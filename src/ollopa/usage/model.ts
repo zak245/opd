@@ -34,7 +34,16 @@ export interface UsageItem {
 
 export const LEVEL_ONE_THRESHOLD = 20
 
+/** Which seats each business declared. A seat that does not exist gets no usage and no first screen. */
+export const SEATS: Record<Business, Role[]> = {
+  fathom: ["admin", "sdr"],
+  meridian: ["sdr", "ae", "marketer", "cs", "admin"],
+  halyard: ["sdr", "admin"],
+  ridgeline: ["sdr", "ae", "marketer", "cs", "admin"],
+}
+
 export function weeklyUse(item: UsageItem, business: Business, role: Role): number {
+  if (!SEATS[business].includes(role)) return 0
   const override = item.overrides?.[business]?.[role]
   if (override !== undefined) return override
   return item.weekly[role] ?? 0

@@ -406,7 +406,7 @@ Test open-by-default vs. closed, visible vs. hidden navigation, and single-page 
 ### 10.6 A validation checklist for any disclosure decision
 
 1. Card sort or top-tasks survey to propose the split.
-2. Tree test the proposed IA: target >70–80% success with high directness on primary tasks.
+2. Tree test the proposed IA. *(Corrected 14 Sep 2026: see sweep 11.)* Benchmark against the real-world distribution, not against a target: Albert and Tullis' review of **98 tree-testing studies** gives a **median task success of 62%, interquartile range 37–83%**, with the rubric Poor <40 / Fair 41–60 / Good 61–80 / Very Good 80–90 / Excellent >90, and 50+ participants per tree for narrow confidence intervals (via NN/g, 2024). The old "70–80%" figure was set without evidence and sits above the industry norm; it is an aspiration, and must be labelled as one if it is used. Directness is defined everywhere and benchmarked nowhere, so read it as a diagnostic — high success with low directness means people knew what they wanted and could not find it easily.
 3. First-click test the level-1 screen.
 4. Instrument every disclosure trigger (open rate, time-to-first-open, per-segment).
 5. Post-launch: feature-adoption per segment; flag any level-2 feature with >20% weekly use as "disclosure debt."

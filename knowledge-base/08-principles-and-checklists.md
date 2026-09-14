@@ -12,7 +12,9 @@
 - "Frequently" is measured, not guessed: per-segment weekly usage from analytics, field studies, support logs, a Top Tasks vote (McGovern).
 - Microsoft's lesson from adaptive menus: the *aggregate* head of the usage distribution is not any *individual's* head. "One person's ideal default 'short' menu was exactly the wrong thing for someone else" (Jensen Harris). Segment by role and account before hiding.
 - Any level-2 feature with more than roughly 20% weekly use in a segment is **disclosure debt** for that segment. Promote it.
-- Corollary from Pendo's data (6% of features generate 80% of clicks): a level-1 surface sized to the empirical head is small. The risk is not that level 1 is too big; it is that the wrong things are on it.
+- Corollary from Pendo's data: a level-1 surface sized to the empirical head is small. The risk is not that level 1 is too big; it is that the wrong things are on it. *(Corrected 14 Sep 2026: see sweep 15.)* **6.4% is the median and 15.6% is best-in-class**, so 6% describes a bloated product, not a target. Pendo "features" are customer-chosen tags, not comparable to McGrenere and Moore's exhaustive 265-function inventory.
+- Ask a second question before dooring anything: not only *what share of users touch it weekly* but **what share of the people who touch it at all touch it daily**. A low-reach, high-repetition command is a density item, and aggregate frequency data will delete it (sweep 13). The tax on a dense screen is paid in fixations, not clicks (Khairat et al., JAMIA 2026).
+- At set-up, route by the **job to be done, not the job title**: Airtable's role-matched templates bought +15% onboarding completion at −10% collaboration until they were re-cut around the shape of the work (sweep 10).
 
 ### Law 2: Stop at two levels
 
@@ -28,6 +30,7 @@
 - Do not label doors by audience. "Advanced settings" → "Additional settings" or, better, the content: "Network settings," "Retry and error handling." Audience labels "discourage exploration" (Home Assistant, 2026).
 - Where two representations genuinely exist for two skill levels (visual query builder vs code), keep them **synchronised on the same artifact**, make switching a two-way door, and let the simpler mode teach the expert one (Grafana's Builder/Code with "Explain").
 - The exception with field evidence is a **user-personalised** two-interface design (McGrenere et al., CHI 2002): the user fills the reduced layer, the toggle is one click, the reduced layer starts nearly empty, and role-seeded defaults cover the third of users who will not customise. It is the designer-chosen, audience-labelled mode that fails.
+- **A density toggle is the one legitimate mode** *(added 14 Sep 2026: see sweep 13)*. It declares nothing about skill, changes nothing about what exists or where it lives, is one click, persists, and is reversible. Ship an admin default plus a per-user override, default to comfortable, and guarantee the switch (Salesforce Display Density; AWS Cloudscape: "Ensure users can always switch"). Density is a legitimate axis for a mode; capability is not.
 
 ### Law 4: Make the door obvious and honest
 
@@ -49,22 +52,27 @@
 
 - Users prefer control (Findlater & McGrenere, CHI 2004: static beat adaptive on speed; most preferred adaptable). Shneiderman: machine-initiated changes conflict with "user desires for consistency, predictability, and control."
 - Context by **object state** (a selected chart shows chart tools; a draft record shows draft actions) is deterministic and predictable. Reordering by **usage history** destroys spatial memory and doubles scan time (Office 2000).
-- If you must adapt, **add** (a "Recent" or "Suggested" section) rather than reorder or remove, and keep the canonical location stable. Ephemeral adaptation (predicted items appear first, the rest fade in) preserves spatial stability and is the one adaptive technique shown to beat static menus (Findlater et al., CHI 2009).
-- AI-driven "smart" disclosure needs demonstrable prediction accuracy above roughly 70% before it beats a good static layer (Gajos et al., CHI 2008), and must be visibly signalled: a third of users in the Word field study never noticed the menus were adapting.
-- Expect fewer than 5% of users to customise anything. Customisation is not a fix for a bad default split.
+- If you must adapt, **add in place** (highlight, sort, filter, a "Recent" or "Suggested" section) rather than reorder or remove, and keep the canonical location stable. Ephemeral adaptation (predicted items appear first, the rest fade in) preserves spatial stability and is the one adaptive technique shown to beat static menus (Findlater et al., CHI 2009).
+- AI-driven "smart" disclosure needs demonstrable prediction accuracy above roughly 70% before it beats a good static layer (Gajos et al., CHI 2008), and must be visibly signalled: a third of users in the Word field study never noticed the menus were adapting. *(Added 14 Sep 2026: see sweep 08.)* That threshold has **never been re-tested**, and it is no longer the main argument: **spatial adaptation loses at any accuracy.** Todi et al. (CHI 2021, 18 participants, 6,480 trials) found frequency reordering no faster than static and 15% slower on the tail; Gaspar-Figueiredo et al. (*JSS* 2025, n=40, EEG) found no significant difference either way.
+- Two further conditions: adaptation is **offered at a task boundary**, not mid-task (52% engagement post-commit against 62% dismissal on a declined edit, Kuo et al. 2026), and **reversible in one action** (users treat the undo as calibration, Kim et al., IUI 2026). Do not interrupt on inferred need — the best "is this user stuck" detector on real enterprise logs reaches 0.27 precision. Use a persistent list.
+- Expect fewer than 5% of users to customise anything. Customisation is not a fix for a bad default split. *(Corrected 14 Sep 2026: see sweep 15.)* Spool's figure is a 2011 anecdote about consumer Word and there is **no post-2018 settings-usage benchmark of any tier**. It justifies deleting an unused capability setting, not a density control, and only when the control was discoverable and the number was measured (Firefox Proton is the cautionary case).
 
 ### Law 7: Decision-critical information is never behind a door
 
 - Price, mandatory fees, commitment length, consequences of a destructive action, data use, safety and compliance state: level 1 by definition.
 - Symmetry test: the path to undo, cancel or reject must be no longer than the path to do, subscribe or accept.
-- Any "conversion lift" from moving a control to a second level must be audited for whether it came from clarity or from suppressed choice (Nouwens et al.: +22–23 points consent from hiding "reject"). Regulators (FTC junk-fee rule 2025, UK CMA/DMCC guidance 2025, EU DPAs) treat this as enforcement territory.
+- Any "conversion lift" from moving a control to a second level must be audited for whether it came from clarity or from suppressed choice (Nouwens et al.: +22–23 points consent from hiding "reject"; Luguri & Strahilevitz 2021: hiding a recurring charge in small grey text took acceptance from 14.8% to 30.1%). Regulators (FTC junk-fee rule 2025, UK CMA/DMCC guidance 2025, EU DPAs) treat this as enforcement territory.
+- *(Added 14 Sep 2026: see sweeps 12 and 14.)* **Satisfaction and complaint data cannot perform that audit.** Mild manipulation produced "no discernable emotional backlash," and across 240 apps and 589 users people "do not identify these practices when exposed to them" (Di Geronimo et al., CHI 2020). "Nobody complained" is not evidence.
+- **Disclosure that exceeds review capacity is equivalent to hiding.** Shown a problematic agent action and asked to approve it, users saw it 88.5% of the time and stopped it 23.9% (Chen et al., n=48) — rationalisation, not inattention. At scale, human review of pull requests fell from 89% to 68% under an AI-output mandate while silent approvals held near 50%. Budget the reviewer's capacity, not just the pixel. Where price is involved and cannot be known in advance (agent token spend varies up to 30× per run), show a running meter and a spend cap rather than a pre-action estimate.
+- Show a **total per period, not a component breakdown**: partitioned pricing left consumers underestimating the total by about 11%, worse than drip pricing's 3.2% (CMA).
 
 ### Law 8: Fade the scaffold; give experts accelerators
 
 - Scaffolding theory says support is withdrawn as it becomes unnecessary. Let users keep sections open by default, remember it, and offer "show all options" as a persistent preference.
-- Experts get keyboard shortcuts, command palettes, bulk actions and scripting, disclosed by repeated exposure (menu items that show their shortcut; a palette that shows the shortcut every time).
-- Audit level 2 semi-annually. For each item: promote (heavily used), keep tucked away (used by a meaningful minority; users prefer this to removal by 45% to 24.5%, McGrenere & Moore 2000), or delete (fewer than roughly 3–5% deviate from the default across all segments). "Hiding it behind progressive disclosure is not a solution. The solution is removal" (featurebloat.com) applies to the last group only.
-- Hidden features are not learned (Findlater & McGrenere 2010). Add awareness mechanisms: shortcut hints in menus, command search, contextual recommendations (CommunityCommands produced 2.1× more useful suggestions than prior techniques), layered contextual help (ToolClips: 7× more unfamiliar tasks completed than online help).
+- Experts get keyboard shortcuts, command palettes, bulk actions and scripting. *(Corrected 14 Sep 2026: see sweeps 09 and 13 — this replaces "disclosed by repeated exposure ... a palette that shows the shortcut every time".)* **Hover hints do not teach**: 749 tooltip exposures produced two shortcut activations, tooltips explain 1% of shortcut discovery in a survey of 853 people (against 28% for being shown over someone's shoulder), and the median in-product tip is opened once per 1,000 impressions. **Temporary full exposure does**: shortcut usage went 9.79% → 86.20% with everything exposed → 73.09% after removal (ExposeHK, IHM 2025). **Spatial feedforward roughly doubles retention**: a keyboard map held median 10 shortcuts at 24 hours against a list's 5.5 (KeyMap, CHI 2020, n=98). A palette is a list, so its inline hint is the floor, not the ceiling.
+- **The only complete promotion trigger anyone has found is removing the old path.** Signifiers changed nothing even at 5,000 ms; 7 of 33 found a hidden widget while an easy alternative existed, everyone found it once the alternative was gone, and none went back (Mackamul et al., CHI 2025). Making errors cheap did not work either (Goguey et al. 2019).
+- Audit level 2 semi-annually. For each item: promote (heavily used), keep tucked away (used by a meaningful minority; users prefer this to removal by 45% to 24.5%, McGrenere & Moore 2000), or delete (fewer than roughly 3–5% deviate from the default across all segments). *(Corrected 14 Sep 2026: see sweep 15.)* **The 3–5% threshold is a design convention with no evidence** — no post-2018 study reports what happened to churn, support volume or task time after a B2B product removed a feature. Check repetition before reach: experts reject the removal of items from paths their hands already know.
+- Hidden features are not learned (Findlater & McGrenere 2010), and an AI that does the task hides the interface more completely than any panel: guided assistance beat automatic on completion 88.5% to 35% and on accuracy 82% to 12% (Khurana et al., CHI 2025). Add awareness mechanisms: command search, contextual recommendations (CommunityCommands produced 2.1× more useful suggestions than prior techniques), layered contextual help (ToolClips: 7× more unfamiliar tasks completed than online help), and a route to a human — an expert answers a short question in about 57 seconds where the forum median is 10.83 hours.
 
 ---
 
@@ -166,7 +174,7 @@ Is it needed by a specific role only?
 
 ### Command palette
 - [ ] Visible trigger (search box with the shortcut hint), not only the keystroke
-- [ ] Each command shows its shortcut so users graduate out of the palette
+- [ ] Each command shows its shortcut, and the product also teaches by temporary exposure or spatial feedforward, since hover hints alone do not teach (sweep 09, KeyMap 2020)
 - [ ] Introduced only after the plain path is strong
 - [ ] Combobox/listbox semantics; result counts announced
 
@@ -192,8 +200,8 @@ Is it needed by a specific role only?
 
 ### 4.1 Before build
 1. **Card sort / Top Tasks vote** to propose the primary/secondary split. Expect a "long neck": a handful of tasks carry most votes.
-2. **Tree test** the proposed hierarchy: target >70–80% success with high directness on primary tasks.
-3. **First-click test** the level-1 screen (right first click ≈ 87% success vs ≈ 46% wrong).
+2. **Tree test** the proposed hierarchy. *(Corrected 14 Sep 2026: see sweep 11.)* Benchmark, do not target: across **98 tree-testing studies the median task success is 62%, IQR 37–83%** (Albert & Tullis, via NN/g 2024), with the rubric Poor <40 / Fair 41–60 / Good 61–80 / Very Good 80–90 / Excellent >90 and 50+ participants per tree. The old ">70–80%" was set without evidence and sits above the industry norm; if you use it, label it an aspiration. Directness has no published benchmark — read it as a diagnostic.
+3. **First-click test** the level-1 screen (right first click ≈ 87% success vs ≈ 46% wrong; Bailey & Wolfson 2006, old and not independently retrieved). Test on the live build where you can: static-prototype first clicks differ from live-site clicks by about 6%, and the largest gaps come from hover menus and responsive shifts — exactly where disclosure lives — so a mock systematically understates the cost of hiding.
 
 ### 4.2 After launch
 4. Instrument every disclosure trigger: open rate, time-to-first-open, per segment.

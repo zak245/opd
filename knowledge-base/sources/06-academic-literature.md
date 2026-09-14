@@ -120,7 +120,7 @@ Throughout, "complex B2B apps" means feature-rich, multi-role enterprise softwar
 ### 4.3 Feature-use distribution data (non-academic, for triangulation)
 
 - The Standish Group (Johnson, XP 2002 keynote) reported that in four internal enterprise applications 7% of features were used "always," 13% "often," 16% "occasionally," 19% "rarely," 45% "never." This is widely repeated but rests on a small, unpublished sample (see Mountain Goat Software's critique, https://www.mountaingoatsoftware.com/blog/are-64-of-features-really-rarely-or-never-used).
-- Pendo (2019 Feature Adoption Report; 180 M users, 35,000 applications) reported roughly 12% of features used often, 15% sometimes, 73% rarely or never.
+- Pendo (2019 Feature Adoption Report) analysed "feature usage across 615 Pendo subscriptions for customers who have used Pendo for more than a year" over three months, and reported **12% frequent / 8% moderate / 24% rare / 56% never used**. *(Corrected 14 Sep 2026: see sweep 15. The previous version of this line — "180 M users, 35,000 applications... 12% often, 15% sometimes, 73% rarely or never" — was wrong in both sample and distribution; the "15%" was a share of usage volume, not of features. Note also that a Pendo "feature" is a customer-chosen tag, so this is not comparable to McGrenere & Moore's exhaustive 265-function inventory.)*
 - The peer-reviewed anchor remains McGrenere & Moore (2000): 27% of functions used on average, with per-user ranges of 3–45%, and only 3.3% of functions used regularly by more than three-quarters of users.
 - **Relevance.** Together these justify a default layer sized around the small "core" set (in Word 97, 12 of 265 first-level functions) while keeping the long tail reachable, since the tail differs by user.
 

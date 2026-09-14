@@ -1,0 +1,60 @@
+import type { UsageItem } from "./model"
+
+// Agents page: 40 items in 5 areas (specs/13-agents.md). Baseline numbers describe Meridian Software.
+// The page shows what the research, outreach and scoring agents did, what waits for approval, and the full ledger.
+// Fathom overrides: two founders and one SDR, all admins, watch credit burn daily; the founder is also an SDR, so the head is at the top of the band.
+// Halyard overrides: the ops lead reads the ledger per client workspace every day; the specialists approve in bulk.
+// Ridgeline overrides: almost no outreach, so approvals are rare; the scoring agent matters to the marketer.
+// CS has no Agents page in the nav (nav.ts); its numbers are 0 everywhere and the page explains who can see it.
+
+export const agentsItems: UsageItem[] = [
+  // Briefing
+  { id: "brief.digest", page: "agents", area: "Briefing", label: "Since you last looked: runs, waiting, exceptions", weekly: { sdr: 65, ae: 20, marketer: 15, admin: 45 }, overrides: { fathom: { sdr: 75, admin: 70 }, halyard: { sdr: 70, admin: 60 }, ridgeline: { sdr: 30, ae: 10, marketer: 25, admin: 35 } }, note: "The one sentence that passes Nielsen's 30-second briefing test." },
+  { id: "brief.status", page: "agents", area: "Briefing", label: "Agent tiles: on or off, runs today, what each may do", weekly: { sdr: 18, ae: 6, marketer: 10, admin: 40 }, overrides: { fathom: { sdr: 18, admin: 18 }, halyard: { sdr: 12, admin: 65 }, ridgeline: { marketer: 20, admin: 40 } }, note: "Fathom has two agents that are always on; the founders look at spend, not status." },
+  { id: "brief.credits-week", page: "agents", area: "Briefing", label: "Credits spent this week against the agent cap", critical: true, weekly: { sdr: 25, ae: 5, marketer: 10, admin: 60 }, overrides: { fathom: { sdr: 60, admin: 75 }, halyard: { sdr: 40, admin: 70 }, ridgeline: { sdr: 10, marketer: 20, admin: 45 } }, note: "Credit burn is decision-critical (rule 7). The number reviewers say surprises them at the end of the month." },
+  { id: "brief.credits-today", page: "agents", area: "Briefing", label: "Credits spent today", weekly: { sdr: 12, ae: 2, marketer: 4, admin: 18 }, overrides: { fathom: { sdr: 15, admin: 65 }, halyard: { sdr: 12, admin: 60 }, ridgeline: { sdr: 4, marketer: 5, admin: 15 } } },
+  { id: "brief.workspace", page: "agents", area: "Briefing", label: "Which client workspace this page shows", weekly: {}, overrides: { halyard: { sdr: 70, admin: 75 } }, note: "Removed, not hidden, where the business has one workspace (rule 4). Halyard switches between ten." },
+
+  // Exceptions
+  { id: "exc.paused", page: "agents", area: "Exceptions", label: "Outreach paused and why (bounce guard)", critical: true, weekly: { sdr: 15, ae: 3, marketer: 2, admin: 25 }, overrides: { fathom: { sdr: 12, admin: 15 }, halyard: { sdr: 15, admin: 50 }, ridgeline: { sdr: 3, admin: 8 } }, note: "Safety state (rule 7). Shown only while something is paused; the section is absent otherwise." },
+  { id: "exc.cap-reached", page: "agents", area: "Exceptions", label: "An agent stopped at its credit cap", critical: true, weekly: { sdr: 3, ae: 1, marketer: 2, admin: 4 }, overrides: { fathom: { sdr: 8, admin: 15 }, halyard: { sdr: 8, admin: 12 } }, note: "Rare at Meridian's cap, weekly at Fathom's." },
+  { id: "exc.resume", page: "agents", area: "Exceptions", label: "Resume or keep paused", weekly: { sdr: 4, admin: 15 }, overrides: { fathom: { sdr: 4, admin: 8 }, halyard: { sdr: 4, admin: 15 } } },
+
+  // Waiting for you
+  { id: "wait.list", page: "agents", area: "Waiting for you", label: "Items waiting for approval", critical: true, weekly: { sdr: 70, ae: 22, marketer: 8, admin: 25 }, overrides: { fathom: { sdr: 80, admin: 80 }, halyard: { sdr: 80, admin: 18 }, ridgeline: { sdr: 30, ae: 12, marketer: 22, admin: 18 } }, note: "A pending approval is decision-critical (rule 7 test: find it without clicking)." },
+  { id: "wait.consequence", page: "agents", area: "Waiting for you", label: "What happens if approved: email from which mailbox, when, credits", critical: true, weekly: { sdr: 70, ae: 22, marketer: 8, admin: 25 }, overrides: { fathom: { sdr: 80, admin: 80 }, halyard: { sdr: 80, admin: 18 }, ridgeline: { sdr: 30, ae: 12, marketer: 22, admin: 18 } }, note: "Never separated from the Approve button (rule 5). Apollo's assistant confirms in chat and the confirmation scrolls away." },
+  { id: "wait.approve", page: "agents", area: "Waiting for you", label: "Approve", weekly: { sdr: 70, ae: 20, marketer: 6, admin: 18 }, overrides: { fathom: { sdr: 75, admin: 75 }, halyard: { sdr: 80, admin: 4 }, ridgeline: { sdr: 28, ae: 10, marketer: 20, admin: 10 } } },
+  { id: "wait.decline", page: "agents", area: "Waiting for you", label: "Decline", weekly: { sdr: 45, ae: 12, marketer: 4, admin: 15 }, overrides: { fathom: { sdr: 50, admin: 40 }, halyard: { sdr: 55, admin: 4 }, ridgeline: { sdr: 20, ae: 6, marketer: 6, admin: 8 } } },
+  { id: "wait.read-draft", page: "agents", area: "Waiting for you", label: "Read the draft or the research before deciding", weekly: { sdr: 55, ae: 18, marketer: 5, admin: 12 }, overrides: { fathom: { sdr: 65, admin: 60 }, halyard: { sdr: 60, admin: 4 }, ridgeline: { sdr: 25, ae: 10, marketer: 8, admin: 8 } }, note: "One door per item, labelled with what is behind it and how long it is." },
+  { id: "wait.edit-draft", page: "agents", area: "Waiting for you", label: "Edit the draft, then approve", weekly: { sdr: 22, ae: 8, admin: 3 }, overrides: { fathom: { sdr: 15, admin: 15 }, halyard: { sdr: 12 }, ridgeline: { sdr: 10, ae: 4 } } },
+  { id: "wait.bulk", page: "agents", area: "Waiting for you", label: "Select several and approve or decline together", weekly: { sdr: 12, ae: 2, admin: 10 }, overrides: { fathom: { sdr: 4, admin: 8 }, halyard: { sdr: 45, admin: 15 }, ridgeline: { sdr: 3, admin: 3 } }, note: "Halyard's specialists clear forty drafts at a time." },
+  { id: "wait.decline-reason", page: "agents", area: "Waiting for you", label: "Tell the agent why you declined", weekly: { sdr: 8, ae: 2, admin: 3 }, overrides: { fathom: { sdr: 4 }, halyard: { sdr: 15 } } },
+  { id: "wait.snooze", page: "agents", area: "Waiting for you", label: "Decide tomorrow", weekly: { sdr: 4, ae: 2, admin: 2 } },
+  { id: "wait.reassign", page: "agents", area: "Waiting for you", label: "Hand the decision to a teammate", weekly: { sdr: 2, ae: 1, admin: 4 }, overrides: { fathom: { sdr: 1, admin: 1 }, halyard: { sdr: 2, admin: 4 } } },
+
+  // Activity
+  { id: "act.ledger", page: "agents", area: "Activity", label: "Every event, newest first", weekly: { sdr: 35, ae: 10, marketer: 12, admin: 50 }, overrides: { fathom: { sdr: 45, admin: 45 }, halyard: { sdr: 25, admin: 60 }, ridgeline: { sdr: 15, marketer: 25, admin: 40 } }, note: "Nielsen (2026): keep the full activity ledger one click away. Here it is on the page, below the briefing." },
+  { id: "act.day-digest", page: "agents", area: "Activity", label: "Per-day digest line with credits for the day", weekly: { sdr: 12, ae: 3, marketer: 6, admin: 45 }, overrides: { fathom: { sdr: 15, admin: 60 }, halyard: { sdr: 10, admin: 60 }, ridgeline: { marketer: 6, admin: 30 } }, note: "Digest the milestones (Nielsen 2026). Credits per day are what Fathom and Halyard read first." },
+  { id: "act.credits-per-event", page: "agents", area: "Activity", label: "Credits per event", critical: true, weekly: { sdr: 20, ae: 3, marketer: 5, admin: 40 }, overrides: { fathom: { sdr: 45, admin: 60 }, halyard: { sdr: 15, admin: 55 }, ridgeline: { sdr: 6, marketer: 8, admin: 25 } }, note: "Spend is decision-critical (rule 7)." },
+  { id: "act.steps", page: "agents", area: "Activity", label: "Step-by-step log for one event: sources, timings, credits per step", weekly: { sdr: 15, ae: 4, marketer: 6, admin: 18 }, overrides: { fathom: { sdr: 18, admin: 18 }, halyard: { admin: 15 }, ridgeline: { marketer: 10 } }, note: "The door on every ledger row. Body band for every role, so it opens on request and stays open where the user left it." },
+  { id: "act.open-contact", page: "agents", area: "Activity", label: "Open the contact or company", weekly: { sdr: 18, ae: 15, marketer: 3, admin: 4 }, overrides: { halyard: { sdr: 8 }, ridgeline: { sdr: 10, ae: 10, marketer: 5 } } },
+  { id: "act.filter-agent", page: "agents", area: "Activity", label: "Filter by agent", weekly: { sdr: 12, ae: 3, marketer: 12, admin: 15 }, overrides: { fathom: { sdr: 4, admin: 6 }, halyard: { sdr: 4, admin: 18 }, ridgeline: { marketer: 22, admin: 25 } }, note: "Ridgeline's marketer only wants the scoring agent." },
+  { id: "act.filter-kind", page: "agents", area: "Activity", label: "Filter by kind of event", weekly: { sdr: 4, ae: 2, marketer: 4, admin: 4 }, overrides: { halyard: { admin: 4 }, ridgeline: { marketer: 5 } } },
+  { id: "act.filter-contact", page: "agents", area: "Activity", label: "Filter by contact or company", weekly: { sdr: 15, ae: 12, marketer: 2, admin: 4 }, overrides: { halyard: { sdr: 12 } } },
+  { id: "act.filter-status", page: "agents", area: "Activity", label: "Filter by outcome: waiting, approved, declined, done, paused", weekly: { sdr: 4, ae: 1, marketer: 1, admin: 12 }, overrides: { fathom: { admin: 4 }, halyard: { sdr: 4, admin: 15 } } },
+  { id: "act.filter-date", page: "agents", area: "Activity", label: "Date range", weekly: { sdr: 4, ae: 1, marketer: 4, admin: 15 }, overrides: { fathom: { admin: 12 }, halyard: { admin: 15 }, ridgeline: { marketer: 6 } } },
+  { id: "act.filter-person", page: "agents", area: "Activity", label: "Filter by teammate", weekly: { admin: 15 }, overrides: { fathom: { sdr: 4, admin: 6 }, halyard: { admin: 30 } }, note: "Only for those who see teammates' items. Removed for the others, with a line saying whose items they see." },
+  { id: "act.search", page: "agents", area: "Activity", label: "Search the ledger", weekly: { sdr: 10, ae: 4, marketer: 4, admin: 4 }, overrides: { halyard: { sdr: 4, admin: 4 }, ridgeline: { marketer: 5 } } },
+  { id: "act.retry", page: "agents", area: "Activity", label: "Run again with a note", weekly: { sdr: 3, ae: 1, marketer: 2, admin: 4 } },
+  { id: "act.flag", page: "agents", area: "Activity", label: "Flag a wrong result", weekly: { sdr: 3, ae: 1, marketer: 1, admin: 3 } },
+  { id: "act.copy-link", page: "agents", area: "Activity", label: "Copy a link to this event", weekly: { sdr: 1, ae: 1, marketer: 1, admin: 2 } },
+  { id: "act.export", page: "agents", area: "Activity", label: "Export the ledger as CSV", weekly: { marketer: 2, admin: 4 }, overrides: { halyard: { admin: 6 } }, note: "Halyard reports agent spend to clients monthly." },
+  { id: "act.expand-all", page: "agents", area: "Activity", label: "Expand all steps or collapse all", weekly: { sdr: 2, admin: 4 } },
+  { id: "act.print", page: "agents", area: "Activity", label: "Print the ledger", weekly: { admin: 1 } },
+  { id: "act.columns", page: "agents", area: "Activity", label: "Show or hide columns", weekly: { sdr: 1, admin: 2 } },
+
+  // Agent settings (live in Settings; linked from here)
+  { id: "set.link", page: "agents", area: "Agent settings", label: "Agent settings in Settings, or who can change them", weekly: { sdr: 4, ae: 1, marketer: 3, admin: 15 }, overrides: { fathom: { sdr: 12, admin: 15 }, halyard: { admin: 15 }, ridgeline: { marketer: 6 } }, note: "Settings live in Settings, not here. Non-admins see the name of the admin who can change them." },
+  { id: "set.pause-agent", page: "agents", area: "Agent settings", label: "Pause this agent now", critical: true, weekly: { sdr: 2, admin: 4 }, overrides: { fathom: { sdr: 4, admin: 4 }, halyard: { admin: 4 } }, note: "A kill switch is safety state (rule 7): visible on the tile for anyone allowed to use it." },
+  { id: "set.notify", page: "agents", area: "Agent settings", label: "Tell me when something waits (Slack or email)", weekly: { sdr: 3, ae: 2, marketer: 2, admin: 3 } },
+]

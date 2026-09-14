@@ -115,8 +115,18 @@ PD is not one psychological principle. It is a negotiated settlement between two
 | Task success penalty for hidden navigation | >20 points lower | Same |
 | Time penalty for hidden navigation (desktop) | ≥39% slower | Same |
 | Click-through on unlabelled non-standard icon | 0% | Harley, NN/g 2014 |
-| Users who ever changed any setting (Word) | <5% | Spool, UIE 2011 |
-| Features generating 80% of clicks (avg. product) | 6% | Pendo 2024 |
+| Users who ever changed any setting (Word) | <5% — a 2011 anecdote about consumer Word, not a benchmark; no post-2018 settings-usage figure of any tier exists | Spool, UIE 2011 *(corrected 14 Sep 2026: see sweep 15)* |
+| Features generating 80% of clicks | **6.4% median, 15.6% best-in-class** (6,800+ apps, 2,500 customers) | Pendo 2024 *(corrected 14 Sep 2026: see sweep 15)* |
+| Feature-use distribution (615 Pendo subscriptions, 3 months) | 12% frequent / 8% moderate / 24% rare / 56% never used | Pendo, 2019 Feature Adoption Report *(corrected 14 Sep 2026: see sweep 15)* |
+| Elements per screenful: condensed vs dispersed layout | 8–14 vs <7; 17% vs 30% unused space | Flaherty, Neusesser & Chitale, NN/g 2023 (n=13) |
+| Information-processing burden on a complex EHR case | more fixations and longer task time, **fewer clicks per minute**, screens viewed unchanged | Khairat et al., JAMIA 2026 (81 ICU providers, 4 centres) |
+| Frequency reordering vs static menus | Static 2283 ms, Frequency 2298 ms, MCTS 2162 ms; 15% slower on non-promoted items | Todi et al., CHI 2021 (18 participants, 6,480 trials) |
+| Adaptive vs static menus with EEG | no significant difference either way | Gaspar-Figueiredo et al., JSS 2025 (n=40) |
+| Shortcut retention at 24 h: spatial keyboard map vs list | median 10 vs 5.5 commands | Lewis et al., KeyMap, CHI 2020 (n=98) |
+| Shortcut activations from 749 tooltip exposures | 2 | Harrison, Malacria & Cockburn, IHM 2025 |
+| Problematic agent action shown for approval vs actually stopped | 88.5% visible, 23.9% stopped | Chen et al., arXiv 2604.04918 (n=48) |
+| Subscription acceptance when the recurring charge is in small grey text | 14.8% → 30.1%, with no measurable backlash | Luguri & Strahilevitz, *J. Legal Analysis* 2021 (n=1,963 / 3,777) |
+| Tree-test task success, real-world distribution | median 62%, IQR 37–83% | Albert & Tullis, 98 studies, via NN/g 2024 |
 | Training-wheels control group time lost to blocked error states | ~25% | Carroll & Carrithers 1984 |
 | Mean effect size of choice overload | 0.02 (CI −0.09 to 0.12) | Scheibehenne et al. 2010 |
 | Consent lift from moving "reject" to second page | +22–23 points | Nouwens et al., CHI 2020 |
@@ -132,6 +142,8 @@ PD is not one psychological principle. It is a negotiated settlement between two
 | Adaptive toolbar utilisation at 50% vs 70% prediction accuracy | 70.6% vs 86.4% | Gajos et al., CHI 2008 |
 | Unfamiliar tasks completed with layered contextual help vs online help | 7× | Grossman & Fitzmaurice, CHI 2010 |
 
+**Two cautions on the Pendo figures.** A "feature" in Pendo is a customer-chosen tag — something a product manager instrumented because they expected it to be used — so it is **not comparable to McGrenere and Moore's exhaustive inventory of 265 Word 97 functions**, and the two must not be cited as one line of evidence. And 12% (2019, average daily usage volume) and 6.4% (2024, click volume) are different metrics on different samples; the gap between them is not a trend. See [11 What changed, 2018–2026](11-what-changed-2018-2026.md).
+
 ---
 
 ## 7. The population model: perpetual intermediates
@@ -142,7 +154,7 @@ Consequences for PD in B2B:
 
 - **Level 1 serves beginners briefly. Level 2 is where intermediates live for years.** Design the intermediate layer, not the minimal one, as the centre of gravity. NN/g's complex-application research confirms that "even users of complex applications tend to plateau at mediocre performance."
 - **Basic/Advanced and Expert modes fail** because they force intermediates to choose an identity they do not have. Home Assistant's 2026 decision to delete "Advanced"/"Expert" labels ("they implicitly tell users that certain features are not for them") and Jira's 2021 rename from "next-gen/classic" to "team-managed/company-managed" both replace audience labels with content labels.
-- **Experts are served by accelerators, not modes.** Keyboard shortcuts, command palettes and bulk actions are "unseen by the novice" (NN/g heuristic 7) and disclosed by repeated exposure. Superhuman's Cmd+K palette, which shows each command's shortcut every time, is the purest example: a disclosure control designed to make users stop needing it.
+- **Experts are served by accelerators, not modes.** Keyboard shortcuts, command palettes and bulk actions are "unseen by the novice" (NN/g heuristic 7) and disclosed by repeated exposure. A command palette that shows each command's shortcut is the floor, not the ceiling: hover hints teach almost nothing (749 tooltip exposures produced two shortcut adoptions; Harrison, Malacria & Cockburn 2025), while temporary full exposure and spatial feedforward do (shortcut use 10% to 86% with 73% persisting; KeyMap doubled 24-hour retention). See [11-what-changed-2018-2026.md](11-what-changed-2018-2026.md).
 - **The one two-interface design with field evidence is user-personalised, not audience-labelled.** McGrenere, Baecker and Booth (CHI 2002) gave 20 Word users a one-click toggle between a "Personal" interface they populated themselves (starting with six functions) and the full default; over six weeks it beat Word's adaptive menus on navigation, learnability, control and satisfaction, and 13 of 20 preferred it. The conditions that made it work are the opposite of a Basic/Advanced switch: the user chooses the contents, the toggle is one click, the reduced layer starts nearly empty, and role-seeded defaults exist for the third of users who will not customise.
 - **Hidden features are not learned.** Findlater and McGrenere (2010) measured the cost: reduced-functionality interfaces improve core-task performance but lower awareness of unused features and their later use. Cockburn et al. (2014) call the result an expertise plateau: users "persistently fail to adopt faster methods." So the level-1 layer must contain cues toward level 2 (shortcut hints in menus, command search, contextual recommendations), or it becomes a permanent novice layer.
 
@@ -150,9 +162,15 @@ Consequences for PD in B2B:
 
 Two lines of evidence pull against each other and the resolution matters for settings sprawl. McGrenere and Moore (2000) found Word 97 users touched about 27% of functions, but only 24.5% wanted unused functions removed while 45% wanted them "tucked away," and 51% wanted to keep discovering new ones. Users like feature growth and hate interface growth. On the other side, Spool's experience rot and featurebloat.com's "the solution is removal" argue that deferral without deletion is how bloat accumulates. The reconciliation: **tuck away what some users use** (the long tail differs by person, so it must remain reachable), and **remove what almost nobody uses** (below roughly 3–5% deviation from the default across all segments). Both decisions require per-segment usage data.
 
+*(Corrected 14 Sep 2026: see sweep 15.)* **The 3–5% threshold is a design convention, not a finding.** No post-2018 study with a stated method reports what happened to churn, support volume or task time after a B2B product removed a feature, so the number has nothing behind it. Add a second question before deleting anything: not only "what share of users touch it weekly" but **"what share of the people who touch it at all touch it daily"**. A command used by 4% of users on 100% of their days is a density item, and aggregate frequency data will delete it — which is what the Windows 11 context menu, Figma UI3 and Firefox compact-density reversals were about (sweep 13).
+
 ### 7.2 When system-driven adaptation is acceptable
 
-The adaptive-menu failure (Office 2000) is not the whole story. Gajos et al. (CHI 2008) found accuracy, not predictability, drives whether users adopt adaptive suggestions: utilisation rose from 70.6% to 86.4% when prediction accuracy rose from 50% to 70%. Findlater et al. (CHI 2009) showed *ephemeral adaptation*, where predicted items appear at once and the rest fade in over about 500 ms, is faster than static menus at 79% accuracy and no slower at 50%, because it keeps every item in its usual place. The rule that follows for AI-driven "smart" disclosure in enterprise tools: adaptation must be spatially stable, visibly signalled, and demonstrably above roughly 70% accuracy; otherwise use a static layer with user-controlled promotion and role defaults.
+The adaptive-menu failure (Office 2000) is not the whole story. Gajos et al. (CHI 2008) found accuracy, not predictability, drives whether users adopt adaptive suggestions: utilisation rose from 70.6% to 86.4% when prediction accuracy rose from 50% to 70%. Findlater et al. (CHI 2009) showed *ephemeral adaptation*, where predicted items appear at once and the rest fade in over about 500 ms, is faster than static menus at 79% accuracy and no slower at 50%, because it keeps every item in its usual place.
+
+*(Corrected 14 Sep 2026: see sweep 08.)* **The 70% threshold has never been re-tested, and spatial adaptation now looks like a loser at any accuracy.** Todi, Bailly, Leiva and Oulasvirta (CHI 2021, 18 participants, 6,480 trials) found frequency reordering no faster than static (2298 ms vs 2283 ms) and **15% slower** on items outside the promoted head; 15 of 18 noticed the menus changing and two understood why. Gaspar-Figueiredo, Vanderdonckt, Abrahão and Insfran (*JSS* 2025, n=40, with EEG) found **no significant difference either way**. So the reason not to reorder is not that the model is not accurate enough yet: relocation costs more than the prediction can repay.
+
+The rule that follows for AI-driven "smart" disclosure in enterprise tools: adaptation must be **in place** (highlight, sort, filter, augment — never relocate), **visibly signalled**, **reversible in one action**, and **offered at a task boundary**, not mid-task. Post-commit suggestions drew 52% engagement while identical content on a declined edit was dismissed 62% of the time (Kuo et al., 2026). Keep the Gajos figure for anything that is *added* rather than moved, and keep it labelled un-replicated. Otherwise use a static layer with user-controlled promotion and role defaults — which is what GitLab shipped in 2023, as pinning rather than inference.
 
 ---
 
@@ -168,7 +186,7 @@ The adaptive-menu failure (Office 2000) is not the whole story. Gajos et al. (CH
 
 ### 8.2 When to prefer density and persistent visibility instead
 
-- **Homogeneous expert populations doing the same task all day**: trading terminals, on-call SRE consoles, clinical dashboards, IDEs. Every disclosure click is repeated thousands of times; the "interaction tax" dwarfs the learnability benefit. Matt Ström-Awn's decomposition: PD trades *visual* density for *temporal* density, and for experts that is a net loss.
+- **Homogeneous expert populations doing the same task all day**: trading terminals, on-call SRE consoles, clinical dashboards, IDEs. Every disclosure click is repeated thousands of times; the "interaction tax" dwarfs the learnability benefit. Matt Ström-Awn's decomposition — PD trades *visual* density for *temporal* density — is the clearest framing of the trade. *(Corrected 14 Sep 2026: see sweep 13.)* **It is an essay and contains no measurements**: no density figures, no elements-per-screen count, no task performance. Keep the taxonomy; do not cite it as evidence. The measured support is elsewhere, and thinner than the position deserves: NN/g's 2023 content-dispersion study puts **condensed at 8–14 unique elements per screenful with 17% unused space against dispersed at under 7 with 30%**, and finds dispersion raises cognitive load and interaction cost (n=13, marketing pages); Khairat et al. (JAMIA 2026, 81 ICU providers) show the tax on a dense screen is paid in **fixations, not clicks** — clicks per minute *fell* as burden rose — so a team counting only clicks will under-price density and over-price disclosure; and four vendor reversals (Windows 11 context menu, Figma UI3, Office simplified ribbon, Firefox compact density) show what all-day experts reject. **No head-to-head experiment comparing a dense and a disclosed build of the same professional tool exists.** Density also has a locality condition: seven screens of everything still cost heavily when related things sit far apart (Afzal et al. 2022), so rule 5 applies to dense screens too.
 - **Safety-critical or decision-critical state**: must be persistently visible and glanceable, neither buried nor modal.
 - **Comparison tasks**: any pattern that shows A *or* B forces the user to hold one in working memory. Side-by-side wins.
 - **Overview-first analytics**: the overview is the primary content; drill-down is details-on-demand, but collapsing the overview removes the step that makes drill-down possible.
@@ -209,5 +227,7 @@ A compressed statement of what the whole literature agrees on. Each is expanded 
 - **[05 Critiques, pitfalls and measurement](sources/05-critiques-pitfalls-and-measurement.md)**: discoverability cost, the 3-click myth, over-nesting, mode toggles, dark-pattern misuse, accessibility failures, side-effects, mobile, when not to use, validation methods, and organisational politics.
 - **[06 Academic literature](sources/06-academic-literature.md)**: the peer-reviewed record (layered interfaces, adaptive/adaptable UIs, bloat studies, learnability, explainable-AI disclosure) with citations.
 - **[08 Principles and checklists](08-principles-and-checklists.md)**: the operational layer: decision tree, per-pattern checklists, measurement plan, anti-patterns.
+- **[11 What changed, 2018–2026](11-what-changed-2018-2026.md)**: what eight years of new evidence did to each of the eight laws and to the gated-features pattern, and which numbers here were wrong.
+- **[12 Gaps we accept](12-gaps-we-accept.md)**: what remains unproven, and the study that would close each gap.
 - **[09 Expert voices](09-expert-voices.md)**: who said what, in one place.
 - **[10 Glossary](10-glossary.md)**: the vocabulary.
