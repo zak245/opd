@@ -2,9 +2,13 @@
 
 *The contacts table. The SDR's home. A full page and lesson 2. Usage items: `src/ollopa/usage/people.ts`.*
 
+*This spec owns the table template that the other table pages extend: sortable headers with the direction always drawn, a columns-and-density popover, a bulk bar that restates its count, an in-place filter row, skeleton loading, and row actions that appear on keyboard focus as well as hover and are repeated in a menu named for the record. Companies, Lists, Inbox, Tasks, Deals, Campaigns, Accounts and Reports cite the deltas from it rather than respecifying it.*
+
 ## 1. Purpose
 
 People holds every contact in the workspace: 18,400 at Meridian, 2,200 at Fathom, 1,000 to 6,000 in each Halyard client workspace, 9,800 at Ridgeline. An SDR opens it many times a day to find who to work next and push them into a sequence or a list. An AE opens it daily to see everyone at an account and log a call task. A marketer opens it a few times a week to build an audience from a list. The RevOps admin opens it weekly to fix owners and check what synced. Customer success does not have the page in its navigation; Accounts serves them.
+
+A contact is disclosed in two levels here, as every record in Ollopa is: a **quick look** drawer beside the table for the glance, and the **full record page** for the visit that dwells. Prospecting is a scanning task, so the SDR lives in the drawer; research is a dwelling task, so the AE opens the page.
 
 The one thing nobody on this page may lose sight of: **what a click will cost and how many people it will touch.** Every action that spends credits prints the price on the control. Every bulk action repeats the count it will act on. Apollo's reviewers complain about two things above all: filters with a learning curve, and money or contacts moving without a clear moment of consent. Both are disclosure mistakes.
 
@@ -24,7 +28,7 @@ Seed: `src/ollopa/data/seed.ts`. Businesses: `src/ollopa/data/businesses.ts`.
 | Source, created, LinkedIn, job change, opens and replies, CRM id and sync date, custom fields, do not contact | – | one field each on `Contact`; two custom fields at Meridian |
 | Technologies, signals with dates, funding, revenue, founded, headcount growth, keywords | – | on `Company` |
 | Saved views | – | `SavedView { id, name, filters, columns, sort, owner, sharedWith, defaultFor: Role[] }`, seeded per business (§3) |
-| Credit prices | `AgentEvent.credits` already uses 12 for research | `CREDITS = { enrich: 2, revealPhone: 8, revealEmail: 1, research: 12, export: 0 }` |
+| Credit prices | `AgentEvent.credits` already uses 12 for research | `CREDITS = { enrich: 2, revealPhone: 8, revealEmail: 1, research: 12, export: 0 }`, defined once in `src/ollopa/data/credits.ts` and read by every page that spends credits (Companies, Lists, the deal record, Agents, Home); this spec no longer owns the values, it only prints them on its controls |
 | Credit balance and cap | `businesses[].credits` | – |
 | Per-user credit limit | Settings item `team.users` | `users[].creditLimit`: 5,000 a month at Meridian, none at Fathom |
 | Counts | `businesses[].counts.contacts` | Seed grows to 800 contacts at Meridian, 220 Fathom, 600 Halyard, 400 Ridgeline; the header counts seeded rows so filter counts and the total agree |
@@ -98,9 +102,10 @@ Every row has: the name as a link, the stage badge as an inline picker, the phon
 
 | Action | Outcome | Level one for |
 |---|---|---|
-| Open the contact | Contact record page (record template; a later case). Back restores scroll, selection and filters. | Everyone |
+| Quick look | A flat drawer beside the table, the table still in view: photo-less header (name, title, company, owner), email and status, phone, stage, sequence and step, last contacted, do-not-contact state. Read-only except the stage badge, the one field the glance exists for. No doors and no sections inside it; it is the top of the record page, cut short. `Esc` closes it, `j`/`k` move it down the table without closing. | SDR; Halyard SDR; Fathom admin; Ridgeline SDR |
+| Open the full contact record | The record page at `/people/:id`, from the shared record template (spec 09 owns the template): header, key fields, then related lists — companies' people, deals, activity, tasks — as scrolling sections, with doors only for long rarely-needed content (full history, enrichment, custom fields, files). At most one tab, and this record does not need it. Back restores scroll, selection and filters. | AE, everyone by link |
 | Add to sequence | Picker of active sequences anchored to the row; Sequence cell updates; toast with undo. Already in one: the picker says so and offers to move. | SDR; Fathom admin |
-| Add to list | Picker with "New list"; Lists cell updates; toast with undo. | SDR, marketer |
+| Add to list | Picker with "New list"; Lists cell updates; toast with undo. The toast links to People filtered to that list, not to the Lists page, because account executives and customer success do not hold Lists. | SDR, marketer |
 | Create a call task | Task due today; toast links to Tasks. | SDR, AE |
 | Change stage | The badge opens the seven stages. Not interested or Unresponsive also leaves the sequence, and says so before you confirm. | AE; Ridgeline SDR |
 | Reveal phone · 8 credits | The phone cell button. One click; toast "Phone revealed · 8 credits · 1,839,992 left". No dialog: the price was on the button. | Cell button, always |
@@ -134,7 +139,7 @@ A picker or drawer that follows a chosen action is the action's form, not a thir
 | No results | "Nothing matches. Remove 'Title: CFO' (would give 41) or clear all filters." Names the last chip added. |
 | Loading | Skeleton rows in the current layout; counts "…"; last count stays, dimmed. |
 | Error | "People could not load. Try again." Filters intact; a second failure adds "Copy details". |
-| No access | CS following a link: "People is for SDRs, account executives, marketers and admins at Meridian. Ask Daniel Okafor (RevOps admin) if you need it." Link to Accounts. |
+| No access | An area the seat does not hold. CS following a link gets the shell's no-access page: "People is for SDRs, account executives, marketers and admins at Meridian. Ask Daniel Okafor (RevOps admin) if you need it." Link to Accounts. There is no read-only view of the table. |
 | Partial permission | The item is replaced by a line naming who can. Never disabled. |
 | Do not contact | Outreach actions replaced by "Do not contact, since 2026-08-30". |
 | Unsaved view edits | Chip reads "My prospects to work · edited", Save and Revert. |
@@ -145,7 +150,8 @@ A picker or drawer that follows a chosen action is the action's form, not a thir
 |---|---|
 | `/` | Focus search |
 | `↑` `↓`, `j` `k` | Move row focus; the focused row shows its buttons |
-| `Enter` | Open the focused contact |
+| `Space` | Quick look on the focused row; again, or `Esc`, closes it |
+| `Enter` | Open the focused contact's record page |
 | `x`, `⇧x`, `⌘A` | Select row, extend, select page |
 | `s` `l` `c` | Sequence, list, call task for the focused row or selection |
 | `e` `p` `r` | Enrich, reveal phone, research: price appears inline, "Enter to spend 8 credits, Esc to cancel" |
@@ -221,7 +227,8 @@ Weekly use is the share of active users in a role touching the item in a typical
 | Column: Source · Created · CRM record · Custom fields · Time zone | 2 · 2 · 1 · 3 · 2 | 2 · 2 · 3 · 4 · 2 | 5 · 5 · 1 · 4 · 1 | 12 · 8 · 10 · 6 · 1 | Fathom admin CRM 1 |
 | Sort by a column | 25 | 25 | 15 | 15 | |
 | Choose columns · Reset · Density · Rows per page | 6 · 1 · 3 · 3 | 5 · 1 · 3 · 2 | 10 · 2 · 3 · 4 | 8 · 2 · 3 · 3 | |
-| Row: Open the contact | 70 | 70 | 20 | 20 | |
+| Row: Quick look (drawer) | 70 | 45 | 20 | 15 | Halyard SDR 75; Ridgeline SDR 60, AE 40; Fathom admin 55 |
+| Row: Open the full record page | 45 | 60 | 12 | 20 | Fathom admin 40; Ridgeline AE 55 |
 | Row: Add to sequence | 60 | 20 | 3 | 5 | Ridgeline SDR 12, AE 5; Fathom admin 50 |
 | Row: Add to list | 30 | 10 | 30 | 5 | Fathom admin 20 |
 | Row: Call task | 22 | 25 | 0 | 2 | Ridgeline SDR 10; Fathom admin 20 |
@@ -231,37 +238,40 @@ Weekly use is the share of active users in a role touching the item in a typical
 | Row: One-off email | 12 | 18 | 1 | 2 | |
 | Row: Research agent (12 credits) | 10 | 8 | 2 | 3 | Fathom 30 |
 | Row: Open company · Edit · Note · Copy email | 10 · 4 · 4 · 4 | 15 · 12 · 15 · 8 | 3 · 3 · 1 · 2 | 3 · 8 · 1 · 2 | |
-| Row: Add to deal · Do not contact · Assign owner · Push to CRM · Merge · Remove | 3 · 4 · 3 · 4 · 1 · 3 | 12 · 4 · 6 · 6 · 1 · 2 | 0 · 3 · 2 · 2 · 1 · 2 | 1 · 4 · 15 · 10 · 4 · 6 | Ridgeline AE deal 18; Fathom owner 0, CRM 1 |
+| Row: Add to deal · Do not contact ✱ · Assign owner · Push to CRM · Merge · Remove ✱ | 3 · 4 · 3 · 4 · 1 · 3 | 12 · 4 · 6 · 6 · 1 · 2 | 0 · 3 · 2 · 2 · 1 · 2 | 1 · 4 · 15 · 10 · 4 · 6 | Ridgeline AE deal 18; Fathom owner 0, CRM 1 |
 | Bulk: Select rows, page, all matching | 50 | 20 | 30 | 15 | Fathom admin 40 |
 | Bulk: Limit per company | 10 | 2 | 5 | 1 | |
 | Bulk: Add to sequence | 45 | 10 | 2 | 4 | Ridgeline SDR 8; Fathom admin 40 |
 | Bulk: Add to list | 28 | 8 | 35 | 5 | Fathom admin 20 |
 | Bulk: Enrich (2 credits each) | 12 | 4 | 8 | 8 | Fathom 25 |
 | Bulk: Export CSV | 8 | 5 | 25 | 15 | Halyard SDR 30, admin 40 |
-| Bulk: Stage · Research · Email · Assign owner · Push to CRM · Merge · Remove | 4 · 4 · 3 · 2 · 3 · 0.5 · 1 | 8 · 4 · 6 · 3 · 3 · 0.5 · 1 | 2 · 2 · 2 · 2 · 3 · 1 · 2 | 3 · 3 · 1 · 20 · 10 · 3 · 5 | Fathom research 25, owner 0, CRM 1; Halyard admin owner 20 |
+| Bulk: Stage · Research · Email · Assign owner · Push to CRM · Merge · Remove ✱ | 4 · 4 · 3 · 2 · 3 · 0.5 · 1 | 8 · 4 · 6 · 3 · 3 · 0.5 · 1 | 2 · 2 · 2 · 2 · 3 · 1 · 2 | 3 · 3 · 1 · 20 · 10 · 3 · 5 | Fathom research 25, owner 0, CRM 1; Halyard admin owner 20 |
 | ✱ Credit cost and balance before enrich, reveal or research | 25 | 15 | 5 | 15 | Fathom SDR 35, admin 40 |
+
 | Add people | 35 | 10 | 15 | 10 | Ridgeline SDR 8; Fathom admin 40 |
 | Import CSV | 4 | 2 | 15 | 10 | Halyard SDR 12, admin 30 |
 | Command palette | 15 | 10 | 5 | 8 | |
 | Shortcuts sheet · Copy view link · Sync from CRM · Print | 4 · 4 · 1 · 0.5 | 3 · 3 · 2 · 1 | 2 · 4 · 1 · 1 | 2 · 4 · 8 · 1 | Fathom sync 1 |
 
-**Shape check**, 113 items (head 20+, body 5–20, tail under 5; target about 15–25 / 25–35 / 45–60):
+**Shape check.** One rule across this group: the denominator is every item in `people.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 114 items in the file; head 20 and above, body 5–20, tail under 5; target about 15–25 / 25–35 / 45–60.
 
-| Pair | Head | Body | Tail |
-|---|---|---|---|
-| Meridian SDR | 26 (23%) | 29 (26%) | 58 (51%) |
-| Meridian AE | 23 (20%) | 42 (37%) | 48 (42%) |
-| Meridian marketer | 20 (18%) | 40 (35%) | 53 (47%) |
-| Meridian admin | 11 (10%) | 46 (41%) | 56 (50%) |
-| Fathom SDR | 33 (29%) | 22 (19%) | 58 (51%) |
-| Halyard SDR | 30 (27%) | 29 (26%) | 54 (48%) |
-| Ridgeline SDR | 25 (22%) | 31 (27%) | 57 (50%) |
+| Pair | Items | Head | Body | Tail |
+|---|---|---|---|---|
+| Meridian SDR | 114 | 27 (24%) | 29 (25%) | 58 (51%) |
+| Meridian AE | 114 | 23 (20%) | 43 (38%) | 48 (42%) |
+| Meridian marketer | 112 | 19 (17%) | 42 (38%) | 51 (46%) |
+| Meridian admin | 114 | 10 (9%) | 48 (42%) | 56 (49%) |
+| Fathom SDR | 111 | 34 (31%) | 22 (20%) | 55 (50%) |
+| Halyard SDR | 114 | 31 (27%) | 29 (25%) | 54 (47%) |
+| Ridgeline SDR | 114 | 26 (23%) | 31 (27%) | 57 (50%) |
 
-The Meridian admin head is under the band because the admin does not live here. Fathom's and Halyard's SDR heads run a little over it, which is the point of those customers: one person doing every job, and ten ICPs in one week.
+The Meridian admin head is under the band because the admin does not live here. Fathom's and Halyard's SDR heads run over it, which is the point of those customers: one person doing every job, and ten ICPs in one week. Customer success does not hold this page at Meridian or Ridgeline, so there is no row for it: four decision-critical items would otherwise be counted for a page that seat cannot open.
 
 ## 5. Before: the common version
 
 Modelled on Apollo's People page, from Apollo's knowledge base (fetched through its Zendesk API, 13 Sep 2026) and public reviews. Dates are Apollo's "updated" dates.
+
+**How to check these claims.** Two of the articles below are recorded in `knowledge-base/sources/07-apollo-settings-map.md` (the settings memo) with their ids: Sharing and defaults (40430351927437) and Data requests (4738396786701). The others were fetched live on 13 September 2026 and are *not* reproduced in the knowledge base, so each claim carries the article title and its updated date and can be reopened at knowledge.apollo.io; none of them is quoted here from memory. Anything with no first-party article — review-site round-ups, credit unit prices, hover behaviour — is labelled secondary or unverified, and nothing rests on it.
 
 **Where it is.** Left navigation, group "Prospect & enrich", item "People". The top bar carries "Search or ask a question in Apollo ⌘K" and a credits pill, "1.8M credits" (KB screenshots, `knowledge-base/sources/07-apollo-settings-map.md` §6).
 
@@ -300,7 +310,7 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 
 | Role | Level one | Level two, top of its door |
 |---|---|---|
-| SDR | Search, count, views; chips Title, Email, Not in a sequence, Stage, Owner, Company; columns Name, Company, Email, Stage, Sequence, Last contacted; row buttons Sequence, List, Call; bulk Add to sequence, Add to list; Add people; price on every paid control | Seniority, Company size, Location, Not contacted, In list, Signals; Phone and Last activity columns; Enrich, Reveal phone, Change stage, One-off email; bulk Enrich, Export |
+| SDR | Search, count, views; chips Title, Email, Not in a sequence, Stage, Owner, Company; columns Name, Company, Email, Stage, Sequence, Last contacted; the quick look; row buttons Sequence, List, Call; bulk Add to sequence, Add to list; Add people; price on every paid control | Seniority, Company size, Location, Not contacted, In list, Signals; Phone and Last activity columns; Enrich, Reveal phone, Change stage, One-off email; bulk Enrich, Export |
 | AE | Chips Title, Stage, Owner, Company, Not contacted; columns add Phone, Last activity, Owner; row buttons Sequence, Call; stage badge | One-off email, Add a note, Edit fields, Add to a deal; Signals; Last activity date |
 | Marketer | Chips Title, Email, Seniority, Company size, Industry, In list; columns Name, Company, Email, Lists; row button List; bulk Add to list, Export | Department, Location; Industry and Company size columns; Import CSV |
 | Admin | Chips Owner, Synced to CRM; columns Name, Company, Email, Owner; bulk Assign owner | Source, Created, Custom fields; CRM column; Push to CRM; Import; Sync now |
@@ -320,21 +330,22 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 | Row menu | "Actions for Amara Okonkwo" | Every row action with shortcut | Menu | – |
 | Stage badge | "Cold ▾" | Seven stages | Popover | – |
 | Selection menu | "Edit or export selected ▾" | Stage, email, research, owner, CRM, merge, export, remove | Menu | – |
-| Name, company | Link | The record | Page, with back | Scroll and selection |
+| Quick look | the row itself, plus "Quick look" in the row menu with its key | The few fields a glance needs, flat | Drawer beside the table | Open or closed, per user |
+| Name, company | Link | The full record | Page, with back | Scroll and selection |
 | Palette | "⌘K" | Every action with shortcut | Overlay | – |
 
 **Accelerators.** Pin the panel. Shortcuts on every menu item and in the palette. Number keys for views. Compact density. Undo on everything undoable. Row buttons on keyboard focus, so a keyboard user never opens the menu.
 
 **Decision-critical, always visible.** The price on every paid control. The count on every bulk button. The consequence of a stage change to Not interested and of Do not contact. The per-user limit when it binds. The balance after each spend.
 
-**Removed, not hidden.** The Net New / Saved tabs (the page holds contacts; finding new people is behind Add people). "Select number of people" (Select all matching with Limit per company covers it). Workflows, Assign account and View companies as bulk actions (outside the boundary or served by Companies). Creating fields from the column door (Settings does that). "Favorites" for views. Export credits (export is free and says so). The second add-to-list control.
+**Removed, not hidden.** The Net New / Saved tabs (the page holds contacts; finding new people is behind Add people). "Select number of people" (Select all matching with Limit per company covers it). Workflows, Assign account and View companies as bulk actions (outside the boundary or served by Companies). Creating fields from the column door (Settings does that). "Favorites" for views. Export credits (export is free and says so). The second add-to-list control. A second version of the contact: the quick look shows the same fields, in the same order, with the same labels as the top of the record page, and removing it would cost only speed.
 
 **Score.**
 
 | Point | Score | Why |
 |---|---|---|
 | 1 Decision-critical visible | 2 | Price on the control, count on the bulk button, consequence before the click |
-| 2 Usage numbers with a source | 2 | 113 items in `people.ts`; shape checked for seven pairs |
+| 2 Usage numbers with a source | 2 | 114 items in `people.ts`; shape checked for seven pairs against one denominator |
 | 3 Two levels on every size | 2 | One door per channel; the phone sheet keeps it |
 | 4 Doors labelled by content, chevron and text | 2 | No "More", no "Advanced"; counts in labels |
 | 5 Door beside what it reveals, keyboard and touch | 2 | Chips open under themselves; row menu on touch; focus reveal |
@@ -349,11 +360,11 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 
 **Step 0, the common version.** A 63-filter sidebar behind "Show Filters" and "More Filters"; tabs Total, Net New, Saved; two add-to-list icons; a bulk bar of eleven actions; credits explained at step 8 of a save dialog; the default view set in Settings.
 
-**Step 1, rule 1: hide the rare, never the necessary.** Count what each role touches weekly. Six filters carry the SDR's week and become chips; the other 25 go into one panel. Columns, row buttons and bulk buttons are cut to the role's head. Evidence: §4; Nielsen 2006, "disclose everything that users frequently need up front"; Pendo 2024, 6% of features carry 80% of clicks.
+**Step 1, rule 1: hide the rare, never the necessary.** Count what each seat touches weekly. Six filters carry the SDR's week and become chips; the other 25 go into one panel. Columns, row buttons and bulk buttons are cut to the seat's head. Evidence: §4; Nielsen 2006, "disclose everything that users frequently need up front"; Pendo 2024, where **6.4% of features generate 80% of clicks is the median and best-in-class is 15.6%** — so a wide head is not automatically a failure, and 6% is the shape of a bloated product rather than a target (`RULES.md` rule 1, corrected 14 Sep 2026).
 
-**Step 2, rule 2: stop at two levels.** Groups-inside-a-sidebar and the tabs go. Every filter is a flat field in one panel; every value is one click from its chip. The contact is a page, not a drawer inside a tab. Evidence: Nielsen 2006 on designs beyond two levels; Landauer and Nachbar 1985, breadth beats depth.
+**Step 2, rule 2: stop at two levels.** Groups-inside-a-sidebar and the tabs go. Every filter is a flat field in one panel; every value is one click from its chip. The contact has two levels and no more: table to quick look is one level, table to record page is one level, page to a door is the second. The drawer holds no doors, so nothing reaches three. Evidence: Nielsen 2006 on designs beyond two levels; Landauer and Nachbar 1985, breadth beats depth; the quick look and the record, `RULES.md`.
 
-**Step 3, rule 3: split by task frequency, not user skill.** "Most popular" versus "more", and the word "advanced", are deleted. One panel; what sits in the bar is decided per role and business by the numbers, not by a mode. The marketer's bar and the SDR's bar differ; neither is labelled for its audience. Evidence: Cooper's perpetual intermediates; Home Assistant 2026 on audience labels; McGrenere, Baecker and Booth 2002 on role-seeded defaults.
+**Step 3, rule 3: split by task frequency, not user skill.** "Most popular" versus "more", and the word "advanced", are deleted. One panel; what sits in the bar is decided per seat and business by the numbers, not by a mode. The marketer's bar and the SDR's bar differ; neither is labelled for its audience. Density (Comfortable, Compact) is the one user-controlled mode, because it asks the user to declare nothing about their skill. Evidence: Cooper's perpetual intermediates; Home Assistant 2026 on audience labels; McGrenere, Baecker and Booth 2002, where a two-interface design the user fills in themselves beat adaptive menus (13 of 20 preferred it); Airtable's 2023 experiment for routing by the job rather than the title; Salesforce and AWS Cloudscape for density as a legitimate mode.
 
 **Step 4, rule 4: make the door obvious and honest.** One "Add to list", with the count in the label. "All filters (31)", "All views (12)", "Columns and density", "Edit or export selected", "Actions for Amara Okonkwo". Chevron and text on every door. Doors that cannot apply are removed: no CRM items at Fathom. Evidence: ryan P., Capterra, 31 Oct 2025; NN/g 2014, 0% click-through on an unlabelled icon; Microsoft Windows UX Guide, remove rather than disable.
 
@@ -377,12 +388,12 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 | Keyboard | Full map; every menu prints its shortcut. |
 | Phone width | Same items as cards and sheets, no level change. |
 | Decision-critical visible | Price, count, consequence, limit, balance. |
-| Two levels maximum | One door per channel; a form after a chosen action is not a door. Gap: "Change stage" in the row menu opened a picker; closed by making the badge the door. |
+| Two levels maximum | One door per channel; a form after a chosen action is not a door; the quick look holds no doors. Gap: "Change stage" in the row menu opened a picker; closed by making the badge the door. |
 | Doors labelled by content | No "More", "Other" or "Advanced". Gap: the selection menu was drafted as "More"; renamed. |
 | Dependent fields together | Select all with Limit per company; Email with its statuses; price with its button. |
 | State persists | Pin, view, columns, order, density, sort, rows per page, scroll on return. |
 | Accelerators | Shortcuts, palette, pin, number keys, undo, compact. |
-| Usage shape checked | Seven pairs; Meridian SDR 23/26/51. |
+| Usage shape checked | Seven pairs against one stated denominator; Meridian SDR 24/25/51. |
 | Nothing hover-only | Row buttons on focus and in the menu; touch uses the menu. |
 | Role gaps explain themselves | Assign owner and Remove name the admin; over-limit and no-credit controls name who can help; nothing greyed. |
 | No usage numbers or teaching text in the product | Numbers live in `people.ts` and here; the page shows counts and prices only. |

@@ -6,6 +6,7 @@ export type Business = "fathom" | "meridian" | "halyard" | "ridgeline"
 export type Page =
   | "home" | "people" | "companies" | "lists" | "sequences" | "inbox" | "tasks"
   | "deals" | "deal" | "campaigns" | "accounts" | "reports" | "agents" | "settings" | "connect"
+  | "setup"
 
 export const ROLES: Role[] = ["sdr", "ae", "marketer", "cs", "admin"]
 export const ROLE_LABEL: Record<Role, string> = {

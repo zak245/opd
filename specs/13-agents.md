@@ -12,7 +12,11 @@ The one thing they must never lose sight of: **what is waiting for my decision, 
 
 The page must pass Nielsen's 30-second briefing test (2026): can a returning user absorb the status, the spend and the pending decisions in 30 seconds, without clicking?
 
-Agent settings (which agents are on, what each may do without approval, credit caps, the model key) live in Settings under "Agents and AI", not here. This page links there and, for people who cannot change them, names who can.
+**Who approves, and what needs approving.** The object's owner approves their agent's actions; an admin may approve for anyone, and the ledger records that it was the admin. Low-cost reversible work — research, scoring, a draft saved but not sent — is never queued: it is logged, and every logged action can be undone from its row. Only irreversible or costly actions wait for a person: sending an email, spending above a credit cap, moving a deal stage. Above a threshold that is a Settings item (default 1,000 recipients or 500 credits in one action) a second, admin approval is needed as well as the owner's. Approvals arrive in one batch at a task boundary, each with its consequence in words, and never as an interruption mid-task.
+
+Every part of that policy is a disclosure decision, not a permissions one. A queue that shows a person everything an agent did would obey rule 7 on paper and break it in fact: shown a problematic agent action and asked to approve it step by step, people saw it **88.5%** of the time and stopped it **23.9%** — a 76% pass-through on things they were explicitly shown, and not from inattention, because "participants often noticed questionable actions, but treated them as routine" (Chen et al., arXiv 2604.04918, n=48). Disclosure that exceeds review capacity is equivalent to hiding (RULES.md rule 7, corollary). So the queue is kept short on purpose, and everything that does not need a decision is moved out of it into the ledger.
+
+Agent settings (which agents are on, what each may do without approval, credit caps, the second-approval threshold, the model key) live in Settings under "Agents and AI", not here. This page links there and, for people who cannot change them, names who can.
 
 ## 2. Data
 
@@ -36,10 +40,12 @@ Agent settings (which agents are on, what each may do without approval, credit c
 ### What must be added to the seed
 
 1. **Agent definitions per business**, `seed.agents`: `{ id: "research" | "outreach" | "scoring", name, on, can: string[], needsApprovalFor: string[], capPerDay, capPerMonth, spentToday, spentThisWeek, pausedReason? }`. Fathom and Halyard have research and outreach only; a tile for an agent that does not exist is a door with nothing behind it (rule 4). `can` and `needsApprovalFor` are copied from Settings, so the tile can say what the agent does and what it never does without a person.
-2. **Event status**, replacing the boolean: `status: "waiting" | "approved" | "declined" | "done" | "paused" | "snoozed"`, plus `decidedBy` and `decidedAt`. `needsApproval` stays as a derived getter so Home keeps working.
+2. **Event status**, replacing the boolean: `status: "waiting" | "waiting-second" | "approved" | "declined" | "done" | "paused" | "snoozed"`, plus `decidedBy`, `decidedAt` and `decidedAsAdmin` (true when an admin approved on someone else's behalf). `needsApproval` stays as a derived getter so Home keeps working. Status `waiting-second` means the owner has approved and the action is over the second-approval threshold; the item stays on screen and says who it is waiting for, so nobody thinks it has been sent.
 3. **Time of day**, `at: "HH:MM"`.
 4. **Contact and company references**, `contactId`, `contact`, `company`.
-5. **The consequence**, `ifApproved: { action: "send" | "enrol" | "enrich" | "score"; mailbox?; sequence?; sendsAt?; credits }`, rendered as one sentence under every waiting item.
+5. **The consequence**, `ifApproved: { action: "send" | "enrol" | "stage" | "spend"; mailbox?; sequence?; stage?; sendsAt?; recipients?; credits }`, rendered as one sentence under every waiting item. Only these four actions can appear in the queue: they are the irreversible or costly ones. `recipients` and `credits` are what the second-approval threshold is measured against.
+5a. **Reversal**, `undoable: true` on every logged action that was not queued, with `undoneAt` and `undoneBy`. A product that calls research and drafts "reversible" as its reason for not queuing them has to ship the reversal.
+5b. **The owner**, `ownerId`: whose contact, deal or audience the action touches, which is who approves it.
 6. **The step log**, `steps: { at; text; credits; source? }[]`, three to eight per event. Research: "Read northwindanalytics.com (2 credits)", "Read 2 news items (4 credits)", "Read 3 profiles (6 credits)", "Wrote 3 signals". Drafted: "Used company context", "Used research from 12 Sep", "Drafted 142 words", "Checked mailbox marcus@meridian.io: warm, 38 of 120 sent today". Scored: "Fit 84 from industry, size, stack", "Intent 61 from 2 signals", "Score 82".
 7. **The draft body**, `draft?: string`, 120 to 160 words with a subject line, on drafted and proposed events.
 8. **Volume**: 60 events per business, including batch runs (one event with a 25-company step list and 300 credits), so the week's total approaches the agent share of `credits.burnPerWeek`: 60% at Fathom, 35% at Meridian, 45% at Halyard, 30% at Ridgeline.
@@ -54,12 +60,28 @@ Derived on the page, never stored: credits today, credits this week, credits per
 
 1. **Briefing.** One sentence: "Since Thursday 17:20: 3 agents ran 41 events. 6 waiting for you. 1 paused. 214 credits this week of 1,000." The credit figure is a small bar against the agent cap, with the workspace balance in grey after it. Under the sentence, one tile per agent: name, on or off, runs today, credits today, one line on what it does, one line on what it never does without a person, and "Pause" for anyone allowed to pause. At Halyard the briefing starts with the client workspace name.
 2. **Exceptions.** Present only while something is paused or capped: the reason, the number that tripped it, the threshold, and "Resume", "Keep paused", "Open bounce guard" (a link into Settings). When nothing is paused the section does not exist.
-3. **Waiting for you.** The approval queue, oldest first. Each item: the agent, the summary, the consequence sentence, the credits, Approve, Decline, and one door labelled by what it holds ("Read the draft · 142 words", "Research · 3 signals · 4 sources", "Score 82 · how it was built"). Nothing waiting: one line, "Nothing waiting."
+3. **Waiting for you.** The approval queue: only irreversible or costly actions, oldest first, arriving in one batch at a task boundary. Each item: the agent, the summary, the consequence sentence, the credits, Approve, Decline, and one door labelled by what it holds ("Read the draft · 142 words", "Research · 3 signals · 4 sources", "Score 82 · how it was built"). Above the list, one line names the batch and its total: "6 arrived while the outreach agent ran, 09:02. Together: 4 emails from your mailbox, 2 people added to sequences, 8 credits." Items over the second-approval threshold carry "Needs Daniel Okafor too" beside Approve, before the decision, not after it. Nothing waiting: one line, "Nothing waiting."
 4. **Activity.** The ledger: search, filters, then every event newest first, grouped by day with a digest line per day ("Fri 12 Sep · 11 events · 3 researched, 2 drafted, 5 scored, 1 sent · 62 credits"). Columns: When, Agent, What happened, Contact or company, Outcome, Credits. Every row has a step-log door.
+
+### What waits, and what does not
+
+The queue holds decisions, not news. Everything else is in the ledger, where it can be read and undone but does not ask for anything.
+
+| The agent does this | What happens | Why |
+|---|---|---|
+| Researches a company, scores a contact, saves a draft | Logged in the ledger with its credits. "Undo" on the row deletes the draft, clears the score, drops the research | Low cost and reversible. A queue that asks about these spends the reviewer's attention on the things that do not need it, and the things that do get the same glance |
+| Sends an email, adds someone to a sequence that will send | Waits for the owner of the contact | Cannot be unsent |
+| Spends above an agent's credit cap | Waits for the owner; the item says how much and against which cap | Cannot be refunded |
+| Moves a deal to another stage | Waits for the owner of the deal | Changes a number people report upward |
+| Any of the above over 1,000 recipients or 500 credits in one action | Waits for the owner, then for an admin | One mistake at that size is the whole month |
+
+The two numbers are the Settings item `ai.second-approval`, not constants written here; Campaigns reads the same item for its own send threshold. An admin may approve any item for anyone, and the ledger row then reads "Approved by Daniel Okafor for Marcus Adeyemi".
+
+**Batches, not interruptions.** The queue fills while an agent runs and is presented when it stops — at the task boundary. Nothing pops up mid-task. Identical suggestions were engaged with 52% of the time at a task boundary and dismissed 62% of the time mid-task (Kuo et al., IUI 2026, 15 developers, 229 interventions), and the best "is this person stuck" detector on real enterprise logs reaches 0.27 precision, so three interruptions in four would be wrong. "Since you last looked" in the briefing is what a boundary looks like when the person, not the agent, chooses the moment.
 
 ### The waiting item
 
-Actor ("Outreach agent", never a bare "AI"). Summary with the contact's title and company. Consequence if approved: "Sends now from marcus@meridian.io. 0 credits. Replies land in your Inbox." or "Adds Amara Okonkwo to 'Q4 enterprise outbound'. Step 1 sends Mon 15 Sep 09:00 from your mailbox. Enriches first: 4 credits." Under Decline, as help text: "Nothing is sent. The agent is told." Age: "Waiting since Fri 14:02". Credits, right-aligned, in the same column as the ledger.
+Actor ("Outreach agent", never a bare "AI"). Summary with the contact's title and company. Consequence if approved: "Sends now from marcus@meridian.io. 0 credits. Replies land in your Inbox." or "Adds Amara Okonkwo to 'Q4 enterprise outbound'. Step 1 sends Mon 15 Sep 09:00 from your mailbox. Enriches first: 4 credits." Under Decline, as help text: "Nothing is sent. The agent is told." Age: "Waiting since Fri 14:02". Credits, right-aligned, in the same column as the ledger. Whose item it is, when it is not yours: "Marcus Adeyemi's contact. You can approve for him." Over the threshold: "1,240 recipients. Over the 1,000 in Settings, so Daniel Okafor approves after you."
 
 ### Actions
 
@@ -73,7 +95,9 @@ Always visible on a waiting item: Approve, Decline, the content door. In the "�
 | Tell the agent why | A short text field; sending it declines the item and adds the note to the step log. |
 | Decide tomorrow | Moves the item to the bottom, badge "Snoozed until tomorrow 08:00". A proposal whose send time is earlier than tomorrow is declined instead, and the item says so before you confirm. |
 | Hand to a teammate | Person picker; the item leaves your queue; the teammate is notified; the ledger records the handover. |
-| Select several | Checkbox per item and "Select all 6"; the bar reads "Approve 6 · Decline 6" with the total consequence: "Sends 4 emails from your mailbox, adds 2 people to sequences, 8 credits." Items whose mailbox is paused stay behind and say why. |
+| Select several | Checkbox per item and "Select all 6"; the bar reads "Approve 6 · Decline 6" with the total consequence: "Sends 4 emails from your mailbox, adds 2 people to sequences, 8 credits." Items whose mailbox is paused stay behind and say why, and so do items over the second-approval threshold, which go to the admin rather than out. |
+| Approve for a teammate (admin) | The item stays in the teammate's queue view as decided; the toast and the ledger both read "Approved by Daniel Okafor for Marcus Adeyemi". An admin cannot approve silently. |
+| Undo a logged action | On a ledger row that was never queued: deletes the draft, clears the score, drops the research, and refunds nothing, which the confirmation says. The row keeps its place and reads "Undone by Marcus Adeyemi 09:20". |
 
 Ledger rows: the step-log door; in "…": Open the contact, Run again with a note (the toast quotes the cost first: "Re-research Northwind Analytics: about 12 credits. Run"), Flag a wrong result (marks the row and tells the agent; undoes nothing), Copy a link.
 
@@ -114,7 +138,7 @@ Phone: the briefing stacks and the tiles scroll horizontally; queue items are ca
 
 | | SDR | AE | Marketer | Admin |
 |---|---|---|---|---|
-| Queue | Items on contacts they own | Items on contacts of their open deals | Proposals to add people to campaigns; scoring on their audiences | Everyone's, labelled "waiting for Marcus Adeyemi"; may approve on their behalf, recorded as such |
+| Queue | Items on contacts they own | Items on deals they own | Proposals on audiences they own | Everyone's, labelled "waiting for Marcus Adeyemi"; may approve on their behalf, recorded as such; plus every item over the second-approval threshold, whoever owns it |
 | Ledger default | Their contacts | Their deals' contacts | Scoring and research agents | Everyone |
 | Teammate filter | Absent, with the line naming who sees all | Absent | Absent | Present |
 | Pause | Only where the profile allows (Fathom) | No | No | Yes |
@@ -141,7 +165,7 @@ Share of active users in the role touching the item in a typical week, per `USAG
 | `exc.paused` Outreach paused and why (bounce guard) | Exceptions | 15 | 3 | 2 | 25 | Fathom: sdr 12, admin 15; Halyard: sdr 15, admin 50; Ridgeline: sdr 3, admin 8 | yes |
 | `exc.cap-reached` An agent stopped at its credit cap | Exceptions | 3 | 1 | 2 | 4 | Fathom: sdr 8, admin 15; Halyard: sdr 8, admin 12 | yes |
 | `exc.resume` Resume or keep paused | Exceptions | 4 | 0 | 0 | 15 | Fathom: sdr 4, admin 8; Halyard: sdr 4, admin 15 |  |
-| `wait.list` Items waiting for approval | Waiting for you | 70 | 22 | 8 | 25 | Fathom: sdr 80, admin 80; Halyard: sdr 80, admin 18; Ridgeline: sdr 30, ae 12, marketer 22, admin 18 | yes |
+| `wait.list` Items waiting for approval, in one batch per task boundary | Waiting for you | 70 | 22 | 8 | 25 | Fathom: sdr 80, admin 80; Halyard: sdr 80, admin 18; Ridgeline: sdr 30, ae 12, marketer 22, admin 18 | yes |
 | `wait.consequence` What happens if approved: email from which mailbox, when, credits | Waiting for you | 70 | 22 | 8 | 25 | Fathom: sdr 80, admin 80; Halyard: sdr 80, admin 18; Ridgeline: sdr 30, ae 12, marketer 22, admin 18 | yes |
 | `wait.approve` Approve | Waiting for you | 70 | 20 | 6 | 18 | Fathom: sdr 75, admin 75; Halyard: sdr 80, admin 4; Ridgeline: sdr 28, ae 10, marketer 20, admin 10 |  |
 | `wait.decline` Decline | Waiting for you | 45 | 12 | 4 | 15 | Fathom: sdr 50, admin 40; Halyard: sdr 55, admin 4; Ridgeline: sdr 20, ae 6, marketer 6, admin 8 |  |
@@ -151,6 +175,7 @@ Share of active users in the role touching the item in a typical week, per `USAG
 | `wait.decline-reason` Tell the agent why you declined | Waiting for you | 8 | 2 | 0 | 3 | Fathom: sdr 4; Halyard: sdr 15 |  |
 | `wait.snooze` Decide tomorrow | Waiting for you | 4 | 2 | 0 | 2 | — |  |
 | `wait.reassign` Hand the decision to a teammate | Waiting for you | 2 | 1 | 0 | 4 | Fathom: sdr 1, admin 1; Halyard: sdr 2, admin 4 |  |
+| `wait.second-approval` Waiting for a second, admin approval (over 1,000 recipients or 500 credits) | Waiting for you | 6 | 1 | 4 | 10 | Fathom: sdr 3, admin 4; Halyard: sdr 12, admin 15; Ridgeline: sdr 1, marketer 5, admin 5 | yes |
 | `act.ledger` Every event, newest first | Activity | 35 | 10 | 12 | 50 | Fathom: sdr 45, admin 45; Halyard: sdr 25, admin 60; Ridgeline: sdr 15, marketer 25, admin 40 |  |
 | `act.day-digest` Per-day digest line with credits for the day | Activity | 12 | 3 | 6 | 45 | Fathom: sdr 15, admin 60; Halyard: sdr 10, admin 60; Ridgeline: marketer 6, admin 30 |  |
 | `act.credits-per-event` Credits per event | Activity | 20 | 3 | 5 | 40 | Fathom: sdr 45, admin 60; Halyard: sdr 15, admin 55; Ridgeline: sdr 6, marketer 8, admin 25 | yes |
@@ -165,6 +190,7 @@ Share of active users in the role touching the item in a typical week, per `USAG
 | `act.search` Search the ledger | Activity | 10 | 4 | 4 | 4 | Halyard: sdr 4, admin 4; Ridgeline: marketer 5 |  |
 | `act.retry` Run again with a note | Activity | 3 | 1 | 2 | 4 | — |  |
 | `act.flag` Flag a wrong result | Activity | 3 | 1 | 1 | 3 | — |  |
+| `act.undo` Undo a logged action: delete the draft, clear the score, drop the research | Activity | 10 | 3 | 4 | 6 | Fathom: sdr 12, admin 12; Halyard: sdr 12, admin 8; Ridgeline: sdr 4, marketer 5, admin 4 |  |
 | `act.copy-link` Copy a link to this event | Activity | 1 | 1 | 1 | 2 | — |  |
 | `act.export` Export the ledger as CSV | Activity | 0 | 0 | 2 | 4 | Halyard: admin 6 |  |
 | `act.expand-all` Expand all steps or collapse all | Activity | 2 | 0 | 0 | 4 | — |  |
@@ -174,20 +200,22 @@ Share of active users in the role touching the item in a typical week, per `USAG
 | `set.pause-agent` Pause this agent now | Agent settings | 2 | 0 | 0 | 4 | Fathom: sdr 4, admin 4; Halyard: admin 4 | yes |
 | `set.notify` Tell me when something waits (Slack or email) | Agent settings | 3 | 2 | 2 | 3 | — |  |
 
-Decision-critical, always level one: credits this week against the cap, outreach paused, cap reached, the waiting items, what happens if approved, credits per event, pause this agent. Seven of forty.
+Decision-critical, always level one: credits this week against the cap, outreach paused, cap reached, the waiting items, what happens if approved, what is waiting for a second approval, credits per event, pause this agent. Eight of forty-two.
 
 ### Shape check
 
 Computed with `shape()` from `model.ts`. Band targets: head 15 to 25%, body 25 to 35%, tail 45 to 60%.
 
-| Pair | Head | Body | Tail | Note |
-|---|---|---|---|---|
-| Meridian, SDR | 10 (25%) | 11 (28%) | 19 (48%) | Fits. The head is the queue and its actions. |
-| Meridian, admin | 9 (23%) | 12 (30%) | 19 (48%) | Fits. The head is the briefing, the spend and the ledger. |
-| Halyard, admin | 10 (25%) | 11 (28%) | 19 (48%) | Fits. Workspace name and teammate filter in the head; approvals not. |
-| Ridgeline, marketer | 8 (20%) | 11 (28%) | 21 (53%) | Fits. Agent filter in the head; the queue at its floor. |
-| Fathom, admin | 11 (28%) | 11 (28%) | 18 (45%) | Just above the band: the founder is also the SDR and watches spend daily. Kept. |
-| Meridian AE and marketer; Ridgeline AE | 0 to 4 | 8 to 12 | 28 to 29 | No head. These roles come for one waiting item and leave; the seven critical items still render. Honest, not a gap. |
+The denominator is every item that exists for that role at that business; an item whose number is 0 is removed there and is not on their page. The same rule is used in specs 12, 14, 15 and 16.
+
+| Pair | Items on their page | Head | Body | Tail | Note |
+|---|---|---|---|---|---|
+| Meridian, SDR | 38 | 10 (26%) | 13 (34%) | 15 (39%) | Head one point over. It is the queue and its actions, which is the SDR's job here. |
+| Meridian, admin | 41 | 9 (22%) | 14 (34%) | 18 (44%) | Fits. The head is the briefing, the spend and the ledger. |
+| Halyard, admin | 42 | 10 (24%) | 13 (31%) | 19 (45%) | Fits. Workspace name and teammate filter in the head; approvals not. |
+| Ridgeline, marketer | 30 | 8 (27%) | 13 (43%) | 9 (30%) | Head and body both over. Twelve items are removed for this role at this business, so the page is short and what is left is used. |
+| Fathom, admin | 41 | 11 (27%) | 12 (29%) | 18 (44%) | Above the band: the founder is also the SDR and watches spend daily. Kept and named. |
+| Meridian, AE | 34 | 4 (12%) | 8 (24%) | 22 (65%) | No head. The AE comes for one waiting item and leaves; the eight critical items still render. Honest, not a gap. |
 
 ## 5. Before: the common version
 
@@ -268,7 +296,7 @@ Nielsen (UX Tigers, 9 Jul 2026): "Make long-running agents disclose by exception
 | "…" on a ledger row | Menu | Open the contact, Run again with a note, Flag a wrong result, Copy a link | n/a |
 | "…" by the Activity heading | Menu | Export CSV, Show or hide columns, Print | Column choice per user |
 | "Filters · 2" (phone) | Sheet | Agent, contact, date, outcome, kind, teammate | Values, as desktop |
-| "Agent settings" | Page (Settings › Agents and AI) | Agents on or off, approval policy, caps, model key | n/a |
+| "Agent settings" | Page (Settings › Agents and AI) | Agents on or off, what each may do without approval, credit caps, the second-approval threshold, model key | n/a |
 | "Open bounce guard" | Page (Settings › Email sending) | The threshold that paused the mailbox | n/a |
 
 No door contains a door. Source and contact links inside the step log go to pages, not further disclosure.
@@ -283,7 +311,7 @@ Seven items (section 4). The rule 7 test: without clicking, on any role and busi
 
 ### Removed, not hidden
 
-The chat panel: agents are given work from the pages where the work is, and this page reports. The Runs table of workflow enrollments: a run is a set of ledger events. "Power-up" credits: one unit, one cap, one number. The Scoring tile at Fathom and Halyard. The teammate filter for roles that see only their own items. A separate "AI runs" tab in Settings: the ledger is the record; Settings keeps the caps.
+Per-item approval for research, scoring and saved drafts: they are logged and undoable, and asking about them would spend the attention the real decisions need. The chat panel: agents are given work from the pages where the work is, and this page reports. The Runs table of workflow enrollments: a run is a set of ledger events. "Power-up" credits: one unit, one cap, one number. The Scoring tile at Fathom and Halyard. The teammate filter for roles that see only their own items. A separate "AI runs" tab in Settings: the ledger is the record; Settings keeps the caps.
 
 ### The nine-point score
 
@@ -297,7 +325,7 @@ The chat panel: agents are given work from the pages where the work is, and this
 | 6 | No dependent information split by a door | 2 | Consequence and credits beside Approve, never behind the draft door; credits per step beside each step. |
 | 7 | State persists; expand-all and print | 2 | Door state per event and user; filters per workspace; Expand all remembered; print CSS expands all. |
 | 8 | User action or object state, never inferred history | 2 | Queue oldest first; exceptions driven by agent state; no reordering by predicted importance; "Since you last looked" adds a sentence and moves nothing. |
-| 9 | Instrumented; promote, keep or delete review | 1 | Door opens and filter use counted per role and business; review scheduled with the Settings review each March and September. One point withheld until the first review has run. |
+| 9 | Instrumented; promote, keep or delete review | 1 | Door opens and filter use counted per role and business, and the decline rate per kind of item counted beside them, because a queue nobody ever declines from is a queue nobody reads. Review scheduled with the Settings review each March and September. One point withheld until the first review has run. |
 
 Total: 17 of 18.
 
@@ -308,7 +336,7 @@ Step 0 is the common version. Each step applies one rule. Rules 3 and 6 are note
 | Step | Rule | What moves | Why | Evidence |
 |---|---|---|---|---|
 | 0 | | The common version: a chat with "Previous chats ⌄", a Runs table, approvals inside the chat, credits under Settings › Credits and activity › Credit usage › AI runs behind a permission, "power-up" credits on a separate meter, no step log. | What happens when each AI feature ships where it was built and nothing is ever moved. | Section 5. |
-| 1 | 7. Decision-critical is never behind a door | Pending confirmations leave the chat and become "Waiting for you" at the top, each with what will happen if approved (mailbox, time, credits) and Approve and Decline side by side. Credits this week against the cap move from four levels down in Settings to the briefing. "Paused" and "cap reached" become exception lines. "Pause" appears on each tile. | An email an agent sends cannot be unsent and a credit it spends cannot be refunded; the person deciding must see the consequence and the spend where they decide. Decline is as short a path as Approve. | Nielsen (2026): never hide "price, requirements, risks" behind the second level. Robillard (Trustpilot, 18 Aug 2026): "racked up a separate bill ... without warning or approval." Nouwens et al. (2020): moving reject off the first page raised consent 22 to 23 points. |
+| 1 | 7. Decision-critical is never behind a door | Pending confirmations leave the chat and become "Waiting for you" at the top, each with what will happen if approved (mailbox, time, credits), whose item it is, whether an admin must approve it too, and Approve and Decline side by side. Credits this week against the cap move from four levels down in Settings to the briefing. "Paused" and "cap reached" become exception lines. "Pause" appears on each tile. **And the queue is cut down:** research, scoring and saved drafts stop asking and are logged with an Undo, so what is left is only what cannot be taken back. The batch arrives when the agent's run ends, with its total stated, never mid-task. | An email an agent sends cannot be unsent and a credit it spends cannot be refunded; the person deciding must see the consequence and the spend where they decide. But showing everything is its own way of hiding: a reviewer with forty items approves the bad one along with the rest. Budget the reviewer, not the pixel. | Nielsen (2026): never hide "price, requirements, risks" behind the second level. Chen et al. (arXiv 2604.04918, n=48): 88.5% of problematic actions seen, 23.9% stopped, and "participants often noticed questionable actions, but treated them as routine." At scale: human review of pull requests fell 89% to 68% under an AI-output mandate (802 developers, 196,212 pull requests), and 61.38% of 33,596 agent-authored pull requests had no recorded review. Kuo et al. (IUI 2026): 52% engagement at a task boundary against 62% dismissal mid-task. Robillard (Trustpilot, 18 Aug 2026): "racked up a separate bill ... without warning or approval." |
 | 2 | 1. Hide the rare, never the necessary | The chat transcript is removed. The event list becomes the ledger at level one for every role (35% of SDRs and 50% of admins weekly at Meridian). Steps, sources and per-step credits go behind one door per row (15% and 18%). Date, outcome, kind and teammate filters go behind one door named for them (4 to 15%); any at 20% or more for the signed-in role and business comes back out (teammate for Halyard's admin, 30%). | Level one is decided by measured weekly use per role and business, not by what felt important. The ledger is used often; one event's steps are not. | Nielsen (2006): "disclose everything that users frequently need up front." Nielsen (2026): "keep the full activity ledger 1 click away." Pendo (2024): 6% of features draw 80% of clicks. USAGE-MODEL.md. |
 | 3 | 2. Stop at two levels | Settings › Credits and activity › Credit usage › AI runs (four levels) becomes the credits column and the per-day digest here. Chat › ⌄ › previous chat › scroll becomes a ledger row and its step log. The Runs table folds into the ledger: a run is a set of events with a batch step list. On the phone, filters go into one sheet and the step log still opens in place, so nothing gets deeper where clicks cost most. | A third level means the structure is wrong. Every item is reachable in one click from the page, on desktop and phone. | Nielsen (2006): designs beyond two levels "typically have low usability." Landauer and Nachbar (1985): breadth beats depth. `08-principles-and-checklists.md`: disclosure drift across breakpoints. |
 | 4 | 4. Make the door obvious and honest | "⌄" beside the chat title becomes "3 steps · 12 credits ▾". "Preview" becomes "Read the draft · 142 words". Every row and item starts with the agent's name. The Scoring tile disappears at Fathom and Halyard rather than sitting greyed. Approve and Decline are removed, not disabled, on decided items. Each tile says what the agent does and what it never does without a person. | The label is the only scent. A door must say what is behind it and always open onto something; a control that cannot apply is removed. Naming the actor is what lets a person trust the row. | NN/g (2014): unlabelled icon, 0% click-through. Windows UX Guide: "Remove (don't disable) progressive disclosure controls that don't apply." Shape of AI: "Name the actor, every time." HAX Guideline 1; PAIR Mental Models. |
@@ -322,6 +350,9 @@ Notes on step 6. **Rule 3:** no "Simple" or "Advanced" agent view and no "Autopi
 | Check | Gap found | Closed by |
 |---|---|---|
 | All roles covered | CS had no line; AE and marketer had no default scope | The "By role" table; the no-access paragraph naming the admin |
+| Every action has an outcome | Two specs disagreed about who approves, and a 5,000-recipient threshold was written into Campaigns | One policy, stated in §1 and §3: the owner approves, the admin may approve for anyone and is named when they do, and the second-approval threshold is the Settings item `ai.second-approval`, default 1,000 recipients or 500 credits |
+| Decision-critical visible | "Reversible, so not queued" was a claim with no control behind it | Every unqueued action has Undo on its ledger row, and the seed carries `undoable`, `undoneAt`, `undoneBy` |
+| Decision-critical visible | A complete queue would pass rule 7 and fail its corollary | The queue holds only irreversible or costly actions, batched at a task boundary; the decline rate is instrumented so a rubber-stamped queue shows up as a number |
 | All four businesses covered | Halyard's workspace name and Fathom's missing scoring agent were implicit | `brief.workspace` as an item removed where it does not apply; the Scoring tile removed at Fathom and Halyard |
 | Every field has a source | Consequence, steps, draft, status, time and contact reference are not in the seed | Section 2 lists ten additions with types and examples |
 | Every action has an outcome | Snooze on a proposal with an earlier send time; bulk approve with a paused mailbox | Snooze declines and says so first; bulk approve leaves paused-mailbox items behind with the reason |

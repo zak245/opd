@@ -2,9 +2,13 @@ import type { UsageItem } from "./model"
 
 // Connect an integration: 29 items in 2 areas (specs/15-connect-integration.md). Baseline numbers describe Meridian Software.
 // Halyard overrides: the agency connects a client's CRM whenever a client is onboarded, so the wizard is routine there.
-// Fathom overrides: one HubSpot connected once by the founder; only "sdr" and "admin" roles exist there.
-// Ridgeline overrides: four quiet integrations and no Salesforce; little outbound, so Slack is about deals and agents.
+// Fathom overrides: no CRM at all (PLAN.md, 13 Sep 2026 — Ollopa is Fathom's CRM); a calendar and an enrichment
+// provider are the whole list. Only "sdr" and "admin" roles exist there.
+// Ridgeline overrides: HubSpot, a calendar, Slack and enrichment; little outbound, so Slack is about deals and agents.
 // Non-admin roles reach the wizard only to connect their own calendar.
+// Plan gating (PLAN.md, 13 Sep 2026): CRM sync is one-way on Starter, two-way on Growth, two-way plus custom objects
+// on Scale; webhooks and API keys are Growth and above. Every lock sits on the card or the row at the entry point,
+// never after the admin has mapped fields or built a condition (gated-features pattern rule 7).
 
 export const connectItems: UsageItem[] = [
   // Wizard
@@ -24,7 +28,8 @@ export const connectItems: UsageItem[] = [
   { id: "wiz.slack-channels", page: "connect", area: "Wizard", label: "Slack: events to channels", weekly: { admin: 3 }, overrides: { fathom: { admin: 2 }, halyard: { admin: 3 }, ridgeline: { admin: 4 } } },
   { id: "wiz.calendar-pick", page: "connect", area: "Wizard", label: "Calendar: which calendars, busy time only", weekly: { sdr: 4, ae: 5, marketer: 1, cs: 4, admin: 2 }, overrides: { fathom: { admin: 4 }, halyard: { admin: 2 }, ridgeline: { admin: 2 } } },
   { id: "wiz.enrichment", page: "connect", area: "Wizard", label: "Enrichment provider: key, fields, order", weekly: { admin: 3 }, overrides: { fathom: { admin: 2 }, halyard: { admin: 3 }, ridgeline: { admin: 2 } } },
-  { id: "wiz.webhook", page: "connect", area: "Wizard", label: "Webhook: URL, secret, events, test", weekly: { admin: 2 }, overrides: { fathom: { admin: 4 }, halyard: { admin: 3 }, ridgeline: { admin: 2 } }, note: "Fathom's founder builds her own automations." },
+  { id: "wiz.webhook", page: "connect", area: "Wizard", label: "Webhook: URL, secret, events, test", weekly: { admin: 2 }, overrides: { fathom: { admin: 1 }, halyard: { admin: 3 }, ridgeline: { admin: 2 } }, note: "Fathom's founder would build her own automations, but webhooks start at Growth: the card carries the lock, the plan and the price, and she has opened it once." },
+  { id: "wiz.custom-objects", page: "connect", area: "Wizard", label: "Custom CRM objects", weekly: { admin: 3 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 2 }, ridgeline: { admin: 1 } }, note: "Scale only. The lock sits in step 3's object list, where the objects are chosen, so nobody maps fields for an object they cannot sync (gated-features pattern rule 7). Removed at Fathom, which has no CRM." },
   { id: "wiz.template", page: "connect", area: "Wizard", label: "Save as or start from a setup template", weekly: { admin: 1 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 22 }, ridgeline: { admin: 0 } }, note: "Halyard's accelerator (rule 8): the same CRM choices, ten times over." },
 
   // Integration page

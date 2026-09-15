@@ -6,6 +6,12 @@ import type { UsageItem } from "./model"
 // Halyard overrides: the ops lead reads the ledger per client workspace every day; the specialists approve in bulk.
 // Ridgeline overrides: almost no outreach, so approvals are rare; the scoring agent matters to the marketer.
 // CS has no Agents page in the nav (nav.ts); its numbers are 0 everywhere and the page explains who can see it.
+// Approvals (PLAN.md, 14 Sep 2026): the object's owner approves, an admin may approve for anyone. Low-cost reversible
+// work (research, scoring, drafts saved but not sent) is logged, never queued; only irreversible or costly actions
+// (sending, spending over a cap, moving a deal stage) wait for a person, in batches at a task boundary. A second,
+// admin approval is needed above the Settings threshold (default 1,000 recipients or 500 credits in one action).
+// The queue is kept short on purpose: disclosure beyond review capacity is equivalent to hiding (RULES.md rule 7
+// corollary; Chen et al., arXiv 2604.04918: 88.5% of problematic actions seen, 23.9% stopped).
 
 export const agentsItems: UsageItem[] = [
   // Briefing
@@ -21,7 +27,7 @@ export const agentsItems: UsageItem[] = [
   { id: "exc.resume", page: "agents", area: "Exceptions", label: "Resume or keep paused", weekly: { sdr: 4, admin: 15 }, overrides: { fathom: { sdr: 4, admin: 8 }, halyard: { sdr: 4, admin: 15 } } },
 
   // Waiting for you
-  { id: "wait.list", page: "agents", area: "Waiting for you", label: "Items waiting for approval", critical: true, weekly: { sdr: 70, ae: 22, marketer: 8, admin: 25 }, overrides: { fathom: { sdr: 80, admin: 80 }, halyard: { sdr: 80, admin: 18 }, ridgeline: { sdr: 30, ae: 12, marketer: 22, admin: 18 } }, note: "A pending approval is decision-critical (rule 7 test: find it without clicking)." },
+  { id: "wait.list", page: "agents", area: "Waiting for you", label: "Items waiting for approval, in one batch per task boundary", critical: true, weekly: { sdr: 70, ae: 22, marketer: 8, admin: 25 }, overrides: { fathom: { sdr: 80, admin: 80 }, halyard: { sdr: 80, admin: 18 }, ridgeline: { sdr: 30, ae: 12, marketer: 22, admin: 18 } }, note: "A pending approval is decision-critical (rule 7 test: find it without clicking). Only irreversible or costly actions are here; research, scoring and saved drafts are logged in the ledger instead, so the queue stays inside a person's review capacity." },
   { id: "wait.consequence", page: "agents", area: "Waiting for you", label: "What happens if approved: email from which mailbox, when, credits", critical: true, weekly: { sdr: 70, ae: 22, marketer: 8, admin: 25 }, overrides: { fathom: { sdr: 80, admin: 80 }, halyard: { sdr: 80, admin: 18 }, ridgeline: { sdr: 30, ae: 12, marketer: 22, admin: 18 } }, note: "Never separated from the Approve button (rule 5). Apollo's assistant confirms in chat and the confirmation scrolls away." },
   { id: "wait.approve", page: "agents", area: "Waiting for you", label: "Approve", weekly: { sdr: 70, ae: 20, marketer: 6, admin: 18 }, overrides: { fathom: { sdr: 75, admin: 75 }, halyard: { sdr: 80, admin: 4 }, ridgeline: { sdr: 28, ae: 10, marketer: 20, admin: 10 } } },
   { id: "wait.decline", page: "agents", area: "Waiting for you", label: "Decline", weekly: { sdr: 45, ae: 12, marketer: 4, admin: 15 }, overrides: { fathom: { sdr: 50, admin: 40 }, halyard: { sdr: 55, admin: 4 }, ridgeline: { sdr: 20, ae: 6, marketer: 6, admin: 8 } } },
@@ -31,9 +37,10 @@ export const agentsItems: UsageItem[] = [
   { id: "wait.decline-reason", page: "agents", area: "Waiting for you", label: "Tell the agent why you declined", weekly: { sdr: 8, ae: 2, admin: 3 }, overrides: { fathom: { sdr: 4 }, halyard: { sdr: 15 } } },
   { id: "wait.snooze", page: "agents", area: "Waiting for you", label: "Decide tomorrow", weekly: { sdr: 4, ae: 2, admin: 2 } },
   { id: "wait.reassign", page: "agents", area: "Waiting for you", label: "Hand the decision to a teammate", weekly: { sdr: 2, ae: 1, admin: 4 }, overrides: { fathom: { sdr: 1, admin: 1 }, halyard: { sdr: 2, admin: 4 } } },
+  { id: "wait.second-approval", page: "agents", area: "Waiting for you", label: "Waiting for a second, admin approval (over 1,000 recipients or 500 credits)", critical: true, weekly: { sdr: 6, ae: 1, marketer: 4, admin: 10 }, overrides: { fathom: { sdr: 3, admin: 4 }, halyard: { sdr: 12, admin: 15 }, ridgeline: { sdr: 1, marketer: 5, admin: 5 } }, note: "The threshold is the Settings item ai.second-approval. The owner's approval is recorded and the item says who it is now waiting for, so nobody thinks it has been sent." },
 
   // Activity
-  { id: "act.ledger", page: "agents", area: "Activity", label: "Every event, newest first", weekly: { sdr: 35, ae: 10, marketer: 12, admin: 50 }, overrides: { fathom: { sdr: 45, admin: 45 }, halyard: { sdr: 25, admin: 60 }, ridgeline: { sdr: 15, marketer: 25, admin: 40 } }, note: "Nielsen (2026): keep the full activity ledger one click away. Here it is on the page, below the briefing." },
+  { id: "act.ledger", page: "agents", area: "Activity", label: "Every event, newest first", weekly: { sdr: 35, ae: 10, marketer: 12, admin: 50 }, overrides: { fathom: { sdr: 45, admin: 45 }, halyard: { sdr: 25, admin: 60 }, ridgeline: { sdr: 15, marketer: 25, admin: 40 } }, note: "Nielsen (2026): keep the full activity ledger one click away. Here it is on the page, below the briefing. Low-cost reversible work lands here and never in the queue." },
   { id: "act.day-digest", page: "agents", area: "Activity", label: "Per-day digest line with credits for the day", weekly: { sdr: 12, ae: 3, marketer: 6, admin: 45 }, overrides: { fathom: { sdr: 15, admin: 60 }, halyard: { sdr: 10, admin: 60 }, ridgeline: { marketer: 6, admin: 30 } }, note: "Digest the milestones (Nielsen 2026). Credits per day are what Fathom and Halyard read first." },
   { id: "act.credits-per-event", page: "agents", area: "Activity", label: "Credits per event", critical: true, weekly: { sdr: 20, ae: 3, marketer: 5, admin: 40 }, overrides: { fathom: { sdr: 45, admin: 60 }, halyard: { sdr: 15, admin: 55 }, ridgeline: { sdr: 6, marketer: 8, admin: 25 } }, note: "Spend is decision-critical (rule 7)." },
   { id: "act.steps", page: "agents", area: "Activity", label: "Step-by-step log for one event: sources, timings, credits per step", weekly: { sdr: 15, ae: 4, marketer: 6, admin: 18 }, overrides: { fathom: { sdr: 18, admin: 18 }, halyard: { admin: 15 }, ridgeline: { marketer: 10 } }, note: "The door on every ledger row. Body band for every role, so it opens on request and stays open where the user left it." },
@@ -47,6 +54,7 @@ export const agentsItems: UsageItem[] = [
   { id: "act.search", page: "agents", area: "Activity", label: "Search the ledger", weekly: { sdr: 10, ae: 4, marketer: 4, admin: 4 }, overrides: { halyard: { sdr: 4, admin: 4 }, ridgeline: { marketer: 5 } } },
   { id: "act.retry", page: "agents", area: "Activity", label: "Run again with a note", weekly: { sdr: 3, ae: 1, marketer: 2, admin: 4 } },
   { id: "act.flag", page: "agents", area: "Activity", label: "Flag a wrong result", weekly: { sdr: 3, ae: 1, marketer: 1, admin: 3 } },
+  { id: "act.undo", page: "agents", area: "Activity", label: "Undo a logged action: delete the draft, clear the score, drop the research", weekly: { sdr: 10, ae: 3, marketer: 4, admin: 6 }, overrides: { fathom: { sdr: 12, admin: 12 }, halyard: { sdr: 12, admin: 8 }, ridgeline: { sdr: 4, marketer: 5, admin: 4 } }, note: "What makes 'reversible, so not queued' true rather than asserted: every unqueued action can be undone from its ledger row." },
   { id: "act.copy-link", page: "agents", area: "Activity", label: "Copy a link to this event", weekly: { sdr: 1, ae: 1, marketer: 1, admin: 2 } },
   { id: "act.export", page: "agents", area: "Activity", label: "Export the ledger as CSV", weekly: { marketer: 2, admin: 4 }, overrides: { halyard: { admin: 6 } }, note: "Halyard reports agent spend to clients monthly." },
   { id: "act.expand-all", page: "agents", area: "Activity", label: "Expand all steps or collapse all", weekly: { sdr: 2, admin: 4 } },

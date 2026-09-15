@@ -3,7 +3,9 @@ import type { UsageItem } from "./model"
 // Inbox: replies from sequences grouped by what the person meant. 58 items in 7 areas (specs/06-inbox.md).
 // Baseline numbers describe Meridian Software, where the SDR sees replies to their own mailbox and hands
 // interested people to an AE.
-// Fathom overrides: no AE exists, so "hand to AE" is removed; the founder (admin) does outbound and lives here.
+// Fathom overrides: no AE exists, so "hand to AE" is removed; the founder (admin seat) does outbound, and the
+//   workspace profile (Founder-led outbound) puts the Inbox in that sidebar. The seat does not grant the page; the
+//   declared profile does (RULES.md, the declared sidebar).
 // Halyard overrides: ten client workspaces, forty sequences; which sequence a reply came from is routine,
 // saved replies and bulk clean-up are daily.
 // Ridgeline overrides: two sequences, little outbound; the inbound SDR and expansion AE see few replies,
@@ -34,7 +36,7 @@ export const inboxItems: UsageItem[] = [
 
   // Row actions (also in the thread panel header and the "…" menu)
   { id: "inbox.act.reply", page: "inbox", area: "Row actions", label: "Reply in place", weekly: { sdr: 85, ae: 50 }, overrides: { fathom: { admin: 75 }, ridgeline: { sdr: 50, ae: 35 } } },
-  { id: "inbox.act.book-meeting", page: "inbox", area: "Row actions", label: "Book meeting (send calendar link)", weekly: { sdr: 60, ae: 40 }, overrides: { fathom: { admin: 55 }, ridgeline: { sdr: 35, ae: 30 } } },
+  { id: "inbox.act.book-meeting", page: "inbox", area: "Row actions", label: "Book meeting (send calendar link)", weekly: { sdr: 60, ae: 40 }, overrides: { fathom: { admin: 55 }, halyard: { sdr: 0 }, ridgeline: { sdr: 35, ae: 30 } }, note: "Meridian, Ridgeline and Fathom have a calendar connected. Halyard has none, so the action is replaced by a line that says how to connect one, not disabled (rule 4)." },
   { id: "inbox.act.hand-to-ae", page: "inbox", area: "Row actions", label: "Hand to an AE", weekly: { sdr: 45, ae: 0 }, overrides: { fathom: { sdr: 0, admin: 0 }, halyard: { sdr: 0 }, ridgeline: { sdr: 25, ae: 0 } }, note: "Zero where the business has no AE seat; the action is removed there, not disabled (rule 4)." },
   { id: "inbox.act.done", page: "inbox", area: "Row actions", label: "Mark done", weekly: { sdr: 40, ae: 25 }, overrides: { fathom: { admin: 40 }, halyard: { sdr: 55 }, ridgeline: { sdr: 30, ae: 20 } } },
   { id: "inbox.act.not-interested", page: "inbox", area: "Row actions", label: "Mark not interested", weekly: { sdr: 30, ae: 15 }, overrides: { fathom: { admin: 30 }, halyard: { sdr: 40 }, ridgeline: { sdr: 12, ae: 6 } } },

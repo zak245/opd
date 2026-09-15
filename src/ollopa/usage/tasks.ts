@@ -5,11 +5,14 @@ import type { UsageItem } from "./model"
 // Halyard overrides: outbound specialists work ten client queues; the ops lead reassigns and reports weekly.
 // Ridgeline overrides: little outbound; tasks are renewal and expansion follow-ups, so CS and AE rise, SDR falls.
 // The SDR at Meridian has a head near 40% of items: this is an operate-all-day screen, the density case in PRODUCT.md.
+// The marketer seat has no access to the area, so it carries no number; the page shows the no-access state naming who does.
+// At Fathom and Halyard the admin seat works tasks because the workspace profile (Founder-led outbound, Agency) puts
+// Tasks in that sidebar, not because the role title grants it.
 
 export const tasksItems: UsageItem[] = [
   // Rows
-  { id: "tasks.rows", page: "tasks", area: "Rows", label: "Task rows: due, type, contact, what to do, from", critical: true, weekly: { sdr: 95, ae: 55, marketer: 2, cs: 20, admin: 20 }, overrides: { fathom: { admin: 90 }, halyard: { admin: 45 }, ridgeline: { sdr: 45, ae: 40, cs: 40, admin: 10 } }, note: "An overdue sequence task means a contact is stuck. That consequence is written on the row, so the rows are never behind a door (rule 7)." },
-  { id: "tasks.summary", page: "tasks", area: "Rows", label: "Due today and overdue counts", critical: true, weekly: { sdr: 95, ae: 50, marketer: 2, cs: 20, admin: 25 }, overrides: { fathom: { admin: 90 }, halyard: { admin: 55 }, ridgeline: { sdr: 45, ae: 35, cs: 40 } }, note: "Overdue is the safety state of this page." },
+  { id: "tasks.rows", page: "tasks", area: "Rows", label: "Task rows: due, type, contact, what to do, from", weekly: { sdr: 95, ae: 55, cs: 20, admin: 20 }, overrides: { fathom: { admin: 90 }, halyard: { admin: 45 }, ridgeline: { sdr: 45, ae: 40, cs: 40, admin: 10 } }, note: "The page's own content, at 95% for the SDR: head by usage, not by rule 7. The overdue count above it carries the safety state." },
+  { id: "tasks.summary", page: "tasks", area: "Rows", label: "Due today and overdue counts", critical: true, weekly: { sdr: 95, ae: 50, cs: 20, admin: 25 }, overrides: { fathom: { admin: 90 }, halyard: { admin: 55 }, ridgeline: { sdr: 45, ae: 35, cs: 40 } }, note: "Safety state (rule 7): an overdue sequence task means a contact is stuck at that step and the sequence is waiting. Level one for every seat that has the page, including the Ridgeline admin at 10." },
   { id: "tasks.owner-column", page: "tasks", area: "Rows", label: "Owner column", weekly: { admin: 20 }, overrides: { fathom: { admin: 60, sdr: 30 }, halyard: { admin: 50 }, ridgeline: { admin: 8 } }, note: "Appears when the owner filter is not 'Me'. At Fathom everyone sees everyone." },
   { id: "tasks.details", page: "tasks", area: "Rows", label: "Row door: step history and contact details", weekly: { sdr: 55, ae: 25, cs: 12, admin: 5 }, overrides: { ridgeline: { sdr: 25, cs: 30 } } },
   { id: "tasks.local-time", page: "tasks", area: "Rows", label: "Contact local time", weekly: { sdr: 15, ae: 8, cs: 4 }, overrides: { halyard: { sdr: 40 }, ridgeline: { sdr: 3 } }, note: "Halyard calls across time zones all day, so it moves from the door into the Due cell." },
@@ -22,11 +25,11 @@ export const tasksItems: UsageItem[] = [
   { id: "tasks.skip", page: "tasks", area: "Actions", label: "Skip: the contact moves to the next step", critical: true, weekly: { sdr: 35, ae: 10, cs: 3, admin: 4 }, overrides: { fathom: { admin: 30 }, ridgeline: { sdr: 8 } }, note: "The consequence is written on the control (rule 7)." },
   { id: "tasks.write-email", page: "tasks", area: "Actions", label: "Write the email", weekly: { sdr: 70, ae: 25, cs: 12, admin: 5 }, overrides: { fathom: { admin: 65 }, ridgeline: { sdr: 30, ae: 20, cs: 30 } } },
   { id: "tasks.open-contact", page: "tasks", area: "Actions", label: "Open contact", weekly: { sdr: 18, ae: 30, cs: 15, admin: 5 }, overrides: { ridgeline: { cs: 30 } }, note: "The row door shows the contact essentials, so the full page is opened less than expected." },
-  { id: "tasks.new", page: "tasks", area: "Actions", label: "New task", weekly: { sdr: 25, ae: 30, marketer: 1, cs: 15, admin: 6 }, overrides: { fathom: { admin: 30 }, ridgeline: { sdr: 15, ae: 35, cs: 35 } } },
+  { id: "tasks.new", page: "tasks", area: "Actions", label: "New task", weekly: { sdr: 25, ae: 30, cs: 15, admin: 6 }, overrides: { fathom: { admin: 30 }, ridgeline: { sdr: 15, ae: 35, cs: 35 } } },
   { id: "tasks.note", page: "tasks", area: "Actions", label: "Add a note to a task", weekly: { sdr: 15, ae: 20, cs: 10, admin: 2 }, overrides: { ridgeline: { cs: 25 } } },
   { id: "tasks.edit", page: "tasks", area: "Actions", label: "Change a task's due date, type or title", weekly: { sdr: 8, ae: 12, cs: 5, admin: 3 } },
   { id: "tasks.reassign", page: "tasks", area: "Actions", label: "Reassign", weekly: { admin: 12 }, overrides: { fathom: { admin: 8 }, halyard: { admin: 35 }, ridgeline: { admin: 4 } }, note: "Halyard rotates specialists between clients weekly." },
-  { id: "tasks.delete", page: "tasks", area: "Actions", label: "Delete a manual task", weekly: { sdr: 4, ae: 5, cs: 2, admin: 3 } },
+  { id: "tasks.delete", page: "tasks", area: "Actions", label: "Delete a manual task", critical: true, weekly: { sdr: 4, ae: 5, cs: 2, admin: 3 }, note: "Destructive: the control and what it removes are visible without a click, like every other delete in the product (rule 7)." },
 
   // Work the queue
   { id: "tasks.queue", page: "tasks", area: "Work the queue", label: "Work the queue", weekly: { sdr: 85, ae: 15, cs: 5, admin: 5 }, overrides: { fathom: { admin: 75 }, halyard: { sdr: 90 }, ridgeline: { sdr: 30, ae: 8, cs: 10, admin: 2 } } },

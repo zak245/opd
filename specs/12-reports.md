@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-Reports is where a leader checks how the team is doing and finds the one number that needs a conversation. Four fixed reports: **Activity** (emails, calls, meetings booked, tasks done, by rep), **Pipeline** (created, won, lost, open by stage, weighted forecast), **Sequences** (sent, replied, bounced, by sequence and by step) and **Campaign results** (sent, opened, replied, pipeline created, by campaign and by audience). One date range and one team filter apply to all four. Export of what is on screen.
+Reports is where a leader checks how the team is doing and finds the one number that needs a conversation. Four fixed reports: **Activity** (emails, calls, meetings booked, tasks done, by rep), **Pipeline** (created, won, lost, open by stage, weighted forecast), **Sequences** (sent, replied, bounced, by sequence and by step) and **Campaign results** (sent, opened, replied, pipeline created, by campaign and by audience). One date range and one team filter apply to all four. What is on screen can be printed on any plan and exported as a CSV on Scale.
 
 Who lives here: the RevOps admin (weekly ops review), the account executive (the forecast before the weekly pipeline call), the marketer (campaign results, most days), customer success (renewal pipeline, weekly). Founders at Fathom Labs and the ops lead at Halyard are admins and use it as leaders do; at Halyard it is also the client report, every week, ten times over. The SDR has no Reports entry; their numbers live on Sequences and Home.
 
@@ -18,12 +18,12 @@ Sources are `src/ollopa/data/seed.ts` and `businesses.ts`. The seed's fixed "tod
 |---|---|---|---|
 | Rep name, role, team | By-rep tables, team and person filters | `businesses.roles`: 2–5 demo users; Meridian has 42 | `users: User[]` per business to `counts.users` (cap 42): name, role, team. Teams: Meridian = Sales development, AE East, AE West, Customer success, Marketing; Ridgeline = Inbound, Expansion, Customer success, Lifecycle marketing; Fathom and Halyard = none |
 | Emails, calls, meetings booked, tasks done, per rep per week | Activity tiles, trend, table, drawer | none | `activityEvents`: kind (email, call, meeting, task), user, contact, company, date; 13 weeks, about 25 per user per week. "Meeting booked" = a contact moved to stage "Meeting booked"; Ollopa has no booking tool |
-| Deals created, won, lost, open, by stage and rep | Pipeline tiles, tables, drawer | `deals`: open deals only, with `stage`, `amount`, `probability`, `closeDate`, `owner` | `createdDate`, `closedDate`, `outcome` (open, won, lost), `lostReason` (price, timing, competitor, no decision, other); closed deals for 13 weeks, about 1.5× the open count |
+| Deals created, won, lost, open, by stage and rep | Pipeline tiles, tables, drawer | `deals`: open deals with `stage`, `amount`, `probability`, `closeDate`, `owner`. Five stages, defined in spec 09 and listed in Settings: Qualified, Discovery, Proposal, Negotiation, Closed won | `createdDate`, `closedDate`, and the archive fields spec 09 defines (`archivedOn`, `lostReason`: price, timing, competitor, no decision, other); 13 weeks of closed deals, about 1.5× the open count. Ollopa has no "Closed lost" stage and no outcome flag (PLAN.md, 13 Sep 2026): **won** means the deal reached Closed won, **lost** means it was archived, and the Lost tile says so in words under the number |
 | Weighted forecast | Pipeline tile | `amount × probability`, open deals closing in range | nothing; the method is printed on the tile |
 | Stage-to-stage conversion | Pipeline door | none | `stageHistory: { dealId, stage, enteredOn }[]` |
 | Sequence sent, delivered, replied, bounced, rates | Sequences tiles and table | `sequences`: `active`, `replied`, `bounced`, `steps` (a count) | `sent`, `delivered`, `stepStats: { n, kind, sent, delivered, opened, replied, bounced }[]`, weekly `series` |
-| Bounce rate against the bounce guard | Sequences tile | threshold is Settings item `mail.bounce-guard` | `bounceGuardThreshold` per business (3.5%) in `businesses.ts` |
-| Campaign name, channel, audience, sent, opened, replied, deals, pipeline | Campaign tiles, table, audience door | `counts.campaigns` is a number only | `campaigns: Campaign[]`: name, channel (email, in-app, webinar, event), audience, sent, delivered, opened, clicked, replied, dealsCreated, pipelineAmount, startedOn, status, owner, `byAudience`. Meridian 12, Ridgeline 8, Fathom 0, Halyard 0 |
+| Bounce rate against the bounce guard | Sequences tile | The one pair for the whole product, owned by the Settings item `mail.bounce-guard`: warns at 4%, pauses at 6% | the observed 7-day rate and volume per business, from the `settings` seed in spec 14: Meridian 1.9% of 14,200, Fathom 3.6% of 620, Halyard 4.4% of 9,800, Ridgeline 0.8% of 410. Reports stores no threshold of its own and prints the same two numbers as every other page |
+| Campaign name, kind, audience, sent, opened, replied, deals, pipeline | Campaign tiles, table, audience door | `campaigns` and `audiences`, the two entities spec 10 defines and owns: `name`, `kind` (Email or Lifecycle), `status`, `owner`, `audienceId`, `audienceSize`, `sent`, `delivered`, `opened`, `clicked`, `replied`, `converted`, `unsubscribed`, `goal` | two fields, added to spec 10's `Campaign` and to nothing else: `dealsCreated` and `pipelineAmount`. Reports does not define a `channel`, does not redefine the entity, and reads the audience breakdown from spec 10's `Audience` (`name`, `type`, `size`, `sources[]`). Meridian 12 campaigns and 6 audiences, Ridgeline 8 and 5, Fathom and Halyard none |
 | Data as of | Control bar | none | a constant per seed: "Data as of 13 Sep 2026, 08:00; refreshes hourly" |
 
 All numbers are computed at render from these rows, so the four reports and every drawer agree. Apollo's "metric availability varies by analytics surface" (§5) is what happens when they are not.
@@ -32,14 +32,14 @@ All numbers are computed at render from these rows, so the four reports and ever
 
 ### Layout
 
-One page, `/reports/:report`. A control bar: report tabs (Activity, Pipeline, Sequences, Campaign results), date range, team, person, the compare toggle where the role's use puts it at level one, Export, Print, "Data as of 13 Sep 2026, 08:00". Below: a **tile row** (four or five headline numbers, with the change against the previous period when compare is on), **one chart** (weekly trend for the range), **one breakdown table** on `TablePage`. On arrival an **overview strip** shows the tile row of every report the role uses (§6), each with "Open the Pipeline report".
+One page, `/reports/:report`. A control bar: report tabs (Activity, Pipeline, Sequences, Campaign results), date range, team, person, the compare toggle where the role's use puts it at level one, Export, Print, the line "Exports and prints spend no credits", and "Data as of 13 Sep 2026, 08:00". The no-credits line is a fee statement, so it sits on the bar in plain sight and not inside the Export menu (rule 7). Below: a **tile row** (four or five headline numbers, with the change against the previous period when compare is on), **one chart** (weekly trend for the range), **one breakdown table** on `TablePage`. On arrival an **overview strip** shows the tile row of every report the role uses (§6), each with "Open the Pipeline report".
 
 | Report | Tiles | Chart | Table rows | Row door (level two) |
 |---|---|---|---|---|
 | Activity | Emails sent, Calls made, Meetings booked, Tasks done | Four series by week | One per rep: the four counts, tasks overdue | "312 emails" opens the records drawer |
-| Pipeline | Created, Won, Lost, Open pipeline, Weighted forecast | Created vs won amount by week | By stage (default) or by rep, switched at level one: count, amount, average age | "14 deals" opens the drawer; "Stage-to-stage conversion" and "Lost reasons: 5" expand in place |
+| Pipeline | Created, Won (reached Closed won), Lost (archived), Open pipeline, Weighted forecast | Created vs won amount by week | By stage (default) or by rep, switched at level one: count, amount, average age. Five stages, no Closed lost column | "14 deals" opens the drawer; "Stage-to-stage conversion" and "Lost reasons: 5" expand in place |
 | Sequences | Sent, Delivered, Reply rate, Bounce rate | Sent and replied by week | One per sequence: sent, delivered, opened, replied, bounced, both rates, status | "Steps: 5" expands in place; "Open sequence" navigates |
-| Campaign results | Sent, Opened, Replied, Deals created, Pipeline created | Sent and replied by week | One per campaign: channel, audience, sent, opened, replied, deals, pipeline, status | "Audience: 4 segments" expands in place; "22 deals" opens the drawer |
+| Campaign results | Sent, Opened, Replied, Deals created, Pipeline created | Sent and replied by week | One per campaign: kind (Email or Lifecycle), audience, sent, opened, replied, deals, pipeline, status | "Audience: 4 segments" expands in place; "22 deals" opens the drawer |
 
 ### Actions
 
@@ -49,7 +49,8 @@ One page, `/reports/:report`. A control bar: report tabs (Activity, Pipeline, Se
 | Date range | Select: This week, Last 7 days, Last 30 days, This quarter, Last quarter, Last 90 days, This year; "Custom range" opens two date fields inside the same menu | Everything recomputes; range is in the URL and remembered |
 | Team, Person | Selects; Person lists the chosen team's members | Recompute; a chip "AE East · Elena Vasquez" states what is applied |
 | Compare with previous period | Toggle | Tiles show the delta; chart adds a dotted previous-period line |
-| Export | Menu: "This table (18 rows)", "Records behind this table", "Copy link with these filters", "Email me this report every Monday", and the line "Report exports spend no credits" | CSV downloads at once, filters applied, header row names the range |
+| Export | Menu: "This table (18 rows)", "Records behind this table", "Copy link with these filters", "Email me this report every Monday" | CSV downloads at once, filters applied, header row names the range. On Starter and Growth the two CSV lines and the weekly email carry a lock and the plan name and open the upgrade panel instead |
+| Read the fee line | On the control bar, beside Export | Nothing to click: "Exports and prints spend no credits" states the fee before the decision is made, not inside the menu where the decision is confirmed |
 | Print or save as PDF | Button | Print stylesheet: every door expanded, filters as a caption, no control bar |
 | Choose columns | Table button "Columns: 7 of 10" | Persisted per report |
 | Row door | Link in the cell, chevron and count | Drawer or in-place expansion |
@@ -72,6 +73,7 @@ No bulk actions; nothing here changes data.
 | Error | Last numbers stay, with "Could not refresh; showing data as of 13 Sep, 08:00. Retry" |
 | No access | An SDR at `/reports`: "Reports is for account executives, marketers, customer success and admins. Your sequence numbers are on Sequences and today's activity is on Home. Daniel Okafor (RevOps admin) can give you access." |
 | Restricted scope | An AE at Meridian: the team select is replaced by "AE East (your team). Daniel Okafor can widen this." |
+| Locked report | Fathom, on Starter: the Pipeline and Sequences tabs sit where they always sit, with a lock and the word Growth. Opening one shows the report's shape — the tile labels, the chart frame, "18 rows" — with the two numbers that are never gated printed in full (weighted forecast, bounce rate against the guard), and one panel: what the report does, that it is on Growth, one total for the period — "$237 a month for your 3 seats", never a per-seat breakdown (gated-features pattern rule 4) — and one button. Nothing is greyed out and nothing has moved |
 
 ### Keyboard, accessibility, phone
 
@@ -83,17 +85,21 @@ At phone width the control bar wraps to two rows, tabs scroll sideways, tiles go
 
 ### By role and by business
 
-| | Default report | In the overview strip | Removed, not disabled |
-|---|---|---|---|
-| Meridian admin | Activity | Activity, Pipeline, Sequences | nothing |
-| Meridian AE | Pipeline | Pipeline | Team select (fixed to own team) |
-| Meridian marketer | Campaign results | Campaign results | nothing |
-| Meridian CS | Pipeline | Pipeline | nothing |
-| Fathom founder (admin) | Pipeline | Pipeline, Activity, Sequences | Campaign results tab, Team select |
-| Halyard ops lead (admin) | Activity | Activity, Sequences | Campaign results tab, Team select (the workspace is the client) |
-| Ridgeline marketer | Campaign results | Campaign results | nothing |
-| Ridgeline CS, AE | Pipeline | Pipeline (CS also Activity) | nothing |
-| Ridgeline admin | Pipeline | Pipeline, Activity, Campaign results | nothing; two sequences are real data |
+| | Default report | In the overview strip | Removed, not disabled | Locked by plan |
+|---|---|---|---|---|
+| Meridian admin | Activity | Activity, Pipeline, Sequences | nothing | nothing; Meridian is on Scale |
+| Meridian AE | Pipeline | Pipeline | Team select (fixed to own team) | nothing |
+| Meridian marketer | Campaign results | Campaign results | nothing | nothing |
+| Meridian CS | Pipeline | Pipeline | nothing | nothing |
+| Fathom founder (admin) | Activity | Activity, plus the locked Pipeline and Sequences tiles | Campaign results tab, Team select | Pipeline, Sequences, CSV export, weekly email (Starter) |
+| Halyard ops lead (admin) | Activity | Activity, Sequences | Campaign results tab, Team select (the workspace is the client) | CSV export, weekly email (Growth); the client report leaves as a PDF |
+| Ridgeline marketer | Campaign results | Campaign results | nothing | CSV export, weekly email (Growth) |
+| Ridgeline CS, AE | Pipeline | Pipeline (CS also Activity) | nothing | as above |
+| Ridgeline admin | Pipeline | Pipeline, Activity, Campaign results | nothing; two sequences are real data | as above |
+
+**What each plan includes** (the table is owned by spec 14; Reports renders its "reports" row). Starter: the Activity report. Growth: all four reports. Scale: all four, plus CSV export and the scheduled weekly email. Three rules hold wherever a lock appears. The lock sits at the entry point — on the tab, on the Export control — and never after a person has set a range, picked a team and read the numbers, because charging for the exit from work already done is drip pricing (gated-features pattern rule 7). Safety and decision-critical numbers are on every plan, so a locked Pipeline report still prints the weighted forecast and a locked Sequences report still prints the bounce rate and the guard's two thresholds (pattern rule 6). And a lock does not promote or demote anything: level one is still decided by the weekly numbers in §4 (pattern rule 9).
+
+The honest consequence at Halyard: the ops lead would export a CSV every week and her plan does not include it, so she prints the client report instead and opens the upgrade panel about once a month. The numbers in §4 say what she does, not what she would do on another plan. That gap is a pricing decision, and the promote-keep-delete review in §6 has to carry it.
 
 ## 4. Usage items
 
@@ -102,26 +108,27 @@ Share of active users in a role touching the item in a typical week. Baseline is
 | Item | AE | Mkt | CS | Admin | Overrides | Note |
 |---|---|---|---|---|---|---|
 | Overview strip | 45 | 55 | 30 | 60 | Fa 55; Ha 70; Ri ae 35, mkt 60, cs 45, admin 50 | The visit itself |
-| Activity report | 8 | 12 | 10 | 45 | Fa 40; Ha 65; Ri cs 20, admin 30 | |
-| Pipeline report | 45 | 10 | 22 | 40 | Fa 50; Ha 15; Ri ae 35, cs 40 | Ridgeline renewals are deals |
-| Sequences report | 4 | 4 | 1 | 25 | Fa 40; Ha 65; Ri admin 4, mkt 2 | |
+| Activity report | 8 | 12 | 10 | 45 | Fa 55; Ha 65; Ri cs 20, admin 30 | The only report Starter includes |
+| Pipeline report | 45 | 10 | 22 | 40 | Fa 8; Ha 15; Ri ae 35, cs 40 | Ridgeline renewals are deals; locked at Fathom, which reads the board on Deals |
+| Sequences report | 4 | 4 | 1 | 25 | Fa 6; Ha 65; Ri admin 4, mkt 2 | Locked at Fathom; step numbers are on Sequences |
 | Campaign results | 2 | 55 | 4 | 12 | Fa 0; Ha 0; Ri mkt 60, cs 12, admin 22 | Removed where 0 |
 | Date range presets | 35 | 50 | 22 | 55 | Fa 50; Ha 65 | |
 | Custom date range | 4 | 12 | 3 | 8 | Ha 18 | Client billing periods |
 | Team filter | 10 | 18 | 6 | 40 | Fa 0; Ha 0; Ri admin 30 | Removed where 0 |
 | Person filter | 15 | 4 | 12 | 18 | Fa 35; Ha 50 | Small teams look at people |
 | Compare with previous period | 15 | 30 | 8 | 15 | Ri mkt 35 | In the range menu when under 20 |
-| Export CSV | 6 | 22 | 5 | 25 | Fa 10; Ha 70; Ri mkt 18 | Halyard's client report |
-| Print or save as PDF | 2 | 8 | 2 | 4 | Ha 30 | |
+| Export CSV | 6 | 22 | 5 | 25 | Fa 2; Ha 8; Ri mkt 5 | Scale only; elsewhere the control carries the lock |
+| Exports and prints spend no credits **DC** | 4 | 12 | 3 | 12 | Fa 3; Ha 25; Ri mkt 8 | The fee statement, on the bar beside Export |
+| Print or save as PDF | 2 | 8 | 2 | 4 | Ha 65 | Not gated: how Halyard's client report leaves the product |
 | Copy link with filters | 4 | 12 | 3 | 10 | Ha 15 | |
-| Email this report weekly | 1 | 4 | 1 | 4 | Ha 15 | |
+| Email this report weekly | 1 | 4 | 1 | 4 | Fa 1; Ha 3 | Scale only |
 | Choose columns | 2 | 3 | 2 | 4 | | |
 | Chart or table for the trend | 2 | 4 | 2 | 4 | | |
 | Time grain | 2 | 4 | 2 | 4 | | |
 | Records behind a number | 30 | 18 | 18 | 30 | Ha 40; Ri cs 30 | The main door |
 | Week by week for one row | 8 | 10 | 5 | 8 | | First section of the drawer |
 | Open the record from the drawer | 18 | 4 | 10 | 4 | | Navigation, not a level |
-| Step by step for a sequence | 2 | 3 | 1 | 18 | Fa 30; Ha 55; Ri admin 2 | Apollo's documented gap |
+| Step by step for a sequence | 2 | 3 | 1 | 18 | Fa 4; Ha 55; Ri admin 2 | Apollo's documented gap; inside the locked report at Fathom |
 | Audience breakdown for a campaign | 1 | 35 | 2 | 3 | Fa 0; Ha 0; Ri mkt 40 | |
 | How these numbers are counted | 4 | 4 | 4 | 4 | | Definitions door |
 | Weighted forecast **DC** | 45 | 4 | 12 | 35 | Ha 10; Ri ae 35, cs 30 | Method on the tile |
@@ -141,17 +148,18 @@ Share of active users in a role touching the item in a typical week. Baseline is
 | Exclude internal contacts | 1 | 2 | 1 | 2 | | |
 | Data as of **DC** | 12 | 20 | 8 | 25 | | |
 
-Shape check, 39 items, computed from the code:
+Shape check, 40 items, computed from `reports.ts` with `shape()`. The denominator is every item that exists for that role at that business — an item whose number is 0 is removed there and is not on their page. That one rule is used for every pair below and in specs 13, 14, 15 and 16.
 
-| Pair | Head | Body | Tail | Verdict |
-|---|---|---|---|---|
-| AE, Meridian | 6 (15%) | 13 (33%) | 20 (51%) | fits |
-| Marketer, Meridian | 9 (23%) | 10 (26%) | 20 (51%) | fits |
-| CS, Ridgeline | 6 (15%) | 12 (31%) | 21 (54%) | fits |
-| Admin, Meridian | 11 (28%) | 15 (38%) | 13 (33%) | head fits; tail light, because a fixed-report page accumulates few rarely-used controls by design |
-| Admin, Halyard | 14 (36%) | 11 (28%) | 14 (36%) | the resident role; five items are removed here and count in the tail |
+| Pair | Items on their page | Head | Body | Tail | Verdict |
+|---|---|---|---|---|---|
+| AE, Meridian | 40 | 6 (15%) | 13 (33%) | 21 (53%) | fits |
+| Marketer, Meridian | 40 | 9 (23%) | 11 (28%) | 20 (50%) | fits |
+| CS, Ridgeline | 40 | 6 (15%) | 12 (30%) | 22 (55%) | fits |
+| Admin, Meridian | 40 | 11 (28%) | 16 (40%) | 13 (33%) | head three points over; tail light, because a fixed-report page accumulates few rarely-used controls by design |
+| Admin, Halyard | 35 | 14 (40%) | 11 (31%) | 10 (29%) | the resident role, and the stretch case. Five items are removed here, so the denominator is smaller and the same head is a bigger share. The client report is this person's weekly job and most of this page is in it |
+| Admin, Fathom | 35 | 9 (26%) | 12 (34%) | 14 (40%) | fits, just over on the head. Starter narrows the page: two reports are locked and the founder lives in the third |
 
-Decision-critical: weighted forecast (a commitment reported upward; the method must sit under the number), bounce rate (safety state: at the bounce-guard threshold sending pauses), data as of (a stale number acted on is a wrong decision), and the export menu's "spend no credits" line (a fee statement, rule 7).
+Decision-critical: weighted forecast (a commitment reported upward; the method must sit under the number), bounce rate (safety state: the guard warns at 4% and pauses at 6%), data as of (a stale number acted on is a wrong decision), and "Exports and prints spend no credits" (a fee statement, rule 7). Four marked in prose and four marked in `reports.ts`.
 
 ## 5. Before: the common version
 
@@ -168,7 +176,7 @@ Apollo's Analytics, as its knowledge base documents it in September 2026, is a r
 3. *Hover-only counts.* "Hover over a statistic for more details" (dashboards); "When you hover over a statistic, Apollo shows the numerical count" (Report on Sequences). Rule 4.
 4. *One metric, several meanings.* "Metric availability varies by analytics surface. Emails > Analytics, sequence reports, Analytics > Reports, and dashboard widgets may show different metric sets." ([Access and Use Email Analytics](https://knowledge.apollo.io/hc/en-us/articles/4425592135821-Access-and-Use-Email-Analytics).)
 5. *Export is not where the view is.* "To export sequence performance data, use Analytics Reports" (same article). Deal exports run in the background, arrive by email, and "might not retain the sort order displayed in Apollo" ([Export Deals to a CSV](https://knowledge.apollo.io/hc/en-us/articles/48217941127437-Export-Deals-to-a-CSV)).
-6. *Gates in the reading path.* Every analytics article opens with "Access to analytics depends on your Apollo plan"; custom reports are on "some Apollo plans"; "If you don't have permission, reach out to an Apollo admin". Which admin, the page does not say.
+6. *Gates in the reading path, and an unnamed admin.* Every analytics article opens with "Access to analytics depends on your Apollo plan"; custom reports are on "some Apollo plans"; "If you don't have permission, reach out to an Apollo admin". Ollopa gates reports by plan too, so the gate itself is not the fault. Three things are: the plan rule is told in the documentation rather than shown on the tab, the reader cannot tell which of the forty reports their own plan includes, and the sentence names no admin, so the request has nowhere to go. Ollopa's answer is the gated-features pattern: the lock is on the tab with the plan name, the panel carries the cost and one button, and a person who cannot upgrade asks a named admin from that panel.
 7. *Users: too many clicks, not deep where it matters.* "navigating between campaigns, contacts, and analytics feels like one click too many each time" (G2 reviewer via SyncGTM's round-up, secondary). "too many clicks to reach data" (Hassnaa, Trustpilot, 4 Sep 2026). "The reporting is decent but not deep enough. I can see open and reply rates, but drilling into which specific step in a sequence is causing drop-off takes more effort than it should" (G2 reviewer, quoted in third-party round-ups surfaced by search; original not fetched, **unverified**).
 
 **What Apollo gets right and Ollopa keeps.** Numbers next to the object (Deals > Analytics). Per-widget "Export to CSV" and "Copy Link". "Created by Apollo" as an honest label for fixed reports.
@@ -181,12 +189,12 @@ Level one is the overview strip on arrival, then the default report's control ba
 
 | Role at business | Level one beyond tiles, chart and table | Level two |
 |---|---|---|
-| Meridian admin | Activity, Pipeline, Sequences in the strip; range; team; export CSV; meetings booked; forecast, bounce, data as of (DC) | Person (in the team menu); compare and custom range (in the range menu); records; steps; conversion; lost reasons; columns; print, link, weekly email (in Export) |
+| Meridian admin | Activity, Pipeline, Sequences in the strip; range; team; export CSV; meetings booked; forecast, bounce, fee line, data as of (DC) | Person (in the team menu); compare and custom range (in the range menu); records; steps; conversion; lost reasons; columns; print, link, weekly email (in Export) |
 | Meridian AE | Pipeline; range; by stage or by rep; forecast, data as of (DC) | Records with "Open deal"; compare and custom range; conversion; lost reasons; Export |
 | Meridian marketer | Campaign results; range; compare toggle; export CSV; audience breakdown; conversion to pipeline; sort; data as of (DC) | Records; custom range; team; print, link, weekly email |
 | Meridian CS | Pipeline; range; forecast (DC) | Records; lost reasons; person; Export |
-| Fathom founder | Pipeline, Activity, Sequences; range; person (no teams, so it stands alone); meetings booked; steps; forecast, bounce (DC) | Records; Export; conversion |
-| Halyard ops lead | Activity, Sequences; range; person; export CSV; print; steps; sort reps, sort sequences; bounce, forecast (DC) | Custom range, weekly email, link; records |
+| Fathom founder | Activity; range; person (no teams, so it stands alone); meetings booked; the locked Pipeline and Sequences tabs with their plan name; forecast, bounce, fee line, data as of (DC) | Records; Export; conversion; steps |
+| Halyard ops lead | Activity, Sequences; range; person; print; steps; sort reps, sort sequences; bounce, forecast, fee line, data as of (DC) | Custom range, link; records; the locked CSV export and weekly email inside the Export door |
 | Ridgeline CS | Pipeline, Activity; range; forecast (DC); records | Lost reasons; person; compare |
 
 ### Every door
@@ -200,7 +208,7 @@ Level one is the overview strip on arrival, then the default report's control ba
 | "Lost reasons: 5" | Expand in place beside the Lost tile | Depends on the Lost count |
 | "Date range: Last 30 days" | Menu: presets, custom range, compare | Compare depends on the range |
 | "Team: AE East" | Menu: teams, then that team's people | Person depends on team |
-| "Export" | Menu: this table, records, copy link, email weekly, "spend no credits" | Four ways out of the page |
+| "Export" | Menu: this table, records, copy link, email weekly | Four ways out of the page. The fee statement is not in here; it is on the bar beside the door, because a fee read after the menu opens is a fee read after the decision has started (rule 7) |
 | "Columns: 7 of 10" | Popover | Small and interactive |
 | "How these numbers are counted" | Expand in place under the tiles; holds the counting toggles (bot opens, archived, internal, unweighted, grain, chart or table) | Definitions and what changes them stay together |
 
@@ -208,15 +216,17 @@ No door contains a door. "Open deal" from the drawer is navigation; Back restore
 
 **Persistence.** Range, team, person, compare, sort, columns and open in-place doors persist per user and per report (localStorage, the `session.ts` pattern) and sit in the URL, so a copied link reproduces the view. "Expand all steps" and "Collapse all" sit above the Sequences table. Print expands everything.
 
-**Accelerators.** Keys 1–4, D, T, E, P, ?, all shown in the palette. "Keep the definitions open" is a checkbox inside that door. Halyard's ops lead gets Export and Print at level one because the numbers put them there, not a mode.
+**Accelerators.** Keys 1–4, D, T, E, P, ?, all shown in the palette. "Keep the definitions open" is a checkbox inside that door. Halyard's ops lead gets Print, the person filter and both sorts at level one because the numbers put them there, not a mode.
 
-**Decision-critical, always visible.** Forecast with "weighted by stage probability" under the number; bounce rate with its threshold and "over threshold" in text; data as of. The no-credits line is inside the Export menu, the one place the export decision is made.
+**Decision-critical, always visible.** Forecast with "weighted by stage probability" under the number; bounce rate with the guard's two thresholds and "over threshold" in text; data as of; and "Exports and prints spend no credits" on the control bar beside Export. The fee line used to sit inside the Export menu and was justified as sitting where the decision is made. That was wrong twice over: a fee is decision-critical whether or not the reader has decided to act, and the FTC's 2022 dark-patterns report names exactly this shape — a charge disclosed only in the control that confirms it — as the mechanism of a deceptive act. It is now on the bar, visible without a click, on every plan.
 
 **Removed rather than hidden.** The report builder, custom metrics, dashboards as objects, goals and alerts, favourites and "set as default" (the role default does this), the Run button, per-widget time filters, the AI assistant entry point, the Campaign results tab at Fathom and Halyard, the Team select at Fathom, Halyard and for a scoped AE.
 
+**Locked rather than removed.** The opposite case, and the reason the two words are kept apart. Removed means the thing cannot exist here at any price: Fathom has no campaigns, so there is no Campaign results tab and no lock. Locked means the thing exists and this plan does not include it: Fathom's Pipeline and Sequences tabs, and the CSV export and weekly email at Fathom, Halyard and Ridgeline. A removed item leaves no trace; a locked one stays exactly where it would live, with the plan name on it.
+
 ### The nine-point score
 
-1. Forecast method, bounce state and freshness on screen; the fee line at the point of decision. **2**
+1. Forecast method, bounce state, freshness and the fee line all on screen without a click; the forecast and the bounce rate print even on a locked report. **2**
 2. Every visible item has a number in §4 with the fitted-shape source. **2**
 3. Page, then drawer or in-place expansion; a record is a page, not a level; the phone keeps the count. **2**
 4. Every door is text plus chevron, labelled by content with a count. **2**
@@ -235,7 +245,8 @@ Not a lesson. The rules that mattered most:
 - **Rule 1.** The overview is what everyone needs weekly, so it is never behind a tab or a Run button.
 - **Rule 5.** Range and compare, team and person, count and its records: each pair stays on one side of a door.
 - **Rule 4.** Every count is its own door, labelled with the number it opens; nothing is hover-only.
-- **Rule 7.** Forecast method, bounce state and freshness sit on the tile, not in a glossary.
+- **Rule 7.** Forecast method, bounce state, freshness and the fee statement sit on the page, not in a glossary and not inside the menu that confirms the action.
+- **The gated-features pattern.** Where a plan does not include a report or an export, the lock sits on the tab or the control, at the entry point, with the plan name and one total price; the report's shape and row count still show; and the two numbers that are never gated, the forecast and the bounce rate, print anyway.
 
 ## 8. Review
 
@@ -243,12 +254,17 @@ Not a lesson. The rules that mattered most:
 |---|---|---|
 | All roles | SDR had no state | No-access state names the admin, points to Sequences and Home |
 | All four businesses | No campaigns or teams at Fathom and Halyard | Tab and select removed, not disabled; overrides in §4 |
+| All four businesses | Three plans, and the specs disagreed about what each includes | §3 renders spec 14's plan table: Starter one report, Growth four, Scale four plus export. Halyard's weekly CSV became a weekly PDF, and the gap is stated rather than papered over |
+| Every field has a source | `bounceGuardThreshold` 3.5% was a threshold invented here | Deleted. The thresholds are Settings' single pair, 4% and 6%; 3.5% was never a threshold but an observed rate |
+| Every field has a source | The Campaign entity was redefined here, with a `channel` | Spec 10 owns `Campaign` and `Audience`; Reports adds `dealsCreated` and `pipelineAmount` and nothing else |
+| Every field has a source | Deals carried an `outcome` flag and a lost stage | Five stages only; lost means archived, with `archivedOn` and `lostReason` from spec 09 |
 | Every field has a source | Users, activity, closed deals, stage history, step stats, campaigns, freshness absent | Listed in §2 with types |
 | Every action has an outcome | Export and print had none | Outcomes table; print stylesheet |
 | Empty, error, no-access | Real zero and empty range looked alike | Both defined; a zero is data, not a door |
 | Keyboard | Chart unreachable | Skipped in tab order with a text summary; tiles are links |
 | Phone width | Table too wide | Sticky first column, scroll inside the table; drawer becomes a sheet |
-| Decision-critical visible | Fee line behind the Export door | Kept there and justified: the decision is made in that menu |
+| Decision-critical visible | Fee line behind the Export door | Moved onto the control bar beside Export. The earlier justification ("the decision is made in that menu") was the FTC's deceptive shape, not a defence |
+| Decision-critical visible | A locked report could have hidden the forecast and the bounce rate | Both print on a locked report; safety and decision-critical items are on every plan |
 | Two levels | "Open deal" from a drawer looked like a third | Defined as navigation; Back restores the drawer |
 | Doors by content | "More" on the table | "Columns: 7 of 10" |
 | Dependent fields together | Compare was a separate toggle for the AE | Moved into the range menu where its number is under 20 |

@@ -7,6 +7,8 @@ import type { UsageItem } from "./model"
 // Fathom overrides: no CS role; the founder (admin) keeps the accounts herself, and there is no AE to hand off from.
 // Halyard overrides: the agency's ten clients are workspaces, not accounts; the page only holds each client's own
 // customers, kept out of sequences, so nearly everything is tail.
+// An account opens two ways: the quick-look drawer (flat, a glance while scanning the table) and the account record
+// page built from the shared record template in specs/09-deal-record.md. Both show the same fields in the same order.
 
 const r = (cs: number, ae?: number, admin?: number) => ({ ridgeline: { cs, ...(ae !== undefined ? { ae } : {}), ...(admin !== undefined ? { admin } : {}) } })
 const hal = { halyard: { admin: 3 } }
@@ -43,7 +45,7 @@ export const accountsItems: UsageItem[] = [
   { id: "ren.lapsed", page: "accounts", area: "Renewals", label: "Lapsed renewals", weekly: { cs: 4, ae: 2, admin: 4 }, note: "Appears only when one exists (object state, rule 6)." },
 
   // Hand-offs
-  { id: "ho.waiting", page: "accounts", area: "Hand-offs", label: "Hand-offs waiting for you", critical: true, weekly: { cs: 25, ae: 25, admin: 4 }, overrides: { ridgeline: { cs: 15, ae: 20 }, fathom: { admin: 0 }, halyard: { admin: 0 } }, note: "A pending approval; visible while one exists. Removed at Fathom and Halyard: nobody hands off there." },
+  { id: "ho.waiting", page: "accounts", area: "Hand-offs", label: "Hand-offs waiting for you", weekly: { cs: 25, ae: 25, admin: 4 }, overrides: { ridgeline: { cs: 15, ae: 20 }, fathom: { admin: 0 }, halyard: { admin: 0 } }, note: "A queue, not an approval: head by usage for CS and AE, and shown only while one exists (object state). Removed at Fathom and Halyard: nobody hands off there." },
   { id: "ho.accept", page: "accounts", area: "Hand-offs", label: "Accept hand-off", weekly: { cs: 18, ae: 2, admin: 2 }, overrides: { ridgeline: { cs: 12 }, fathom: { admin: 0 }, halyard: { admin: 0 } } },
   { id: "ho.send", page: "accounts", area: "Hand-offs", label: "Send hand-off to customer success", weekly: { cs: 1, ae: 25, admin: 2 }, overrides: { ridgeline: { ae: 18 }, fathom: { admin: 0 }, halyard: { admin: 0 } }, note: "Usually started from the closed-won deal; also here for the AE who forgot." },
   { id: "ho.notes", page: "accounts", area: "Hand-offs", label: "Why they bought and what was promised", weekly: { cs: 18, ae: 20, admin: 2 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 0 } }, note: "Kept with the hand-off it belongs to (rule 5)." },
@@ -75,8 +77,8 @@ export const accountsItems: UsageItem[] = [
   { id: "work.files", page: "accounts", area: "Working an account", label: "Files", weekly: { cs: 4, ae: 2, admin: 1 } },
   { id: "work.all-fields", page: "accounts", area: "Working an account", label: "All fields, including custom fields", weekly: { cs: 4, ae: 2, admin: 6 } },
   { id: "work.owner", page: "accounts", area: "Working an account", label: "Change owner", weekly: { cs: 4, ae: 3, admin: 12 }, overrides: { fathom: { admin: 1 }, halyard: { admin: 2 } } },
-  { id: "work.churned", page: "accounts", area: "Working an account", label: "Mark churned", weekly: { cs: 3, ae: 1, admin: 2 }, note: "Its consequence is written on the confirm step, never one door further (rule 7)." },
-  { id: "work.remove", page: "accounts", area: "Working an account", label: "Remove account", weekly: { cs: 1, ae: 0.5, admin: 2 }, note: "Same rule as Mark churned; undo lives in the notification." },
+  { id: "work.churned", page: "accounts", area: "Working an account", label: "Mark churned", critical: true, weekly: { cs: 3, ae: 1, admin: 2 }, note: "Destructive in effect: the account leaves the default view and stops being sequenced. The consequence is written on the control, never one door further (rule 7)." },
+  { id: "work.remove", page: "accounts", area: "Working an account", label: "Remove account", critical: true, weekly: { cs: 1, ae: 0.5, admin: 2 }, note: "Destructive, so it is marked like every other delete in the product (rule 7); undo lives in the notification." },
   { id: "work.push-crm", page: "accounts", area: "Working an account", label: "Push to CRM now", weekly: { cs: 3, ae: 2, admin: 6 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 1 } } },
 
   // Views and filters

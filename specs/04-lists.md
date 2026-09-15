@@ -46,7 +46,7 @@ Lists per business. Meridian: 14 (5 segments), including "Q4 enterprise targets"
 |---|---|---|
 | Page | New list | Chooser in place: Static list, Segment from filters, Import CSV. Static: name, kind, then the People or Companies table in a drawer to pick members. Segment: name, kind, filters, live count. CSV: file, field mapping, "Import 1,204 rows as a people list" |
 | Row, visible on hover and focus | Add to sequence (people lists; SDR, admin); Add to campaign (marketer) | Picker names the sequence or campaign, shows credits and "n already in another sequence", confirms with "Add 1,240 people" |
-| Row, always in "…" | Open · Add to sequence or campaign · Export CSV · Duplicate · Rename · Pin to top · Change who can see it · Convert to segment / Freeze as static · Archive · Delete list (people stay in People) | Export: all emails or verified only; file downloads; order matches the table. Delete: confirm names the list and states "The 1,240 people stay in People. Running sequences keep their contacts." Undo for 10 seconds in the toast |
+| Row, always in "…", named "Actions for {list}" | Open · Add to sequence or campaign · Export CSV · Duplicate · Rename · Pin to top · Change who can see it · Convert to segment / Freeze as static · Archive · Delete list (people stay in People) | Export: all emails or verified only; file downloads; order matches the table. Delete: confirm names the list and states "The 1,240 people stay in People. Running sequences keep their contacts." Undo for 10 seconds in the toast |
 | Companies list rows | "Find people at these companies" replaces Add to sequence | Opens People filtered to the companies |
 | Bulk (checkbox column) | Add to sequence, Add to campaign, Export, Archive, Delete | Same outcomes; the bar shows the count |
 | Detail, page | Add to sequence / campaign, Export CSV, Refresh now (segments) | As above; Refresh recomputes members and updates "last refreshed" |
@@ -57,7 +57,7 @@ Lists per business. Meridian: 14 (5 segments), including "Q4 enterprise targets"
 
 **Sorting and columns.** Sort by Updated (default, newest first), Records, Name; clicking a header. Columns door "Columns: visibility, source, created ▾" adds the three tail columns; choice persists. Detail members table sorts by Added (default), Name, Last activity.
 
-**States.** Empty: "No lists yet. Make one from People, Companies, or here." with the New list chooser open. Empty search: the template's "Nothing matches. Clear the search or a filter." Empty segment: "No one matches these filters right now. Widen a filter or wait for the next refresh." Loading: skeleton rows. Error: "Lists could not load. Retry.", keeping the last good table. No access (AE, CS): the shell's `NoAccess` page names the roles that use Lists and the admin to ask; it adds one line: "You can still add people to a sequence from People."
+**States.** Empty: "No lists yet. Make one from People, Companies, or here." with the New list chooser open. Empty search: the template's "Nothing matches. Clear the search or a filter." Empty segment: "No one matches these filters right now. Widen a filter or wait for the next refresh." Loading: skeleton rows. Error: "Lists could not load. Retry.", keeping the last good table. No access (AE, CS): Lists is an area those seats do not hold, so the shell's no-access page names the seats that use Lists and the admin to ask, and adds one line: "You can still add people to a list or a sequence from People." Account executives keep the "Add to list" row action on People; its toast links back to People filtered to that list, never here. If a workspace profile had left Lists out of a seat that does hold it, the page would still open from a link or ⌘K and its header would offer "Add to sidebar"; a profile gap and a seat gap are different things (spec 00).
 
 **Keyboard.** `/` focus search, `n` New list, `j`/`k` move, `Enter` open, `s` Add to sequence, `c` Add to campaign, `e` Export, `x` select, `Esc` close a door or drawer, `⌘K` palette listing each of these with its key. Every door is a button with `aria-expanded`; drawers trap and return focus.
 
@@ -125,11 +125,11 @@ Weekly share of active users per role, baseline Meridian. Overrides where the bu
 | Find and merge duplicates | 3 | 4 | 6 | |
 | Push list to the CRM as a campaign | 2 | 8 | 8 | F sdr 0, admin 1 |
 
-Shape check (51 items, `shape()` from `model.ts`), head / body / tail: Meridian SDR 22 / 45 / 33; Meridian marketer 22 / 55 / 24; Meridian admin 14 / 51 / 35; Halyard SDR 25 / 41 / 33; Ridgeline marketer 22 / 49 / 29; Fathom admin 24 / 29 / 47. Heads sit inside the 15 to 25% band; tails run under 45% for the roles that live here, expected on a screen with few settings and many actions. Ridgeline's inbound SDR has no item above 20%: the page shows the row and the four criticals and doors the rest, the honest result for a role that hardly uses it.
+**Shape check.** One rule across this group: the denominator is every item in `lists.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 51 items in the file. Head / body / tail: Meridian SDR 51 items, 22 / 45 / 33; Meridian marketer 50 items, 22 / 56 / 22; Meridian admin 51 items, 14 / 51 / 35; Halyard SDR 50 items, 26 / 42 / 32; Ridgeline marketer 50 items, 22 / 50 / 28; Fathom admin 48 items, 25 / 31 / 44. Heads sit at the top of or just over the 15 to 25% band; tails run under 45% for the seats that live here, which is expected on a screen with few settings and many actions. Ridgeline's inbound SDR has no item above 20%: the page shows the row and the four decision-critical items and doors the rest, the honest result for a seat that hardly uses it. Account executives and customer success hold no row here, because the page is not theirs to open.
 
 ## 5. Before: the common version
 
-Modelled on Apollo's Lists, from the knowledge base article "Create and Use a List" (updated 28 Aug 2026; 135 reader votes, net −75, the most downvoted article in the "lists" search results) and "Save, Share, and Set Alerts for Searches" (30 Aug 2026), fetched through Apollo's Zendesk API on 13 Sep 2026.
+Modelled on Apollo's Lists, from the knowledge base article "Create and Use a List" (updated 28 Aug 2026; 135 reader votes, net −75, the most downvoted article in the "lists" search results) and "Save, Share, and Set Alerts for Searches" (30 Aug 2026), fetched through Apollo's Zendesk API on 13 Sep 2026. Neither article is reproduced in `knowledge-base/sources/07-apollo-settings-map.md`, so every claim below names the article and its updated date and can be reopened at knowledge.apollo.io; claims that rest on a review site or a third-party guide are labelled secondary or unverified, and none of them carries an argument on its own.
 
 **Layout and depth.** Lists sits in the left nav under "Prospect & enrich". The hub "shows you the lists you created, organized by people and companies". Finding a list is behind a door: "Click Show filters to search for specific lists." Seeing a colleague's list is two doors deep: "Navigate to Lists and click Show filters > Created by. Click Team." Creating from the hub: "Create a list", name, people or companies, "Select filters", check records, "Add to list", "Create". Removing members from a list is behind an ellipsis: "check one or more prospects, then click ... > Remove from lists."
 
@@ -168,12 +168,12 @@ Across businesses: Fathom removes Add to campaign and shows Source on the row fo
 | New list ▾ | Static list · Segment from filters · Import CSV | In place, under the button |
 | Mode, source, archived ▾ | Three filters | In place, toolbar row |
 | Columns: visibility, source, created ▾ | Column checklist | In place |
-| … (More actions), per row | Open, Add to sequence or campaign, Export, Duplicate, Rename, Pin, Change who can see it, Convert or freeze, Archive, Delete list (people stay in People) | Menu, 11 items, destructive last |
+| "Actions for {list}" (…), per row | Open, Add to sequence or campaign, Export, Duplicate, Rename, Pin, Change who can see it, Convert or freeze, Archive, Delete list (people stay in People) | Menu, 11 items, destructive last with its consequence in the label |
 | Edit filters (segments) | The filter builder with live count | In place, replaces the chips |
 | Refresh and alerts ▾ (segments) | Refresh cadence, last refreshed, email alert | In place, under the chips |
 | History: 9 changes ▾ | Who added or removed what | In place, bottom of detail |
 | Add people | People table with filters and Max people per company | Drawer over the detail |
-| … per member row | View, Enrich (2 credits), Set stage, Assign owner, Create call task, Remove | Menu |
+| "Actions for {person}" (…) per member row | View, Enrich (2 credits), Set stage, Assign owner, Create call task, Remove | Menu |
 | ⌘K | Every action with its key | Palette |
 
 Every door has a chevron and text, sits next to what it reveals, and works by keyboard and touch. Add to campaign is removed, not disabled, at Fathom and Halyard. Companies lists replace Add to sequence with "Find people at these companies".
@@ -184,6 +184,8 @@ Every door has a chevron and text, sits next to what it reveals, and works by ke
 
 **Decision-critical, always visible.** Credits before enrol or enrich ("212 net-new emails = 212 credits · balance 1.84M"). "96 already in another sequence" before enrol, with badges on the rows. "New matches added to Q4 enterprise outbound automatically · Turn off" on any segment that feeds something. Delete states what stays. The path to remove a list from a sequence's feed is one click, the same as adding it.
 
+**Lists owns the feed.** The auto-feed and its off switch live here and nowhere else. A sequence or a campaign fed by a list shows one read-only line, "Fed by Q4 enterprise targets · new matches added automatically", linking to that list; it carries no control of its own, so there is one place to turn the feed off and one sentence describing it.
+
 **Removed, not hidden.** "Saved searches" and "saved records" as separate concepts: a segment is the saved search, People is the saved records. "View companies" as an action: the Company column links. Reload after create. The 100-page cap: segments show a live count instead.
 
 **Score.**
@@ -191,7 +193,7 @@ Every door has a chevron and text, sits next to what it reveals, and works by ke
 1. Decision-critical visible: credits, double-enrol, auto-feed, delete consequence, all at level one. 2.
 2. Every visible item has a number: 51 items in `lists.ts`, shape checked. 2.
 3. Two levels on every screen size: page and one door; phone keeps the same doors. 2.
-4. Doors labelled by content with chevron and text; no "More" except the row ellipsis, which is the template's stable menu route. 2.
+4. Doors labelled by content with chevron and text. The row and member menus were "More actions" and are now "Actions for {list}" and "Actions for {person}"; no door in this spec is called More, Other or Advanced. 2.
 5. Doors adjacent, keyboard and touch: in-place expansions under their cause; drawers return focus. 2.
 6. Dependent fields together: filters and their live count; refresh cadence and alert; credits beside the action that spends them. 2.
 7. State persists; expand-all and print exist. 2.
@@ -222,7 +224,7 @@ Lists is a real page, not a lesson. The rules that mattered most:
 | Phone width | Cards, same doors, no third level |
 | Decision-critical visible | Four criticals in the header and menu label |
 | Two levels maximum | Doors table. Gap: a filter builder inside a drawer would be a third level; closed by editing filters in place |
-| Doors labelled by content | Doors table; "…" is the template's stable route and duplicates the visible actions |
+| Doors labelled by content | Doors table. Gap found in the reconciliation pass: the row menu was "More actions"; it is now named for the record it acts on, and it still duplicates the visible actions so nothing is hover-only |
 | Dependent fields together | Filters with count; cadence with alert; credits with the action |
 | State persists | §6 persistence |
 | Accelerators | Keys, palette, hover-and-focus row actions |

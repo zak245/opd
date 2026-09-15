@@ -8,6 +8,8 @@ import type { UsageItem } from "./model"
 // Halyard overrides: ten client workspaces with ten ICPs, so company filters, views and exports are routine.
 // Ridgeline overrides: inbound and product-led; signals replace sequences as the reason to open the page.
 // Customer success is not in the People navigation (nav.ts), so it carries no numbers here.
+// Destructive actions carry critical: true, so they are never hidden: they sit in the always-visible row menu with their
+// consequence written into the label (the same treatment as lists.row.delete).
 
 export const peopleItems: UsageItem[] = [
   // Search and views
@@ -96,7 +98,8 @@ export const peopleItems: UsageItem[] = [
   { id: "people.page-size", page: "people", area: "Table", label: "Rows per page", weekly: { sdr: 3, ae: 2, marketer: 4, admin: 3 } },
 
   // Row actions
-  { id: "people.row.open", page: "people", area: "Row actions", label: "Open the contact", weekly: { sdr: 70, ae: 70, marketer: 20, admin: 20 } },
+  { id: "people.row.quick-look", page: "people", area: "Row actions", label: "Quick look: the drawer beside the table", weekly: { sdr: 70, ae: 45, marketer: 20, admin: 15 }, overrides: { fathom: { admin: 55 }, halyard: { sdr: 75 }, ridgeline: { sdr: 60, ae: 40 } }, note: "Level one of the record: a flat drawer with the few fields a glance needs, the table still in view. Prospecting is a scanning task, so the SDR lives here (PLAN, 14 Sep 2026)." },
+  { id: "people.row.open", page: "people", area: "Row actions", label: "Open the full contact record", weekly: { sdr: 45, ae: 60, marketer: 12, admin: 20 }, overrides: { fathom: { admin: 40 }, ridgeline: { ae: 55 } }, note: "Level two of the record: the page, from the shared record template. Research is a dwelling task, so the AE opens it more often than the SDR does." },
   { id: "people.row.sequence", page: "people", area: "Row actions", label: "Add to sequence", weekly: { sdr: 60, ae: 20, marketer: 3, admin: 5 }, overrides: { ridgeline: { sdr: 12, ae: 5 }, fathom: { admin: 50 } } },
   { id: "people.row.list", page: "people", area: "Row actions", label: "Add to list", weekly: { sdr: 30, ae: 10, marketer: 30, admin: 5 }, overrides: { fathom: { admin: 20 } } },
   { id: "people.row.call", page: "people", area: "Row actions", label: "Create a call task", weekly: { sdr: 22, ae: 25, marketer: 0, admin: 2 }, overrides: { ridgeline: { sdr: 10 }, fathom: { admin: 20 } } },
@@ -110,11 +113,11 @@ export const peopleItems: UsageItem[] = [
   { id: "people.row.note", page: "people", area: "Row actions", label: "Add a note", weekly: { sdr: 4, ae: 15, marketer: 1, admin: 1 } },
   { id: "people.row.copy-email", page: "people", area: "Row actions", label: "Copy email address", weekly: { sdr: 4, ae: 8, marketer: 2, admin: 2 } },
   { id: "people.row.add-to-deal", page: "people", area: "Row actions", label: "Add to a deal", weekly: { sdr: 3, ae: 12, marketer: 0, admin: 1 }, overrides: { ridgeline: { ae: 18 } } },
-  { id: "people.row.dnc", page: "people", area: "Row actions", label: "Mark do not contact", weekly: { sdr: 4, ae: 4, marketer: 3, admin: 4 } },
+  { id: "people.row.dnc", page: "people", area: "Row actions", label: "Mark do not contact, with what it stops", critical: true, weekly: { sdr: 4, ae: 4, marketer: 3, admin: 4 }, note: "Safety state: it removes the person from every sequence and blocks outreach, so the consequence is on the control (rule 7)." },
   { id: "people.row.assign-owner", page: "people", area: "Row actions", label: "Assign owner", weekly: { sdr: 3, ae: 6, marketer: 2, admin: 15 }, overrides: { fathom: { sdr: 0, admin: 0 } } },
   { id: "people.row.push-crm", page: "people", area: "Row actions", label: "Push to CRM now", weekly: { sdr: 4, ae: 6, marketer: 2, admin: 10 }, overrides: { fathom: { admin: 1 } } },
   { id: "people.row.merge", page: "people", area: "Row actions", label: "Merge duplicate", weekly: { sdr: 1, ae: 1, marketer: 1, admin: 4 } },
-  { id: "people.row.remove", page: "people", area: "Row actions", label: "Remove from workspace", weekly: { sdr: 3, ae: 2, marketer: 2, admin: 6 } },
+  { id: "people.row.remove", page: "people", area: "Row actions", label: "Remove from workspace, with what it stops", critical: true, weekly: { sdr: 3, ae: 2, marketer: 2, admin: 6 } },
 
   // Bulk actions (appear when rows are selected)
   { id: "people.bulk.select", page: "people", area: "Bulk actions", label: "Select rows, page, or all matching", weekly: { sdr: 50, ae: 20, marketer: 30, admin: 15 }, overrides: { fathom: { admin: 40 } } },
@@ -129,7 +132,7 @@ export const peopleItems: UsageItem[] = [
   { id: "people.bulk.assign-owner", page: "people", area: "Bulk actions", label: "Assign owner to selected", weekly: { sdr: 2, ae: 3, marketer: 2, admin: 20 }, overrides: { fathom: { sdr: 0, admin: 0 }, halyard: { admin: 20 } } },
   { id: "people.bulk.push-crm", page: "people", area: "Bulk actions", label: "Push selected to CRM", weekly: { sdr: 3, ae: 3, marketer: 3, admin: 10 }, overrides: { fathom: { admin: 1 } } },
   { id: "people.bulk.merge", page: "people", area: "Bulk actions", label: "Merge selected duplicates", weekly: { sdr: 0.5, ae: 0.5, marketer: 1, admin: 3 } },
-  { id: "people.bulk.remove", page: "people", area: "Bulk actions", label: "Remove selected", weekly: { sdr: 1, ae: 1, marketer: 2, admin: 5 } },
+  { id: "people.bulk.remove", page: "people", area: "Bulk actions", label: "Remove selected, with what it stops", critical: true, weekly: { sdr: 1, ae: 1, marketer: 2, admin: 5 } },
 
   // Page actions and credit visibility
   { id: "people.credits.cost", page: "people", area: "Page", label: "Credit cost and balance before enrich, reveal or research", critical: true, weekly: { sdr: 25, ae: 15, marketer: 5, admin: 15 }, overrides: { fathom: { sdr: 35, admin: 40 } }, note: "Spending is a consequence; it is on the button, never one click away (rule 7)." },

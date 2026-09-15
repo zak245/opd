@@ -11,8 +11,10 @@ Tasks is where an SDR spends the middle of every day. A sequence sends its autom
 | SDR | All day | Work the queue: call, connect, write, mark done, snooze, skip |
 | Account executive | Daily, briefly | Follow-ups on open deals; creates manual tasks after calls |
 | Customer success | Weekly (daily at Ridgeline) | Renewal and expansion follow-ups |
-| RevOps admin | Weekly | Sees the team's queue, reassigns when someone leaves; at Fathom and Halyard, works tasks too |
-| Marketer | Almost never | Has no tasks; the page says why and who to ask |
+| RevOps admin | Weekly | Sees the team's queue, reassigns when someone leaves; at Fathom and Halyard the admin seat works tasks as well |
+| Marketer | Never | No access to the area; the page names who works tasks and who to ask |
+
+Tasks is an area the seat carries: SDR, account executive, customer success and the RevOps admin have it, the marketer does not. Where it sits in the sidebar is a second question, answered by the workspace profile declared at set-up, never inferred from behaviour (RULES.md, the declared sidebar). Fathom's profile is Founder-led outbound and Halyard's is Agency, so Tasks is in the admin seat's sidebar at both and those admins work the queue like an SDR. Where a profile leaves Tasks out, the page still opens by deep link and ⌘K and its header offers "Add to sidebar"; and when a sequence first assigns a task to someone whose profile left it out, the page appears in their sidebar for two weeks and then asks "keep it?".
 
 The one thing nobody may lose sight of: an overdue sequence task means a contact is stuck at that step. The sequence waits. The page says so on every such row and in the header.
 
@@ -56,7 +58,7 @@ Seed size becomes 40 tasks per business. Halyard is heavy on Call and LinkedIn f
 
 **Page actions.** New task opens a drawer: Contact (search), Type, Due (Today, Tomorrow, a date), Title, Note, Owner (admin). Work the queue is in section 6. Export CSV and column visibility sit in a door "Table options: columns, export".
 
-**Filters and search.** Search matches contact, company, title and sequence. Filters: Type, Due (Overdue, Today, This week, All open), Source (each sequence, Manual, Agent), Owner (Me, each user, Everyone), Status (Open, Snoozed, Done, Skipped), Sort (Due, Type, Contact). Which sit at level one varies by role and business (section 6); the rest share one door labelled with its contents, such as "More filters: source, status, sort".
+**Filters and search.** The shared table behaviours — sortable headers, the bulk bar, skeleton loading, row actions on focus as well as hover — are specified once in [02 People](02-people.md); this spec records only its deltas. Search matches contact, company, title and sequence. Filters: Type, Due (Overdue, Today, This week, All open), Source (each sequence, Manual, Agent), Owner (Me, each user, Everyone), Status (Open, Snoozed, Done, Skipped), Sort (Due, Type, Contact). Which sit at level one varies by role and business (section 6); the rest share one door labelled with its contents, such as "More filters: source, status, sort".
 
 **Row door.** A chevron with the text "History and contact" at the end of the What to do cell, expanding in place: previous steps with dates and results, the contact's email and status, phone, local time, last activity, notes and the note field. Open state persists per task per user. "Expand all" and "Collapse all" sit above the column. Print expands every row.
 
@@ -65,7 +67,7 @@ Seed size becomes 40 tasks per business. Halyard is heavy on Call and LinkedIn f
 | State | Shown |
 |---|---|
 | No tasks, role gets tasks | "Nothing due. Tasks arrive from sequences you own and from deals and accounts assigned to you." plus New task |
-| No tasks, marketer | "No tasks are assigned to you. Tasks come from sequences and from deals and accounts you own. At Meridian sequences are owned by SDRs; if you should have tasks, ask Daniel Okafor, RevOps admin." Work the queue is absent, not disabled |
+| No access, marketer | The shell's no-access page: "Tasks is worked by SDRs, account executives, customer success and the RevOps admin. At Meridian Software that is Marcus Adeyemi, Elena Vasquez, Aisha Rahman and Daniel Okafor. Daniel Okafor can change who has access." No empty table and no New task button: the area is not the marketer's |
 | Everything done | "Done for today. 4 due tomorrow." linking to Due: This week |
 | Filter matches nothing | "Nothing matches. Clear the search or a filter." (template) |
 | Loading; error | Five skeleton rows, counts "—"; "Tasks did not load." with Retry, filters kept |
@@ -77,15 +79,17 @@ Seed size becomes 40 tasks per business. Halyard is heavy on Call and LinkedIn f
 
 **Phone width.** Rows become cards: due and type, then contact, then what to do. Done and "…" are always visible. The row door still expands in place. Filters collapse into one door, "Filters: due, type, owner", with the active count. The queue is full screen with Done, Snooze and Skip fixed at the bottom. Nothing is deeper than on desktop.
 
-**By role and business.** The split is in section 6. In short: the marketer sees the empty state; admins open on Everyone when they have no open task of their own, otherwise on Me, decided by object state; at Fathom everyone has the Owner filter; Halyard puts local time under Due; Ridgeline keeps Skip in the menu because renewal sequences exist.
+**By role and business.** The split is in section 6. In short: the marketer gets the no-access page; admins open on Everyone when they have no open task of their own, otherwise on Me, decided by object state; at Fathom everyone has the Owner filter; Halyard puts local time under Due; Ridgeline keeps Skip in the menu because renewal sequences exist.
 
 ## 4. Usage items
 
-Weekly use per role, share of active users touching the item, baseline Meridian, per USAGE-MODEL.md. Code: `src/ollopa/usage/tasks.ts`. Marketer is 0 on every item except rows and counts (2) and New task (1): the page is the empty state for that role. Overrides: F Fathom, H Halyard, R Ridgeline.
+Weekly use per role, share of active users touching the item, baseline Meridian, per USAGE-MODEL.md. Code: `src/ollopa/usage/tasks.ts`. The marketer has no access, so the seat carries no number at all; `weeklyUse` also returns zero for a seat a business has not declared (`SEATS` in `usage/model.ts`), so Fathom's and Halyard's absent seats never compute a first screen. Overrides: F Fathom, H Halyard, R Ridgeline.
+
+Two marks changed in this pass. The task rows are the page's own content, head by usage at 95% for the SDR, so they are no longer marked decision-critical; rule 7 covers price, commitment, destructive consequences and safety state, not a page's body. The due-today and overdue counts keep the mark, and the argument is stated once here: an overdue sequence task means a contact is stuck at that step and the sequence is waiting, which is the safety state of this page. Delete a manual task gains the mark, because every other destructive action in the product carries it.
 
 | Item | SDR | AE | CS | Adm | Overrides |
 |---|---|---|---|---|---|
-| Task rows: due, type, contact, what to do, from **(critical)** | 95 | 55 | 20 | 20 | F adm 90; H adm 45; R sdr 45, ae 40, cs 40, adm 10 |
+| Task rows: due, type, contact, what to do, from | 95 | 55 | 20 | 20 | F adm 90; H adm 45; R sdr 45, ae 40, cs 40, adm 10 |
 | Due today and overdue counts **(critical)** | 95 | 50 | 20 | 25 | F adm 90; H adm 55; R sdr 45, ae 35, cs 40 |
 | Owner column | 0 | 0 | 0 | 20 | F adm 60, sdr 30; H adm 50; R adm 8 |
 | Row door: step history and contact details | 55 | 25 | 12 | 5 | R sdr 25, cs 30 |
@@ -101,7 +105,7 @@ Weekly use per role, share of active users touching the item, baseline Meridian,
 | Add a note to a task | 15 | 20 | 10 | 2 | R cs 25 |
 | Change due date, type or title | 8 | 12 | 5 | 3 | |
 | Reassign | 0 | 0 | 0 | 12 | F adm 8; H adm 35; R adm 4 |
-| Delete a manual task | 4 | 5 | 2 | 3 | |
+| Delete a manual task **(critical)** | 4 | 5 | 2 | 3 | |
 | Work the queue | 85 | 15 | 5 | 5 | F adm 75; H sdr 90; R sdr 30, ae 8, cs 10, adm 2 |
 | Keyboard shortcuts in the queue | 30 | 5 | 1 | 1 | H sdr 50; R sdr 8 |
 | Search | 15 | 10 | 6 | 15 | H sdr 18, adm 30 |
@@ -129,11 +133,11 @@ Weekly use per role, share of active users touching the item, baseline Meridian,
 | Ridgeline, CS | 10 (29%) | 5 (15%) | 19 (56%) |
 | Meridian, SDR | 13 (38%) | 13 (38%) | 8 (24%) |
 
-Three pairs fit the published shape, with heads a touch above the band. The Meridian SDR head is 38% and Halyard's SDR reaches 44%. That is deliberate: Tasks is an operate-all-day screen for one role, the case where the knowledge base says density beats disclosure (00-core-model.md §8.2; PRODUCT.md: "they live in one screen all day, so doors cost them the most"). Every level-one decision in section 6 follows from this table through `levelOf`.
+No pair fits the 15–25% head band. Three sit at 29% and the Meridian SDR reaches 38%, Halyard's SDR 44%. The argument for the SDR is real — Tasks is an operate-all-day screen for one role, and an all-day screen is where density beats disclosure (PRODUCT.md: "they live in one screen all day, so doors cost them the most") — but it is an argument, not a measurement, and the honest reading is that this page is denser than the published shape. There is no head-to-head test of density against disclosure on a professional tool with its own all-day users ([11 What changed](../knowledge-base/11-what-changed-2018-2026.md), "What nobody re-ran"), so point 2 of the score is a 1, not a 2. Every level-one decision in section 6 follows from this table through `levelOf`.
 
 ## 5. Before: the common version
 
-Modelled on Apollo's Tasks page, from the knowledge base articles "Tasks Overview" (updated 31 Jul 2026), "Create a Task" (9 Sep 2026) and "Organize and Complete Tasks" (12 Sep 2026) and the six first-party screenshots inside them, fetched 13 Sep 2026 through the KB's Zendesk API.
+Modelled on Apollo's Tasks page, from the knowledge base articles "Tasks Overview" (updated 31 Jul 2026), "Create a Task" (9 Sep 2026) and "Organize and Complete Tasks" (12 Sep 2026) and the screenshots inside them, read 13 Sep 2026. Those three article titles and their dates are the whole source for this section; the screenshots are not separately linkable, so every layout detail below that is not a direct quotation is a description of them and cannot be checked against a URL.
 
 **Where it is.** Main nav, group "Tools & automations", item "Tasks" (knowledge-base/sources/07-apollo-settings-map.md §6). Home has a Tasks widget with "View all tasks" ("Home Overview").
 
@@ -159,7 +163,7 @@ Kept because it is good: "Task 5 of 20" with arrows in the drawer, bulk actions 
 
 **Layout.** One page from the table template. Header with counts, "Work the queue", "New task". One toolbar: search, the level-one filters for this role and business, one door for the rest, "Expand all", "Table options: columns, export". The table. No tab row, no left rail, no views, no group by.
 
-**Level one and level two, per role at Meridian.** SDR: counts, rows, Done, Snooze, Write, Skip with its consequence, New task, Work the queue, shortcuts on labels, Type and Due filters and the row door at level one; Source, Status and Sort in "More filters", note, edit, delete, snooze until and open contact in "…", columns and export in "Table options". AE: counts, rows, Done, Snooze, Write, Skip, New task, Open contact and Add note at level one; the queue as a secondary button (15%), all filters in the door. CS: counts, rows, Done, Skip; everything else in doors, and the queue button appears once a task exists. Admin: counts, rows, Owner column and filter, Skip; Reassign and the Status and Due filters in doors; the page opens on Everyone. Marketer: the empty state naming Daniel Okafor, with New task as a plain button.
+**Level one and level two, per role at Meridian.** SDR: counts, rows, Done, Snooze, Write, Skip with its consequence, New task, Work the queue, shortcuts on labels, Type and Due filters and the row door at level one; Source, Status and Sort in "More filters", note, edit, delete, snooze until and open contact in "…", columns and export in "Table options". AE: counts, rows, Done, Snooze, Write, Skip, New task, Open contact and Add note at level one; the queue as a secondary button (15%), all filters in the door. CS: counts, rows, Done, Skip; everything else in doors, and the queue button appears once a task exists. Admin: counts, rows, Owner column and filter, Skip; Reassign and the Status and Due filters in doors; the page opens on Everyone. Marketer: the no-access page naming the four seats that work tasks and the admin who can change access.
 
 **Across the four businesses.** Fathom: the admin gets the SDR's level one plus Owner filter and column; a third of rows say "From: Research agent". Meridian: the baseline. Halyard: local time under Due, Source at level one, and for the admin Reassign, Bulk reassign and Status at level one; the page is per workspace, the switcher is a later case. Ridgeline: CS and AE get the AE's level one plus Snooze until a date; Type and Source go into the door for the SDR; the queue is a secondary button for everyone but the SDR.
 
@@ -168,8 +172,8 @@ Kept because it is good: "Task 5 of 20" with arrows in the drawer, bulk actions 
 | Door | Label | Container |
 |---|---|---|
 | Row door | "History and contact", chevron and text | Expands in place |
-| Row menu | "…", aria-label "More actions"; items carry shortcuts | Flat menu, no submenus |
-| More filters | "More filters: source, status, sort" (contents vary by role) | Popover |
+| Row menu | "…", named for what it holds: "Snooze until, note, edit, open contact, reassign, delete"; items carry shortcuts | Flat menu, no submenus |
+| Filters | "More filters: source, status, sort" — the label lists its contents and the count of active ones (contents vary by role) | Popover |
 | Table options | "Table options: columns, export" | Popover |
 | New task | "New task" | Drawer |
 | Work the queue | "Work the queue (11)" | Drawer beside the table; full screen on phone |
@@ -182,12 +186,12 @@ Kept because it is good: "Task 5 of 20" with arrows in the drawer, bulk actions 
 
 **Decision-critical, always visible.** The overdue count and "sequence waiting" on the row; the consequence written on Skip and on Snooze for sequence tasks; Delete only where it applies, below a divider, with Undo.
 
-**Removed rather than hidden.** Priority (a task is due or it is not); starring; the Recommended ranking; saved views; group by; multi-level sort; the 30 firmographic filters and the deprecated one; the type tabs and Views menu (one Type filter remains); "Archive" (Skip for sequence tasks, Delete for manual ones); auto-skip (an overdue task stays overdue and says so); plan-gated task types; "Start call session" (no dialer in Ollopa: a call task shows the number and takes the outcome).
+**Removed rather than hidden.** Priority (a task is due or it is not); starring; the Recommended ranking; saved views; group by; multi-level sort; the 30 firmographic filters and the deprecated one; the type tabs and Views menu (one Type filter remains); "Archive" (Skip for sequence tasks, Delete for manual ones); auto-skip (an overdue task stays overdue and says so); "Start call session" (no dialer in Ollopa: a call task shows the number and takes the outcome). Apollo gates call tasks by plan; Ollopa's plan table gates seats, mailboxes, teams and profiles, agents, reports, CRM sync, SSO and the API, and never the day's work, so every task type is on every plan.
 
 **Score.**
 
 1. Decision-critical visible: overdue counts, sequence waiting, Skip and Snooze consequences, Delete with Undo. 2.
-2. Every visible item backed by a number: section 4, density case explained. 2.
+2. Every visible item backed by a number: yes, section 4 — but four of the five role-business pairs are above the head band and one reaches 44%, on an argument rather than a measurement. 1.
 3. Two levels on every screen size; inline fields inside doors are not doors; the phone collapses layout, not availability. 2.
 4. Doors labelled by content with chevron and text; "…" is the one conventional ellipsis, labelled for assistive tech. 2.
 5. Doors adjacent, all buttons, keyboard and touch; actions show on focus and are always visible on the phone. 2.
@@ -196,7 +200,7 @@ Kept because it is good: "Task 5 of 20" with arrows in the drawer, bulk actions 
 8. Disclosure by user action or object state only; no ranking by history. 2.
 9. Door open rates are logged and a twice-yearly review is scheduled, but none has happened. 1.
 
-Total 17 of 18.
+Total 16 of 18.
 
 ## 7. Lesson steps
 
@@ -205,13 +209,14 @@ Not a lesson. The rules that mattered most:
 - **Rule 1.** Due, what to do and the sequence state are needed on every visit; they are columns, not drawer content.
 - **Rule 4.** "Archive" became "Skip · contact moves to next step"; every door label says what is behind it.
 - **Rule 6.** A stable order, overdue first then oldest due, replaced an AI "Recommended" ranking explained only on hover.
-- **Rule 8.** The queue, shortcuts printed on labels and bulk actions let the SDR live here without doors; 30 filters nobody uses on a task page were deleted, not tucked away.
+- **Rule 8.** The queue, shortcuts printed on labels and bulk actions let the SDR live here without doors; 30 filters nobody uses on a task page were deleted, not tucked away. The printed shortcut is a floor: hints do not teach (749 tooltip exposures produced two shortcut activations, IHM 2025), while a period of full exposure does (9.79% to 86.20%, holding at 73.09% afterwards). The queue is that exposure here — it puts every action in front of the person who works the page all day.
 
 ## 8. Review
 
 | Check | Result |
 |---|---|
-| All roles covered | Gap: the marketer had no page; closed with the empty state naming the admin |
+| All roles covered | Gap: the marketer had an empty table with a New task button, which reads as access. Closed: the marketer has no access to the area and gets the shell's no-access page naming the four seats that work tasks |
+| Sidebar, not role | Gap: the spec gave Fathom's and Halyard's admins tasks by role. Closed: the seat carries the area, the declared workspace profile decides the sidebar, and a page left out still opens and offers "Add to sidebar" |
 | All four businesses covered | Gap: Halyard's local time and Source filter were level two by the baseline; closed with overrides |
 | Every field has a source | Nine seed additions. Gap: contacts matched by name; closed with `contactId` |
 | Every action has an outcome | Section 3, including undo and sequence effects |
@@ -226,5 +231,5 @@ Not a lesson. The rules that mattered most:
 | Accelerators present | Queue, shortcuts, bulk, expand all |
 | Usage shape checked | Four pairs; SDR density case stated |
 | Nothing hover-only | Actions on focus and in the menu; always visible on the phone |
-| Role gaps explain themselves | Marketer empty state; SDR description line naming the admin |
+| Role gaps explain themselves | Marketer no-access page naming the seats and the admin; SDR description line naming the admin who can widen the view |
 | No usage numbers or teaching text | Task counts only; numbers live in `tasks.ts` and here |

@@ -9,6 +9,7 @@ import type { UsageItem } from "./model"
 // Halyard overrides: the ops lead (admin) tracks hand-offs to ten client CRMs; custom fields and sync are daily.
 // Ridgeline overrides: expansion and renewal deals; product signals and plan fields are the working set for AE and CS.
 // SDR and marketer have no access to deals; their numbers are absent and the page names who has access.
+// Five stages only; a lost deal is archived with a reason, so there is no "Closed lost" stage (PLAN.md, 13 Sep 2026).
 
 export const dealItems: UsageItem[] = [
   // Header fields
@@ -27,7 +28,7 @@ export const dealItems: UsageItem[] = [
 
   // Closing
   { id: "close.won", page: "deal", area: "Closing", label: "Mark won", weekly: { ae: 45, cs: 35, admin: 15 }, overrides: { fathom: { admin: 30 }, halyard: { admin: 20 } }, note: "About half of Meridian's AEs close something in a given week." },
-  { id: "close.lost", page: "deal", area: "Closing", label: "Mark lost, with a reason", weekly: { ae: 35, cs: 25, admin: 15 }, overrides: { fathom: { admin: 25 }, halyard: { admin: 25 } }, note: "Halyard marks 'client rejected' often." },
+  { id: "close.lost", page: "deal", area: "Closing", label: "Mark lost and archive, with a reason", weekly: { ae: 35, cs: 25, admin: 15 }, overrides: { fathom: { admin: 25 }, halyard: { admin: 25 } }, note: "Archiving is how a deal is lost; the reason is required and the consequence is stated before it happens. Halyard archives 'client rejected' often." },
   { id: "close.reopen", page: "deal", area: "Closing", label: "Reopen a closed deal", weekly: { ae: 3, cs: 5, admin: 3 } },
   { id: "close.delete", page: "deal", area: "Closing", label: "Delete deal", critical: true, weekly: { ae: 1, cs: 0.5, admin: 3 }, note: "Destructive. The button and its consequence are visible without a click (rule 7)." },
 
@@ -69,7 +70,7 @@ export const dealItems: UsageItem[] = [
   // Sync and agents
   { id: "sync.status", page: "deal", area: "Sync and agents", label: "CRM sync status and link", weekly: { ae: 20, cs: 10, admin: 35 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 55 }, ridgeline: { ae: 15, cs: 10, admin: 25 } }, note: "Shown only when a CRM is connected (object state). Fathom has none. Halyard hands every deal to a client CRM." },
   { id: "sync.history", page: "deal", area: "Sync and agents", label: "Sync history and errors for this deal", weekly: { ae: 4, cs: 2, admin: 15 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 20 } } },
-  { id: "agent.proposal", page: "deal", area: "Sync and agents", label: "Pending agent proposal (approve or dismiss)", weekly: { ae: 20, cs: 10, admin: 10 }, overrides: { fathom: { admin: 40 }, ridgeline: { ae: 25, cs: 15 } }, note: "Appears only while a proposal exists (object state, rule 6). Approving may send email or spend credits, so the consequence is on the card." },
+  { id: "agent.proposal", page: "deal", area: "Sync and agents", label: "Pending agent proposal (approve or dismiss)", weekly: { ae: 20, cs: 10, admin: 10 }, overrides: { fathom: { admin: 40 }, ridgeline: { ae: 25, cs: 15 } }, note: "Appears only while a proposal exists (object state, rule 6). The deal's owner approves; the admin may approve for anyone. Approving may send email, spend credits or move the stage, so the consequence is written on the card and the item waits for a task boundary rather than interrupting (Settings, agent approvals)." },
   { id: "agent.research", page: "deal", area: "Sync and agents", label: "Ask the research agent (credits)", weekly: { ae: 10, cs: 5, admin: 5 }, overrides: { fathom: { admin: 35 } } },
 
   // All fields: the tail every deal record accumulates

@@ -6,9 +6,11 @@
 
 A go-to-market platform for B2B companies. Teams use it to find companies and people, reach out to them, run the pipeline from first reply to closed deal, and keep the account after the sale.
 
-**Inside the boundary:** contacts and companies, lists and segments, outreach sequences (email, call tasks, LinkedIn tasks), pipeline and deals, campaigns and audiences, basic reporting, integrations (CRM sync, calendar, email provider, data enrichment, Slack), and agents that research accounts, draft outreach, score leads and propose next steps.
+**Inside the boundary** (widened 15 September 2026, see PLAN.md): people and companies (a company carries its customer state), lists and segments, personas and ICP, signals and scoring, enrichment jobs and credits, sequences with templates and snippets, email threads, tasks, call logging with dispositions (no telephony), the meeting object and its events (no booking page), follow-up drafts and field proposals from conversations (no recording), LinkedIn tasks (no browser extension), pipeline and deals including typed renewals and expansions, campaigns, audiences and forms, workflows, basic reporting, integrations (CRM sync, calendar, email provider, enrichment, Slack) with webhooks, the API, MCP and a narrow CLI, agents and their runs, mailboxes and domains, fields and stages, the admin's intake requests, notes and briefs, workspace and plan.
 
-**Outside the boundary:** paid ads, website builder, support desk, billing of the customer's own customers. If a case needs one of these, the case is wrong.
+**Outside the boundary:** telephony, booking pages, call recording, the browser extension, paid ads, website builder, support desk, billing of the customer's own customers. If a case needs one of these, the case is wrong.
+
+The full object model and the 54 approved journeys are in [JOURNEYS.md](JOURNEYS.md). The page map below predates the widened boundary and is superseded by the information architecture map once that exists.
 
 ## The five roles
 
@@ -78,7 +80,7 @@ Deliberately absent, because they are outside the boundary: a dialer, meetings b
 
 ## The settings inventory
 
-About 45 items in 9 areas. Marked items are decision-critical and are always visible (rule 7).
+About 66 items in 10 areas (the full list lives in specs/14-settings.md and src/ollopa/usage/settings.ts). Marked items are decision-critical and are always visible (rule 7).
 
 - **Workspace.** Name, logo, timezone, default currency, language.
 - **Team and access.** Users (invite, deactivate, credit limit per user), teams, permission profiles, security (MFA, SSO, IP allowlist, password policy, session timeout).

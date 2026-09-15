@@ -6,6 +6,9 @@ import type { UsageItem } from "./model"
 // Fathom overrides: only "sdr" and "admin" exist; the admin is a founder doing outbound, so prospecting items are high.
 // Halyard overrides: ten client workspaces; lists arrive from clients, views and the in-sequence column are daily.
 // Ridgeline overrides: product-led, almost no outbound; finding new companies is rare, current-client work is high.
+// A record has two levels: the quick-look drawer (co.act.quick-look) and the full record page (co.act.open); the drawer
+// shows the same fields in the same order as the top of the page, and nothing collapses inside it.
+// Destructive actions carry critical: true: they live in the always-visible row menu with their consequence in the label.
 
 export const companiesItems: UsageItem[] = [
   // Search and filters
@@ -54,7 +57,8 @@ export const companiesItems: UsageItem[] = [
 
   // Row and bulk actions
   { id: "co.act.find-people", page: "companies", area: "Row and bulk actions", label: "Find people at this company", weekly: { sdr: 85, ae: 30, cs: 20, admin: 10 }, overrides: { fathom: { admin: 65 }, ridgeline: { sdr: 30, cs: 10 } }, note: "The main move on this page: from the account to the people at it." },
-  { id: "co.act.open", page: "companies", area: "Row and bulk actions", label: "Open the company record", weekly: { sdr: 60, ae: 50, cs: 70, admin: 20 }, overrides: { fathom: { admin: 50 } } },
+  { id: "co.act.quick-look", page: "companies", area: "Row and bulk actions", label: "Quick look: the drawer beside the table", weekly: { sdr: 55, ae: 30, cs: 45, admin: 12 }, overrides: { fathom: { admin: 45 }, halyard: { sdr: 65 }, ridgeline: { cs: 55 } }, note: "Level one of the record: a flat drawer holding the header fields and the contacts held, the table still in view. Scanning a filtered set is the SDR's and the CS's daily move (PLAN, 14 Sep 2026)." },
+  { id: "co.act.open", page: "companies", area: "Row and bulk actions", label: "Open the full company record", weekly: { sdr: 35, ae: 45, cs: 55, admin: 20 }, overrides: { fathom: { admin: 40 } }, note: "Level two of the record: the page, from the shared record template. The drawer took the glances; what is left is the dwelling visit." },
   { id: "co.act.add-list", page: "companies", area: "Row and bulk actions", label: "Add to list", weekly: { sdr: 50, ae: 10, cs: 12, admin: 6 }, overrides: { fathom: { admin: 40 }, ridgeline: { sdr: 15 }, halyard: { sdr: 60, admin: 20 } } },
   { id: "co.act.research", page: "companies", area: "Row and bulk actions", label: "Research with the agent, credit cost shown", critical: true, weekly: { sdr: 30, ae: 10, cs: 8, admin: 8 }, overrides: { fathom: { sdr: 50, admin: 40 } }, note: "Spends credits, so the cost is on the control itself (rule 7)." },
   { id: "co.act.select", page: "companies", area: "Row and bulk actions", label: "Select rows and the bulk bar", weekly: { sdr: 40, ae: 10, cs: 15, admin: 15 }, overrides: { ridgeline: { sdr: 10 }, fathom: { admin: 30 } } },
@@ -63,7 +67,7 @@ export const companiesItems: UsageItem[] = [
   { id: "co.act.edit", page: "companies", area: "Row and bulk actions", label: "Edit company", weekly: { sdr: 4, ae: 5, cs: 8, admin: 10 } },
   { id: "co.act.push-crm", page: "companies", area: "Row and bulk actions", label: "Push to CRM, with what it overwrites", weekly: { sdr: 5, ae: 12, cs: 5, admin: 15 }, overrides: { fathom: { sdr: 0, admin: 0 } }, note: "Removed, not disabled, when no CRM is connected (rule 4). Fathom has none." },
   { id: "co.act.export", page: "companies", area: "Row and bulk actions", label: "Export CSV", weekly: { sdr: 4, ae: 3, cs: 8, admin: 15 }, overrides: { halyard: { admin: 30 } } },
-  { id: "co.act.remove", page: "companies", area: "Row and bulk actions", label: "Remove from workspace, with what it stops", weekly: { sdr: 3, ae: 1, cs: 2, admin: 4 }, note: "The consequence (lists left, sequences stopped) is on the control and the undo is one click (rule 7)." },
+  { id: "co.act.remove", page: "companies", area: "Row and bulk actions", label: "Remove from workspace, with what it stops", critical: true, weekly: { sdr: 3, ae: 1, cs: 2, admin: 4 }, note: "The consequence (lists left, sequences stopped) is on the control and the undo is one click (rule 7)." },
   { id: "co.act.merge", page: "companies", area: "Row and bulk actions", label: "Merge duplicates", weekly: { sdr: 1, ae: 1, cs: 1, admin: 5 } },
   { id: "co.act.flag", page: "companies", area: "Row and bulk actions", label: "Flag data as wrong", weekly: { sdr: 2, ae: 1, cs: 1, admin: 1 } },
 

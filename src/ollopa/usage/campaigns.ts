@@ -15,9 +15,9 @@ const glance = { fathom: { admin: 2, sdr: 0 }, halyard: { admin: 3, sdr: 0 } }
 export const campaignsItems: UsageItem[] = [
   // Campaign list: the columns
   { id: "camp.list.name", page: "campaigns", area: "Campaign list", label: "Campaign name, kind and subject", weekly: { marketer: 95, admin: 30 }, overrides: glance },
-  { id: "camp.list.status", page: "campaigns", area: "Campaign list", label: "Status (draft, scheduled, sending, sent, running, paused)", critical: true, weekly: { marketer: 95, admin: 30 }, overrides: glance, note: "A scheduled or sending state is a consequence about to happen (rule 7)." },
-  { id: "camp.list.audience", page: "campaigns", area: "Campaign list", label: "Audience and its size", critical: true, weekly: { marketer: 80, admin: 15 }, overrides: none, note: "Who receives the send, and how many, is never hidden before a send (rule 7)." },
-  { id: "camp.list.delivery", page: "campaigns", area: "Campaign list", label: "Sent, delivered and bounced", critical: true, weekly: { marketer: 85, admin: 25 }, overrides: none, note: "Bounce rate is safety state; it is what auto-pauses a campaign. Sent and delivered are shown with it (rule 5)." },
+  { id: "camp.list.status", page: "campaigns", area: "Campaign list", label: "Status (draft, scheduled, sending, sent, running, paused)", weekly: { marketer: 95, admin: 30 }, overrides: glance, note: "Head by usage at 95%, not by rule 7: the consequence about to happen is stated on the send itself, where the decision is made." },
+  { id: "camp.list.audience", page: "campaigns", area: "Campaign list", label: "Audience and its size", weekly: { marketer: 80, admin: 15 }, overrides: none, note: "Head by usage at 80%. The rule 7 obligation sits on the send dialog and the detail block, which name recipients and suppressions before anything goes out." },
+  { id: "camp.list.delivery", page: "campaigns", area: "Campaign list", label: "Sent, delivered and bounced", critical: true, weekly: { marketer: 85, admin: 25 }, overrides: none, note: "Bounce rate is safety state: the guard warns at 4% and pauses at 6%, and the cell shows the observed rate against those two numbers. Sent and delivered are shown with it (rule 5)." },
   { id: "camp.list.opens-clicks", page: "campaigns", area: "Campaign list", label: "Opened and clicked", weekly: { marketer: 85, admin: 10 }, overrides: none },
   { id: "camp.list.replies", page: "campaigns", area: "Campaign list", label: "Replied", weekly: { marketer: 35, admin: 5 }, overrides: { ...none, ridgeline: { marketer: 25 } }, note: "Most campaigns send from a shared mailbox; replies matter for the few that ask a question." },
   { id: "camp.list.conversions", page: "campaigns", area: "Campaign list", label: "Converted, with the goal it counts", weekly: { marketer: 75, admin: 20 }, overrides: { ...none, ridgeline: { marketer: 90, admin: 25 } } },
@@ -52,10 +52,10 @@ export const campaignsItems: UsageItem[] = [
   { id: "camp.act.pause", page: "campaigns", area: "Actions", label: "Pause or resume", critical: true, weekly: { marketer: 12, admin: 8 }, overrides: none, note: "The path to stop a send is never longer than the path to start it (rule 7)." },
   { id: "camp.act.duplicate", page: "campaigns", area: "Actions", label: "Duplicate", weekly: { marketer: 15, admin: 2 }, overrides: { ...none, ridgeline: { marketer: 6 } } },
   { id: "camp.act.archive", page: "campaigns", area: "Actions", label: "Archive", weekly: { marketer: 4, admin: 4 }, overrides: none },
-  { id: "camp.act.delete-draft", page: "campaigns", area: "Actions", label: "Delete draft", weekly: { marketer: 3, admin: 1 }, overrides: none, note: "Drafts only; sent campaigns are archived, never deleted, so results stay." },
+  { id: "camp.act.delete-draft", page: "campaigns", area: "Actions", label: "Delete draft", critical: true, weekly: { marketer: 3, admin: 1 }, overrides: none, note: "Destructive, so the control and what it removes are visible without a click (rule 7). Drafts only; sent campaigns are archived, never deleted, so results stay." },
   { id: "camp.act.bulk", page: "campaigns", area: "Actions", label: "Bulk pause, archive, change owner", weekly: { marketer: 3, admin: 6 }, overrides: none },
   { id: "camp.act.export", page: "campaigns", area: "Actions", label: "Export results", weekly: { marketer: 4, admin: 5 }, overrides: none },
-  { id: "camp.act.approval", page: "campaigns", area: "Actions", label: "Request or give approval before send", weekly: { marketer: 10, admin: 12 }, overrides: { ...none, ridgeline: { marketer: 3, admin: 3 } }, note: "Meridian's permissions require a second person on sends over 5,000." },
+  { id: "camp.act.approval", page: "campaigns", area: "Actions", label: "Request or give the second approval before a large send", weekly: { marketer: 10, admin: 12 }, overrides: { ...none, ridgeline: { marketer: 3, admin: 3 } }, note: "A second, admin approval above the threshold set in Settings (default 1,000 recipients or 500 credits in one action). The sender approves their own ordinary sends; nothing below the threshold is queued." },
 
   // Campaign detail
   { id: "camp.detail.funnel", page: "campaigns", area: "Campaign detail", label: "Results: sent to converted, with rates", weekly: { marketer: 90, admin: 25 }, overrides: none },
@@ -89,7 +89,7 @@ export const campaignsItems: UsageItem[] = [
   { id: "aud.delete", page: "campaigns", area: "Audiences", label: "Delete audience", weekly: { marketer: 2, admin: 1 }, overrides: none, note: "Blocked while a campaign uses it; the row says which one." },
 
   // Sending policy, shown as one line above the table
-  { id: "pol.bounce-guard", page: "campaigns", area: "Sending policy", label: "Bounce guard state and this week's bounce rate", critical: true, weekly: { marketer: 15, admin: 30 }, overrides: { fathom: { admin: 5, sdr: 0 }, halyard: { admin: 5, sdr: 0 } }, note: "The same safety state as Settings; shown where the sends happen (rule 7)." },
+  { id: "pol.bounce-guard", page: "campaigns", area: "Sending policy", label: "Bounce guard (warn 4%, pause 6%) with the observed rate", critical: true, weekly: { marketer: 15, admin: 30 }, overrides: { fathom: { admin: 5, sdr: 0 }, halyard: { admin: 5, sdr: 0 } }, note: "One pair for the whole product, owned by Settings and adjustable by the admin; this page reads it and prints the observed rate beside it (rule 7)." },
   { id: "pol.daily-cap", page: "campaigns", area: "Sending policy", label: "Daily campaign send cap and sends used today", weekly: { marketer: 12, admin: 15 }, overrides: none },
   { id: "pol.domain", page: "campaigns", area: "Sending policy", label: "Marketing domain health", weekly: { marketer: 4, admin: 20 }, overrides: none },
   { id: "pol.consent", page: "campaigns", area: "Sending policy", label: "Consent rules by region", weekly: { marketer: 3, admin: 4 }, overrides: none },

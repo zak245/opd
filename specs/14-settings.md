@@ -4,18 +4,20 @@
 
 ## 1. Purpose
 
-Settings is where a workspace is configured and where the money is. It holds every one of the roughly 45 items in the inventory in PRODUCT.md (59 usage items in `src/ollopa/usage/settings.ts`, because the code counts security and mailbox sub-settings separately), grouped in nine areas: Workspace; Team and access; Email sending; Prospecting rules; Pipeline and data; Sequences; Agents and AI; Integrations; Plan, billing and usage.
+Settings is where a workspace is configured and where the money is. It holds every item in the inventory in PRODUCT.md (66 usage items in `src/ollopa/usage/settings.ts`, because the code counts security and mailbox sub-settings separately and because the decisions of 13 and 14 September 2026 added seven), grouped in ten areas: Workspace; **How your team works**; Team and access; Email sending; Prospecting rules; Pipeline and data; Sequences; Agents and AI; Integrations; Plan, billing and usage.
+
+Three things this page owns for the whole product, so that no other page invents its own: the **bounce guard** pair (warns at 4%, pauses at 6%), the **agent approval policy** and its second-approval threshold (default 1,000 recipients or 500 credits in one action), and the **declared sidebar** — the workspace profile and the seats, which live in "How your team works". Every other page reads these and shows the observed values beside them.
 
 Who lives here:
 
 | Role | How often | What they come for |
 |---|---|---|
-| RevOps admin (Meridian, Ridgeline) | Weekly | Users joining and leaving, mailbox health, CRM sync errors, agent limits, credit burn, the plan |
+| RevOps admin (Meridian, Ridgeline) | Weekly | Users joining and leaving, mailbox health, CRM sync errors, agent limits, credit burn, the plan, upgrade requests from teammates |
 | Agency ops lead (Halyard, admin role) | Daily | The same items, ten workspaces over, plus workspace name, timezone, currency and sending domains that are rare elsewhere |
 | Founder (Fathom, admin role) | Weekly, credits daily | Mailboxes and warm-up, which agents are on, credit burn against a small balance, the price |
 | SDR, AE, marketer, customer success | Monthly or less; SDRs weekly for mailboxes | Their own mailboxes, signature, tracking, credit usage; company context for the marketer |
 
-The one thing nobody on this page may lose sight of: **what the workspace costs and what can spend or stop it on its own.** Price and renewal date, credit balance and burn rate, bounce guard status, what agents may do without a human, agent credit caps, cancel plan and delete workspace are visible the moment the page opens, for anyone whose role has them, without a click.
+The one thing nobody on this page may lose sight of: **what the workspace costs and what can spend or stop it on its own.** Price and renewal date, credit balance and burn rate, bounce guard status, what agents may do without a human, agent credit caps, the second-approval threshold, upgrade requests waiting from teammates, cancel plan and delete workspace are visible the moment the page opens, for anyone whose role has them, without a click.
 
 ## 2. Data
 
@@ -30,7 +32,7 @@ The one thing nobody on this page may lose sight of: **what the workspace costs 
 | Counts: users, contacts, companies, sequences, open deals, campaigns, integrations, agents | `businesses.ts` → `counts` |
 | Pipeline stages with probability | `seed.ts` → `DEAL_STAGES` and the probability map (Qualified 10, Discovery 25, Proposal 50, Negotiation 75, Closed won 100) |
 | Contact stages | `seed.ts` → `STAGES` |
-| Account stages | `seed.ts` → `Company.stage` values (Cold, Active opportunity, Current client, Churned) |
+| Account stages | `seed.ts` → `Company.stage` values: Cold, Active opportunity, Current client, Churned, Do not prospect. Five, owned here through `pipe.contact-stages`; Companies and Accounts read them and add none |
 | Agent names | `seed.ts` → `AgentEvent.agent` (Research agent, Outreach agent, Scoring agent); which exist per business from `counts.agents` (Fathom and Halyard: Research and Outreach; Meridian and Ridgeline: all three) |
 | Items waiting for approval | `seed.ts` → `agentEvents` where `needsApproval` |
 | Sequences named in schedules and rulesets | `seed.ts` → `sequences` |
@@ -38,7 +40,7 @@ The one thing nobody on this page may lose sight of: **what the workspace costs 
 
 Derived on the page, not stored:
 
-- Monthly price = seats × price per seat. Meridian: 42 × $79 = $3,318 a month, billed annually ($39,816 a year), renews 15 Jan 2027. Fathom: 3 × $49 = $147 a month, billed monthly, renews 2 Oct 2026. Halyard: 25 × $79 = $1,975 a month, billed annually, renews 30 Nov 2026. Ridgeline: 14 × $79 = $1,106 a month, billed annually, renews 8 Mar 2027.
+- Monthly price = seats × price per seat, shown as one total for the period and never as a breakdown. Three plans: Starter $49 a seat, Growth $79, Scale $129. Meridian is on **Scale**: 42 seats, $5,418 a month, billed annually ($65,016 a year), renews 15 Jan 2027. Fathom is on **Starter**: 3 seats, $147 a month, billed monthly, renews 2 Oct 2026. Halyard is on **Growth**: 25 seats, $1,975 a month, billed annually, renews 30 Nov 2026. Ridgeline is on **Growth**: 14 seats, $1,106 a month, billed annually, renews 8 Mar 2027. (`businesses.ts` currently has Meridian on Growth at $79 a seat; the plan decision of 13 September 2026 makes it Scale, so `plan.name` becomes "Scale" and `plan.pricePerSeat` 129 there.)
 - Credit run-out date = today + balance ÷ burn per week. Meridian: about 14 Oct. Fathom: about 26 Sep, which is before the 2 Oct renewal, so it is shown as a warning. Halyard: about 30 Sep, the day the monthly credit cycle ends, also a warning. Ridgeline: about 22 Oct, fine.
 - Credit cycle end = the renewal day of month, monthly, for every plan.
 
@@ -49,28 +51,52 @@ One `settings` object per business in `src/ollopa/data/settings.ts`, determinist
 | Area | Fields to add |
 |---|---|
 | Workspace | name, logo initials, timezone, currency, language |
+| How your team works | `profile` (one of Founder-led outbound, Separated sales team, Agency, Product-led growth) with the three answers behind it (`firstJob`, `people`, `seats[]`) and who declared it and when; `leftOut[]` (page, why, `signals` count, `signalKind`); `exposure` (page, started, ends, state: showing, kept, dropped) |
 | Team | users (name, title, role, profile, status, credit limit, credits used this month, last active), teams, permission profiles, security (MFA enforced, SSO provider, IP allowlist, password policy, session timeout) |
 | Email sending | mailboxes (address, owner, provider, warm-up state and day, daily and hourly limit, sent today, deliverability, 7-day bounce rate, paused), domains (SPF, DKIM, DMARC, bounce rate, mailbox count), tracking subdomain, bounce guard (on, warning 4%, pause 6%, 7-day rate and volume, paused mailboxes), catch-all blocking, unsubscribe text and whether users may disable it, open and click tracking |
 | Prospecting | GDPR regions, DNC countries, primary email type, duplicate handling, in-progress limit, territories |
 | Pipeline and data | pipelines (stages from `DEAL_STAGES` with probability and forecast category), contact and account stages, custom fields per object, deal currency and multi-currency, enrichment provider order |
 | Sequences | schedules, rulesets, priority |
-| Agents and AI | company context, agents on or off, approval rules per agent (research, draft, add to sequence, send, spend), per-run and monthly caps per agent, own model key |
+| Agents and AI | company context, agents on or off, approval rules per agent (research, draft, add to sequence, send, spend), per-run and monthly caps per agent, `secondApproval { recipients: 1000, credits: 500 }`, own model key |
 | Integrations | connected list (name, kind, status, last sync, error count), sync conditions, field mapping, error log, calendar, Slack, enrichment provider, API keys, webhooks |
-| Plan | invoices, tax ID, export status |
+| Plan | plan tier (Starter, Growth, Scale), invoices, tax ID, export status, `upgradeRequests[]` (who asked, which feature, which plan, monthly cost, where the request came from, reason, when) |
 
 | | Meridian | Fathom | Halyard (current client workspace) | Ridgeline |
 |---|---|---|---|---|
 | Workspace | Meridian Software, Europe/Berlin, EUR | Fathom Labs, America/New_York, USD | Kestrel Health (client), Europe/London, GBP | Ridgeline, America/Los_Angeles, USD |
-| Team | 42 users (5 from `roles[]`, 37 generated); 4 teams; 5 profiles; MFA enforced; SSO Okta; 2 IP ranges | 3 users, all Admin; no teams, profiles or SSO; MFA optional | 25 users, 6 with mailboxes here; 2 teams; 2 profiles; MFA enforced; no SSO | 14 users; 2 teams; 5 profiles; SSO Google |
-| Email | 34 mailboxes; 3 domains, all records green; bounce 1.9% of 14,200, none paused; users may not disable unsubscribe text | 3 mailboxes, all warming; fathomlabs.com, DMARC missing; bounce 3.6% of 620, near warning; users may disable | 6 mailboxes on 2 client domains; bounce 4.4% of 9,800, warning; 1 mailbox paused at 6.2% | 9 mailboxes; 1 domain; bounce 0.8% of 410; tracking off |
-| Prospecting | EU and UK restricted; DNC US, UK, DE, FR; business email; prompt on duplicate; 5 per account; 3 territories | EU; DNC US; any email; auto-merge; 3 per account; no territories | EU and UK; 4 per account; 2 client territories | EU; auto-merge; 2 per account; no territories |
+| Plan | Scale, 42 seats, $5,418 a month | Starter, 3 seats, $147 a month | Growth, 25 seats, $1,975 a month | Growth, 14 seats, $1,106 a month |
+| How your team works | Separated sales team; five seats; nothing left out | Founder-led outbound; admin and SDR seats; Inbox and Campaigns left out, Inbox showing for two weeks on 7 replies | Agency; admin and SDR seats; Campaigns and Accounts left out, declared again per client workspace | Product-led growth; five seats; Sequences and Lists left out of the admin's sidebar |
+| Team | 42 users (5 from `roles[]`, 37 generated); 4 teams; 5 profiles; MFA enforced; SSO Okta; 2 IP ranges | 3 users, all Admin; MFA optional; teams, permission profiles, SSO and the IP allowlist locked on Starter | 25 users, 6 with mailboxes here; 2 teams; 2 profiles; MFA enforced; SSO and IP allowlist locked on Growth | 14 users; 2 teams; 5 profiles; SSO and IP allowlist locked on Growth |
+| Email | 34 mailboxes; 3 domains, all records green; bounce 1.9% of 14,200 in 7 days, none paused; users may not disable unsubscribe text | 3 mailboxes, one per user, which is Starter's limit; all warming; fathomlabs.com, DMARC missing; bounce 3.6% of 620, under the 4% warning; users may disable | 6 mailboxes on 2 client domains; bounce 4.4% of 9,800, over the 4% warning; 1 mailbox paused at 6.2%, over the 6% pause | 9 mailboxes; 1 domain; bounce 0.8% of 410; tracking off |
+| Prospecting | EU and UK restricted; DNC US, UK, DE, FR; business email; prompt on duplicate; 5 per account; 3 territories | EU; DNC US; any email; auto-merge; 3 per account; territories locked on Starter | EU and UK; 4 per account; 2 client territories | EU; auto-merge; 2 per account; no territories set |
 | Pipeline | 2 pipelines; 14 custom fields; EUR, multi-currency on; Northlight Data → Beacon Verify → Ollopa | 1 pipeline; 3 fields; Northlight Data → Ollopa | 1 pipeline; 6 fields | 2 pipelines; 9 fields; Northlight Data → Beacon Verify |
 | Sequences | 3 schedules, 2 rulesets | 1 and 1 | 4 client-hour schedules, 2 rulesets | 1 and 1 |
-| Agents | 3 on; research and draft free, add-to-sequence and send need approval; caps Research 40/run and 300k a month, Outreach 10 and 60k, Scoring 2 and 40k | 2 on; same approvals; Research 25 and 3,000, Outreach 5 and 800 | 2 on; Research 30 and 80k, Outreach 8 and 20k | Scoring and Research on, Outreach off; Research 20 and 60k, Scoring 2 and 30k |
-| Integrations | HubSpot (3 errors, synced 4 min ago), Google Workspace mail, Google Calendar, Slack, Northlight Data; 2 API keys; 1 webhook | Google Workspace mail, Northlight Data; no CRM | Google Workspace mail; no CRM | Salesforce (0 errors), Google Calendar, Slack, Northlight Data |
+| Agents | 3 on; research, scoring and drafts are logged not queued; add-to-sequence, send, spend over a cap and stage changes need the owner's approval; second approval over 1,000 recipients or 500 credits; caps Research 40/run and 300k a month, Outreach 10 and 60k, Scoring 2 and 40k; own model key available | 2 on (Starter's limit); same approvals; second approval over 400 recipients or 200 credits, lowered by the founder; Research 25 and 3,000, Outreach 5 and 800; own model key locked | 2 on; same approvals; threshold at the default; Research 30 and 80k, Outreach 8 and 20k; own model key locked | 3 on, Outreach off; same approvals; threshold at the default; Research 20 and 60k, Scoring 2 and 30k; own model key locked |
+| Integrations | **Salesforce** production (3 errors, synced 4 min ago), two-way with custom objects; Google Workspace mail, Google Calendar, Slack, Northlight Data; 2 API keys; 1 webhook | Google Workspace mail, Google Calendar, Northlight Data; **no CRM** — Ollopa is the CRM here; API keys and webhooks locked on Starter | Google Workspace mail; **one client CRM per workspace**, HubSpot in the current one (1 error); custom objects locked on Growth | **HubSpot** (0 errors), two-way; Google Calendar, Slack, Northlight Data; custom objects locked |
 | Plan | 12 invoices; DE tax ID | 4 invoices | 12 invoices; GB tax ID | 6 invoices |
 
 Per-user credits used this month are generated as shares of `monthlyCap − balance`, weighted to SDRs.
+
+### 2.3 The three plans
+
+Ollopa gates features by plan, and this page owns the table. Every other spec renders its own row of it and adds nothing.
+
+| | Starter | Growth | Scale |
+|---|---|---|---|
+| Price a seat, a month | $49 | $79 | $129 |
+| Seats | 3 | unlimited | unlimited |
+| Mailboxes per user | 1 | unlimited | unlimited |
+| Teams, permission profiles, territories | no | yes | yes |
+| Agents | 2 | 3 | all, plus your own model key |
+| Reports | Activity only | all four | all four, plus CSV export and the scheduled weekly email |
+| CRM sync | one-way | two-way | two-way, plus custom objects |
+| SSO, SCIM, IP allowlist, audit export | no | no | yes |
+| API and webhooks | no | yes | yes |
+| On this plan | Fathom Labs | Halyard Agency, Ridgeline | Meridian Software |
+
+Gating and permission hiding are opposites and must never be confused on this page. A role without permission gets the item hidden and a sentence naming who can grant it. A plan without a feature gets the item **shown where it always lives**, with a lock, the plan name, and a real control that opens one panel: what the feature does, which plan includes it, one total for the period, and one button. A person who cannot upgrade asks the admin from that same panel, and the request carries the feature, the cost and where it came from. Nothing moves when it unlocks, no feature is renamed into a "Premium" section, and the usage numbers in §4 still decide the level — a lock never promotes an item.
+
+Two things are never gated. Safety and decision-critical items are on every plan: bounce guard, credit balance and burn, price and renewal, cancel, delete, export, the agent approval rules and caps. And no gate appears after a person has produced work they cannot keep — the lock is at the entry point, which on this page means the row itself, never the Save button at the end of a form they have filled in.
 
 ## 3. Features
 
@@ -80,7 +106,7 @@ One page inside the main navigation. No separate settings shell, no settings sid
 
 1. **Header row.** Title "Settings", the workspace name, and the settings search box (`Find a setting…`, shortcut `/`). To its right: "Expand all" / "Collapse all".
 2. **The strip.** Decision-critical facts for this role, always visible, no door. See 3.3.
-3. **Areas.** For the signed-in role, "You" first (personal settings), then the workspace areas in the fixed inventory order. On desktop a sticky in-page index on the left lists the areas as anchors; it is a table of contents, not navigation to other pages.
+3. **Areas.** For the signed-in role, "You" first (personal settings), then the workspace areas in the fixed inventory order, with **How your team works** second after Workspace, because it explains the shape of everything below it. On desktop a sticky in-page index on the left lists the areas as anchors; it is a table of contents, not navigation to other pages.
 
 Each area has a heading, its level-one rows, and at most one door. The door is a button with a chevron, a content label and a count: `▸ Tracking subdomain, catch-all blocking, unsubscribe text, open and click tracking (4 settings)`. When every item in an area is level two, the door sits directly under the heading and carries the whole list. When nothing is behind the door, there is no door.
 
@@ -88,7 +114,7 @@ A setting row has the label on the left, the control or the current value on the
 
 ### 3.2 Personal versus workspace
 
-Every role gets "You": name, title, login email, password, multi-factor authentication for your own account. Then the personal items from the inventory: your mailboxes (with warm-up and limits), your signature, your open and click tracking, your unsubscribe text, your calendar, your credit usage against your limit, and what agents may do without your approval. An item is on the page for a role when the usage model has a number for that role; an item whose number is 0 at a business is removed for that business (Fathom has no teams, no permission profiles, no SSO, no territories).
+Every role gets "You": name, title, login email, password, multi-factor authentication for your own account. Then the personal items from the inventory: your mailboxes (with warm-up and limits), your signature, your open and click tracking, your unsubscribe text, your calendar, your credit usage against your limit, and what agents may do without your approval. An item is on the page for a role when the usage model has a number for that role; an item whose number is 0 at a business is removed there, because it could not work there at any price. Locked is the other case and looks different: Fathom's teams, permission profiles, single sign-on, IP allowlist, territories, API keys, webhooks and own model key all exist, all sit exactly where they sit at Meridian, and all carry a lock and a plan name.
 
 Roles without workspace access see, after their own settings, one sentence: "Workspace settings (team, email domains, prospecting rules, pipeline, agents, integrations, plan and billing) are managed by Daniel Okafor, RevOps admin." The name comes from the business's admin seat. No greyed-out sections, no locked rows.
 
@@ -101,7 +127,8 @@ For admins, one bar under the header with:
 - **Plan and price.** "Growth · 42 seats · $3,318 a month, billed annually · renews 15 Jan 2027". Two links of equal weight next to it: **Change plan** and **Cancel plan**. Cancel opens a confirmation that states the end date and what happens to data; no reason picker, no "keep my plan" detour.
 - **Credits.** "1.84M of 2.5M left this month · 410k a week · lasts to about 14 Oct". When the run-out date is before the cycle end, the text turns to warning colour and says "runs out before 15 Oct". Fathom reads "4,120 of 10,000 · 2,300 a week · runs out about 26 Sep, before renewal on 2 Oct".
 - **Bounce guard.** "On · 1.9% of 14,200 in 7 days · warns at 4%, pauses at 6% · nothing paused". Halyard reads "Warning · 4.4% of 9,800 · 1 mailbox paused".
-- **Agents.** "3 on · send and add-to-sequence need approval · caps 300k / 60k / 40k a month · 4 waiting for approval → Agents".
+- **Agents.** "3 on · send, add-to-sequence, stage changes and spend over a cap need the owner's approval · a second approval over 1,000 recipients or 500 credits · caps 300k / 60k / 40k a month · 4 waiting for approval → Agents".
+- **Upgrade requests.** Present only when someone has asked: "2 upgrade requests · Priya Natarajan wants Territories (Growth, $237 a month for 3 seats) · Review". The approver is making a price decision, so the cost is on the line, not behind it.
 - **Delete workspace** is not in the strip. It is at level one at the foot of the Plan area, with its consequence written out and "Export all data" beside it, and the index and the search jump straight to it. Nothing hides it; it is one scroll away, not one click away.
 
 For SDRs, AEs, marketers and CS, the strip is shorter: your credit usage and limit, bounce guard status for your mailboxes, and what agents may do without your approval where the role has it. Price, cancel and delete are not shown to roles that cannot act on them; the workspace sentence in 3.2 names who can.
@@ -111,6 +138,12 @@ For SDRs, AEs, marketers and CS, the strip is shorter: your credit usage and lim
 | Where | Action | Outcome |
 |---|---|---|
 | Any row | Change a value | Row marked changed; the Save bar appears (3.5) |
+| Any locked row | Open the lock | A panel in place: what the feature does, which plan includes it, one total for the period, one button ("Upgrade to Growth" for an admin; "Ask Daniel Okafor" for anyone else, which sends the feature, the cost and where the request came from). Escape closes it and nothing has changed |
+| How your team works | Change the workspace profile | The three questions from the set-up page (spec 16) open in place with the current answers. Saving redraws the sidebar and says what moved: "Inbox and Campaigns are back in the sidebar for SDR seats" |
+| How your team works | Change which seats exist | A checklist of the five seats; unchecking one says how many people hold it and what happens to them |
+| How your team works | Add a left-out page back | "Add to sidebar" on the row; it goes to the end of its group and stays |
+| How your team works | Answer a two-week exposure | "Inbox has been in your sidebar for 14 days. Keep it?" with Keep and Remove; the answer holds until a new signal |
+| Plan | Review an upgrade request | The request with requester, feature, plan, monthly cost, origin, reason and time; Approve (which changes the plan and states the new total) or Decline with a note |
 | Strip | Change plan | The plan page: seats stepper, plan cards, a price summary that stays on screen with "Due today"; returns here |
 | Strip | Cancel plan | Dialog stating end date, seats and what is kept for 30 days; "Cancel plan" and "Keep plan" the same size |
 | You | Change password, set up MFA | Inline forms in the row |
@@ -145,7 +178,8 @@ The mailboxes table and the users table have a search box and filters (mailboxes
 
 | State | What the page does |
 |---|---|
-| Empty | An area with nothing configured shows the honest sentence and the action: "No CRM connected · Connect one" (Fathom, Halyard); "No sending domains yet · Add a domain"; "No territories: everyone can prospect everywhere" |
+| Empty | An area with nothing configured shows the honest sentence and the action: "No CRM connected · Connect one" (Fathom); "No sending domains yet · Add a domain"; "No territories: everyone can prospect everywhere" |
+| Locked by plan | The row is where it always is, with its label, a lock and the plan name: "Territories · Growth". It is a real control; it opens the panel. Never greyed out, never moved, never removed, and never a lock on something that would not work here anyway |
 | Loading | Skeleton rows for the strip and tables; the header and index render at once; never a spinner alone |
 | Error | Row-level: "Couldn't refresh mailbox health; showing values from 2 minutes ago · Retry". The rest of the page works. A failed Save keeps the bar up with the error under it |
 | No access | A role that opens Settings sees its own settings; workspace areas are absent and the sentence in 3.2 names the admin. A deep link to a workspace setting (`#mail.bounce-guard`) from a non-admin shows the personal page with a banner: "Bounce guard thresholds are set by Daniel Okafor, RevOps admin" |
@@ -172,18 +206,19 @@ One column. The index becomes a "Jump to" select under the header. The strip sta
 
 | | Meridian admin | Halyard admin | Meridian SDR | Fathom founder (admin) |
 |---|---|---|---|---|
-| Strip | Price, credits, bounce guard, agents, cancel | Same; bounce guard in warning, 1 paused | Own credits (8,400 of 25,000), bounce guard status for own mailboxes, agent approvals | Renewal in 19 days; credits run out before it (warning); bounce guard near warning; agents |
+| Strip | Price ($5,418 a month, Scale), credits, bounce guard, agents, cancel | Same; bounce guard in warning, 1 paused | Own credits (8,400 of 25,000), bounce guard status for own mailboxes, agent approvals | Renewal in 19 days; credits run out before it (warning); bounce guard under warning; agents; 2 upgrade requests |
+| How your team works | Profile (Separated sales team), seats, nothing left out | Profile per client workspace at level one; seats; two pages left out with their signal counts | Absent; the sentence in 3.2 names the admin | Profile, seats, the two left-out pages, and the exposure now running on Inbox |
 | Workspace | Door: all five | Name, timezone, currency at level one; door: logo, language | Absent | Door: all five |
-| Team | Users at level one; door: teams, profiles, five security items | Same | Absent | Door only: users (3 of 3 seats) and four security items; teams, profiles, SSO removed |
+| Team | Users at level one; door: teams, profiles, five security items | Same; SSO and IP allowlist locked (Scale) | Absent | Door only: users (3 of 3 seats, the Starter limit) and the security items; teams, profiles, SSO and IP allowlist locked with their plan names |
 | Email | Mailboxes (warm-up and limits in the row), domains, bounce guard at level one; door: tracking subdomain, catch-all, unsubscribe pair, tracking | Same | Own mailboxes; limits read-only, "set by Daniel Okafor"; door: signature, tracking, unsubscribe text | Mailboxes, warm-up, limits, bounce guard at level one; domains join the door |
-| Prospecting | Door: all six | Same | Door: primary email type, in-progress limit, read-only | Door: five; territories removed |
+| Prospecting | Door: all six | Same | Door: primary email type, in-progress limit, read-only | Door: all six; territories carries a lock and "Growth" |
 | Pipeline | Door: all five | Same | Door: enrichment order, read-only | Door: all five |
 | Sequences | Door: schedules, rulesets | Same | Door: schedules, rulesets, priority | Same as Meridian |
-| Agents | On or off, approvals, caps at level one; door: context, own key | Same | Approvals at level one, read-only; door: which agents are on | Same as Meridian |
-| Integrations | CRM sync with error count at level one; door: six | "No CRM connected · Connect one" at level one; door: six | Door: calendar | Door: all, CRM shown as "none" |
-| Plan | Strip; Change and Cancel; Delete and Export at level one; door: invoices, tax ID | Same | Own credits only | Same as Meridian |
+| Agents | On or off, approvals, caps, second-approval threshold at level one; door: context, own key | Same; own key locked (Scale) | Approvals and the threshold at level one, read-only; door: which agents are on | Same as Meridian; own key locked; the threshold lowered to 400 recipients |
+| Integrations | Salesforce sync with error count at level one; door: six | Client HubSpot at level one with its error count; door: six, custom objects locked | Door: calendar | "No CRM connected · Connect one" at level one; door: the rest, with API keys and webhooks locked |
+| Plan | Strip; Change and Cancel; Delete, Export and upgrade requests at level one; door: invoices, tax ID | Same | Own credits only | Same as Meridian; two upgrade requests waiting |
 
-AEs see You, own mailboxes (level one at Meridian, door at Ridgeline), credits, and a door with signature, tracking, pipeline stages and custom fields read-only, calendar, default currency. Marketers see You, company context at level one, credits, and a door with tracking, custom fields, signature. Customer success sees You, credits, and a door with signature and calendar. Ridgeline's admin sees mailboxes, warm-up, limits and domains drop into the Email door; Users, CRM, agents and the strip stay.
+AEs see You, own mailboxes (level one at Meridian, door at Ridgeline), credits, and a door with signature, tracking, pipeline stages and custom fields read-only, calendar, default currency. Marketers see You, company context at level one, credits, and a door with tracking, custom fields, signature. Customer success sees You, credits, and a door with signature and calendar. Ridgeline's admin sees mailboxes, warm-up, limits and domains drop into the Email door; Users, CRM, agents and the strip stay, and "How your team works" shows Sequences and Lists as the two pages the Product-led growth profile leaves out of an admin's sidebar.
 
 ## 4. Usage items
 
@@ -193,17 +228,22 @@ Weekly use is the share of active users in a role at a business who touch the it
 |---|---|---|---|---|---|---|---|---|---|
 | me.profile | You | Name, title, login email, password | 3 | 3 | 3 | 3 | 3 | | |
 | me.mfa | You | Multi-factor authentication for your account | 1 | 1 | 1 | 1 | 1 | | |
+| me.notify-delivery | You | Where notifications go: digest or as they happen, Slack, push, mute, quiet hours | 4 | 6 | 4 | 3 | 3 | Fathom: admin 8, sdr 8; Halyard: admin 6, sdr 8 | |
 | ws.name | Workspace | Workspace name | 2 | – | – | – | – | Halyard: admin 40 | |
 | ws.logo | Workspace | Logo | 1 | – | – | – | – | Halyard: admin 15 | |
 | ws.timezone | Workspace | Timezone | 3 | – | – | – | – | Halyard: admin 35 | |
 | ws.currency | Workspace | Default currency | 2 | – | 1 | – | – | Halyard: admin 25 | |
 | ws.language | Workspace | Language | 1 | – | – | – | – | | |
+| work.profile | How your team works | Workspace profile and the three answers behind it | 3 | – | – | – | – | Halyard: admin 25; Fathom: admin 2; Ridgeline: admin 2 | |
+| work.seats | How your team works | Which seats exist in this workspace | 8 | – | – | – | – | Halyard: admin 20; Fathom: admin 3; Ridgeline: admin 4 | |
+| work.left-out | How your team works | Pages the profile leaves out, with how many signals have arrived for each | 6 | – | – | – | – | Halyard: admin 12; Fathom: admin 10; Ridgeline: admin 4 | |
+| work.exposure | How your team works | Two-week exposure: what is showing, until when, keep or drop | 4 | – | – | – | – | Halyard: admin 6; Fathom: admin 9; Ridgeline: admin 3 | |
 | team.users | Team and access | Users | 45 | – | – | – | – | Halyard: admin 30; Fathom: admin 6 | |
-| team.teams | Team and access | Teams | 10 | – | – | – | – | Fathom: admin 0 | |
-| team.profiles | Team and access | Permission profiles | 8 | – | – | – | – | Fathom: admin 0 | |
+| team.teams | Team and access | Teams | 10 | – | – | – | – | Fathom: admin 1 | Locked on Starter |
+| team.profiles | Team and access | Permission profiles | 8 | – | – | – | – | Fathom: admin 1 | Locked on Starter |
 | sec.mfa | Team and access | Multi-factor authentication | 3 | – | – | – | – | | |
-| sec.sso | Team and access | Single sign-on | 2 | – | – | – | – | Fathom: admin 0 | |
-| sec.ip | Team and access | IP allowlist | 1 | – | – | – | – | | |
+| sec.sso | Team and access | Single sign-on | 2 | – | – | – | – | Fathom: admin 1 | Scale only |
+| sec.ip | Team and access | IP allowlist | 1 | – | – | – | – | | Scale only |
 | sec.password | Team and access | Password policy | 1 | – | – | – | – | | |
 | sec.session | Team and access | Session timeout | 1 | – | – | – | – | | |
 | mail.mailboxes | Email sending | Mailboxes | 40 | 60 | 25 | – | – | Halyard: admin 70, sdr 65; Fathom: admin 50, sdr 60; Ridgeline: sdr 20, ae 10, admin 15 | |
@@ -212,7 +252,7 @@ Weekly use is the share of active users in a role at a business who touch the it
 | mail.signature | Email sending | Email signature | 2 | 5 | 5 | 2 | 3 | | |
 | mail.domains | Email sending | Sending domains | 20 | – | – | – | – | Halyard: admin 45; Fathom: admin 10; Ridgeline: admin 6 | |
 | mail.tracking-subdomain | Email sending | Tracking subdomain | 2 | – | – | – | – | | |
-| mail.bounce-guard | Email sending | Bounce guard | 35 | 15 | – | – | – | | yes |
+| mail.bounce-guard | Email sending | Bounce guard: warns at 4%, pauses at 6% | 35 | 15 | – | – | – | | yes |
 | mail.catch-all | Email sending | Block catch-all domains | 5 | – | – | – | – | | |
 | mail.unsubscribe-text | Email sending | Unsubscribe text | 3 | 2 | – | – | – | | |
 | mail.unsubscribe-permission | Email sending | Users may disable the unsubscribe text | 2 | – | – | – | – | | |
@@ -222,7 +262,7 @@ Weekly use is the share of active users in a role at a business who touch the it
 | pros.primary-email | Prospecting rules | Primary email type | 2 | 3 | – | – | – | | |
 | pros.duplicates | Prospecting rules | Duplicate handling | 6 | – | – | – | – | | |
 | pros.in-progress | Prospecting rules | In-progress limit per account | 8 | 6 | – | – | – | | |
-| pros.territories | Prospecting rules | Territories | 12 | – | – | – | – | Fathom: admin 0; Halyard: admin 4 | |
+| pros.territories | Prospecting rules | Territories | 12 | – | – | – | – | Fathom: admin 1; Halyard: admin 4 | Locked on Starter |
 | pipe.stages | Pipeline and data | Pipelines and stages | 10 | – | 6 | – | – | Fathom: admin 12 | |
 | pipe.contact-stages | Pipeline and data | Contact and account stages | 6 | – | – | – | – | | |
 | pipe.fields | Pipeline and data | Custom fields | 15 | – | 4 | 4 | – | | |
@@ -235,37 +275,39 @@ Weekly use is the share of active users in a role at a business who touch the it
 | ai.agents | Agents and AI | Agents on or off | 25 | 10 | – | – | – | Fathom: admin 40 | |
 | ai.approvals | Agents and AI | What agents may do without approval | 30 | 8 | – | – | – | | yes |
 | ai.credit-caps | Agents and AI | Agent credit caps | 35 | – | – | – | – | | yes |
-| ai.own-key | Agents and AI | Bring your own model key | 2 | – | – | – | – | | |
+| ai.second-approval | Agents and AI | Second approval above 1,000 recipients or 500 credits in one action | 10 | 4 | – | – | – | Fathom: admin 4, sdr 2; Halyard: admin 12, sdr 6; Ridgeline: admin 5 | yes |
+| ai.own-key | Agents and AI | Bring your own model key | 2 | – | – | – | – | | Scale only |
 | int.crm | Integrations | CRM sync | 40 | – | – | – | – | Fathom: admin 5; Halyard: admin 25 | |
 | int.field-mapping | Integrations | CRM field mapping | 15 | – | – | – | – | Fathom: admin 2 | |
 | int.error-log | Integrations | Sync error log | 30 | – | – | – | – | Fathom: admin 3 | |
 | int.calendar | Integrations | Calendar | 3 | 5 | 5 | – | 4 | | |
 | int.slack | Integrations | Slack | 5 | – | – | – | – | | |
 | int.enrichment | Integrations | Enrichment provider | 6 | – | – | – | – | | |
-| int.api-keys | Integrations | API keys | 6 | – | – | – | – | | |
-| int.webhooks | Integrations | Webhooks | 4 | – | – | – | – | | |
+| int.api-keys | Integrations | API keys | 6 | – | – | – | – | Fathom: admin 1 | Locked on Starter |
+| int.webhooks | Integrations | Webhooks | 4 | – | – | – | – | Fathom: admin 1 | Locked on Starter |
 | plan.seats | Plan, billing and usage | Plan and seats | 20 | – | – | – | – | Halyard: admin 30; Fathom: admin 15 | |
 | plan.price | Plan, billing and usage | Price and renewal date | 25 | – | – | – | – | | yes |
 | plan.credits | Plan, billing and usage | Credit balance and burn rate | 55 | 30 | 15 | 20 | 5 | Fathom: admin 60, sdr 40 | yes |
+| plan.upgrade-requests | Plan, billing and usage | Upgrade requests from teammates | 6 | – | – | – | – | Fathom: admin 12; Halyard: admin 10; Ridgeline: admin 4 | yes |
 | plan.invoices | Plan, billing and usage | Invoices | 8 | – | – | – | – | | |
 | plan.tax-id | Plan, billing and usage | Tax ID | 1 | – | – | – | – | | |
 | plan.cancel | Plan, billing and usage | Cancel plan | 1 | – | – | – | – | | yes |
 | plan.export | Plan, billing and usage | Export all data | 2 | – | – | – | – | | |
 | plan.delete | Plan, billing and usage | Delete workspace | 0.5 | – | – | – | – | | yes |
 
-The two "You" rows are the personal profile block from 3.2; the other 59 rows are `settings.ts` as it stands. "Plan and seats" and "Export all data" sit at level one for reasons other than use: the cancel path must be no longer than the subscribe path (rule 7), and export is the action delete depends on (rule 5).
+"Name, title, login email, password" and "Multi-factor authentication" are the personal profile block from 3.2; all 66 rows are `settings.ts` as it stands. "Plan and seats" and "Export all data" sit at level one for reasons other than use: the cancel path must be no longer than the subscribe path (rule 7), and export is the action delete depends on (rule 5).
 
-Shape check, over the items that exist for the role at the business:
+Shape check, computed from `settings.ts` with `shape()`. The denominator is every item that exists for that role at that business — an item whose number is 0 is removed there and is not on their page. A locked item is on the page, so it counts. The same rule is used in specs 12, 13, 15 and 16.
 
-| Pair | Items | Head | Body | Tail | Verdict |
+| Pair | Items on their page | Head | Body | Tail | Verdict |
 |---|---|---|---|---|---|
-| Meridian admin | 58 | 14 (24%) | 18 (31%) | 26 (45%) | Fits: head 15–25, body 25–35, tail 45–60 |
-| Fathom admin | 54 | 9 (17%) | 18 (33%) | 27 (50%) | Fits |
-| Halyard admin | 58 | 17 (29%) | 18 (31%) | 23 (40%) | Head four points over the band. Expected: the agency is the customer whose rare settings are routine. Kept, and named as the stretch case |
-| Meridian SDR | 17 | 4 (24%) | 8 (47%) | 5 (29%) | Head fits; a personal page has a short tail because the workspace tail is not on it |
-| Ridgeline admin | 58 | 10 (17%) | 20 (34%) | 28 (48%) | Fits |
+| Meridian admin | 65 | 14 (22%) | 22 (34%) | 29 (45%) | Fits: head 15–25, body 25–35, tail 45–60 |
+| Fathom admin | 65 | 9 (14%) | 21 (32%) | 35 (54%) | Fits, one point under on the head. Starter locks eight items, which are on the page and in the tail: a small company on a small plan carries the whole inventory and touches little of it |
+| Halyard admin | 65 | 19 (29%) | 23 (35%) | 23 (35%) | Head four points over the band. Expected: the agency is the customer whose rare settings are routine, and the workspace profile is declared again for every client. Kept, and named as the stretch case |
+| Meridian SDR | 19 | 4 (21%) | 9 (47%) | 6 (32%) | Head fits; a personal page has a short tail because the workspace tail is not on it |
+| Ridgeline admin | 65 | 10 (15%) | 21 (32%) | 34 (52%) | Fits |
 
-Level one for Meridian admin, counting critical items: 16 of 58. For Halyard admin 19, Fathom admin 11, Meridian SDR 6 (three by use, three critical).
+Level one, counting critical items: Meridian admin 18 of 65, Halyard admin 23, Fathom admin 13, Ridgeline admin 14, Meridian SDR 7 (four by use, three critical).
 
 ## 5. Before: the common version
 
@@ -323,26 +365,27 @@ Described in 3.1. One page in the main navigation, header with search, the strip
 
 | Role | Level one | Level two (behind one door per area) |
 |---|---|---|
-| Admin | Strip; You; Users row and table; mailboxes table with warm-up and limits; sending domains; bounce guard; agents on/off, approvals, caps; CRM sync with error count; Change plan and Cancel plan; Export and Delete | Workspace five; teams, profiles, security five; tracking subdomain, catch-all, unsubscribe pair, tracking; prospecting six; pipeline five; schedules and rulesets; company context and own key; field mapping, calendar, Slack, enrichment, API keys, webhooks; invoices and tax ID |
-| SDR | Strip (own credits, bounce guard status, approvals); You; own mailboxes with warm-up and limits | Signature, tracking, unsubscribe text; primary email type, in-progress limit; enrichment order; schedules, rulesets, priority; agents on; calendar |
+| Admin | Strip; You; the workspace profile and seats; Users row and table; mailboxes table with warm-up and limits; sending domains; bounce guard; agents on/off, approvals, caps, second-approval threshold; CRM sync with error count; Change plan and Cancel plan; upgrade requests; Export and Delete | Workspace five; left-out pages and the running exposure; teams, profiles, security five; tracking subdomain, catch-all, unsubscribe pair, tracking; prospecting six; pipeline five; schedules and rulesets; company context and own key; field mapping, calendar, Slack, enrichment, API keys, webhooks; invoices and tax ID |
+| SDR | Strip (own credits, bounce guard status, what agents may do without your approval, the second-approval threshold); You; own mailboxes with warm-up and limits | Signature, tracking, unsubscribe text; primary email type, in-progress limit; enrichment order; schedules, rulesets, priority; agents on; calendar |
 | AE | Strip (own credits); You; own mailboxes (Meridian) | Signature, tracking, pipeline stages, custom fields, calendar, default currency |
 | Marketer | Strip (own credits); You; company context | Tracking, custom fields, signature |
 | CS | Strip (own credits); You | Signature, calendar |
 
-How it changes across businesses: Halyard's admin gets workspace name, timezone and currency at level one; Fathom's admin loses Users, domains and CRM to doors and loses teams, profiles, SSO and territories altogether; Ridgeline's admin loses mailboxes, warm-up, limits and domains to the Email door and gains nothing, because product-led sending is light. The critical strip is the same for every admin.
+How it changes across businesses: Halyard's admin gets workspace name, timezone, currency and the workspace profile at level one, because a new client workspace is a monthly job; Fathom's admin loses Users, domains and CRM to doors, and keeps teams, permission profiles, SSO, the IP allowlist, territories, API keys, webhooks and the own model key on the page with locks rather than losing them; Ridgeline's admin loses mailboxes, warm-up, limits and domains to the Email door and gains nothing, because product-led sending is light. The critical strip is the same for every admin.
 
 ### 6.3 Doors, labels and containers
 
 | Area | Door label for Meridian's admin (content, with count) | Container |
 |---|---|---|
 | Workspace | Name, logo, timezone, currency and language (5); Halyard: Logo and language (2) | In place |
+| How your team works | Pages left out and the exposure showing now (2); Halyard: nothing behind a door, all four rows are level one | In place; changing the profile opens the three questions in place |
 | Team and access | Teams, permission profiles, MFA, single sign-on, IP allowlist, password policy, session timeout (7); Fathom: Users, MFA, IP allowlist, password policy, session timeout (5) | In place; teams and profiles open a drawer |
 | Email sending | Tracking subdomain, catch-all blocking, unsubscribe text, open and click tracking (4); SDR: Signature, open and click tracking, unsubscribe text (3) | In place |
 | Mailbox row, domain row | Edit (signature, tracking subdomain, unlink); DNS records | Drawer, flat |
 | Prospecting rules | GDPR by region, do-not-call, primary email type, duplicate handling, in-progress limit, territories (6) | In place; territories open a drawer |
 | Pipeline and data | Pipelines and stages, contact and account stages, custom fields, deal currency, enrichment provider order (5) | In place; lists open drawers |
 | Sequences | Sending schedules, rulesets (2); SDR adds priority (3) | In place; lists open drawers |
-| Agents and AI | Company context, bring your own model key (2) | In place; context opens a drawer |
+| Agents and AI | Company context, bring your own model key (Scale) (2) | In place; context opens a drawer |
 | Integrations | Field mapping, calendar, Slack, enrichment provider, API keys, webhooks (6) | In place; mapping and error log open drawers; connect opens the wizard page |
 | Plan, billing and usage | Invoices and tax ID (2) | In place |
 | Users table; Change plan | Not doors: links | Page |
@@ -359,24 +402,24 @@ Door state is remembered per user per workspace (`ollopa.settings.doors.<busines
 
 ### 6.6 Decision-critical items
 
-Price and renewal, credit balance and burn with run-out date, bounce guard status with the current rate, agent approval rules, agent credit caps, pending approvals count, Cancel plan next to Change plan, Delete workspace with its consequence and Export beside it. All at level one; the first seven in the strip.
+Price and renewal, credit balance and burn with run-out date, bounce guard status with the current rate and both thresholds, agent approval rules, agent credit caps, the second-approval threshold, pending approvals count, upgrade requests with their cost, Cancel plan next to Change plan, Delete workspace with its consequence and Export beside it. All at level one; the first nine in the strip. None of them is ever gated: safety and decision-critical items are on every plan.
 
 ### 6.7 Removed rather than hidden
 
-Get started checklist and onboarding progress; Workspace overview; the Notifications page (preferences live on Agents and Inbox, next to what they notify about); Marketing domains; Data requests; AI word usage; System activity log; Removal requests as a page (a line under GDPR restrictions); Sequence alerts and Best times; the Admin Settings flyout; the extra copies of the credit balance (the header pill stays and links here); the cancel-reason picker and "Keep current plan"; "Advanced" blocks (deletion and merge sync are two labelled rows in the CRM drawer); custom user fields. Absent from the inventory and the product, not parked behind a door.
+The Get started checklist and its four progress rings, the "Team & Workspace setup 86% completed" flyout and the "Onboarding hub" percentage: about two dozen tasks replaced by three questions asked once, on their own page, before the workspace opens (spec 16). Not moved behind a door here and not kept as a percentage anywhere. What survives of them is one row in "How your team works" that says which profile was declared and lets it be changed. Then: Workspace overview; the Notifications page as a page — but not the preferences on it. What to be notified about stays on the thing that notifies (Agents, Inbox, the CRM error log); where notifications go — digest or as they happen, Slack, push, mute, quiet hours — is one row in "You", because those five are read and set together, and it is what the shell's notification panel links to; Marketing domains; Data requests; AI word usage; System activity log; Removal requests as a page (a line under GDPR restrictions); Sequence alerts and Best times; the Admin Settings flyout; the extra copies of the credit balance (the header pill stays and links here); the cancel-reason picker and "Keep current plan"; "Advanced" blocks (deletion and merge sync are two labelled rows in the CRM drawer); custom user fields. Absent from the inventory and the product, not parked behind a door.
 
 ### 6.8 Score
 
 | # | Question | Score | Line |
 |---|---|---|---|
-| 1 | Decision-critical visible without interaction | 2 | Strip plus level-one delete and export; cancel beside change plan |
-| 2 | Every visible item backed by a sourced number | 2 | Section 4, from `settings.ts`, shape checked for five pairs |
+| 1 | Decision-critical visible without interaction | 2 | Strip plus level-one delete, export and upgrade requests; cancel beside change plan; nothing decision-critical is ever behind a plan lock |
+| 2 | Every visible item backed by a sourced number | 2 | Section 4, all 65 items from `settings.ts`, shape checked for five pairs with one stated denominator |
 | 3 | No path exceeds two levels on any screen size | 2 | Page and one door; flat drawers; sub-pages are independent screens with their own single door; same on phone |
-| 4 | Doors labelled by content, chevron and text | 2 | Every door lists its contents and count; no "More", "Other" or "Advanced" |
+| 4 | Doors labelled by content, chevron and text | 2 | Every door lists its contents and count; no "More", "Other" or "Advanced". A locked row is a real control with its own label and plan name, never a disabled one and never a "Premium" section |
 | 5 | Doors adjacent to what they reveal, keyboard and touch | 2 | Door under its area heading; header is a button; 40 px targets |
-| 6 | No dependent information split across a door | 2 | Unsubscribe pair, bounce guard triple, limits with their permission, delete with export, credit limit with usage |
+| 6 | No dependent information split across a door | 2 | Unsubscribe pair, bounce guard triple, limits with their permission, delete with export, credit limit with usage, and the five notification-delivery choices in one row rather than scattered across the things that notify |
 | 7 | State persists; expand all and print | 2 | 6.4 |
-| 8 | User action or object state, never inferred history | 2 | Layout from the usage model per segment; nothing reorders by the user's history; status rows change with object state only |
+| 8 | User action or object state, never inferred history | 2 | Layout from the usage model per segment; nothing reorders by the user's history; status rows change with object state only. The sidebar this page owns is declared, not inferred: a profile a human chose, plus a seat a human granted, both visible and editable here. The one thing that changes on a signal, the two-week exposure, adds a page temporarily, asks before keeping it, moves nothing else, and shows its own signal count on this page |
 | 9 | Instrumented; promote, keep or delete review scheduled | 1 | Door opens are counted and the review is scheduled; the demo has no real analytics behind it, so the review runs on the illustrative model |
 
 Total: 17 of 18.
@@ -387,7 +430,7 @@ Step 0 is the common version in section 5. Six steps follow, one rule each, in t
 
 ### Step 1. Rule 7: decision-critical information is never behind a door
 
-**What moves.** The strip appears at the top. Price and renewal date come up from the Manage Subscription checkout (second level). Credit balance and burn rate come up from Credits and activity › Credit usage › Usage details (third level) and gain a run-out date. Bounce guard status comes up from Sending policies, with the current rate from Bounce logs. Agent approval rules and credit caps, which had no home (per workflow, per user, per permission profile), get one at level one in Agents and AI. Cancel plan moves from below the fold on Plan overview to the strip beside Change plan, same size; the reason picker and "Keep current plan" go. Delete workspace is created at level one with its consequence; before, it was "contact support". Pending approvals get a count and a link. Ghosts stay on the parody's Plan overview and Credit usage pages until step 2.
+**What moves.** The strip appears at the top. Price and renewal date come up from the Manage Subscription checkout (second level), as one total for the period rather than a per-seat breakdown, because partitioned pricing left consumers underestimating the total by about 11%, worse than drip pricing's 3.2% (CMA). Credit balance and burn rate come up from Credits and activity › Credit usage › Usage details (third level) and gain a run-out date. Bounce guard status comes up from Sending policies, with the current rate from Bounce logs. Agent approval rules and credit caps, which had no home (per workflow, per user, per permission profile), get one at level one in Agents and AI. Cancel plan moves from below the fold on Plan overview to the strip beside Change plan, same size; the reason picker and "Keep current plan" go. Delete workspace is created at level one with its consequence; before, it was "contact support". Pending approvals get a count and a link, and so do upgrade requests from teammates, each carrying the feature, the plan and the monthly cost, because the person approving a request is making a price decision. The second-approval threshold, which had been a number hard-coded inside the campaign send dialog, becomes a row in Agents and AI. Ghosts stay on the parody's Plan overview and Credit usage pages until step 2.
 
 **Evidence.** Nielsen (2026): never hide "price, requirements, risks, privacy terms" behind the second level. Nouwens et al. (2020): moving the reject button off the first page raised consent by 22 to 23 points. Blake et al. (2021): deferring fees raised spending by 21%. FTC junk-fee rule (2025), UK CMA guidance (2025). Memo §1.3: "scroll to Cancel Plan", "no self-serve control"; §3: "surprised at the end of the month".
 
@@ -405,13 +448,13 @@ Step 0 is the common version in section 5. Six steps follow, one rule each, in t
 
 ### Step 4. Rule 4: make the door obvious and honest
 
-**What moves.** Labels are rewritten by content: Rules of engagement becomes Prospecting rules with a door reading "GDPR by region, do-not-call, primary email type, duplicate handling, in-progress limit, territories (6)"; Email setup and health, Mailboxes & domains and Deliverability suite become one name, Email sending; Credits and activity and System activity disappear into Plan, billing and usage; AI context center becomes the row Company context inside Agents and AI; Objects, fields, stages becomes Pipeline and data; "Advanced sync" becomes two rows, Deletion sync and Merge sync. Every door gains a chevron, its content list and a count. Doors that do not apply are removed: Fathom loses teams, permission profiles, SSO and territories, and its Team door shrinks to what is left. The greyed-out admin checklist and "your admin hasn't provided you access" become one sentence naming the admin.
+**What moves.** Plan locks stop being absences. In the parody, a feature the plan does not include is either missing from the sidebar or greyed out with "your Apollo admin hasn't provided you access", which conflates two different things; here a feature the role may not have is hidden with a sentence naming who can grant it, and a feature the plan does not include is shown where it lives with a lock, the plan name and a panel that states the cost and offers one button. Then labels are rewritten by content: Rules of engagement becomes Prospecting rules with a door reading "GDPR by region, do-not-call, primary email type, duplicate handling, in-progress limit, territories (6)"; Email setup and health, Mailboxes & domains and Deliverability suite become one name, Email sending; Credits and activity and System activity disappear into Plan, billing and usage; AI context center becomes the row Company context inside Agents and AI; Objects, fields, stages becomes Pipeline and data; "Advanced sync" becomes two rows, Deletion sync and Merge sync. Every door gains a chevron, its content list and a count. Doors that do not apply are removed, and doors that are merely unpaid-for are not: Fathom keeps teams, permission profiles, SSO, the IP allowlist and territories on the page with locks, and loses nothing. The greyed-out admin checklist and "your admin hasn't provided you access" become one sentence naming the admin.
 
 **Evidence.** Tognazzini: "If the user cannot find it, it does not exist." NN/g (2014): an unlabelled non-standard icon got 0% click-through. NN/g (2016): hidden navigation used in 27% of desktop cases against 48 to 50% for visible, task success more than 20 points lower, users at least 39% slower. Microsoft Windows UX Guide: "Remove (don't disable) progressive disclosure controls that don't apply in the current context." Home Assistant (2026): audience labels "implicitly tell users that certain features are not for them." Memo §3: "Name of the features is a bit confusing"; §6: the renamed pages; §1.1 and §3: the greyed-out states.
 
 ### Step 5. Rule 5: keep context across the boundary
 
-**What moves.** Dependent pairs go into one row or one door. Unsubscribe text and "users may disable it" sit together in the Email door (they were Profile › Email settings and Permission profiles). Bounce guard thresholds, the current 7-day rate and the paused mailboxes are one row (they were Sending policies, Bounce logs and the mailbox drawer). Mailbox limits sit in the row, with the rule "users may adjust their own limits" above the table (it was in Permission profiles). The users table shows credit limit and credits used side by side (they were Users and Credit usage). Export all data moves beside Delete workspace, because delete's warning says export first. Door state now persists per user; Expand all, Collapse all and print-expands-all appear in the header.
+**What moves.** A new area, How your team works, gathers the four things that decide what everyone sees: the workspace profile with the three answers behind it, which seats exist, which pages the profile leaves out with the signal count for each, and any two-week exposure running now with its keep-or-drop question. Before, none of these existed and the sidebar was simply the sidebar. Then dependent pairs go into one row or one door. Unsubscribe text and "users may disable it" sit together in the Email door (they were Profile › Email settings and Permission profiles). Bounce guard thresholds, the current 7-day rate and the paused mailboxes are one row (they were Sending policies, Bounce logs and the mailbox drawer). Mailbox limits sit in the row, with the rule "users may adjust their own limits" above the table (it was in Permission profiles). The users table shows credit limit and credits used side by side (they were Users and Credit usage). Export all data moves beside Delete workspace, because delete's warning says export first. Door state now persists per user; Expand all, Collapse all and print-expands-all appear in the header.
 
 **Evidence.** Cowan (2001): working memory holds about four chunks. Microsoft Fluent 2: "Never put information in one accordion item that needs to be referenced in another accordion item." Microsoft Windows UX Guide: "If a user expands or collapses an item, make the state persist so it takes effect the next time the window is displayed." NN/g: switching between tabs to compare costs memory and interaction. Memo §1.2, §1.3: where each half of the four pairs lived.
 
@@ -431,8 +474,13 @@ Step 0 is the common version in section 5. Six steps follow, one rule each, in t
 
 | Check | Gap found | How it was closed |
 |---|---|---|
+| All four businesses covered | The plan table existed in PLAN.md and nowhere in the specs | §2.3 carries it; every business's tier, price and locks are stated; other specs render their own row |
+| All four businesses covered | 14 and 15 disagreed about which CRM each business runs | Meridian Salesforce, Ridgeline HubSpot, Fathom none, Halyard one client CRM per workspace, in §2.2 |
+| Every field has a source | The bounce guard, the approval policy and the sidebar were each defined in several specs | All three are owned here: one pair of thresholds, one approval policy with one threshold item, one profile-and-seats area |
+| Decision-critical visible | The campaign send threshold was a constant inside another spec | `ai.second-approval`, a critical row at level one, read by Agents and Campaigns |
 | All roles covered | Customer success had almost nothing and it looked like an oversight | Kept honest: You, own credits, a door with signature and calendar, the sentence naming the admin (3.12, 6.2) |
 | All four businesses covered | Ridgeline's admin was missing from the role-business table | Added to 3.12 and 6.2; shape checked in 4 |
+| Dependent fields together | The Notifications page was deleted while the shell still linked to it for digest, Slack, push, mute and quiet hours | One row, "Where notifications go", in You: the five delivery choices together, and the link target the shell needs. What to be notified about stays beside the thing that notifies |
 | Every field has a source | Mailboxes, domains, users, thresholds, approvals, invoices are not in the seed | 2.2 lists a `settings` seed per business; price and run-out are derived, formulas given |
 | Every action has an outcome | Export and delete had no end state | 3.4: progress then a link; a name-typing dialog with grace period and "Export first" |
 | Empty, error and no-access states | No state for a non-admin following a deep link to a workspace setting | 3.8: personal page with a banner naming the admin |

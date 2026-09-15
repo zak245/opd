@@ -1,6 +1,6 @@
 # 09 · Deal record
 
-*The AE's deal page. A full page, and lesson 3. It also defines the record template that the contact page, the company page and parts of Settings reuse.*
+*The AE's deal page. A full page, and lesson 3. It also defines the record template — and the quick look that goes with it — for the contact page, the company page, the account page and the detail views in Settings.*
 
 ## 1. Purpose
 
@@ -29,7 +29,7 @@ Every field on the page, where it comes from, and what the seed must gain. `Deal
 |---|---|---|
 | Deal name | `Deal.name` | Editable title |
 | Company | `Deal.company` → `Company` | Link to the company page |
-| Stage | `Deal.stage` | Add `"Closed lost"` to `DEAL_STAGES`. Stages and their order come from the business's pipeline definition (below) |
+| Stage | `Deal.stage` | Five stages, defined here and read by the board, Reports and Settings: Qualified, Discovery, Proposal, Negotiation, Closed won. `DEAL_STAGES` in the seed already holds exactly these and does not change. There is no Closed lost stage and no outcome flag: a deal that is lost is archived with a reason. Order comes from the business's pipeline definition (below) |
 | Amount and currency | `Deal.amount`, add `Deal.currency` | Meridian: USD, EUR, GBP. Others: workspace default only |
 | Close date | `Deal.closeDate` | |
 | Owner | `Deal.owner` | A seat at the business |
@@ -39,7 +39,7 @@ Every field on the page, where it comes from, and what the seed must gain. `Deal
 | Last activity | `Deal.lastActivity` | Derived from the newest timeline item once activities exist |
 | Created, age | add `Deal.createdAt` | |
 | Pipeline | add `Deal.pipeline` | Meridian: New business, Expansion. Ridgeline: Expansion, Renewal. Fathom and Halyard: one |
-| Lost reason | add `Deal.lostReason` | Required when marking lost |
+| Lost reason and archive date | add `Deal.lostReason`, `Deal.archivedAt` | A reason is required when a deal is archived as lost: Price, No decision, Competitor, Timing. An archived deal keeps its last open stage, leaves the board and the forecast, and stays on the company and in Reports |
 | Custom fields | add `Deal.custom: Record<string, string \| number \| boolean>` and `customFieldDefs` per business | See 2.3 |
 | CRM record | add `Deal.crmId`, `Deal.crmSyncedAt`, `Deal.crmError` | Only where a CRM is connected |
 | Contacts on the deal | add `DealContact { dealId, contactId, role }` | Role: Champion, Economic buyer, Technical, User, Other |
@@ -66,13 +66,13 @@ Every field on the page, where it comes from, and what the seed must gain. `Deal
 
 ### 2.4 Pipelines
 
-Add `pipelines` per business: name, stages, and per stage a default probability and forecast category. Meridian and Ridgeline have two pipelines; Fathom and Halyard have one. Stage names stay those of the seed: Qualified 10% Pipeline, Discovery 25% Pipeline, Proposal 50% Best case, Negotiation 75% Commit, Closed won 100% Closed, Closed lost 0% Omitted.
+Add `pipelines` per business: name, stages, and per stage a default probability and forecast category. Meridian and Ridgeline have two pipelines; Fathom and Halyard have one. Stage names stay those of the seed: Qualified 10% Pipeline, Discovery 25% Pipeline, Proposal 50% Best case, Negotiation 75% Commit, Closed won 100% Closed. Five stages, no sixth; losing a deal is archiving it, not a stage.
 
 ## 3. Features
 
 ### 3.1 What is shown
 
-- **Header.** Back link to Deals. Title. Company link. A status ribbon only when the deal is closed or has a sync error. A field grid: stage stepper with probability and forecast category under it; amount; close date; next step with date; owner; last activity. Pipeline and currency appear only where the business has more than one. Actions: Log activity, Mark won, Mark lost, Delete deal.
+- **Header.** Back link to Deals. Title. Company link. A status ribbon only when the deal is closed or has a sync error. A field grid: stage stepper with probability and forecast category under it; amount; close date; next step with date; owner; last activity. Pipeline and currency appear only where the business has more than one. Actions: Log activity, Mark won, Mark lost and archive, Delete deal.
 - **Main column.** The activity timeline. A composer at the top (Call, Email, Meeting, Note). Filter chips: All, Emails, Calls, Meetings, Notes, Changes. Items grouped by day, newest first. Each item: kind icon, who, when, summary. Emails show two lines and a "Show full email" door. A pinned note sits above the day groups.
 - **Side panel.** Cards: Next step (mirrors the header on phone only); Contacts on the deal; Open tasks; Company summary. Then doors: Custom fields, History, Files, Company signals and news, All fields, Sync history. A pending agent proposal is a card above the contacts while it exists.
 
@@ -90,7 +90,7 @@ Add `pipelines` per business: name, stages, and per stage a default probability 
 | Add contact | Contacts card | Search people at the company; set role |
 | Set contact role, remove contact | Contacts card row menu | Role chip changes; removal keeps the contact record |
 | Mark won | Header, or W | Confirm: "Stage becomes Closed won, forecast Closed, 2 open tasks close." Deal locks; Reopen appears |
-| Mark lost | Header, or Shift+W | Reason required; same consequence sentence; deal locks |
+| Mark lost and archive | Header, or Shift+W | A reason is required. The consequence is written before confirming: "Archived as lost. The deal leaves the board and the forecast, its 2 open tasks close, and it stays on Northwind Analytics and in Reports." Fields lock; Reopen appears |
 | Reopen | Ribbon | Returns the deal to its last open stage |
 | Delete deal | Header | Confirm: "Removes this deal and its 14 activities. Contacts, the company and files stay on the company." Undo for 10 seconds |
 | Enrich | Signals door | Button reads "Enrich · 2 credits"; runs and lists changed fields |
@@ -116,12 +116,12 @@ The timeline filter chips are the only filter. Filter state persists per user. T
 | No activity | Composer with "No activity yet. Log the first call or note." |
 | No contacts | "No contacts on this deal yet. Add the people you are talking to." |
 | No next step | The field reads "No next step" in the warning colour |
-| Closed | Ribbon "Won on 12 Sep 2026" or "Lost on … · reason"; fields read-only; Reopen |
+| Closed or archived | Ribbon "Won on 12 Sep 2026" or "Archived as lost on 11 Sep 2026 · Price"; fields read-only; Reopen |
 | Sync error | Ribbon "Not synced to Salesforce since Tuesday: field mapping error. Sync history ›" |
 
 ### 3.5 Keyboard and shortcuts
 
-Tab order: back link, title, header fields in reading order, actions, composer, timeline items, side cards, doors. Every door is a button inside a heading with `aria-expanded`. Shortcuts: S stage, C call, E email, M meeting, N note, T task, W won, Shift+W lost, G then H history, [ and ] previous and next deal in board order, Esc back to the board, ⌘K palette. The palette lists every action with its shortcut. Focus moves into a drawer when it opens and returns on close.
+Tab order: back link, title, header fields in reading order, actions, composer, timeline items, side cards, doors. Every door is a button inside a heading with `aria-expanded`. Shortcuts: S stage, C call, E email, M meeting, N note, T task, W won, Shift+W mark lost and archive, G then H history, [ and ] previous and next deal in board order, Esc back to the board, ⌘K palette. The palette lists every action with its shortcut. Focus moves into a drawer when it opens and returns on close.
 
 ### 3.6 Accessibility
 
@@ -168,7 +168,7 @@ Role differences at one business come from the usage model only. The admin at Me
 | Pipeline | 4 | 4 | 6 | Fathom, Halyard 0 · Ridgeline AE 6, CS 8, admin 8 |
 | **Closing** | | | | |
 | Mark won | 45 | 35 | 15 | Fathom admin 30 · Halyard admin 20 |
-| Mark lost, with a reason | 35 | 25 | 15 | Fathom admin 25 · Halyard admin 25 |
+| Mark lost and archive, with a reason | 35 | 25 | 15 | Fathom admin 25 · Halyard admin 25 |
 | Reopen a closed deal | 3 | 5 | 3 | |
 | Delete deal ★ | 1 | 0.5 | 3 | |
 | **Activity timeline** | | | | |
@@ -273,7 +273,7 @@ Depth from the sign-in: nav › Deals › deal › tab › field, and for a cust
 | Probability and forecast category live in Settings, three levels from the stage they belong to | 2, 5 | Set Up Deals |
 | The deal form is customised under *Create deal*, custom fields under Settings: one object configured in two places | 5 | Set Up Deals; Create Custom Deal Fields |
 | Hover-then-Edit on a record field: no touch, no keyboard, fails WCAG 1.4.13 | 4 | View and Edit Contacts |
-| A gear icon lets each user hide widgets. Fewer than 5% ever change a setting (Spool 2011), so this is an abdication of the default split | 6 | View and Edit Contacts |
+| A gear icon lets each user hide widgets, so the default split is left to each user to repair | 6 | View and Edit Contacts. The line usually quoted here — Spool's "fewer than 5% ever changed a setting" — is a 2011 anecdote about consumer Word, and no post-2018 settings-usage benchmark exists ([11 What changed](../knowledge-base/11-what-changed-2018-2026.md)), so the argument rests on rule 6 itself: a default nobody chose is not fixed by a control nobody finds |
 | Delete sits in a "…" menu with no consequence shown until clicked | 7 | Access and Manage Deals |
 | Enrichment on a record spends credits; the credit cost on the *Enrichment* tab is unverified, and users report surprise spend: "watch the credit system closely or you'll get surprised at the end of the month" | 7 | View and Edit Contacts; Reddit via Cleverly (secondary) |
 | Non-admins get no deals by default and no explanation in the product beyond "contact your Apollo admin" | product rule: role gaps explain themselves | Set Up Deals |
@@ -293,7 +293,7 @@ Nothing in the 2025 or 2026 release notes changes the deal page structure; the o
 Qualified ─ Discovery ─ [Proposal] ─ Negotiation ─ Closed won        50% · Best case
 Amount $48,000 USD   Close 20 Oct 2026   Next step: Security review call · 17 Sep   Owner Elena Vasquez   Last activity 2 days ago
 
-[Log activity]  [Mark won]  [Mark lost]                                    Delete deal · removes 14 activities   …
+[Log activity]  [Mark won]  [Mark lost and archive]                         Delete deal · removes 14 activities   …
 
 ┌─ Timeline ───────────────────────────────────┐  ┌─ Side panel ─────────────────────────────┐
 │ Call · Email · Meeting · Note                 │  │ Research agent proposes next step:        │
@@ -321,7 +321,7 @@ Two levels. The page is level one. Each door is level two. No door contains a do
 | Stage group, amount, close date, next step, last activity | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
 | Owner | 2 (in All fields) | 1 | 2 | 2 | 1 | 2 | 2 |
 | Forecast category | 1 | 1 | 1 | with stage | with stage | 1 | 1 |
-| Mark won, Mark lost | 1 | 2 (… menu) | 1 | 1 | 1 | 1 | 1 |
+| Mark won; Mark lost and archive | 1 | 2 (… menu) | 1 | 1 | 1 | 1 | 1 |
 | Delete ★ | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
 | Timeline, note, filter | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
 | Log call, email | 1 | 2 (composer "More") | 1 | 1 | 2 | 1 | 1 |
@@ -364,27 +364,40 @@ Shortcuts as listed in 3.5. The palette (⌘K) lists each action with its shortc
 
 ### 6.6 Decision-critical items
 
-Visible without a click: the delete button with its consequence sentence next to it; the credit cost on Enrich and on Ask the research agent; the consequence sentence on Mark won and Mark lost before confirming; the sync error ribbon; what approving an agent proposal will do (send an email, spend credits) on the proposal card. The path to reopen a closed deal is one click, the same as closing it.
+Visible without a click: the delete button with its consequence sentence next to it; the credit cost on Enrich and on Ask the research agent; the consequence sentence on Mark won and on Mark lost and archive before confirming; the sync error ribbon; what approving an agent proposal will do (send an email, spend credits, move the stage) on the proposal card. The path to reopen a closed or archived deal is one click, the same as closing it.
+
+Who approves, and how often. The deal's owner approves their own agent's actions and the admin may approve for anyone (the policy is one item in Settings, not a rule invented per page). Research, scoring and drafts that are saved rather than sent are logged, never queued. Only irreversible or costly actions wait for a person: sending an email, spending above the credit cap, changing the stage. A second, admin approval is required above a threshold that is a setting. The proposal card waits for the next visit to the deal instead of interrupting, because a suggestion arriving at a task boundary is taken and the same suggestion mid-task is dismissed (52% engagement post-commit against 62% dismissal mid-edit, Kuo et al. 2026). And the queue is kept short on purpose: shown a problematic agent action and asked to approve it, people saw it 88.5% of the time and stopped it 23.9% (Chen et al., N=48), so disclosure past a reviewer's capacity is the same as hiding it.
 
 ### 6.7 What was removed
 
 The *Customize deal form* screen (fields are configured in one place, Settings › Pipeline and data); the widget-visibility gear; the *Notes* tab (notes are timeline items); the *Activities* tab (the timeline is the page); *Email all contacts* as a separate button (the composer's Email picks recipients from the deal's contacts); *Locations* on a deal; probability as a free-standing field (it is the stage's number unless overridden, and lives under the stepper).
 
-### 6.8 The record template
+### 6.8 The record template, and the quick look
 
-The deal page is the first use of `RecordPage`, the second shared template after `TablePage`. The contact page, the company page and the detail views in Settings (a user, a mailbox, an integration) reuse it. The template decides structure; the usage model decides what sits at level one.
+The deal page is the first use of `RecordPage`, the second shared template after `TablePage`. The contact page, the company page, the account page and the detail views in Settings (a user, a mailbox, an integration) reuse it. The template decides structure; the usage model decides what sits at level one.
+
+**A record is disclosed in two levels, and often should be.** This is the pattern named in RULES.md, and this spec is where it is defined for every record in the product.
+
+- **The quick look** is level one: a flat drawer opened from a table row, keeping the table in view. It shows the few fields a glance needs, in the same order and with the same labels as the top of the full record. Nothing collapses inside it. It is read-only except for the one field the glance exists for — a deal's stage on the board, an account's next step on the accounts table. It serves scanning tasks, where a person moves through many rows and needs a glance at each.
+- **The record page** is level two: everything about the object, from this template. Header, key fields, related lists as scrolling sections (people at a company, deals, activity), and doors only for long content that is rarely needed alongside the rest — full history, enrichment data, custom fields, files. At most one tab, for a related table big enough to be a page of its own, with a count in its label; sections otherwise, because tabs hide what a person may need to see side by side. It serves dwelling tasks, where a person has chosen the object and is working on it.
+- **The test.** Remove the drawer and you lose only speed. If removing it would lose a feature, it has become a second version of the record, and that is against the rules.
+- **The count.** Table to drawer is one level, table to page is one level, page to a door or a tab is a second. Nothing reaches three, because the drawer has no doors and a tab has none.
+
+The deal uses both: the board's card opens a quick look with stage editable in place (the one field the glance exists for), and the card title opens this page. The account page in [11 Accounts](11-accounts.md) is the same arrangement on a table instead of a board.
 
 ```
 RecordPage<T> {
   back: { label, href }                       // "← Deals"
   title: { value, onRename? }                 // editable when onRename is given
   subtitle?: { label, href }                  // parent object: the company
-  ribbon?: { tone, text, action? }            // object state only: closed, sync error, deactivated
+  ribbon?: { tone, text, action? }            // object state only: closed, archived, sync error, deactivated
   fields: Field[]                             // the header grid
   actions: { primary: Action[]; secondary: Action[]; destructive?: { label, consequence, onConfirm } }
   main: { kind: "timeline", items, composer, filters } | { kind: "sections", sections }
   side: Card[]                                // contacts, tasks, company; or status cards in Settings
   doors: Door[]                               // side-panel doors, in this order
+  tab?: { label, count, table }               // at most one, for a related table big enough to be its own page
+  quickLook: { fields: FieldKey[]; editable?: FieldKey }   // the drawer: the top of this page, cut short
   shortcuts: Shortcut[]                       // shown in the palette
   noAccess?: { message, who: Seat[] }         // names who can
 }
@@ -405,15 +418,19 @@ Rules the template enforces, so every record page inherits them:
 6. Row actions in cards are visible on hover and focus and repeated in each row's "…" menu.
 7. On phone: header, then the sticky action bar, then side cards, then main, then doors. Drawers become sheets. No item changes level.
 8. No usage numbers, sources or teaching text render anywhere.
+9. `quickLook` renders as a flat drawer: the named fields in the order they appear in `fields`, with the same labels, no doors, no collapsing sections, and at most one editable field. A quick look that needs a door is a record page.
+10. `tab` is optional and there is never more than one. Related lists are sections in `main`, not tabs.
 
 How the other pages fill it:
 
-| Page | Header fields (level one at Meridian, primary role) | Main | Side cards | Doors |
-|---|---|---|---|---|
-| Contact | Name, title, company, email with status, phone, stage, owner, in sequence | Timeline | Company, open deals, tasks | Sequences (2), Custom fields, History, Enrichment (drawer), Files, All fields |
-| Company | Name, domain, industry, employees, stage, owner, open deals count | Timeline | Contacts (top 5), open deals, signals | People at the company (drawer), Custom fields, Locations, History, Enrichment (drawer), Files, All fields |
-| Settings › user | Name, email, role, permission profile, credit limit, status | Sections: access, mailboxes, activity | Credit usage this month, last sign-in | Teams, Territories, Sessions, Audit log |
-| Settings › mailbox | Address, owner, warm-up status, daily limit and sent today, deliverability score | Sections: limits, signature | Bounce guard state ★ | Warm-up settings, Tracking, Forwarding, History |
+| Page | Header fields (level one at Meridian, primary role) | Main | Side cards | Doors | Quick look |
+|---|---|---|---|---|---|
+| Deal | Stage, amount, close date, next step, owner, last activity | Timeline | Contacts, tasks, company | Custom fields, History, Files, Signals (drawer), All fields, Sync history | Stage, amount, close date, next step; stage editable |
+| Contact | Name, title, company, email with status, phone, stage, owner, in sequence | Timeline | Company, open deals, tasks | Sequences (2), Custom fields, History, Enrichment (drawer), Files, All fields | Name, title, company, email with status, phone; email status read-only, stage editable |
+| Company | Name, domain, industry, employees, stage, owner, open deals count | Sections: contacts, open deals, activity | Contacts (top 5), open deals, signals | Custom fields, Locations, History, Enrichment (drawer), Files, All fields; one tab, "People (48)", where the list is big enough to be its own page | Name, domain, industry, employees, stage, owner |
+| Account | Health with band, renewal and days left, contract value, open risks, last touch, next step | Sections: health drivers, renewal terms, risks, signals, hand-off, touches, usage, seats, contacts, deals | Renewal, champion, CRM sync | History, Files, All fields, Enrichment (drawer) | Health, renewal and days left, value, open risks, next step; next step editable |
+| Settings › user | Name, email, role, permission profile, credit limit, status | Sections: access, mailboxes, activity | Credit usage this month, last sign-in | Teams, Territories, Sessions, Audit log | Name, email, role, status |
+| Settings › mailbox | Address, owner, warm-up status, daily limit and sent today, deliverability score | Sections: limits, signature | Bounce guard state ★ (warn 4%, pause 6%, with the observed rate) | Warm-up settings, Tracking, Forwarding, History | Address, owner, warm-up status, sent today |
 
 ### 6.9 The nine-point score
 
@@ -441,17 +458,17 @@ Lesson 3 starts from the common version and applies one rule per step. Each step
 
 **Step 2 · Rule 2, stop at two levels.** Delete the tab strip. Every former tab becomes a side-panel door or a timeline filter. *All Fields › field group › field* becomes *All fields › field*. Evidence: Nielsen 2006 on designs beyond two levels; Landauer and Nachbar 1985, breadth beats depth; Hassnaa's Trustpilot review, "too many clicks to reach data". What moves: three tabs and one nested tab level become six doors, each one click from the page.
 
-**Step 3 · Rule 3, split by task frequency, not user skill.** Remove the widget-visibility gear and the idea of a per-user layout. The admin and the AE see the same page; what differs is which items are level one, decided by the usage model per role and business. Evidence: Spool 2011, fewer than 5% change a setting; Findlater and McGrenere 2004, users prefer stable layouts; Home Assistant 2026 on audience labels. What moves: nothing on screen; the gear goes, and the split is now a table in `deal.ts` rather than 42 private configurations.
+**Step 3 · Rule 3, split by task frequency, not user skill.** Remove the widget-visibility gear and the idea of a per-user layout. The admin and the AE see the same page; what differs is which items are level one, decided by the usage model per role and business. Evidence: Findlater and McGrenere 2004, users prefer stable layouts; Home Assistant 2026 deleted its Advanced and Expert labels because "they implicitly tell users that certain features are not for them". The figure often quoted here, Spool's "fewer than 5% ever changed a setting", is a 2011 anecdote about consumer Word and there is no post-2018 replacement, so it is not the argument: the argument is that a per-user layout hands the design problem to the user. What moves: nothing on screen; the gear goes, and the split is now a table in `deal.ts` rather than 42 private configurations.
 
 **Step 4 · Rule 4, make the door obvious and honest.** Label every door by content with a count: *Custom fields (6)*, *History (12 changes)*, *Files (2)*. Replace hover-to-edit with click or Enter on the field, an editor in place, and a visible pencil on focus. Remove currency, pipeline, custom fields and sync where a business has none of them. Evidence: NN/g 2014, 0% click-through on an unlabelled icon; Microsoft Windows UX Guide, remove controls that do not apply; WCAG 1.4.13 on hover-only content. What moves: seven door labels, one editing mechanism, four removals per business profile.
 
 **Step 5 · Rule 5, keep context across the boundary.** Put probability and forecast category directly under the stage stepper and change all three together. Put the next step's date on the next step. Put the contacts beside the timeline, not on another tab. Expand doors in place; use a drawer only for signals and enrichment, which need room but must keep the deal in view. Doors remember whether you left them open. Evidence: Microsoft Fluent 2, never split information that must be referenced together; Cowan 2001, about four chunks; Microsoft Windows UX Guide on persisting expand state. What moves: probability and forecast out of Settings and onto the stage; contacts out of the tab strip and beside the timeline.
 
-**Step 6 · Rule 6, stable, user-controlled disclosure.** Nothing on the page reorders itself. The agent proposal card appears because a proposal exists, and disappears when it is approved or dismissed. Ridgeline's product-signals card is there because the business profile says so at sign-in, not because someone opened the door last week. Evidence: Findlater and McGrenere 2004, static menus beat adaptive ones; Gajos et al. 2008, adaptation needs about 70% accuracy to pay; Jensen Harris on Office 2000 menus. What moves: the agent proposal from a notification bell to a card driven by object state.
+**Step 6 · Rule 6, stable, user-controlled disclosure.** Nothing on the page reorders itself. The agent proposal card appears because a proposal exists, and disappears when it is approved or dismissed. Ridgeline's product-signals card is there because the business profile says so at sign-in, not because someone opened the door last week. Evidence: Jensen Harris on Office 2000's inferred menus, and the two modern re-tests that re-based the argument — Todi et al. (CHI 2021, 18 participants, 6,480 trials: static 2283 ms against frequency reordering 2298 ms, and 15% slower outside the promoted head) and Gaspar-Figueiredo et al. (JSS 2025, n=40, no significant difference either way). Spatial adaptation loses at any accuracy, so the old "about 70% accuracy" threshold (Gajos et al. 2008, never replicated) is no longer the reason. What moves: the agent proposal from a notification bell to a card driven by object state.
 
 **Step 7 · Rule 7, decision-critical information is never behind a door.** Take Delete out of the "…" menu and put it in the actions row with "removes 14 activities" beside it. Put the credit cost on Enrich and on Ask the research agent. Show what Mark won and Mark lost do before confirming. Show the sync error as a ribbon. Say on the proposal card that approving sends an email. Evidence: Nielsen 2026, never hide consequences; Nouwens et al. 2020 on second-page choices; Trustpilot and Cleverly on surprise credit spend. What moves: one button up a level, four consequence sentences and two prices onto the page.
 
-**Step 8 · Rule 8, fade the scaffold; give experts accelerators.** Add S, C, E, M, N, T, W and Shift+W; [ and ] to walk the board; ⌘K with every shortcut shown; expand all and print; doors that stay open once opened. Log each door open, and every six months promote what everyone opens, keep what some open, delete what nobody opens. Evidence: NN/g heuristic 7; Cockburn et al. 2014 on users failing to adopt faster methods unless pulled; McGrenere and Moore 2000, tuck away 45% versus remove 24.5%. What moves: nothing visible for a first-time user; everything for the resident.
+**Step 8 · Rule 8, fade the scaffold; give experts accelerators.** Add S, C, E, M, N, T, W and Shift+W; [ and ] to walk the board; ⌘K with every shortcut shown; expand all and print; doors that stay open once opened. Log each door open, and every six months promote what everyone opens, keep what some open, delete what nobody opens. Evidence: NN/g heuristic 7; Cockburn et al. 2014 on users failing to adopt faster methods unless pulled; McGrenere and Moore 2000, tuck away 45% versus remove 24.5%. The palette's inline hint is the floor, not the teacher: 749 tooltip exposures produced two shortcut activations and tooltips explain 1% of shortcut discovery, while a period of full exposure took usage from 9.79% to 86.20%, holding at 73.09% after it ended (IHM 2025, in [11 What changed](../knowledge-base/11-what-changed-2018-2026.md)). What moves: nothing visible for a first-time user; everything for the resident.
 
 **Close.** Score the page with the nine questions. Show Meridian AE, Meridian admin, Halyard admin and Ridgeline CS side by side: the same template, four different level-one sets, no mode switch.
 
@@ -467,7 +484,9 @@ Lesson 3 starts from the common version and applies one rule per step. Each step
 | Keyboard | Yes | Shift+W for lost replaced an earlier X, which collides with common cut bindings |
 | Phone width | Yes | The "All 5 contacts" in-place door is phone-only; added to the doors table so it is not a hidden extra level |
 | Decision-critical visible | Yes | Agent approval consequence was missing; added to the proposal card |
-| Two levels maximum | Yes | *All fields › field group* was a nested level; groups are headings inside one door, not doors |
+| Two levels maximum | Yes | *All fields › field group* was a nested level; groups are headings inside one door, not doors. The quick-look drawer is flat and adds no level of its own |
+| Five stages | Yes | An earlier draft added "Closed lost" as a sixth stage with a lost reason. Closed: five stages defined here, and losing a deal means archiving it with a reason; the board, Reports and Settings read this list |
+| The quick look | Yes | The pattern was only implied. Section 6.8 now states it for every record in the product: flat drawer, sections not tabs, at most one tab, same fields in the same order as the top of the page |
 | Doors labelled by content | Yes | "Details" was an early label; replaced by six content labels |
 | Dependent fields together | Yes | Probability at 15% would have gone behind a door by number; rule 5 keeps it with stage, stated in 4.1 |
 | State persists | Yes | Per user across deals, not per deal, so a resident's preference holds |

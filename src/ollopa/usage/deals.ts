@@ -5,6 +5,8 @@ import type { UsageItem } from "./model"
 // Fathom overrides: the founders (admin) are the AEs; three people, one pipeline, no CRM, agents propose next steps.
 // Halyard overrides: the agency ops lead (admin) reviews a small pipeline per client workspace weekly.
 // Ridgeline overrides: two pipelines (Expansion, Renewals); CS creates and moves renewal deals, so CS numbers rise.
+// Five stages only (Qualified, Discovery, Proposal, Negotiation, Closed won). A lost deal is archived with a reason:
+// there is no "Closed lost" stage and no outcome flag (PLAN.md, 13 Sep 2026).
 
 type O = NonNullable<UsageItem["overrides"]>
 const f = (admin: number): O => ({ fathom: { admin } })
@@ -27,14 +29,14 @@ export const dealsItems: UsageItem[] = [
   { id: "deals.card.contacts", page: "deals", area: "Board", label: "Contacts on the deal", weekly: { ae: 4, cs: 3, admin: 1 } },
   { id: "deals.card.currency", page: "deals", area: "Board", label: "Original currency when it differs", weekly: { ae: 3, admin: 2 }, overrides: r({ ae: 0, admin: 0 }), note: "Ridgeline bills in one currency; the item is removed there, not hidden." },
   { id: "deals.card.sync", page: "deals", area: "Board", label: "CRM sync error on the card", critical: true, weekly: { ae: 3, cs: 1, admin: 20 }, overrides: ov(f(0), h(0), r({ admin: 10 })), note: "A deal that is not reaching the CRM is data state the owner must see (rule 7). Removed where no CRM is connected." },
-  { id: "deals.card.agent", page: "deals", area: "Board", label: "Agent-proposed next step awaiting approval", critical: true, weekly: { ae: 12, cs: 2, admin: 5 }, overrides: ov(f(35), r({ ae: 18, cs: 10 })), note: "A pending approval is always visible (rule 7). Fathom's founders lean on the agents most." },
+  { id: "deals.card.agent", page: "deals", area: "Board", label: "Agent-proposed next step awaiting approval", critical: true, weekly: { ae: 12, cs: 2, admin: 5 }, overrides: ov(f(35), r({ ae: 18, cs: 10 })), note: "A pending approval is always visible (rule 7). The deal's owner approves; the admin may approve for anyone (Settings, agent approvals). Fathom's founders lean on the agents most." },
   { id: "deals.card.stale", page: "deals", area: "Board", label: "Stale marker (no activity for 14 days)", weekly: { ae: 18, cs: 5, admin: 15 }, note: "Shown by object state on the card; the filter is a separate item." },
   { id: "deals.column.sum", page: "deals", area: "Board", label: "Count and sum per column", weekly: { ae: 85, cs: 15, admin: 40 }, overrides: ov(f(70), h(35), r({ cs: 30 })) },
   { id: "deals.column.weighted", page: "deals", area: "Board", label: "Weighted sum per column", weekly: { ae: 12, cs: 2, admin: 30 }, overrides: ov(f(2), h(3)) },
   { id: "deals.column.stale-count", page: "deals", area: "Board", label: "Stale deals per column", weekly: { ae: 4, admin: 12 } },
   { id: "deals.board.drag", page: "deals", area: "Board", label: "Drag a card to another stage", weekly: { ae: 70, cs: 8, admin: 10 }, overrides: ov(f(65), h(15), r({ cs: 30 })) },
   { id: "deals.board.move-menu", page: "deals", area: "Board", label: "Move to a stage from the card menu", weekly: { ae: 10, cs: 4, admin: 3 }, note: "The keyboard and touch route to the same move." },
-  { id: "deals.board.closed-columns", page: "deals", area: "Board", label: "Closed won and closed lost columns", weekly: { ae: 15, cs: 4, admin: 15 }, overrides: ov(f(10), h(10)) },
+  { id: "deals.board.closed-won-rail", page: "deals", area: "Board", label: "Closed won rail", weekly: { ae: 15, cs: 4, admin: 15 }, overrides: ov(f(10), h(10)), note: "One rail, because there are five stages and Closed won is the fifth. Lost deals are archived, so they are not a column." },
   { id: "deals.board.collapse-column", page: "deals", area: "Board", label: "Collapse a stage column", weekly: { ae: 4, cs: 1, admin: 2 } },
   { id: "deals.board.sort-in-column", page: "deals", area: "Board", label: "Order cards within a column", weekly: { ae: 3, admin: 3 } },
   { id: "deals.board.expand-cards", page: "deals", area: "Board", label: "Expand or collapse all cards", weekly: { ae: 4, cs: 2, admin: 4 } },
@@ -58,7 +60,7 @@ export const dealsItems: UsageItem[] = [
   { id: "deals.filter.company", page: "deals", area: "Filters and search", label: "Company", weekly: { ae: 4, cs: 8, admin: 3 }, overrides: r({ cs: 15 }) },
   { id: "deals.filter.created", page: "deals", area: "Filters and search", label: "Created date", weekly: { ae: 2, admin: 4 } },
   { id: "deals.filter.custom", page: "deals", area: "Filters and search", label: "Custom deal fields", weekly: { ae: 2, admin: 4 }, overrides: f(0), note: "Fathom has no custom deal fields, so the filter is removed there." },
-  { id: "deals.filter.lost-reason", page: "deals", area: "Filters and search", label: "Lost reason", weekly: { ae: 2, admin: 4 } },
+  { id: "deals.filter.archived", page: "deals", area: "Filters and search", label: "Archived deals and the reason each was lost", weekly: { ae: 2, admin: 4 }, note: "Archived deals are off the board by default; this is how they come back into view." },
 
   // Actions
   { id: "deals.action.open-record", page: "deals", area: "Actions", label: "Open the deal record", weekly: { ae: 95, cs: 20, admin: 35 }, overrides: ov(f(90), h(30), r({ cs: 60 })) },
@@ -68,7 +70,7 @@ export const dealsItems: UsageItem[] = [
   { id: "deals.action.change-forecast", page: "deals", area: "Actions", label: "Change forecast category", weekly: { ae: 10, cs: 1, admin: 3 } },
   { id: "deals.action.change-owner", page: "deals", area: "Actions", label: "Change owner", weekly: { ae: 3, cs: 2, admin: 12 }, overrides: ov(f(2), h(10)) },
   { id: "deals.action.close-won", page: "deals", area: "Actions", label: "Close won, showing what happens next", critical: true, weekly: { ae: 15, cs: 4, admin: 3 }, overrides: ov(f(20), r({ cs: 15 })), note: "Closing pushes to the CRM and hands the account to CS; that consequence is shown before the drop lands (rule 7)." },
-  { id: "deals.action.close-lost", page: "deals", area: "Actions", label: "Close lost, with reason", critical: true, weekly: { ae: 18, cs: 3, admin: 3 }, overrides: ov(f(20), r({ cs: 10 })) },
+  { id: "deals.action.mark-lost", page: "deals", area: "Actions", label: "Mark lost and archive, with a reason", critical: true, weekly: { ae: 18, cs: 3, admin: 3 }, overrides: ov(f(20), r({ cs: 10 })), note: "There is no Closed lost stage. The sheet says the deal leaves the board and the forecast and stays on the company; the reason is required (rule 7)." },
   { id: "deals.action.reopen", page: "deals", area: "Actions", label: "Reopen a closed deal", weekly: { ae: 2, admin: 2 } },
   { id: "deals.action.bulk-owner", page: "deals", area: "Actions", label: "Bulk: change owner", weekly: { ae: 1, admin: 12 }, overrides: ov(f(2), h(8)), note: "Territory changes and departures; an admin errand." },
   { id: "deals.action.bulk-stage", page: "deals", area: "Actions", label: "Bulk: move to a stage", weekly: { ae: 3, admin: 4 } },

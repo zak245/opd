@@ -15,6 +15,7 @@ import { accountsItems } from "./accounts"
 import { reportsItems } from "./reports"
 import { agentsItems } from "./agents"
 import { connectItems } from "./connect"
+import { setupItems } from "./setup"
 
 export * from "./model"
 
@@ -36,6 +37,7 @@ export const allItems: UsageItem[] = [
   ...agentsItems,
   ...settingsItems,
   ...connectItems,
+  ...setupItems,
 ]
 
 export function itemsFor(page: Page): UsageItem[] {

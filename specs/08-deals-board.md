@@ -18,7 +18,7 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 |---|---|---|
 | Deal name, company | `Deal.name`, `Deal.company` | |
 | Amount | `Deal.amount` | In the workspace default currency (`ws.currency`) |
-| Stage | `Deal.stage` | Qualified, Discovery, Proposal, Negotiation, Closed won |
+| Stage | `Deal.stage` | Five stages: Qualified, Discovery, Proposal, Negotiation, Closed won. There is no Closed lost stage and no outcome flag; a lost deal is archived with a reason. The list and its probabilities are defined once in [09 Deal record](09-deal-record.md) and read here |
 | Probability | `Deal.probability` | Owned by the setting "Pipelines and stages" |
 | Close date | `Deal.closeDate` | Overdue when before today (2026-09-13 in the seed) |
 | Owner | `Deal.owner` | A user from `businesses.roles` |
@@ -33,9 +33,9 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 | Field | Type | Why |
 |---|---|---|
 | `pipeline` | Meridian: "New business", "Renewals and expansion"; Ridgeline: "Expansion", "Renewals"; one at Fathom and Halyard | The pipeline picker exists only with more than one |
-| `forecastCategory` | Pipeline, Best case, Commit, Closed, Omitted | Defaults from stage (Qualified, Discovery → Pipeline; Proposal → Best case; Negotiation → Commit; Closed won → Closed); one deal in ten overrides, two per business are Omitted |
+| `forecastCategory` | Pipeline, Best case, Commit, Closed, Omitted | Defaults from stage (Qualified, Discovery → Pipeline; Proposal → Best case; Negotiation → Commit; Closed won → Closed); one deal in ten overrides, two per business are Omitted. Archiving a deal takes it out of the forecast altogether |
 | `stageEnteredAt`, `createdAt` | dates | Days in stage; created-date filter |
-| `Closed lost` stage, `lostReason` | stage; Price, No decision, Competitor, Timing | One closed-lost deal per six open |
+| `archivedAt`, `lostReason` | date; Price, No decision, Competitor, Timing | A lost deal is archived, not moved to a sixth stage. One archived deal per six open, so the archived filter has rows |
 | `syncState` | synced, error, null | Only where a CRM is connected (Meridian, Ridgeline); one in twenty in error |
 | `agentProposal` | string or null | A proposed next step awaiting approval; more often at Fathom |
 | `currency` | ISO code, optional | A handful at Meridian and Halyard, to show conversion |
@@ -47,7 +47,7 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 
 - **Header.** "Deals", the pipeline name when there is more than one, scope (Mine, My team, All), period (Closing: any time, this month, this quarter, next quarter, overdue), search, Board or Table, and "New deal".
 - **Forecast strip.** Commit, Best case (commit plus best case), Pipeline (all open), Closed won, each as count and sum for the current scope and period. Omitted appears only when its count is above zero.
-- **Board.** One column per open stage in pipeline order; header shows stage, count and sum. Closed won and Closed lost are narrow rails at the right with count and sum; clicking a rail expands it into a column.
+- **Board.** One column per open stage in pipeline order; header shows stage, count and sum. Closed won is a narrow rail at the right with count and sum; clicking it expands it into a column. There is no lost rail: a deal that is lost is archived and leaves the board, and the filter "Archived deals and the reason each was lost" brings them back into view.
 - **Card.** Deal name (link to the record), company, amount, next step, close date. Object-state markers: "3 days overdue"; "Stale, 21 days"; "Not syncing to CRM"; "Agent proposes: Send security questionnaire. Approve · Dismiss". Owner initials sit on the card where the role's usage puts them at level one (admin, Halyard), else inside the card's door.
 - **Table view.** Built on `TablePage`. Columns: Deal, Company, Stage, Amount, Forecast, Close date, Next step, Owner, Last activity, Days in stage. Same scope, period, search and filters.
 
@@ -60,11 +60,11 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 | Move to stage | Card menu, stages listed flat | Same as drag |
 | Edit in place | Click amount, close date or next step | Becomes an input; Enter saves, Escape cancels |
 | Close won | Drop on the rail, or menu | A sheet on the card states what happens: pushed to the CRM where connected, account moves to Customer success, counted as Closed. Confirm or cancel |
-| Close lost | Drop on the rail, or menu | Same sheet; lost reason required |
-| Reopen | Menu on a closed card | Back to the last open stage |
+| Mark lost and archive | Card menu | A sheet states what happens: a reason is required, the deal leaves the board and the forecast, it stays on the company and in Reports, and the CRM opportunity is not deleted. Confirm or cancel; Undo in the toast |
+| Reopen | Menu on a closed card, or from the archived filter | Back to the last open stage |
 | Log a call or note | Card menu | Short form in a drawer; saved to the deal's activity |
 | Change owner, change forecast category | Card menu | Inline select |
-| Approve or dismiss an agent proposal | Buttons on the card | Approve sets the next step; both clear the badge and write to the agent log |
+| Approve or dismiss an agent proposal | Buttons on the card | Approve sets the next step; both clear the badge and write to the agent log. The deal's owner approves their own agent's proposals and the admin may approve for anyone, as the approval policy in Settings says. Research, scoring and saved drafts are logged, not queued; only an irreversible or costly act (sending the email, moving the stage, spending above the credit cap) waits for a person, and the card states which it is. Proposals wait on the card for the next time the AE looks at the deal; nothing interrupts a person mid-task |
 | New deal | Header button, N | Drawer: name, company, pipeline (if more than one), stage, amount, close date, owner, next step |
 | Bulk: change owner, move, change close date, export, delete | Selection bar on checking cards or rows | Applies to the selection; delete asks once and names what goes |
 | Export, Import, Print, Edit stages | Page menu "Import, export, print and stages" | Export downloads the view; import opens a CSV drawer; print expands all; Edit stages goes to Settings › Pipeline and data |
@@ -73,7 +73,7 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 ### Filters, search, sorting, columns
 
 - Level one: scope, period, search (deal name, company, owner, next step).
-- The filter door, "Filters: owner, forecast category, stale, amount, company, created, lost reason, custom fields", opens in place under the header and shows "2 filters on". Owner and forecast category sit at level one for the admin at Meridian and Halyard.
+- The filter door, "Filters: owner, forecast category, stale, amount, company, created, archived and its reason, custom fields", opens in place under the header and shows "2 filters on". Owner and forecast category sit at level one for the admin at Meridian and Halyard.
 - Cards are ordered by close date within a column; other orders, table columns ("Columns, 10 of 16"), density and saved views live in the view options door. Table sorts by any header.
 
 ### States
@@ -105,13 +105,13 @@ Columns become one column with a row of stage chips at the top, each with count 
 | | AE | CS | Admin |
 |---|---|---|---|
 | Meridian | Scope defaults to Mine; owner inside the card door; owner and forecast filters inside the filter door | Scope All; strip collapsed to its door; card shows name, company, amount, close date | Scope All; owner on the card; owner and forecast filters in the header; weighted sum in the column header |
-| Fathom | No seat; the founder (admin) is the AE | No seat | Scope All; no pipeline picker; no CRM badges (removed); agent proposals common; strip at level one |
-| Halyard | No seat | No seat | One small pipeline per client workspace; owner on the card; strip is a door; saved views per client |
+| Fathom | No AE seat exists | No seat | The founder's admin seat works the pipeline, and the Founder-led outbound profile puts Deals in her sidebar; scope All; no pipeline picker; no CRM badges (removed); agent proposals common; strip at level one |
+| Halyard | No seat | No seat | One small pipeline per client workspace, with the workspace's name shown by the shell's top bar rather than by this page; owner on the card; strip is a door; saved views per client |
 | Ridgeline | Pipeline picker at level one | Pipeline picker and New deal at level one; next step and close date on the card | Sync badges where the CRM is connected |
 
 ## 4. Usage items
 
-Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = Halyard admin, R = Ridgeline (role named). Critical items (rule 7) are marked * and are level one regardless. Data: `src/ollopa/usage/deals.ts`.
+Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = Halyard admin, R = Ridgeline (role named). Critical items (rule 7) are marked * and are level one regardless. Data: `src/ollopa/usage/deals.ts`. Fathom and Halyard have declared only an admin and an SDR seat, and `weeklyUse` returns zero for a seat a business does not have (`SEATS` in `usage/model.ts`), so no AE or CS first screen is ever computed there. The shared table behaviours used by the table view are specified once in [02 People](02-people.md); this spec records only the board's own.
 
 | Item | Area | AE | CS | Admin | Overrides |
 |---|---|---|---|---|---|
@@ -135,7 +135,7 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Stale deals per column | Board | 4 | 0 | 12 | |
 | Drag a card to another stage | Board | 70 | 8 | 10 | F 65, H 15, R cs 30 |
 | Move to a stage from the card menu | Board | 10 | 4 | 3 | |
-| Closed won and closed lost columns | Board | 15 | 4 | 15 | F 10, H 10 |
+| Closed won rail | Board | 15 | 4 | 15 | F 10, H 10 |
 | Collapse a stage column | Board | 4 | 1 | 2 | |
 | Order cards within a column | Board | 3 | 0 | 3 | |
 | Expand or collapse all cards | Board | 4 | 2 | 4 | |
@@ -155,7 +155,7 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Company | Filters | 4 | 8 | 3 | R cs 15 |
 | Created date | Filters | 2 | 0 | 4 | |
 | Custom deal fields | Filters | 2 | 0 | 4 | F 0 (removed) |
-| Lost reason | Filters | 2 | 0 | 4 | |
+| Archived deals and the reason each was lost | Filters | 2 | 0 | 4 | |
 | Open the deal record | Actions | 95 | 20 | 35 | F 90, H 30, R cs 60 |
 | Edit amount, close date or next step in place | Actions | 55 | 8 | 10 | F 50, H 15, R cs 30 |
 | New deal | Actions | 15 | 4 | 4 | F 30, H 15, R ae 18, cs 30 |
@@ -163,7 +163,7 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Change forecast category | Actions | 10 | 1 | 3 | |
 | Change owner | Actions | 3 | 2 | 12 | F 2, H 10 |
 | Close won, showing what happens next * | Actions | 15 | 4 | 3 | F 20, R cs 15 |
-| Close lost, with reason * | Actions | 18 | 3 | 3 | F 20, R cs 10 |
+| Mark lost and archive, with a reason * | Actions | 18 | 3 | 3 | F 20, R cs 10 |
 | Reopen a closed deal | Actions | 2 | 0 | 2 | |
 | Bulk: change owner | Actions | 1 | 0 | 12 | F 2, H 8 |
 | Bulk: move to a stage | Actions | 3 | 0 | 4 | |
@@ -208,7 +208,7 @@ Modelled on Apollo's Deals page as documented in its knowledge base (articles up
 
 **Complaints with a source.** "too many clicks to reach data many navigation buttons seems to be not in the logical place" (Hassnaa, Trustpilot, 4 Sep 2026); "navigating between campaigns, contacts, and analytics feels like one click too many each time" (G2 via SyncGTM, secondary); "Name of the features is a bit confusing to me" (Capterra). Reviews call the module "lightweight deal management" with "basic reporting, no forecasting" (The SaaS Source, secondary); Apollo's KB says the HubSpot deals sync "doesn't support forecasting" ([Set Up Deals](https://knowledge.apollo.io/hc/en-us/articles/40691781463437-Set-Up-Deals)). Quotes are collected in the [Apollo settings map](../knowledge-base/sources/07-apollo-settings-map.md), §3.
 
-**Praise to keep.** Saved views that "sync across sessions" and one-click bulk export (Salesforge hands-on review). Both stay.
+**Praise to keep.** Saved views that "sync across sessions" and one-click bulk export (Salesforge hands-on review of Apollo; secondary, and not confirmed by Apollo's own knowledge base). Both stay.
 
 ## 6. After: the disclosed version
 
@@ -218,8 +218,8 @@ Modelled on Apollo's Deals page as documented in its knowledge base (articles up
 
 | Role | Level one | Level two |
 |---|---|---|
-| AE | Columns with count and sum; card with name, company, amount, next step, close date and object-state badges; drag; scope; period; search; edit in place; forecast strip; close won and lost; delete with consequence | Card door: owner, days in stage, last activity, forecast category, probability, contacts, currency. Filter door. View options. Card menu. Page menu |
-| CS | Columns; card with name, company, amount, close date and badges; scope; open record; close won and lost; delete | Card door adds next step. Strip collapsed to "Forecast for this quarter". Same doors |
+| AE | Columns with count and sum; card with name, company, amount, next step, close date and object-state badges; drag; scope; period; search; edit in place; forecast strip; close won; mark lost and archive; delete with consequence | Card door: owner, days in stage, last activity, forecast category, probability, contacts, currency. Filter door. View options. Card menu. Page menu |
+| CS | Columns; card with name, company, amount, close date and badges; scope; open record; close won; mark lost and archive; delete | Card door adds next step. Strip collapsed to "Forecast for this quarter". Same doors |
 | Admin | As AE plus owner on the card, weighted sum in the header, owner and forecast filters in the header, sync badges | The rest of the filter door; the same menus |
 
 **Every door, label and container.**
@@ -228,21 +228,23 @@ Modelled on Apollo's Deals page as documented in its knowledge base (articles up
 |---|---|---|---|
 | Card | "Owner, activity and forecast", chevron, owner initials as preview | In place under the card | Per user; "Expand all cards" sets all |
 | Column header | "Weighted total and stale deals" | In place under the header | Per column |
-| Closed rails | "Closed won · 9 · $612k", "Closed lost · 4 · $96k" | Expands into a column | Per user |
-| Filters | "Filters: owner, forecast category, stale, amount, company, created, lost reason, custom fields", with "n filters on" | In place under the header | Open state and values |
+| Closed won rail | "Closed won · 9 · $612k" | Expands into a column | Per user |
+| Filters | "Filters: owner, forecast category, stale, amount, company, created, archived and its reason, custom fields", with "n filters on" | In place under the header | Open state and values |
 | Forecast strip (CS, Halyard) | "Forecast for this quarter: commit, best case, pipeline, closed won" | In place | Per user |
 | View options | "View: table columns, card order, density, saved views" | Popover | Values |
-| Card menu | "…", named "Actions for Northwind · Platform" | Menu: Open, Edit next step, Log a call or note, Change owner, Change forecast category, Move to (stages flat), Close won, Close lost, divider, Delete with consequence text | n/a |
+| Card menu | "…", named "Actions for Northwind · Platform: open, next step, log, owner, forecast, move, close won, mark lost" | Menu: Open, Edit next step, Log a call or note, Change owner, Change forecast category, Move to (the five stages, flat), Close won, Mark lost and archive, divider, Delete with consequence text | n/a |
 | Page menu | "Import, export, print and stages" | Menu | n/a |
 | New deal; Log a call or note | Button; menu item | Drawer | Draft kept |
-| Close won or lost | Drop or menu item | Sheet on the card | n/a |
+| Close won; mark lost and archive | Drop or menu item | Sheet on the card | n/a |
 | Delete | Menu item | Dialog (a confirmation, not a disclosure) | n/a |
 
 No door contains a door: the move list is flat, the filter row has no sub-menus, the popover has no tabs.
 
-**Decision-critical, always visible.** The consequence of closing (CRM push, handoff, counted as closed) is on the sheet before the drop lands. A pending agent proposal and a CRM sync error are on the card. Delete sits in the menu with its consequence beside it, and the confirmation names what goes. Undo for a move is as short as the move.
+**Decision-critical, always visible.** The consequence of closing (CRM push, handoff, counted as closed) is on the sheet before the drop lands, and so is the consequence of archiving a lost deal (off the board, out of the forecast, kept on the company). A pending agent proposal and a CRM sync error are on the card, and the proposal card says what approving will do. Delete sits in the menu with its consequence beside it, and the confirmation names what goes. Undo for a move is as short as the move.
 
-**Removed rather than hidden.** The creation-date default sort. The pipeline picker where there is one pipeline. CRM badges where no CRM is connected. The custom-field filter where no custom fields exist. The currency line where one currency is used. "Group by" anything other than stage. "Customize deal form" from the create dialog; Settings › Pipeline and data owns it and the page menu links there. The separate Analytics tab; the strip is on the board and Reports has the rest. Deal type.
+One caution the evidence forces. Showing someone a pending agent action is not the same as having it reviewed: asked to approve step by step, people saw a planted problematic action 88.5% of the time and stopped it 23.9% (Chen et al., N=48, in [11 What changed](../knowledge-base/11-what-changed-2018-2026.md)). That is why the board queues nothing that can be undone cheaply, states the consequence on the item rather than in a policy page, and keeps the number of approvals small enough to be read.
+
+**Removed rather than hidden.** A sixth "Closed lost" column and an outcome flag: a lost deal is archived with a reason, so the board shows the five stages a live deal passes through. The creation-date default sort. The pipeline picker where there is one pipeline. CRM badges where no CRM is connected. The custom-field filter where no custom fields exist. The currency line where one currency is used. "Group by" anything other than stage. "Customize deal form" from the create dialog; Settings › Pipeline and data owns it and the page menu links there. The separate Analytics tab; the strip is on the board and Reports has the rest. Deal type.
 
 **Persistence.** View, scope, period, filters, open doors, expanded rails and cards, table columns and sort, per user per workspace, in localStorage under `ollopa.deals.<business>.<role>`. A door left open is open next visit. Print expands every door and rail into a list by stage.
 
@@ -259,7 +261,7 @@ No door contains a door: the move list is flat, the filter row has no sub-menus,
 | 3 | Two levels on every screen size | 2 | Flat move list, no sub-menus; phone keeps the same doors |
 | 4 | Doors labelled by content, chevron and text | 2 | No "More", "Advanced" or "Other" |
 | 5 | Doors adjacent, keyboard and touch | 2 | Card door under the card, column door under the header, filter row under the header; every door a button |
-| 6 | Dependent information together | 2 | Sum with weighted sum; amount with currency; close with its consequence; lost with reason |
+| 6 | Dependent information together | 2 | Sum with weighted sum; amount with currency; close with its consequence; archiving with its reason |
 | 7 | State persists; expand all and print | 2 | Listed above |
 | 8 | User action or object state only | 2 | Badges by object state; nothing reorders by history |
 | 9 | Instrumented and reviewed | 1 | The plan exists; the demo cannot show a completed review |
@@ -271,7 +273,7 @@ Total 17 of 18.
 Not a lesson. The rules that mattered most:
 
 - **Rule 1.** The board, sums and next step are what AEs touch daily; they are level one, and the table is the alternative, not the default.
-- **Rule 7.** Closing a deal, a failed sync, a pending agent proposal and delete all show their consequence without a click.
+- **Rule 7.** Closing a deal, archiving a lost one, a failed sync, a pending agent proposal and delete all show their consequence without a click — and the number of things asking for approval is kept small, because a queue nobody can read is the same as hiding it.
 - **Rule 2.** Stages, forecast categories and the deal form no longer live three settings places away; the page links once to one place, and no menu holds a menu.
 - **Rule 4.** Access failures name who can open the page; the filter door and card door say what they hold.
 
@@ -279,9 +281,10 @@ Not a lesson. The rules that mattered most:
 
 | Check | Result |
 |---|---|
-| All roles covered | AE, CS, admin have level-one tables; SDR and marketer have the no-access state. Gap: the Fathom SDR had no line; closed by naming the founder |
+| All roles covered | AE, CS, admin have level-one tables; SDR and marketer have the no-access state. Gap: the spec called Fathom's founder "the AE". Closed: Fathom has no AE seat; the founder's admin seat works the pipeline and her workspace profile puts Deals in the sidebar |
 | All four businesses covered | Section 3 table and section 4 overrides. Gap: only the admin opens the page at Halyard; stated |
-| Every field has a source | Section 2. Gap: forecast category, days in stage and closed lost were missing from the seed; listed |
+| Every field has a source | Section 2. Gap: forecast category, days in stage and the archive fields were missing from the seed; listed |
+| Five stages | Gap: an earlier draft added a sixth stage, Closed lost. Closed: five stages, defined once in 09; a lost deal is archived with a reason and leaves the board and the forecast |
 | Every action has an outcome | Section 3 actions table |
 | Empty, error, no-access states | Section 3, plus no-match, empty column and cannot-move |
 | Keyboard | Full list, ARIA drag pattern, undo |
@@ -289,7 +292,7 @@ Not a lesson. The rules that mattered most:
 | Decision-critical visible | Five items marked in section 4, placed in section 6 |
 | Two levels maximum | Checked door by door; the move list was a sub-menu in the first draft and is now flat |
 | Doors labelled by content | Section 6 table |
-| Dependent fields together | Sum with weighted; amount with currency; close with consequence; lost with reason |
+| Dependent fields together | Sum with weighted; amount with currency; close with consequence; archiving with its reason |
 | State persists | Section 6 |
 | Accelerators present | Shortcuts, palette, expand all, bulk, undo |
 | Usage shape checked | Seven pairs computed; six fit; Meridian CS explained |

@@ -6,7 +6,9 @@
 
 The Inbox is where a reply becomes a next step. Every email a sequence sends can come back with an answer, and the answer means one of five things: the person is interested, they have a question, not now, they are out of office, or they want to be left alone. The page sorts replies by that meaning and puts the right action on each row.
 
-Who lives here: the SDR, all day; the AE, daily, for replies handed over and replies to their own sequences. At Fathom Labs the founder does outbound, so the admin role has the Inbox there too. Marketers, customer success and the RevOps admin elsewhere do not see it; the page tells them who does.
+Who lives here: the SDR, all day; the AE, daily, for replies handed over and replies to their own sequences. Marketers and customer success do not have the area at all; the page tells them who does and who to ask.
+
+The admin seat is not a third role here. The sidebar is declared, never inferred: it comes from the seat and from the workspace profile chosen at set-up (RULES.md, the declared sidebar). At Fathom Labs the profile is Founder-led outbound, so the Inbox is in the founder's sidebar and she works replies all day. At Meridian the profile is Separated sales team, so the Inbox is not in the admin's sidebar; the page still opens by deep link and by ⌘K, and its header offers "Add to sidebar", which adds it at the end of its group and keeps it there. And when a first reply arrives for someone whose profile left the Inbox out, the page appears in that sidebar for two weeks and then asks "keep it?" — the answer is final until a new signal, and there is never more than one such exposure in a period.
 
 The one thing they must never lose sight of: an interested person who is waiting. Reply speed is the whole game. The page opens on Interested, longest-waiting first, and the waiting time is the first column.
 
@@ -33,7 +35,7 @@ To add to the seed, deterministic per business:
 - Reply volume: Fathom 10, Meridian 18, Halyard 18, Ridgeline 6. Ridgeline's replies come from "Warm inbound follow-up" and "Trial activation nudge", mostly Interested or Question, almost never Out of office or Unsubscribe.
 - Six handled replies per business, so Handled is not empty.
 
-The calendar link for Book meeting comes from Settings › Integrations › Calendar (`int.calendar`); all four businesses have one connected. Saved replies are five fixed texts per business. AEs for Hand to an AE are the `ae` seats in `businesses.ts`.
+The calendar link for Book meeting comes from Settings › Integrations › Calendar (`int.calendar`). Meridian, Ridgeline and Fathom have a calendar connected; Halyard has none, so Book meeting is replaced there by the line in section 3 and the action carries no number at Halyard. Saved replies are five fixed texts per business. AEs for Hand to an AE are the `ae` seats in `businesses.ts`.
 
 ## 3. Features
 
@@ -61,11 +63,11 @@ Menu actions, every group unless noted: Hand to an AE (SDR only, where an AE sea
 
 Bulk: x or Select in the menu shows checkboxes and a bar with Mark done, Mark not interested, Hand to an AE, Confirm unsubscribes (only when every selected row is in Unsubscribe), Export CSV, and the count. Escape clears it.
 
-Page actions: none. An inbox creates nothing; one-off email lives on the contact page.
+Page actions: none. An inbox creates nothing; one-off email lives on the contact page. There is no reply drawer anywhere in the product: the composer is inside this page's thread panel, and Reply on a Home row opens this page with that thread selected.
 
 ### Filters, search, sorting, columns
 
-Search matches name, company and reply text. Filters: sequence, owner, mailbox, date received. Sorting by Waiting, From or Sequence by clicking the header, with the sort announced. Columns are fixed; there is no column chooser.
+The shared table behaviours — sortable headers, the bulk bar, skeleton loading, row actions that appear on focus as well as hover — are specified once in [02 People](02-people.md), the full table lesson; this section records only what differs here. Search matches name, company and reply text. Filters: sequence, owner, mailbox, date received. Sorting by Waiting, From or Sequence by clicking the header, with the sort announced. Columns are fixed; there is no column chooser.
 
 ### States
 
@@ -74,9 +76,10 @@ Search matches name, company and reply text. Filters: sequence, owner, mailbox, 
 - Empty search or filter: the template's "Nothing matches. Clear the search or a filter."
 - Loading: six skeleton rows and a skeleton panel.
 - Error: "Couldn't load replies from your mailbox. Last synced 09:40." with Retry and a link to Settings › Mailboxes.
-- No access (marketer, customer success, admin outside Fathom): "Inbox is where SDRs and AEs work replies. At Meridian Software that is Marcus Adeyemi and Elena Vasquez. Replies to lifecycle campaigns are on Campaigns." Names come from `businesses.ts`.
+- No access (marketer, customer success): "Inbox is where SDRs and AEs work replies. At Meridian Software that is Marcus Adeyemi and Elena Vasquez. Replies to lifecycle campaigns are on Campaigns." Names come from `businesses.ts`.
+- Not in the sidebar (an admin whose workspace profile leaves the Inbox out): the page opens normally, and the header offers "Add to sidebar". This is not a no-access state and says nothing about permission.
 - Own mailbox only, at Meridian: under the count, "You see replies to your mailbox. Daniel Okafor can widen this in Settings › Team and access."
-- No calendar connected: Book meeting is replaced by "Connect a calendar to book from here", linking to Settings.
+- No calendar connected (Halyard): Book meeting is replaced by "Connect a calendar to book from here", linking to Settings › Integrations. The button is removed, not disabled.
 
 ### Keyboard
 
@@ -94,10 +97,10 @@ The list becomes two-line rows: name and Meant badge, then the first line, with 
 
 | | SDR | AE | Admin |
 |---|---|---|---|
-| Fathom | own and both founders' replies; no AE seat, so Hand to an AE is removed and Create deal takes its place at level one | no seat | the founder: same page as the SDR |
-| Meridian | own mailbox only; Hand to an AE to Elena Vasquez | replies handed over plus replies to own sequences; Create deal and the earlier messages are at level one | no access |
-| Halyard | one client workspace at a time; Sequence · step column and the sequence filter at level one; saved replies at level one; no AE seat, so Hand to an AE is removed and hand-off is Book meeting on the client's calendar | no seat | no access |
-| Ridgeline | few replies, mostly Interested and Question; Not now still at level one | Create deal, Open contact and contact details at level one | no access |
+| Fathom | own and both founders' replies; no AE seat, so Hand to an AE is removed and Create deal takes its place at level one | no seat | the founder: the same page as the SDR, in her sidebar because the workspace profile is Founder-led outbound |
+| Meridian | own mailbox only; Hand to an AE to Elena Vasquez | replies handed over plus replies to own sequences; Create deal and the earlier messages are at level one | the Separated sales team profile leaves the Inbox out of the sidebar; the page opens by link or ⌘K and offers "Add to sidebar" |
+| Halyard | one client workspace at a time; Sequence · step column and the sequence filter at level one; saved replies at level one; no AE seat, so Hand to an AE is removed; no calendar is connected, so Book meeting is replaced by the connect line and Reply and Insert a saved reply take its place | no seat | the Agency profile leaves the Inbox out of the ops lead's sidebar; the page opens and offers "Add to sidebar" |
+| Ridgeline | few replies, mostly Interested and Question; Not now still at level one | Create deal, Open contact and contact details at level one | the Separated sales team profile leaves it out of the sidebar, as at Meridian |
 
 ## 4. Usage items
 
@@ -122,7 +125,7 @@ Fifty-eight items in seven areas. Baseline numbers describe Meridian; overrides 
 | Filter by date | Filters | 3 | 3 | halyard: sdr 4 |
 | Filter by mailbox | Filters | 4 | 2 | fathom: admin 3 |
 | Reply in place | Row actions | 85 | 50 | fathom: admin 75; ridgeline: sdr 50, ae 35 |
-| Book meeting | Row actions | 60 | 40 | fathom: admin 55; ridgeline: sdr 35, ae 30 |
+| Book meeting | Row actions | 60 | 40 | fathom: admin 55; halyard: 0 (no calendar; the action is removed); ridgeline: sdr 35, ae 30 |
 | Hand to an AE | Row actions | 45 | 0 | fathom: 0; halyard: 0; ridgeline: sdr 25 |
 | Mark done | Row actions | 40 | 25 | fathom: admin 40; halyard: sdr 55; ridgeline: sdr 30, ae 20 |
 | Mark not interested | Row actions | 30 | 15 | fathom: admin 30; halyard: sdr 40; ridgeline: sdr 12, ae 6 |
@@ -170,11 +173,11 @@ Shape check, computed with `shape()` from `model.ts` (target: head 15–25%, bod
 |---|---|---|---|
 | Meridian, SDR | 14 (24%) | 15 (26%) | 29 (50%) |
 | Meridian, AE | 11 (19%) | 18 (31%) | 29 (50%) |
-| Halyard, SDR | 15 (26%) | 16 (28%) | 27 (47%) |
+| Halyard, SDR | 14 (24%) | 16 (28%) | 28 (48%) |
 | Ridgeline, AE | 11 (19%) | 14 (24%) | 33 (57%) |
 | Fathom, admin | 13 (22%) | 15 (26%) | 30 (52%) |
 
-Halyard's SDR sits one item over the head band. That is the agency profile: the sequence names the client, so the sequence column and filter and the saved replies are daily. It is kept, and it is the reason Halyard's level one differs from Meridian's.
+Every pair fits the published shape. Halyard's SDR reaches the top of the head band for the agency reason: the sequence names the client, so the sequence column, the sequence filter and the saved replies are daily there. Book meeting, level one everywhere else, is zero at Halyard because no calendar is connected, so the action is removed rather than shown dead.
 
 ## 5. Before: the common version
 
@@ -197,9 +200,9 @@ Modelled on Apollo's **Emails** hub. Sources: [View and Respond to Emails](https
 - Replies are late: "Replies can take 15-30 minutes to sync and appear in Apollo, even if the reply already appears in your mailbox." (Email Tracking Overview.)
 - An out-of-office message "doesn't count as replied", and the Status filter is "Not to be confused with email status for contacts". (View and Respond; Sequences Overview.)
 - Seeing the team's replies needs a permission profile change: "you need the email visibility permission can see emails from all users… An Apollo admin at your organization can help." (View and Respond.)
-- Reviews: "too many clicks to reach data, many navigation buttons seems to be not in the logical place" (Hassnaa, Trustpilot, 4 Sep 2026); "one click too many each time" (G2 reviewer via SyncGTM, secondary); "The grid for making calls and completing tasks is a bit messy" (G2 via Warmly, secondary). A Capterra reviewer saying "the inbox doesn't always sync well" surfaced only in a search summary: unverified.
+- Reviews: "too many clicks to reach data, many navigation buttons seems to be not in the logical place" (Hassnaa, Trustpilot, 4 Sep 2026); "one click too many each time" (G2 reviewer via SyncGTM, secondary); "The grid for making calls and completing tasks is a bit messy" (G2 via Warmly, secondary). (A fourth complaint about inbox syncing appeared only in a search summary with no reachable review behind it, so it is not used here.)
 
-**Kept from Apollo.** The classifier: 90% accuracy, out-of-office precision above 99%, willing-to-meet recall above 90% (tech blog). Auto-pause and auto-resume on a detected return date. A reply finishes the sequence by default.
+**Kept from Apollo.** The classifier, with the figures Apollo publishes for it — about 90% accuracy overall, out-of-office precision above 99%, willing-to-meet recall above 90% ([Email Reply Classification Done Right](https://www.apollo.io/tech-blog/email-reply-classification-done-right), 23 Aug 2024; Apollo's own numbers, not independently checked). Auto-pause and auto-resume on a detected return date. A reply finishes the sequence by default.
 
 **Before score:** 1. Decision-critical: unsubscribe requests are a filter value, 0. 2. Usage numbers: none published, 0. 3. Two levels: page → Show filters → Sentiment → value, and page → thread → icon → composer, 0. 4. Doors labelled: "Show filters" and "…" say nothing about content, 1. 5. Adjacent and keyboard: Mark Interested is on a different message, 0. 6. Dependent information: outcome marking on Sequences, the reply on Emails, 0. 7. Persistence: filters reset on return (unverified), 1. 8. Object state: filters appear from detected data the user has not seen, 1. 9. Instrumented: unknown, 1. Total 4 of 18.
 
@@ -213,8 +216,8 @@ Modelled on Apollo's **Emails** hub. Sources: [View and Respond to Emails](https
 |---|---|---|
 | Meridian SDR | Interested, Question, Not now, Unsubscribe tabs; the row; search; Reply, Book meeting, Hand to an AE, Mark done, Mark not interested, Follow up on, Confirm unsubscribe; the panel with the composer | Tab "Out of office (2) · Handled (6)"; door "Filter by sequence, owner, mailbox, date"; row "…"; panel "Earlier messages (3)"; "Insert a saved reply"; Send menu with Schedule; "Contact details" |
 | Meridian AE | Interested, Question, Unsubscribe tabs; the row; Reply, Book meeting, Mark done, Confirm unsubscribe, Create deal, Open contact; the panel with earlier messages and contact details open | Tab "Not now (1) · Out of office (0) · Handled (4)"; door "Search and filter by sequence, owner, date"; row "…" |
-| Fathom SDR and admin | As Meridian SDR, minus Hand to an AE, plus Create deal | Same doors; CRM sync line removed |
-| Halyard SDR | As Meridian SDR, minus Hand to an AE, plus the Sequence · step column, the Sequence filter beside search, and Insert a saved reply as a visible button | Door "Filter by owner, mailbox, date"; the rest as Meridian |
+| Fathom SDR and founder (admin seat) | As Meridian SDR, minus Hand to an AE, plus Create deal | Same doors; CRM sync line removed |
+| Halyard SDR | As Meridian SDR, minus Hand to an AE and minus Book meeting, plus the Sequence · step column, the Sequence filter beside search, and Insert a saved reply as a visible button | Door "Filter by owner, mailbox, date"; the rest as Meridian |
 | Ridgeline SDR | As Meridian SDR | Same doors |
 | Ridgeline AE | As Meridian AE | Same doors |
 
@@ -235,11 +238,11 @@ Two levels, counted per channel: the page and one door. The panel is part of lev
 
 **Persistence.** Group, filters, panel state and width, door states, in `localStorage` under `ollopa.inbox.{business}.{role}`. Expand all and collapse all sit at the top of the panel; print expands everything.
 
-**Accelerators.** Shortcuts on every menu item; the palette; the panel kept open; saved replies; Book meeting as one click. A daily SDR reaches every level-one action without a door.
+**Accelerators.** Shortcuts on every menu item; the palette; the panel kept open; saved replies; Book meeting as one click where a calendar is connected. A daily SDR reaches every level-one action without a door. The shortcut printed beside a menu item is a floor, not a teacher: 749 tooltip exposures produced two shortcut activations, while showing every shortcut for a while took usage from 9.79% to 86.20% and left it at 73.09% after the exposure ended (Harrison, Malacria and Cockburn, IHM 2025, in [11 What changed](../knowledge-base/11-what-changed-2018-2026.md)). The product's teaching device is the two-week sidebar exposure in section 1, not a hint.
 
 **Decision-critical, always visible.** The Unsubscribe tab count. Confirm unsubscribe with its consequence written on the confirmation. Hand to an AE names the person receiving it. Mark not interested says it ends the sequence. Undo in every toast, one click, the same length as doing.
 
-**Removed rather than hidden.** Drafts, scheduled and bounced emails (they belong to Sequences and Tasks). A Sentiment filter (the groups replace it). Mark interested (corrections go through Change what they meant). Unmark as reply. Email from a different user in bulk. Column chooser, density toggle, saved views: under 3% in every segment. Open and click popovers: replies are the signal, as Apollo's own KB says.
+**Removed rather than hidden.** Drafts, scheduled and bounced emails (they belong to Sequences and Tasks). A Sentiment filter (the groups replace it). Mark interested (corrections go through Change what they meant). Unmark as reply. Email from a different user in bulk. Column chooser, density toggle and saved views: the page has five fixed columns, so none of the three earns a place and none carries a number in `inbox.ts`. Open and click popovers: replies are the signal, as Apollo's own KB says.
 
 **After score.** 1. Unsubscribe count and consequence text visible without a click: 2. 2. Every level-one item has a number in `inbox.ts` with USAGE-MODEL.md as source: 2. 3. Page and one door on every width: 2. 4. Every door named by its content with a chevron: 2. 5. Doors sit beside what they reveal and open by keyboard and touch: 2. 6. The reply, its outcome and its actions are on one row and one panel; nothing dependent is split: 2. 7. Group, filters, panel, door state persist; expand all and print exist: 2. 8. Doors open by user action or by the reply's group; nothing moves from history: 2. 9. Door opens are counted in the usage log and the promote, keep or delete review is every six months; in the demo the counter lives in memory only: 1. Total 17 of 18.
 
@@ -256,7 +259,8 @@ The Inbox is a real page, not a lesson. The rules that mattered most:
 
 | Check | Gap found | Closed by |
 |---|---|---|
-| All roles | The nav gives Inbox to SDR and AE only; Fathom's admin does outbound | Fathom's admin gets the page with its own numbers; other admins get the no-access state naming who has it |
+| All roles | An earlier draft granted the Inbox to Fathom's admin by role | Rewritten: SDR and AE have the area; the admin seat gets the page from the workspace profile, and where the profile leaves it out the page opens and offers "Add to sidebar" |
+| Calendar | The spec claimed all four businesses had a calendar connected | Corrected: Meridian, Ridgeline and Fathom yes, Halyard no; Book meeting is removed at Halyard and its usage number there is zero |
 | All four businesses | Halyard and Fathom have no AE seat | Hand to an AE removed there; Create deal and Book meeting take its place |
 | Every field has a source | Thread, step, owner, status did not exist | Section 2 lists the seed additions |
 | Every action has an outcome | Book meeting risked being a booking page, outside the boundary | It sends the calendar's link; the booking lives in the calendar |
@@ -269,7 +273,7 @@ The Inbox is a real page, not a lesson. The rules that mattered most:
 | Dependent fields together | Outcome marking and the reply | Same row, same panel |
 | State persists | Panel width and door state | Per user and workspace |
 | Accelerators | Shortcuts existed but were not shown | Beside each menu item and in the palette |
-| Usage shape | Fathom admin had no body; Halyard SDR too small a tail | Overrides adjusted; five pairs in section 4 |
+| Usage shape | Fathom admin had no body; Halyard's SDR sat one item over the head band | Overrides adjusted; five pairs recomputed in section 4 from `inbox.ts`, all inside the band |
 | Nothing hover-only | Row actions on hover | Also on focus and in "…"; Apollo's status hover becomes text |
 | Role gaps explain themselves | Meridian SDR sees only own mailbox | One line names the admin who can widen it |
 | No usage numbers or teaching text | None | Numbers live in `inbox.ts` and this file only |

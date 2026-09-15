@@ -49,7 +49,7 @@ export const businesses: BusinessDef[] = [
       { role: "cs", title: "Customer success manager", user: "Aisha Rahman", initials: "AR" },
       { role: "admin", title: "RevOps admin", user: "Daniel Okafor", initials: "DO" },
     ],
-    plan: { name: "Growth", seats: 42, pricePerSeat: 79, renews: "2027-01-15", billing: "annual" },
+    plan: { name: "Scale", seats: 42, pricePerSeat: 129, renews: "2027-01-15", billing: "annual" },
     credits: { balance: 1_840_000, monthlyCap: 2_500_000, burnPerWeek: 410_000 },
     counts: { users: 42, contacts: 18_400, companies: 3_100, sequences: 26, openDeals: 214, campaigns: 12, integrations: 5, agents: 3 },
   },

@@ -6,7 +6,7 @@
 
 The page connects an outside system to the workspace: a CRM (Salesforce or HubSpot), a calendar (Google or Microsoft 365), Slack, an enrichment provider, or a webhook. For a CRM it also decides what syncs, how fields map, and what Ollopa may write, delete or merge in the other system. Then it hands over to the integration's page in Settings, where the connection lives for the rest of its life: status, error log, mapping and rules, all editable in place.
 
-Who lives here: the RevOps admin. At Meridian, Daniel Okafor connects something a few times a year and looks at the Salesforce page most weeks. At Fathom, Priya Natarajan connected HubSpot once. At Halyard, Ravi Sethi connects a client's CRM every time a client is onboarded, so the wizard is routine there, not rare. At Ridgeline, Grace Mwangi keeps four quiet integrations healthy. SDRs, AEs, marketers and customer success come only to connect their own calendar.
+Who lives here: the RevOps admin. At Meridian, Daniel Okafor connects something a few times a year and looks at the Salesforce page most weeks. At Fathom there is no CRM at all — Ollopa is the CRM — so Priya Natarajan has connected a calendar and an enrichment provider and nothing else. At Halyard, Ravi Sethi connects one client CRM per client workspace, every time a client is onboarded, so the wizard is routine there, not rare. At Ridgeline, Grace Mwangi keeps four quiet integrations healthy, HubSpot among them. SDRs, AEs, marketers and customer success come only to connect their own calendar.
 
 How often: the wizard once per integration; the integration page weekly for the admin at Meridian, Halyard and Ridgeline.
 
@@ -31,7 +31,7 @@ The one thing they must never lose sight of: what this connection will write int
 | Calendar choices, Slack event-to-channel pairs, enrichment key and field list and order, webhook URL, secret, events, last test | The kind's own steps and page | `integrations[].calendars`, `channels`, `enrichment`, `webhook` (to add); order ties to `pipe.enrichment-order` |
 | Names of the admins for the role-gap sentence | No-access state | `businesses[].roles` (exists) |
 
-To add to the seed, generated deterministically like the rest of `seed.ts`: an `integrations` array per business. Fathom: HubSpot (connected by Priya Natarajan, syncing, no errors) and Google Calendar per user, two in total. Meridian: Salesforce production (Daniel Okafor, syncing, 3 errors today, 1,204 records today), Google Calendar, Slack, the enrichment provider "Northlight", a webhook "Warehouse export", five in total. Halyard: one HubSpot for the current client workspace, 1 error today. Ridgeline: HubSpot, Google Calendar, Slack, Northlight, four in total. Also `crmFields` for Salesforce (Contact, Account, Opportunity, Task) and HubSpot (Contact, Company, Deal, Engagement), about twenty each with a few required fields and one picklist; six to twelve `integrationErrors` at Meridian and Halyard (a picklist rejection, a missing required field, a read-only field, a duplicate email); thirty `syncRuns`; one `setupDrafts` row at Meridian (Microsoft 365 Calendar, step 2 of 3) so the resume path has data. The second enrichment provider is "Datakite".
+To add to the seed, generated deterministically like the rest of `seed.ts`: an `integrations` array per business, following the CRM decision of 13 September 2026. Fathom: Google Calendar per user and the enrichment provider "Northlight", **no CRM**; Ollopa is their system of record. Meridian: Salesforce production (Daniel Okafor, syncing, 3 errors today, 1,204 records today), Google Calendar, Slack, Northlight, a webhook "Warehouse export", five in total. Halyard: **one client CRM per client workspace**, HubSpot in the current one, 1 error today, and no calendar. Ridgeline: HubSpot, Google Calendar, Slack, Northlight, four in total. Also `crmFields` for Salesforce (Contact, Account, Opportunity, Task) and HubSpot (Contact, Company, Deal, Engagement), about twenty each with a few required fields and one picklist; six to twelve `integrationErrors` at Meridian and Halyard (a picklist rejection, a missing required field, a read-only field, a duplicate email); thirty `syncRuns`; one `setupDrafts` row at Meridian (Microsoft 365 Calendar, step 2 of 3) so the resume path has data. The second enrichment provider is "Datakite".
 
 ## 3. Features
 
@@ -39,11 +39,13 @@ To add to the seed, generated deterministically like the rest of `seed.ts`: an `
 
 Reached from Settings › Integrations › "Connect an integration", from that section's empty state, and from Home's admin to-do when a draft exists. Route `connect`; the sidebar keeps Settings highlighted.
 
-**Step 1: Choose what to connect.** Seven cards in three groups: CRM (Salesforce, HubSpot), Calendar (Google, Microsoft 365), Team and data (Slack, enrichment provider, webhook). Each card says in one line what the connection does and whether one is already connected. One CRM per workspace: the other CRM card reads "Disconnect Salesforce first" and opens the Salesforce page. The card chosen decides the step list: six steps for a CRM, three for anything else.
+**Step 1: Choose what to connect.** Seven cards in three groups: CRM (Salesforce, HubSpot), Calendar (Google, Microsoft 365), Team and data (Slack, enrichment provider, webhook). Each card says in one line what the connection does and whether one is already connected. One CRM per workspace: the other CRM card reads "Disconnect Salesforce first" and opens the Salesforce page. At Halyard that rule is per client workspace, so each one has its own CRM and its own cards. The card chosen decides the step list: six steps for a CRM, three for anything else.
+
+Where a plan does not include something, the lock is on the card, here, before anything is done. Webhooks and API keys are Growth and above, so at Fathom the webhook card carries a lock, the plan name and one total for the period, and opens the upgrade panel rather than step 2. A CRM card never carries a lock, because every plan syncs: Starter one-way, Growth two-way, Scale two-way with custom objects. That difference is stated on the card, not discovered on step 3, and never after a mapping has been built (gated-features pattern rule 7).
 
 **Step 2: Authorise.** HubSpot, Google, Microsoft 365, Slack: one button, "Sign in to HubSpot", opening the provider's consent screen. Salesforce: production or sandbox as two radios, then "Sign in to Salesforce as the sync user", with one line saying the sync user should be a shared account that stays active. No package to install, no separate setup app. Enrichment: key field and "Check the key". Webhook: URL, secret, "Send a test event", response shown in place. The result is text on the step: "Connected as ollopa-sync@meridian.com. Token valid until 12 Mar 2027."
 
-**Step 3: Choose what syncs.** CRM: four rows (contacts, companies, deals, activities), four radios each (both ways, pull only, push only, off). Defaults: both for contacts and companies, pull for deals, push for activities. Each row has one plain-words line ("Ollopa will create and update Salesforce contacts and take updates back"). Activities have one door, "Which activities to push (emails, calls, tasks, meetings)", expanded in place. Calendar: which calendars, busy time only or event detail. Slack: five events (reply received, meeting booked, deal moved, agent needs approval, sync error), each with a channel. Enrichment: which fields it may fill and its place in the provider order, shown with the other providers. Webhook: which events.
+**Step 3: Choose what syncs.** CRM: four rows (contacts, companies, deals, activities), four radios each (both ways, pull only, push only, off). On Starter the "both ways" radio carries the plan name and opens the upgrade panel, and the row still works one-way; the limit is on the radio, where the choice is made. Custom CRM objects are a fifth row on Growth and below, with a lock and "Scale", placed in the object list so nobody maps fields for an object they cannot sync. Defaults: both for contacts and companies, pull for deals, push for activities. Each row has one plain-words line ("Ollopa will create and update Salesforce contacts and take updates back"). Activities have one door, "Which activities to push (emails, calls, tasks, meetings)", expanded in place. Calendar: which calendars, busy time only or event detail. Slack: five events (reply received, meeting booked, deal moved, agent needs approval, sync error), each with a channel. Enrichment: which fields it may fill and its place in the provider order, shown with the other providers. Webhook: which events.
 
 **Step 4: Map fields.** CRM only. One tab per object chosen, labelled with a count ("Contacts · 14 mapped, 1 required unmapped"). Rows: Ollopa field, direction, CRM field, write rule (fill empty, overwrite). Standard fields are pre-mapped. CRM-required fields without a mapping are listed first with a text mark, not colour alone. "Add a field pair" adds a row. Deals also carry stage mapping in the same tab, one to one, with "Match stages by name". The write rule sits in the row of the pair it governs, never on another step. A search box filters both columns; a door "Show 42 unmapped Salesforce fields" holds the long tail.
 
@@ -101,7 +103,8 @@ Bulk: "Retry all". Sorting: errors and runs by time, newest first, errors also b
 
 | State | Shown |
 |---|---|
-| No integrations | Settings › Integrations shows the seven cards with their one-line descriptions |
+| No integrations | Settings › Integrations shows the seven cards with their one-line descriptions. This is Fathom's normal state for a CRM, not an error: "No CRM connected. Ollopa is holding your contacts, companies and deals. Connect one when you have one." |
+| Locked by plan | A card or a control that this plan does not include keeps its place and its label, with a lock, the plan name and a real control that opens one panel: what it does, which plan includes it, one total for the period, one button. A non-admin gets "Ask Daniel Okafor" in the same panel, and the request carries the feature, the cost and where it came from. Never greyed out, never moved, never after work has been done |
 | Loading | Step 2: "Waiting for Salesforce…" with cancel; step 4: table skeleton, "Loading Salesforce fields" |
 | Authorisation failed | Provider's message in text, "Try again", "Use a different account"; step stays not done |
 | Sync errors | Status "Needs attention"; error table at level one; Home to-do for the admin |
@@ -125,7 +128,7 @@ Phone width: the step list collapses to "Step 3 of 6: Choose what syncs · Show 
 
 | Business | What changes |
 |---|---|
-| Fathom | The Salesforce card reads "Not on the Starter plan" with a link to Plan: shown, not hidden |
+| Fathom | No CRM at all: Ollopa is the system of record here, so the two CRM cards sit in the list unconnected like any other card and nothing reads "not on your plan", because every plan syncs. What is locked is the webhook card (Growth), with the plan name and the monthly total on it. The integration page is a calendar and an enrichment provider, with no error table |
 | Meridian | Baseline; five integrations, one draft, Salesforce has three errors today |
 | Halyard | "Start from a saved template" is a button beside the cards, and "Save these choices as a template" is on the review step at level one; one HubSpot per workspace |
 | Ridgeline | No Salesforce; Slack defaults have "deal moved" and "agent needs approval" on and "reply received" off, because there is little outbound |
@@ -152,7 +155,8 @@ Weekly use is the share of active users in the role touching the item in a typic
 | wiz.slack-channels | Wizard | Slack: events to channels | | | | | 3 | 2 | 3 | 4 | |
 | wiz.calendar-pick | Wizard | Calendar: which calendars, busy only | 4 | 5 | 1 | 4 | 2 | 4 | 2 | 2 | |
 | wiz.enrichment | Wizard | Enrichment: key, fields, order | | | | | 3 | 2 | 3 | 2 | |
-| wiz.webhook | Wizard | Webhook: URL, secret, events, test | | | | | 2 | 4 | 3 | 2 | |
+| wiz.webhook | Wizard | Webhook: URL, secret, events, test | | | | | 2 | 1 | 3 | 2 | |
+| wiz.custom-objects | Wizard | Custom CRM objects (Scale) | | | | | 3 | 0 | 2 | 1 | |
 | wiz.template | Wizard | Setup template (save, start from) | | | | | 1 | 0 | 22 | 0 | |
 | int.status | Integration page | Status, last and next sync, records and errors today | 3 | 3 | | 2 | 40 | 5 | 25 | 30 | yes |
 | int.errors | Integration page | Error log, fix in the row | | | | | 30 | 3 | 25 | 25 | |
@@ -166,18 +170,18 @@ Weekly use is the share of active users in the role touching the item in a typic
 | int.history | Integration page | Sync history | | | | | 20 | 3 | 8 | 12 | |
 | int.disconnect | Integration page | Disconnect, with what happens | | | | | 1 | 1 | 4 | 1 | yes |
 
-Notes on the numbers: int.status, int.errors and int.edit-mapping match the Settings items int.crm (40), int.error-log (30) and int.field-mapping (15). Non-admins reach the wizard for their own calendar, hence the small SDR, AE and CS numbers on three items. Fathom's founder builds her own automations, hence webhook 4. Halyard connects a client's CRM most months, and wiz.template is the accelerator that makes the tenth connection cheap.
+Notes on the numbers: int.status, int.errors and int.edit-mapping match the Settings items int.crm (40), int.error-log (30) and int.field-mapping (15). Non-admins reach the wizard for their own calendar, hence the small SDR, AE and CS numbers on three items. Fathom's founder would build her own automations, but webhooks start at Growth, so she has opened that card once: webhook 1, and the ask shows up in Settings as an upgrade request. Custom objects are removed at Fathom, which has no CRM, and locked at Halyard and Ridgeline, where they stay on the page with their plan name. Halyard connects a client's CRM most months, and wiz.template is the accelerator that makes the tenth connection cheap.
 
-Shape check, 29 items:
+Shape check, 30 items, computed from `connect.ts` with `shape()`. The denominator is every item that exists for that role at that business — an item whose number is 0 is removed there and is not on their page; a locked item is on the page and counts. The same rule is used in specs 12, 13, 14 and 16.
 
-| Pair | Head (20 and above) | Body (5 to 20) | Tail (under 5) | Verdict |
-|---|---|---|---|---|
-| Meridian, admin | 5 (17%): status, errors, retry, pull-push-now, history | 10 (34%) | 14 (48%) | Fits |
-| Halyard, admin | 8 (28%): choose, authorise, objects, mapping, review, template, status, errors | 13 (45%) | 8 (28%) | Head slightly large, body heavy, tail light: the agency profile. The setup block moves up one band because it is routine there. The split still holds: same items, a different level one |
-| Fathom, admin | 0; the critical items carry level one | 6 (21%) | 23 (79%) | A three-person team does not touch integrations weekly |
-| Ridgeline, admin | 2 (7%): status, errors | 5 (17%) | 22 (76%) | Four quiet integrations |
+| Pair | Items on their page | Head (20 and above) | Body (5 to 20) | Tail (under 5) | Verdict |
+|---|---|---|---|---|---|
+| Meridian, admin | 30 | 5 (17%): status, errors, retry, pull-push-now, history | 10 (33%) | 15 (50%) | Fits |
+| Halyard, admin | 30 | 8 (27%): choose, authorise, objects, mapping, review, template, status, errors | 13 (43%) | 9 (30%) | Head slightly large, body heavy, tail light: the agency profile. The setup block moves up one band because it is routine there. The split still holds: same items, a different level one |
+| Fathom, admin | 27 | 0; the critical items carry level one | 6 (22%) | 21 (78%) | A three-person team with no CRM does not touch integrations weekly |
+| Ridgeline, admin | 28 | 2 (7%): status, errors | 5 (18%) | 21 (75%) | Four quiet integrations |
 
-Decision-critical: wiz.deletion, wiz.merge, wiz.review, int.status, int.pause, int.disconnect.
+Decision-critical: wiz.deletion, wiz.merge, wiz.review, int.status, int.pause, int.disconnect. Nothing here is ever gated: what a connection will write, delete or merge is on every plan.
 
 ## 5. Before: the common version
 
@@ -217,7 +221,7 @@ Apollo's flow is the model. Sources are Apollo's knowledge base, fetched 13 Sep 
 | Admin, integration page | Status strip, error table when errors exist, Pause, Disconnect with consequence, five door labels with summaries | What syncs, Field mapping, Sync rules, Authorisation, Sync history |
 | SDR, AE, marketer, CS | Calendar cards, own calendar status, read-only CRM status, the sentence naming who can connect more | Nothing else exists for them; nothing greyed out |
 
-Across businesses: Fathom shows the Salesforce plan gap in text and no error table on HubSpot (no errors); Meridian's error table is at level one today because there are three errors; Halyard has the template button at level one on steps 1 and 6; Ridgeline has four quiet pages and different Slack defaults.
+Across businesses: Fathom has no CRM and no error table, and one locked card (webhook, Growth) carrying its plan name and monthly total; Meridian's error table is at level one today because there are three errors; Halyard has the template button at level one on steps 1 and 6, one CRM per client workspace, and custom objects locked; Ridgeline has four quiet pages, custom objects locked, and different Slack defaults.
 
 **Doors.** Every door is a button with a chevron and a content label, in the reading path, next to what it reveals, keyboard and touch.
 
@@ -229,14 +233,15 @@ Across businesses: Fathom shows the Salesforce plan gap in text and no error tab
 | "Show steps" (phone only) | In place | Under the heading | Per session |
 | What syncs, Field mapping, Sync rules, Authorisation, Sync history, each with a summary line | In place | Integration page | Per user and integration |
 | "Start from a saved template", "Save these choices as a template" | In place (level one at Halyard) | Steps 1 and 6 | Templates saved per workspace |
+| A locked card or radio: "Webhook · Growth", "Both ways · Growth", "Custom objects · Scale" | Panel in place | Step 1's card list, step 3's direction radios and object list | Nothing to persist; the panel closes on Escape and changes nothing |
 
 Modals exist only for confirmations: Discard setup, Disconnect, and the count before Apply mapping, Pull now and Push now. No drawers. Draft answers are saved on every change, server side.
 
 **Accelerators.** Setup templates; "Match stages by name"; done steps as links; Cmd/Ctrl+S and Cmd/Ctrl+Shift+E printed on the buttons; "Retry all"; print expands every door.
 
-**Decision-critical, always visible.** The consequence statement on review; the deletion and merge consequence lines on step 5; "Nothing syncs until you press Start syncing"; status and Pause; Disconnect with its consequence; the count before any bulk run; the plan gap on a card in text.
+**Decision-critical, always visible.** The consequence statement on review; the deletion and merge consequence lines on step 5; "Nothing syncs until you press Start syncing"; status and Pause; Disconnect with its consequence; the count before any bulk run. Where a plan limit applies, the lock, the plan name and one total for the period are on the card or the radio at the entry point, and no lock ever appears later in the wizard than the choice it governs — charging for the exit from work already done is drip pricing, not disclosure (gated-features pattern rule 7).
 
-**Removed rather than hidden.** The six-hour timer (replaced by "Start syncing" and "Save without syncing"). The managed package and separate setup app (one sign-in as the sync user). "HubSpot CRM" versus "HubSpot Data Enrichment" (enrichment providers are their own card). "Hide my contacts pulled from the CRM" (People and Companies filter by source). "Infer missing data" (enrichment is the provider's job, under the credit caps in Settings). "Push emails even if the sender or recipient doesn't exist". "Advanced sync" and the three "advanced settings" (their contents are named). The plan gate on pull conditions.
+**Removed rather than hidden.** The six-hour timer (replaced by "Start syncing" and "Save without syncing"). The managed package and separate setup app (one sign-in as the sync user). "HubSpot CRM" versus "HubSpot Data Enrichment" (enrichment providers are their own card). "Hide my contacts pulled from the CRM" (People and Companies filter by source). "Infer missing data" (enrichment is the provider's job, under the credit caps in Settings). "Push emails even if the sender or recipient doesn't exist". "Advanced sync" and the three "advanced settings" (their contents are named). The plan gate on pull conditions: selective sync is on every plan here, because a condition builder that sometimes opens onto nothing is a door that lies (rule 4); what varies by plan is named on the card before the wizard starts.
 
 **The nine-point score.**
 
@@ -262,7 +267,7 @@ Lesson 4. Step 0 is the common version from section 5. Each later step applies o
 |---|---|---|---|---|
 | 0 | | Marketplace list, four-context authorisation, six-hour timer, page › object tab › Sync sub-tab › "Advanced sync" block, error log with hover detail | What happens when each sync setting is added where it fits and nothing is ever moved | Apollo articles 4414356051725, 4414496822797, 4414469523981, 4416606988941, 7683909560845; settings map 1.3 and 1.4 |
 | 1 | 2. Stop at two levels | Page › tab › sub-tab › block becomes one page per step with at most one in-place door; the integration page becomes status plus five doors | A fourth level is where admins get lost; it is not a widget problem | Nielsen 2006: beyond two levels "typically have low usability"; Pajamas: three or more "suggests the feature needs redesign"; settings map 1.3 shows D4 |
-| 2 | 4. Make the door obvious and honest | "Advanced sync" becomes "Deletions and merges"; "Next", "Save and next", "Done" become "Continue to field mapping" and "Start syncing"; "Step 3 of 6" appears in text; the error fix moves from hover into the row; the plan-gated door is removed | A label is the only scent a door has, and a door must always open onto something | NN/g wizards (pattern 9): descriptive labels, progress in text; Windows UX Guide: "Remove (don't disable)"; NN/g 2014: 0% click-through on an unlabelled icon; WCAG 1.4.13 |
+| 2 | 4. Make the door obvious and honest | "Advanced sync" becomes "Deletions and merges"; "Next", "Save and next", "Done" become "Continue to field mapping" and "Start syncing"; "Step 3 of 6" appears in text; the error fix moves from hover into the row; and the plan-gated door — a door that opens onto "available on certain Apollo plans" — becomes either an ungated control or a lock at the entry point that opens onto a panel with the plan, the total and one button. A door must always deliver what its label promises; a lock promises something else and delivers that | A label is the only scent a door has, and a door must always open onto something | NN/g wizards (pattern 9): descriptive labels, progress in text; Windows UX Guide: "Remove (don't disable)"; NN/g 2014: 0% click-through on an unlabelled icon; WCAG 1.4.13 |
 | 3 | 5. Keep context across the boundary | Push-by-stage and stage mapping share a tab; the write rule sits in the pair's row; deletion, merge and matching share one group; answers save on every change and the draft resumes from Settings and Home | Fields edited together must be seen together, and a wizard that forgets what you typed splits context across time | Fluent 2: "Never put information in one accordion item that needs to be referenced in another"; Cowan 2001; NN/g wizards: exit and resume; Nielsen 2006: staged disclosure is "problematic when the steps are interdependent" |
 | 4 | 7. Decision-critical is never behind a door | The timer becomes "Start syncing"; the review step states what the first sync will pull, push, delete and merge; deletion and merge leave the "Advanced" block for the open page with a consequence line each; Disconnect shows what happens beside the button; Pause is on the strip | What a connection will do to the system of record is the one thing the admin must never lose sight of | Nielsen 2026: never hide "risks"; RULES.md rule 7: "what a destructive action does… safety state"; Apollo 47407472057101 on mirrored duplicates and merges |
 | 5 | 1. Hide the rare, never the necessary | On the integration page, status, errors, retry, pull now and history are level one (40, 30, 20, 20, 20 for Meridian's admin); what syncs, mapping, rules and authorisation are doors; in the wizard, activity types and the unmapped-fields tail go behind doors | Level one is decided by weekly use per role and business, not by what felt important | USAGE-MODEL.md; settings.ts int.crm 40, int.error-log 30, int.field-mapping 15; Pendo 2024; McGrenere and Moore 2000 |
@@ -290,5 +295,6 @@ Rule 3 runs through step 7: one wizard serves Fathom's first connection and Haly
 | Accelerators present | Only for Halyard | Done steps as links, printed shortcuts, Retry all, Match stages by name, for everyone |
 | Usage shape checked | Only Meridian | Halyard, Fathom and Ridgeline added with a verdict each |
 | Nothing hover-only | Error fix inherited from the model | Printed in the row |
-| Role gaps explain themselves | Salesforce card at Fathom hidden by plan | Shown with the gap in text and a link to Plan |
+| Role gaps explain themselves | Fathom's Salesforce card read "Not on the Starter plan" | Deleted. Fathom has no CRM by choice, not by price: Ollopa is their system of record, both CRM cards are ordinary unconnected cards, and every plan syncs. The real plan limits here are webhooks (Growth) and custom objects (Scale), each locked on the card or the row where the choice is made |
+| All four businesses | 14 and 15 disagreed about which CRM each business runs | Meridian Salesforce, Ridgeline HubSpot, Fathom none, Halyard one client CRM per workspace, in §2 and §3.6 |
 | No usage numbers or teaching text in the product | "Nothing syncs until…" reads as teaching | Kept: it is a statement of state and decision-critical, not instruction |
