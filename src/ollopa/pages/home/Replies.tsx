@@ -1,0 +1,152 @@
+// Replies: the interested and question replies nobody has worked yet, newest first.
+//
+// Reply opens the thread in Inbox, where the composer lives. Home has no composer of its own, so the
+// product has one and not two. Unsubscribe states what it does to the person before it runs, in place,
+// because it cannot be undone from a toast.
+import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { href, navigate } from "@/app/router"
+import { toast } from "../../templates/TablePage"
+import { Door, type Disclosure } from "../../ui"
+import type { Reply } from "../../data/seed"
+import type { HomeData } from "./data"
+import { when } from "./format"
+import { Confirm, Nothing, Row, RowList, RowMenu, Section, UndoLine, useUndo } from "./rows"
+
+interface ReplyRowProps {
+  r: Reply
+  canBook: boolean
+  confirming: boolean
+  onNotInterested: (r: Reply) => void
+  onAsk: (id: string | null) => void
+  onUnsubscribe: (r: Reply) => void
+}
+
+function ReplyRow({ r, canBook, confirming, onNotInterested, onAsk, onUnsubscribe }: ReplyRowProps) {
+  const open = () => navigate(`/ollopa/inbox/${r.id}`)
+  const book = () => navigate(`/ollopa/inbox/${r.id}?meeting=new`)
+  return (
+    <Row
+      keys={{ r: open, b: () => { if (canBook) book() }, n: () => onNotInterested(r) }}
+      onEnter={open}
+      className="flex-col items-stretch sm:flex-row sm:items-start"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-x-2">
+          <span className="font-medium">{r.contact}</span>
+          <span className="text-muted-foreground">· {r.company}</span>
+          <Badge variant="secondary" className="font-normal">{r.outcome}</Badge>
+          <span className="text-xs text-muted-foreground">{when(r.received)}</span>
+        </span>
+        <span className="block truncate text-xs text-muted-foreground">{r.snippet}</span>
+      </span>
+      {confirming ? (
+        <Confirm
+          text={`${r.contact} will never be emailed from this workspace again.`}
+          label="Unsubscribe"
+          onConfirm={() => onUnsubscribe(r)}
+          onCancel={() => onAsk(null)}
+        />
+      ) : (
+        <span className="flex shrink-0 items-center gap-2">
+          <Button size="sm" variant="outline" className="h-7" onClick={open}>Reply</Button>
+          {canBook ? (
+            <Button size="sm" variant="ghost" className="hidden h-7 sm:inline-flex" onClick={book}>Book a meeting</Button>
+          ) : (
+            <a className="hidden text-xs text-muted-foreground underline underline-offset-4 sm:inline" href={href("/ollopa/connect/calendar")}>
+              Connect a calendar to book from here
+            </a>
+          )}
+          <RowMenu
+            name={r.contact}
+            actions={[
+              { label: "Reply in Inbox", shortcut: "R", onSelect: open },
+              canBook
+                ? { label: "Book a meeting", shortcut: "B", onSelect: book }
+                : { label: "Connect a calendar to book from here", onSelect: () => navigate("/ollopa/connect/calendar") },
+              { label: "Mark not interested", shortcut: "N", onSelect: () => onNotInterested(r) },
+              { label: `Unsubscribe ${r.contact} · never emailed from this workspace again`, destructive: true, onSelect: () => onAsk(r.id) },
+            ]}
+          />
+        </span>
+      )}
+    </Row>
+  )
+}
+
+export function Replies({ data, d, order }: { data: HomeData; d: Disclosure; order: number }) {
+  const [gone, setGone] = useState<Record<string, string>>({})
+  const [confirming, setConfirming] = useState<string | null>(null)
+  const [note, setNote, clearNote] = useUndo()
+  const canBook = data.replies.hasCalendar && d.weekly("home.replies.book") > 0
+
+  const hot = data.replies.hot.filter((r) => !gone[r.id])
+  const other = data.replies.other.filter((r) => !gone[r.id])
+
+  function leave(r: Reply, what: string, sentence: string, undoable = true) {
+    setGone((g) => ({ ...g, [r.id]: what }))
+    toast(sentence)
+    if (undoable) setNote({ text: sentence, undo: () => setGone((g) => { const next = { ...g }; delete next[r.id]; return next }) })
+    else clearNote()
+  }
+
+  const notInterested = (r: Reply) => leave(r, "not-interested", `Not interested · ${r.contact} left ${r.sequence}.`)
+  const unsubscribe = (r: Reply) => {
+    setConfirming(null)
+    leave(r, "unsubscribed", `Unsubscribed · ${r.contact} will never be emailed from this workspace again.`, false)
+  }
+
+  return (
+    <Section id="home-replies" title="Replies" count={hot.length} order={order} link={{ label: "Inbox", to: "/ollopa/inbox" }}>
+      <UndoLine note={note} onDone={clearNote} />
+
+      {hot.length > 0 ? (
+        <RowList label="Interested and question replies">
+          {hot.map((r) => (
+            <ReplyRow
+              key={r.id}
+              r={r}
+              canBook={canBook}
+              confirming={confirming === r.id}
+              onNotInterested={notInterested}
+              onAsk={setConfirming}
+              onUnsubscribe={unsubscribe}
+            />
+          ))}
+        </RowList>
+      ) : (
+        <Nothing text="No interested or question replies waiting." link={{ label: "Inbox", to: "/ollopa/inbox" }} />
+      )}
+
+      {other.length > 0 && (
+        <div className="pt-1">
+          <Door id="home.replies.other" label="Not now and out-of-office replies" count={other.length}>
+            <ul className="divide-y">
+              {other.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                  <span className="min-w-0 flex-1">
+                    <span className="font-medium">{r.contact}</span>
+                    <span className="text-muted-foreground"> · {r.company} · {r.outcome}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {r.returnsOn ? `Back on ${r.returnsOn}` : r.followUpOn ? `Asked for ${r.followUpOn}` : r.snippet}
+                    </span>
+                  </span>
+                  <Button size="sm" variant="ghost" className="h-7 shrink-0" onClick={() => notInterested(r)}>Mark not interested</Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 shrink-0"
+                    onClick={() => leave(r, "snoozed", `Snoozed · ${r.contact} comes back on ${r.returnsOn ?? r.followUpOn ?? "the date they gave"}.`)}
+                  >
+                    Snooze
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Door>
+        </div>
+      )}
+    </Section>
+  )
+}

@@ -1,0 +1,262 @@
+// Workflows (`P-workflows`): the trigger-rule-action chains that route what arrives.
+//
+// Three columns make this a page rather than a list — past the SLA window, could not route, and the
+// credit ceiling with today's spend — and each of them is a link into the record, already at the block
+// it names, because a count that leads nowhere is a decoration. The page is on Growth, and the lock
+// sits at the entry point with the table's real shape and its real count behind it, never after
+// somebody has built a rule they cannot keep.
+import { useMemo, useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+import { href, navigate } from "@/app/router"
+import { toast } from "../../templates/TablePage"
+import { Door } from "../../ui/Door"
+import { EmptyState } from "../../ui/EmptyState"
+import { Locked } from "../../ui/Locked"
+import { gate } from "../../ui/gate"
+import { businessById } from "../../data/businesses"
+import { TODAY, seedFor, type Workflow } from "../../data/seed"
+import type { Session } from "../../session"
+import { Grid, type GridColumn } from "./grid"
+import { breachedRows, enrolled7d, notRoutedRuns, runsOf } from "./derive"
+import { ago, day, num } from "./format"
+import { patchRow, addRow, useMarketing } from "./store"
+
+const COLUMN_NAMES = ["Workflow", "Trigger", "Status", "Enrolled, 7 days", "Past the SLA window", "Could not route", "Credit ceiling and spend today", "Owner", "Last edited"]
+
+export function WorkflowsPage({ session }: { session: Session }) {
+  const b = businessById(session.business)
+  const seed = seedFor(session.business)
+  const rows = useMarketing(session.business)
+  const lock = gate("workflows", session.business)
+  const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
+
+  const [q, setQ] = useState("")
+  const [status, setStatus] = useState("all")
+  const [trigger, setTrigger] = useState("all")
+  const [owner, setOwner] = useState("all")
+  const [folder, setFolder] = useState("all")
+  const [archived, setArchived] = useState("all")
+
+  const on = rows.workflows.filter((w) => w.status === "on").length
+  const off = rows.workflows.length - on
+
+  const stats = useMemo(() => {
+    const map = new Map<string, { enrolled: number; breached: number; notRouted: number }>()
+    for (const w of rows.workflows) {
+      const runs = runsOf(seed.workflowRuns, w.id)
+      map.set(w.id, { enrolled: enrolled7d(runs), breached: w.sla?.breachedToday ?? 0, notRouted: notRoutedRuns(runs).length })
+    }
+    return map
+  }, [rows.workflows, seed.workflowRuns])
+
+  const filtered = rows.workflows.filter((w) => {
+    const needle = q.trim().toLowerCase()
+    if (needle && !`${w.name} ${w.trigger} ${w.rules.map((r) => `${r.condition} ${r.action}`).join(" ")}`.toLowerCase().includes(needle)) return false
+    if (status !== "all" && w.status !== (status === "On" ? "on" : "off")) return false
+    if (trigger !== "all" && w.trigger !== trigger) return false
+    if (owner !== "all" && w.owner !== owner) return false
+    if (folder !== "all" && (w.folder ?? "No folder") !== folder) return false
+    return true
+  })
+
+  /* --------------------------------------------------------------- the Starter state: a real lock */
+
+  if (lock.locked) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="px-6 pt-5">
+          <h2 className="text-lg font-semibold">Workflows</h2>
+          <p className="text-sm text-muted-foreground">Route what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 px-6 py-3">
+          <Locked feature="Workflows" plan={lock.plan} pricePerMonth={lock.pricePerMonth} what={lock.what}>
+            <Button>Create a workflow</Button>
+          </Locked>
+          <span className="text-sm tabular-nums text-muted-foreground">{num(rows.workflows.length)} workflows</span>
+        </div>
+        <p className="px-6 pb-3 text-xs text-muted-foreground">
+          Without it: assign an owner by hand from People, and route by saved view.
+        </p>
+        {/* The real shape and the real count, values withheld — never a screenshot and never a chart. */}
+        <div className="overflow-x-auto border-t">
+          <Table>
+            <TableHeader><TableRow>{COLUMN_NAMES.map((c) => <TableHead key={c}>{c}</TableHead>)}</TableRow></TableHeader>
+            <TableBody>
+              {rows.workflows.length === 0 ? (
+                <TableRow><TableCell colSpan={COLUMN_NAMES.length} className="py-10 text-center text-sm text-muted-foreground">No workflows yet. The first one anybody creates puts this page in the sidebar.</TableCell></TableRow>
+              ) : rows.workflows.map((w) => (
+                <TableRow key={w.id}>
+                  <TableCell className="font-medium">{w.name}</TableCell>
+                  {COLUMN_NAMES.slice(1, -1).map((c) => <TableCell key={c} className="text-muted-foreground">—</TableCell>)}
+                  <TableCell><Badge variant="secondary">{lock.plan}</Badge></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    )
+  }
+
+  /* -------------------------------------------------------------------------------- the columns */
+
+  const columns: GridColumn<Workflow>[] = [
+    { key: "name", header: "Workflow", sortBy: (w) => w.name, className: "min-w-[10rem] whitespace-normal", cell: (w) => (
+      <div className="min-w-0"><div className="font-medium">{w.name}</div>{w.folder && <div className="text-xs text-muted-foreground">{w.folder}</div>}</div>
+    ) },
+    { key: "trigger", header: "Trigger", sortBy: (w) => w.trigger, className: "min-w-[9rem] whitespace-normal", cell: (w) => <span className="text-sm">When {w.trigger}</span> },
+    { key: "status", header: "Status", sortBy: (w) => w.status, className: "min-w-[7rem] whitespace-normal", cell: (w) => (
+      <div className="min-w-0">
+        <Badge variant="secondary" className={w.status === "on" ? "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200" : ""}>{w.status === "on" ? "On" : "Off"}</Badge>
+        <div className="text-xs text-muted-foreground">{w.statusChangedBy}, {ago(w.statusChangedOn)}</div>
+      </div>
+    ) },
+    { key: "enrolled", header: "Enrolled, 7 days", sortBy: (w) => stats.get(w.id)?.enrolled ?? 0, className: "tabular-nums", cell: (w) => num(stats.get(w.id)?.enrolled ?? 0) },
+    { key: "breached", header: "Past the SLA window", sortBy: (w) => stats.get(w.id)?.breached ?? 0, className: "min-w-[8rem] whitespace-normal", cell: (w) => {
+      const n = stats.get(w.id)?.breached ?? 0
+      if (!w.sla) return <span className="text-muted-foreground">No clock on this one</span>
+      return n === 0
+        ? <span className="tabular-nums text-muted-foreground">0</span>
+        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=sla`)}>{num(n)} past {w.sla.windows.hot}</a>
+    } },
+    { key: "notRouted", header: "Could not route", sortBy: (w) => stats.get(w.id)?.notRouted ?? 0, cell: (w) => {
+      const n = stats.get(w.id)?.notRouted ?? 0
+      return n === 0
+        ? <span className="tabular-nums text-muted-foreground">0</span>
+        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=runs`)}>{num(n)}</a>
+    } },
+    { key: "ceiling", header: "Credit ceiling and spend today", sortBy: (w) => w.ceiling.spentToday, className: "min-w-[9rem]", cell: (w) => (
+      <a className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium text-amber-700 dark:text-amber-400")} href={href(`/ollopa/workflows/${w.id}?at=ceiling`)}>
+        {num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} a day
+      </a>
+    ) },
+    { key: "owner", header: "Owner", sortBy: (w) => w.owner, cell: (w) => w.owner },
+    { key: "edited", header: "Last edited", sortBy: (w) => w.editedOn, cell: (w) => <span className="text-xs">{w.editedBy}<br />{day(w.editedOn)}</span> },
+  ]
+
+  const secondary = [
+    { key: "trigger", label: "Trigger", value: trigger, set: setTrigger, options: [...new Set(rows.workflows.map((w) => w.trigger))] },
+    { key: "owner", label: "Owner", value: owner, set: setOwner, options: [...new Set(rows.workflows.map((w) => w.owner))] },
+    { key: "folder", label: "Folder", value: folder, set: setFolder, options: [...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))] },
+    { key: "archived", label: "Archived", value: archived, set: setArchived, options: ["Archived only", "Not archived"] },
+  ]
+  const activeBehind = secondary.filter((f) => f.value !== "all").length
+
+  const create = () => {
+    const w: Workflow = {
+      id: `wf-new-${Date.now().toString(36)}`, name: "Untitled workflow", owner: session.user, status: "off",
+      statusChangedBy: session.user, statusChangedOn: TODAY, createdOn: TODAY, editedBy: session.user, editedOn: TODAY, folder: null,
+      trigger: "a form is submitted", enrolment: [],
+      rules: [{ id: "new-r1", condition: "Always", action: "create a task", config: "Call task, due in 2 hours" }],
+      routing: null, sla: null,
+      ceiling: { perDay: 200, perRun: 25, spentToday: 0 },
+      limits: { perDay: 100, reEnrol: false, maxPerPerson: 1 },
+      hours: { from: "08:00", to: "18:00", days: ["Mon", "Tue", "Wed", "Thu", "Fri"], clockPauses: true },
+      suppress: ["Do not contact", "Unsubscribed"],
+    }
+    addRow(session.business, "workflows", w)
+    toast("Workflow created, off. Nothing runs until you turn it on.")
+    navigate(`/ollopa/workflows/${w.id}`)
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5">
+        <div>
+          <h2 className="text-lg font-semibold">Workflows</h2>
+          <p className="text-sm text-muted-foreground">Which rule is firing, on whom, and what it is about to cost.</p>
+        </div>
+        <Button onClick={create}>Create a workflow</Button>
+      </div>
+
+      {rows.workflows.length === 0 ? (
+        <div className="px-6 py-10">
+          <EmptyState
+            title="No workflows"
+            body="A workflow routes what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
+            action={<Button size="sm" onClick={create}>Create a workflow</Button>}
+          />
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-auto">
+          <div className="flex flex-wrap items-center gap-2 px-6 py-3">
+            <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="h-8 w-40 text-xs" aria-label="Status"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">On ({on}) · Off ({off})</SelectItem>
+                <SelectItem value="On">On ({on})</SelectItem>
+                <SelectItem value="Off">Off ({off})</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={folder} onValueChange={setFolder}>
+              <SelectTrigger className="h-8 w-40 text-xs" aria-label="Folder"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Folder: all</SelectItem>
+                {[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="px-6 pb-2">
+            <Door id="workflows.filters" label="Additional filters: trigger, owner, folder, archived" count={activeBehind || undefined}>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {secondary.map((f) => (
+                  <Select key={f.key} value={f.value} onValueChange={f.set}>
+                    <SelectTrigger className="h-8 w-44 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{f.label}: all</SelectItem>
+                      {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ))}
+              </div>
+            </Door>
+          </div>
+
+          <Grid<Workflow>
+            id="workflows"
+            rows={filtered}
+            rowKey={(w) => w.id}
+            columns={columns}
+            // The order the page is read in: what has breached, then what could not be routed, then name.
+            defaultSort={{ key: "breached", dir: "desc" }}
+            actions={(w) => [{
+              label: w.status === "on" ? "Turn off" : "Turn on",
+              onClick: () => {
+                const runs = runsOf(seed.workflowRuns, w.id)
+                patchRow(session.business, "workflows", w.id, { status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
+                toast(w.status === "on"
+                  ? `${w.name} stops enrolling. The ${num(breachedRows(w, runs).length + (w.sla?.running ?? 0))} people already running finish their steps.`
+                  : `${w.name} is on. It enrols up to ${num(w.limits.perDay)} people a day; the rest wait.`)
+              },
+            }]}
+            menu={(w) => [
+              { label: "Open", onClick: () => navigate(`/ollopa/workflows/${w.id}`) },
+              { label: "Test on one record", onClick: () => navigate(`/ollopa/workflows/${w.id}?open=test`) },
+              { label: "Duplicate", onClick: () => {
+                const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
+                addRow(session.business, "workflows", copy)
+                toast(`${copy.name} created, off. The copy does not carry the run history or the enrolments.`)
+              } },
+              { label: "Archive", destructive: true, separatorBefore: true, onClick: () => toast(`${w.name} archived. It stops enrolling for good; the run history is kept and the rule stays readable.`) },
+            ]}
+            menuName="Open, test on one record, duplicate, archive"
+            onOpen={(w) => navigate(`/ollopa/workflows/${w.id}`)}
+            cardTitle={(w) => <span className="font-medium">{w.name}</span>}
+          />
+        </div>
+      )}
+
+      {session.role !== "admin" && (
+        <p className="border-t px-6 py-2 text-xs text-muted-foreground">
+          Territories and permission profiles are the admin's: {admin} sets them in Settings › Team and access.
+        </p>
+      )}
+    </div>
+  )
+}

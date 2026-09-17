@@ -1,10 +1,19 @@
-// A page whose own builder has not landed yet still renders what the workspace holds: its name and
-// its real counts from seed. No "coming soon", no empty shell — navigation stays whole and every
-// number on it is the number the finished page will read.
+// A page whose own builder has not landed yet still renders what the workspace holds: what the page
+// is for, its real counts from the workspace's own data, and, where the workspace holds nothing for
+// it yet, the same first-run state the finished page will show. No "coming soon", no empty shell —
+// navigation stays whole and every number on it is the number the finished page will read.
+//
+// It is also where the third kind of "cannot see it" is answered: a page the workspace profile left
+// out opens exactly like any other, and says which profile left it out and what brings it back,
+// beside the shell's "Add to sidebar".
 import { businessById } from "../data/businesses"
 import { seedFor } from "../data/seed"
+import { leftOut } from "../map"
+import { navItem } from "../nav"
+import { FirstRunState, firstRunFor } from "../pages/states/empty"
+import { PURPOSE } from "../pages/states/pages"
+import { PROFILE_LABEL, type Session } from "../session"
 import type { Page } from "../usage/model"
-import type { Session } from "../session"
 import { notificationsFor } from "./notifications"
 
 export interface Count { label: string; value: string }
@@ -115,20 +124,43 @@ export function countsFor(page: Page, session: Session): Count[] {
 }
 
 export function Placeholder({ session, page, title }: { session: Session; page: Page; title: string }) {
-  const counts = countsFor(page, session)
   const b = businessById(session.business)
+  const firstRun = firstRunFor(page, session)
+  // A zero says nothing the first-run sentence has not already said, so it goes.
+  const counts = countsFor(page, session).filter((c) => !firstRun || c.value !== "0")
+  const purpose = PURPOSE[page]
+
+  // The third kind of "cannot see it": the seat holds the page, the profile left it out of the
+  // sidebar, and the shell's header offers it back. Say which profile, and what brings it back.
+  const omission = leftOut(page, session.profile, session.role)
+  const label = navItem(page)?.label ?? title
+  const inSidebar = session.sidebarAdded.includes(page) || session.exposures.some((e) => e.page === page && e.answer !== "remove")
+
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <h2 className="text-xl font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{b.name}</p>
-      <dl className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {counts.map((c) => (
-          <div key={c.label} className="rounded-lg border p-4">
-            <dt className="text-xs uppercase tracking-wider text-muted-foreground">{c.label}</dt>
-            <dd className="mt-1 text-2xl font-semibold tabular-nums">{c.value}</dd>
-          </div>
-        ))}
-      </dl>
+      {purpose && <p className="mt-3 max-w-2xl text-sm">{purpose}</p>}
+
+      {omission && !inSidebar && (
+        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+          {label} is not in your sidebar: the {PROFILE_LABEL[session.profile]} profile leaves it out until {omission.signal}.
+          “Add to sidebar”, beside the title, keeps it for good.
+        </p>
+      )}
+
+      {firstRun && <div className="mt-6 max-w-2xl"><FirstRunState page={page} session={session} /></div>}
+
+      {counts.length > 0 && (
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {counts.map((c) => (
+            <div key={c.label} className="rounded-lg border p-4">
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">{c.label}</dt>
+              <dd className="mt-1 break-words text-2xl font-semibold tabular-nums">{c.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </div>
   )
 }

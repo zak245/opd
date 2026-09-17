@@ -16,7 +16,7 @@ export type Feature =
   | "reports.all" | "reports.csv-export" | "reports.scheduled-email"
   | "crm.two-way" | "crm.custom-objects"
   | "sso" | "scim" | "ip-allowlist" | "audit-export"
-  | "api" | "webhooks" | "mcp.write" | "workflows" | "view-as"
+  | "api" | "webhooks" | "mcp.write" | "workflows" | "rulesets" | "view-as"
 
 export const FEATURES: Record<Feature, { has: (row: PlanRow) => boolean; what: string }> = {
   "seats.unlimited": { has: (r) => r.seats === "unlimited", what: "Invite as many people as you need. Starter stops at three seats." },
@@ -38,6 +38,7 @@ export const FEATURES: Record<Feature, { has: (row: PlanRow) => boolean; what: s
   api: { has: (r) => r.api, what: "The REST API, with published limits and a spend cap for each key." },
   webhooks: { has: (r) => r.api, what: "Webhooks with a written delivery contract and a reconciliation endpoint." },
   "mcp.write": { has: (r) => /write/.test(r.mcp), what: "MCP write scopes. Reading is on every plan." },
+  rulesets: { has: (r) => r.teams, what: "Reusable rulesets: save a sequence's rules once and apply them to any sequence." },
   workflows: { has: (r) => r.workflows, what: "Workflows: route a record, assign an owner, start a sequence when something happens." },
   "view-as": { has: (r) => r.viewAs, what: "See the product as one of your teammates sees it, to check access before you grant it." },
 }

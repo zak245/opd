@@ -1,0 +1,133 @@
+// Pipeline: the numbers an account executive acts on, and the deals behind the two that need work.
+//
+// Needs attention comes first and is a count only: the six warnings and their thresholds belong to the
+// deal record and the board, so Home counts them and states nothing of its own. An AE who has direct
+// reports gets the team roll-up above her own, because that is the number her week is measured in.
+import { Button } from "@/components/ui/button"
+import { href, navigate } from "@/app/router"
+import { Door, type Disclosure } from "../../ui"
+import type { Deal } from "../../data/seed"
+import type { HomeData } from "./data"
+import { day } from "./format"
+import { Nothing, Row, RowList, Section } from "./rows"
+
+function Stat({ label, value, sub, to }: { label: string; value: string; sub?: string; to?: string }) {
+  const body = (
+    <>
+      <span className="block text-xs text-muted-foreground">{label}</span>
+      <span className="block text-base font-semibold tabular-nums">{value}</span>
+      {sub && <span className="block text-xs text-muted-foreground">{sub}</span>}
+    </>
+  )
+  return to
+    ? <a className="rounded-md border px-3 py-2 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" href={href(to)}>{body}</a>
+    : <div className="rounded-md border px-3 py-2">{body}</div>
+}
+
+function DealRow({ deal, note, money }: { deal: Deal; note: string; money: (n: number) => string }) {
+  const open = () => navigate(`/ollopa/deals/${deal.id}`)
+  return (
+    <Row onEnter={open}>
+      <span className="min-w-0 flex-1">
+        <span className="font-medium">{deal.name}</span>
+        <span className="block text-xs text-muted-foreground">{deal.stage} · {note}</span>
+      </span>
+      <span className="shrink-0 tabular-nums">{money(deal.amount)}</span>
+      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={open}>Open</Button>
+    </Row>
+  )
+}
+
+export function Pipeline({ data, d, order, hasReports }: { data: HomeData; d: Disclosure; order: number; hasReports: boolean }) {
+  const p = data.pipeline
+  const m = data.money
+  const mine = d.atLevelOne("home.pipeline.mine") && p.mine.length > 0
+  const team = d.atLevelOne("home.pipeline.team")
+  const warnings = d.atLevelOne("home.pipeline.warnings")
+  const nextStep = d.atLevelOne("home.pipeline.next-step")
+  const closing = d.atLevelOne("home.pipeline.closing")
+  const stagesOpen = d.atLevelOne("home.pipeline.stages")
+
+  const perRep = hasReports
+    ? [data.user, ...data.reports].map((rep) => {
+      const rows = p.open.filter((x) => x.owner === rep)
+      return { rep, count: rows.length, total: rows.reduce((n, x) => n + x.amount, 0) }
+    })
+    : []
+
+  return (
+    <Section id="home-pipeline" title="Pipeline" order={order} link={{ label: "Deals", to: "/ollopa/deals" }}>
+      {warnings && (
+        <a
+          className="mb-2 flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          href={href("/ollopa/deals?filter=warnings")}
+        >
+          <span className="font-medium">Needs attention</span>
+          <span className="tabular-nums">{p.needsAttention.length}</span>
+          <span className="ml-auto text-xs text-muted-foreground">Open them on the board</span>
+        </a>
+      )}
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        {hasReports && (
+          <Stat
+            label={`Your team (${data.reports.length + 1} sellers)`}
+            value={m(p.teamTotal)}
+            sub={`${p.team.length} open deals`}
+            to="/ollopa/deals?scope=team"
+          />
+        )}
+        {mine && <Stat label="Your open deals" value={m(p.mineTotal)} sub={`${p.mine.length} deals`} to="/ollopa/deals?owner=me" />}
+        {team && !hasReports && <Stat label="Team pipeline" value={m(p.openTotal)} sub={`${p.open.length} open deals`} to="/ollopa/deals" />}
+        {nextStep && <Stat label="No next step" value={String(p.noNextStep.length)} sub="Deals with nothing planned" to="/ollopa/deals?filter=no-next-step" />}
+        {closing && <Stat label="Closing in 30 days" value={String(p.closing.length)} sub={m(p.closing.reduce((n, x) => n + x.amount, 0))} to="/ollopa/deals?filter=closing" />}
+      </div>
+
+      {hasReports && perRep.length > 0 && (
+        <ul className="mt-2 divide-y rounded-lg border text-sm">
+          {perRep.map((r) => (
+            <li key={r.rep} className="flex items-center gap-3 px-3 py-1.5">
+              <span className="min-w-0 flex-1">{r.rep === data.user ? `${r.rep} (you)` : r.rep}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">{r.count} deals</span>
+              <span className="shrink-0 tabular-nums">{m(r.total)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {closing && (
+        <div className="pt-2">
+          {p.closing.length > 0 ? (
+            <RowList label="Deals closing in the next 30 days">
+              {p.closing.slice(0, 5).map((deal) => <DealRow key={deal.id} deal={deal} money={m} note={`closes ${day(deal.closeDate)}`} />)}
+            </RowList>
+          ) : (
+            <Nothing text="Nothing closes in the next 30 days." link={{ label: "Deals", to: "/ollopa/deals" }} />
+          )}
+        </div>
+      )}
+
+      <div className="pt-1">
+        <Door id="home.pipeline.stages" label="By stage and forecast category" count={p.open.length} defaultOpen={stagesOpen}>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
+            {p.byStage.map((s) => (
+              <div key={s.label} className="flex items-baseline justify-between gap-2 border-b py-1">
+                <dt className="text-muted-foreground">{s.label}</dt>
+                <dd className="tabular-nums">{s.count} · {m(s.total)}</dd>
+              </div>
+            ))}
+          </dl>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 pt-2 sm:grid-cols-3">
+            {p.byForecast.filter((f) => f.count > 0).map((f) => (
+              <div key={f.label} className="flex items-baseline justify-between gap-2 border-b py-1">
+                <dt className="text-muted-foreground">{f.label}</dt>
+                <dd className="tabular-nums">{f.count} · {m(f.total)}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="pt-2 text-xs text-muted-foreground">A lost deal is archived, so there is no Closed lost column.</p>
+        </Door>
+      </div>
+    </Section>
+  )
+}

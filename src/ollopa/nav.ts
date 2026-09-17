@@ -4,7 +4,7 @@
 // they may open at all. The workspace profile, declared at set-up, may leave a page out. Nothing
 // here reads usage, history or the clock. Order never changes by role, business or history.
 import type { LucideIcon } from "lucide-react"
-import { Home, Users, Building2, List, Send, Inbox, CheckSquare, Columns3, Megaphone, HeartHandshake, GitBranch, Ticket, BarChart3, Bot, Settings } from "lucide-react"
+import { Home, Users, Building2, List, Send, FileText, Inbox, CheckSquare, Columns3, Megaphone, HeartHandshake, GitBranch, Ticket, BarChart3, Bot, Settings } from "lucide-react"
 import type { Business, Page, Role } from "./usage/model"
 import { leftOut } from "./map"
 import type { Session } from "./session"
@@ -18,6 +18,11 @@ export interface NavItem {
   roles: Role[]
   /** `g` then this letter jumps here. Printed beside the row in ⌘K and in the shortcut sheet. */
   key: string
+  /**
+   * Held by the seat but in nobody's sidebar by default (spec 05 §3.9, Templates): reached from the
+   * place that uses it, from ⌘K or by deep link, and its header offers "Add to sidebar".
+   */
+  optional?: boolean
 }
 
 /** Sidebar order: "top" (no label), the named groups, then "bottom" (after a divider, no label). */
@@ -31,6 +36,7 @@ export const NAV: NavItem[] = [
   { page: "companies", label: "Companies", icon: Building2, group: "Prospect", roles: ["sdr", "ae", "cs", "admin"], key: "c" },
   { page: "lists", label: "Lists", icon: List, group: "Prospect", roles: ["sdr", "marketer", "admin"], key: "l" },
   { page: "sequences", label: "Sequences", icon: Send, group: "Engage", roles: ["sdr", "ae", "admin"], key: "s" },
+  { page: "templates", label: "Templates", icon: FileText, group: "Engage", roles: ["sdr", "ae", "marketer", "admin"], key: "e", optional: true },
   { page: "inbox", label: "Inbox", icon: Inbox, group: "Engage", roles: ["sdr", "ae"], key: "i" },
   { page: "tasks", label: "Tasks", icon: CheckSquare, group: "Engage", roles: ["sdr", "ae", "cs"], key: "t" },
   { page: "deals", label: "Deals", icon: Columns3, group: "Win", roles: ["ae", "cs", "admin"], key: "d" },
@@ -76,7 +82,7 @@ export interface SidebarEntry {
  * plus pages added by hand and any page on a two-week exposure, each at the end of its group.
  */
 export function sidebarFor(session: Session, today: string): SidebarEntry[] {
-  const declared = NAV.filter((n) => seatCarries(n.page, session.business, session.role))
+  const declared = NAV.filter((n) => !n.optional && seatCarries(n.page, session.business, session.role))
     .filter((n) => !leftOut(n.page, session.profile, session.role))
     .map<SidebarEntry>((item) => ({ item, source: "declared" }))
 
@@ -123,5 +129,5 @@ export function navItem(page: Page): NavItem | undefined {
 
 /** Kept for pages written against the old signature: the seat's pages, before the profile subtracts. */
 export function navFor(role: Role): NavItem[] {
-  return NAV.filter((n) => n.roles.includes(role))
+  return NAV.filter((n) => !n.optional && n.roles.includes(role))
 }

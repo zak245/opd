@@ -206,8 +206,10 @@ export function AppShell({ session, page, title, children }: { session: Session;
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4">
-          <h1 className="truncate text-sm font-semibold">{title}</h1>
+        {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
+            and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
+        <header className={cn("flex shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
+          <h1 className={cn("truncate text-sm font-semibold", (canAdd || added) && "mr-auto md:mr-0")}>{title}</h1>
           {client && <span className="hidden shrink-0 rounded border px-2 py-0.5 text-xs text-muted-foreground sm:inline">{client} · client workspace</span>}
           {canAdd && (
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>
@@ -215,7 +217,7 @@ export function AppShell({ session, page, title, children }: { session: Session;
           {added && inSidebar && (
             <Button variant="ghost" size="sm" className="shrink-0" onClick={() => { removeFromSidebar(page); refresh() }}>Remove from sidebar</Button>
           )}
-          <div className="flex-1" />
+          <div className={cn("flex-1", (canAdd || added) && "h-0 basis-full md:h-auto md:basis-auto")} />
           <Button variant="outline" size="sm" className="hidden w-64 justify-start text-muted-foreground lg:flex" onClick={() => setPalette(true)}>
             <Search className="size-4" aria-hidden="true" />
             Search or jump to…

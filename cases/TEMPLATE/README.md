@@ -49,7 +49,9 @@ Walkthrough done: keyboard only, both versions [ ]. Screen reader, disclosed ver
 
 ## Files in this folder
 
-- `model.ts`: one screen model with a layout per step. Never a separate "bad" and "good" implementation. Step N is the model with N rules on.
-- `steps.ts`: the steps: rule, title, what moved, why, evidence quotes, and which doors to open on arrival so the change is visible.
+- `case.ts`: the case's id, title, summary, the page node the stage renders, the seat it signs in as, and the spec it is built from.
+- `steps.ts`: the steps: rule, title, what moved, why, evidence quotes with their sources, and which doors to open on arrival so the change is visible.
 - `scores.ts`: the nine rubric scores per step.
 - `screens/`: screenshots of step 0 and the last step.
+
+The page itself lives in `src/ollopa/pages/<folder>/` and reads `useLesson()` (`src/learn/context.ts`): one component, one model, a layout per step. Never a separate "bad" and "good" implementation. Step N is the page with N rules on; step 0 is the common version.

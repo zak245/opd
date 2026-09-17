@@ -156,8 +156,8 @@ export const NODES: MapNode[] = [
   { id: "S-plan", name: "Plan, billing and usage", type: "settings area", page: "settings", route: "/ollopa/settings/plan", seats: ["admin"], profiles: NONE, gate: null, synonyms: ["price", "invoice", "renewal", "credit balance and burn rate", "runway", "cancel"] },
 
   // 2.15 Integrations, imports and jobs
-  { id: "W-connect", name: "Connect an integration", type: "wizard", page: "connect", route: "/ollopa/connect/:id", seats: ["admin"], profiles: NONE, gate: null },
-  { id: "R-integration", name: "Integration", type: "record", page: "connect", route: "/ollopa/integrations/:id", seats: ["admin"], profiles: NONE, gate: null },
+  { id: "W-connect", name: "Connect an integration", type: "wizard", page: "connect", route: "/ollopa/connect/:id", seats: ALL, profiles: NONE, gate: null },
+  { id: "R-integration", name: "Integration", type: "record", page: "connect", route: "/ollopa/integrations/:id", seats: ALL, profiles: NONE, gate: null },
   { id: "W-import", name: "Import and enrich", type: "wizard", page: "enrichment", route: "/ollopa/import", seats: ["sdr", "marketer", "admin"], profiles: NONE, gate: null, synonyms: ["CSV", "upload"] },
   { id: "R-job", name: "Enrichment job", type: "record", page: "enrichment", route: "/ollopa/enrichment/:id", seats: ["sdr", "marketer", "admin"], profiles: NONE, gate: null },
 

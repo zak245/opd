@@ -1,0 +1,701 @@
+<title>Disclosure Stepper</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #F5F7F3; --paper-2: #EBEFE8; --stage: #FFFFFF;
+    --ink: #1A2126; --ink-2: #4B565E; --ink-3: #7A858C; --rule: #D3DAD0;
+    --accent: #0E6B86; --accent-ink: #0A5169; --accent-soft: #DCEBF0;
+    --warn: #A8641A; --warn-soft: #F4E7D4; --danger: #A3352B; --danger-soft: #F6E3E0;
+    --good: #2E7D4F; --good-soft: #DDEFE3;
+    --serif: "Newsreader", Georgia, serif; --sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; --mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper: #151A1D; --paper-2: #1E2529; --stage: #1B2126;
+    --ink: #E6EBE8; --ink-2: #B3BDB8; --ink-3: #7F8B86; --rule: #2E383D;
+    --accent: #5FB8D3; --accent-ink: #8ED0E4; --accent-soft: #163640;
+    --warn: #E0A660; --warn-soft: #3A2B16; --danger: #E08A80; --danger-soft: #3D211E;
+    --good: #7CC79A; --good-soft: #1C3527;
+  } }
+  :root[data-theme="dark"] {
+    --paper: #151A1D; --paper-2: #1E2529; --stage: #1B2126;
+    --ink: #E6EBE8; --ink-2: #B3BDB8; --ink-3: #7F8B86; --rule: #2E383D;
+    --accent: #5FB8D3; --accent-ink: #8ED0E4; --accent-soft: #163640;
+    --warn: #E0A660; --warn-soft: #3A2B16; --danger: #E08A80; --danger-soft: #3D211E;
+    --good: #7CC79A; --good-soft: #1C3527;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; padding-inline: clamp(16px, 4vw, 40px); padding-block: 0 72px; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 500; margin: 0; text-wrap: balance; line-height: 1.15; }
+  h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); }
+  .eyebrow { font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  a { color: var(--accent-ink); }
+  button:focus-visible, [tabindex]:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header { padding-top: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 1rem 2rem; align-items: end; }
+  header p { margin: .6rem 0 0; color: var(--ink-2); max-width: 62ch; font-family: var(--serif); font-size: 1.1rem; }
+  .case-tag { font-family: var(--mono); font-size: .75rem; color: var(--ink-3); text-align: right; line-height: 1.7; }
+  @media (max-width: 720px) { header { grid-template-columns: 1fr; } .case-tag { text-align: left; } }
+
+  /* layout: rail | stage | panel */
+  .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr) 300px; gap: 1.5rem; margin-top: 1.5rem; align-items: start; }
+  @media (max-width: 1060px) { .layout { grid-template-columns: 200px minmax(0, 1fr); } .panel { grid-column: 1 / -1; } }
+  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } .rail { position: static; } }
+
+  /* rail */
+  .rail { position: sticky; top: 16px; }
+  .rail ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--rule); }
+  .rail li { position: relative; padding: .45rem 0 .45rem 1rem; }
+  .rail li::before { content: ""; position: absolute; left: -6px; top: .95rem; width: 10px; height: 10px; border-radius: 50%; background: var(--paper); border: 2px solid var(--rule); }
+  .rail li.done::before { background: var(--accent); border-color: var(--accent); }
+  .rail li.current::before { background: var(--paper); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .rail button { all: unset; cursor: pointer; display: block; width: 100%; }
+  .rail .rl { font-family: var(--mono); font-size: .68rem; color: var(--ink-3); letter-spacing: .06em; }
+  .rail .rt { font-size: .9rem; color: var(--ink-2); line-height: 1.3; }
+  .rail li.current .rt { color: var(--ink); font-weight: 500; }
+  .rail li.done .rt { color: var(--ink-2); }
+  .rail li.todo .rt { color: var(--ink-3); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  .btn { font: inherit; font-family: var(--mono); font-size: .74rem; letter-spacing: .04em; color: var(--accent-ink); background: none; border: 1px solid var(--accent); border-radius: 3px; padding: .35rem .65rem; cursor: pointer; }
+  .btn:hover { background: var(--accent-soft); }
+  .btn[disabled] { opacity: .4; cursor: default; }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-ink); }
+  .kbd { font-family: var(--mono); font-size: .68rem; color: var(--ink-3); margin-top: .6rem; }
+
+  /* score */
+  .score { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+  .score .big { font-family: var(--mono); font-size: 1.6rem; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .score .big small { font-size: .8rem; color: var(--ink-3); }
+  .rubric { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: 3px; }
+  .rubric li { display: grid; grid-template-columns: 26px 1fr; align-items: center; gap: .4rem; font-size: .72rem; color: var(--ink-3); }
+  .rubric .pips { display: flex; gap: 2px; }
+  .rubric .pip { width: 10px; height: 6px; background: var(--rule); border-radius: 1px; transition: background .3s; }
+  .rubric .pip.on { background: var(--good); }
+  .rubric li.changed { color: var(--good); }
+
+  /* stage: the fake product */
+  .stage-wrap { position: relative; }
+  .stage { background: var(--stage); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; position: relative; }
+  .chrome { display: flex; align-items: center; gap: .5rem; padding: .5rem .9rem; border-bottom: 1px solid var(--rule); background: var(--paper-2); font-family: var(--mono); font-size: .7rem; color: var(--ink-3); }
+  .chrome .dots span { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--rule); margin-right: 4px; }
+  .app { padding: 1.1rem 1.25rem 1.5rem; }
+  .app-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
+  .app-head h2 { font-size: 1.25rem; }
+  .app-head .sub { font-size: .8rem; color: var(--ink-3); }
+  .expert { display: flex; align-items: center; gap: .9rem; font-size: .78rem; color: var(--ink-2); }
+  .expert .sw { display: inline-flex; align-items: center; gap: .4rem; }
+  .expert .track { width: 28px; height: 16px; border-radius: 8px; background: var(--rule); position: relative; }
+  .expert .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--stage); }
+  .expert .track.on { background: var(--accent); } .expert .track.on::after { left: 14px; }
+  .expert kbd { font-family: var(--mono); font-size: .7rem; border: 1px solid var(--rule); border-radius: 3px; padding: 0 .3rem; }
+
+  .sec { margin-bottom: 1rem; }
+  .sec-h { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding: .3rem 0; border-bottom: 1px solid var(--rule); margin-bottom: .2rem; display: flex; justify-content: space-between; }
+  .field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; padding: .42rem .4rem; border-radius: 4px; position: relative; }
+  .field .lbl { font-size: .9rem; }
+  .field .val { font-family: var(--mono); font-size: .76rem; color: var(--ink-3); display: flex; align-items: center; gap: .5rem; }
+  .field .val .box { border: 1px solid var(--rule); border-radius: 3px; padding: .1rem .45rem; background: var(--paper); min-width: 80px; text-align: left; }
+  .use { font-family: var(--mono); font-size: .64rem; padding: 0 .3rem; border-radius: 2px; background: var(--paper-2); color: var(--ink-3); }
+  .use.hi { background: var(--good-soft); color: var(--good); }
+  .use.lo { background: var(--warn-soft); color: var(--warn); }
+
+  .door { border: 1px solid var(--rule); border-radius: 5px; margin: .45rem 0; background: var(--stage); }
+  .door.deep { margin-left: 1.25rem; border-style: dashed; }
+  .door > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1.2rem 1fr auto; align-items: center; gap: .5rem; padding: .5rem .7rem; font-size: .9rem; }
+  .door > summary::-webkit-details-marker { display: none; }
+  .door .chev { font-family: var(--mono); color: var(--accent); transition: transform .18s; display: inline-block; }
+  .door[open] > summary .chev { transform: rotate(90deg); }
+  .door .cnt { font-family: var(--mono); font-size: .68rem; color: var(--ink-3); }
+  .door .inner { padding: .1rem .5rem .5rem; border-top: 1px solid var(--rule); }
+  .door > summary .lbl-bad { color: var(--ink-2); }
+  .door > summary .lbl-bad::after { content: " · audience label"; font-family: var(--mono); font-size: .62rem; color: var(--warn); }
+
+  .plan { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; padding: .7rem .9rem; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper-2); margin-bottom: 1rem; }
+  .plan .name { font-weight: 600; }
+  .plan .price { font-family: var(--mono); font-size: .8rem; color: var(--ink-2); }
+  .plan .in-door { background: var(--stage); border-style: dashed; }
+  .danger { border: 1px solid var(--danger); border-radius: 5px; padding: .6rem .9rem; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; margin-top: .5rem; }
+  .danger .t { font-weight: 600; color: var(--danger); font-size: .9rem; }
+  .danger .d { font-size: .78rem; color: var(--ink-3); }
+  .mini { font: inherit; font-size: .78rem; border: 1px solid var(--rule); background: var(--stage); border-radius: 3px; padding: .25rem .6rem; color: var(--ink-2); }
+  .mini.red { border-color: var(--danger); color: var(--danger); }
+
+  /* change highlighting; --k is the speed multiplier (1 normal, 2 slow motion) */
+  :root { --k: 1; }
+  .moved { animation: glow calc(3s * var(--k)) ease-out; }
+  @keyframes glow { 0% { box-shadow: 0 0 0 3px var(--accent); background: var(--accent-soft); } 60% { box-shadow: 0 0 0 3px var(--accent-soft); background: var(--accent-soft); } 100% { box-shadow: 0 0 0 0 transparent; background: transparent; } }
+  .ghost { position: absolute; pointer-events: none; border: 1.5px dashed var(--warn); border-radius: 4px; animation: ghostfade calc(4s * var(--k)) ease-out forwards; display: flex; align-items: center; gap: .5rem; padding: 0 .6rem; font-size: .74rem; font-family: var(--mono); color: var(--warn); background: var(--warn-soft); overflow: hidden; white-space: nowrap; z-index: 3; }
+  .ghost b { font-weight: 500; }
+  @keyframes ghostfade { 0% { opacity: 1; } 75% { opacity: .9; } 100% { opacity: 0; } }
+  .field .box.editing { display: none; }
+  .field input { font: inherit; font-family: var(--mono); font-size: .76rem; border: 1px solid var(--accent); border-radius: 3px; padding: .1rem .45rem; background: var(--stage); color: var(--ink); width: 160px; }
+  .field .box { cursor: text; }
+  .field .box:hover { border-color: var(--accent); }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: .76rem; padding: .5rem .9rem; border-radius: 4px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; max-width: 90vw; }
+  .toast.show { opacity: 1; }
+  .confirm { border: 1px solid var(--danger); background: var(--danger-soft); border-radius: 4px; padding: .5rem .7rem; margin-top: .5rem; font-size: .82rem; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .palette { position: absolute; inset: 0; background: rgba(20,26,29,.35); display: none; align-items: flex-start; justify-content: center; padding-top: 60px; z-index: 10; }
+  .palette.show { display: flex; }
+  .palette .box2 { width: min(440px, 92%); background: var(--stage); border: 1px solid var(--rule); border-radius: 6px; box-shadow: 0 12px 40px rgba(0,0,0,.25); overflow: hidden; }
+  .palette input { width: 100%; font: inherit; font-size: 1rem; padding: .7rem .9rem; border: 0; border-bottom: 1px solid var(--rule); background: var(--stage); color: var(--ink); outline: none; }
+  .palette ul { list-style: none; margin: 0; padding: .3rem 0; max-height: 240px; overflow: auto; }
+  .palette li { padding: .45rem .9rem; display: flex; justify-content: space-between; gap: 1rem; font-size: .9rem; cursor: pointer; }
+  .palette li.sel { background: var(--accent-soft); }
+  .palette li span:last-child { font-family: var(--mono); font-size: .7rem; color: var(--ink-3); }
+  .slow { display: inline-flex; align-items: center; gap: .4rem; font-family: var(--mono); font-size: .72rem; color: var(--ink-2); margin-top: .6rem; cursor: pointer; }
+  /* trace mode: placeholders stay in the flow where things used to be, until the next step */
+  .moved.stay { animation: none; background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+  /* a ghost: the component itself, faded, where it used to be, with a caption saying where it went */
+  .tomb { margin: .25rem 0; border: 1.5px dashed var(--warn); border-radius: 5px; background: repeating-linear-gradient(135deg, transparent 0 6px, var(--warn-soft) 6px 7px); }
+  .tomb .ghosted { opacity: .45; filter: grayscale(.7); pointer-events: none; user-select: none; }
+  .tomb .ghosted .use { visibility: hidden; }
+  .tomb .cap { display: flex; align-items: center; gap: .5rem; padding: .25rem .6rem .3rem; border-top: 1px dashed var(--warn); color: var(--warn); font-family: var(--mono); font-size: .7rem; }
+  .tomb .cap b { font-weight: 500; }
+  .tomb button { margin-left: auto; font: inherit; font-size: .68rem; color: var(--warn); background: none; border: 1px solid var(--warn); border-radius: 3px; padding: .05rem .5rem; cursor: pointer; }
+  .tomb button:hover { background: var(--stage); }
+  .tomb.fade, .left.fade { transition: opacity .6s; opacity: 0; }
+  .left { font-family: var(--mono); font-size: .68rem; color: var(--warn); background: var(--warn-soft); border: 1px dashed var(--warn); border-radius: 3px; padding: 0 .4rem; margin-left: .5rem; white-space: nowrap; }
+  .door > summary { grid-template-columns: 1.2rem 1fr auto auto; }
+  .legend { font-family: var(--mono); font-size: .68rem; color: var(--ink-3); margin-top: .5rem; line-height: 1.6; }
+  .legend i { display: inline-block; width: 12px; height: 8px; vertical-align: middle; margin-right: .3rem; border-radius: 2px; }
+  .legend .g { border: 1.5px dashed var(--warn); background: var(--warn-soft); }
+  .legend .m { background: var(--accent-soft); box-shadow: 0 0 0 1.5px var(--accent-soft); }
+  @media (prefers-reduced-motion: reduce) { .moved { animation: none; background: var(--accent-soft); } .ghost { animation: none; opacity: .8; } .door .chev { transition: none; } }
+
+  /* panel: rule, moved, evidence */
+  .panel { position: sticky; top: 16px; }
+  .panel .rule { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink); }
+  .panel h3 { font-size: 1.25rem; margin: .25rem 0 .6rem; }
+  .panel p { margin: 0 0 .75rem; font-size: .92rem; color: var(--ink-2); }
+  .panel ul { margin: 0 0 .75rem; padding-left: 1.1rem; font-size: .88rem; color: var(--ink-2); }
+  .panel li { margin-bottom: .3rem; }
+  .panel details { border-top: 1px solid var(--rule); margin-top: .5rem; }
+  .panel summary { list-style: none; cursor: pointer; padding: .6rem 0; display: flex; align-items: center; gap: .5rem; font-family: var(--mono); font-size: .74rem; color: var(--accent-ink); }
+  .panel summary::-webkit-details-marker { display: none; }
+  .panel details[open] summary .chev { transform: rotate(90deg); }
+  .panel .chev { display: inline-block; transition: transform .18s; }
+  .panel blockquote { margin: 0 0 .6rem; padding-left: .8rem; border-left: 2px solid var(--rule); font-family: var(--serif); font-size: .98rem; color: var(--ink); }
+  .panel cite { display: block; font-family: var(--mono); font-size: .68rem; font-style: normal; color: var(--ink-3); margin-top: .3rem; }
+
+  .anatomy { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+  .anatomy h2 { font-size: 1.5rem; margin-bottom: .5rem; }
+  .anatomy p { max-width: 68ch; color: var(--ink-2); }
+  .grid6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+  .grid6 > div { padding: .9rem 1rem; background: var(--paper-2); }
+  .grid6 b { font-family: var(--serif); font-size: 1.05rem; font-weight: 500; display: block; margin-bottom: .3rem; }
+  .grid6 p { font-size: .86rem; margin: 0; }
+  @media (max-width: 720px) { .grid6 { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <span class="eyebrow">Case 01 · Workspace settings · a reusable evolution pattern</span>
+    <h1>From the common version to the disclosed one, one rule at a time</h1>
+    <p>Six moves turn a settings page most teams would ship into one that follows the rules. Step through them. Watch what moves, where hidden things go, and how the score changes.</p>
+  </div>
+  <div class="case-tag">Pallet · freight operations SaaS<br>Roles: admin, dispatcher, finance<br>Design system: shadcn-style</div>
+</header>
+
+<div class="layout">
+  <aside class="rail" aria-label="Steps">
+    <ol id="rail"></ol>
+    <div class="controls">
+      <button class="btn" id="prev" type="button">◂ Back</button>
+      <button class="btn primary" id="next" type="button">Next ▸</button>
+      <button class="btn" id="play" type="button">Play</button>
+      <button class="btn" id="compare" type="button">Compare 0 ⇄ 6</button>
+    </div>
+    <div class="kbd">← → to step · space to play</div>
+    <label class="slow"><input type="checkbox" id="trace" checked> Trace changes</label>
+    <label class="slow"><input type="checkbox" id="slow"> Slow motion (2×)</label>
+    <div class="legend"><i class="g"></i>where it was, and where it went<br><i class="m"></i>where it is now</div>
+    <div class="legend" style="margin-top:.2rem">Only real moves are marked. Things that just shift down to make room are not.</div>
+    <div class="score">
+      <span class="eyebrow">Review score</span>
+      <div class="big"><span id="scoreNum">4</span><small> / 18</small></div>
+      <ul class="rubric" id="rubric"></ul>
+    </div>
+  </aside>
+
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <div class="chrome"><span class="dots"><span></span><span></span><span></span></span> pallet.app / settings / workspace</div>
+      <div class="app" id="app"></div>
+      <div class="palette" id="palette" role="dialog" aria-label="Jump to a setting"><div class="box2"><input id="palq" type="text" placeholder="Jump to a setting…" autocomplete="off"><ul id="pallist"></ul></div></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <aside class="panel" id="panel"></aside>
+</div>
+
+<section class="anatomy">
+  <h2>The pattern, so it can be reused for any screen</h2>
+  <p>Every case uses the same six parts. A new case only changes the screen model, the list of steps, and the rubric scores.</p>
+  <div class="grid6">
+    <div><b>Rail</b><p>The steps, one rule each, in order. Done, current, and to come. Clicking any step jumps there.</p></div>
+    <div><b>Stage</b><p>The real screen, built from the real components, live at every step. The viewer can open the doors.</p></div>
+    <div><b>Delta</b><p>Things that move slide to their new place. Things that get hidden leave a ghost for a moment that names where they went.</p></div>
+    <div><b>Score</b><p>The nine-point review rubric, filled in as each rule lands. The improvement is a number, not a feeling.</p></div>
+    <div><b>Evidence</b><p>What moved, why, and the study behind it. One level down, behind a toggle. The page follows its own rules.</p></div>
+    <div><b>Controls</b><p>Back, next, play, compare. Arrow keys. A "you try" mode can be added later on the same model.</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  // ---------- the screen model ----------
+  // Fields: key, label, value, weekly-use % (from analytics), group per step.
+  var F = {
+    name:     { l: 'Workspace name',     v: 'Pallet Logistics', u: 92 },
+    tz:       { l: 'Timezone',           v: 'Europe/Paris',      u: 61 },
+    logo:     { l: 'Logo',               v: 'pallet.svg',        u: 8 },
+    lang:     { l: 'Default language',   v: 'English',           u: 6 },
+    datef:    { l: 'Date format',        v: 'DD/MM/YYYY',        u: 5 },
+    numf:     { l: 'Number format',      v: '1 234,56',          u: 4 },
+    week:     { l: 'Week starts on',     v: 'Monday',            u: 3 },
+    fiscal:   { l: 'Fiscal year start',  v: 'January',           u: 2 },
+    cur:      { l: 'Currency',           v: 'EUR',               u: 58 },
+    taxid:    { l: 'Tax ID',             v: 'FR 40 123 456 789', u: 40 },
+    prefix:   { l: 'Invoice prefix',     v: 'PAL-',              u: 12 },
+    nextnum:  { l: 'Next invoice number',v: '00418',             u: 9 },
+    terms:    { l: 'Payment terms',      v: 'Net 30',            u: 55 },
+    late:     { l: 'Late fee',           v: '1.5% / month',      u: 7 },
+    footer:   { l: 'Invoice footer',     v: 'Thank you…',        u: 6 },
+    round:    { l: 'Rounding',           v: 'Nearest cent',      u: 3 },
+    taxrate:  { l: 'Tax rate',           v: '20%',               u: 30 },
+    retain:   { l: 'Data retention',     v: '7 years',           u: 4 },
+    audit:    { l: 'Audit log export',   v: 'Monthly · CSV',     u: 5 },
+    apikeys:  { l: 'API keys',           v: '2 active',          u: 9 },
+    retry:    { l: 'Retry policy',       v: '3 × backoff',       u: 3 },
+    hook:     { l: 'Webhook URL',        v: 'https://…/events',  u: 6 },
+    secret:   { l: 'Signing secret',     v: '••••••••',          u: 2 }
+  };
+
+  // Layout per step. Each entry is a block: {t:'sec', key, label, items} | {t:'door', key, label, count, deep, items} | 'plan' | 'danger' | {t:'expert'}
+  var L = [];
+  // Step 0: the common version
+  L[0] = [
+    { t: 'sec', key: 'general', label: 'General', items: ['name','tz','logo','lang','datef','numf','week','fiscal','cur','taxid'] },
+    { t: 'sec', key: 'invoicing', label: 'Invoicing', items: ['prefix','nextnum','terms','late','footer','round','taxrate'] },
+    { t: 'door', key: 'adv', label: 'Advanced', bad: true, items: ['plan','retain','audit',
+        { t: 'door', key: 'dev', label: 'Developer', bad: true, deep: true, items: ['apikeys','retry',
+          { t: 'door', key: 'hooks', label: 'Webhooks', deep: true, items: ['hook','secret'] } ] },
+        'danger' ] }
+  ];
+  // Step 1: rule 7 — price and delete come out
+  L[1] = [
+    'plan',
+    L[0][0], L[0][1],
+    { t: 'door', key: 'adv', label: 'Advanced', bad: true, items: ['retain','audit',
+        { t: 'door', key: 'dev', label: 'Developer', bad: true, deep: true, items: ['apikeys','retry',
+          { t: 'door', key: 'hooks', label: 'Webhooks', deep: true, items: ['hook','secret'] } ] } ] },
+    'danger'
+  ];
+  // Step 2: rule 1 — order by weekly use; rare things go behind doors
+  L[2] = [
+    'plan',
+    { t: 'sec', key: 'general', label: 'General', badges: true, items: ['name','tz','cur','terms','taxid'] },
+    { t: 'door', key: 'invoicing', label: 'Invoicing', badges: true, items: ['taxrate','prefix','nextnum','late','footer','round'] },
+    { t: 'door', key: 'more', label: 'More settings', bad: true, badges: true, items: ['logo','lang','datef','numf','week','fiscal'] },
+    { t: 'door', key: 'adv', label: 'Advanced', bad: true, badges: true, items: ['retain','audit',
+        { t: 'door', key: 'dev', label: 'Developer', bad: true, deep: true, items: ['apikeys','retry',
+          { t: 'door', key: 'hooks', label: 'Webhooks', deep: true, items: ['hook','secret'] } ] } ] },
+    'danger'
+  ];
+  // Step 3: rule 2 — flatten to two levels
+  L[3] = [
+    'plan',
+    L[2][1], L[2][2], L[2][3],
+    { t: 'door', key: 'adv', label: 'Advanced', bad: true, badges: true, items: ['retain','audit'] },
+    { t: 'door', key: 'dev', label: 'Developer', bad: true, badges: true, items: ['apikeys','retry','hook','secret'] },
+    'danger'
+  ];
+  // Step 4: rule 4 — name the doors by content
+  L[4] = [
+    'plan',
+    L[2][1],
+    { t: 'door', key: 'invoicing', label: 'Invoice formatting', count: '6 settings', badges: true, items: ['taxrate','prefix','nextnum','late','footer','round'] },
+    { t: 'door', key: 'more', label: 'Localisation', count: '6 settings', badges: true, items: ['logo','lang','datef','numf','week','fiscal'] },
+    { t: 'door', key: 'adv', label: 'Data and compliance', count: '2 settings', badges: true, items: ['retain','audit'] },
+    { t: 'door', key: 'dev', label: 'Integrations · API keys, webhooks', count: '4 settings', badges: true, items: ['apikeys','retry','hook','secret'] },
+    'danger'
+  ];
+  // Step 5: rule 5 — dependent fields together; doors remember state
+  L[5] = [
+    'plan',
+    { t: 'sec', key: 'general', label: 'General', badges: true, items: ['name','tz','cur','terms','taxid','taxrate'] },
+    { t: 'door', key: 'invoicing', label: 'Invoice formatting', count: '5 settings', badges: true, items: ['prefix','nextnum','late','footer','round'] },
+    L[4][3], L[4][4], L[4][5],
+    'danger'
+  ];
+  // Step 6: rule 8 — accelerators for experts
+  L[6] = [ { t: 'expert' } ].concat(L[5]);
+
+  var STEPS = [
+    { rule: 'Step 0', title: 'The common version', moved: ['Twenty-three settings in two long lists, in the order the database has them.', 'The plan price and the delete action are inside a door called "Advanced".', 'Advanced holds Developer, which holds Webhooks: three levels deep.'],
+      why: 'This is not a bad team. It is what happens when every request is added where it fits and nothing is ever moved.', ev: [] },
+    { rule: 'Rule 7', title: 'Decision-critical information is never behind a door', open: ['adv'], moved: ['The plan and its price move to the top of the page.', 'Delete workspace moves out of Advanced into a visible danger zone.'],
+      why: 'Price, commitment and consequences are level 1 by definition. Hiding them is not simplification; regulators and users both treat it as concealment.',
+      ev: [{ q: 'Never hide decision-critical information: price, requirements, risks, privacy terms.', c: 'Jakob Nielsen, 2026' }, { q: 'Removing the opt-out button from the first page increases consent by 22–23 percentage points.', c: 'Nouwens et al., CHI 2020' }] },
+    { rule: 'Rule 1', title: 'Hide the rare, never the necessary', moved: ['Weekly-use badges appear from analytics.', 'The five settings most people touch weekly stay in General. Payment terms moves up from Invoicing.', 'Everything used by fewer than one in five goes behind a door.'],
+      why: 'The split is by task frequency, measured per segment, not by what felt important in the roadmap meeting. Hidden things leave a ghost so you can see where they went.',
+      ev: [{ q: 'You must disclose everything that users frequently need up front.', c: 'Nielsen, NN/g 2006' }, { q: '6% of product features are generating 80% of clicks for the average product.', c: 'Pendo, 2024' }] },
+    { rule: 'Rule 2', title: 'Stop at two levels', open: ['adv', 'dev'], moved: ['Developer and Webhooks are pulled out of Advanced and flattened into one door. Both doors are opened here so you can see it.', 'Nothing is more than one click from the page.'],
+      why: 'Each extra level multiplies clicks and halves discoverability. A third level means the structure is wrong, not the widget.',
+      ev: [{ q: 'Designs that go beyond 2 disclosure levels typically have low usability because users often get lost when moving between the levels.', c: 'Nielsen, NN/g 2006' }, { q: 'Breadth should be favored over depth in hierarchical menus.', c: 'Landauer & Nachbar, CHI 1985' }] },
+    { rule: 'Rule 4', title: 'Make the door obvious and honest', moved: ['"Advanced" becomes "Data and compliance". "More settings" becomes "Localisation". "Developer" becomes "Integrations · API keys, webhooks".', 'Each door shows how many settings are inside.'],
+      why: 'A door\'s label is the only scent the user has. Audience labels tell people a feature is not for them. Content labels tell them what is behind it.',
+      ev: [{ q: 'If the user cannot find it, it does not exist.', c: 'Bruce Tognazzini' }, { q: 'These labels create a psychological barrier: they implicitly tell users that certain features are not for them.', c: 'Home Assistant, 2026' }] },
+    { rule: 'Rule 5', title: 'Keep context across the boundary', moved: ['Tax rate moves out of Invoice formatting to sit next to Tax ID. They are edited together.', 'Doors now remember whether you left them open.'],
+      why: 'Working memory holds about four things. Two fields that depend on each other must never sit on opposite sides of a door.',
+      ev: [{ q: 'Never put information in one accordion item that needs to be referenced in another accordion item.', c: 'Microsoft Fluent 2' }, { q: 'If a user expands or collapses an item, make the state persist so it takes effect the next time the window is displayed.', c: 'Microsoft Windows UX Guide' }] },
+    { rule: 'Rule 8', title: 'Fade the scaffold; give experts accelerators', moved: ['A "Show all sections" switch for people who live here.', 'A ⌘K hint: jump to any setting by name.'],
+      why: 'The doors are scaffolding for the many. The few who use this page all day get a way past it, disclosed by repeated exposure rather than by a mode.',
+      ev: [{ q: 'Shortcuts — unseen by the novice user — speed up the interaction for the expert users.', c: 'Nielsen heuristic 7' }, { q: 'Reduced-functionality interfaces improve core-task performance but lower awareness of unused features.', c: 'Findlater & McGrenere, 2010' }] }
+  ];
+
+  var RUBRIC = ['Decision-critical visible', 'Level 1 backed by data', 'No third level', 'Doors labelled by content', 'Doors adjacent, keyboard-reachable', 'Dependent info together', 'State persists', 'User or object driven', 'Instrumented for review'];
+  var SCORES = [
+    [0,0,0,0,1,1,0,2,0],
+    [2,0,0,0,1,1,0,2,0],
+    [2,2,0,0,1,1,0,2,1],
+    [2,2,2,0,1,1,0,2,1],
+    [2,2,2,2,2,1,0,2,1],
+    [2,2,2,2,2,2,2,2,1],
+    [2,2,2,2,2,2,2,2,2]
+  ];
+
+  // ---------- rendering ----------
+  var app = document.getElementById('app');
+  var stage = document.getElementById('stage');
+  var railEl = document.getElementById('rail');
+  var panel = document.getElementById('panel');
+  var step = 0, openDoors = {}, timer = null;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function fieldHtml(k, badges) {
+    var f = F[k];
+    var badge = badges ? '<span class="use ' + (f.u >= 20 ? 'hi' : (f.u < 10 ? 'lo' : '')) + '">' + f.u + '% weekly</span>' : '';
+    return '<div class="field" data-key="' + k + '"><span class="lbl">' + esc(f.l) + '</span><span class="val">' + badge + '<span class="box">' + esc(f.v) + '</span></span></div>';
+  }
+  function planHtml(inDoor) {
+    return '<div class="plan' + (inDoor ? ' in-door' : '') + '" data-key="plan"><div><div class="name">Growth plan</div><div class="price">$349 / month · renews 1 Oct · 14 seats</div></div><button class="mini" type="button">Change plan</button></div>';
+  }
+  function dangerHtml() {
+    return '<div class="danger" data-key="danger"><div><div class="t">Delete workspace</div><div class="d">Removes all shipments, invoices and users. Cannot be undone.</div></div><button class="mini red" type="button">Delete…</button></div>';
+  }
+  function expertHtml() {
+    return '<div class="app-head" data-key="expert"><div><h2>Workspace settings</h2><div class="sub">Changes save automatically</div></div><div class="expert"><span class="sw"><span class="track" id="showall"></span> Show all sections</span><span><kbd>⌘K</kbd> jump to a setting</span></div></div>';
+  }
+  function itemsHtml(items, badges) {
+    return items.map(function (it) {
+      if (it === 'plan') return planHtml(true);
+      if (it === 'danger') return dangerHtml();
+      if (typeof it === 'string') return fieldHtml(it, badges);
+      return blockHtml(it);
+    }).join('');
+  }
+  function blockHtml(b) {
+    if (b === 'plan') return planHtml(false);
+    if (b === 'danger') return dangerHtml();
+    if (b.t === 'expert') return expertHtml();
+    if (b.t === 'sec') {
+      return '<section class="sec" data-key="sec-' + b.key + '"><div class="sec-h"><span>' + esc(b.label) + '</span><span>' + b.items.length + '</span></div>' + itemsHtml(b.items, b.badges) + '</section>';
+    }
+    var isOpen = !!openDoors[b.key];
+    var cnt = b.count ? b.count : (b.items.length + ' items');
+    return '<details class="door' + (b.deep ? ' deep' : '') + '" data-key="door-' + b.key + '" data-door="' + b.key + '"' + (isOpen ? ' open' : '') + '><summary><span class="chev">▸</span><span class="' + (b.bad ? 'lbl-bad' : '') + '">' + esc(b.label) + '</span><span class="cnt">' + esc(cnt) + '</span></summary><div class="inner">' + itemsHtml(b.items, b.badges) + '</div></details>';
+  }
+
+  // Snapshot of every item: where it is, which container holds it, its order in that container, and whether it is visible.
+  // A field inside a closed door has a zero-size box and reads as "hidden".
+  function isStructural(key) { return key === 'head' || key === 'expert' || key.indexOf('sec-') === 0 || key.indexOf('door-') === 0; }
+  function baseKey(k) { return k.replace(/^(sec|door)-/, ''); }
+  function doorLabel(d) { return d.querySelector('summary > span:nth-child(2)').textContent.replace(' · audience label', ''); }
+  function snapshot() {
+    var m = {};
+    var s = stage.getBoundingClientRect();
+    app.querySelectorAll('[data-key]').forEach(function (el) {
+      var key = el.getAttribute('data-key');
+      if (isStructural(key)) return;
+      var r = el.getBoundingClientRect();
+      var label = (el.querySelector('.lbl') || el.querySelector('.name') || el.querySelector('.t') || {}).textContent || '';
+      var cont = el.parentElement.closest('.sec, details.door');
+      var contKey = cont ? baseKey(cont.getAttribute('data-key')) : 'root';
+      var list = cont ? (cont.classList.contains('sec') ? cont : cont.querySelector('.inner')) : app;
+      var idx = Array.prototype.filter.call(list.children, function (c) { return c.hasAttribute('data-key'); }).indexOf(el);
+      // inside any closed door counts as hidden; sizes alone are unreliable because closed <details> keep stale layout
+      var hidden = !!el.parentElement.closest('details:not([open])') || r.width < 2 || r.height < 2;
+      var entry = { hidden: hidden, label: label, cont: contKey, idx: idx, x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height, html: el.outerHTML };
+      if (hidden) {
+        var d = el.closest('details.door'); if (!d) return;
+        var rs = d.querySelector('summary').getBoundingClientRect();
+        entry.x = rs.left - s.left; entry.y = rs.top - s.top; entry.w = rs.width; entry.h = rs.height; entry.from = doorLabel(d);
+        entry.nofly = rs.width < 2;   // the door itself is inside another closed door; no sensible place to fly from
+      }
+      m[key] = entry;
+    });
+    return m;
+  }
+  // structural elements (sections, doors, header) by key -> label, so renamed or new containers can be marked
+  function structSnapshot() {
+    var m = {};
+    app.querySelectorAll('[data-key]').forEach(function (el) {
+      var key = el.getAttribute('data-key'); if (!isStructural(key)) return;
+      m[key] = el.classList.contains('sec') ? el.querySelector('.sec-h span').textContent : (el.tagName === 'DETAILS' ? doorLabel(el) : key);
+    });
+    return m;
+  }
+  function containerEl(k) { return app.querySelector('[data-key="sec-' + k + '"], [data-key="door-' + k + '"]'); }
+  function containerName(k) { if (k === 'root') return 'the page'; var c = containerEl(k); if (!c) return k; return c.classList.contains('sec') ? c.querySelector('.sec-h span').textContent : doorLabel(c); }
+
+  var toastEl = document.getElementById('toast'), toastT = null;
+  function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { toastEl.classList.remove('show'); }, 1800); }
+  function K() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k')) || 1; }
+
+  function wireApp() {
+    // doors remember (or forget) their state
+    app.querySelectorAll('details.door').forEach(function (d) {
+      d.addEventListener('toggle', function () { openDoors[d.getAttribute('data-door')] = d.open; });
+    });
+    // show all sections
+    var sw = document.getElementById('showall');
+    if (sw) sw.parentElement.addEventListener('click', function () {
+      var on = !sw.classList.contains('on'); sw.classList.toggle('on', on);
+      app.querySelectorAll('details.door').forEach(function (d) { d.open = on; openDoors[d.getAttribute('data-door')] = on; });
+      toast(on ? 'All sections shown. This choice is remembered.' : 'Sections collapsed.');
+    });
+    // editable values
+    app.querySelectorAll('.field .box').forEach(function (box) {
+      box.setAttribute('tabindex', '0'); box.setAttribute('role', 'button'); box.setAttribute('aria-label', 'Edit');
+      function startEdit() {
+        var field = box.closest('.field'), k = field.getAttribute('data-key');
+        if (field.querySelector('input')) return;
+        var inp = document.createElement('input'); inp.value = F[k].v; box.classList.add('editing'); box.after(inp); inp.focus(); inp.select();
+        function done(save) {
+          if (save && inp.value.trim() !== '' && inp.value !== F[k].v) { F[k].v = inp.value.trim(); toast('Saved · ' + F[k].l); }
+          box.textContent = F[k].v; box.classList.remove('editing'); inp.remove(); box.focus();
+        }
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); e.stopPropagation(); });
+        inp.addEventListener('blur', function () { done(true); });
+      }
+      box.addEventListener('click', startEdit);
+      box.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit(); } });
+    });
+    // plan and delete buttons
+    var change = app.querySelector('.plan .mini');
+    if (change) change.addEventListener('click', function () { toast('Plans: Starter $99 · Growth $349 · Scale $890. No change made.'); });
+    var del = app.querySelector('.danger .mini');
+    if (del) del.addEventListener('click', function () {
+      var dz = del.closest('.danger'); if (dz.querySelector('.confirm')) return;
+      var c = document.createElement('div'); c.className = 'confirm'; c.style.gridColumn = '1 / -1';
+      c.innerHTML = '<span>Type <b>Pallet Logistics</b> to confirm.</span><input class="mini" style="width:170px" placeholder="Workspace name"><button class="mini red" type="button" disabled>Delete for good</button><button class="mini" type="button">Cancel</button>';
+      dz.appendChild(c);
+      var inp = c.querySelector('input'), ok = c.querySelectorAll('button')[0], cancel = c.querySelectorAll('button')[1];
+      inp.addEventListener('input', function () { ok.disabled = inp.value.trim() !== F.name.v; });
+      inp.addEventListener('keydown', function (e) { e.stopPropagation(); });
+      ok.addEventListener('click', function () { toast('This is a demo. Nothing was deleted.'); c.remove(); });
+      cancel.addEventListener('click', function () { c.remove(); });
+      inp.focus();
+    });
+  }
+
+  // ⌘K palette: an accelerator that only exists once rule 8 has landed
+  var pal = document.getElementById('palette'), palq = document.getElementById('palq'), pallist = document.getElementById('pallist'), palSel = 0, palItems = [];
+  function palRender() {
+    var q = palq.value.trim().toLowerCase();
+    palItems = Object.keys(F).filter(function (k) { return !q || F[k].l.toLowerCase().indexOf(q) >= 0; }).slice(0, 8);
+    palSel = Math.min(palSel, Math.max(0, palItems.length - 1));
+    pallist.innerHTML = palItems.map(function (k, i) { return '<li class="' + (i === palSel ? 'sel' : '') + '" data-k="' + k + '"><span>' + esc(F[k].l) + '</span><span>' + esc(F[k].v) + '</span></li>'; }).join('') || '<li><span>No setting matches</span></li>';
+    pallist.querySelectorAll('li[data-k]').forEach(function (li) { li.addEventListener('click', function () { palGo(li.getAttribute('data-k')); }); });
+  }
+  function palOpen() { pal.classList.add('show'); palq.value = ''; palSel = 0; palRender(); palq.focus(); }
+  function palClose() { pal.classList.remove('show'); }
+  function palGo(k) {
+    palClose();
+    var el = app.querySelector('[data-key="' + k + '"]'); if (!el) return;
+    var d = el.closest('details.door'); if (d) { d.open = true; openDoors[d.getAttribute('data-door')] = true; }
+    el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+    el.classList.remove('moved'); void el.offsetWidth; el.classList.add('moved');
+    var box = el.querySelector('.box'); if (box) setTimeout(function () { box.focus(); }, 350);
+  }
+  palq.addEventListener('input', function () { palSel = 0; palRender(); });
+  palq.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { palSel = Math.min(palSel + 1, palItems.length - 1); palRender(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { palSel = Math.max(palSel - 1, 0); palRender(); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (palItems[palSel]) palGo(palItems[palSel]); }
+    else if (e.key === 'Escape') { palClose(); }
+    e.stopPropagation();
+  });
+  pal.addEventListener('click', function (e) { if (e.target === pal) palClose(); });
+
+  function render(prevStep) {
+    var before = snapshot(), beforeStruct = structSnapshot();
+    var headless = !(L[step][0] && L[step][0].t === 'expert');
+    app.innerHTML = (headless ? '<div class="app-head" data-key="head"><div><h2>Workspace settings</h2><div class="sub">Changes save automatically</div></div></div>' : '') + L[step].map(blockHtml).join('');
+
+    wireApp();
+
+    if (prevStep === undefined || prevStep === step) return;
+    var trace = document.getElementById('trace').checked;
+    var k = K(), slideMs = 1100 * k, stayMs = 4500 * k;
+    var mid = snapshot();   // positions right after render, before placeholders are added
+
+    function mark(el) { el.classList.add('moved'); if (trace) el.classList.add('stay'); }
+    function expire(node) { if (trace) return; setTimeout(function () { node.classList.add('fade'); setTimeout(function () { node.remove(); }, 650); }, stayMs); }
+    function jumpTo(key) {
+      var el = app.querySelector('[data-key="' + key + '"]'); if (!el) return;
+      var d = el.closest('details.door'); if (d) { d.open = true; openDoors[d.getAttribute('data-door')] = true; }
+      el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+      el.classList.remove('moved', 'stay'); void el.offsetWidth; el.classList.add('moved');
+    }
+    // the component itself, re-drawn as a ghost in the flow where it used to be
+    function tombstone(key, b, text) {
+      var c = containerEl(b.cont); if (!c) return;
+      var list = c.classList.contains('sec') ? c : c.querySelector('.inner');
+      var t = document.createElement('div'); t.className = 'tomb';
+      var body = document.createElement('div'); body.className = 'ghosted'; body.innerHTML = b.html;
+      body.querySelectorAll('[data-key]').forEach(function (x) { x.removeAttribute('data-key'); });
+      body.querySelectorAll('[tabindex], button, input').forEach(function (x) { x.setAttribute('tabindex', '-1'); x.setAttribute('aria-hidden', 'true'); });
+      var cap = document.createElement('div'); cap.className = 'cap';
+      cap.innerHTML = '<span>was here</span><span>→</span><b>' + esc(text) + '</b><button type="button">show me</button>';
+      cap.querySelector('button').addEventListener('click', function () { jumpTo(key); });
+      t.appendChild(body); t.appendChild(cap);
+      var items = Array.prototype.filter.call(list.children, function (x) { return x.hasAttribute('data-key') || x.classList.contains('tomb'); });
+      var at = items[b.idx]; if (at) list.insertBefore(t, at); else list.appendChild(t);
+      if (c.tagName === 'DETAILS' && !c.open) tag(c, b.label);   // the ghost is inside a closed door; say so on the door
+      expire(t);
+    }
+    // a small tag on a door's summary line listing what left it
+    function tag(doorEl, name) {
+      var sum = doorEl.querySelector('summary');
+      var t = sum.querySelector('.left');
+      if (!t) { t = document.createElement('span'); t.className = 'left'; t.setAttribute('data-names', ''); sum.appendChild(t); expire(t); }
+      var names = t.getAttribute('data-names'); names = names ? names + ', ' + name : name; t.setAttribute('data-names', names);
+      t.textContent = '↑ left: ' + names;
+    }
+
+    var moves = [];
+    Object.keys(before).forEach(function (key) {
+      var b = before[key], a = mid[key];
+      if (!a) return;
+      if (b.hidden && !a.hidden) {
+        if (b.cont === a.cont) return;   // its door was simply opened
+        tombstone(key, b, a.cont === 'root' ? 'now visible on the page' : 'now in "' + containerName(a.cont) + '"');   // ghost stays inside the door it left
+        moves.push({ key: key });
+      } else if (!b.hidden && a.hidden) {
+        if (b.cont === a.cont) { var c0 = containerEl(a.cont); if (c0) mark(c0); return; }   // its section became a door
+        tombstone(key, b, 'now behind "' + containerName(a.cont) + '"');
+        moves.push({ key: key, hide: true });
+      } else if (!b.hidden && !a.hidden) {
+        if (b.cont !== a.cont) { tombstone(key, b, 'now in "' + containerName(a.cont) + '"'); moves.push({ key: key }); }
+        else if (b.idx !== a.idx) { moves.push({ key: key }); }
+        // same container, same order: it only shifted to make room. Not a move.
+      } else if (b.cont !== a.cont) {
+        // moved between doors while both were closed: mark the door it arrived in
+        var c1 = containerEl(a.cont); if (c1) mark(c1);
+      }
+    });
+    Object.keys(mid).forEach(function (key) { if (!before[key] && !mid[key].hidden) moves.push({ key: key }); });
+    // new or renamed containers glow too
+    var afterStruct = structSnapshot();
+    Object.keys(afterStruct).forEach(function (key) { if (!(key in beforeStruct) || beforeStruct[key] !== afterStruct[key]) { var el = app.querySelector('[data-key="' + key + '"]'); if (el) mark(el); } });
+
+    // now that placeholders are in the flow, measure again and animate every visible item from where it was to where it is
+    var after = snapshot();
+    Object.keys(after).forEach(function (key) {
+      var a = after[key], b = before[key], el = app.querySelector('[data-key="' + key + '"]');
+      if (!el || a.hidden || !b || b.nofly) return;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      if (reduce || Math.abs(dx) + Math.abs(dy) < 2) return;
+      var fade = b.hidden;
+      el.style.transition = 'none'; el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)' + (fade ? ' scale(.96)' : ''); if (fade) el.style.opacity = '.35';
+      requestAnimationFrame(function () { requestAnimationFrame(function () { el.style.transition = 'transform ' + slideMs + 'ms cubic-bezier(.2,.7,.2,1), opacity ' + slideMs + 'ms'; el.style.transform = ''; el.style.opacity = ''; }); });
+    });
+    moves.forEach(function (mv) { if (mv.hide) return; var el = app.querySelector('[data-key="' + mv.key + '"]'); if (el) mark(el); });
+    if (!trace) setTimeout(function () { app.querySelectorAll('.moved').forEach(function (el) { el.classList.remove('moved'); }); }, stayMs);
+  }
+
+  function clearTrace() {
+    app.querySelectorAll('.tomb, .left').forEach(function (g) { g.remove(); });
+    app.querySelectorAll('.moved').forEach(function (el) { el.classList.remove('moved', 'stay'); });
+  }
+
+  function renderRail() {
+    railEl.innerHTML = STEPS.map(function (s, i) {
+      var cls = i < step ? 'done' : (i === step ? 'current' : 'todo');
+      return '<li class="' + cls + '"><button type="button" data-go="' + i + '"><span class="rl">' + esc(s.rule) + '</span><br><span class="rt">' + esc(s.title) + '</span></button></li>';
+    }).join('');
+    railEl.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { go(+b.getAttribute('data-go')); }); });
+    document.getElementById('prev').disabled = step === 0;
+    document.getElementById('next').disabled = step === STEPS.length - 1;
+  }
+
+  function renderScore(prevStep) {
+    var sc = SCORES[step], ps = SCORES[prevStep === undefined ? step : prevStep];
+    var total = sc.reduce(function (a, b) { return a + b; }, 0);
+    document.getElementById('scoreNum').textContent = total;
+    document.getElementById('rubric').innerHTML = RUBRIC.map(function (r, i) {
+      return '<li class="' + (sc[i] !== ps[i] ? 'changed' : '') + '"><span class="pips"><span class="pip ' + (sc[i] >= 1 ? 'on' : '') + '"></span><span class="pip ' + (sc[i] >= 2 ? 'on' : '') + '"></span></span><span>' + esc(r) + '</span></li>';
+    }).join('');
+  }
+
+  function renderPanel() {
+    var s = STEPS[step];
+    panel.innerHTML = '<span class="rule">' + esc(s.rule) + '</span><h3>' + esc(s.title) + '</h3>' +
+      '<p class="eyebrow" style="margin-bottom:.3rem">What moved</p><ul>' + s.moved.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>' +
+      '<p>' + esc(s.why) + '</p>' +
+      (s.ev.length ? '<details><summary><span class="chev">▸</span> Why: the evidence</summary>' + s.ev.map(function (e) { return '<blockquote>“' + esc(e.q) + '”<cite>' + esc(e.c) + '</cite></blockquote>'; }).join('') + '</details>' : '');
+  }
+
+  function go(n) {
+    n = Math.max(0, Math.min(STEPS.length - 1, n));
+    var prev = step; step = n;
+    if (step < 5) { openDoors = {}; }   // before rule 5 lands, doors forget their state on every step
+    (STEPS[step].open || []).forEach(function (d) { openDoors[d] = true; });   // some steps open the doors the change happens in
+    render(prev); renderRail(); renderScore(prev); renderPanel();
+  }
+
+  document.getElementById('prev').addEventListener('click', function () { go(step - 1); });
+  document.getElementById('next').addEventListener('click', function () { go(step + 1); });
+  document.getElementById('compare').addEventListener('click', function () { go(step === 0 ? STEPS.length - 1 : 0); });
+  var playBtn = document.getElementById('play');
+  function stopPlay() { if (timer) { clearInterval(timer); timer = null; playBtn.textContent = 'Play'; } }
+  playBtn.addEventListener('click', function () {
+    if (timer) { stopPlay(); return; }
+    if (step === STEPS.length - 1) go(0);
+    playBtn.textContent = 'Pause';
+    timer = setInterval(function () { if (step >= STEPS.length - 1) { stopPlay(); return; } go(step + 1); }, 6000 * K());
+  });
+  document.getElementById('trace').addEventListener('change', function (e) { if (!e.target.checked) clearTrace(); else { var p = step; go(Math.max(0, step - 1)); go(p); } });
+  document.getElementById('slow').addEventListener('change', function (e) {
+    document.documentElement.style.setProperty('--k', e.target.checked ? 2 : 1);
+    if (timer) { stopPlay(); playBtn.click(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (step >= 6) palOpen(); else toast('Not yet. The ⌘K accelerator arrives with Rule 8, at the last step.');
+      return;
+    }
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight') { stopPlay(); go(step + 1); }
+    else if (e.key === 'ArrowLeft') { stopPlay(); go(step - 1); }
+    else if (e.key === ' ') { e.preventDefault(); playBtn.click(); }
+  });
+  // clicking the ⌘K hint opens the palette too, for people on a phone or without the shortcut habit
+  app.addEventListener('click', function (e) { if (e.target.closest('.expert kbd')) palOpen(); });
+
+  render(); renderRail(); renderScore(); renderPanel();
+  // ?step=N opens at step N-1 and advances to N, so a shared link (or a screenshot) lands on the change itself
+  var want = parseInt(new URLSearchParams(location.search).get('step'), 10);
+  if (!isNaN(want) && want > 0) { go(want - 1); setTimeout(function () { go(want); }, 250); }
+})();
+</script>

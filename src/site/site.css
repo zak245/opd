@@ -1,0 +1,145 @@
+/* The library site's reading styles. Same tokens as the product, light and dark.
+   One rule about width: the measure is 70 characters, and only tables, code and images break it. */
+
+.site-prose {
+  max-width: 70ch;
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.site-prose > * + * { margin-top: 1rem; }
+
+.site-prose h1,
+.site-prose h2,
+.site-prose h3,
+.site-prose h4,
+.site-prose h5,
+.site-prose h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 5rem;
+}
+
+.site-prose h1 { font-size: 1.875rem; margin-top: 2.5rem; }
+.site-prose h2 {
+  font-size: 1.375rem;
+  margin-top: 3rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border);
+}
+.site-prose h3 { font-size: 1.125rem; margin-top: 2rem; }
+.site-prose h4,
+.site-prose h5,
+.site-prose h6 { font-size: 1rem; margin-top: 1.75rem; }
+.site-prose > :first-child { margin-top: 0; }
+.site-prose h1 + *,
+.site-prose h2 + *,
+.site-prose h3 + * { margin-top: 0.75rem; }
+
+.site-prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--foreground) 35%, transparent);
+  text-underline-offset: 3px;
+}
+.site-prose a:hover { text-decoration-color: currentColor; }
+/* Scoped to the site root, so the product's own focus styles are untouched. */
+.site a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* A file that exists in the repository but has no page on this site. */
+.site-unpublished { color: var(--muted-foreground); }
+
+.site-prose strong { font-weight: 600; }
+.site-prose em { font-style: italic; }
+
+.site-prose ul,
+.site-prose ol { padding-left: 1.35rem; }
+.site-prose ul { list-style: disc; }
+.site-prose ol { list-style: decimal; }
+.site-prose li { margin-top: 0.4rem; }
+.site-prose li::marker { color: var(--muted-foreground); }
+.site-prose li > ul,
+.site-prose li > ol { margin-top: 0.4rem; }
+.site-prose li > p { margin: 0; }
+
+.site-prose blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+}
+
+.site-prose code {
+  font-size: 0.875em;
+  background: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 0.125em 0.35em;
+}
+.site-prose pre {
+  background: var(--muted);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.site-prose pre code { background: none; padding: 0; font-size: inherit; }
+
+/* An hr already separates; the heading after it does not need its own line. */
+.site-prose hr + h1,
+.site-prose hr + h2 {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 1.5rem;
+}
+
+.site-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
+}
+
+.site-prose img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* Tables are the one thing allowed past the measure, and they scroll rather than overflow. */
+.site-table {
+  overflow-x: auto;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.site-table table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.site-table th,
+.site-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.site-table thead th {
+  background: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.site-table tbody tr:last-child td { border-bottom: 0; }
+
+@media (max-width: 640px) {
+  .site-prose { font-size: 0.9375rem; }
+  .site-prose h1 { font-size: 1.5rem; }
+  .site-prose h2 { font-size: 1.1875rem; }
+}

@@ -5,6 +5,9 @@
 //   rule 4  chevron plus text plus count, a button inside a heading, `aria-expanded`, keyboard and touch
 //   rule 5  it sits where it is written and remembers whether it was left open
 //   rule 7  closed content stays in the DOM (`hidden="until-found"`), so find-in-page and print reach it
+//
+// It also tags itself for the lesson view: `data-door` and `data-open` on the section, `data-container`
+// and `data-container-label` on the body, so a page never tags a door by hand (BUILD-WAVE3.md).
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -177,6 +180,19 @@ export function Door({ id, label, count, children, defaultOpen = false }: DoorPr
     return () => el.removeEventListener("beforematch", onMatch)
   })
 
+  // One door, opened from anywhere by id: `ollopa:door` with { id, open }. The lesson view uses it to
+  // open the door a step happens inside, and to show a viewer where a thing went; the product does
+  // not dispatch it. There is still one state per door, so nothing can disagree about what is open.
+  useEffect(() => {
+    const onDoor = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string; open: boolean }>).detail
+      if (!detail || detail.id !== id) return
+      setOpen(detail.open)
+    }
+    document.addEventListener("ollopa:door", onDoor)
+    return () => document.removeEventListener("ollopa:door", onDoor)
+  })
+
   // A door inside a door is the third level the rules forbid: render the contents with the label as a heading.
   if (flat) {
     if (import.meta.env.DEV) console.warn(`[ui] Door "${id}" is inside a door or a panel; it renders flat (rule 2).`)
@@ -191,7 +207,7 @@ export function Door({ id, label, count, children, defaultOpen = false }: DoorPr
   }
 
   return (
-    <section data-door className="border-t border-border first:border-t-0">
+    <section data-door={id} data-open={open ? "true" : "false"} className="border-t border-border first:border-t-0">
       <h3 className="m-0">
         <button
           type="button"
@@ -209,6 +225,8 @@ export function Door({ id, label, count, children, defaultOpen = false }: DoorPr
         id={contentId}
         ref={content}
         data-door-content
+        data-container={id}
+        data-container-label={label}
         className="px-2 pb-3 text-sm"
       >
         <FlatProvider value={true}>{children}</FlatProvider>

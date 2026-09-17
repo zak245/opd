@@ -32,14 +32,59 @@ function chance(r: R, p: number): boolean { return r() < p }
 function int(r: R, min: number, max: number): number { return min + Math.floor(r() * (max - min + 1)) }
 function many<T>(n: number, fn: (i: number) => T): T[] { return Array.from({ length: Math.max(0, n) }, (_, i) => fn(i)) }
 
+/**
+ * A total split over N weeks on a fixed profile taken from `salt`, so the weeks add back up to the
+ * total exactly and the same row draws the same shape on every reload.
+ */
+function overWeeks(total: number, weeks: number, salt: number): number[] {
+  if (weeks <= 0) return []
+  if (total === 0) return new Array(weeks).fill(0)
+  const weights = Array.from({ length: weeks }, (_, i) => 0.6 + 0.8 * Math.abs(Math.sin(i * 1.7 + salt)))
+  const sum = weights.reduce((a, b) => a + b, 0)
+  const out = weights.map((w) => Math.round((w / sum) * total))
+  out[out.length - 1] += total - out.reduce((a, b) => a + b, 0)
+  return out
+}
+
 /** The seed's fixed today. Every relative date on every page is measured from it. */
 export const TODAY = "2026-09-13"
 const TODAY_MS = Date.UTC(2026, 8, 13)
 function shift(days: number): string { return new Date(TODAY_MS + days * 86_400_000).toISOString().slice(0, 10) }
 function dateBack(r: R, maxDays: number): string { return shift(-Math.floor(r() * maxDays)) }
+function plusDays(iso: string, days: number): string { return new Date(Date.parse(iso) + days * 86_400_000).toISOString().slice(0, 10) }
+/** The Monday of the week a date falls in: the bucket every weekly series in the product uses. */
+function weekStartOf(iso: string): string {
+  const d = new Date(iso.slice(0, 10) + "T00:00:00Z")
+  return plusDays(iso.slice(0, 10), -((d.getUTCDay() + 6) % 7))
+}
+/** The Mondays of the last `n` weeks, oldest first, ending with the week today sits in. */
+function lastWeeks(n: number): string[] {
+  const thisWeek = weekStartOf(TODAY)
+  return many(n, (k) => plusDays(thisWeek, -(n - 1 - k) * 7))
+}
 function dateAhead(r: R, maxDays: number): string { return shift(Math.floor(r() * maxDays)) }
 function clockTime(r: R): string { return `${String(int(r, 7, 18)).padStart(2, "0")}:${String(int(r, 0, 59)).padStart(2, "0")}` }
 function money(r: R, bands: readonly number[]): number { return pick(r, bands) }
+
+/* ------------------------------------------------------------------------- quarters, for targets */
+
+/** "2026-Q3" for any day in it. */
+function quarterOf(iso: string): string {
+  return `${iso.slice(0, 4)}-Q${Math.floor((Number(iso.slice(5, 7)) - 1) / 3) + 1}`
+}
+/** The quarter `back` quarters before this one. */
+function quarterBack(period: string, back: number): string {
+  const [year, q] = period.split("-Q").map(Number)
+  const n = year * 4 + (q - 1) - back
+  return `${Math.floor(n / 4)}-Q${(n % 4) + 1}`
+}
+/** The first and last day of a quarter. */
+function quarterWindow(period: string): { from: string; to: string } {
+  const [year, q] = period.split("-Q").map(Number)
+  const from = Date.UTC(year, (q - 1) * 3, 1)
+  const to = Date.UTC(q === 4 ? year + 1 : year, q === 4 ? 0 : q * 3, 1) - 86_400_000
+  return { from: new Date(from).toISOString().slice(0, 10), to: new Date(to).toISOString().slice(0, 10) }
+}
 
 /* ---------------------------------------------------------------------------------- name pools */
 
@@ -70,18 +115,18 @@ const TITLES: { title: string; seniority: Seniority; department: string }[] = [
 ]
 const INDUSTRIES = ["Software","Logistics","Healthcare","Fintech","Energy","Manufacturing","Media","Retail","Insurance","Legal"]
 const PLACES = [
-  { city: "Berlin", country: "Germany", tz: "Europe/Berlin", eu: true },
-  { city: "Munich", country: "Germany", tz: "Europe/Berlin", eu: true },
-  { city: "Paris", country: "France", tz: "Europe/Paris", eu: true },
-  { city: "Amsterdam", country: "Netherlands", tz: "Europe/Amsterdam", eu: true },
-  { city: "Madrid", country: "Spain", tz: "Europe/Madrid", eu: true },
-  { city: "Stockholm", country: "Sweden", tz: "Europe/Stockholm", eu: true },
-  { city: "London", country: "United Kingdom", tz: "Europe/London", eu: false },
-  { city: "Manchester", country: "United Kingdom", tz: "Europe/London", eu: false },
-  { city: "New York", country: "United States", tz: "America/New_York", eu: false },
-  { city: "Austin", country: "United States", tz: "America/Chicago", eu: false },
-  { city: "San Francisco", country: "United States", tz: "America/Los_Angeles", eu: false },
-  { city: "Toronto", country: "Canada", tz: "America/Toronto", eu: false },
+  { city: "Berlin", country: "Germany", tz: "Europe/Berlin", eu: true, dial: "+49 30", languages: ["German", "English"] },
+  { city: "Munich", country: "Germany", tz: "Europe/Berlin", eu: true, dial: "+49 89", languages: ["German", "English"] },
+  { city: "Paris", country: "France", tz: "Europe/Paris", eu: true, dial: "+33 1", languages: ["French", "English"] },
+  { city: "Amsterdam", country: "Netherlands", tz: "Europe/Amsterdam", eu: true, dial: "+31 20", languages: ["Dutch", "English"] },
+  { city: "Madrid", country: "Spain", tz: "Europe/Madrid", eu: true, dial: "+34 91", languages: ["Spanish", "English"] },
+  { city: "Stockholm", country: "Sweden", tz: "Europe/Stockholm", eu: true, dial: "+46 8", languages: ["Swedish", "English"] },
+  { city: "London", country: "United Kingdom", tz: "Europe/London", eu: false, dial: "+44 20", languages: ["English"] },
+  { city: "Manchester", country: "United Kingdom", tz: "Europe/London", eu: false, dial: "+44 161", languages: ["English"] },
+  { city: "New York", country: "United States", tz: "America/New_York", eu: false, dial: "+1 212", languages: ["English"] },
+  { city: "Austin", country: "United States", tz: "America/Chicago", eu: false, dial: "+1 512", languages: ["English", "Spanish"] },
+  { city: "San Francisco", country: "United States", tz: "America/Los_Angeles", eu: false, dial: "+1 415", languages: ["English"] },
+  { city: "Toronto", country: "Canada", tz: "America/Toronto", eu: false, dial: "+1 416", languages: ["English", "French"] },
 ]
 const TECHS = ["Salesforce","HubSpot","Snowflake","Segment","Marketo","Zendesk","Okta","Stripe","Looker","Workday"]
 const KEYWORDS = ["pipeline","automation","compliance","logistics","onboarding","analytics","payments","scheduling"]
@@ -107,6 +152,11 @@ export const STAGE_FORECAST: Record<DealStage, ForecastCategory> = { Qualified: 
 export const BOUNCE_GUARD = { warnPercent: 4, pausePercent: 6 }
 /** The second, admin approval threshold (PLAN.md). A business may lower it; Fathom does. */
 export const SECOND_APPROVAL = { recipients: 1_000, credits: 500 }
+function secondApprovalOf(business: Business): { recipients: number; credits: number } {
+  return business === "fathom" ? { recipients: 400, credits: 200 } : SECOND_APPROVAL
+}
+/** The three agents, in the order the page reads them. */
+const AGENT_ORDER = ["Research agent", "Outreach agent", "Scoring agent"] as const
 /** What a metered action costs. Defined once and read by every page that spends credits. */
 export const CREDITS = { enrich: 2, revealEmail: 1, revealPhone: 8, research: 12, draft: 4, score: 1, export: 0 }
 /** The six deal warnings and their default thresholds. Admin-set in Settings › Pipeline and data. */
@@ -140,6 +190,9 @@ export type Disposition = (typeof DISPOSITIONS)[number]
 export type Seniority = "C-level" | "VP" | "Director" | "Manager" | "Individual"
 export type WriteState = "suggested" | "edited" | "validated"
 
+/** Something that happened at this person's company, the day it happened, and what it says. */
+export interface ContactSignal { kind: string; on: string; detail: string }
+
 /** A human you can reach. JOURNEYS §1 row 1. */
 export interface Contact {
   id: string; name: string; title: string; seniority: Seniority; department: string
@@ -150,9 +203,15 @@ export interface Contact {
   inSequence: string | null; lists: string[]
   source: "Found" | "Imported" | "CRM" | "Form" | "Agent"; addedOn: string; enrichedOn: string | null
   location: { city: string; country: string }; tz: string; linkedin: string
+  /** The day they started in this job, which is what "time in role" is measured from. */
+  roleStartedOn: string
+  /** The languages they work in, most confident first. */
+  languages: string[]
   persona: string; score: number; scorePrevious: number; scoredAt: string; scoreReasons: string[]
-  signals: string[]; opens: number; replies: number
+  signals: ContactSignal[]; opens: number; replies: number
   crmId: string | null; crmSyncedAt: string | null; custom: Record<string, string>
+  /** What the last enrichment actually filled in on this person. Empty where nothing was enriched. */
+  lastEnrichedFields: string[]
   restrictedBy: string | null
   jobChange: { firedOn: string; source: string; previousCompany: string; previousEmail: string; newCompanyId: string } | null
 }
@@ -160,6 +219,8 @@ export interface Contact {
 /** An organisation, prospect or customer. Carries its customer state; `accounts` carries the rest. */
 export interface Company {
   id: string; name: string; industry: string; employees: number; domain: string; contacts: number
+  /** The switchboard number, as the enrichment provider returns it. */
+  phone: string
   stage: AccountStage; owner: string; lastActivity: string
   location: { city: string; country: string }; founded: number; description: string; revenue: string
   signals: string[]; source: "Found" | "Imported" | "CRM"; addedOn: string; enrichedOn: string | null
@@ -180,10 +241,18 @@ export interface Handoff {
   writtenBy: { section: string; by: string }[]
 }
 export interface Play { id: string; name: string; why: string; dueBy: string; owner: string; state: "suggested" | "running" | "done" | "dropped" }
+/** One week of an account's use of the product: who signed in and how much they did. */
+export interface AccountWeek { week: string; activeSeats: number; events: number }
+/** A person holding a seat at the account, and when they were last in the product. */
+export interface AccountSeat { name: string; lastSignIn: string }
 /** The customer state of a company: health and its drivers, renewal, seats and usage, risks, plays. */
 export interface Account {
   id: string; companyId: string; name: string; domain: string; stage: AccountStage; owner: string; ae: string
   plan: string; seatsBought: number; seatsActive: number; usage30: number; usageDelta30: number
+  /** Thirteen weeks of use, oldest first: the last week is the one that ends today. */
+  usage90: AccountWeek[]
+  /** Everyone holding a seat, and when each was last in the product. */
+  seats: AccountSeat[]
   health: number; band: "Healthy" | "Watch" | "At risk"; healthDelta30: number; drivers: { label: string; points: number }[]
   renewal: string; value: number; billing: "monthly" | "annual"; noticeDays: number; autoRenew: boolean
   forecast: "Commit" | "Likely" | "At risk" | "Lost"
@@ -219,9 +288,13 @@ export interface Enrollment {
   stepOrder: number; nextAt: string | null; addedAt: string; addedBy: string; mailbox: string
   notSentReason: "No email" | "Unverified email" | "Do not contact" | "Already in another sequence" | "Mailbox limit reached" | null
 }
+/** One week of a sequence's sending. The twelve weeks add up to the sequence's own totals. */
+export interface SequenceWeek { week: string; sent: number; delivered: number; opened: number; replied: number; bounced: number }
 /** A cadence with a schedule and rules. */
 export interface Sequence {
   id: string; name: string; steps: number; active: number; replied: number; bounced: number
+  /** Twelve weeks, oldest first, summing to `sent`, `delivered`, `opened`, `replied` and `bounced`. */
+  series: SequenceWeek[]
   owner: string; status: "Active" | "Paused" | "Draft"
   paused: number; finished: number; notSent: number; sent: number; delivered: number; opened: number
   interested: number; meetings: number; bounceRate7d: number
@@ -245,6 +318,8 @@ export interface Reply {
   outcome: "Interested" | "Not now" | "Question" | "Out of office" | "Unsubscribe"
   received: string; snippet: string; body: string; messages: ThreadMessage[]
   status: "open" | "handled"; handled: boolean; handedTo: string | null
+  /** Who put the outcome on it: the reply agent, a person by name, or nobody yet. */
+  classifiedBy: "reply agent" | string | null
   followUpOn: string | null; returnsOn: string | null; dealId: string | null
   draft: { subject: string; body: string; by: string; state: "suggested" | "edited" | "sent" } | null
 }
@@ -268,6 +343,8 @@ export interface Call {
   id: string; taskId: string | null; contactId: string; contact: string; company: string; dealId: string | null
   purpose: string; disposition: Disposition; connected: boolean; startedAt: string; durationSec: number
   notes: string; loggedBy: string; sentiment: "positive" | "neutral" | "negative"; advancedSequence: boolean
+  /** What the recorder returned, where a workspace has one connected. Null everywhere else. */
+  transcript: string | null
   coachingNote: CoachingNote | null
 }
 /** A scheduled conversation and what became of it. */
@@ -305,13 +382,29 @@ export interface Deal {
 export interface DealWarning { kind: string; observed: string; threshold: string; text: string }
 
 export interface Audience {
-  id: string; name: string; type: "Static" | "Segment"; size: number; lastRebuilt: string; sources: string[]
+  id: string; name: string; type: "Static" | "Segment"; size: number
+  /** People gained or lost since yesterday's rebuild. Zero on a frozen audience. */
+  sizeDelta: number
+  lastRebuilt: string; sources: string[]
   mode: "live" | "frozen"; refreshAt: string | null; frozenAt: string | null; feeds: string[]
   rules: ListFilter[]
   suppressed: { unsubscribed: number; bounced: number; customers: number; openDeals: number; closedLost: number; inSequence: number }
   suppressionsOn: { customers: boolean; openDeals: boolean; closedLost: boolean; inSequence: boolean }
   usedBy: string[]
 }
+/** The eight checks a campaign passes before it goes out, in the order the panel prints them. */
+export const CAMPAIGN_CHECKS = [
+  "Every merge field resolves for every recipient",
+  "Every link works and is tracked",
+  "The unsubscribe link is present and points at the workspace footer",
+  "The plain-text version exists",
+  "The from mailbox is warmed and under its daily cap",
+  "The subject renders under 60 characters on a phone",
+  "The audience's suppressions are applied and its mode is what the sender expects",
+  "No recipient has had another campaign in the frequency-cap window",
+] as const
+export interface CampaignCheck { name: string; state: "pass" | "fail" | "not run" }
+
 export interface Campaign {
   id: string; name: string; kind: "Email" | "Lifecycle"
   status: "Draft" | "Scheduled" | "Sending" | "Sent" | "Running" | "Paused" | "Archived"; pausedBy: string | null
@@ -320,7 +413,16 @@ export interface Campaign {
   trigger: string | null; delayDays: number | null; exitRule: string | null
   sent: number; delivered: number; bounced: number; opened: number; clicked: number; replied: number
   converted: number; unsubscribed: number; complaints: number
-  goal: string; owner: string; qa: { by: string | null; on: string | null; checklist: { item: string; done: boolean }[] }
+  goal: string; owner: string
+  qa: {
+    by: string | null; on: string | null; checklist: { item: string; done: boolean }[]
+    /** The eight pre-send checks by name, each pass, fail or not run. */
+    checks: CampaignCheck[]
+  }
+  /** Every link in the body and how many people clicked it. */
+  links: { url: string; clicks: number }[]
+  /** How long after a click a deal still counts as this campaign's. */
+  attributionDays: number
   sendsByDay: { day: string; sent: number }[]
   variants: { label: string; subject: string; sent: number; opened: number; replied: number }[]
   activity: { at: string; by: string; what: string }[]
@@ -500,12 +602,168 @@ export interface Notification { id: string; kind: "reply" | "meeting" | "approva
 export interface WorkspaceHealth { bounceRate: number; bounceVolume: number; bounceGuard: "ok" | "warning" | "paused"; syncErrors: number; mailboxesNearLimit: number; invitesPending: number; setupRemaining: string[] }
 export interface UserActivity { user: string; sentThisWeek: number; callsThisWeek: number; meetingsBooked: number; tasksDone: number }
 export interface ActivityEvent { id: string; kind: "email" | "call" | "meeting" | "task"; user: string; contactId: string; company: string; date: string }
-export interface SavedView { id: string; name: string; object: "person" | "company" | "deal"; filters: ListFilter[]; columns: string[]; sort: string; owner: string; sharedWith: "everyone" | "me"; defaultFor: Role[] }
+/**
+ * A named set of filters, columns and sort (spec 02 §3).
+ *
+ * On a person view, `filters[].field` is the filter's own id on the People page and `value` is one
+ * chosen value; a filter with two values has two rows here. `columns` are the columns the view adds
+ * to the seat's default set, in order.
+ */
+export interface SavedView {
+  id: string; name: string; object: "person" | "company" | "deal"; filters: ListFilter[]; columns: string[]
+  sort: string; owner: string; sharedWith: "everyone" | "me"; defaultFor: Role[]
+  /** Email me when it gains people. */
+  alert: "off" | "daily" | "weekly"
+  /** True for the one view that ships with the product instead of being built in a workspace. */
+  shipped: boolean
+}
+/** A reply somebody writes over and over, kept so they do not write it again. */
+export interface SavedReply { id: string; name: string; body: string }
 export interface Goal { id: string; period: string; user: string | null; team: string | null; amount: number }
 export interface ForecastSubmission { id: string; period: string; user: string; amount: number; split: Record<string, number>; note: string; submittedAt: string; actual: number | null }
 export interface ForecastPrediction { period: string; user: string; amount: number; drivers: string[] }
 export interface StageHistory { dealId: string; stage: DealStage; enteredOn: string }
 export interface SyncErrorRow { id: string; integration: string; at: string; count: number; message: string }
+
+/* ------------------------------------------- the workspace settings the admin sets and pages read */
+
+export interface DncLogRow { at: string; by: string; what: string; count: number }
+/** A forecast category and the sentence printed under it, on Reports and in Settings alike. */
+export interface ForecastDefinition { name: ForecastCategory; definition: string }
+
+/**
+ * The settings a workspace holds that no other collection carries (spec 14 §2.2). Users, mailboxes,
+ * pipelines, fields, agents, keys and the plan are objects of their own and are not repeated here.
+ */
+export interface WorkspaceSettings {
+  security: { mfaEnforced: boolean; sso: string | null; ipRanges: string[]; passwordPolicy: string; sessionTimeout: string }
+  sending: { catchAll: boolean; unsubscribeText: string; usersMayDisable: boolean; opens: boolean; clicks: boolean }
+  prospecting: {
+    gdprRegions: string
+    dncCountries: string[]
+    primaryEmail: string
+    duplicates: string
+    duplicateRate: number
+    inProgressLimit: number
+    /** A 31-day obligation rather than a switch: the date, the next due date and the kept review log. */
+    dnc: { synchronisedOn: string; nextDueOn: string; log: DncLogRow[] }
+    removal: { people: number; addedThisMonth: number; sequences: number; jobs: number; keys: number; agents: number; lists: number; crmLinks: number }
+  }
+  pipeline: {
+    forecastDefinitions: ForecastDefinition[]
+    submissionWindow: { opensOn: string; day: string; time: string }
+    renewalReminders: number[]
+    multiCurrency: boolean
+  }
+  scoring: { expansionRouting: { toOwnerUnder: number; toAeAtOrOver: number }; firstValue: { noMilestoneDays: number } }
+  agents: { context: string; ownKeySet: boolean }
+  you: { delivery: "A daily digest" | "As they happen"; slack: boolean; push: boolean; muted: boolean; quietHours: string }
+}
+
+/**
+ * The five sentences that say what each forecast category means. One list, so the words under the
+ * label on Reports and the words in Settings › Pipeline and data are the same words.
+ */
+const FORECAST_DEFINITIONS: ForecastDefinition[] = [
+  { name: "Omitted", definition: "Left out of the number. You are not counting on it this period." },
+  { name: "Pipeline", definition: "Live, but not yet a number you would defend." },
+  { name: "Best case", definition: "About a 50% number. It closes if the good version happens." },
+  { name: "Commit", definition: "About a 90% number. You would be surprised to lose it." },
+  { name: "Closed", definition: "Signed. Already counted for this period." },
+]
+
+const SETTINGS: Record<Business, WorkspaceSettings> = {
+  meridian: {
+    security: { mfaEnforced: true, sso: "Okta", ipRanges: ["81.14.0.0/16", "212.99.4.0/24"], passwordPolicy: "12 characters, one number", sessionTimeout: "30 minutes" },
+    sending: { catchAll: true, unsubscribeText: "Reply STOP and I will not write again.", usersMayDisable: false, opens: true, clicks: true },
+    prospecting: {
+      gdprRegions: "EU and UK restricted", dncCountries: ["United States", "United Kingdom", "Germany", "France"],
+      primaryEmail: "Business email", duplicates: "Ask before merging", duplicateRate: 3.1, inProgressLimit: 5,
+      dnc: {
+        synchronisedOn: "2026-09-02", nextDueOn: "2026-10-03",
+        log: [
+          { at: "2026-09-02", by: "Daniel Okafor", what: "Synchronised with the national registers", count: 18_400 },
+          { at: "2026-08-04", by: "Daniel Okafor", what: "Synchronised with the national registers", count: 17_900 },
+          { at: "2026-07-06", by: "Daniel Okafor", what: "Synchronised with the national registers", count: 17_240 },
+        ],
+      },
+      removal: { people: 214, addedThisMonth: 31, sequences: 0, jobs: 1, keys: 2, agents: 3, lists: 3, crmLinks: 214 },
+    },
+    pipeline: { forecastDefinitions: FORECAST_DEFINITIONS, submissionWindow: { opensOn: "Wednesday", day: "Friday", time: "16:00" }, renewalReminders: [120, 90, 60, 30], multiCurrency: true },
+    scoring: { expansionRouting: { toOwnerUnder: 15_000, toAeAtOrOver: 25_000 }, firstValue: { noMilestoneDays: 90 } },
+    agents: { context: "Meridian Software sells revenue tooling to mid-market software companies. We win on permissions and reporting depth. We lose to incumbents on price.", ownKeySet: false },
+    you: { delivery: "A daily digest", slack: true, push: false, muted: false, quietHours: "19:00 to 08:00" },
+  },
+  fathom: {
+    security: { mfaEnforced: false, sso: null, ipRanges: [], passwordPolicy: "12 characters, one number", sessionTimeout: "No timeout" },
+    sending: { catchAll: false, unsubscribeText: "Reply STOP and I will not write again.", usersMayDisable: true, opens: true, clicks: true },
+    prospecting: {
+      gdprRegions: "EU restricted", dncCountries: ["United States"],
+      primaryEmail: "Any email", duplicates: "Merge automatically", duplicateRate: 4.6, inProgressLimit: 3,
+      dnc: {
+        synchronisedOn: "2026-09-05", nextDueOn: "2026-10-06",
+        log: [
+          { at: "2026-09-05", by: "Priya Natarajan", what: "Synchronised with the national registers", count: 2_200 },
+          { at: "2026-08-07", by: "Priya Natarajan", what: "Synchronised with the national registers", count: 2_010 },
+        ],
+      },
+      removal: { people: 12, addedThisMonth: 4, sequences: 0, jobs: 0, keys: 0, agents: 2, lists: 1, crmLinks: 0 },
+    },
+    pipeline: { forecastDefinitions: FORECAST_DEFINITIONS, submissionWindow: { opensOn: "Thursday", day: "Friday", time: "17:00" }, renewalReminders: [120, 90, 60, 30], multiCurrency: false },
+    scoring: { expansionRouting: { toOwnerUnder: 15_000, toAeAtOrOver: 25_000 }, firstValue: { noMilestoneDays: 90 } },
+    agents: { context: "Fathom Labs sells a seed-stage analytics tool to data teams of one to five people. Two founders do the outbound themselves.", ownKeySet: false },
+    you: { delivery: "As they happen", slack: false, push: true, muted: false, quietHours: "22:00 to 07:00" },
+  },
+  halyard: {
+    security: { mfaEnforced: true, sso: null, ipRanges: [], passwordPolicy: "12 characters, one number", sessionTimeout: "No timeout" },
+    sending: { catchAll: true, unsubscribeText: "Reply STOP and we will not write again.", usersMayDisable: false, opens: true, clicks: true },
+    prospecting: {
+      gdprRegions: "EU and UK restricted", dncCountries: ["United States", "United Kingdom"],
+      primaryEmail: "Business email", duplicates: "Ask before merging", duplicateRate: 2.4, inProgressLimit: 4,
+      // Past 31 days: the row reads overdue, and Home's health strip carries it.
+      dnc: {
+        synchronisedOn: "2026-08-05", nextDueOn: "2026-09-05",
+        log: [
+          { at: "2026-08-05", by: "Ravi Sethi", what: "Synchronised for Kestrel Health", count: 9_800 },
+          { at: "2026-07-03", by: "Ravi Sethi", what: "Synchronised for Kestrel Health", count: 9_100 },
+        ],
+      },
+      removal: { people: 86, addedThisMonth: 12, sequences: 2, jobs: 1, keys: 1, agents: 2, lists: 4, crmLinks: 86 },
+    },
+    pipeline: { forecastDefinitions: FORECAST_DEFINITIONS, submissionWindow: { opensOn: "Wednesday", day: "Friday", time: "15:00" }, renewalReminders: [120, 90, 60, 30], multiCurrency: true },
+    scoring: { expansionRouting: { toOwnerUnder: 15_000, toAeAtOrOver: 25_000 }, firstValue: { noMilestoneDays: 90 } },
+    agents: { context: "Halyard runs outbound for ten client companies. Every workspace carries its own client's positioning; this one is Kestrel Health, clinic software.", ownKeySet: false },
+    you: { delivery: "A daily digest", slack: true, push: true, muted: false, quietHours: "18:00 to 08:00" },
+  },
+  ridgeline: {
+    security: { mfaEnforced: false, sso: null, ipRanges: [], passwordPolicy: "12 characters, one number", sessionTimeout: "30 minutes" },
+    sending: { catchAll: false, unsubscribeText: "Reply STOP and we will not write again.", usersMayDisable: false, opens: false, clicks: false },
+    prospecting: {
+      gdprRegions: "EU restricted", dncCountries: ["United States"],
+      primaryEmail: "Business email", duplicates: "Merge automatically", duplicateRate: 1.8, inProgressLimit: 2,
+      dnc: {
+        synchronisedOn: "2026-09-01", nextDueOn: "2026-10-02",
+        log: [
+          { at: "2026-09-01", by: "Grace Mwangi", what: "Synchronised with the national registers", count: 9_800 },
+          { at: "2026-08-03", by: "Grace Mwangi", what: "Synchronised with the national registers", count: 9_400 },
+        ],
+      },
+      removal: { people: 41, addedThisMonth: 6, sequences: 1, jobs: 0, keys: 1, agents: 1, lists: 2, crmLinks: 41 },
+    },
+    pipeline: { forecastDefinitions: FORECAST_DEFINITIONS, submissionWindow: { opensOn: "Wednesday", day: "Thursday", time: "16:00" }, renewalReminders: [120, 90, 60, 30], multiCurrency: false },
+    scoring: { expansionRouting: { toOwnerUnder: 15_000, toAeAtOrOver: 25_000 }, firstValue: { noMilestoneDays: 90 } },
+    agents: { context: "Ridgeline is product-led. Most conversations start inside the product; outbound is expansion and renewal only.", ownKeySet: false },
+    you: { delivery: "A daily digest", slack: true, push: false, muted: false, quietHours: "18:00 to 09:00" },
+  },
+}
+
+/** How many campaign emails a workspace may send in a day, and what today has used (spec 10 §2). */
+const SEND_POLICY: Record<Business, { dailyCap: number; usedToday: number }> = {
+  meridian: { dailyCap: 10_000, usedToday: 3_400 },
+  ridgeline: { dailyCap: 4_000, usedToday: 900 },
+  fathom: { dailyCap: 0, usedToday: 0 },
+  halyard: { dailyCap: 0, usedToday: 0 },
+}
 
 /** Everything a page may read. Collections are plural; the seven original names are unchanged. */
 export interface Seed {
@@ -514,7 +772,7 @@ export interface Seed {
   sequences: Sequence[]; sequenceSteps: SequenceStep[]; enrollments: Enrollment[]
   sequenceChanges: SequenceChange[]; schedules: Schedule[]; rulesets: Ruleset[]
   templates: Template[]; snippets: Snippet[]
-  replies: Reply[]; tasks: Task[]; calls: Call[]; coachingNotes: CoachingNote[]; meetings: Meeting[]
+  replies: Reply[]; savedReplies: SavedReply[]; tasks: Task[]; calls: Call[]; coachingNotes: CoachingNote[]; meetings: Meeting[]
   deals: Deal[]; dealContacts: DealContact[]; dealActivities: DealActivity[]; dealFiles: DealFile[]
   qualEvidence: QualEvidence[]; stageHistory: StageHistory[]; pipelines: Pipeline[]; fields: FieldDef[]
   campaigns: Campaign[]; audiences: Audience[]; forms: Form[]
@@ -531,7 +789,9 @@ export interface Seed {
   apiKeys: ApiKey[]; endpointCosts: EndpointCost[]; webhooks: Webhook[]; webhookDeliveries: WebhookDelivery[]
   mcpTokens: McpToken[]; cliDevices: CliDevice[]
   requests: Request[]; notes: Note[]; briefs: Note[]
-  workspace: Workspace; invoices: Invoice[]
+  workspace: Workspace; settings: WorkspaceSettings; invoices: Invoice[]
+  /** The workspace's campaign send cap and what today has used. */
+  sendPolicy: { dailyCap: number; usedToday: number }
   notifications: Notification[]; workspaceHealth: WorkspaceHealth
   activity: UserActivity[]; activityEvents: ActivityEvent[]
   goals: Goal[]; forecastSubmissions: ForecastSubmission[]; forecastPredictions: ForecastPrediction[]
@@ -751,7 +1011,7 @@ export function seedFor(business: Business): Seed {
     const mine = mailboxes[i % Math.max(1, mailboxes.length)]
     const status: Sequence["status"] = guard === "auto-paused" ? "Paused" : i < Math.ceil(sequences_active(b.counts.sequences)) ? "Active" : chance(r, 0.5) ? "Paused" : "Draft"
     return {
-      id: `seq-${i + 1}`, name: seqNames[i], steps: int(r, 3, 7),
+      id: `seq-${i + 1}`, name: seqNames[i], steps: int(r, 3, 7), series: [],
       active, replied: Math.round(sent * (0.02 + r() * 0.08)), bounced,
       owner: business === "ridgeline" ? (i === 0 ? csUser : aeUser) : owners[i % owners.length], status,
       paused: int(r, 0, 30), finished: int(r, 20, 300), notSent: int(r, 0, 26), sent,
@@ -769,6 +1029,19 @@ export function seedFor(business: Business): Seed {
   })
   function sequences_active(total: number) { return Math.max(1, Math.round(Math.min(total, seqNames.length) * 0.65)) }
   mailboxes.forEach((m) => { m.sequences = sequences.filter((s) => s.mailbox === m.address).map((s) => s.name) })
+  // Twelve weeks of sending per sequence, oldest first, each column adding back up to the sequence's
+  // own total — so a weekly chart and the totals beside it can never disagree.
+  const twelveWeeks = lastWeeks(12)
+  sequences.forEach((s, i) => {
+    const sentW = overWeeks(s.sent, 12, i + 1)
+    const deliveredW = overWeeks(s.delivered, 12, i + 2)
+    const openedW = overWeeks(s.opened, 12, i + 3)
+    const repliedW = overWeeks(s.replied, 12, i + 5)
+    const bouncedW = overWeeks(s.bounced, 12, i + 8)
+    s.series = twelveWeeks.map((week, k) => ({
+      week, sent: sentW[k], delivered: deliveredW[k], opened: openedW[k], replied: repliedW[k], bounced: bouncedW[k],
+    }))
+  })
 
   const sequenceSteps: SequenceStep[] = []
   sequences.forEach((s) => {
@@ -849,6 +1122,7 @@ export function seedFor(business: Business): Seed {
     return {
       id: `co-${i + 1}`, name, industry: pick(r, INDUSTRIES), employees,
       domain: name.toLowerCase().replace(/[^a-z]+/g, "") + ".com", contacts: 0, stage,
+      phone: `${place.dial} ${int(r, 100, 999)} ${int(r, 1000, 9999)}`,
       owner: owners[i % owners.length], lastActivity: dateBack(r, 40),
       location: { city: place.city, country: place.country }, founded: int(r, 1994, 2021),
       description: `${name} sells ${pick(r, KEYWORDS)} software to ${pick(r, INDUSTRIES).toLowerCase()} teams from ${place.city}.`,
@@ -881,6 +1155,28 @@ export function seedFor(business: Business): Seed {
     const dnc = hasPhone && chance(r, 0.12)
     const score = int(r, 12, 98)
     const jobChanged = chance(r, business === "ridgeline" ? 0.035 : 0.01)
+    const enrichedOn = chance(r, 0.65) ? dateBack(r, 120) : null
+    // Time in role: about a fifth of people started inside the last six months, the rest longer ago.
+    const newInRole = chance(r, 0.22)
+    const roleStartedOn = shift(-(newInRole ? int(r, 20, 175) : int(r, 200, 2_600)))
+    // What a signal says on a person, so the row can be read without opening the definition.
+    const signalDetail: Record<string, string> = {
+      Hiring: "Two open revenue roles posted this month.",
+      Funded: "Announced a Series B in the last quarter.",
+      Intent: "People on their network read about the category this week.",
+      "Visited site": "Three visits to the pricing page in seven days.",
+      "Job change": "Started at this employer in the last month.",
+      "Executive sponsor changed": "The named sponsor changed title.",
+      "Seats over 90%": "92% of seats active for seven days.",
+      "Feature limit hit": "Hit a plan limit twice in fourteen days.",
+      "New team joined": "A new team created eight seats.",
+      "Pricing page visits": "Three pricing page visits this week.",
+      "No first-value milestone in 90 days": "Ninety days in with no milestone confirmed.",
+    }
+    const signalsHere: ContactSignal[] = pickN(r, signalNames, int(r, 0, 2)).map((kind) => ({
+      kind, on: dateBack(r, signals.find((s) => s.name === kind)?.freshnessDays ?? 30),
+      detail: signalDetail[kind] ?? "Seen on the company in the last month.",
+    }))
     return {
       id: `c-${i + 1}`, name: `${first} ${last}`, title: t.title, seniority: t.seniority, department: t.department,
       company: co.name, companyId: co.id, email: `${first}.${last}@${co.domain}`.toLowerCase(), emailStatus: status,
@@ -891,12 +1187,15 @@ export function seedFor(business: Business): Seed {
       lastActivity: dateBack(r, 30), lastContacted: chance(r, 0.7) ? dateBack(r, 45) : null,
       owner: owners[i % owners.length], inSequence: chance(r, outbound ? 0.55 : 0.15) ? sequences[i % sequences.length]?.name ?? null : null,
       lists: [], source: pick(r, ["Found", "Found", "Imported", "CRM", "Form", "Agent"] as const),
-      addedOn: dateBack(r, 400), enrichedOn: chance(r, 0.65) ? dateBack(r, 120) : null,
+      addedOn: dateBack(r, 400), enrichedOn,
       location: { city: place.city, country: place.country }, tz: place.tz,
       linkedin: `linkedin.com/in/${first}-${last}`.toLowerCase(),
+      roleStartedOn,
+      languages: place.languages,
       persona: personas[i % (personas.length - 1)].name, score, scorePrevious: Math.max(0, score - int(r, -12, 12)),
       scoredAt: dateBack(r, 9), scoreReasons: pickN(r, ["Industry matches the persona", "Seniority matches the persona", "Opened three emails in a week", "Company hiring in revenue", "No activity for 30 days"], 2),
-      signals: pickN(r, signalNames, int(r, 0, 2)), opens: int(r, 0, 22), replies: int(r, 0, 4),
+      signals: signalsHere, opens: int(r, 0, 22), replies: int(r, 0, 4),
+      lastEnrichedFields: enrichedOn ? pickN(r, ["Email", "Mobile", "Job title", "Company size", "LinkedIn", "Location"], int(r, 1, 4)) : [],
       crmId: sz.crm ? `00Q${int(r, 100000, 999999)}` : null, crmSyncedAt: sz.crm ? dateBack(r, 3) : null,
       custom: (business === "meridian" ? { "Buying role": pick(r, ["Champion", "User", "Blocker", "Unknown"]), Segment: pick(r, ["Enterprise", "Mid-market"]) } : {}) as Record<string, string>,
       restrictedBy: place.eu && chance(r, 0.5) ? "EU region rule" : null,
@@ -943,11 +1242,109 @@ export function seedFor(business: Business): Seed {
   lists.filter((l) => l.kind === "people").forEach((l) => l.memberIds.forEach((id) => { contactById.get(id)?.lists.push(l.name) }))
   lists.filter((l) => l.kind === "companies").forEach((l) => l.memberIds.forEach((id) => { const c = companies.find((x) => x.id === id); if (c) c.lists.push(l.name) }))
 
+  /**
+   * The seeded person views of spec 02 §3, per business and seat, plus the company and deal views the
+   * other two tables read. On a person view `filters[].field` is the People page's own filter id and
+   * each chosen value is its own row, and `columns` are the columns the view adds to the seat's set.
+   */
+  const primaryModel = scoreModels.find((m) => m.primary) ?? scoreModels[0]
+  const mqlLabel = `Above the MQL threshold (${primaryModel.threshold})`
+  const f = (field: string, values: string[]): ListFilter[] => values.map((value) => ({ field, op: "is", value }))
+  const shippedView: SavedView = {
+    id: "view-needs-enrichment", name: "Needs enrichment", object: "person", filters: [],
+    columns: ["people.col.email", "people.col.phone", "people.col.company"],
+    sort: "", owner: "Ollopa", sharedWith: "everyone", defaultFor: [], alert: "off", shipped: true,
+  }
+  const halyardClients = Array.from(new Set(companies.map((c) => c.custom.Client).filter(Boolean))).slice(0, 3)
+  const personViews: SavedView[] = business === "fathom"
+    ? [{
+      id: "view-work-week", name: "To work this week", object: "person",
+      filters: [...f("people.f.email", ["Verified"]), ...f("people.f.not-in-sequence", ["Not in a sequence"]), ...f("people.f.signals", ["In the last 30 days"])],
+      columns: ["people.col.signals", "people.col.phone"], sort: "score desc",
+      owner: adminUser, sharedWith: "everyone", defaultFor: ["sdr", "admin"], alert: "off", shipped: false,
+    }]
+    : business === "halyard"
+      ? [
+        ...halyardClients.map((client, i) => {
+          // The ICP is read off the client's own accounts: their industries, their sizes, their countries.
+          const theirs = companies.filter((c) => c.custom.Client === client)
+          const industries = Array.from(new Set(theirs.map((c) => c.industry))).slice(0, 3)
+          const countries = Array.from(new Set(theirs.map((c) => c.location.country))).slice(0, 3)
+          return {
+            id: `view-icp-${i + 1}`, name: `${client} ICP`, object: "person" as const,
+            filters: [
+              ...f("people.f.title", ["Manager", "Director", "Head", "VP", "Chief"]),
+              ...f("people.f.company-size", ["51–200", "201–1,000", "1,000+"]),
+              ...f("people.f.industry", industries.length ? industries : ["Software"]),
+              ...f("people.f.location", countries.length ? countries : ["United Kingdom"]),
+            ],
+            columns: ["people.col.location"], sort: "",
+            owner: sdrUser, sharedWith: "everyone" as const, defaultFor: (i === 0 ? ["sdr"] : []) as Role[], alert: "off" as const, shipped: false,
+          }
+        }),
+        {
+          id: "view-everyone-ws", name: "Everyone in this workspace", object: "person", filters: [],
+          columns: ["people.col.owner", "people.col.source"], sort: "",
+          owner: adminUser, sharedWith: "everyone", defaultFor: ["admin"], alert: "off", shipped: false,
+        },
+      ]
+      : business === "ridgeline"
+        ? [
+          {
+            id: "view-signals-week", name: "Signals this week", object: "person",
+            filters: [...f("people.f.signals", ["In the last 7 days"]), ...f("people.f.stage", ["Cold", "Approaching", "Replied", "Interested", "Meeting booked", "Unresponsive"])],
+            columns: ["people.col.signals", "people.col.last-activity"], sort: "lastActivity desc",
+            owner: sdrUser, sharedWith: "everyone", defaultFor: ["sdr"], alert: "daily", shipped: false,
+          },
+          {
+            id: "view-expansion", name: "My expansion accounts", object: "person",
+            filters: [...f("people.f.owner", ["Me"]), ...f("people.f.signals", ["In the last 30 days"])],
+            columns: ["people.col.signals", "people.col.last-activity"], sort: "",
+            owner: aeUser, sharedWith: "me", defaultFor: ["ae"], alert: "weekly", shipped: false,
+          },
+          {
+            id: "view-mql", name: "Above the MQL threshold", object: "person",
+            filters: f("people.f.score", [mqlLabel]),
+            columns: ["people.col.score", "people.col.lists", "people.col.last-activity"], sort: "score desc",
+            owner: mkUser, sharedWith: "everyone", defaultFor: ["marketer"], alert: "off", shipped: false,
+          },
+        ]
+        : [
+          {
+            id: "view-prospects", name: "My prospects to work", object: "person",
+            filters: [...f("people.f.owner", ["Me"]), ...f("people.f.email", ["Verified"]), ...f("people.f.not-in-sequence", ["Not in a sequence"]), ...f("people.f.stage", ["Cold", "Approaching"])],
+            columns: [], sort: "score desc",
+            owner: sdrUser, sharedWith: "me", defaultFor: ["sdr"], alert: "off", shipped: false,
+          },
+          {
+            id: "view-accounts-people", name: "My accounts' people", object: "person",
+            filters: [...f("people.f.owner", ["Me"]), ...f("people.f.stage", ["Replied", "Interested", "Meeting booked"])],
+            columns: ["people.col.phone", "people.col.last-activity"], sort: "",
+            owner: aeUser, sharedWith: "me", defaultFor: ["ae"], alert: "off", shipped: false,
+          },
+          {
+            id: "view-audience", name: "Audience: verified", object: "person",
+            filters: f("people.f.email", ["Verified"]),
+            columns: ["people.col.lists", "people.col.industry", "people.col.company-size"], sort: "",
+            owner: mkUser, sharedWith: "everyone", defaultFor: ["marketer"], alert: "off", shipped: false,
+          },
+          {
+            id: "view-mql", name: "Above the MQL threshold", object: "person",
+            filters: f("people.f.score", [mqlLabel]),
+            columns: ["people.col.score", "people.col.lists", "people.col.last-activity"], sort: "score desc",
+            owner: mkUser, sharedWith: "everyone", defaultFor: [], alert: "weekly", shipped: false,
+          },
+          {
+            id: "view-everyone", name: "Everyone", object: "person", filters: [],
+            columns: ["people.col.owner", "people.col.source", "people.col.crm"], sort: "",
+            owner: adminUser, sharedWith: "everyone", defaultFor: ["admin"], alert: "off", shipped: false,
+          },
+        ]
   const savedViews: SavedView[] = [
-    { id: "view-1", name: "My open contacts", object: "person", filters: [{ field: "owner", op: "is", value: "me" }, { field: "stage", op: "is not", value: "Not interested" }], columns: ["name", "company", "email", "stage", "sequence", "lastActivity"], sort: "lastActivity desc", owner: sdrUser, sharedWith: "me", defaultFor: ["sdr"] },
-    { id: "view-2", name: "Verified, not in a sequence", object: "person", filters: [{ field: "emailStatus", op: "is", value: "Verified" }, { field: "inSequence", op: "is", value: "empty" }], columns: ["name", "title", "company", "score", "owner"], sort: "score desc", owner: sdrUser, sharedWith: "everyone", defaultFor: [] },
-    { id: "view-3", name: "Accounts at risk", object: "company", filters: [{ field: "stage", op: "is", value: "Current client" }, { field: "health", op: "is under", value: "40" }], columns: ["name", "health", "renewalDate", "owner"], sort: "health asc", owner: csUser, sharedWith: "everyone", defaultFor: ["cs"] },
-    { id: "view-4", name: "My deals closing this quarter", object: "deal", filters: [{ field: "owner", op: "is", value: "me" }, { field: "closeDate", op: "before", value: "2026-12-31" }], columns: ["name", "amount", "stage", "closeDate", "nextStep"], sort: "closeDate asc", owner: aeUser, sharedWith: "me", defaultFor: ["ae"] },
+    ...personViews,
+    shippedView,
+    { id: "view-accounts-at-risk", name: "Accounts at risk", object: "company", filters: [{ field: "stage", op: "is", value: "Current client" }, { field: "health", op: "is under", value: "40" }], columns: ["name", "health", "renewalDate", "owner"], sort: "health asc", owner: csUser, sharedWith: "everyone", defaultFor: ["cs"], alert: "off", shipped: false },
+    { id: "view-my-deals", name: "My deals closing this quarter", object: "deal", filters: [{ field: "owner", op: "is", value: "me" }, { field: "closeDate", op: "before", value: "2026-12-31" }], columns: ["name", "amount", "stage", "closeDate", "nextStep"], sort: "closeDate asc", owner: aeUser, sharedWith: "me", defaultFor: ["ae"], alert: "off", shipped: false },
   ]
 
   /* ------------------------------------------------------- accounts: the customer state of a company */
@@ -984,10 +1381,27 @@ export function seedFor(business: Business): Seed {
     const price = business === "ridgeline" ? 79 : business === "meridian" ? 129 : 49
     const hasAe = seats.some((s) => s.role === "ae")
     const handoffOn = hasAe && i % 4 === 0
+    // Thirteen weeks of use, oldest first. Seats walk towards today's active count, so the last week
+    // in the series and the number on the record are the same number.
+    const seatsThirteenWeeksAgo = Math.max(1, Math.round(seatsActive / (1 + usageDelta30 / 100)))
+    const usageWeeks = lastWeeks(13)
+    const usage90: AccountWeek[] = usageWeeks.map((week, k) => {
+      const walk = Math.round(seatsThirteenWeeksAgo + ((seatsActive - seatsThirteenWeeksAgo) * k) / 12)
+      const wobble = k === 12 ? 0 : ((seatsBought * (k + 3)) % 7) - 3
+      const active = Math.max(0, Math.min(seatsBought, walk + wobble))
+      return { week, activeSeats: active, events: active * (6 + ((k * 5) % 7)) }
+    })
+    // Who holds the seats. The people we already hold at the company fill them; the rest are names
+    // only the customer's own admin would know, so they carry a sign-in date and nothing else.
+    const holders = byCompany(c.id)
+    const accountSeats: AccountSeat[] = many(seatsBought, (k) => ({
+      name: holders[k]?.name ?? `${FIRST[(i * 5 + k * 7) % FIRST.length]} ${LAST[(i * 3 + k * 11) % LAST.length]}`,
+      lastSignIn: k < seatsActive ? shift(-int(r, 0, 6)) : shift(-int(r, 24, 120)),
+    }))
     return {
       id: `acc-${i + 1}`, companyId: c.id, name: c.name, domain: c.domain, stage: c.stage, owner: csUser, ae: hasAe ? aeUser : adminUser,
       plan: price === 129 ? "Scale" : price === 79 ? "Growth" : "Starter",
-      seatsBought, seatsActive, usage30, usageDelta30,
+      seatsBought, seatsActive, usage30, usageDelta30, usage90, seats: accountSeats,
       health, band, healthDelta30: int(r, -14, 14),
       drivers: [{ label: "Base", points: 55 }, { label: `Usage ${usageDelta30 >= 0 ? "up" : "down"} ${Math.abs(usageDelta30)}%`, points: usagePts }, { label: `${Math.round(seatsActive / seatsBought * 100)}% of seats active`, points: seatPts }, { label: `Last touch ${touchDays} days ago`, points: touchPts }, { label: `${openRisks.length} open risk${openRisks.length === 1 ? "" : "s"}`, points: riskPts }, { label: `${accSignals.length} expansion signal${accSignals.length === 1 ? "" : "s"}`, points: signalPts }],
       renewal, value: seatsBought * price * 12, billing: "annual" as const, noticeDays: pick(r, [30, 60, 90]), autoRenew: chance(r, 0.6),
@@ -1032,6 +1446,18 @@ export function seedFor(business: Business): Seed {
   const qualEvidence: QualEvidence[] = []
   const stageHistory: StageHistory[] = []
   const lostReasons = ["Price", "No decision", "Competitor", "Timing"]
+  // Who carries a book. New business sits with the people on an account-executive seat, so the by-rep
+  // table has a row per rep rather than one row for the seat user; renewals sit with customer success
+  // where the business has that seat, which is whose forecast the renewal book is.
+  const aeNames = users.filter((u) => u.role === "ae").map((u) => u.name)
+  const outboundNames = users.filter((u) => u.role === "sdr" || u.role === "admin").map((u) => u.name)
+  const hasCsSeat = seats.some((s) => s.role === "cs")
+  const bookOwner = (i: number, dealType: Deal["dealType"]): string => {
+    if (dealType === "Renewal" && hasCsSeat) return csUser
+    if (aeNames.length) return aeNames[i % aeNames.length]
+    if (outboundNames.length) return outboundNames[i % Math.min(outboundNames.length, 10)]
+    return owners[i % owners.length]
+  }
   const deals: Deal[] = many(openCount + archivedCount + historyCount, (i) => {
     const co = companies[Math.floor(Math.pow(r(), 1.3) * companies.length)]
     const archived = i >= openCount && i < openCount + archivedCount
@@ -1041,8 +1467,10 @@ export function seedFor(business: Business): Seed {
     const dealType: Deal["dealType"] = customer ? (chance(r, 0.5) ? "Renewal" : "Expansion") : business === "ridgeline" ? (chance(r, 0.6) ? "Expansion" : "Renewal") : "New"
     const amount = money(r, [4_800, 12_000, 24_000, 48_000, 96_000, 180_000])
     const createdAt = dateBack(r, history ? 300 : 180)
-    const stageEnteredAt = dateBack(r, 60)
-    const owner = seats.some((s) => s.role === "ae") ? (chance(r, 0.6) ? aeUser : owners[i % owners.length]) : owners[i % owners.length]
+    // Stalled in stage is an exception, so most deals moved stage inside the last month and about one
+    // in seven has been sitting where it is for longer than the workspace's warning.
+    const stageEnteredAt = shift(-(i % 7 === 3 ? int(r, 31, 70) : int(r, 0, 25)))
+    const owner = bookOwner(i, dealType)
     const people = byCompany(co.id).slice(0, int(r, 1, 5))
     const roles: DealContact["role"][] = ["Champion", "Economic buyer", "Technical", "User", "Blocker", "Other"]
     const id = `d-${i + 1}`
@@ -1077,8 +1505,16 @@ export function seedFor(business: Business): Seed {
       id, name: `${co.name} · ${dealType === "New" ? pick(r, ["Platform", "Growth plan", "Pilot"]) : dealType}`,
       company: co.name, companyId: co.id, amount,
       currency: business === "meridian" && chance(r, 0.12) ? pick(r, ["USD", "GBP"]) : sz.currency,
-      stage, probability: STAGE_PROBABILITY[stage], closeDate: history ? dateBack(r, 120) : shift(int(r, -20, 90)),
-      owner, lastActivity: dateBack(r, 30),
+      stage, probability: STAGE_PROBABILITY[stage],
+      // Won deals closed in the past. An open deal closes later this quarter or in the next one, and
+      // about one in six has slipped past the date it was given, which is what Overdue is for.
+      closeDate: history ? dateBack(r, 120)
+        : archived ? dateBack(r, 60)
+          : shift(i % 6 === 2 ? -int(r, 1, 12) : i % 6 === 4 || i % 6 === 5 ? int(r, 18, 108) : int(r, 2, 17)),
+      owner,
+      // Most open deals were touched this week; a tail has been quiet for over a month, and those are
+      // the ones No activity is about.
+      lastActivity: history || archived ? dateBack(r, 120) : shift(-(i % 9 === 4 ? int(r, 41, 70) : int(r, 0, 12))),
       nextStep: noNextStep ? null : pick(r, ["Send the proposal", "Security review call", "Intro to the CFO", "Pilot kickoff", "Pricing follow-up", "Contract redlines"]),
       nextStepDue: noNextStep ? null : shift(int(r, -3, 14)),
       dealType, pipeline: pipelineNames[dealType === "New" ? 0 : pipelineNames.length - 1],
@@ -1088,7 +1524,8 @@ export function seedFor(business: Business): Seed {
       crmId: sz.crm ? `006${int(r, 100000, 999999)}` : null, crmSyncedAt: sz.crm ? dateBack(r, 2) : null,
       crmError: sz.crm && chance(r, 0.05) ? "Stage value Negotiation is not in the CRM picklist" : null,
       agentProposal: chance(r, business === "fathom" ? 0.25 : 0.08) ? pick(r, ["Move to Proposal: they asked for pricing on the call", "Set the next step to a security review", "Re-date to 30 October: they said the budget lands then"]) : null,
-      lastProspectActivityAt: chance(r, 0.85) ? dateBack(r, 45) : null,
+      // Ghosted is an exception too: most prospects answered inside the fortnight.
+      lastProspectActivityAt: chance(r, 0.85) ? shift(-(i % 8 === 6 ? int(r, 22, 60) : int(r, 0, 14))) : null,
       contactCount: people.length, seniorSponsor: senior,
       source: pick(r, ["Outbound", "Inbound", "Campaign", "Referral", "Product signal"]),
       campaign: sz.campaigns ? (chance(r, 0.3) ? "Q4 launch announcement" : null) : null,
@@ -1130,6 +1567,14 @@ export function seedFor(business: Business): Seed {
     "Out of office": "I am out until the 21st with limited email access. For anything urgent please contact our operations team.",
     Unsubscribe: "Please remove me from this list. I am not the right person for this and I would rather not be contacted again.",
   }
+  // The seats that read sequence replies: the SDR and the AE, and the admin where the workspace runs
+  // outbound without a separate seat for it. A sales manager reads her reps' replies, not her own box.
+  const replyReaders = seats
+    .filter((s) => !s.reports?.length)
+    .filter((s) => s.role === "sdr" || s.role === "ae" || (s.role === "admin" && (business === "fathom" || business === "halyard")))
+    .map((s) => s.user)
+  const replyBoxes = (replyReaders.length ? replyReaders : [sdrUser])
+    .map((name) => mailboxes.find((m) => m.owner === name)?.address ?? mailboxOf(name))
   const replyCount = sz.replies + 6
   const replies: Reply[] = many(replyCount, (i) => {
     const c = contacts[Math.floor(r() * contacts.length)]
@@ -1140,7 +1585,7 @@ export function seedFor(business: Business): Seed {
     const of = seq?.steps ?? 4
     const n = int(r, 1, of)
     const handled = i >= sz.replies
-    const mb = mailboxes[i % Math.max(1, mailboxes.length)]?.address ?? mailboxOf(sdrUser)
+    const mb = replyBoxes[i % replyBoxes.length]
     const received = dateBack(r, 5)
     return {
       id: `r-${i + 1}`, contactId: c.id, contact: c.name, company: c.company,
@@ -1151,6 +1596,8 @@ export function seedFor(business: Business): Seed {
         { from: "them" as const, sent: received, subject: `Re: ${c.company} · keeping the pipeline honest`, body: replyBodies[outcome] },
       ],
       status: handled ? "handled" : "open", handled, handedTo: handled && seats.some((s) => s.role === "ae") ? aeUser : null,
+      // The agent puts the first outcome on a reply; a person who has worked it owns the outcome after.
+      classifiedBy: handled ? (mailboxes.find((m) => m.address === mb)?.owner ?? sdrUser) : "reply agent",
       followUpOn: outcome === "Not now" ? "2027-01-05" : null,
       returnsOn: outcome === "Out of office" ? "2026-09-21" : null,
       dealId: outcome === "Interested" && chance(r, 0.4) ? deals[i % deals.length].id : null,
@@ -1162,7 +1609,36 @@ export function seedFor(business: Business): Seed {
     }
   })
 
+  /** The five replies this workspace writes over and over, ready to drop into a thread (spec 06 §2). */
+  const savedReplies: SavedReply[] = [
+    { id: "sr-1", name: "Offer three times", body: "Thanks {first name}. Three that work this side: Tuesday 14:00, Wednesday 10:30, Thursday 15:00. Say which and I will send the invitation." },
+    { id: "sr-2", name: "Answer on the CRM sync", body: "Good question, {first name}. The sync is two-way and you keep your own field names — you map them once and nothing is overwritten without a review." },
+    { id: "sr-3", name: "Send the security summary", body: "Here is the one-page security summary, {first name}. SSO, data residency and the sub-processor list are all in it. Happy to put your security lead on a call." },
+    { id: "sr-4", name: "Follow up in the new year", body: "Understood, {first name} — I will come back in January. If anything changes before then, reply to this and it lands with me." },
+    { id: "sr-5", name: "Hand over to a colleague", body: `Thanks {first name}. My colleague at ${b.name} runs this part and will pick it up from here, with everything you have told me already.` },
+  ]
+
   const taskTitles = { Call: "Call after two opened emails", LinkedIn: "Send a connection request", Email: "Send the follow-up", "Follow-up": "Follow up on the proposal", Meeting: "Discovery call" }
+  /**
+   * Who works a task, by what the task is. The marketer never appears: that seat has no access to the
+   * area at all. Where a business has not declared the seat that would normally take the work, it
+   * falls to the next seat on the list that the business does declare.
+   */
+  const WORKS_TASK: Record<Task["kind"], Role[]> = {
+    Call: ["sdr", "sdr", "ae", "admin"],
+    LinkedIn: ["sdr", "sdr", "admin"],
+    Email: ["sdr", "ae", "cs"],
+    "Follow-up": ["ae", "cs", "sdr", "admin"],
+    Meeting: ["ae", "sdr", "cs"],
+  }
+  const taskOwner = (kind: Task["kind"], i: number): string => {
+    const wants = WORKS_TASK[kind]
+    for (let k = 0; k < wants.length; k++) {
+      const seat = seats.find((s) => s.role === wants[(i + k) % wants.length])
+      if (seat) return seat.user
+    }
+    return seats[0].user
+  }
   const tasks: Task[] = many(sz.tasks, (i) => {
     const c = contacts[Math.floor(r() * contacts.length)]
     const kind: Task["kind"] = i < 2 ? "Meeting"
@@ -1172,12 +1648,14 @@ export function seedFor(business: Business): Seed {
     const createdBy: Task["createdBy"] = business === "fathom" && i % 3 === 0 ? "agent" : c.inSequence ? "sequence" : "manual"
     const seq = sequences.find((s) => s.name === c.inSequence)
     const status: Task["status"] = i < 26 ? "Open" : pick(r, ["Done", "Done", "Snoozed", "Skipped"] as const)
+    const owner = taskOwner(kind, i)
     return {
       id: `t-${i + 1}`, kind, contact: c.name, contactId: c.id, company: c.company,
       due: shift(int(r, -4, 6)), sequence: c.inSequence, title: taskTitles[kind],
       step: seq ? { n: int(r, 1, seq.steps), of: seq.steps, title: taskTitles[kind] } : null,
-      createdBy, creator: createdBy === "agent" ? "Outreach agent" : createdBy === "sequence" ? c.inSequence ?? "Sequence" : c.owner,
-      owner: owners[i % owners.length], status,
+      // A task made by hand was made by the person who owns it, so the From column tells the truth.
+      createdBy, creator: createdBy === "agent" ? "Outreach agent" : createdBy === "sequence" ? c.inSequence ?? "Sequence" : owner,
+      owner, status,
       snoozedUntil: status === "Snoozed" ? shift(int(r, 1, 5)) : null, doneAt: status === "Done" ? dateBack(r, 4) : null,
       outcome: kind === "Call" && status === "Done" ? pick(r, ["Connected", "Voicemail", "No answer", "Wrong number"] as const) : null,
       priority: chance(r, 0.2) ? "High" : "Normal",
@@ -1193,12 +1671,17 @@ export function seedFor(business: Business): Seed {
   tasks.filter((t) => t.kind === "Call").slice(0, 2).forEach((t) => { const c = contactById.get(t.contactId); if (c) { c.doNotCall = true; c.doNotCallSource = "National DNC register"; c.dncCheckedOn = dateBack(r, 5) } })
 
   const coachingNotes: CoachingNote[] = []
+  // Every rep logs calls, not just the person whose seat you sign in as: the activity report counts a
+  // row per rep, and a coaching note is about somebody else's call.
+  const frontLine = users.filter((u) => u.role === "sdr" || u.role === "ae")
+  // At a workspace with no bench of reps the founders dial too, which is how Fathom actually works.
+  const repNames = (frontLine.length > 1 ? frontLine : users.filter((u) => u.role !== "marketer")).map((u) => u.name)
   const calls: Call[] = many(sz.calls, (i) => {
     const c = contacts[Math.floor(r() * contacts.length)]
     const disposition = pick(r, DISPOSITIONS)
     const connected = disposition === "Connected" || disposition === "Connected, not interested" || disposition === "Callback booked"
     const id = `call-${i + 1}`
-    const loggedBy = owners[i % owners.length]
+    const loggedBy = repNames.length ? repNames[i % repNames.length] : owners[i % owners.length]
     const day = dateBack(r, 91)
     if (i < Math.round(sz.calls * 0.12)) coachingNotes.push({
       id: `coach-${i + 1}`, callId: id, author: managerUser ?? adminUser, at: day,
@@ -1214,10 +1697,21 @@ export function seedFor(business: Business): Seed {
       notes: connected ? pick(r, ["Runs a team of twelve. Their forecast is a spreadsheet the manager rebuilds on Thursdays.", "Uses Apollo, unhappy with the data. Renewal is in March.", "Asked for pricing and a security summary. Wants the ops lead on the next call."]) : "No answer; will try before nine tomorrow.",
       loggedBy, sentiment: connected ? pick(r, ["positive", "neutral", "negative"] as const) : "neutral",
       advancedSequence: !connected,
+      transcript: null,
       coachingNote: null,
     }
   })
   coachingNotes.forEach((n) => { const call = calls.find((c) => c.id === n.callId); if (call) call.coachingNote = n })
+  // A recorder is connected at Meridian and Ridgeline and nowhere else, and it returns something only
+  // for a call that was answered and ran long enough to have anything in it.
+  const recorderConnected = business === "meridian" || business === "ridgeline"
+  calls.forEach((call) => {
+    call.transcript = recorderConnected && call.connected && call.durationSec > 120
+      ? `${call.contact}: “We looked at two other tools last quarter and stopped because the data was stale.”\n`
+        + `${call.loggedBy}: “What would have to be true for this to be worth another look?”\n`
+        + `${call.contact}: “Show me it keeps up with job changes, and I will bring in our ops lead.”`
+      : null
+  })
 
   const meetings: Meeting[] = many(sz.meetings, (i) => {
     const c = contacts[Math.floor(r() * contacts.length)]
@@ -1245,7 +1739,10 @@ export function seedFor(business: Business): Seed {
     return {
       id: `aud-${i + 1}`,
       name: ["Customers, all plans", "Trial day 7–14", "Webinar attendees, August", "Enterprise prospects, EMEA", "Renewals in 90 days", "Hand-raisers, last 30 days"][i] ?? `Audience ${i + 1}`,
-      type: i % 3 === 0 ? "Static" : "Segment", size, lastRebuilt: dateBack(r, 4),
+      type: i % 3 === 0 ? "Static" : "Segment", size,
+      // A live audience moves every night; a frozen one is the same list it was frozen as.
+      sizeDelta: live ? int(r, -40, 220) : 0,
+      lastRebuilt: dateBack(r, 4),
       sources: [lists[i % lists.length]?.name ?? "Saved search", i % 2 ? "Trial day 7–14" : "Lifecycle stage is customer"],
       mode: live ? "live" : "frozen", refreshAt: live ? shift(1) : null, frozenAt: live ? null : dateBack(r, 12),
       feeds: [], rules: [{ field: "lifecycleStage", op: "is", value: i % 2 ? "Trial" : "Customer" }, { field: "industry", op: "is one of", value: "Software, Fintech" }],
@@ -1269,6 +1766,16 @@ export function seedFor(business: Business): Seed {
     const opened = Math.round(delivered * (0.22 + r() * 0.33))
     const clicked = Math.round(delivered * (0.02 + r() * 0.07))
     const converted = Math.round(delivered * (0.005 + r() * 0.055))
+    // The eight pre-send checks. Nothing has been checked until QA has been run; after that they
+    // pass, except the one or two this campaign actually trips.
+    const qaRun = status !== "Draft"
+    const fails = new Set<number>(guardPaused ? [4] : status === "Paused" ? [1] : i % 4 === 1 ? [5] : [])
+    const checks: CampaignCheck[] = CAMPAIGN_CHECKS.map((name, k) => ({
+      name, state: !qaRun ? "not run" : fails.has(k) ? "fail" : "pass",
+    }))
+    const linkTargets = ["/changelog", "/pricing", "/book-a-demo", "/customers/kestrel-health", "/docs/routing", "/unsubscribe"]
+    const linkCount = status === "Draft" || status === "Scheduled" ? 0 : int(r, 3, 6)
+    const clickSplit = overWeeks(clicked, linkCount, i + 4)
     return {
       id: `camp-${i + 1}`, name: lifecycle ? lifecycleNames[i % lifecycleNames.length] : campaignNames[i % campaignNames.length],
       kind: lifecycle ? "Lifecycle" : "Email", status, pausedBy: guardPaused ? "Bounce guard" : status === "Paused" ? mkUser : null,
@@ -1281,7 +1788,9 @@ export function seedFor(business: Business): Seed {
       sent, delivered, bounced, opened, clicked, replied: Math.round(delivered * (r() * 0.03)), converted,
       unsubscribed: Math.round(delivered * (0.001 + r() * 0.007)), complaints: Math.round(delivered * 0.0004),
       goal: pick(r, ["Booked demo", "Started trial", "Renewed", "Added seats"]), owner: mkUser,
-      qa: { by: status === "Draft" ? null : owners[(i + 1) % owners.length], on: status === "Draft" ? null : dateBack(r, 30), checklist: [{ item: "Suppressions applied", done: true }, { item: "Links tested", done: status !== "Draft" }, { item: "Preview on phone", done: status !== "Draft" }, { item: "Someone who did not build it checked it", done: status !== "Draft" }] },
+      qa: { by: status === "Draft" ? null : owners[(i + 1) % owners.length], on: status === "Draft" ? null : dateBack(r, 30), checklist: [{ item: "Suppressions applied", done: true }, { item: "Links tested", done: status !== "Draft" }, { item: "Preview on phone", done: status !== "Draft" }, { item: "Someone who did not build it checked it", done: status !== "Draft" }], checks },
+      links: many(linkCount, (k) => ({ url: `https://${wsDomain}${linkTargets[k % linkTargets.length]}`, clicks: clickSplit[k] ?? 0 })),
+      attributionDays: lifecycle ? 14 : 30,
       sendsByDay: lifecycle ? many(30, (d) => ({ day: shift(-29 + d), sent: int(r, 4, 90) })) : [],
       variants: i < 2 && business === "meridian" ? [{ label: "A", subject: "What changed in Ollopa this quarter", sent: Math.round(sent / 2), opened: Math.round(opened / 2), replied: 4 }, { label: "B", subject: "Three things your team asked for", sent: Math.round(sent / 2), opened: Math.round(opened / 2) + 40, replied: 7 }] : [],
       activity: many(int(r, 2, 5), (k) => ({ at: dateBack(r, 30), by: mkUser, what: pick(r, ["Audience attached", "Copy rewritten", "QA passed", "Scheduled", "Paused by the bounce guard"]) + (k === 0 ? "" : "") })),
@@ -1351,10 +1860,20 @@ export function seedFor(business: Business): Seed {
     perUserLimit: business === "meridian" ? 5_000 : business === "ridgeline" ? 3_000 : null,
     bySurface: { app: Math.round(burn * 0.3), automation: Math.round(burn * 0.12), api: Math.round(burn * (business === "fathom" ? 0 : 0.1)), mcp: Math.round(burn * 0.04), cli: Math.round(burn * (business === "halyard" ? 0.09 : 0.02)), agent: agentShare },
     byFeature: [{ feature: "Research", credits: Math.round(agentShare * 0.5) }, { feature: "Email reveal", credits: Math.round(burn * 0.14) }, { feature: "Phone reveal", credits: Math.round(burn * 0.2) }, { feature: "Enrichment jobs", credits: Math.round(burn * 0.1) }, { feature: "Drafts", credits: Math.round(agentShare * 0.2) }],
-    byUser: users.map((u, i) => ({ user: u.name, used: Math.round((burn * 4 / users.length) * (u.role === "sdr" ? 1.8 : u.role === "ae" ? 1.1 : 0.5) * (0.6 + ((i * 37) % 80) / 100)), limit: u.creditLimit })),
+    // What a person has spent this cycle. Where the workspace sets a ceiling per person, nobody can be
+    // over it: most people are under half of theirs, and one or two are close enough to feel it.
+    byUser: users.map((u, i) => {
+      const share = Math.round((burn * 4 / users.length) * (u.role === "sdr" ? 1.8 : u.role === "ae" ? 1.1 : 0.5) * (0.6 + ((i * 37) % 80) / 100))
+      if (u.creditLimit === null) return { user: u.name, used: share, limit: null }
+      const closeToTheLimit = i % 23 === 3
+      const fraction = closeToTheLimit ? 0.84 + ((i * 13) % 12) / 100 : 0.06 + ((i * 29) % 42) / 100
+      return { user: u.name, used: Math.min(u.creditLimit, Math.round(u.creditLimit * fraction)), limit: u.creditLimit }
+    }),
     teamBudgets: teams.map((t) => ({ team: t.name, credits: int(r, 20_000, 400_000), used: int(r, 5_000, 200_000) })),
     spikeAlert: { multiple: 3, todayMultiple: Number((0.6 + r() * 2.8).toFixed(1)) },
   }
+  // The user row and the credit row are the same fact, so they are written from one place.
+  users.forEach((u) => { u.creditsUsed = credits.byUser.find((x) => x.user === u.name)?.used ?? 0 })
 
   /* ------------------------------------------------------------------ agents and their runs */
 
@@ -1386,7 +1905,8 @@ export function seedFor(business: Business): Seed {
     const c = contacts[Math.floor(r() * contacts.length)]
     const co = companies.find((x) => x.id === c.companyId) ?? companies[0]
     const deal = deals[i % deals.length]
-    const kind: AgentEvent["kind"] = business === "fathom" && i === 7 ? "capped"
+    // Every workspace has one run that stopped at its daily cap, so the exception is never theoretical.
+    const kind: AgentEvent["kind"] = i === 7 ? "capped"
       : i === 9 ? "proposed"
         : i % 11 === 4 ? "skipped"
         : pick(r, ["researched", "researched", "drafted", "drafted", "scored", "proposed", "sent", "paused"] as const)
@@ -1409,7 +1929,7 @@ export function seedFor(business: Business): Seed {
           scored: `Scored ${co.name} ${int(r, 40, 96)} (fit high, intent rising)`,
           proposed: recipients > 200 ? `Proposes enrolling ${recipients} people in "${seq?.name ?? "outbound"}"` : `Proposes moving ${deal.company} to Proposal`,
           sent: `Sent step 2 to ${c.name}`, paused: `Paused outreach to ${co.name}: bounce rate 5.1%`,
-          capped: "Research agent stopped at its daily cap of 300 credits at 14:10",
+          capped: `Research agent stopped at its daily cap of ${(agents.find((a) => a.id === "research")?.capPerDay ?? 300).toLocaleString()} credits at 14:10`,
           skipped: `Passed over ${c.name}`,
         }[kind]
     return {
@@ -1435,12 +1955,202 @@ export function seedFor(business: Business): Seed {
         mailbox: mailboxes[i % Math.max(1, mailboxes.length)]?.address, sequence: seq?.name, stage: "Proposal",
         sendsAt: `${shift(1)} 08:00`, recipients, credits: spend || CREDITS.draft,
       } : null,
-      steps: many(int(r, 3, 8), (k) => ({ at: clockTime(r), text: [`Read ${co.domain} (2 credits)`, "Read 2 news items (4 credits)", "Read 3 profiles (6 credits)", "Wrote 3 signals", "Used company context", `Checked mailbox ${mailboxes[0]?.address ?? "—"}: warm, 38 of 120 sent today`, "Drafted 142 words", "Fit 84 from industry, size, stack"][k % 8], credits: k < 3 ? [2, 4, 6][k] : 0, source: k === 0 ? `https://${co.domain}` : undefined })),
+      // What the run did and what each step cost. A company with more to read costs more than one
+      // with a single page, so no two runs come to the same total.
+      steps: ((): AgentEvent["steps"] => {
+        const pages = int(r, 1, 4), news = int(r, 0, 3), profiles = int(r, 1, 5), words = int(r, 90, 180)
+        const log: AgentEvent["steps"] = [
+          { at: clockTime(r), text: `Read ${pages} ${pages === 1 ? "page" : "pages"} on ${co.domain} (${pages * 2} credits)`, credits: pages * 2, source: `https://${co.domain}` },
+        ]
+        if (news > 0) log.push({ at: clockTime(r), text: `Read ${news} news ${news === 1 ? "item" : "items"} (${news * 2} credits)`, credits: news * 2 })
+        log.push({ at: clockTime(r), text: `Read ${profiles} ${profiles === 1 ? "profile" : "profiles"} (${profiles} credits)`, credits: profiles })
+        log.push({ at: clockTime(r), text: "Used company context", credits: 0 })
+        if (kind === "drafted" || kind === "sent") log.push({ at: clockTime(r), text: `Drafted ${words} words (${CREDITS.draft} credits)`, credits: CREDITS.draft })
+        if (kind === "scored") log.push({ at: clockTime(r), text: `Fit ${int(r, 40, 96)} from industry, size and stack (${CREDITS.score} credit)`, credits: CREDITS.score })
+        return log
+      })(),
       undoable: !needsApproval && kind !== "paused" && kind !== "capped",
       undoneAt: null, undoneBy: null,
       skipReason: kind === "skipped" ? pick(r, ["suppressed", "unsubscribed", "region restricted", "do not call"] as const) : null,
       expiresOn: needsApproval ? shift(int(r, 1, 5)) : null,
       sourceQuote: kind === "proposed" && recipients <= 200 ? "\"Send us the paper and we will start the security review this week.\" — discovery call, 9 Sep" : null,
+    }
+  })
+
+  /* ------------------------------------------------ the queue each seat opens, and the runs behind it */
+
+  const mailboxOfUser = (name: string) => mailboxes.find((m) => m.owner === name)?.address ?? mailboxOf(name)
+  const pipeStages = pipelines[0].stages.map((s) => s.name)
+  const nextStage = (d: Deal): DealStage => pipeStages[Math.min(pipeStages.length - 1, pipeStages.indexOf(d.stage) + 1)]
+  const draftTo = (co: Company, person: Contact, sender: string) =>
+    `Subject: ${co.name} · a day a week\n\nHi ${person.name.split(" ")[0]},\n\n`
+    + `You are hiring two revenue operations people, which usually means the reporting is the bottleneck rather than the headcount. `
+    + `Teams your size lose about a day a week keeping the pipeline honest, and the forecast still gets rebuilt by hand on Thursdays.\n\n`
+    + `We fixed that for three companies in ${co.industry.toLowerCase()} this year. Worth twenty minutes on Thursday?\n\n${sender}`
+
+  /**
+   * Every declared seat has two to five items waiting on it, and each is work that seat owns: a send
+   * or an enrolment belongs to the seat that runs outbound, a proposed stage change to the person who
+   * owns the deal, and a request to spend over the agent's per-run cap to whoever owns the company
+   * being researched. The items are taken from the end of the log so the shaped history at the front
+   * — the capped run, the big enrolment — is left alone.
+   */
+  const outboundSeat = seats.find((s) => s.role === "sdr") ?? seats.find((s) => s.role === "admin") ?? seats[0]
+  const openForStage = deals.filter((d) => d.stage !== "Closed won" && !d.archivedAt)
+  const claimedIds = new Set<string>()
+  let taken = 0
+  seats.forEach((seat, si) => {
+    const wants = 2 + ((si * 3 + 1) % 4)
+    const theirDeals = openForStage.filter((d) => d.owner === seat.user)
+    const theirContacts = contacts.filter((c) => c.owner === seat.user)
+    for (let k = 0; k < wants && taken < agentEvents.length; k++) {
+      const e = agentEvents[agentEvents.length - 1 - taken]
+      taken++
+      claimedIds.add(e.id)
+      const person = theirContacts[k % Math.max(1, theirContacts.length)] ?? contacts[k % contacts.length]
+      const co = companies.find((x) => x.id === person.companyId) ?? companies[0]
+      const seq = sequences[(si + k) % Math.max(1, sequences.length)]
+      const deal = theirDeals[k % Math.max(1, theirDeals.length)]
+      const isOutbound = seat.user === outboundSeat.user
+      const action: "send" | "enrol" | "stage" | "spend" =
+        isOutbound ? (k === wants - 1 ? "enrol" : "send") : deal ? "stage" : "spend"
+      e.ownerId = seat.user
+      e.actorUser = seat.user
+      e.needsApproval = true
+      e.decision = null
+      e.decidedBy = null
+      e.decidedAt = null
+      e.decidedAsAdmin = false
+      e.undoable = false
+      e.undoneAt = null
+      e.undoneBy = null
+      e.skipReason = null
+      e.expiresOn = shift(3 + ((si * 2 + k) % 9))
+      e.contactId = person.id
+      e.contact = person.name
+      e.company = co.name
+      e.companyId = co.id
+      e.inputs = [{ label: `${co.name} website`, href: `https://${co.domain}` }, { label: "Funding announcement, August", href: "#" }, { label: `${person.name} on LinkedIn`, href: `https://${person.linkedin}` }]
+      e.status = "waiting"
+      e.needsSecondApproval = false
+      e.approvalTier = "owner"
+      e.sourceQuote = null
+      e.to = null
+      e.draft = null
+      e.dealId = null
+      e.sequence = seq?.name ?? null
+      if (action === "send") {
+        e.agent = "Outreach agent"
+        e.kind = "drafted"
+        e.summary = `Drafted a first email to ${person.name}`
+        e.trigger = "A signal fired"
+        e.to = person.name
+        e.draft = draftTo(co, person, seat.user)
+        e.credits = CREDITS.draft
+        e.ifApproved = { action: "send", mailbox: mailboxOfUser(seat.user), sequence: seq?.name, sendsAt: `${shift(1)} 08:00`, recipients: 1, credits: CREDITS.draft }
+      } else if (action === "enrol") {
+        // One enrolment per workspace is big enough to need the admin after the owner, so the second
+        // approval is something a person can actually meet rather than a rule on a settings page.
+        const recipients = secondApprovalOf(business).recipients + 240 + ((si * 37) % 600)
+        e.agent = "Outreach agent"
+        e.kind = "proposed"
+        e.summary = `Proposes enrolling ${recipients.toLocaleString()} people in "${seq?.name ?? "outbound"}"`
+        e.trigger = "A list was saved"
+        e.draft = draftTo(co, person, seat.user)
+        e.credits = 0
+        e.status = "waiting-second"
+        e.needsSecondApproval = true
+        e.approvalTier = "admin"
+        e.ifApproved = { action: "enrol", mailbox: mailboxOfUser(seat.user), sequence: seq?.name, sendsAt: `${shift(1)} 08:00`, recipients, credits: recipients * CREDITS.draft }
+      } else if (action === "stage" && deal) {
+        const to = nextStage(deal)
+        e.agent = "Outreach agent"
+        e.kind = "proposed"
+        e.summary = `Proposes moving ${deal.company} to ${to}`
+        e.trigger = "A reply landed"
+        e.dealId = deal.id
+        e.company = deal.company
+        e.companyId = deal.companyId
+        e.credits = 0
+        e.sourceQuote = "\"Send us the paper and we will start the security review this week.\" — discovery call, 9 Sep"
+        e.ifApproved = { action: "stage", mailbox: mailboxOfUser(seat.user), stage: to, recipients: 1, credits: 0 }
+      } else {
+        const over = (agents.find((a) => a.id === "research")?.capPerRun ?? 25) + 8 + ((si * 11 + k) % 40)
+        e.agent = "Research agent"
+        e.kind = "researched"
+        e.summary = `Asks to spend ${over.toLocaleString()} credits researching ${co.name}, over its per-run cap`
+        e.trigger = "A list was saved"
+        e.credits = 0
+        e.ifApproved = { action: "spend", mailbox: mailboxOfUser(seat.user), credits: over }
+      }
+    }
+  })
+
+  // Everything else in the log has already been decided: an item nobody ever decides is a decision
+  // nobody made, dressed up as a decision pending.
+  agentEvents.forEach((e, i) => {
+    if (claimedIds.has(e.id)) return
+    if (e.status === "waiting" || e.status === "waiting-second") {
+      e.status = i % 5 === 0 ? "declined" : "approved"
+      e.decision = e.status
+      e.decidedBy = e.ownerId
+      e.decidedAt = shift(-1 - (i % 3))
+    }
+  })
+
+  /**
+   * One run per agent per day. Agents work in runs, not one item at a time, so the log is cut into
+   * runs of three to five items, each run gets its own day and clock, and every item in it carries
+   * the run's key — which is what the approval batch on Home is grouped by.
+   */
+  const RUN_CLOCKS = ["08:10", "11:25", "14:05", "16:40"]
+  const runKeyOf = (agent: string, on: string) => `${agent.toLowerCase().replace(/ /g, "-")}-${on}`
+  AGENT_ORDER.forEach((agentName, ai) => {
+    // Newest run first, so today's run holds the items still waiting and the older days hold history.
+    const mine = agentEvents.filter((e) => e.agent === agentName).reverse()
+    let day = 0
+    for (let at = 0; at < mine.length; day++) {
+      // Three to five, and never a tail of one or two: the last run takes whatever is left over.
+      const want = 3 + ((day + ai) % 3)
+      const size = mine.length - at - want < 3 ? mine.length - at : want
+      const on = shift(-day)
+      const key = runKeyOf(agentName, on)
+      const start = Date.parse(`2026-01-01T${RUN_CLOCKS[day % RUN_CLOCKS.length]}:00Z`)
+      for (let k = 0; k < size && at < mine.length; k++, at++) {
+        mine[at].when = on
+        mine[at].at = new Date(start + k * 7 * 60_000).toISOString().slice(11, 16)
+        mine[at].batchKey = key
+      }
+    }
+  })
+
+  // The mailbox an item sends from is the owner's, the stage it proposes is the one after the deal's
+  // own, and the draft is signed by whoever is sending it. A draft signed by one person and sent from
+  // another's mailbox is a consequence line that is not true.
+  agentEvents.forEach((e) => {
+    if (e.ifApproved) {
+      e.ifApproved.mailbox = mailboxOfUser(e.ownerId)
+      if (e.ifApproved.action === "stage") {
+        // A stage change can only be proposed on a deal that is still open, and it moves that deal to
+        // the stage after the one it is in — never to the stage it is already sitting in.
+        const deal = deals.find((d) => d.id === e.dealId && d.stage !== "Closed won" && !d.archivedAt)
+          ?? openForStage.find((d) => d.owner === e.ownerId)
+          ?? openForStage[0]
+        if (deal) {
+          e.dealId = deal.id
+          e.company = deal.company
+          e.companyId = deal.companyId
+          e.ifApproved.stage = nextStage(deal)
+          e.summary = `Proposes moving ${deal.company} to ${e.ifApproved.stage}`
+        }
+      } else {
+        e.ifApproved.stage = undefined
+      }
+    }
+    if (e.draft) {
+      const lines = e.draft.trimEnd().split("\n")
+      lines[lines.length - 1] = e.ownerId
+      e.draft = lines.join("\n")
     }
   })
 
@@ -1597,18 +2307,31 @@ export function seedFor(business: Business): Seed {
 
   /* --------------------------------------------------------- the admin's queue: intake requests */
 
-  const changeRequests: [string, Request["origin"], string][] = [
-    ["See which deals lost a required field at Proposal", "report", "Asked from the Pipeline report"],
-    ["Add a Renewal type field on the deal", "field or stage", "Trying to record auto versus negotiated renewals"],
-    ["Let the AE team edit the close date after Proposal", "permission", "Blocked on the deal record"],
-    ["Route inbound from Germany to the DACH pod", "routing", "A routing exception on the form workflow"],
-    ["Add a stage between Discovery and Proposal", "field or stage", "Asked on the deals board"],
-    ["Give marketing read access to Accounts", "no-access page", "Landed on the no-access page for Accounts"],
-    ["A weekly export of closed-won deals by rep", "report", "Asked from the Forecast tab"],
-    ["Stop the bounce guard pausing the client sequence", "locked control", "Trying to change the threshold on Email sending"],
-    ["Make Economic buyer required at Negotiation", "field or stage", "Asked in the deal review"],
-    ["Add a second mailbox", "locked control", "Trying to add a second mailbox on the Email sending page"],
-    ["Turn territories on", "locked control", "Trying to open Territories in Prospecting rules"],
+  // What each change would touch, written from what the change is about: a request that says it
+  // touches the same two things as every other request tells the admin nothing.
+  const changeRequests: [string, Request["origin"], string, Request["touches"]][] = [
+    ["See which deals lost a required field at Proposal", "report", "Asked from the Pipeline report",
+      [{ kind: "report", id: "report-pipeline", name: "Pipeline report" }, { kind: "stage", id: "stage-proposal", name: "Proposal" }]],
+    ["Add a Renewal type field on the deal", "field or stage", "Trying to record auto versus negotiated renewals",
+      [{ kind: "field", id: "field-renewal-type", name: "Renewal type" }]],
+    ["Let the AE team edit the close date after Proposal", "permission", "Blocked on the deal record",
+      [{ kind: "profile", id: "prof-ae", name: "Account executive" }, { kind: "field", id: "field-close-date", name: "Close date" }]],
+    ["Route inbound from Germany to the DACH pod", "routing", "A routing exception on the form workflow",
+      [{ kind: "workflow", id: "wf-1", name: "Inbound form to an SDR" }]],
+    ["Add a stage between Discovery and Proposal", "field or stage", "Asked on the deals board",
+      [{ kind: "stage", id: "stage-discovery", name: "Discovery" }, { kind: "stage", id: "stage-proposal", name: "Proposal" }, { kind: "report", id: "report-forecast", name: "Forecast" }]],
+    ["Give marketing read access to Accounts", "no-access page", "Landed on the no-access page for Accounts",
+      [{ kind: "profile", id: "prof-marketing", name: "Marketing" }]],
+    ["A weekly export of closed-won deals by rep", "report", "Asked from the Forecast tab",
+      [{ kind: "report", id: "report-forecast", name: "Forecast" }, { kind: "plan feature", id: "plan.reports", name: "The scheduled weekly email" }]],
+    ["Stop the bounce guard pausing the client sequence", "locked control", "Trying to change the threshold on Email sending",
+      [{ kind: "plan feature", id: "plan.bounce-guard", name: "Bounce guard thresholds" }]],
+    ["Make Economic buyer required at Negotiation", "field or stage", "Asked in the deal review",
+      [{ kind: "field", id: "field-economic-buyer", name: "Economic buyer" }, { kind: "stage", id: "stage-negotiation", name: "Negotiation" }]],
+    ["Add a second mailbox", "locked control", "Trying to add a second mailbox on the Email sending page",
+      [{ kind: "plan feature", id: "plan.mailboxes", name: "A second mailbox per user" }]],
+    ["Turn territories on", "locked control", "Trying to open Territories in Prospecting rules",
+      [{ kind: "plan feature", id: "plan.territories", name: "Territories" }]],
   ]
   const upgradeFeatures: [string, string, number][] = [["A second mailbox per user", "Growth", 237], ["Territories", "Growth", 237], ["Two-way CRM sync", "Growth", 1_975], ["Custom objects in the CRM sync", "Scale", 3_225]]
   const requests: Request[] = many(sz.requests, (i) => {
@@ -1631,7 +2354,7 @@ export function seedFor(business: Business): Seed {
       declined: state === "declined" ? { by: adminUser, on: shift(-1), reason: "The same answer is already on the Pipeline report; the column was hidden, not missing." } : null,
       estimate: state === "captured" ? null : "Half a day: one field, one report column, one line in the announcement.",
       baseline: "Today the stage gate checks nothing and the report counts every deal.",
-      touches: isUpgrade ? [{ kind: "plan feature", id: "plan.mailboxes", name: up[0] }] : [{ kind: "field", id: "field-renewal-type", name: "Renewal type" }, { kind: "stage", id: "stage-proposal", name: "Proposal" }],
+      touches: isUpgrade ? [{ kind: "plan feature", id: "plan.mailboxes", name: up[0] }] : c[3],
       affected: { count: int(r, 4, 34), how: "everyone on a seat that edits deals" },
       scope: { kind: i % 3 === 0 ? "everyone" : "team", name: i % 3 === 0 ? undefined : teams[0]?.name ?? "Sales" },
       scopeHistory: [{ at: shift(-2), to: "Widened from AE East to everyone who edits deals" }],
@@ -1720,7 +2443,12 @@ export function seedFor(business: Business): Seed {
     leftOut, exposure: business === "fathom" ? { page: "inbox", started: shift(-4), ends: shift(10), state: "showing" } : null,
     plan: { name: b.plan.name, seats: b.plan.seats, pricePerSeat: b.plan.pricePerSeat, monthlyTotal: b.plan.seats * b.plan.pricePerSeat, billing: b.plan.billing, renews: b.plan.renews },
     taxId: business === "meridian" ? "DE 812 345 678" : business === "halyard" ? "GB 123 4567 89" : null,
-    crm: sz.crm, setupRemaining: business === "fathom" ? ["Set up DMARC on fathomlabs.com"] : business === "halyard" ? ["Connect the CRM for two client workspaces"] : [],
+    crm: sz.crm,
+    // What set-up still owes this workspace. Fathom's second founder and its SDR were invited and
+    // never accepted, so the set-up door reads "mailbox, invites (2)" rather than one line.
+    setupRemaining: business === "fathom"
+      ? ["Set up DMARC on fathomlabs.com", "2 invitations are not accepted"]
+      : business === "halyard" ? ["Connect the CRM for two client workspaces"] : [],
     modelTraining: "off", answerTarget: { businessDays: 2 }, retention: { declinedDays: 365 },
     waterfall: { stopAtFirstVerified: true, ceilingPerRow: 12, order: providerOrder },
   }
@@ -1786,27 +2514,54 @@ export function seedFor(business: Business): Seed {
     }
   })
 
-  const periods = ["2026-Q3", "2026-Q4"]
-  const goals: Goal[] = [
-    ...users.filter((u) => u.role === "ae").map((u, i) => ({ id: `goal-u${i + 1}`, period: "2026-Q4", user: u.name, team: null, amount: 250_000 })),
-    ...teams.map((t, i) => ({ id: `goal-t${i + 1}`, period: "2026-Q4", user: null, team: t.name, amount: 1_200_000 })),
-  ]
-  const forecastSubmissions: ForecastSubmission[] = users.filter((u) => u.role === "ae").flatMap((u, ui) =>
-    ["2026-Q1", "2026-Q2", "2026-Q3"].map((p, i) => ({
+  /**
+   * A target per rep for the quarter being forecast and the two before it, so a report's period
+   * selector has a denominator in every position. The number is the size of the book: what that rep
+   * holds in Commit and Closed for the period, over the share of it they are actually at — which puts
+   * attainment between 40% and 130%, the range a quota is set in.
+   */
+  const periods = [quarterOf(TODAY), quarterBack(quarterOf(TODAY), 1), quarterBack(quarterOf(TODAY), 2)]
+  const countsTowardsGoal = (d: Deal) => d.forecast === "Commit" || d.forecast === "Closed"
+  const aeUsers = users.filter((u) => deals.some((d) => d.owner === u.name && !d.archivedAt))
+  const goals: Goal[] = []
+  periods.forEach((period, p) => {
+    const win = quarterWindow(period)
+    aeUsers.forEach((u, i) => {
+      const book = deals
+        .filter((d) => d.owner === u.name && !d.archivedAt && d.closeDate >= win.from && d.closeDate <= win.to && countsTowardsGoal(d))
+        .reduce((s, d) => s + d.amount, 0)
+      // A rep with nothing in Commit or Closed for a quarter was not carrying a number for it, so no
+      // target is written: a target with no book behind it reads as 0% and means nothing.
+      if (book === 0) return
+      const attainment = 0.4 + (((i * 7 + p * 3) % 10) / 10) * 0.9
+      goals.push({
+        id: `goal-u${p + 1}-${i + 1}`, period, user: u.name, team: null,
+        amount: Math.max(5_000, Math.round(book / attainment / 5_000) * 5_000),
+      })
+    })
+    teams.forEach((t, i) => {
+      const members = users.filter((x) => x.team === t.name).map((x) => x.name)
+      const total = goals.filter((g) => g.period === period && g.user && members.includes(g.user)).reduce((s, g) => s + g.amount, 0)
+      goals.push({ id: `goal-t${p + 1}-${i + 1}`, period, user: null, team: t.name, amount: total || 1_200_000 })
+    })
+  })
+  const submittedPeriods = [...periods].reverse()
+  const forecastSubmissions: ForecastSubmission[] = aeUsers.flatMap((u, ui) =>
+    submittedPeriods.map((p, i) => ({
       id: `fs-${ui}-${i}`, period: p, user: u.name, amount: int(r, 120_000, 420_000),
       split: { Commit: int(r, 80_000, 260_000), "Best case": int(r, 40_000, 180_000), Pipeline: int(r, 100_000, 600_000), Omitted: int(r, 0, 60_000) },
       note: pick(r, ["Two deals slipped a week; the rest is unchanged.", "Commit is down one deal: their security review moved.", "Holding the number; the biggest deal signs on Friday."]),
-      submittedAt: `${shift(-90 + i * 30)} 15:40`, actual: int(r, 100_000, 400_000),
+      submittedAt: `${shift(-90 + i * 30)} 15:40`, actual: i === submittedPeriods.length - 1 ? null : int(r, 100_000, 400_000),
     })))
-  const forecastPredictions: ForecastPrediction[] = users.filter((u) => u.role === "ae").map((u) => ({
-    period: periods[1], user: u.name, amount: int(r, 140_000, 380_000),
+  const forecastPredictions: ForecastPrediction[] = aeUsers.map((u) => ({
+    period: periods[0], user: u.name, amount: int(r, 140_000, 380_000),
     drivers: deals.filter((d) => d.owner === u.name).slice(0, 3).map((d) => d.id),
   }))
 
   const seed: Seed = {
     contacts, companies, accounts, lists, savedViews,
     sequences, sequenceSteps, enrollments, sequenceChanges, schedules, rulesets, templates, snippets,
-    replies, tasks, calls, coachingNotes, meetings,
+    replies, savedReplies, tasks, calls, coachingNotes, meetings,
     deals, dealContacts, dealActivities, dealFiles, qualEvidence, stageHistory, pipelines, fields,
     campaigns, audiences, forms, personas, signals, scoreModels,
     enrichmentJobs, importDrafts, importMappings, enrichmentRates, credits,
@@ -1814,12 +2569,12 @@ export function seedFor(business: Business): Seed {
     mailboxes, domains, users, teams, territories, permissionProfiles,
     integrations, crmFields, integrationErrors, syncRuns, setupDrafts, syncErrors,
     apiKeys, endpointCosts: ENDPOINT_COSTS, webhooks, webhookDeliveries, mcpTokens, cliDevices,
-    requests, notes, briefs, workspace, invoices,
+    requests, notes, briefs, workspace, settings: SETTINGS[business], invoices, sendPolicy: SEND_POLICY[business],
     notifications, workspaceHealth, activity, activityEvents,
     goals, forecastSubmissions, forecastPredictions,
     dealWarningThresholds: DEAL_WARNING_DEFAULTS,
     bounceGuard: { ...BOUNCE_GUARD, observedPercent: sz.bounce.rate, volume7d: sz.bounce.volume, state: guardState },
-    secondApproval: business === "fathom" ? { recipients: 400, credits: 200 } : SECOND_APPROVAL,
+    secondApproval: secondApprovalOf(business),
   }
   cache.set(business, seed)
   return seed

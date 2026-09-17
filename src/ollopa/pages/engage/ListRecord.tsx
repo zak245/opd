@@ -1,0 +1,517 @@
+// The list or segment (`R-list`): the page a group is worked from.
+//
+// A list is bought or built as a number and worked as a calendar, so the count says what it means as
+// work in the same line. Under it sit the standing arrangements — the auto-feed and the agent watch —
+// each with its own running cost and its own off switch, because a thing that keeps spending without
+// anyone touching it belongs in front of the person who owns it (rule 7). Lists owns those switches
+// and nothing else in the product carries a second copy of them.
+import { useMemo, useState } from "react"
+import { ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { href, navigate } from "@/app/router"
+import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
+import { Panel } from "../../ui/Panel"
+import { EmptyState } from "../../ui/EmptyState"
+import { SectionHeader } from "../../ui/SectionHeader"
+import { useDisclosure } from "../../ui/useDisclosure"
+import { businessById } from "../../data/businesses"
+import { CREDITS, seedFor, TODAY, type Company, type Contact, type List } from "../../data/seed"
+import type { Session } from "../../session"
+import { engage, useEngage } from "./store"
+import { agentWatch, alreadyInASequence, companyMembersOf, enrolCredits, enrichCredits, membersOf, splitForEnrol, touchEstimate } from "./facts"
+import { AddToSequencePanel } from "./AddToSequence"
+import { type Col, DataTable, Pill, ago, day, n, toast, usePersisted } from "./shared"
+
+/** The seed stores a filter field as its column name; a person reads it in words. */
+const FIELD_LABEL: Record<string, string> = {
+  stage: "Stage", title: "Title", industry: "Industry", employees: "Employees",
+  emailStatus: "Email status", inSequence: "In a sequence", lastActivity: "Last activity",
+}
+const fieldLabel = (f: string) => FIELD_LABEL[f] ?? f
+
+export function ListRecord({ session, id }: { session: Session; id?: string }) {
+  const d = useDisclosure("lists")
+  const b = businessById(session.business)
+  const seed = seedFor(session.business)
+  const { lists, sequences } = useEngage(session.business)
+  const list = lists.find((l) => l.id === id) ?? lists[0]
+
+  const [renaming, setRenaming] = useState(false)
+  const [name, setName] = useState(list?.name ?? "")
+  const [editingFilters, setEditingFilters] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [enrolling, setEnrolling] = useState(false)
+  const [selected, setSelected] = useState<string[]>([])
+  const [confirming, setConfirming] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
+  const [sort, setSort] = usePersisted<{ key: string; dir: "asc" | "desc" }>(
+    `ollopa.list.members.sort.${session.user}`, { key: "added", dir: "desc" },
+  )
+
+  if (!list) {
+    return (
+      <div className="p-10">
+        <EmptyState title="That list is gone" body="It may have been deleted. The people stay in People." action={<Button size="sm" onClick={() => navigate("/ollopa/lists")}>Back to Lists</Button>} />
+      </div>
+    )
+  }
+
+  const people = membersOf(list, session.business)
+  const companies = companyMembersOf(list, session.business)
+  const count = list.memberIds.length
+  // The same split the enrol panel will run, so the line on the page and the line in the panel agree.
+  const enrolable = splitForEnrol(people).adding
+  const credits = enrolCredits(enrolable)
+  const doubled = alreadyInASequence(enrolable).length
+  const watch = agentWatch(list, session.business)
+  const hasCampaigns = b.counts.campaigns > 0
+  const isOwner = list.owner === session.user || session.role === "admin"
+
+  const say = (msg: string) => { setStatus(msg); toast(msg) }
+
+  /* ------------------------------------------------------------------------------ the members */
+
+  const peopleColumns: Col<Contact>[] = [
+    {
+      key: "name", header: "Name", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
+      cell: (c) => (
+        <div className="min-w-0">
+          <a className="font-medium hover:underline" href={href(`/ollopa/people/${c.id}`)} onClick={(e) => e.stopPropagation()}>{c.name}</a>
+          <div className="text-xs text-muted-foreground">{c.title}</div>
+        </div>
+      ),
+    },
+    { key: "company", header: "Company", phone: true, cell: (c) => c.company, sort: (a, c) => a.company.localeCompare(c.company) },
+    {
+      key: "email", header: "Email", cell: (c) => (
+        <div className="min-w-0">
+          <div className="truncate text-xs">{c.email}</div>
+          <Pill tone={c.emailStatus === "Verified" ? "good" : c.emailStatus === "Bounced" ? "error" : "warning"}>{c.emailStatus}</Pill>
+        </div>
+      ),
+    },
+    { key: "stage", header: "Stage", phone: true, cell: (c) => <Pill tone="muted">{c.stage}</Pill> },
+    {
+      key: "sequence", header: "Sequence", cell: (c) => c.inSequence
+        ? <span className="text-xs">{c.inSequence} <Pill tone="warning">already in a sequence</Pill></span>
+        : <span className="text-muted-foreground">—</span>,
+    },
+    { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => <div><div>{day(c.addedOn)}</div><div className="text-xs text-muted-foreground">by {list.owner}</div></div> },
+    { key: "activity", header: "Last activity", className: "tabular-nums", sort: (a, c) => a.lastActivity.localeCompare(c.lastActivity), cell: (c) => ago(c.lastActivity) },
+  ]
+
+  const companyColumns: Col<Company>[] = [
+    { key: "name", header: "Company", primary: true, sort: (a, c) => a.name.localeCompare(c.name), cell: (c) => <a className="font-medium hover:underline" href={href(`/ollopa/companies/${c.id}`)} onClick={(e) => e.stopPropagation()}>{c.name}</a> },
+    { key: "industry", header: "Industry", phone: true, cell: (c) => c.industry },
+    { key: "employees", header: "Employees", className: "tabular-nums", sort: (a, c) => a.employees - c.employees, cell: (c) => n(c.employees) },
+    { key: "contacts", header: "Contacts", className: "tabular-nums", phone: true, sort: (a, c) => a.contacts - c.contacts, cell: (c) => n(c.contacts) },
+    { key: "stage", header: "Stage", cell: (c) => <Pill tone="muted">{c.stage}</Pill> },
+    { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => day(c.addedOn) },
+  ]
+
+  const removeMember = (memberId: string, label: string) => {
+    engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => m !== memberId) })
+    say(`${label} removed from ${list.name}`)
+  }
+
+  const memberMenu = (c: Contact) => [
+    { label: "View", onClick: () => navigate(`/ollopa/people/${c.id}`) },
+    { label: "Add to a sequence", onClick: () => setEnrolling(true) },
+    { label: "Call", onClick: () => say(`Call task created for ${c.name}`) },
+    { label: `Enrich · ${CREDITS.enrich} credits`, onClick: () => say(`Enriched ${c.name} · ${CREDITS.enrich} credits`) },
+    { label: "Set stage", onClick: () => say(`Stage for ${c.name}: choose one`) },
+    { label: "Assign owner", onClick: () => say(`Owner for ${c.name}: choose one`) },
+    { label: "Create a call task", onClick: () => say(`Call task created for ${c.name}`) },
+    { label: `Remove from ${list.name} · ${c.name} stays in People`, destructive: true, onClick: () => removeMember(c.id, c.name) },
+  ]
+
+  /* ----------------------------------------------------------------------------------- render */
+
+  return (
+    <DoorGroup>
+      <div className="flex min-h-full flex-col">
+        <header className="border-b px-4 pt-4 sm:px-6">
+          <a href={href("/ollopa/lists")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
+            <ArrowLeft className="size-3" aria-hidden="true" />Lists
+          </a>
+
+          <div className="mt-2 flex flex-wrap items-start gap-x-3 gap-y-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                {renaming && isOwner ? (
+                  <Input
+                    autoFocus aria-label="List name" className="h-9 w-72 text-lg font-semibold"
+                    value={name} onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { engage.patchList(session.business, list.id, { name }); setRenaming(false); say(`Renamed to ${name}`) }
+                      if (e.key === "Escape") { setName(list.name); setRenaming(false) }
+                    }}
+                    onBlur={() => { engage.patchList(session.business, list.id, { name }); setRenaming(false) }}
+                  />
+                ) : (
+                  <h2 className="truncate text-lg font-semibold">
+                    {isOwner
+                      ? <button type="button" className="rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => { setName(list.name); setRenaming(true) }}>{list.name}<span className="sr-only"> — rename</span></button>
+                      : list.name}
+                  </h2>
+                )}
+                <Pill tone="muted">{list.kind === "people" ? "People" : "Companies"}</Pill>
+                <Pill tone={list.mode === "segment" ? "good" : "muted"}>{list.mode === "segment" ? "Segment" : "Static"}</Pill>
+                {list.archived && <Pill tone="muted">Archived</Pill>}
+              </div>
+              {/* The count and what it means as work, in one line and as plain text. */}
+              <p className="mt-1 text-sm">
+                {n(count)} {list.kind === "people" ? "people" : "companies"} · {touchEstimate(count, session.business)}
+                {list.newThisWeek > 0 && <> · +{n(list.newThisWeek)} this week</>}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {list.owner} · {list.visibility === "everyone" ? "Everyone can see it" : "Only you can see it"} ·{" "}
+                {list.mode === "segment" && list.lastRefreshed ? `last refreshed ${ago(list.lastRefreshed)}` : `updated ${ago(list.updated)}`}
+                {d.level("detail.new-since") === 1 && list.newThisWeek > 0 && <> · {n(list.newThisWeek)} new since your last visit</>}
+              </p>
+            </div>
+
+            <div className="ml-auto flex flex-wrap items-center gap-2" data-print-hide>
+              {list.kind === "people"
+                ? <Button size="sm" onClick={() => setEnrolling(true)}>Add to sequence</Button>
+                : <Button size="sm" onClick={() => { say(`People at the ${n(count)} companies in ${list.name}`); navigate("/ollopa/people") }}>Find people at these companies</Button>}
+              {hasCampaigns && <Button size="sm" variant="outline" onClick={() => say(`${list.name}: pick a campaign`)}>Add to campaign</Button>}
+              {list.mode === "static" && isOwner && <Button size="sm" variant="outline" onClick={() => setAdding(true)}>{list.kind === "people" ? "Add people" : "Add companies"}</Button>}
+              {list.mode === "segment" && (
+                <Button size="sm" variant="outline" onClick={() => { engage.patchList(session.business, list.id, { lastRefreshed: TODAY }); say(`${list.name} refreshed · ${n(count)} match now`) }}>Refresh now</Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => say(`Exported ${list.name} · ${n(count)} rows, in the order shown`)}>Export CSV</Button>
+              <Button size="sm" variant="ghost" onClick={() => say("Link to this list copied")}>Copy link</Button>
+              {isOwner && (confirming ? (
+                <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
+                  <span className="max-w-[26rem] text-xs text-destructive">
+                    The {n(count)} {list.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
+                  </span>
+                  <Button size="sm" variant="destructive" onClick={() => { engage.deleteList(session.business, list.id); navigate("/ollopa/lists") }}>Delete list</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Keep it</Button>
+                </span>
+              ) : (
+                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirming(true)}>Delete list</Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Decision-critical, never behind a door: what the next click spends, and who it doubles. */}
+          {list.kind === "people" && (
+            <p className="mt-3 text-sm tabular-nums" role="status">
+              {n(enrolable.length)} can be added · {n(credits)} net-new emails = {n(credits)} credits · balance {n(seed.credits.balance)}
+              {doubled > 0 && <span className="font-medium text-amber-700 dark:text-amber-400"> · {n(doubled)} already in another sequence</span>}
+            </p>
+          )}
+
+          {/* The standing arrangements: one line each, each with its own cost and its own off switch. */}
+          <div className="mt-2 space-y-1">
+            {list.feeds.filter((f) => f.auto).map((f) => (
+              <p key={f.name} className="flex flex-wrap items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                New matches added to {f.name} automatically
+                <Button
+                  size="sm" variant="outline" className="h-6 px-2 text-xs"
+                  onClick={() => {
+                    engage.patchList(session.business, list.id, { feeds: list.feeds.map((x) => (x.name === f.name ? { ...x, auto: false } : x)) })
+                    say(`New matches are no longer added to ${f.name}`)
+                  }}
+                >Turn off</Button>
+              </p>
+            ))}
+            {watch && (
+              <p className="flex flex-wrap items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                {watch.agent} researches new matches · about {watch.creditsEach} credits each · about {n(watch.perWeek)} credits a week
+                <Button
+                  size="sm" variant="outline" className="h-6 px-2 text-xs"
+                  onClick={() => { engage.patchList(session.business, list.id, { source: "manual" }); say(`${watch.agent} no longer watches ${list.name}`) }}
+                >Turn off</Button>
+              </p>
+            )}
+          </div>
+
+          {/* A segment is its filters: they are the object, so they are on the page (rule 6). */}
+          {list.mode === "segment" && (
+            <div className="mt-3">
+              {editingFilters ? (
+                <div className="rounded-md border p-3">
+                  <h3 className="text-sm font-medium">Filters</h3>
+                  <div className="mt-2 space-y-2">
+                    {list.filters.map((f, i) => (
+                      <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="rounded border px-2 py-1">{fieldLabel(f.field)}</span>
+                        <span className="text-muted-foreground">{f.op}</span>
+                        <Input
+                          aria-label={`${fieldLabel(f.field)} ${f.op}`} className="h-8 w-48" defaultValue={f.value}
+                          onBlur={(e) => engage.patchList(session.business, list.id, {
+                            filters: list.filters.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)),
+                          })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-sm tabular-nums">{n(count)} match right now</p>
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" onClick={() => { setEditingFilters(false); say(`Filters saved · ${n(count)} match`) }}>Save filters</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingFilters(false)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {list.filters.map((f, i) => <span key={i} className="rounded-full border px-2 py-0.5 text-xs">{fieldLabel(f.field)} {f.op} {f.value}</span>)}
+                  {list.suppressions.map((s) => <span key={s} className="rounded-full border border-dashed px-2 py-0.5 text-xs text-muted-foreground">excludes {s}</span>)}
+                  {isOwner && <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditingFilters(true)}>Edit filters</Button>}
+                </div>
+              )}
+              <div className="mt-2 rounded-lg border">
+                <Door id="list.refresh" label="Refresh and alerts" defaultOpen={d.level("detail.refresh") === 1}>
+                  <div className="grid gap-3 py-1 sm:grid-cols-3">
+                    <div>
+                      <Label htmlFor="refresh-when" className="text-xs">Refreshes</Label>
+                      <Select value={list.alert === "off" ? "daily" : list.alert} onValueChange={(v) => { engage.patchList(session.business, list.id, { alert: v as List["alert"] }); say(`${list.name} refreshes ${v}`) }}>
+                        <SelectTrigger id="refresh-when" className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Every day</SelectItem>
+                          <SelectItem value="weekly">Every week</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-foreground">Last refreshed</div>
+                      {list.lastRefreshed ? `${day(list.lastRefreshed)} · ${ago(list.lastRefreshed)}` : "Never"}
+                    </div>
+                    <label className="flex items-end gap-2 pb-2 text-sm">
+                      <Checkbox
+                        checked={list.alert !== "off"}
+                        onCheckedChange={(v) => { engage.patchList(session.business, list.id, { alert: v === true ? "weekly" : "off" }); say(v === true ? "You will be emailed when this segment gains matches" : "Alerts off") }}
+                      />
+                      Email me when it gains matches
+                    </label>
+                  </div>
+                </Door>
+              </div>
+            </div>
+          )}
+
+          <p className="sr-only" role="status" aria-live="polite">{status}</p>
+        </header>
+
+        {/* --------------------------------------------------------------------------- members */}
+        <div className="min-h-0 flex-1 px-4 pt-4 sm:px-6">
+          <div className="flex items-center justify-between">
+            <SectionHeader title={list.kind === "people" ? "People in this list" : "Companies in this list"} count={count} />
+            <ExpandAll />
+          </div>
+
+          {list.kind === "people" ? (
+            <DataTable<Contact>
+              rows={people}
+              rowKey={(c) => c.id}
+              columns={peopleColumns}
+              sortKey={sort.key}
+              sortDir={sort.dir}
+              onSort={(k, dir) => setSort({ key: k, dir })}
+              rowActions={[{ label: () => "Add to sequence", onClick: () => setEnrolling(true) }]}
+              menu={memberMenu}
+              menuLabel={(c) => c.name}
+              onOpen={(c) => navigate(`/ollopa/people/${c.id}`)}
+              selection={{
+                selected, onChange: setSelected,
+                bar: (ids) => (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => setEnrolling(true)}>Add to sequence</Button>
+                    <Button size="sm" variant="outline" onClick={() => say(`Exported ${n(ids.length)} rows`)}>Export CSV</Button>
+                    <Button size="sm" variant="outline" onClick={() => say(`Enriched ${n(ids.length)} people · ${n(enrichCredits(ids.length))} credits`)}>
+                      Enrich {n(ids.length)} · {n(enrichCredits(ids.length))} credits
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => say(`Stage set for ${n(ids.length)} people`)}>Set stage</Button>
+                    <Button size="sm" variant="outline" onClick={() => say(`Owner assigned for ${n(ids.length)} people`)}>Assign owner</Button>
+                    <Button size="sm" variant="outline" onClick={() => say(`${n(ids.length)} call tasks created`)}>Create call tasks</Button>
+                    <Button size="sm" variant="outline" onClick={() => say(`Custom field set for ${n(ids.length)} people`)}>Set a custom field</Button>
+                    <Button size="sm" variant="outline" onClick={() => say("No duplicates found in this list")}>Merge duplicates</Button>
+                    <Button
+                      size="sm" variant="ghost" className="text-destructive"
+                      onClick={() => {
+                        engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => !ids.includes(m)) })
+                        setSelected([]); say(`${n(ids.length)} removed from ${list.name} · they stay in People`)
+                      }}
+                    >Remove {n(ids.length)} · they stay in People</Button>
+                  </>
+                ),
+              }}
+              empty={
+                list.mode === "segment"
+                  ? <EmptyState title="No one matches these filters right now" body="Widen a filter or wait for the next refresh." action={<Button size="sm" onClick={() => setEditingFilters(true)}>Edit filters</Button>} />
+                  : <EmptyState title="Nobody in this list yet" body="Add people from People, from a search, or from a CSV." action={<Button size="sm" onClick={() => setAdding(true)}>Add people</Button>} />
+              }
+            />
+          ) : (
+            <DataTable<Company>
+              rows={companies}
+              rowKey={(c) => c.id}
+              columns={companyColumns}
+              sortKey={sort.key}
+              sortDir={sort.dir}
+              onSort={(k, dir) => setSort({ key: k, dir })}
+              rowActions={[{ label: () => "Find people here", onClick: (c) => { say(`People at ${c.name}`); navigate("/ollopa/people") } }]}
+              menu={(c) => [
+                { label: "Open the company", onClick: () => navigate(`/ollopa/companies/${c.id}`) },
+                { label: "Find people at this company", onClick: () => navigate("/ollopa/people") },
+                { label: `Remove from ${list.name} · ${c.name} stays in Companies`, destructive: true, onClick: () => removeMember(c.id, c.name) },
+              ]}
+              menuLabel={(c) => c.name}
+              onOpen={(c) => navigate(`/ollopa/companies/${c.id}`)}
+              selection={{
+                selected, onChange: setSelected,
+                bar: (ids) => (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => say(`Exported ${n(ids.length)} rows`)}>Export CSV</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
+                      engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => !ids.includes(m)) })
+                      setSelected([]); say(`${n(ids.length)} removed from ${list.name} · they stay in Companies`)
+                    }}>Remove {n(ids.length)} · they stay in Companies</Button>
+                  </>
+                ),
+              }}
+              empty={<EmptyState title="No companies in this list yet" body="Add them from Companies or from a search." />}
+            />
+          )}
+
+          <div className="mt-4 rounded-lg border">
+            <Door id="list.history" label="History" count={list.history.length} defaultOpen={d.level("detail.history") === 1}>
+              <ul className="space-y-1 py-1">
+                {list.history.map((h, i) => (
+                  <li key={i} className="grid grid-cols-[6rem_8rem_1fr] gap-2 text-xs">
+                    <span className="tabular-nums text-muted-foreground">{day(h.when)}</span>
+                    <span className="text-muted-foreground">{h.who}</span>
+                    <span>{h.what}</span>
+                  </li>
+                ))}
+              </ul>
+            </Door>
+          </div>
+
+          <p className="mt-4 border-t py-4 text-xs text-muted-foreground" data-print-hide>
+            Deleting this list keeps the {n(count)} {list.kind === "people" ? "people in People" : "companies in Companies"}. Running sequences keep their contacts.
+          </p>
+        </div>
+
+        {/* ---------------------------------------------------------------------- the two panels */}
+        <AddMembersPanel
+          open={adding}
+          onOpenChange={setAdding}
+          list={list}
+          session={session}
+          onAdd={(ids, capPerCompany) => {
+            engage.patchList(session.business, list.id, { memberIds: [...new Set([...list.memberIds, ...ids])] })
+            say(`Added ${n(ids.length)} to ${list.name}${capPerCompany ? ` · at most ${capPerCompany} per company` : ""}`)
+          }}
+        />
+
+        {enrolling && (
+          <AddToSequencePanel
+            open
+            onOpenChange={setEnrolling}
+            business={session.business}
+            user={session.user}
+            people={selected.length > 0 ? people.filter((c) => selected.includes(c.id)) : people}
+            sequences={sequences.filter((s) => s.status !== "Draft")}
+            from={list.name}
+          />
+        )}
+      </div>
+    </DoorGroup>
+  )
+}
+
+/** `X-listadd`: the People table over the list, so the list it is filling stays in view. */
+function AddMembersPanel({ open, onOpenChange, list, session, onAdd }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  list: List
+  session: Session
+  onAdd: (ids: string[], capPerCompany: number | null) => void
+}) {
+  const seed = seedFor(session.business)
+  const [q, setQ] = useState("")
+  const [stage, setStage] = useState("all")
+  const [cap, setCap] = useState("all")
+  const [picked, setPicked] = useState<string[]>([])
+
+  const pool = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    const rows = (list.kind === "people" ? seed.contacts : seed.companies)
+      .filter((r) => !list.memberIds.includes(r.id))
+      .filter((r) => (needle ? `${r.name} ${"company" in r ? r.company : r.industry}`.toLowerCase().includes(needle) : true))
+      .filter((r) => (stage === "all" ? true : r.stage === stage))
+    if (cap === "all" || list.kind !== "people") return rows.slice(0, 60)
+    const perCompany = new Map<string, number>()
+    const limit = Number(cap)
+    return rows.filter((r) => {
+      const key = "companyId" in r ? r.companyId : r.id
+      const at = perCompany.get(key) ?? 0
+      if (at >= limit) return false
+      perCompany.set(key, at + 1)
+      return true
+    }).slice(0, 60)
+  }, [seed, list, q, stage, cap])
+
+  return (
+    <Panel
+      id="list-add"
+      title={list.kind === "people" ? `Add people to ${list.name}` : `Add companies to ${list.name}`}
+      open={open}
+      onOpenChange={onOpenChange}
+      footer={
+        <Button className="w-full" disabled={picked.length === 0} onClick={() => { onAdd(picked, cap === "all" ? null : Number(cap)); setPicked([]); onOpenChange(false) }}>
+          Add {n(picked.length)} to {list.name}
+        </Button>
+      }
+    >
+      <div className="flex flex-wrap gap-2">
+        <Input aria-label="Search people" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-40" />
+        <Select value={stage} onValueChange={setStage}>
+          <SelectTrigger className="w-36" aria-label="Stage"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Stage: all</SelectItem>
+            {[...new Set((list.kind === "people" ? seed.contacts : seed.companies).map((r) => r.stage))].map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {list.kind === "people" && (
+          <Select value={cap} onValueChange={setCap}>
+            <SelectTrigger className="w-44" aria-label="Max people per company"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any number per company</SelectItem>
+              <SelectItem value="1">1 per company</SelectItem>
+              <SelectItem value="3">3 per company</SelectItem>
+              <SelectItem value="5">5 per company</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      <ul className="mt-3 divide-y border-t">
+        {pool.map((r) => (
+          <li key={r.id}>
+            <label className="flex cursor-pointer items-center gap-2 py-2">
+              <Checkbox
+                checked={picked.includes(r.id)}
+                onCheckedChange={() => setPicked((p) => (p.includes(r.id) ? p.filter((x) => x !== r.id) : [...p, r.id]))}
+              />
+              <span className="min-w-0">
+                <span className="block text-sm">{r.name}</span>
+                <span className="block text-xs text-muted-foreground">{"company" in r ? `${r.title} · ${r.company}` : `${r.industry} · ${n(r.employees)} people`}</span>
+              </span>
+            </label>
+          </li>
+        ))}
+        {pool.length === 0 && <li className="py-6 text-center text-sm text-muted-foreground">Nothing matches. Clear the search or a filter.</li>}
+      </ul>
+    </Panel>
+  )
+}

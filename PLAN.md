@@ -63,6 +63,7 @@ What we are **not** building: another component library, a full design system, o
 | Contact activity | The contact record's activity is the record's main timeline with its filter chips, and `X-calllog` opens from a call item in it. There is no activity door on a contact. Resolves the SDR walk (delete the door) against the leader walk (keep it and let the spec match the map): the SDR walk changes the map, so the spec follows the map rather than the other way round. The company record keeps its own activity door, because a company's timeline is several people's | Decided 15 Sep 2026; rule 1 — what the record exists to show is not a disclosure |
 | Founder-led omissions | The Founder-led outbound profile leaves out six pages: Inbox, Campaigns, Accounts, Reports, Requests and Workflows, each with a named signal — first reply, first audience or campaign, first deal reaching Closed won, first full week over ten sends, second upgrade request in a week, first routing exception. Agency leaves out Workflows too. Resolves this table's own map-decisions row against IA-MAP §6.4a and spec 16 | Decided 15 Sep 2026; the declared sidebar, and teaching by exposure |
 | Working mode | From 15 Sep 2026 the owner accepts recommendations by default; the walk and the build run on Opus agents with the rules as the judge, and the owner sees progress and results rather than per-item questions | Owner's instruction: go fast, accept all changes needed to build the final thing |
+| Lesson contract | A lesson renders the real page component on a stage inside a `LessonProvider`; the page branches on `ruleOn(lesson, n)` and tags things with `data-item` and places with `data-container`, so the lesson view finds moves by comparing the DOM. A case folder is data (`case.ts`, `steps.ts`, `scores.ts`, README, screens); it holds no page code. Five cases in wave 3: Settings, People, Deal record, Connect, Agents, each with the step order its spec section 7 fixes | Decided 17 Sep 2026 by recommendation; one implementation per page, never a "bad" and a "good" one |
 | Settings case | Step 0 is a faithful parody of Apollo's settings (separate settings shell, vague labels, five levels, renamed pages, duplicates, split dependent settings, price and cancel below the fold, no delete). Six steps: rules 7, 1, 2, 4, 5, 8. Rule 6 is a note, not a step | Every problem in step 0 is documented in the Apollo source memo |
 
 ---
@@ -74,13 +75,13 @@ Every case folder has the same shape. This is what makes it a library and lets s
 ```
 cases/<screen-name>/
   README.md        the task, the roles, the common mistake, the rules applied, the evidence
-  model.ts         one screen model, with a layout per step (no separate "bad" and "good" code)
+  case.ts          id, title, summary, the page node the stage renders, the seat, the spec
   steps.ts         the steps: rule, title, what moved, why, evidence quotes, doors to open
   scores.ts        the nine rubric scores per step
   screens/         screenshots of step 0 and the last step
 ```
 
-One model, rendered with N rules on, is step N. The two versions can never drift apart because there is only one.
+The model is the page itself, in `src/ollopa/pages/<folder>/`: the same component the product routes to, reading `useLesson()` and rendering a layout per step from the same rows, seed and usage numbers. One model, rendered with N rules on, is step N. The two versions can never drift apart because there is only one. The contract between pages and the lesson view is `src/learn/context.ts` and `BUILD-WAVE3.md`.
 
 ---
 

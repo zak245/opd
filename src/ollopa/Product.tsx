@@ -9,11 +9,9 @@ import { WorkspaceSetup } from "./pages/setup/WorkspaceSetup"
 import { AppShell } from "./shell/AppShell"
 import { NoAccess } from "./shell/NoAccess"
 import { Placeholder } from "./shell/Placeholder"
-import { Home } from "./pages/Home"
-import { People, Companies, Sequences, Tasks, InboxPage, Lists } from "./pages/tables"
 import { DealRecord } from "./pages/deal/DealRecord"
 import { matchRoute, nodeById, type MapNode } from "./map"
-import { navItem } from "./nav"
+import { navItem, seatCarries } from "./nav"
 import { seedFor } from "./data/seed"
 import type { Business, Page } from "./usage/model"
 
@@ -26,6 +24,18 @@ function recordName(node: MapNode, id: string, business: Business): string | nul
     case "R-deal": return seed.deals.find((d) => d.id === id)?.name ?? null
     case "R-sequence": return seed.sequences.find((s) => s.id === id)?.name ?? null
     case "X-thread": return seed.replies.find((r) => r.id === id)?.contact ?? null
+    case "R-list": return seed.lists.find((l) => l.id === id)?.name ?? null
+    case "R-template": return seed.templates.find((t) => t.id === id)?.name ?? seed.snippets.find((t) => t.id === id)?.name ?? null
+    case "R-campaign": return seed.campaigns.find((c) => c.id === id)?.name ?? null
+    case "R-audience": return seed.audiences.find((a) => a.id === id)?.name ?? null
+    case "R-form": return seed.forms.find((f) => f.id === id)?.name ?? null
+    case "R-workflow": return seed.workflows.find((w) => w.id === id)?.name ?? null
+    case "R-integration": return seed.integrations.find((i) => i.id === id)?.name ?? null
+    case "R-job": case "R-enrichment-job": return seed.enrichmentJobs.find((j) => j.id === id)?.sourceLabel ?? null
+    case "R-request": return seed.requests.find((r) => r.id === id)?.outcome ?? null
+    case "R-agent-run": return seed.agentEvents.find((e) => e.id === id)?.summary ?? null
+    // The wizard's id is the integration kind ("salesforce") or an existing integration.
+    case "W-connect": return seed.integrations.find((i) => i.id === id)?.name ?? (id === "new" ? null : id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, " "))
     default: return null
   }
 }
@@ -58,20 +68,16 @@ for (const mod of Object.values(import.meta.glob<{ nodes?: Record<string, PageCo
 function bodyFor(node: MapNode, session: Session, id: string | undefined) {
   const Registered = registered[node.id]
   if (Registered) return <Registered session={session} id={id} />
-  switch (node.id) {
-    case "P-home": return <Home session={session} />
-    case "P-people": return <People session={session} />
-    case "P-companies": return <Companies session={session} />
-    case "P-sequences": return <Sequences session={session} />
-    case "P-tasks": return <Tasks session={session} />
-    case "P-inbox": return <InboxPage session={session} />
-    case "P-lists": return <Lists session={session} />
-    case "R-deal": return <DealRecord session={session} dealId={id} />
-    default: {
-      const title = id ? `${recordName(node, id, session.business) ?? id} · ${node.name}` : node.name
-      return <Placeholder session={session} page={node.page} title={title} />
-    }
-  }
+  if (node.id === "R-deal") return <DealRecord session={session} dealId={id} />
+  const title = id ? `${recordName(node, id, session.business) ?? id} · ${node.name}` : node.name
+  return <Placeholder session={session} page={node.page} title={title} />
+}
+
+/** A page body by node id, for the lesson stage: the same component the product routes to. */
+export function PageBody({ nodeId, session, id }: { nodeId: string; session: Session; id?: string }) {
+  const node = nodeById(nodeId)
+  if (!node) return <Placeholder session={session} page="home" title={nodeId} />
+  return bodyFor(node, session, id)
 }
 
 export function Product() {
@@ -92,13 +98,19 @@ export function Product() {
   // The h1 equals the sidebar label for a page; a record reads "{record} · {page}"; a settings area,
   // a wizard or a surface carries its own name, because that is what the person asked for.
   const pageLabel = navItem(page)?.label ?? node.name
-  const title = id
+  const title = id && !(node.type === "wizard" && id === "new")
     ? `${recordName(node, id, session.business) ?? id} · ${pageLabel}`
     : node.type === "page"
       ? pageLabel
       : node.name
 
+  // The map's seat column decides, with two additions. A seat overlay (nav.ts) may carry a page the
+  // map's row does not name for that role: Fathom's founder holds Inbox and Tasks. And a settings
+  // area is never refused outright: the Settings page renders what the seat holds and closes with
+  // the sentence naming the admin (spec 14 §3.8), so it decides for itself.
   const held = node.seats.includes(session.role)
+    || seatCarries(page, session.business, session.role)
+    || (node.type === "settings area" && seatCarries("settings", session.business, session.role))
 
   return (
     <AppShell session={session} page={page} title={title}>

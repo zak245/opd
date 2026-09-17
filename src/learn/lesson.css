@@ -1,0 +1,109 @@
+/* The lesson chrome. Everything here is the product's theme; two extra colours exist because a
+   teaching mark has to be told apart from the product's own greys: one for "here it is now", one for
+   "here is where it was". Both follow the light and dark themes. */
+
+.lesson-root {
+  --lesson-k: 1;
+  --lesson-accent: oklch(0.52 0.14 250);
+  --lesson-accent-soft: oklch(0.94 0.035 250);
+  --lesson-ghost: oklch(0.55 0.12 62);
+  --lesson-ghost-soft: oklch(0.96 0.03 75);
+}
+
+.dark .lesson-root {
+  --lesson-accent: oklch(0.76 0.12 250);
+  --lesson-accent-soft: oklch(0.33 0.07 255);
+  --lesson-ghost: oklch(0.79 0.1 70);
+  --lesson-ghost-soft: oklch(0.31 0.05 70);
+}
+
+.lesson-slow { --lesson-k: 2; }
+
+/* The stage holds the real page. `contain: paint` makes it the containing block for the product's
+   own fixed chrome (the phone bottom bar), so the product stays inside its frame. */
+.lesson-stage {
+  position: relative;
+  contain: paint;
+}
+.lesson-stage .h-screen { height: 100% !important; }
+
+/* where it is now */
+@keyframes lesson-glow {
+  0% { box-shadow: 0 0 0 3px var(--lesson-accent); background: var(--lesson-accent-soft); }
+  60% { box-shadow: 0 0 0 3px var(--lesson-accent-soft); background: var(--lesson-accent-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; background: transparent; }
+}
+
+.lesson-moved {
+  border-radius: 5px;
+  animation: lesson-glow calc(3s * var(--lesson-k, 1)) ease-out;
+}
+
+.lesson-moved-stay {
+  animation: none;
+  background: var(--lesson-accent-soft);
+  box-shadow: 0 0 0 2px var(--lesson-accent-soft);
+}
+
+/* where it was: the thing itself, faded and hatched, in the flow at the place it left */
+.lesson-ghost {
+  margin: 0.3rem 0;
+  border: 1.5px dashed var(--lesson-ghost);
+  border-radius: 5px;
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--lesson-ghost-soft) 6px 7px);
+  overflow: hidden;
+}
+
+.lesson-ghost-body {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+  pointer-events: none;
+  user-select: none;
+}
+
+.lesson-ghost-caption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border-top: 1px dashed var(--lesson-ghost);
+  color: var(--lesson-ghost);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.lesson-ghost-button {
+  margin-left: auto;
+  flex: none;
+  border: 1px solid var(--lesson-ghost);
+  border-radius: 4px;
+  padding: 0.05rem 0.45rem;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--lesson-ghost);
+  background: var(--background);
+  cursor: pointer;
+}
+.lesson-ghost-button:hover { background: var(--lesson-ghost-soft); }
+.lesson-ghost-button:focus-visible { outline: 2px solid var(--lesson-accent); outline-offset: 2px; }
+
+/* what a place lost */
+.lesson-left {
+  margin: 0.15rem 0.5rem;
+  padding: 0 0.4rem;
+  display: inline-block;
+  border: 1px dashed var(--lesson-ghost);
+  border-radius: 4px;
+  background: var(--lesson-ghost-soft);
+  color: var(--lesson-ghost);
+  font-size: 0.68rem;
+  line-height: 1.6;
+}
+
+.lesson-fade { transition: opacity 0.55s; opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-moved { animation: none; background: var(--lesson-accent-soft); box-shadow: 0 0 0 2px var(--lesson-accent-soft); }
+  .lesson-fade { transition: none; }
+}

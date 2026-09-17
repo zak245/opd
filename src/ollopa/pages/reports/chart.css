@@ -1,0 +1,36 @@
+/* The one chart on a report, and the only colour on this page that is not ink.
+ *
+ * Four categorical slots in a fixed order, never cycled: a fifth series folds into the table instead.
+ * Both columns were validated against this app's own surfaces with the data-viz validator — light on
+ * #ffffff, dark on the app's dark background — and pass the lightness band, the chroma floor, the
+ * adjacent-pair CVD separation and the normal-vision floor in both modes. In light mode aqua and
+ * yellow sit under 3:1 against white, so the chart ships its table twin (the "Table" toggle above it)
+ * and the legend carries every series by name: colour is never the only channel. */
+.ollopa-viz {
+  --viz-surface: #ffffff;
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+}
+
+.dark .ollopa-viz {
+  --viz-surface: #0a0a0a;
+  --viz-grid: #2c2c2a;
+  --viz-axis: #383835;
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+}
+
+/* Print: the chart is ink on paper, and every door is already open by then. */
+@media print {
+  [data-print-hide] { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ollopa-viz * { transition: none !important; }
+}

@@ -1,0 +1,587 @@
+// The campaign record (`R-campaign`), with its four panels: the pre-send checks (`X-qa`), the
+// schedule (`X-schedule`), the test send (`X-sendtest`) and the recipients (`X-recipients`).
+//
+// Results first, because that is what the reader came for; then the audience with its six suppression
+// counts and its mode; then the content with both previews side by side, because a marketer compares
+// them and a comparison across a menu is the split rule 5 forbids; then the schedule or the trigger,
+// with the QA line directly above the button that sends. The QA line never disables the button: a send
+// is the sender's decision, and the page's job is to make sure nobody makes it blind.
+import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
+import { href, navigate, useRoute } from "@/app/router"
+import { toast } from "../../templates/TablePage"
+import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
+import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
+import { Panel } from "../../ui/Panel"
+import { EmptyState } from "../../ui/EmptyState"
+import { useDisclosure } from "../../ui/useDisclosure"
+import { businessById } from "../../data/businesses"
+import { BOUNCE_GUARD, SECOND_APPROVAL, TODAY, seedFor, type Audience, type Campaign } from "../../data/seed"
+import type { Session } from "../../session"
+import { StatusBadge } from "./CampaignsPage"
+import { netSize, preSendChecks, qaLine, suppressionCounts } from "./derive"
+import { ago, day, num, pct } from "./format"
+import { patchRow, removeRow, useMarketing } from "./store"
+
+/* ------------------------------------------------------------------------------- the funnel */
+
+function Funnel({ c }: { c: Campaign }) {
+  const steps = [
+    { label: "Sent", n: c.sent, of: c.sent },
+    { label: "Delivered", n: c.delivered, of: c.sent },
+    { label: "Opened", n: c.opened, of: c.delivered },
+    { label: "Clicked", n: c.clicked, of: c.delivered },
+    { label: "Replied", n: c.replied, of: c.delivered },
+    { label: "Converted", n: c.converted, of: c.delivered },
+  ]
+  return (
+    <div>
+      <ol className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-6">
+        {steps.map((s) => (
+          <li key={s.label}>
+            <div className="text-xs text-muted-foreground">{s.label}</div>
+            <div className="text-lg font-semibold tabular-nums">{num(s.n)}</div>
+            <div className="text-xs tabular-nums text-muted-foreground">{s.label === "Sent" ? c.goal : pct(s.n, s.of)}</div>
+          </li>
+        ))}
+      </ol>
+      {/* Bounced and unsubscribed are the cost of the send and sit on the same line as the rest. */}
+      <p className="pt-3 text-sm">
+        <span className={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? "font-medium text-amber-700 dark:text-amber-400" : ""}>
+          {num(c.bounced)} bounced · {pct(c.bounced, c.sent)}
+        </span>
+        <span className="text-muted-foreground"> (warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%)</span>
+        {" · "}
+        <span>{num(c.unsubscribed)} unsubscribed · {pct(c.unsubscribed, c.delivered)}</span>
+      </p>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------------------ the two previews */
+
+function Previews({ c }: { c: Campaign }) {
+  const body = (
+    <>
+      <p className="text-[11px] text-muted-foreground">{c.fromName} &lt;{c.fromMailbox}&gt;</p>
+      <p className="font-medium">{c.subject || "No subject yet"}</p>
+      <p className="text-[11px] text-muted-foreground">{c.previewText || "No preview text yet"}</p>
+      <p className="pt-2">Hi {"{{first_name}}"},</p>
+      <p className="pt-1">{c.kind === "Lifecycle" ? "You are a week into your trial. Here is the one thing most teams set up next." : "Here is what changed this quarter, in two minutes and one number."}</p>
+      <p className="pt-2 text-[11px] text-muted-foreground">Unsubscribe · {c.fromMailbox}</p>
+    </>
+  )
+  return (
+    <div className="flex flex-wrap items-start gap-4">
+      <figure className="min-w-0 flex-1">
+        <figcaption className="pb-1 text-xs text-muted-foreground">Desktop</figcaption>
+        <div className="min-h-40 rounded-md border p-3 text-sm">{body}</div>
+      </figure>
+      <figure>
+        <figcaption className="pb-1 text-xs text-muted-foreground">Phone, 400 px</figcaption>
+        <div className="min-h-40 w-[200px] rounded-md border p-2 text-xs">{body}</div>
+      </figure>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------------------------- the page */
+
+export function CampaignRecord({ session, id }: { session: Session; id?: string }) {
+  const b = businessById(session.business)
+  const seed = seedFor(session.business)
+  const rows = useMarketing(session.business)
+  const d = useDisclosure("campaigns")
+  const route = useRoute()
+  const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
+
+  const c = rows.campaigns.find((x) => x.id === id)
+  const [qaOpen, setQaOpen] = useState(false)
+  const [testOpen, setTestOpen] = useState(route.query.get("open") === "test")
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [note, setNote] = useState("")
+  const [testTo, setTestTo] = useState(`${session.user.split(" ")[0].toLowerCase()}@${b.id === "meridian" ? "meridian.io" : `${b.id}.com`}`)
+  const [sendDate, setSendDate] = useState(c?.sendAt ?? TODAY)
+  const [sendTime, setSendTime] = useState("09:00")
+  const [timezone, setTimezone] = useState(b.timezone)
+  const [speed, setSpeed] = useState("As fast as the mailbox allows")
+
+  if (!c) {
+    return (
+      <div className="p-10">
+        <EmptyState title="That campaign is not here" body="It may have been deleted, or the link may be old." action={<Button size="sm" onClick={() => navigate("/ollopa/campaigns")}>Back to Campaigns</Button>} />
+      </div>
+    )
+  }
+
+  const audience: Audience | undefined = rows.audiences.find((a) => a.id === c.audienceId)
+  const recipients = audience ? netSize(audience) : c.audienceSize
+  const policy = seed.sendPolicy
+  const checks = preSendChecks(c, audience, seed, seed.domains[0], policy)
+  const line = qaLine(c, checks)
+  const failures = checks.filter((k) => k.state === "fail")
+  const at = (itemId: string) => d.level(itemId) === 1
+  const isOwner = c.owner === session.user || session.role === "admin"
+  const awaiting = c.activity[0]?.what.startsWith("Approval requested")
+  const needsSecond = recipients >= SECOND_APPROVAL.recipients
+
+  const patch = (p: Partial<Campaign>) => patchRow(session.business, "campaigns", c.id, p)
+  const log = (what: string) => patch({ activity: [{ at: TODAY, by: session.user, what }, ...c.activity] })
+
+  const pause = () => { patch({ status: "Paused", pausedBy: session.user }); log("Paused"); toast(`${c.name} paused. The send time is kept.`) }
+  const resume = () => {
+    const passed = c.sendAt !== null && c.sendAt < TODAY
+    patch({ status: c.kind === "Lifecycle" ? "Running" : passed ? "Draft" : "Scheduled", pausedBy: null })
+    toast(passed ? "Resumed as a draft: the kept time has passed, so choose a new one." : `${c.name} resumed.`)
+  }
+
+  const sendConsequence = consequenceText({
+    sends: recipients,
+    to: audience ? audience.name : "the audience at send time",
+    from: c.fromMailbox,
+    changes: `Sends on ${day(sendDate)} at ${sendTime} ${timezone}`,
+  })
+
+  /* -------------------------------------------------------------------------------- the header */
+
+  const fields: RecordField[] = [
+    { key: "kind", label: "Kind", value: c.kind },
+    { key: "status", label: "Status", value: <StatusBadge c={c} /> },
+    { key: "owner", label: "Owner", value: c.owner, under: session.role === "admin" ? undefined : `${admin} can change the owner` },
+    { key: "audience", label: "Audience", value: audience ? <a className="underline" href={href(`/ollopa/audiences/${audience.id}`)}>{audience.name}</a> : `Audience removed; ${num(c.audienceSize)} people at send time`, under: `${num(recipients)} after suppressions` },
+    { key: "goal", label: "Goal", value: c.goal },
+    c.kind === "Lifecycle"
+      ? { key: "trigger", label: "Trigger", value: c.trigger ?? "—", under: "Measured on enrolment over the period", level: at("camp.detail.trigger") ? 1 : 2 }
+      : { key: "send", label: "Send", value: c.status === "Scheduled" ? `Scheduled ${day(c.sendAt)}` : c.sendAt ? `Sent ${day(c.sendAt)}` : "Not scheduled" },
+    { key: "from", label: "From", value: `${c.fromName} · ${c.fromMailbox}`, level: at("camp.list.from") ? 1 : 2 },
+  ]
+
+  /* --------------------------------------------------------------------------------- the doors */
+
+  const doors: RecordDoor[] = []
+
+  if (c.sendsByDay.length > 0) {
+    const peak = Math.max(...c.sendsByDay.map((s) => s.sent))
+    doors.push({
+      id: "campaign.sends-by-day", label: "Sends by day", count: c.sendsByDay.length, openByDefault: at("camp.detail.sends-by-day"),
+      content: (
+        <ol className="space-y-1">
+          {c.sendsByDay.slice(-14).map((s) => (
+            <li key={s.day} className="flex items-center gap-2 text-xs">
+              <span className="w-14 shrink-0 text-muted-foreground">{day(s.day)}</span>
+              <span className="h-2 rounded bg-foreground/70" style={{ width: `${Math.max(4, (s.sent / peak) * 100)}%` }} aria-hidden="true" />
+              <span className="tabular-nums">{num(s.sent)}</span>
+            </li>
+          ))}
+        </ol>
+      ),
+    })
+  }
+
+  // The recipients table is wider than the record column, so it opens as a drawer, and the drawer
+  // holds no doors of its own (the quick look and the record pattern).
+  const recipientSample = seed.contacts.slice(0, Math.min(25, Math.max(0, recipients)))
+  if (recipients > 0) {
+    doors.push({
+      id: "campaign.recipients", label: `Recipients · ${num(recipients)}`, container: "drawer",
+      content: (
+        <table className="w-full text-xs">
+          <caption className="pb-2 text-left text-muted-foreground">The first {recipientSample.length} of {num(recipients)}, and what each has done.</caption>
+          <thead><tr className="text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
+          <tbody>
+            {recipientSample.map((p) => (
+              <tr key={p.id} className="border-t">
+                <td className="py-1"><a className="underline" href={href(`/ollopa/people/${p.id}`)}>{p.name}</a></td>
+                <td>{p.company}</td>
+                <td className="tabular-nums">{p.opens}</td>
+                <td className="tabular-nums">{p.replies}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ),
+    })
+  }
+
+  // Every link in the body and how many people clicked it. Removed when the body carries no links.
+  if (c.links.length > 0) {
+    const clicks = c.links.reduce((n, l) => n + l.clicks, 0)
+    doors.push({
+      id: "campaign.links", label: `Links clicked · ${num(clicks)}`, count: c.links.length,
+      content: (
+        <table className="w-full text-xs">
+          <thead><tr className="text-left text-muted-foreground"><th className="py-1">Link</th><th className="text-right">Clicks</th><th className="text-right">Of delivered</th></tr></thead>
+          <tbody>
+            {[...c.links].sort((a, z) => z.clicks - a.clicks).map((l) => (
+              <tr key={l.url} className="border-t">
+                <td className="max-w-0 truncate py-1"><span title={l.url}>{l.url}</span></td>
+                <td className="text-right tabular-nums">{num(l.clicks)}</td>
+                <td className="text-right tabular-nums">{pct(l.clicks, c.delivered)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ),
+    })
+  }
+
+  if (c.variants.length > 0) {
+    doors.push({
+      id: "campaign.variants", label: `Variants ${c.variants.map((v) => v.label).join(" and ")}`, count: c.variants.length,
+      content: (
+        <ul className="space-y-2">
+          {c.variants.map((v) => (
+            <li key={v.label}>
+              <div className="font-medium">{v.label} · “{v.subject}”</div>
+              <div className="text-xs tabular-nums text-muted-foreground">{num(v.sent)} sent · {num(v.opened)} opened · {pct(v.opened, v.sent)} · {num(v.replied)} replied</div>
+            </li>
+          ))}
+        </ul>
+      ),
+    })
+  }
+
+  doors.push({
+    id: "campaign.goal", label: "Goal, what it produced and the attribution window", count: 4,
+    content: (
+      <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1">
+        <dt className="text-muted-foreground">Goal</dt><dd>{c.goal}</dd>
+        <dt className="text-muted-foreground">Deals created</dt><dd className="tabular-nums">{num(c.dealsCreated)}</dd>
+        <dt className="text-muted-foreground">Pipeline</dt><dd className="tabular-nums">{b.currency} {num(c.pipelineAmount)} created · {b.currency} {num(c.pipelineInfluenced)} influenced</dd>
+        <dt className="text-muted-foreground">Attribution window</dt>
+        <dd>{c.attributionDays} days — a deal created within {c.attributionDays} days of a click counts here.</dd>
+      </dl>
+    ),
+  })
+
+  doors.push({
+    id: "campaign.delivery-settings", label: "Delivery settings: tracking, reply-to, unsubscribe text, footer", count: 4,
+    content: (
+      <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1">
+        <dt className="text-muted-foreground">Tracking</dt><dd>{seed.domains[0]?.trackingSubdomain ?? "Not set up"}</dd>
+        <dt className="text-muted-foreground">Reply-to</dt><dd>{c.fromMailbox}</dd>
+        <dt className="text-muted-foreground">Unsubscribe text</dt><dd>“Stop receiving these emails” — one text for the workspace. {admin} can change it.</dd>
+        <dt className="text-muted-foreground">Footer</dt><dd>{b.name}, with the postal address from Settings.</dd>
+      </dl>
+    ),
+  })
+
+  if (c.status === "Sent") {
+    const nonOpeners = Math.max(0, c.delivered - c.opened)
+    doors.push({
+      id: "campaign.resend", label: "Resend to people who did not open", count: nonOpeners,
+      content: (
+        <div className="space-y-2">
+          <ConsequenceLine sends={nonOpeners} to={audience?.name ?? "this audience"} from={c.fromMailbox} changes="A new subject line, the same body" />
+          <Button size="sm" variant="outline" onClick={() => { log(`Resend to ${num(nonOpeners)} non-openers prepared`); toast(`A draft resend to ${num(nonOpeners)} people was created.`) }}>Prepare the resend</Button>
+        </div>
+      ),
+    })
+  }
+
+  doors.push({
+    id: "campaign.activity", label: "Activity", count: c.activity.length,
+    content: <ul className="space-y-1 text-xs">{c.activity.map((a, i) => <li key={i} className="flex justify-between gap-2"><span>{a.what} · {a.by}</span><span className="tabular-nums text-muted-foreground">{day(a.at)}</span></li>)}</ul>,
+  })
+
+  doors.push({
+    id: "campaign.notes", label: "Notes",
+    content: (
+      <div className="space-y-2">
+        <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why this campaign exists, and what it is for." aria-label="Note" />
+        <Button size="sm" disabled={!note.trim()} onClick={() => { log(`Note: ${note.trim()}`); setNote(""); toast("Saved · Notes") }}>Save the note</Button>
+        <ul className="space-y-1 text-xs text-muted-foreground">
+          {c.activity.filter((a) => a.what.startsWith("Note:") || a.what.startsWith("Retired")).map((a, i) => <li key={i}>{a.what} — {a.by}, {day(a.at)}</li>)}
+        </ul>
+      </div>
+    ),
+  })
+
+  /* ------------------------------------------------------------------------------- the sections */
+
+  const audienceBlock = (
+    <div className="space-y-2">
+      {audience ? (
+        <>
+          <p className="text-sm">
+            <span className="tabular-nums">{num(audience.size)} total</span> ·{" "}
+            <span className="font-medium tabular-nums">{num(netSize(audience))} after suppressions</span>
+          </p>
+          {/* Six counts, level one, each a link to the names behind it. A count behind a door is a
+              count nobody checks before a send. */}
+          <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            {suppressionCounts(audience).map((s) => (
+              <li key={s.key}>
+                <a className={cn("underline", s.on ? "" : "text-muted-foreground")} href={href(`/ollopa/audiences/${audience.id}?records=${s.key}`)}>
+                  <span className="tabular-nums">{num(s.count)}</span> {s.label}
+                </a>
+                <span className="text-xs text-muted-foreground">{s.always ? ", always applied" : s.on ? "" : ", off"}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm">
+            {audience.mode === "live"
+              ? <>Mode: live · refreshes daily 06:00 · new matches are added to {audience.usedBy[0] ?? "no campaign yet"}</>
+              : <>Frozen at {num(audience.size)} on {day(audience.frozenAt)}</>}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => {
+              patchRow(session.business, "audiences", audience.id, audience.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY })
+              toast(audience.mode === "live" ? `${audience.name} frozen at ${num(audience.size)}. No new matches are added.` : `${audience.name} is live again and refreshes daily at 06:00.`)
+            }}>{audience.mode === "live" ? "Freeze" : "Make live"}</Button>
+            <Button size="sm" variant="ghost" onClick={() => navigate(`/ollopa/audiences/${audience.id}`)}>Open audience</Button>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Audience removed; {num(c.audienceSize)} people at send time.</p>
+      )}
+    </div>
+  )
+
+  const scheduleSection = (
+    <div className="space-y-3">
+      {c.kind === "Lifecycle" ? (
+        <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
+          <dt className="text-muted-foreground">Trigger</dt><dd>{c.trigger}</dd>
+          <dt className="text-muted-foreground">Delay</dt><dd>{c.delayDays} day{c.delayDays === 1 ? "" : "s"} after the trigger</dd>
+          <dt className="text-muted-foreground">Exit rule</dt><dd>{c.exitRule}</dd>
+          <dt className="text-muted-foreground">Measured on</dt><dd>Enrolment over the period, not on one send</dd>
+        </dl>
+      ) : (
+        <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
+          <dt className="text-muted-foreground">Time</dt><dd>{c.status === "Scheduled" ? `${day(c.sendAt)}, ${sendTime}` : c.sendAt ? day(c.sendAt) : "Not scheduled"}</dd>
+          <dt className="text-muted-foreground">Timezone</dt><dd>{timezone}</dd>
+          <dt className="text-muted-foreground">Send speed</dt><dd>{speed}</dd>
+        </dl>
+      )}
+
+      {/* The QA line, directly above the button, never disabled and never blocking. */}
+      <div className="rounded-md border px-3 py-2">
+        <p className="text-sm">
+          <span className={failures.length ? "font-medium text-amber-700 dark:text-amber-400" : ""}>{line}</span>
+          {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}{c.qa.by === c.owner ? ", who built this campaign" : ""}</span>}
+        </p>
+        <Button size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setQaOpen(true)}>Run the checks</Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {c.status === "Sending" || c.status === "Running" ? (
+          // A send in flight is the one moment this page has a safety state: Pause is the same size
+          // as Schedule, and it is never one click further away.
+          <Button onClick={pause}>Pause</Button>
+        ) : c.status === "Paused" ? (
+          <Button onClick={resume}>Resume</Button>
+        ) : c.status === "Sent" ? (
+          <p className="text-sm text-muted-foreground">Sent {day(c.sendAt)}. A sent campaign is archived, never deleted, so the results stay.</p>
+        ) : (
+          <Button onClick={() => setScheduleOpen(true)}>{needsSecond ? "Request approval" : "Schedule"}</Button>
+        )}
+        <Button variant="outline" onClick={() => setTestOpen(true)}>Send test</Button>
+      </div>
+      {needsSecond && c.status !== "Sent" && (
+        <p className="text-xs text-muted-foreground">
+          {num(recipients)} recipients is above this workspace's second-approval threshold of {num(SECOND_APPROVAL.recipients)} recipients or {num(SECOND_APPROVAL.credits)} credits in one action, so {admin} approves before it goes out.
+        </p>
+      )}
+    </div>
+  )
+
+  const buildAudienceFrom = c.sent > 0 && (
+    <p className="pt-3 text-sm">
+      Build an audience from:{" "}
+      {[
+        { label: "opened", n: c.opened },
+        { label: "clicked", n: c.clicked },
+        { label: "did not open", n: Math.max(0, c.delivered - c.opened) },
+      ].map((x, i) => (
+        <span key={x.label}>
+          {i > 0 && " · "}
+          <button className="underline" onClick={() => toast(`New audience from ${c.name}: ${x.label} · ${num(x.n)} people. Nothing is sent.`)}>
+            {x.label} <span className="tabular-nums">{num(x.n)}</span>
+          </button>
+        </span>
+      ))}
+    </p>
+  )
+
+  /* -------------------------------------------------------------------------------- the render */
+
+  return (
+    <>
+      <RecordPage
+        back={{ label: "Campaigns", href: href("/ollopa/campaigns") }}
+        title={{ value: c.name, onRename: isOwner ? (v) => { patch({ name: v }); toast("Saved · Campaign name") } : undefined }}
+        chips={<span className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{c.kind}</Badge><StatusBadge c={c} /></span>}
+        ribbon={
+          c.status === "Sending"
+            ? { tone: "warning", text: `Sending: ${num(c.sent)} of ${num(recipients)} · bounced ${pct(c.bounced, c.sent)} against warn ${BOUNCE_GUARD.warnPercent}% and pause ${BOUNCE_GUARD.pausePercent}%`, action: <Button size="sm" onClick={pause}>Pause</Button> }
+            : c.pausedBy === "Bounce guard"
+              ? { tone: "error", text: `Paused by the bounce guard at ${pct(c.bounced, c.sent)}, past the ${BOUNCE_GUARD.pausePercent}% pause threshold.`, action: <a className="text-sm underline" href={href("/ollopa/settings")}>Bounce guard</a> }
+              : awaiting
+                ? { tone: "info", text: `Awaiting approval: ${admin}. ${sendConsequence}` }
+                : undefined
+        }
+        fields={fields}
+        actions={{
+          primary: c.status === "Sending" || c.status === "Running" ? [{ label: "Pause", onClick: pause, shortcut: "P" }]
+            : c.status === "Paused" ? [{ label: "Resume", onClick: resume, shortcut: "P" }]
+              : c.status === "Sent" ? [{ label: "Duplicate", onClick: () => { toast("Duplicate from the Campaigns table keeps audience, content and schedule.") ; navigate("/ollopa/campaigns") } }]
+                : [{ label: "Send test", onClick: () => setTestOpen(true), shortcut: "T" }],
+          secondary: [{ label: "Run the checks", onClick: () => setQaOpen(true) }, { label: "Export results", onClick: () => toast(`${c.name}: results exported as CSV.`) }],
+          destructive: c.status === "Draft" ? {
+            label: "Delete draft",
+            consequence: "Deletes the draft and its test sends. Sent campaigns are archived, never deleted.",
+            onConfirm: () => { removeRow(session.business, c.id); toast(`${c.name} deleted.`); navigate("/ollopa/campaigns") },
+          } : undefined,
+        }}
+        main={{
+          kind: "sections",
+          label: "Campaign",
+          sections: [
+            { id: "results", title: "Results", children: <><Funnel c={c} />{buildAudienceFrom}</> },
+            { id: "audience", title: "Audience", children: audienceBlock },
+            { id: "content", title: "Content", children: <Previews c={c} /> },
+            { id: "schedule", title: c.kind === "Lifecycle" ? "Trigger" : "Schedule", children: scheduleSection },
+          ],
+        }}
+        side={[
+          {
+            id: "policy", title: "Sending policy",
+            children: (
+              <ul className="space-y-1 text-sm">
+                <li>Bounce guard: warn {BOUNCE_GUARD.warnPercent}%, pause {BOUNCE_GUARD.pausePercent}% · observed {seed.bounceGuard.observedPercent}% this week</li>
+                <li className="tabular-nums">{num(policy.usedToday)} of {num(policy.dailyCap)} sends used today</li>
+                <li>{seed.domains[0]?.domain} · {seed.domains[0]?.spf && seed.domains[0]?.dkim && seed.domains[0]?.dmarc ? "SPF, DKIM and DMARC pass" : "needs SPF, DKIM or DMARC"}</li>
+                <li className="text-xs text-muted-foreground">{admin} sets the thresholds in Settings.</li>
+              </ul>
+            ),
+          },
+        ]}
+        doors={doors}
+        shortcuts={[
+          { keys: "T", label: "Send a test", run: () => setTestOpen(true) },
+          { keys: "P", label: c.status === "Paused" ? "Resume" : "Pause", run: () => (c.status === "Paused" ? resume() : pause()) },
+          { keys: "Q", label: "Run the pre-send checks", run: () => setQaOpen(true) },
+        ]}
+      />
+
+      {/* ------------------------------------------------- X-qa: eight checks, flat, failures in words */}
+      <Panel id="campaign-qa" title="Pre-send checks" open={qaOpen} onOpenChange={setQaOpen}
+        footer={
+          <Button className="w-full" onClick={() => {
+            patch({ qa: { by: session.user, on: TODAY, checklist: c.qa.checklist.map((k) => ({ ...k, done: true })), checks: c.qa.checks.map((k) => ({ ...k, state: "pass" as const })) } })
+            setQaOpen(false)
+            toast(`Checks run by ${session.user}.`)
+          }}>Run the checks now</Button>
+        }
+      >
+        <ol className="space-y-3">
+          {checks.map((k) => (
+            <li key={k.n}>
+              <div className="flex items-baseline gap-2">
+                <span className={cn("text-xs font-medium", k.state === "fail" ? "text-amber-700 dark:text-amber-400" : k.state === "pass" ? "text-green-700 dark:text-green-400" : "text-muted-foreground")}>{k.state}</span>
+                <span className="text-sm font-medium">{k.title}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{k.words}</p>
+              {k.fix && <a className="text-xs underline" href={k.fix.href}>{k.fix.label}</a>}
+            </li>
+          ))}
+        </ol>
+        <p className="pt-4 text-xs text-muted-foreground">
+          {c.qa.on
+            ? `Run ${day(c.qa.on)} by ${c.qa.by}${c.qa.by === c.owner ? ", who built this campaign" : ""}.`
+            : "Not run yet. The result travels with a request for approval, so the approver sees it too."}
+        </p>
+      </Panel>
+
+      {/* ---------------------------------------------------------------------- X-sendtest: a test */}
+      <Panel id="campaign-test" title="Send a test" open={testOpen} onOpenChange={setTestOpen}
+        footer={<Button className="w-full" onClick={() => { setTestOpen(false); toast(`Test sent to ${testTo} from ${c.fromMailbox}.`) }}>Send the test</Button>}
+      >
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="test-to" className="text-xs">To</Label>
+            <Input id="test-to" className="mt-1" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
+          </div>
+          {c.variants.length > 0 && (
+            <div>
+              <Label htmlFor="test-variant" className="text-xs">Variant</Label>
+              <Select defaultValue={c.variants[0].label}>
+                <SelectTrigger id="test-variant" className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{c.variants.map((v) => <SelectItem key={v.label} value={v.label}>{v.label} · {v.subject}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
+          <ConsequenceLine sends={1} to={testTo} from={c.fromMailbox} changes="The test carries a working unsubscribe link that unsubscribes nobody" />
+        </div>
+      </Panel>
+
+      {/* ------------------------------------- X-schedule, which becomes "Request approval" above the
+          workspace's threshold. The threshold is read from Settings and never written here. */}
+      <Panel id="campaign-schedule" title={needsSecond ? "Request approval" : "Schedule and send"} open={scheduleOpen} onOpenChange={setScheduleOpen}
+        footer={
+          <Button className="w-full" onClick={() => {
+            if (needsSecond) {
+              patch({ activity: [{ at: TODAY, by: session.user, what: `Approval requested from ${admin}` }, ...c.activity] })
+              toast(`${admin} was asked to approve. ${sendConsequence}`)
+            } else {
+              patch({ status: "Scheduled", sendAt: sendDate, activity: [{ at: TODAY, by: session.user, what: `Scheduled for ${day(sendDate)} ${sendTime}` }, ...c.activity] })
+              toast(`Scheduled. ${sendConsequence}`)
+            }
+            setScheduleOpen(false)
+          }}>{needsSecond ? `Request approval from ${admin}` : "Schedule the send"}</Button>
+        }
+      >
+        <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div><Label htmlFor="send-date" className="text-xs">Date</Label><Input id="send-date" type="date" className="mt-1" value={sendDate} onChange={(e) => setSendDate(e.target.value)} /></div>
+            <div><Label htmlFor="send-time" className="text-xs">Time</Label><Input id="send-time" type="time" className="mt-1" value={sendTime} onChange={(e) => setSendTime(e.target.value)} /></div>
+          </div>
+          <div>
+            <Label htmlFor="send-tz" className="text-xs">Timezone</Label>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger id="send-tz" className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={b.timezone}>{b.timezone} — the workspace default</SelectItem>
+                <SelectItem value="each recipient's local time">Each recipient's local time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="send-speed" className="text-xs">Send speed</Label>
+            <Select value={speed} onValueChange={setSpeed}>
+              <SelectTrigger id="send-speed" className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="As fast as the mailbox allows">As fast as the mailbox allows</SelectItem>
+                <SelectItem value="Spread over 4 hours">Spread over 4 hours</SelectItem>
+                <SelectItem value="Spread over the day">Spread over the day</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-md border p-3">
+            <p className="text-sm">{sendConsequence}</p>
+            {audience && (
+              <p className="pt-1 text-xs text-muted-foreground">
+                Suppressed: {suppressionCounts(audience).filter((s) => s.on).map((s) => `${num(s.count)} ${s.label}`).join(" · ")}.
+              </p>
+            )}
+            <p className="pt-1 text-xs text-muted-foreground">{line}{c.qa.on ? ` · run ${day(c.qa.on)} by ${c.qa.by}` : ""}</p>
+          </div>
+
+          {needsSecond && (
+            <p className="text-xs text-muted-foreground">
+              Above {num(SECOND_APPROVAL.recipients)} recipients or {num(SECOND_APPROVAL.credits)} credits in one action, a second person approves. {admin} will see the audience and its suppressions, the mailbox, the time, the QA result and this line before deciding.
+            </p>
+          )}
+        </div>
+      </Panel>
+    </>
+  )
+}
