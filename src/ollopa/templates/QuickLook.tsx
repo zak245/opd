@@ -1,0 +1,103 @@
+// The quick look: level one of a record, opened from a table row with the table still in view.
+//
+// It is the top of the record page cut short — the same fields, in the same order, with the same
+// labels — and it is flat: no doors, no sections, nothing that opens. Read-only except for the one
+// field the glance exists for, which is why the drawer is opened at all (a deal's stage on the board,
+// an account's next step on the accounts table). Whose field that is depends on who is looking: the
+// owner moves the deal, anyone else gets the comment composer, because the board already refuses a
+// move they do not own. One editable field either way; the rule is "one", not "the same one for all".
+//
+// The test: remove the drawer and you lose only speed. If removing it would lose a feature, it has
+// become a second version of the record, which the pattern forbids.
+import { useEffect, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { FlatProvider } from "../ui/Door"
+import { type ReactNode } from "react"
+
+export interface QuickLookField {
+  label: string
+  value: ReactNode
+}
+
+export interface QuickLookEditable {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  /** A picklist where the field is one (stage). Free text when absent. */
+  options?: string[]
+  /** A composer rather than a field: the non-owner's comment. */
+  multiline?: boolean
+}
+
+export interface QuickLookProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  fields: QuickLookField[]
+  /** At most one. It replaces the field with the same label, or is added at the end when it is a composer. */
+  editable?: QuickLookEditable
+  /** "Open" goes to the record page: the drawer carries no deep link, the page does. */
+  onOpen: () => void
+}
+
+export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen }: QuickLookProps) {
+  const [draft, setDraft] = useState(editable?.value ?? "")
+  const first = useRef<HTMLButtonElement>(null)
+  useEffect(() => { setDraft(editable?.value ?? "") }, [editable?.value, open])
+
+  const editableInline = editable && fields.some((f) => f.label === editable.label)
+
+  const editor = editable && (
+    <div className="grid gap-1.5">
+      <Label htmlFor="quicklook-edit" className="text-xs text-muted-foreground">{editable.label}</Label>
+      {editable.options ? (
+        <Select value={draft} onValueChange={(v) => { setDraft(v); editable.onChange(v) }}>
+          <SelectTrigger id="quicklook-edit" className="w-full"><SelectValue /></SelectTrigger>
+          <SelectContent>{editable.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+        </Select>
+      ) : editable.multiline ? (
+        <div className="grid gap-2">
+          <Textarea id="quicklook-edit" rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Say it to the owner" />
+          <Button size="sm" className="justify-self-start" disabled={!draft.trim()} onClick={() => { editable.onChange(draft); setDraft("") }}>Comment</Button>
+        </div>
+      ) : (
+        <Input id="quicklook-edit" value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => editable.onChange(draft)} />
+      )}
+    </div>
+  )
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-sm">
+        <SheetHeader className="border-b px-5 py-4">
+          <SheetTitle className="text-base">{title}</SheetTitle>
+          <SheetDescription className="sr-only">A glance at this record. Open it for everything else.</SheetDescription>
+        </SheetHeader>
+        {/* Flat by construction: anything openable rendered in here renders in place instead. */}
+        <FlatProvider value={true}>
+          <dl className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 text-sm">
+            {fields.map((f) => (
+              editableInline && editable && f.label === editable.label ? (
+                <div key={f.label}>{editor}</div>
+              ) : (
+                <div key={f.label} className="grid grid-cols-[9rem_1fr] items-baseline gap-3">
+                  <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                  <dd className="min-w-0">{f.value}</dd>
+                </div>
+              )
+            ))}
+            {editable && !editableInline && <div className="border-t pt-3">{editor}</div>}
+          </dl>
+        </FlatProvider>
+        <SheetFooter className="border-t px-5 py-3">
+          <Button ref={first} className="w-full" onClick={onOpen}>Open</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}

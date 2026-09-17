@@ -6,12 +6,26 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { QuickLook, type QuickLookEditable, type QuickLookField } from "./QuickLook"
 
 export interface Column<T> { key: string; header: string; cell: (row: T) => ReactNode; className?: string }
 export interface RowAction<T> { label: string | ((row: T) => string); icon?: LucideIcon; onClick: (row: T) => void }
 const lbl = <T,>(a: RowAction<T>, r: T) => (typeof a.label === "function" ? a.label(r) : a.label)
 export interface MoreAction<T> { label: string; onClick: (row: T) => void; destructive?: boolean }
 export interface Filter<T> { key: string; label: string; options: string[]; get: (row: T) => string }
+/**
+ * The quick look this table opens: level one of the record, flat, with the same labels in the same
+ * order as the top of the record page (RULES.md, the quick look and the record). The row opens it by
+ * click or by Enter, and "Quick look" is the first entry in the row's "…" menu, so nothing is
+ * pointer-only. "Open" goes to the record page, which is the thing that carries a link.
+ */
+export interface QuickLookSpec<T> {
+  title: (row: T) => string
+  fields: (row: T) => QuickLookField[]
+  /** At most one editable field, and which one it is may depend on who is looking. */
+  editable?: (row: T) => QuickLookEditable | undefined
+  onOpen: (row: T) => void
+}
 
 export interface TablePageProps<T> {
   title: string
@@ -27,12 +41,14 @@ export interface TablePageProps<T> {
   moreActions?: MoreAction<T>[]
   primary?: { label: string; onClick: () => void }
   pageSize?: number
+  quickLook?: QuickLookSpec<T>
 }
 
 export function TablePage<T>(p: TablePageProps<T>) {
   const [q, setQ] = useState("")
   const [active, setActive] = useState<Record<string, string>>({})
   const [limit, setLimit] = useState(p.pageSize ?? 25)
+  const [glancing, setGlancing] = useState<T | null>(null)
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -80,10 +96,16 @@ export function TablePage<T>(p: TablePageProps<T>) {
           </TableHeader>
           <TableBody>
             {rows.slice(0, limit).map((r) => (
-              <TableRow key={p.rowKey(r)} className="group">
+              <TableRow
+                key={p.rowKey(r)}
+                className={cn("group", p.quickLook && "cursor-pointer")}
+                tabIndex={p.quickLook ? 0 : undefined}
+                onClick={p.quickLook ? (e) => { e.currentTarget.focus(); setGlancing(r) } : undefined}
+                onKeyDown={p.quickLook ? (e) => { if (e.key === "Enter" && e.target === e.currentTarget) { e.preventDefault(); setGlancing(r) } } : undefined}
+              >
                 {p.columns.map((c) => <TableCell key={c.key} className={cn("py-2", c.className)}>{c.cell(r)}</TableCell>)}
                 {(p.rowActions || p.moreActions) && (
-                  <TableCell className="py-1 pr-3">
+                  <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {(p.rowActions ?? []).map((a, i) => (
                         <Button
@@ -103,6 +125,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
                             <Button size="icon" variant="ghost" className="size-7" aria-label="More actions"><MoreHorizontal className="size-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {p.quickLook && <DropdownMenuItem onSelect={() => setGlancing(r)}>Quick look</DropdownMenuItem>}
                             {(p.rowActions ?? []).map((a, i) => <DropdownMenuItem key={i} onSelect={() => a.onClick(r)}>{lbl(a, r)}</DropdownMenuItem>)}
                             {p.rowActions && p.rowActions.length > 0 && <DropdownMenuSeparator />}
                             {p.moreActions.map((a) => (
@@ -121,6 +144,16 @@ export function TablePage<T>(p: TablePageProps<T>) {
             )}
           </TableBody>
         </Table>
+        {p.quickLook && glancing && (
+          <QuickLook
+            open
+            onOpenChange={(o) => { if (!o) setGlancing(null) }}
+            title={p.quickLook.title(glancing)}
+            fields={p.quickLook.fields(glancing)}
+            editable={p.quickLook.editable?.(glancing)}
+            onOpen={() => { const row = glancing; setGlancing(null); p.quickLook!.onOpen(row) }}
+          />
+        )}
         {rows.length > limit && (
           <div className="flex justify-center border-t py-3">
             <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more</Button>

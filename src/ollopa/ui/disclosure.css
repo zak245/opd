@@ -1,0 +1,27 @@
+/* Door behaviour that CSS owns: print, find-in-page and reduced motion.
+   Imported by Door.tsx, so any page that renders a door gets it. */
+
+/* Closed doors stay in the DOM with hidden="until-found", so the browser's
+   find-in-page reaches their text and opens them. Printing expands every one. */
+@media print {
+  [data-door-content][hidden] { display: block !important; content-visibility: visible !important; padding-bottom: 0.75rem !important; }
+  [data-door-chevron],
+  [data-print-hide] { display: none !important; }
+  [data-record-card],
+  [data-door] { break-inside: avoid; }
+}
+
+/* A closed door keeps its content in the DOM. `hidden="until-found"` is what makes find-in-page work;
+   this is the hiding itself, because a framework reset may exempt that value from display:none. */
+[data-door-content][hidden] { content-visibility: hidden; padding-bottom: 0; }
+@supports not (content-visibility: hidden) {
+  [data-door-content][hidden] { display: none; }
+}
+
+/* 180 ms reveal, swapped for a crossfade when the reader asked for less motion. */
+[data-door-content]:not([hidden]) { animation: door-open 180ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  [data-door-content]:not([hidden]) { animation: door-fade 180ms linear; }
+}
+@keyframes door-open { from { opacity: 0; transform: translateY(-2px) } to { opacity: 1; transform: none } }
+@keyframes door-fade { from { opacity: 0 } to { opacity: 1 } }

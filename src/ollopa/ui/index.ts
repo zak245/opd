@@ -1,0 +1,17 @@
+// The shared primitives every Ollopa page codes against. Documented, with an example each, in README.md.
+export { Door, DoorGroup, ExpandAll, useDoorState, FlatProvider, useFlat, type DoorProps } from "./Door"
+export { Panel, type PanelProps } from "./Panel"
+export { ConsequenceLine, consequenceText, type ConsequenceProps } from "./ConsequenceLine"
+export { ApproveBar, approveAllLabel, type ApproveBarProps, type ApproveItem } from "./ApproveBar"
+export { Locked, type LockedProps } from "./Locked"
+export { gate, money, FEATURES, PLAN_ORDER, type Feature, type Plan, type GateResult } from "./gate"
+export { HealthStrip, type HealthLine, type HealthKind } from "./HealthStrip"
+export { Announcement, type AnnouncementProps } from "./Announcement"
+export { SectionHeader, type SectionHeaderProps } from "./SectionHeader"
+export { EmptyState, type EmptyStateProps } from "./EmptyState"
+export { useDisclosure, type Disclosure } from "./useDisclosure"
+export { QuickLook, type QuickLookProps } from "../templates/QuickLook"
+export { RecordPage } from "../templates/RecordPage"
+export type { RecordPageProps, RecordField, RecordSection, RecordCard, RecordDoor, RecordAction, RecordTimeline, RecordBrief } from "../templates/RecordPage"
+/** The session is the shell builder's; re-exported here so a page has one import for "who is looking". */
+export { useSession, type Session } from "../session"
