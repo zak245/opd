@@ -21,6 +21,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { href, navigate } from "@/app/router"
+import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { toast } from "../../templates/TablePage"
 import { Panel } from "../../ui/Panel"
@@ -28,6 +29,7 @@ import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
 import { CREDITS, STAGES, seedFor, type ContactStage } from "../../data/seed"
+import { SEATS, itemById, weeklyUse } from "../../usage"
 import type { Session } from "../../session"
 import { columnsFor, STAGE_TONE, type ColumnDef } from "./columns"
 import { applyFilters, chipLabel, filtersFor, type Active, type FilterContext, type FilterDef } from "./filters"
@@ -35,13 +37,19 @@ import { day, glanceFields, rowsFor, type PersonRow } from "./person"
 import { needsEnrichment, viewsFor, type PeopleView } from "./views"
 import { FilterChip, FiltersPanelBody, FiltersPanelFrame } from "./parts"
 import { EnrichPanel } from "./EnrichPanel"
+import { BulkSelection, CreditsDialog, ParodyColumns, ParodySelection, ParodySidebar, ParodyTabs, ParodyViewsDoor } from "./parody"
 
 /* -------------------------------------------------------------------------------- what persists */
 
 const key = (user: string, what: string) => `ollopa.people.${user}.${what}`
 
-function usePersisted<T>(user: string, what: string, initial: T): [T, (v: T) => void] {
+/**
+ * `remember` is false on a lesson stage: a step must render from the seed and the usage model alone,
+ * so what a previous visit to the product left in this browser cannot change what a step shows.
+ */
+function usePersisted<T>(user: string, what: string, initial: T, remember = true): [T, (v: T) => void] {
   const [value, setValue] = useState<T>(() => {
+    if (!remember) return initial
     try {
       const raw = localStorage.getItem(key(user, what))
       return raw === null ? initial : (JSON.parse(raw) as T)
@@ -49,8 +57,9 @@ function usePersisted<T>(user: string, what: string, initial: T): [T, (v: T) => 
   })
   const set = useCallback((v: T) => {
     setValue(v)
+    if (!remember) return
     try { localStorage.setItem(key(user, what), JSON.stringify(v)) } catch { /* this visit only */ }
-  }, [user, what])
+  }, [user, what, remember])
   return [value, set]
 }
 
@@ -62,6 +71,24 @@ export function PeoplePage({ session }: { session: Session }) {
   const seed = seedFor(session.business)
   const b = businessById(session.business)
   const d = useDisclosure("people")
+
+  /* ------------------------------------------------------------------------------ which step this is
+   *
+   * Null in the product, where every rule is on. On a lesson stage `ruleOn` says which rules have
+   * landed, and the page draws the layout for that step from the same rows, the same seed and the
+   * same usage numbers. There is no second implementation of this page: step 0 is this component
+   * with no rule on, and the last step is this component with all eight on, which is the product.
+   */
+  const lesson = useLesson()
+  const rHead = ruleOn(lesson, 1)     // the usage model decides what sits at level one
+  const rFlat = ruleOn(lesson, 2)     // one flat panel, no tabs, nothing three deep
+  const rContent = ruleOn(lesson, 3)  // headings name content, not an audience; density arrives
+  const rDoors = ruleOn(lesson, 4)    // one "Add to list", every door labelled with its count
+  const rContext = ruleOn(lesson, 5)  // dependent controls together; the default view on the page
+  const rStable = ruleOn(lesson, 6)   // the selection bar comes from selection, an object state
+  const rPrice = ruleOn(lesson, 7)    // the price and the count on the control, never in a dialog
+  const rExpert = ruleOn(lesson, 8)   // shortcuts, number keys, undo
+  const onStage = lesson !== null
 
   const allRows = useMemo(() => rowsFor(seed), [seed])
   const ctx: FilterContext = useMemo(
@@ -78,20 +105,68 @@ export function PeoplePage({ session }: { session: Session }) {
     [allColumns, d],
   )
 
+  /**
+   * The highest weekly use any seat at this business has for an item. Before rule 1 the page is not
+   * cut to the seat at all — one table, one sidebar, one set of buttons for everybody — so what it
+   * shows is what somebody, somewhere in the workspace, uses weekly. The number still comes from the
+   * usage model; the common version's mistake is not the numbers, it is not asking for them.
+   */
+  const anyRoleWeekly = useCallback((id: string) => {
+    const item = itemById(id)
+    if (!item) return 0
+    return Math.max(...SEATS[session.business].map((r) => weeklyUse(item, session.business, r)))
+  }, [session.business])
+
+  /** One table for every seat: the union of what each seat reads weekly, in display order. */
+  const unionColumns = useMemo(
+    () => allColumns.filter((c) => anyRoleWeekly(c.id) >= 20).map((c) => c.id),
+    [allColumns, anyRoleWeekly],
+  )
+
+  /**
+   * The glossary's split: 20 "Most Popular Filters" and the rest. Popularity here is a ranking of
+   * the whole workspace, which is why it is the wrong ranking for any one person in it.
+   */
+  const popularFilters = useMemo(
+    () => [...defs].sort((x, y) => anyRoleWeekly(y.id) - anyRoleWeekly(x.id)).slice(0, 20),
+    [defs, anyRoleWeekly],
+  )
+  const restFilters = useMemo(() => defs.filter((f) => !popularFilters.includes(f)), [defs, popularFilters])
+
   const defaultView = views.find((v) => v.defaultFor.includes(session.role)) ?? null
 
   /* ------------------------------------------------------------------------------------- state */
 
   const [typed, setTyped] = useState("")
   const [q, setQ] = useState("")
-  const [active, setActive] = useState<Active>(defaultView?.filters ?? {})
-  const [viewId, setViewId] = usePersisted<string | null>(session.user, "view", defaultView?.id ?? null)
-  const [sort, setSort] = usePersisted<Sort | null>(session.user, "sort", defaultView?.sort ?? null)
-  const [columns, setColumns] = usePersisted<string[]>(session.user, "columns", [])
-  const [density, setDensity] = usePersisted<"Comfortable" | "Compact">(session.user, "density", "Comfortable")
-  const [pageSize, setPageSize] = usePersisted<number>(session.user, "pageSize", 25)
-  const [pinned, setPinned] = usePersisted<boolean>(session.user, "pinned", false)
-  const [panelOpen, setPanelOpen] = useState(false)
+  /**
+   * A lesson opens with one filter from the body switched on as well as the seat's default view:
+   * "has a phone number on file", which an SDR sets on a calling day and then forgets about. Until
+   * rule 5 it is doing its work from inside the panel and the page says nothing about it, which is
+   * what a hidden cause looks like — and what somebody means by "the count changed and I do not know
+   * why". In the product it is an ordinary filter a person either set or did not.
+   */
+  const [active, setActive] = useState<Active>(
+    onStage ? { "people.f.phone": ["A phone number on file"] } : defaultView?.filters ?? {},
+  )
+  const keep = !onStage
+  const [viewId, setViewId] = usePersisted<string | null>(session.user, "view", onStage ? null : defaultView?.id ?? null, keep)
+  const [sort, setSort] = usePersisted<Sort | null>(session.user, "sort", onStage ? { key: "score", dir: "desc" } : defaultView?.sort ?? null, keep)
+  const [columns, setColumns] = usePersisted<string[]>(session.user, "columns", [], keep)
+  const [density, setDensity] = usePersisted<"Comfortable" | "Compact">(session.user, "density", "Comfortable", keep)
+  const [pageSize, setPageSize] = usePersisted<number>(session.user, "pageSize", 25, keep)
+  const [pinned, setPinned] = usePersisted<boolean>(session.user, "pinned", false, keep)
+  /* A lesson arrives with the place a change happens in already open, so the change can be seen. The
+     panel is the lesson at the two steps where the filters move into it and the labels have not been
+     fixed yet; from rule 4 on, a closed panel with an honest label on its door is the point, which is
+     also how the product opens. */
+  const [panelOpen, setPanelOpen] = useState(onStage && !rDoors)
+  /* The common version's own state: the sidebar behind "Show Filters", the second button inside it,
+     the tab strip above the results, and the dialog that holds the price. */
+  const [showFilters, setShowFilters] = useState(onStage)
+  const [moreFilters, setMoreFilters] = useState(false)
+  const [tab, setTab] = useState("total")
+  const [creditsDialog, setCreditsDialog] = useState(false)
   const [includeDnc, setIncludeDnc] = useState(false)
   const [shown, setShown] = useState(25)
   const [selected, setSelected] = useState<string[]>([])
@@ -114,12 +189,37 @@ export function PeoplePage({ session }: { session: Session }) {
   const searchRef = useRef<HTMLInputElement>(null)
 
   const view = views.find((v) => v.id === viewId) ?? null
-  const shownColumnIds = columns.length > 0
-    ? columns
-    : [...defaultColumns, ...(view?.extraColumns ?? []).filter((c) => !defaultColumns.includes(c))]
+  const seatColumns = [...defaultColumns, ...(view?.extraColumns ?? []).filter((c) => !defaultColumns.includes(c))]
+  /**
+   * A lesson adds Phone at the end, as a person would from the columns door. The SDR's seat does not
+   * get it by default — she reveals a number about once a week — but the price on that button is the
+   * thing this screen is most about, and a rule the viewer cannot see land has not been taught.
+   */
+  const withPhone = (ids: string[]) => {
+    if (!onStage || ids.includes("people.col.phone")) return ids
+    const at = ids.indexOf("people.col.email")
+    const out = [...ids]
+    out.splice(at < 0 ? out.length : at + 1, 0, "people.col.phone")
+    return out
+  }
+  const shownColumnIds = columns.length > 0 ? columns : withPhone(rHead ? seatColumns : unionColumns)
   const shownColumns = shownColumnIds
     .map((id) => allColumns.find((c) => c.id === id))
     .filter((c): c is ColumnDef => Boolean(c))
+
+  // The lesson view opens the place a change happens in, by id, so the change can be seen. The panel
+  // and the common version's sidebar are not `Door`s, so they answer the same event themselves.
+  useEffect(() => {
+    const onDoor = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string; open: boolean }>).detail
+      if (!detail) return
+      if (detail.id === "people.filters.panel") setPanelOpen(detail.open)
+      if (detail.id === "people.parody.sidebar") setShowFilters(detail.open)
+      if (detail.id === "people.parody.more") { setShowFilters(detail.open); setMoreFilters(detail.open) }
+    }
+    document.addEventListener("ollopa:door", onDoor)
+    return () => document.removeEventListener("ollopa:door", onDoor)
+  }, [])
 
   // Results and count update as you type, debounced 150 ms; the old count stays, dimmed, until then.
   useEffect(() => {
@@ -149,6 +249,18 @@ export function PeoplePage({ session }: { session: Session }) {
   }, [filtered, sort, allColumns])
 
   const page = sorted.slice(0, shown)
+
+  // A lesson opens with three rows ticked, because the bar that acts on a selection is half of what
+  // this screen teaches and it is not on screen until something is selected. It is the page's own
+  // state, set once: the last step is the product with three rows ticked.
+  const seeded = useRef(false)
+  useEffect(() => {
+    if (!onStage || seeded.current || page.length === 0) return
+    seeded.current = true
+    setSelected(page.slice(0, 3).map((p) => p.id))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onStage, page.length])
+
   const stageOf = (p: PersonRow) => localStage[p.id] ?? p.stage
   const seqOf = (p: PersonRow) => localSeq[p.id] ?? p.inSequence
   const isRevealed = (p: PersonRow) => p.phoneRevealed || revealed.includes(p.id)
@@ -172,8 +284,13 @@ export function PeoplePage({ session }: { session: Session }) {
   /* --------------------------------------------------------------------------- filters and view */
 
   const activeCount = Object.values(active).filter((v) => v.length > 0).length
-  const chipFilters = defs.filter((f) => d.level(f.id) === 1)
-  const activeElsewhere = defs.filter((f) => d.level(f.id) === 2 && (active[f.id]?.length ?? 0) > 0)
+  // Before rule 1 nothing is asked of the usage model, so no filter is in the bar: every one of them
+  // is in the sidebar, at the same depth, whether this seat opens it every morning or never.
+  const chipFilters = rHead ? defs.filter((f) => d.level(f.id) === 1) : []
+  // Before rule 5 a filter that is doing something from inside the panel says nothing on the page.
+  const activeElsewhere = rContext
+    ? defs.filter((f) => d.level(f.id) === 2 && (active[f.id]?.length ?? 0) > 0)
+    : []
   const edited = Boolean(view) && JSON.stringify(active) !== JSON.stringify(view!.filters)
 
   const setFilter = (id: string, chosen: string[]) => {
@@ -201,8 +318,10 @@ export function PeoplePage({ session }: { session: Session }) {
 
   const undoTimer = useRef<number | undefined>(undefined)
   const offerUndo = (text: string, run: () => void) => {
-    setUndo({ text, run })
     toast(text)
+    // Undo is an accelerator: it arrives with rule 8, and before it the action is simply done.
+    if (!rExpert) return
+    setUndo({ text, run })
     window.clearTimeout(undoTimer.current)
     undoTimer.current = window.setTimeout(() => setUndo(null), 10_000)
   }
@@ -239,16 +358,20 @@ export function PeoplePage({ session }: { session: Session }) {
 
   /** The words on a paid control, in the same shape every time, and what happens when they bind. */
   const priceState = (cost: number) => {
-    if (cost > balance) return { suffix: " · no credits left", why: `The workspace has ${balance.toLocaleString()} credits left. ${admin ? `${admin.user} (${admin.title})` : "Your admin"} can add more.` }
-    if (myLimit !== null && spentByMe + cost > myLimit) return { suffix: " · over your limit", why: `Your limit is ${myLimit.toLocaleString()} credits a month; ${spentByMe.toLocaleString()} used. ${admin ? `${admin.user} (${admin.title})` : "Your admin"} can raise it.` }
+    if (cost > balance) return { suffix: rPrice ? " · no credits left" : "", why: `The workspace has ${balance.toLocaleString()} credits left. ${admin ? `${admin.user} (${admin.title})` : "Your admin"} can add more.` }
+    if (myLimit !== null && spentByMe + cost > myLimit) return { suffix: rPrice ? " · over your limit" : "", why: `Your limit is ${myLimit.toLocaleString()} credits a month; ${spentByMe.toLocaleString()} used. ${admin ? `${admin.user} (${admin.title})` : "Your admin"} can raise it.` }
     return { suffix: "", why: null as string | null }
   }
 
   const spend = (cost: number, done: string) => {
     const state = priceState(cost)
     if (state.why) { toast(state.why); return }
-    toast(`${done} · ${cost} credits · ${(balance - cost).toLocaleString()} left`)
+    // Rule 7 puts the balance in the message: what it cost, and what is left, every time.
+    toast(rPrice ? `${done} · ${cost} credits · ${(balance - cost).toLocaleString()} left` : done)
   }
+
+  /** What a control that spends says after its name. Before rule 7 it says nothing. */
+  const price = (cost: number) => (rPrice ? ` · ${cost.toLocaleString()} credits${priceState(cost).suffix}` : "")
 
   /* --------------------------------------------------------------------------------- row actions */
 
@@ -267,10 +390,10 @@ export function PeoplePage({ session }: { session: Session }) {
 
   const rowActs: RowAct[] = [
     { id: "people.row.sequence", icon: Send, shortcut: "s", label: (p) => (seqOf(p) ? "Move sequence" : "Sequence"), run: (p) => (seqOf(p) ? toast(`${p.name} is already in ${seqOf(p)}. Choose a sequence to move them to.`) : (setLocalSeq((s) => ({ ...s, [p.id]: seed.sequences[0]?.name ?? "Outbound" })), offerUndo(`${p.name} added to ${seed.sequences[0]?.name ?? "a sequence"}.`, () => setLocalSeq((s) => { const n = { ...s }; delete n[p.id]; return n })))) },
-    { id: "people.row.list", icon: ListPlus, shortcut: "l", label: () => "List", run: (p) => offerUndo(`${p.name} added to ${seed.lists.find((l) => l.kind === "people")?.name ?? "a list"}.`, () => toast(`${p.name} taken off the list again.`)) },
+    { id: "people.row.list", icon: ListPlus, shortcut: "l", label: () => (rDoors ? "List" : "Add to list"), run: (p) => offerUndo(`${p.name} added to ${seed.lists.find((l) => l.kind === "people")?.name ?? "a list"}.`, () => toast(`${p.name} taken off the list again.`)) },
     { id: "people.row.call", icon: Phone, shortcut: "c", label: () => "Call task", run: (p) => toast(`Call task due today for ${p.name}. It is in Tasks.`) },
-    { id: "people.row.enrich", icon: Sparkles, shortcut: "e", label: (p) => (p.enrichedOn ? `Enrich · ${CREDITS.enrich} credits${priceState(CREDITS.enrich).suffix}` : `Enrich · ${CREDITS.enrich} credits${priceState(CREDITS.enrich).suffix}`), run: (p) => spend(CREDITS.enrich, `${p.name} enriched`) },
-    { id: "people.row.research-agent", shortcut: "r", label: () => `Research · ${CREDITS.research} credits${priceState(CREDITS.research).suffix}`, run: (p) => spend(CREDITS.research, `Research queued for ${p.name}`) },
+    { id: "people.row.enrich", icon: Sparkles, shortcut: "e", label: () => `Enrich${price(CREDITS.enrich)}`, run: (p) => spend(CREDITS.enrich, `${p.name} enriched`) },
+    { id: "people.row.research-agent", shortcut: "r", label: () => `Research${price(CREDITS.research)}`, run: (p) => spend(CREDITS.research, `Research queued for ${p.name}`) },
     { id: "people.row.email", label: () => "One-off email", run: (p) => toast(`Writing to ${p.email}.`) },
     { id: "people.row.view-company", label: () => "Open the company", run: (p) => navigate(`/ollopa/companies/${p.companyId}`) },
     { id: "people.row.copy-email", label: () => "Copy email", run: (p) => { navigator.clipboard?.writeText(p.email); toast(`${p.email} copied.`) } },
@@ -285,32 +408,77 @@ export function PeoplePage({ session }: { session: Session }) {
   ]
 
   const usable = rowActs.filter((a) => d.weekly(a.id) > 0 || a.id === "people.row.dnc" || a.id === "people.row.remove")
-  const rowButtons = usable
-    .filter((a) => d.level(a.id) === 1 && !a.destructive)
-    .sort((x, y) => d.weekly(y.id) - d.weekly(x.id))
-    .slice(0, 5)
+  const rowButtons = (rHead
+    ? usable.filter((a) => d.level(a.id) === 1 && !a.destructive).sort((x, y) => d.weekly(y.id) - d.weekly(x.id))
+    : rowActs.filter((a) => anyRoleWeekly(a.id) >= 20 && !a.destructive).sort((x, y) => anyRoleWeekly(y.id) - anyRoleWeekly(x.id))
+  ).slice(0, 5)
+
+  /**
+   * The second add-to-list control: "Add to list" for people sits beside "Add to lists" for
+   * companies ("Create and Use a List", 28 Aug 2026), one letter apart and one icon apart, and the
+   * second one adds everybody at the company. Rule 4 leaves one door, labelled by what is behind it.
+   */
+  const companyListAct: RowAct = {
+    id: "people.row.list-companies",
+    icon: ListPlus,
+    label: () => "Add to lists",
+    run: (p) => offerUndo(
+      `Everyone at ${p.company} added to ${seed.lists.find((l) => l.kind === "companies")?.name ?? "a list"}.`,
+      () => toast("Taken off the list again."),
+    ),
+  }
 
   /* -------------------------------------------------------------------------------- bulk actions */
 
-  interface BulkAct { id: string; label: (n: number) => string; run: () => void; destructive?: boolean }
+  interface BulkAct {
+    id: string
+    /** What the common version writes on the button: the action, and nothing about who it will touch. */
+    plain: string
+    /** What the button says once it restates its count (rule 4) and prints its price (rule 7). */
+    label: (n: number, price: boolean) => string
+    run: () => void
+    destructive?: boolean
+  }
 
   const bulkActs: BulkAct[] = [
-    { id: "people.bulk.sequence", label: (n) => `Add ${n} to sequence`, run: () => offerUndo(`${count} added to ${seed.sequences[0]?.name ?? "a sequence"} · 3 skipped, already in a sequence.`, () => toast("Taken back out of the sequence.")) },
-    { id: "people.bulk.list", label: (n) => `Add ${n} to list`, run: () => offerUndo(`${count} added to ${seed.lists.find((l) => l.kind === "people")?.name ?? "a list"}.`, () => toast("Taken off the list.")) },
-    { id: "people.bulk.enrich", label: (n) => `Enrich ${n} · ${(n * CREDITS.enrich).toLocaleString()} credits`, run: () => setEnrichFor(selectedRows) },
-    { id: "people.bulk.export", label: (n) => `Export ${n} · no credits`, run: () => toast(`${count} people exported as CSV · no credits.`) },
-    { id: "people.bulk.stage", label: (n) => `Change stage of ${n}`, run: () => toast(`Choose the stage for ${count} people.`) },
-    { id: "people.bulk.research-agent", label: (n) => `Research ${n} · ${(n * CREDITS.research).toLocaleString()} credits`, run: () => spend(count * CREDITS.research, `Research queued for ${count} people`) },
-    { id: "people.bulk.email", label: (n) => `Email ${n}`, run: () => toast(`Writing to ${count} people.`) },
-    { id: "people.bulk.assign-owner", label: (n) => `Assign owner of ${n}`, run: () => toast(`Owner changed for ${count} people.`) },
-    { id: "people.bulk.push-crm", label: (n) => `Push ${n} to ${b.crm ?? "CRM"}`, run: () => toast(`${count} pushed to ${b.crm}.`) },
-    { id: "people.bulk.merge", label: () => (count === 2 ? "Merge the two selected" : "Merge duplicates — select two"), run: () => (count === 2 ? toast("Side by side: choose which value wins.") : toast("Select exactly two people to merge.")) },
-    { id: "people.bulk.remove", destructive: true, label: (n) => `Remove ${n} from the workspace`, run: () => offerUndo(`${count} removed from the workspace.`, () => toast("They are back.")) },
+    { id: "people.bulk.sequence", plain: "Sequence", label: (n) => `Add ${n} to sequence`, run: () => offerUndo(`${count} added to ${seed.sequences[0]?.name ?? "a sequence"} · 3 skipped, already in a sequence.`, () => toast("Taken back out of the sequence.")) },
+    { id: "people.bulk.list", plain: "List", label: (n) => `Add ${n} to list`, run: () => offerUndo(`${count} added to ${seed.lists.find((l) => l.kind === "people")?.name ?? "a list"}.`, () => toast("Taken off the list.")) },
+    { id: "people.bulk.enrich", plain: "Enrich", label: (n, price) => `Enrich ${n}${price ? ` · ${(n * CREDITS.enrich).toLocaleString()} credits` : ""}`, run: () => (rPrice ? setEnrichFor(selectedRows) : setCreditsDialog(true)) },
+    { id: "people.bulk.export", plain: "Export", label: (n, price) => `Export ${n}${price ? " · no credits" : ""}`, run: () => toast(`${count} people exported as CSV${rPrice ? " · no credits" : ""}.`) },
+    { id: "people.bulk.stage", plain: "Change stage", label: (n) => `Change stage of ${n}`, run: () => toast(`Choose the stage for ${count} people.`) },
+    { id: "people.bulk.research-agent", plain: "Research with AI", label: (n, price) => `Research ${n}${price ? ` · ${(n * CREDITS.research).toLocaleString()} credits` : ""}`, run: () => spend(count * CREDITS.research, `Research queued for ${count} people`) },
+    { id: "people.bulk.email", plain: "Email", label: (n) => `Email ${n}`, run: () => toast(`Writing to ${count} people.`) },
+    { id: "people.bulk.assign-owner", plain: "Assign owner", label: (n) => `Assign owner of ${n}`, run: () => toast(`Owner changed for ${count} people.`) },
+    { id: "people.bulk.push-crm", plain: `Push to ${b.crm ?? "CRM"}`, label: (n) => `Push ${n} to ${b.crm ?? "CRM"}`, run: () => toast(`${count} pushed to ${b.crm}.`) },
+    { id: "people.bulk.merge", plain: "Merge duplicates", label: () => (count === 2 ? "Merge the two selected" : "Merge duplicates — select two"), run: () => (count === 2 ? toast("Side by side: choose which value wins.") : toast("Select exactly two people to merge.")) },
+    { id: "people.bulk.remove", destructive: true, plain: "Remove", label: (n) => `Remove ${n} from the workspace`, run: () => offerUndo(`${count} removed from the workspace.`, () => toast("They are back.")) },
   ]
+
+  /**
+   * The eleven the common version puts in a row: Save, Email, Sequence, Workflows, List, Export,
+   * Research with AI, Push to CRM, View companies, Assign owner, Assign account ("Search for
+   * People", 5 Sep 2026). Four of them — Save, Workflows, View companies, Assign account — are
+   * Apollo's and not this product's, so they are here and nowhere else.
+   */
+  const parodyOnlyBulk: BulkAct[] = [
+    { id: "people.bulk.save", plain: "Save", label: () => "Save", run: () => setCreditsDialog(true) },
+    { id: "people.bulk.workflows", plain: "Workflows", label: () => "Workflows", run: () => toast("Choose a workflow to run on the selection.") },
+    { id: "people.bulk.view-companies", plain: "View companies", label: () => "View companies", run: () => navigate("/ollopa/companies") },
+    { id: "people.bulk.assign-account", plain: "Assign account", label: () => "Assign account", run: () => toast("Choose the account these people belong to.") },
+  ]
+  const byId = (id: string) => [...bulkActs, ...parodyOnlyBulk].find((a) => a.id === id)!
+  const parodyBulk: BulkAct[] = [
+    "people.bulk.save", "people.bulk.email", "people.bulk.sequence", "people.bulk.workflows",
+    "people.bulk.list", "people.bulk.export", "people.bulk.research-agent", "people.bulk.push-crm",
+    "people.bulk.view-companies", "people.bulk.assign-owner", "people.bulk.assign-account",
+  ].map(byId)
+
   const usableBulk = bulkActs.filter((a) => d.weekly(a.id) > 0 || a.id === "people.bulk.remove")
-  const bulkButtons = usableBulk
-    .filter((a) => d.level(a.id) === 1 && !a.destructive)
-    .sort((x, y) => d.weekly(y.id) - d.weekly(x.id))
+  const bulkButtons = rHead
+    ? usableBulk.filter((a) => d.level(a.id) === 1 && !a.destructive).sort((x, y) => d.weekly(y.id) - d.weekly(x.id))
+    : parodyBulk
+  /** What a bulk button says at this step: the bare action, then the count, then the price. */
+  const bulkLabel = (a: BulkAct) => (rDoors ? a.label(count, rPrice) : a.plain)
 
   /* ------------------------------------------------------------------------------- the keyboard */
 
@@ -322,6 +490,8 @@ export function PeoplePage({ session }: { session: Session }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Accelerators are rule 8: before it lands, the page is reachable but has no fast path.
+      if (!rExpert) return
       const t = e.target as HTMLElement | null
       const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo?.run(); setUndo(null); return }
@@ -348,6 +518,8 @@ export function PeoplePage({ session }: { session: Session }) {
   const onRowKey = (e: React.KeyboardEvent<HTMLTableRowElement>, p: PersonRow, i: number) => {
     if (e.target !== e.currentTarget) return
     const k = e.key
+    // Arrow keys walk the table at every step; the letter keys are the rule 8 accelerators.
+    if (!rExpert && k !== "ArrowDown" && k !== "ArrowUp" && k !== "Enter" && k !== " ") return
     if (pending) {
       if (k === "Enter") { e.preventDefault(); pending.run(); setPending(null); return }
       if (k === "Escape") { e.preventDefault(); setPending(null); return }
@@ -411,6 +583,80 @@ export function PeoplePage({ session }: { session: Session }) {
     </DropdownMenu>
   )
 
+  /**
+   * What says how many people the buttons beside it will touch. Rule 5 replaces the four scattered
+   * Bulk Selection controls with the count, the one control that changes it, and — once it is on —
+   * the per-company limit beside it, restating the result in words.
+   */
+  const selectionControls = rContext ? (
+    <>
+      {count > 0 && <span className="text-sm font-medium tabular-nums">{count.toLocaleString()} selected</span>}
+      {!allMatching && sorted.length > selected.length && (
+        <Button size="sm" variant="outline" data-item="people.bulk.select" data-item-label="Select all matching" className="h-7 px-2 text-xs" onClick={() => setAllMatching(true)}>
+          Select all {sorted.length.toLocaleString()} matching
+        </Button>
+      )}
+      {allMatching && (
+        /* One changes the meaning of the other, so they sit together and restate the result. */
+        <span className="flex items-center gap-1.5 text-xs" data-item="people.bulk.limit-per-company" data-item-label="Limit per company">
+          <label htmlFor="per-company" className="text-muted-foreground">Limit per company</label>
+          <Select value={perCompany === null ? "all" : String(perCompany)} onValueChange={(v) => setPerCompany(v === "all" ? null : Number(v))}>
+            <SelectTrigger id="per-company" className="h-7 w-24 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">No limit</SelectItem>
+              {[1, 2, 3, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} per company</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="text-muted-foreground">
+            Select {count.toLocaleString()} people{perCompany ? `, up to ${perCompany} per company` : ""}
+          </span>
+        </span>
+      )}
+    </>
+  ) : (
+    <ParodySelection
+      perCompany={perCompany}
+      onNumber={(n) => { setSelected(page.slice(0, n).map((p) => p.id)); setAllMatching(false) }}
+      onPerCompany={setPerCompany}
+      onSelectPage={() => { setSelected(page.map((p) => p.id)); setAllMatching(false) }}
+      onSelectAll={() => setAllMatching(true)}
+    />
+  )
+
+  /** The bulk buttons themselves, wherever this step puts them. */
+  const bulkStrip = (
+    <>
+      {bulkButtons.map((a) => (
+        <Button key={a.id} size="sm" className="h-7 px-2 text-xs" data-item={a.id} data-item-label={a.plain} onClick={a.run}>
+          {bulkLabel(a)}
+        </Button>
+      ))}
+      {rHead && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" data-item="people.bulk.more" data-item-label={rDoors ? "Edit or export selected" : "More actions"}>
+              {rDoors ? "Edit or export selected" : "More"} <ChevronDown aria-hidden="true" className="size-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" data-container="people.bulk.menu" data-container-label={rDoors ? "Edit or export selected" : "the more menu"}>
+            {usableBulk.filter((a) => !a.destructive).map((a) => (
+              <DropdownMenuItem key={a.id} data-item={a.id} data-item-label={a.plain} onSelect={a.run}>{bulkLabel(a)}</DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            {usableBulk.filter((a) => a.destructive).map((a) => (
+              <DropdownMenuItem key={a.id} data-item={a.id} data-item-label={a.plain} className="text-destructive" onSelect={a.run}>{bulkLabel(a)}</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      {count > 0 && (
+        <Button size="sm" variant="ghost" data-item="people.bulk.clear" data-item-label="Clear selection" className="h-7 px-2 text-xs" onClick={() => { setSelected([]); setAllMatching(false) }}>
+          Clear selection
+        </Button>
+      )}
+    </>
+  )
+
   const filtersBody = (
     <FiltersPanelBody
       filters={defs}
@@ -422,6 +668,11 @@ export function PeoplePage({ session }: { session: Session }) {
       dnc={allRows.filter((p) => p.doNotContact).length}
       includeDnc={includeDnc}
       onIncludeDnc={setIncludeDnc}
+      showDnc={rPrice}
+      headings={rContent ? undefined : [
+        { label: `Most Popular Filters (${popularFilters.length})`, filters: popularFilters },
+        { label: `More Filters (${restFilters.length}) · advanced`, filters: restFilters },
+      ]}
     />
   )
 
@@ -467,14 +718,16 @@ export function PeoplePage({ session }: { session: Session }) {
       </div>
 
       {/* ---------------------------------------------------------------------- 2. the views row */}
-      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 lg:px-6" data-print-hide>
-        {d.level("people.views.saved") === 1 && views
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 lg:px-6" data-container="people.views.row" data-container-label="the views row" data-print-hide>
+        {rHead && d.level("people.views.saved") === 1 && views
           .filter((v) => v.defaultFor.includes(session.role) || v.owner === session.user || (v.shipped && d.level("people.views.needs-enrichment") === 1))
           .slice(0, 4)
           .map((v) => (
             <button
               key={v.id}
               type="button"
+              data-item={`people.view.${v.id}`}
+              data-item-label={v.name}
               aria-pressed={viewId === v.id}
               onClick={() => openView(v)}
               className={cn(
@@ -488,14 +741,27 @@ export function PeoplePage({ session }: { session: Session }) {
             </button>
           ))}
 
-        <ViewsDoor
-          views={views}
-          viewId={viewId}
-          user={session.user}
-          onOpen={openView}
-          onSave={(name) => { toast(`View saved · ${name}`); setViewId(null) }}
-          onAction={(what, v) => toast(`${v.name} · ${what}`)}
-        />
+        {rDoors ? (
+          <ViewsDoor
+            views={views}
+            viewId={viewId}
+            user={session.user}
+            onOpen={openView}
+            onSave={(name) => { toast(`View saved · ${name}`); setViewId(null) }}
+            onAction={(what, v) => toast(`${v.name} · ${what}`)}
+            onPage={rContext}
+            shortcuts={rExpert}
+          />
+        ) : (
+          <ParodyViewsDoor
+            views={views}
+            viewId={viewId}
+            user={session.user}
+            onOpen={openView}
+            onDefault={rContext ? (v) => toast(`${v.name} is your default view.`) : null}
+            named={!rHead}
+          />
+        )}
 
         {edited && view && (
           <span className="flex items-center gap-1 text-xs">
@@ -509,15 +775,17 @@ export function PeoplePage({ session }: { session: Session }) {
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 lg:px-6" data-print-hide>
         <Input
           ref={searchRef}
+          data-item="people.search"
+          data-item-label="Search"
           aria-label="Search people by name, title, company or email"
-          placeholder="Search  /"
+          placeholder={rExpert ? "Search  /" : "Search"}
           className="h-8 w-56"
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
         />
 
         {/* Level one for this seat, and any level-two filter that is active: a hidden cause is not allowed. */}
-        <span className="hidden flex-wrap items-center gap-2 md:flex">
+        <span className="hidden flex-wrap items-center gap-2 md:flex" data-container="people.chips" data-container-label="the filter bar">
           {[...chipFilters, ...activeElsewhere].map((f) => (
             <FilterChip
               key={f.id}
@@ -535,39 +803,75 @@ export function PeoplePage({ session }: { session: Session }) {
           ))}
         </span>
 
-        {/* The one door that holds every filter, flat. On a phone it opens as a full-height sheet. */}
+        {/* The one door that holds every filter, flat. On a phone it opens as a full-height sheet.
+            Before rule 2 the same control is "Show Filters", which opens a sidebar of groups. */}
         <button
           type="button"
-          aria-expanded={panelOpen || pinned}
-          onClick={() => (window.matchMedia("(max-width: 767px)").matches ? setPhoneFilters(true) : setPanelOpen(!panelOpen))}
+          data-item="people.filters.all"
+          data-item-label={rDoors ? "All filters" : "Show Filters"}
+          aria-expanded={rFlat ? panelOpen || pinned : showFilters}
+          onClick={() => {
+            if (!rFlat) { setShowFilters(!showFilters); return }
+            window.matchMedia("(max-width: 767px)").matches ? setPhoneFilters(true) : setPanelOpen(!panelOpen)
+          }}
           className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (panelOpen || pinned) && "rotate-180")} />
-          <span className="md:hidden">Filters{activeCount ? ` · ${activeCount} active` : ""}</span>
-          <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
+          <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (rFlat ? panelOpen || pinned : showFilters) && "rotate-180")} />
+          {!rFlat ? (
+            <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
+          ) : !rDoors ? (
+            <span>Filters</span>
+          ) : (
+            <>
+              <span className="md:hidden">Filters{activeCount ? ` · ${activeCount} active` : ""}</span>
+              <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
+            </>
+          )}
         </button>
 
         {(activeCount > 0 || q) && (
-          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearAll}>Clear</Button>
+          <Button size="sm" variant="ghost" data-item="people.f.clear" data-item-label="Clear" className="h-7 px-2 text-xs" onClick={clearAll}>Clear</Button>
         )}
 
         <span className="ml-auto flex items-center gap-3">
-          <span role="status" aria-live="polite" className={cn("tabular-nums text-xs", settling ? "text-muted-foreground/60" : "text-muted-foreground")}>
+          <span data-item="people.count" data-item-label="the result count" role="status" aria-live="polite" className={cn("tabular-nums text-xs", settling ? "text-muted-foreground/60" : "text-muted-foreground")}>
             {settling ? "…" : `${sorted.length.toLocaleString()} of ${total.toLocaleString()}`}
           </span>
-          <ColumnsDoor
-            all={allColumns}
-            shownIds={shownColumnIds}
-            onChange={setColumns}
-            onReset={() => setColumns([])}
-            density={density}
-            onDensity={setDensity}
-            pageSize={pageSize}
-            onPageSize={(n) => { setPageSize(n); setShown(n) }}
-            roleLabel={seat?.title ?? "your seat"}
-          />
+          {rDoors ? (
+            <ColumnsDoor
+              all={allColumns}
+              shownIds={shownColumnIds}
+              onChange={setColumns}
+              onReset={() => setColumns([])}
+              density={density}
+              onDensity={setDensity}
+              pageSize={pageSize}
+              onPageSize={(n) => { setPageSize(n); setShown(n) }}
+              roleLabel={seat?.title ?? "your seat"}
+            />
+          ) : (
+            <ParodyColumns
+              all={allColumns}
+              shownIds={shownColumnIds}
+              onChange={setColumns}
+              density={density}
+              onDensity={setDensity}
+              showDensity={rContent}
+            />
+          )}
         </span>
       </div>
+
+      {/* --------------------------------------------- 3b. the tabs, and the strip above the results */}
+      {!rFlat && (
+        <ParodyTabs
+          total={total}
+          netNew={allRows.filter((p) => !p.enrichedOn).length}
+          saved={total - allRows.filter((p) => !p.enrichedOn).length}
+          tab={tab}
+          onTab={setTab}
+        />
+      )}
 
       {/* The filters that produced these rows, on the printed page and nowhere else. */}
       <p className="hidden px-6 pb-2 text-xs print:block">
@@ -575,69 +879,53 @@ export function PeoplePage({ session }: { session: Session }) {
       </p>
 
       {/* ----------------------------------------------------------------- 4. the selection bar */}
-      {count > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 lg:px-6" data-print-hide>
-          <span className="text-sm font-medium tabular-nums">{count.toLocaleString()} selected</span>
-          {!allMatching && sorted.length > selected.length && (
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setAllMatching(true)}>
-              Select all {sorted.length.toLocaleString()} matching
-            </Button>
-          )}
-          {allMatching && (
-            /* One changes the meaning of the other, so they sit together and restate the result. */
-            <span className="flex items-center gap-1.5 text-xs">
-              <label htmlFor="per-company" className="text-muted-foreground">Limit per company</label>
-              <Select value={perCompany === null ? "all" : String(perCompany)} onValueChange={(v) => setPerCompany(v === "all" ? null : Number(v))}>
-                <SelectTrigger id="per-company" className="h-7 w-24 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">No limit</SelectItem>
-                  {[1, 2, 3, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} per company</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <span className="text-muted-foreground">
-                Select {count.toLocaleString()} people{perCompany ? `, up to ${perCompany} per company` : ""}
-              </span>
-            </span>
-          )}
-          <span className="flex flex-wrap items-center gap-1.5">
-            {bulkButtons.map((a) => (
-              <Button key={a.id} size="sm" className="h-7 px-2 text-xs" onClick={a.run}>{a.label(count)}</Button>
-            ))}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
-                  Edit or export selected <ChevronDown aria-hidden="true" className="size-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {usableBulk.filter((a) => !a.destructive).map((a) => (
-                  <DropdownMenuItem key={a.id} onSelect={a.run}>{a.label(count)}</DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                {usableBulk.filter((a) => a.destructive).map((a) => (
-                  <DropdownMenuItem key={a.id} className="text-destructive" onSelect={a.run}>{a.label(count)}</DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { setSelected([]); setAllMatching(false) }}>Clear selection</Button>
-          </span>
-        </div>
+      {rStable ? (
+        count > 0 && (
+          <div
+            className="flex flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 lg:px-6"
+            data-container="people.bulk.bar"
+            data-container-label="the selection bar"
+            data-print-hide
+          >
+            {selectionControls}
+            <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
+          </div>
+        )
+      ) : (
+        /* Before rule 6 the strip is simply always there, selection or no selection. */
+        <BulkSelection controls={selectionControls}>{bulkStrip}</BulkSelection>
       )}
 
       {/* ------------------------------------------------------------------------- 5. the table */}
       <div className="flex min-h-0 flex-1">
-        {(panelOpen || pinned) && (
+        {!rFlat && (
+          <ParodySidebar
+            popular={popularFilters}
+            rest={restFilters}
+            active={active}
+            values={valuesOf}
+            count={counts}
+            onChange={setFilter}
+            open={showFilters}
+            moreOpen={moreFilters}
+            onMore={setMoreFilters}
+            onSaveSearch={() => toast("Name this search to save it.")}
+          />
+        )}
+
+        {rFlat && (panelOpen || pinned) && (
           <FiltersPanelFrame
-            title={`All filters (${defs.length})`}
+            title={rDoors ? `All filters (${defs.length})` : "Filters"}
             pinned={pinned}
             onPin={setPinned}
+            showPin={rContext}
             onClose={() => { setPanelOpen(false); setPinned(false) }}
           >
             {filtersBody}
           </FiltersPanelFrame>
         )}
 
-        <div className="min-w-0 flex-1 overflow-auto border-t">
+        <div className="min-w-0 flex-1 overflow-auto border-t" data-container="people.table.columns" data-container-label="the table header">
           {/* Phone: the same items as cards, no level change. */}
           <ul className="divide-y md:hidden">
             {selectMode && <li className="px-4 py-2 text-xs text-muted-foreground">Tap a row to select it.</li>}
@@ -662,12 +950,12 @@ export function PeoplePage({ session }: { session: Session }) {
                       <span className="text-muted-foreground">{p.lastContacted ? day(p.lastContacted) : "Never contacted"}</span>
                       {p.phone && !isRevealed(p) && (
                         <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => reveal(p)}>
-                          Reveal · {CREDITS.revealPhone} credits{priceState(CREDITS.revealPhone).suffix}
+                          {rPrice ? `Reveal · ${CREDITS.revealPhone} credits${priceState(CREDITS.revealPhone).suffix}` : "Access mobile"}
                         </Button>
                       )}
                     </div>
                   </div>
-                  <RowMenu p={p} acts={usable} onGlance={() => setGlancing(p)} />
+                  <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} />
                 </div>
               </li>
             ))}
@@ -688,6 +976,8 @@ export function PeoplePage({ session }: { session: Session }) {
                   <th
                     key={c.id}
                     scope="col"
+                    data-item={c.id}
+                    data-item-label={c.header}
                     aria-sort={sort?.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
                     className={cn("h-9 px-2 text-left align-middle text-xs font-medium text-muted-foreground", c.className)}
                   >
@@ -730,14 +1020,14 @@ export function PeoplePage({ session }: { session: Session }) {
                           {p.jobChange && d.weekly("people.job-change-update") > 0 && <JobChange p={p} onDone={(m) => offerUndo(m, () => toast("Put back as it was."))} seed={seed} />}
                         </span>
                       ) : c.key === "stage" ? (
-                        <StagePicker value={stageOf(p)} inSequence={Boolean(seqOf(p))} onChange={(s) => moveStage(p, s)} />
+                        <StagePicker value={stageOf(p)} inSequence={rPrice && Boolean(seqOf(p))} onChange={(s) => moveStage(p, s)} />
                       ) : c.key === "sequence" ? (
                         seqOf(p) || <span className="text-muted-foreground">—</span>
                       ) : c.key === "phone" ? (
                         isRevealed(p) ? <span className="tabular-nums">{p.phoneNumber ?? "On file"}</span>
                           : p.phone ? (
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); reveal(p) }}>
-                              Reveal · {CREDITS.revealPhone} credits{priceState(CREDITS.revealPhone).suffix}
+                            <Button size="sm" variant="outline" data-item="people.row.reveal-phone" data-item-label="Reveal phone" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); reveal(p) }}>
+                              {rPrice ? `Reveal · ${CREDITS.revealPhone} credits${priceState(CREDITS.revealPhone).suffix}` : "Access mobile"}
                             </Button>
                           ) : <span className="text-muted-foreground">No phone</span>
                       ) : c.cell(p)}
@@ -748,14 +1038,18 @@ export function PeoplePage({ session }: { session: Session }) {
                       keyboard focus, over the row rather than taking a column's width from it. */}
                   <td className={cn("sticky right-0 w-10 border-l bg-background px-2 group-hover:bg-muted", pad)} onClick={(e) => e.stopPropagation()}>
                     <div className="relative flex items-center justify-end">
-                      <div className="absolute right-7 flex items-center gap-1 rounded-md bg-background opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                        {rowButtons.map((a) => (
-                          <Button key={a.id} size="sm" variant="ghost" className="h-7 whitespace-nowrap px-2 text-xs" onClick={() => a.run(p)}>
+                      <div
+                        className="absolute right-7 flex items-center gap-1 rounded-md bg-background opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                        data-container="people.row.actions"
+                        data-container-label="the row's buttons"
+                      >
+                        {[...rowButtons, ...(rDoors ? [] : [companyListAct])].map((a) => (
+                          <Button key={a.id} size="sm" variant="ghost" data-item={a.id} data-item-label={a.label(p)} className="h-7 whitespace-nowrap px-2 text-xs" onClick={() => a.run(p)}>
                             {a.icon && <a.icon aria-hidden="true" className="size-3.5" />}{a.label(p)}
                           </Button>
                         ))}
                       </div>
-                      <RowMenu p={p} acts={usable} onGlance={() => setGlancing(p)} />
+                      <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} />
                     </div>
                   </td>
                 </tr>
@@ -828,6 +1122,18 @@ export function PeoplePage({ session }: { session: Session }) {
       <Panel id="people-filters-phone" title={`All filters (${defs.length})`} open={phoneFilters} onOpenChange={setPhoneFilters}>
         {filtersBody}
       </Panel>
+
+      {/* The common version's price: eight steps into a dialog, and nowhere else (rule 7). */}
+      {!rPrice && (
+        <CreditsDialog
+          open={creditsDialog}
+          onOpenChange={setCreditsDialog}
+          count={Math.max(count, 1)}
+          cost={Math.max(count, 1) * CREDITS.enrich}
+          balance={balance}
+          onConfirm={() => toast(`${Math.max(count, 1)} people saved.`)}
+        />
+      )}
     </div>
   )
 }
@@ -845,31 +1151,35 @@ function capPerCompany(rows: PersonRow[], limit: number | null): PersonRow[] {
 }
 
 /** Every row action, with its shortcut printed, named for the person it acts on. */
-function RowMenu({ p, acts, onGlance }: {
+function RowMenu({ p, acts, named = true, shortcuts = true, onGlance }: {
   p: PersonRow
   acts: { id: string; label: (p: PersonRow) => string; shortcut?: string; run: (p: PersonRow) => void; destructive?: boolean }[]
+  /** Rule 4: the menu is named for the person it acts on, not "More". */
+  named?: boolean
+  /** Rule 8: every item prints the key that does it. */
+  shortcuts?: boolean
   onGlance: () => void
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon" variant="ghost" className="size-7" aria-label={`Actions for ${p.name}`}>
+        <Button size="icon" variant="ghost" className="size-7" data-item="people.row.more" data-item-label="the row menu" aria-label={named ? `Actions for ${p.name}` : "More"}>
           <MoreHorizontal aria-hidden="true" className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuItem onSelect={onGlance}>Quick look<span className="ml-auto font-mono text-xs text-muted-foreground">Enter</span></DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate(`/ollopa/people/${p.id}`)}>Open the full record<span className="ml-auto font-mono text-xs text-muted-foreground">o</span></DropdownMenuItem>
+      <DropdownMenuContent align="end" className="w-64" data-container="people.row.menu" data-container-label={named ? `Actions for ${p.name}` : "the row menu"}>
+        <DropdownMenuItem data-item="people.row.quick-look" data-item-label="Quick look" onSelect={onGlance}>Quick look{shortcuts && <span className="ml-auto font-mono text-xs text-muted-foreground">Enter</span>}</DropdownMenuItem>
+        <DropdownMenuItem data-item="people.row.open" data-item-label="Open the full record" onSelect={() => navigate(`/ollopa/people/${p.id}`)}>Open the full record{shortcuts && <span className="ml-auto font-mono text-xs text-muted-foreground">o</span>}</DropdownMenuItem>
         <DropdownMenuSeparator />
         {acts.filter((a) => !a.destructive).map((a) => (
-          <DropdownMenuItem key={a.id} onSelect={() => a.run(p)}>
+          <DropdownMenuItem key={a.id} data-item={a.id} data-item-label={a.label(p)} onSelect={() => a.run(p)}>
             {a.label(p)}
-            {a.shortcut && <span className="ml-auto font-mono text-xs text-muted-foreground">{a.shortcut}</span>}
+            {shortcuts && a.shortcut && <span className="ml-auto font-mono text-xs text-muted-foreground">{a.shortcut}</span>}
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
         {acts.filter((a) => a.destructive).map((a) => (
-          <DropdownMenuItem key={a.id} className="text-destructive" onSelect={() => a.run(p)}>{a.label(p)}</DropdownMenuItem>
+          <DropdownMenuItem key={a.id} data-item={a.id} data-item-label={a.label(p)} className="text-destructive" onSelect={() => a.run(p)}>{a.label(p)}</DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -885,7 +1195,9 @@ function StagePicker({ value, inSequence, onChange }: { value: ContactStage; inS
         className={cn("h-6 w-auto gap-1 border-none px-1.5 py-0 text-xs shadow-none focus-visible:ring-2", STAGE_TONE[value])}
         onClick={(e) => e.stopPropagation()}
       >
-        <SelectValue />
+        {/* The trigger prints the stage and only the stage: the consequence note belongs on the
+            option, where the choice is made, and Radix would otherwise copy it into the badge. */}
+        <span>{value}</span>
       </SelectTrigger>
       <SelectContent>
         {STAGES.map((s) => (
@@ -943,13 +1255,17 @@ function JobChange({ p, seed, onDone }: { p: PersonRow; seed: ReturnType<typeof 
 }
 
 /** "All views (n)": mine, shared, the shipped one, a search, and the name field that saves this one. */
-function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction }: {
+function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction, onPage = true, shortcuts = true }: {
   views: PeopleView[]
   viewId: string | null
   user: string
   onOpen: (v: PeopleView) => void
   onSave: (name: string) => void
   onAction: (what: string, v: PeopleView) => void
+  /** Rule 5: the default view is set here, on the page it changes, not in Settings. */
+  onPage?: boolean
+  /** Rule 8: the number key that opens each view is printed beside it. */
+  shortcuts?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
@@ -972,7 +1288,7 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction }: {
             >
               <span className="min-w-0 flex-1 truncate">{v.name}</span>
               {v.alert && v.alert !== "off" && <span className="text-xs text-muted-foreground">{v.alert} email</span>}
-              <span className="font-mono text-xs text-muted-foreground">{views.indexOf(v) < 9 ? views.indexOf(v) + 1 : ""}</span>
+              {shortcuts && <span className="font-mono text-xs text-muted-foreground">{views.indexOf(v) < 9 ? views.indexOf(v) + 1 : ""}</span>}
             </button>
           </li>
         ))}
@@ -985,6 +1301,8 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction }: {
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-item="people.views.saved"
+          data-item-label="All views"
           aria-expanded={open}
           className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
@@ -1000,19 +1318,24 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction }: {
           <label htmlFor="save-view" className="text-xs text-muted-foreground">Save the filters you are looking at</label>
           <div className="mt-1 flex gap-1.5">
             <Input id="save-view" className="h-8" placeholder="Name this view" value={name} onChange={(e) => setName(e.target.value)} />
-            <Button size="sm" disabled={!name.trim()} onClick={() => { onSave(name.trim()); setName(""); setOpen(false) }}>Save</Button>
+            <Button size="sm" data-item="people.views.save" data-item-label="Save this view" disabled={!name.trim()} onClick={() => { onSave(name.trim()); setName(""); setOpen(false) }}>Save</Button>
           </div>
         </div>
         {current && (
           <div className="mt-3 border-t pt-3">
             <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{current.name}</h4>
             <div className="flex flex-wrap gap-1">
-              {["Set as my default", "Rename", "Share with everyone", "Email me daily", "Email me weekly", "Copy a link", "Delete"].map((what) => (
+              {[...(onPage ? ["Set as my default"] : []), "Rename", "Share with everyone", "Email me daily", "Email me weekly", "Copy a link", "Delete"].map((what) => (
                 <Button key={what} size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { onAction(what.toLowerCase(), current); setOpen(false) }}>
                   {what}
                 </Button>
               ))}
             </div>
+            {!onPage && (
+              <p className="pt-2 text-xs text-muted-foreground">
+                Your default view is set in <a className="underline" href={href("/ollopa/settings")}>Settings › Users and teams › Sharing and defaults</a>.
+              </p>
+            )}
           </div>
         )}
       </PopoverContent>
@@ -1046,6 +1369,8 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-item="people.columns.choose"
+          data-item-label="Columns and density"
           aria-expanded={open}
           className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
@@ -1053,7 +1378,7 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
           Columns and density · {shownIds.length} of {all.length}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
+      <PopoverContent align="end" className="w-80" data-container="people.columns.popover" data-container-label="Columns and density">
         <ul className="max-h-72 space-y-0.5 overflow-y-auto">
           {[...shownIds.map((id) => all.find((c) => c.id === id)).filter((c): c is ColumnDef => Boolean(c)),
             ...all.filter((c) => !shownIds.includes(c.id))].map((c) => {
@@ -1082,7 +1407,7 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
         </ul>
         <div className="mt-3 space-y-2 border-t pt-3">
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={onReset}>Reset to the {roleLabel} default</Button>
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-xs" data-item="people.density" data-item-label="Density">
             <span className="text-muted-foreground">Density</span>
             {(["Comfortable", "Compact"] as const).map((v) => (
               <Button key={v} size="sm" variant={density === v ? "secondary" : "ghost"} aria-pressed={density === v} className="h-7 px-2 text-xs" onClick={() => onDensity(v)}>{v}</Button>
