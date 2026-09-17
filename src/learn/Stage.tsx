@@ -34,7 +34,7 @@ export function Stage({ lessonCase, step, session, stageRef }: {
     <div ref={stageRef} className="lesson-stage h-full overflow-hidden rounded-lg border bg-background shadow-sm">
       <LessonProvider value={lesson}>
         {chrome === "product"
-          ? <AppShell session={session} page={page} title={title}>{body}</AppShell>
+          ? <AppShell session={session} page={page} title={title} defaultCollapsed>{body}</AppShell>
           : <div className="h-full overflow-y-auto">{body}</div>}
       </LessonProvider>
     </div>

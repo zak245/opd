@@ -8,8 +8,9 @@
 // for the AE and a door for CS and the admin; custom fields sit in the header at Halyard and Ridgeline
 // and behind a door at Meridian; history opens by default for the seat that audits. Same page, no mode.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { Bot, CalendarClock, CheckSquare, FileText, Mail, MessageSquare, Phone, Sparkles } from "lucide-react"
+import { Bell, Bot, CalendarClock, CheckSquare, ChevronRight, FileText, Mail, MessageSquare, MoreHorizontal, Phone, Settings2, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ruleOn, useLesson } from "@/learn/context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +57,43 @@ function fieldValue(v: string | number | boolean | undefined): string {
 /** The buyer's own words, with one pair of quotation marks however the source stored them. */
 function quoted(text: string): string {
   return `“${text.replace(/^["“”']+|["“”']+$/g, "")}”`
+}
+
+/* The lesson view finds what moved by comparing the DOM before and after a step, so every thing on
+   this page carries `data-item` with its usage-item id and keeps that id at every step, and every
+   place a thing can live carries `data-container`. `Door` tags itself (BUILD-WAVE3.md). None of this
+   renders anything: the product ships the same attributes. */
+
+/** A thing: a field value, a card, a menu entry. The same id at step 0 and at the last step. */
+function Thing({ id, label, className, children }: { id: string; label?: string; className?: string; children: ReactNode }) {
+  return <span data-item={id} data-item-label={label} className={className}>{children}</span>
+}
+
+/** A thing that is also a place: a card that holds rows, a tab body that holds fields. */
+function ThingPlace({ id, label, place, placeLabel, className, open, children }: {
+  id: string; label?: string; place: string; placeLabel: string; className?: string; open?: boolean; children: ReactNode
+}) {
+  return (
+    <div
+      data-item={id} data-item-label={label}
+      data-container={place} data-container-label={placeLabel}
+      data-open={open === undefined ? undefined : open ? "true" : "false"}
+      className={className}
+    >
+      {children}
+    </div>
+  )
+}
+
+/** A place only: the widget panel, the tab strip, the timeline. */
+function Place({ id, label, className, open, children }: {
+  id: string; label: string; className?: string; open?: boolean; children: ReactNode
+}) {
+  return (
+    <div data-container={id} data-container-label={label} data-open={open === undefined ? undefined : open ? "true" : "false"} className={className}>
+      {children}
+    </div>
+  )
 }
 
 /** Every field an agent can write carries one. A value with no chip was typed by a person. */
@@ -106,6 +144,8 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
       <div role="tablist" aria-label="Log activity" className="flex flex-wrap gap-1 pb-2">
         {tabs.map((t) => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
+            data-item={t.key === "email" ? "timeline.email" : t.key === "note" ? "timeline.note" : undefined}
+            data-item-label={t.key === "email" ? "Email a contact" : t.key === "note" ? "Add a note" : undefined}
             className={cn("rounded-md px-2.5 py-1 text-xs", tab === t.key ? "bg-foreground text-background" : "hover:bg-muted")}>
             {t.label}
           </button>
@@ -186,6 +226,18 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const b = businessById(session.business)
   const disclosure = useDisclosure("deal")
 
+  /* On a lesson stage this names the step; in the product it is null and every rule is on, so the
+     branches below collapse to the page wave 2 shipped. One component, one model, a layout per step. */
+  const lesson = useLesson()
+  const r1 = ruleOn(lesson, 1)   // hide the rare, never the necessary
+  const r2 = ruleOn(lesson, 2)   // stop at two levels
+  const r3 = ruleOn(lesson, 3)   // split by task frequency, not user skill
+  const r4 = ruleOn(lesson, 4)   // make the door obvious and honest
+  const r5 = ruleOn(lesson, 5)   // keep context across the boundary
+  const r6 = ruleOn(lesson, 6)   // stable, user-controlled disclosure
+  const r7 = ruleOn(lesson, 7)   // decision-critical information is never behind a door
+  const r8 = ruleOn(lesson, 8)   // fade the scaffold; give experts accelerators
+
   // The deal the route names; failing that, the first one this seat owns, so a bare link still lands.
   const deal = useMemo(
     () => seed.deals.find((d) => d.id === dealId) ?? seed.deals.find((d) => d.owner === session.user) ?? seed.deals[0],
@@ -215,6 +267,16 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const composer = useRef<HTMLDivElement>(null)
   const [, setEvidenceDoor] = useDoorState("deal.evidence")
 
+  /* State the common version needs and the disclosed version does not: which tab is showing, whether
+     the "…" menu, the gear and the bell are open, and which field group inside All Fields is open. */
+  const [parodyTab, setParodyTab] = useState<"activities" | "files" | "notes" | "all" | "enrich">("activities")
+  const [parodyMenu, setParodyMenu] = useState(false)
+  const [gearOpen, setGearOpen] = useState(false)
+  const [bellOpen, setBellOpen] = useState(false)
+  const [group, setGroup] = useState<string | null>(null)
+  const [hiddenWidgets, setHiddenWidgets] = useState<string[]>([])
+  const [hoverEdit, setHoverEdit] = useState<string | null>(null)
+
   useEffect(() => {
     if (!deal) return
     setStage(deal.stage); setForecast(deal.forecast); setProbability(deal.probability)
@@ -230,6 +292,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const [chord, setChord] = useState(false)
   const [, setHistoryDoor] = useDoorState("deal.history")
   useEffect(() => {
+    if (!r8) return
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (e.metaKey || e.ctrlKey || t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return
@@ -249,7 +312,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [chord, dealId, session.business, setHistoryDoor])
+  }, [chord, dealId, session.business, setHistoryDoor, r8])
 
   if (!deal) {
     return (
@@ -346,7 +409,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   }
 
   const stepper = (
-    <div className="space-y-2">
+    <Place id="field.stage" label="the stage" className="space-y-2">
       {/* A radiogroup: one tab stop, arrow keys between the steps, and the gate spoken on the step. */}
       <div role="radiogroup" aria-label="Stage" className="flex flex-wrap gap-1">
         {stages.map((s) => {
@@ -358,7 +421,9 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
               key={s.name}
               role="radio"
               aria-checked={s.name === stage}
-              aria-describedby={missing.length ? "stage-gate" : undefined}
+              aria-describedby={missing.length && r7 ? "stage-gate" : undefined}
+              data-item={s.name === stage ? "deal.stage" : undefined}
+              data-item-label={s.name === stage ? "Stage" : undefined}
               tabIndex={s.name === stage ? 0 : -1}
               onKeyDown={(e) => {
                 const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0
@@ -383,25 +448,80 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         })}
       </div>
       {/* The gate is on the step before the click, not after it: a rule met only afterwards is hidden. */}
-      {stages.filter((s) => missingFor(s.name).length > 0).slice(0, 1).map((s) => (
+      {r7 && stages.filter((s) => missingFor(s.name).length > 0).slice(0, 1).map((s) => (
         <p key={s.name} id="stage-gate" className="text-xs text-amber-700 dark:text-amber-400">
-          {s.name} needs {missingFor(s.name).join(" and ")}. Set by {admin?.user ?? "your admin"} in{" "}
-          <a className="underline" href={href("/ollopa/settings")}>Settings › Pipeline and data</a>.
+          <Thing id="qual.gate" label="The stage gate">
+            {s.name} needs {missingFor(s.name).join(" and ")}. Set by {admin?.user ?? "your admin"} in{" "}
+            <a className="underline" href={href("/ollopa/settings")}>Settings › Pipeline and data</a>.
+          </Thing>
         </p>
       ))}
-    </div>
+    </Place>
+  )
+
+  /* Where probability and forecast category live before rule 5 puts them under the stage: a row in
+     All fields saying where they are set, which is what the common version leaves you with. */
+  const stageSemantics = (
+    <span className="text-muted-foreground">
+      <Thing id="deal.probability" label="Probability">Probability</Thing> and{" "}
+      <Thing id="deal.forecast" label="Forecast category">forecast category</Thing> are set per stage in
+      Settings › Objects, fields, stages › Deal fields &amp; stages › Pipelines.
+    </span>
   )
 
   /* -------------------------------------------------------------------------------- the fields */
+
+  /* Rule 4 is what turns editing into a real control. Before it, a field is edited by hovering it and
+     clicking the word that appears — no keyboard, no touch, and the affordance is invisible until the
+     pointer is already on it. The template's in-place editor is handed over only once rule 4 is on. */
+  const editable = (_id: string, value: string, onSave: (v: string) => void) =>
+    r4 && canEdit ? { value, onSave } : undefined
+
+  const withHover = (node: ReactNode, run: () => void, id?: string) =>
+    r4 || !canEdit ? node : (
+      <span className="group/hover inline-flex items-center gap-1" onMouseDown={run}>
+        {node}
+        <span aria-hidden="true" data-item={id} data-item-label="Edit, on hover"
+          className="text-xs text-muted-foreground opacity-0 transition-opacity group-hover/hover:opacity-100">Edit</span>
+      </span>
+    )
+
+  const ask = (label: string, current: string, onSave: (v: string) => void) => () => {
+    const next = window.prompt(label, current)
+    if (next !== null) onSave(next)
+  }
+
+  /* The tail, as rows. It is the same list wherever it is shown: the All Fields tab in the common
+     version, the All fields door once there is one. */
+  const tail: { key: string; label: string; value: ReactNode; group?: string }[] = [
+    ...(showType ? [] : [{ key: "type", label: "Deal type", value: <Thing id="field.deal-type" label="Deal type">{deal.dealType}</Thing> }]),
+    { key: "created", label: "Created", value: <Thing id="deal.created" label="Created">{day(deal.createdAt)} · {daysBetween(deal.createdAt)} days old</Thing> },
+    { key: "source", label: "Lead source", value: <Thing id="field.source" label="Lead source">{deal.source}</Thing> },
+    { key: "campaign", label: "Campaign", value: <Thing id="field.campaign" label="Campaign">{deal.campaign ?? "—"}</Thing> },
+    { key: "competitor", label: "Competitor", value: <Thing id="field.competitor" label="Competitor">{deal.competitor ?? "—"}</Thing> },
+    { key: "term", label: "Contract term", value: <Thing id="field.contract-term" label="Contract term">{deal.contractTerm}</Thing> },
+    { key: "payment", label: "Payment terms", value: <Thing id="field.payment-terms" label="Payment terms">{deal.paymentTerms}</Thing> },
+    { key: "discount", label: "Discount", value: <Thing id="field.discount" label="Discount">{deal.discount}%</Thing> },
+    { key: "proposal", label: "Proposal link", value: <Thing id="field.proposal-link" label="Proposal link">{deal.proposalLink ?? "—"}</Thing> },
+    { key: "esign", label: "Signature status", value: <Thing id="field.esign" label="Signature status">{deal.esign}</Thing> },
+    { key: "split", label: "Split owners", value: <Thing id="field.split" label="Split owners">{deal.splitOwners.join(", ") || "—"}</Thing> },
+    { key: "tags", label: "Tags", value: <Thing id="field.tags" label="Tags">{deal.tags.join(", ") || "—"}</Thing> },
+    { key: "priority", label: "Priority", value: <Thing id="field.priority" label="Priority">{deal.priority}</Thing> },
+    { key: "weighted", label: "Weighted amount", value: <Thing id="field.weighted" label="Weighted amount">{money(Math.round(amount * probability) / 100, deal.currency)}</Thing> },
+    { key: "line-items", label: "Line items", value: <Thing id="field.line-items" label="Line items">{deal.lineItems.map((l) => `${l.name} × ${l.qty}`).join(", ") || "—"}</Thing> },
+    ...(hasCrm ? [{ key: "crm-id", label: "CRM record id", value: <Thing id="field.crm-id" label="CRM record id">{deal.crmId ?? "—"}</Thing> }] : []),
+    // Before rule 5 this row is all the page says about probability and forecast category.
+    ...(r1 && !r5 ? [{ key: "stage-semantics", label: "Stage semantics", value: stageSemantics }] : []),
+  ]
 
   const fields: RecordField[] = [
     {
       key: "stage", label: "Stage", wide: true, editor: "stepper", value: stepper,
       // Probability and forecast never leave the stage: they change together and are read together.
-      under: (
+      under: !r5 ? undefined : (
         <span className="flex flex-wrap items-center gap-x-3">
-          <span>Probability <span className="tabular-nums text-foreground">{probability}%</span></span>
-          <span>
+          <Thing id="deal.probability" label="Probability">Probability <span className="tabular-nums text-foreground">{probability}%</span></Thing>
+          <Thing id="deal.forecast" label="Forecast category">
             Forecast category{" "}
             {canEdit ? (
               <Select value={forecast} onValueChange={(v) => { setForecast(v as ForecastCategory); log("field", `Forecast category · ${forecast} → ${v}`) }}>
@@ -413,31 +533,44 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
                 </SelectContent>
               </Select>
             ) : <span className="text-foreground">{forecast}</span>}
-          </span>
+          </Thing>
         </span>
       ),
     },
     {
       key: "amount", label: "Amount", editor: "money",
-      value: <span className="tabular-nums">{money(amount, deal.currency)}</span>,
-      edit: canEdit ? { value: String(amount), onSave: (v) => { setAmount(Number(v) || 0); log("field", `Amount · ${money(amount, deal.currency)} → ${money(Number(v) || 0, deal.currency)}`) } } : undefined,
-      under: b.id === "meridian" ? <>Currency {deal.currency}</> : undefined,
+      value: withHover(
+        <Thing id="deal.amount" label="Amount" className="tabular-nums">{money(amount, deal.currency)}</Thing>,
+        ask("Amount", String(amount), (v) => setAmount(Number(v) || 0)),
+        "edit.hover",
+      ),
+      edit: editable("deal.amount", String(amount), (v) => { setAmount(Number(v) || 0); log("field", `Amount · ${money(amount, deal.currency)} → ${money(Number(v) || 0, deal.currency)}`) }),
+      under: b.id === "meridian" ? <Thing id="deal.currency" label="Currency">Currency {deal.currency}</Thing> : undefined,
     },
     {
       key: "close", label: "Close date", editor: "date",
-      value: <span className="tabular-nums">{day(closeDate)}</span>,
+      value: withHover(
+        <Thing id="deal.close-date" label="Close date" className="tabular-nums">{day(closeDate)}</Thing>,
+        ask("Close date (YYYY-MM-DD)", closeDate, setCloseDate),
+      ),
       under: <>{closeDate < TODAY ? "passed" : `in ${daysBetween(TODAY, closeDate)} days`}</>,
-      edit: canEdit ? { value: closeDate, onSave: (v) => { setCloseDate(v); log("field", `Close date · ${day(closeDate)} → ${day(v)}`) } } : undefined,
+      edit: editable("deal.close-date", closeDate, (v) => { setCloseDate(v); log("field", `Close date · ${day(closeDate)} → ${day(v)}`) }),
     },
     {
       key: "next-step", label: "Next step", span: 2, editor: "text",
       tone: nextStep ? undefined : "warning",
       // The next step and its date are one line. A deal with no next step is not being worked.
-      value: nextStep
-        ? <span>{nextStep} <span className="text-muted-foreground">· {nextStepDue ? `${day(nextStepDue)} (${ago(nextStepDue)})` : "no date"}</span></span>
-        : <span>No next step</span>,
-      edit: canEdit ? { value: nextStep, onSave: (v) => { setNextStep(v); log("field", `Next step · ${v || "cleared"}`) } } : undefined,
-      under: canEdit && nextStep ? (
+      value: (
+        <Place id="field.next-step" label="the next step" className="contents">
+          <Thing id="deal.next-step" label="Next step">
+            {nextStep
+              ? <>{nextStep}{r5 && <Thing id="deal.next-step-date" label="Next step date" className="text-muted-foreground"> · {nextStepDue ? `${day(nextStepDue)} (${ago(nextStepDue)})` : "no date"}</Thing>}</>
+              : <>No next step</>}
+          </Thing>
+        </Place>
+      ),
+      edit: editable("deal.next-step", nextStep, (v) => { setNextStep(v); log("field", `Next step · ${v || "cleared"}`) }),
+      under: r5 && canEdit && nextStep ? (
         <label className="inline-flex items-center gap-2">
           Due
           <Input type="date" aria-label="Next step date" value={nextStepDue} className="h-6 w-36 px-1 py-0 text-xs"
@@ -445,16 +578,23 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         </label>
       ) : undefined,
     },
-    { key: "owner", label: "Owner", editor: "user", value: deal.owner, under: isOwner ? "you" : undefined },
-    { key: "last-activity", label: "Last activity", value: <span>{day(deal.lastActivity)} <span className="text-muted-foreground">· {ago(deal.lastActivity)}</span></span> },
-    ...(seed.pipelines.length > 1 ? [{ key: "pipeline", label: "Pipeline", value: deal.pipeline } as RecordField] : []),
+    // Before rule 5 the next step's date is a field of its own, two cells away from the step it dates.
+    ...(!r5 && nextStep
+      ? [{
+          key: "next-step-due", label: "Next step due",
+          value: <Thing id="deal.next-step-date" label="Next step date" className="tabular-nums">{nextStepDue ? day(nextStepDue) : "—"}</Thing>,
+        } as RecordField]
+      : []),
+    { key: "owner", label: "Owner", editor: "user", value: <Thing id="deal.owner" label="Owner">{deal.owner}</Thing>, under: isOwner ? "you" : undefined },
+    { key: "last-activity", label: "Last activity", value: <Thing id="deal.last-activity" label="Last activity">{day(deal.lastActivity)} <span className="text-muted-foreground">· {ago(deal.lastActivity)}</span></Thing> },
+    ...(seed.pipelines.length > 1 ? [{ key: "pipeline", label: "Pipeline", value: <Thing id="deal.pipeline" label="Pipeline">{deal.pipeline}</Thing> } as RecordField] : []),
 
     // The warning chips: each prints its observed number against the workspace's threshold.
     ...(warnings.length
       ? [{
           key: "warnings", label: "Warnings", wide: true,
           value: (
-            <div className="flex flex-wrap gap-1.5">
+            <div data-item="deal.warnings" data-item-label="Warning chips" className="flex flex-wrap gap-1.5">
               {warnings.map((w) => (
                 <span key={w.kind} className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
                   {w.kind} · {readable(w.observed)} against {readable(w.threshold)}
@@ -467,29 +607,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
     // Custom fields sit in the header where the seat works in them, and behind a door where it does not.
     ...(customInHeader
-      ? customDefs.map((f) => ({ key: f.id, label: f.label, value: fieldValue(deal.custom[f.label]), group: f.group } as RecordField))
+      ? customDefs.map((f) => ({ key: f.id, label: f.label, group: f.group, value: <Thing id={`custom.${f.id}`} label={f.label}>{fieldValue(deal.custom[f.label])}</Thing> } as RecordField))
       : []),
 
     // Level two: the tail every deal record accumulates. The template puts these in the All fields door.
-    ...([
-      ...(showType ? [] : [{ key: "type", label: "Deal type", value: deal.dealType }]),
-      { key: "created", label: "Created", value: `${day(deal.createdAt)} · ${daysBetween(deal.createdAt)} days old` },
-      { key: "source", label: "Lead source", value: deal.source },
-      { key: "campaign", label: "Campaign", value: deal.campaign ?? "—" },
-      { key: "competitor", label: "Competitor", value: deal.competitor ?? "—" },
-      { key: "term", label: "Contract term", value: deal.contractTerm },
-      { key: "payment", label: "Payment terms", value: deal.paymentTerms },
-      { key: "discount", label: "Discount", value: `${deal.discount}%` },
-      { key: "proposal", label: "Proposal link", value: deal.proposalLink ?? "—" },
-      { key: "esign", label: "Signature status", value: deal.esign },
-      { key: "split", label: "Split owners", value: deal.splitOwners.join(", ") || "—" },
-      { key: "tags", label: "Tags", value: deal.tags.join(", ") || "—" },
-      { key: "priority", label: "Priority", value: deal.priority },
-      { key: "weighted", label: "Weighted amount", value: money(Math.round(amount * probability) / 100, deal.currency) },
-      { key: "line-items", label: "Line items", value: deal.lineItems.map((l) => `${l.name} × ${l.qty}`).join(", ") || "—" },
-      ...(hasCrm ? [{ key: "crm-id", label: "CRM record id", value: deal.crmId ?? "—" }] : []),
-      ...(customInHeader ? [] : []),
-    ].map((f) => ({ ...f, level: 2 }) as RecordField)),
+    // Until rule 2 lands it is not a door at all: it is the All Fields tab, rendered in the main column.
+    ...(r2 ? tail.map((f) => ({ ...f, level: 2 }) as RecordField) : []),
   ]
 
   /* -------------------------------------------------------------------------------- the timeline */
@@ -507,7 +630,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const timelineItems = filtered.length === 0 ? (
     <EmptyState title="No activity yet" body="Log the first call or note and it will appear here, newest first." />
   ) : (
-    <div className="space-y-4">
+    <ThingPlace id="timeline.list" label="The activity timeline" place="timeline" placeLabel="the timeline" className="space-y-4">
       {groups.map((g) => (
         <section key={g.day}>
           <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-medium text-muted-foreground">{g.day}</h3>
@@ -536,7 +659,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           </div>
         </section>
       ))}
-    </div>
+    </ThingPlace>
   )
 
   /* ----------------------------------------------------------------------------- the side cards */
@@ -544,22 +667,22 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const cards: RecordCard[] = []
 
   // The agent proposal, while one exists: object state, never a list that lingers.
-  if (proposal && proposalOpen) {
+  if (proposal && proposalOpen && r6) {
     const q = evidence[0]
     cards.push({
       id: "proposal", title: "Agent proposal", tone: "attention",
       children: (
-        <div className="space-y-2 text-sm">
-          <div className="text-xs text-muted-foreground">{proposal.agent} · {day(proposal.at)}</div>
+        <ThingPlace id="agent.proposal" label="The agent proposal" place="card.proposal" placeLabel="the Agent proposal card" className="space-y-2 text-sm">
+          <div className="text-xs text-muted-foreground">{proposal.agent} · {day(proposal.when)} {proposal.at}</div>
           <div className="font-medium">Stage · {stage} → {stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)]?.name}</div>
           {q && <blockquote className="border-l-2 pl-2 text-xs text-muted-foreground">{quoted(q.quote)} — {q.sourceKind}, {day(q.at)}</blockquote>}
           <StateChip state="suggested" />
-          <p className="text-xs">
+          {r7 && <p className="text-xs">
             {`Stage becomes ${stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)]?.name}. `}
             {`Probability ${probability}% → ${STAGE_PROBABILITY[stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)]?.name ?? stage]}%, `}
             {`forecast category ${forecast} → ${STAGE_FORECAST[stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)]?.name ?? stage]}. `}
             {crm ? `${crm.name} is updated. ` : ""}{proposal.credits} credits.
-          </p>
+          </p>}
           <div className="flex gap-2">
             <Button size="sm" className="flex-1" onClick={() => { moveStage(stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)].name); setProposalOpen(false) }}>Approve</Button>
             <Button size="sm" variant="outline" className="flex-1" onClick={() => { setProposalOpen(false); toast("Proposal dismissed. It leaves the agent queue too.") }}>Dismiss</Button>
@@ -567,14 +690,14 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           <p className="text-xs">
             <button type="button" className="underline" onClick={() => setEvidenceDoor(true)}>Open the full evidence</button>
           </p>
-        </div>
+        </ThingPlace>
       ),
     })
   }
 
   // Qualification: the AE's weekly work. A human validates; the model proposes; the quote sits beside it.
   const qualCard = (
-    <div className="space-y-1">
+    <ThingPlace id="qual.card" label="Qualification" place="card.qual" placeLabel="the Qualification card" className="space-y-1">
       {QUAL_ELEMENTS.map((element) => {
         const v = qual?.[element]
         const quote = evidence.find((e) => e.element === element)
@@ -608,10 +731,10 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           </div>
         )
       })}
-    </div>
+    </ThingPlace>
   )
 
-  if (qualIsCard && used("qual.card")) {
+  if (qualIsCard && used("qual.card") && r1) {
     cards.push({
       id: "qualification",
       title: "Qualification",
@@ -622,12 +745,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     })
   }
 
-  if (meeting && used("meeting.card")) {
+  if (meeting && used("meeting.card") && r1) {
     const gaps = 8 - answered
     cards.push({
       id: "meeting", title: "The meeting",
       children: (
-        <div className="space-y-2 text-sm">
+        <ThingPlace id="meeting.card" label="The meeting" place="card.meeting" placeLabel="the meeting card" className="space-y-2 text-sm">
           <div>{day(meeting.at)} · {meeting.state}</div>
           <ul className="text-xs text-muted-foreground">
             {meeting.attendees.slice(0, 4).map((a) => {
@@ -648,20 +771,20 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
               </Button>
             </div>
           )}
-        </div>
+        </ThingPlace>
       ),
     })
   }
 
   // "Contacts · 5 · 2 have replied": five names where one has answered is not five relationships.
-  cards.push({
+  if (r1) cards.push({
     id: "contacts", title: "Contacts", count: contacts.length,
     subtitle: `${contacts.filter((c) => c.engaged).length} have replied`,
     action: canEdit ? <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => toast("Search people at this company, then set a role.")}>Add</Button> : undefined,
     children: contacts.length === 0
       ? <EmptyState title="No contacts on this deal yet" body="Add the people you are talking to, and say what each of them is." />
       : (
-        <div>
+        <ThingPlace id="contacts.list" label="Contacts on the deal" place="card.contacts" placeLabel="the Contacts card">
           {contacts.map((c) => {
             const person = seed.contacts.find((p) => p.id === c.contactId)
             return (
@@ -688,32 +811,32 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
               />
             )
           })}
-        </div>
+        </ThingPlace>
       ),
   })
 
-  cards.push({
+  if (r1) cards.push({
     id: "tasks", title: "Open tasks", count: openTasks.length,
-    action: canEdit ? <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => toast(`Task created on ${deal.name}, assigned to ${deal.owner}.`)}>Create</Button> : undefined,
+    action: canEdit ? <Button size="sm" variant="ghost" className="h-7 text-xs" data-item="tasks.create" data-item-label="Create a task" onClick={() => toast(`Task created on ${deal.name}, assigned to ${deal.owner}.`)}>Create</Button> : undefined,
     children: openTasks.length === 0
       ? <EmptyState title="No open tasks" body="Create one and it appears on the Tasks page too." />
-      : <div>{openTasks.slice(0, 5).map((t) => (
+      : <ThingPlace id="tasks.list" label="Open tasks" place="card.tasks" placeLabel="the Open tasks card">{openTasks.slice(0, 5).map((t) => (
           <CardRow key={t.id} title={`${t.kind}: ${t.contact}`} meta={`due ${day(t.due)}`}
             actions={[{ label: "Mark done", onClick: () => toast(`${t.kind} for ${t.contact} done.`) }]} />
-        ))}</div>,
+        ))}</ThingPlace>,
   })
 
-  cards.push({
+  if (r1) cards.push({
     id: "company", title: "Company",
     action: <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/ollopa/companies/${company?.id ?? ""}`)}>Open</Button>,
     children: (
-      <dl className="space-y-1 text-sm">
+      <dl data-item="company.card" data-item-label="Company summary" className="space-y-1 text-sm">
         <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Industry</dt><dd>{company?.industry ?? "—"}</dd></div>
         <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Employees</dt><dd className="tabular-nums">{company?.employees?.toLocaleString() ?? "—"}</dd></div>
         <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Stage</dt><dd>{company?.stage ?? "—"}</dd></div>
         <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Owner</dt><dd>{company?.owner ?? "—"}</dd></div>
         {relatedIsCard && (
-          <div className="border-t pt-1">
+          <div data-item="company.related-deals" data-item-label="Other deals at this company" className="border-t pt-1">
             <dt className="text-muted-foreground">Other deals here</dt>
             {otherDeals.map((d) => (
               <dd key={d.id}><a className="hover:underline" href={href(`/ollopa/deals/${d.id}`)}>{d.name} · {money(d.amount, d.currency)} · {d.stage}</a></dd>
@@ -729,7 +852,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     cards.push({
       id: "health", title: "Account health · why",
       children: (
-        <div className="space-y-1 text-sm">
+        <div data-item="company.account-health" data-item-label="Account health" className="space-y-1 text-sm">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-semibold tabular-nums">{account.health}</span>
             <Badge variant="secondary">{account.band}</Badge>
@@ -747,79 +870,98 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   if (signalsIsCard && account) {
     cards.push({
       id: "signals", title: "Signals", count: account.signals.length,
-      children: <div>{account.signals.slice(0, 4).map((s) => <CardRow key={s.id} title={s.kind} meta={`${s.detail} · ${day(s.fired)}`} />)}</div>,
+      children: <div data-item="company.signals" data-item-label="Signals and news">{account.signals.slice(0, 4).map((s) => <CardRow key={s.id} title={s.kind} meta={`${s.detail} · ${day(s.fired)}`} />)}</div>,
     })
   }
 
   /* --------------------------------------------------------------------------------- the doors */
 
+  /* Two pieces both the common version and the disclosed one render, so there is one of each.
+     Rule 7 is what puts the price on the button: before it, running enrichment spends credits and
+     the page does not say how many (spec 09 §5.2, the surprise-spend row). */
+  const customFieldRows = customDefs.map((f) => (
+    <div key={f.id} className="contents">
+      <dt className="text-xs text-muted-foreground">{f.label}</dt>
+      <dd><Thing id={`custom.${f.id}`} label={f.label}>{fieldValue(deal.custom[f.label])}</Thing></dd>
+    </div>
+  ))
+
+  const enrichButton = (
+    <Button size="sm" data-item="enrich.run" data-item-label="Enrich" onClick={() => toast(`Enriching ${deal.company}. ${CREDITS.enrich} credits.`)}>
+      {r7 ? `Enrich · ${CREDITS.enrich} credits` : "Enrich"}
+    </Button>
+  )
+
   const doors: RecordDoor[] = []
 
-  if (used("qual.evidence")) doors.push({
-    id: "deal.evidence", label: "Evidence and source quotes", count: evidence.length,
+  /* Rule 4 is what makes a door labelled by what is behind it and counted. Before it, a door carries
+     the name of the tab or widget it came from and says nothing about how much is inside. */
+  const doorLabel = (before: string, after: string) => (r4 ? after : before)
+  const doorCount = (n: number | undefined) => (r4 ? n : undefined)
+
+  if (used("qual.evidence") && r2) doors.push({
+    id: "deal.evidence", label: doorLabel("Evidence", "Evidence and source quotes"), count: doorCount(evidence.length),
     content: evidence.length === 0
       ? <p className="text-muted-foreground">No conversation has been recorded against this deal yet.</p>
-      : <ul className="space-y-2">{evidence.map((e) => (
+      : <ul data-item="qual.evidence" data-item-label="Evidence and source quotes" className="space-y-2">{evidence.map((e) => (
           <li key={e.id}><div className="text-xs font-medium">{e.element}</div><blockquote className="border-l-2 pl-2 text-xs text-muted-foreground">{quoted(e.quote)}</blockquote><div className="text-[11px] text-muted-foreground">{e.sourceKind} · {day(e.at)}</div></li>
         ))}</ul>,
   })
 
-  if (!qualIsCard && answered > 0 && used("qual.card")) {
+  if (!qualIsCard && answered > 0 && used("qual.card") && r2) {
     doors.push({ id: "deal.qualification", label: "Qualification", count: 8, content: qualCard })
   }
 
-  if (!customInHeader && customDefs.length > 0) {
+  if (!customInHeader && customDefs.length > 0 && r2) {
     doors.push({
-      id: "deal.custom", label: "Custom fields", count: customDefs.length,
+      id: "deal.custom", label: doorLabel("Record details", "Custom fields"), count: doorCount(customDefs.length),
       content: (
         <dl className="grid grid-cols-[10rem_1fr] gap-x-4 gap-y-1.5">
-          {customDefs.map((f) => (
-            <div key={f.id} className="contents">
-              <dt className="text-xs text-muted-foreground">{f.label}</dt>
-              <dd>{fieldValue(deal.custom[f.label])}</dd>
-            </div>
-          ))}
+          {customFieldRows}
         </dl>
       ),
     })
   }
 
-  doors.push({
-    id: "deal.history", label: "History", count: history.length, openByDefault: historyOpen,
+  if (r2) doors.push({
+    id: "deal.history", label: doorLabel("Change log", "History"), count: doorCount(history.length), openByDefault: historyOpen,
     content: history.length === 0
       ? <p className="text-muted-foreground">No stage changes yet.</p>
-      : <ul className="space-y-1">{history.map((h) => <li key={h.stage + h.enteredOn} className="flex justify-between gap-2"><span>{h.stage}</span><span className="tabular-nums text-muted-foreground">{day(h.enteredOn)}</span></li>)}</ul>,
+      : <ul data-item="history.changes" data-item-label="History of stage and field changes" className="space-y-1">{history.map((h) => <li key={h.stage + h.enteredOn} className="flex justify-between gap-2"><span>{h.stage}</span><span className="tabular-nums text-muted-foreground">{day(h.enteredOn)}</span></li>)}</ul>,
   })
 
-  doors.push({
-    id: "deal.files", label: "Files and the proposal", count: files.length,
+  if (r2) doors.push({
+    id: "deal.files", label: doorLabel("Files", "Files and the proposal"), count: doorCount(files.length),
     content: files.length === 0
       ? <EmptyState title="No files yet" body="Drop the proposal or the security pack here and it stays with the deal." />
-      : <ul className="space-y-1">{files.map((f) => <li key={f.id} className="flex justify-between gap-2"><span>{f.name}</span><span className="text-xs text-muted-foreground">{Math.round(f.size / 1024)} KB · {f.uploadedBy}</span></li>)}</ul>,
+      : <ul data-item="files.list" data-item-label="Files" className="space-y-1">{files.map((f) => <li key={f.id} className="flex justify-between gap-2"><span>{f.name}</span><span className="text-xs text-muted-foreground">{Math.round(f.size / 1024)} KB · {f.uploadedBy}</span></li>)}</ul>,
   })
 
-  if (!signalsIsCard) {
+  if (!signalsIsCard && r2) {
     doors.push({
-      id: "deal.signals", label: "Signals and news", count: account?.signals.length || undefined, container: "drawer",
+      // Rule 5: signals and enrichment need room but must keep the deal in view, so this one is a drawer.
+      id: "deal.signals", label: doorLabel("Enrichment", "Signals and news"), count: doorCount(account?.signals.length || undefined), container: r5 ? "drawer" : "inline",
       content: (
-        <div className="space-y-3">
-          <Button size="sm" onClick={() => toast(`Enriching ${deal.company}. ${CREDITS.enrich} credits.`)}>Enrich · {CREDITS.enrich} credits</Button>
-          {(account?.signals ?? []).length === 0
-            ? <p className="text-muted-foreground">Nothing has fired for {deal.company} yet.</p>
-            : <ul className="space-y-2">{(account?.signals ?? []).map((s) => (
-                <li key={s.id}><div className="font-medium">{s.kind}</div><div className="text-xs text-muted-foreground">{s.detail} · {s.source} · {day(s.fired)}</div></li>
-              ))}</ul>}
-        </div>
+        <Place id="deal.signals.body" label={r5 ? "the Signals drawer" : "Signals and news"}>
+          <div data-item="company.signals" data-item-label="Signals and news" className="space-y-3">
+            {enrichButton}
+            {(account?.signals ?? []).length === 0
+              ? <p className="text-muted-foreground">Nothing has fired for {deal.company} yet.</p>
+              : <ul className="space-y-2">{(account?.signals ?? []).map((s) => (
+                  <li key={s.id}><div className="font-medium">{s.kind}</div><div className="text-xs text-muted-foreground">{s.detail} · {s.source} · {day(s.fired)}</div></li>
+                ))}</ul>}
+          </div>
+        </Place>
       ),
     })
   }
 
-  if (hasCrm) {
+  if (hasCrm && r2) {
     const runs = seed.syncRuns.slice(0, 10)
     doors.push({
-      id: "deal.sync", label: `Sync history · last ${Math.min(runs.length, 10)}`,
+      id: "deal.sync", label: r4 ? `Sync history · last ${Math.min(runs.length, 10)}` : "Sync",
       content: (
-        <ul className="space-y-1 text-xs">
+        <ul data-item="sync.history" data-item-label="Sync history" className="space-y-1 text-xs">
           <li className="pb-1">{crm?.name} record <span className="font-mono">{deal.crmId}</span> · synced {deal.crmSyncedAt ? day(deal.crmSyncedAt) : "never"}</li>
           {runs.map((s) => <li key={s.id} className="flex justify-between gap-2 text-muted-foreground"><span>{s.object} · {s.direction} · {s.pulled + s.pushed} records{s.failed ? `, ${s.failed} failed` : ""}</span><span className="tabular-nums">{day(s.started)}</span></li>)}
         </ul>
@@ -850,6 +992,342 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     : deal.syncState === "error" ? { tone: "error" as const, text: `Not synced to ${crm?.name ?? "the CRM"} since ${day(deal.crmSyncedAt)}: ${deal.crmError}`, action: <a className="text-sm underline" href="#sync">Sync history ›</a> }
     : undefined
 
+  /* ------------------------------------------------- the controls the rules take away, one by one */
+
+  const composerBlock = (
+    <div ref={composer} data-item="timeline.composer" data-item-label="The composer">
+      <Composer
+        session={session}
+        business={b.id}
+        contacts={contacts.map((c) => ({ contactId: c.contactId, name: c.name, role: c.role }))}
+        companyName={deal.company}
+        isOwner={isOwner}
+        owner={deal.owner}
+        mates={b.roles.filter((s2) => s2.user !== session.user).map((s2) => ({ user: s2.user, title: s2.title }))}
+        onLog={log}
+      />
+    </div>
+  )
+
+  const filterChips = (
+    <div data-item="timeline.filter" data-item-label="Timeline filters" className="flex flex-wrap items-center gap-1.5">
+      {FILTERS.map((f) => (
+        <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key}
+          data-item={f.key === "note" && r2 ? "timeline.note-list" : undefined}
+          data-item-label={f.key === "note" && r2 ? "Notes" : undefined}
+          className={cn("rounded-full border px-2.5 py-0.5 text-xs", filter === f.key ? "bg-foreground text-background" : "hover:bg-muted")}>
+          {f.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  const pinnedNote = pinned ? (
+    <article data-item="timeline.pin" data-item-label="Pinned note" className="mb-3 rounded-md border border-dashed p-2.5">
+      <div className="text-xs font-medium text-muted-foreground">Pinned note</div>
+      <p className="text-sm">{pinned.body}</p>
+      <div className="text-xs text-muted-foreground">{pinned.author} · {day(pinned.at)}</div>
+    </article>
+  ) : undefined
+
+  const loadOlder = filtered.length > shown ? (
+    <div className="flex justify-center pt-3">
+      <Button variant="outline" size="sm" onClick={() => setShown((n) => n + 12)}>Load older</Button>
+    </div>
+  ) : undefined
+
+  /* The bodies of the tab strip. A body that is not showing keeps its contents in the DOM and says so
+     with data-open="false", which is how the lesson knows a thing is out of sight without measuring it.
+     Inside All Fields the fields are grouped, and a group is a third level: All Fields › group › field. */
+  const tabStrip: [string, string][] = r1
+    ? [["files", "Files"], ["notes", "Notes"], ["all", "All Fields"], ["enrich", "Enrichment"]]
+    : [["activities", "Activities"], ["files", "Files"], ["notes", "Notes"], ["all", "All Fields"], ["enrich", "Enrichment"]]
+  const showingTab = tabStrip.some(([k]) => k === parodyTab) ? parodyTab : tabStrip[0][0]
+
+  const tabBody = (key: string, place: string, label: string, body: ReactNode) => (
+    tabStrip.every(([k]) => k !== key) ? null : (
+      <Place key={key} id={place} label={label} open={showingTab === key} className={showingTab === key ? undefined : "hidden"}>{body}</Place>
+    )
+  )
+
+  const tabBodies = (
+    <>
+      {tabBody("activities", "tab.activities", "the Activities tab", <>{filterChips}{pinnedNote}{timelineItems}{loadOlder}</>)}
+      {tabBody("files", "tab.files", "the Files tab",
+        files.length === 0
+          ? <p className="text-muted-foreground">No files yet.</p>
+          : <ul data-item="files.list" data-item-label="Files" className="space-y-1">
+              {files.map((f) => <li key={f.id} className="flex justify-between gap-2"><span>{f.name}</span><span className="text-xs text-muted-foreground">{Math.round(f.size / 1024)} KB · {f.uploadedBy}</span></li>)}
+            </ul>)}
+      {tabBody("notes", "tab.notes", "the Notes tab",
+        <ul data-item="timeline.note-list" data-item-label="Notes" className="space-y-2">
+          {activities.filter((a) => a.kind === "note").map((a) => (
+            <li key={a.id}><div>{a.summary}</div><div className="text-xs text-muted-foreground">{a.by} · {day(a.at)}</div></li>
+          ))}
+          {notes.map((n) => (
+            <li key={n.id}><div>{n.body}</div><div className="text-xs text-muted-foreground">{n.author} · {day(n.at)}</div></li>
+          ))}
+        </ul>)}
+      {tabBody("all", "tab.all-fields", "the All Fields tab",
+        <div className="space-y-1">
+          {/* A field group is a door inside a tab: the third level rule 2 removes. */}
+          {["Commercial", "Legal", "Everything else"].map((g) => {
+            const rows = g === "Everything else"
+              ? tail.map((f) => ({ key: f.key, label: f.label, value: f.value }))
+              : customDefs.filter((f) => f.group === g).map((f) => ({
+                  key: f.id, label: f.label,
+                  value: <Thing id={`custom.${f.id}`} label={f.label}>{fieldValue(deal.custom[f.label])}</Thing>,
+                }))
+            if (rows.length === 0) return null
+            const open = group === g
+            return (
+              <section key={g}>
+                <h4 className="m-0">
+                  <button type="button" aria-expanded={open} onClick={() => setGroup(open ? null : g)}
+                    className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-xs font-medium hover:bg-muted">
+                    <ChevronRight aria-hidden="true" className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-90")} />
+                    {g}
+                  </button>
+                </h4>
+                <Place id={`group.${g.toLowerCase().split(" ")[0]}`} label={`the ${g} field group`} open={open}
+                  className={cn("grid grid-cols-[10rem_1fr] gap-x-4 gap-y-1 pl-6", !open && "hidden")}>
+                  {rows.map((f) => (
+                    <div key={f.key} className="contents">
+                      <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                      <dd className="text-sm">{f.value}</dd>
+                    </div>
+                  ))}
+                  {g === "Legal" && !r1 && (
+                    <div className="contents">
+                      <dt className="text-xs text-muted-foreground">Champion confirmed</dt>
+                      <dd className="text-sm">
+                        <Thing id="qual.card" label="Champion confirmed">
+                          <input type="checkbox" readOnly checked className="align-middle" /> <span className="align-middle">Yes</span>
+                        </Thing>
+                      </dd>
+                    </div>
+                  )}
+                </Place>
+              </section>
+            )
+          })}
+        </div>)}
+      {tabBody("enrich", "tab.enrich", "the Enrichment tab",
+        <div data-item="company.signals" data-item-label="Signals and news" className="space-y-3">
+          {enrichButton}
+          {(account?.signals ?? []).length === 0
+            ? <p className="text-muted-foreground">Nothing has fired for {deal.company} yet.</p>
+            : <ul className="space-y-2">{(account?.signals ?? []).map((sg) => (
+                <li key={sg.id}><div className="font-medium">{sg.kind}</div><div className="text-xs text-muted-foreground">{sg.detail} · {sg.source} · {day(sg.fired)}</div></li>
+              ))}</ul>}
+        </div>)}
+    </>
+  )
+
+  /* The gear that lets each person hide widgets: a per-user layout, which is the design problem handed
+     back to the user. Rule 3 deletes it (spec 09 §5.2, the gear row; the argument is rule 6 itself). */
+  const gear = r3 ? null : (
+    <span className="relative">
+      <Button size="icon" variant="ghost" className="size-7" aria-label="Customize widget visibility"
+        data-item="layout.gear" data-item-label="Customize widget visibility" onClick={() => setGearOpen((o) => !o)}>
+        <Settings2 className="size-4" />
+      </Button>
+      {gearOpen && (
+        <span className="absolute left-0 top-8 z-30 w-56 rounded-md border bg-background p-2 text-xs shadow-md">
+          <span className="block pb-1 font-medium">Show widgets</span>
+          {["general", "details", "account", "contacts", "tasks", "notes"].map((w) => (
+            <label key={w} className="flex items-center gap-2 py-0.5 capitalize">
+              <input type="checkbox" checked={!hiddenWidgets.includes(w)}
+                onChange={() => setHiddenWidgets((h) => (h.includes(w) ? h.filter((x) => x !== w) : [...h, w]))} />
+              {w}
+            </label>
+          ))}
+        </span>
+      )}
+    </span>
+  )
+
+  /* Before rule 6 a waiting proposal is an item in the bell, seen if you happen to open it. Rule 6
+     makes it a card that is there because the object has a proposal, and gone when it is decided. */
+  const bell = r6 || !proposal ? null : (
+    <span className="relative">
+      <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" aria-expanded={bellOpen} onClick={() => setBellOpen((o) => !o)}>
+        <Bell className="size-3.5" /> 1
+      </Button>
+      <Place id="bell" label="the notification bell" open={bellOpen}
+        className={cn("absolute right-0 top-8 z-30 w-72 rounded-md border bg-background p-2 text-xs shadow-md", !bellOpen && "hidden")}>
+        <ThingPlace id="agent.proposal" label="The agent proposal" place="bell.item" placeLabel="the notification bell">
+          <span className="block font-medium">{proposal.agent}</span>
+          <span className="block text-muted-foreground">{proposal.summary}</span>
+        </ThingPlace>
+      </Place>
+    </span>
+  )
+
+  /* Rule 7 takes Delete out of here and puts it in the actions row with what it removes beside it. */
+  const overflow = r7 ? null : (
+    <span className="relative">
+      <Button size="icon" variant="ghost" className="size-7" aria-label="More actions" aria-expanded={parodyMenu} onClick={() => setParodyMenu((o) => !o)}>
+        <MoreHorizontal className="size-4" />
+      </Button>
+      <Place id="parody.menu" label={"the \u201c\u2026\u201d menu"} open={parodyMenu}
+        className={cn("absolute right-0 top-8 z-30 w-48 rounded-md border bg-background p-1 text-xs shadow-md", !parodyMenu && "hidden")}>
+        <button type="button" data-item="close.delete" data-item-label="Delete deal"
+          className="block w-full rounded px-2 py-1 text-left text-destructive hover:bg-muted"
+          onClick={() => { setParodyMenu(false); toast("Delete this deal?") }}>
+          Delete deal
+        </button>
+      </Place>
+    </span>
+  )
+
+  /* What is left of the tab strip between rule 1 and rule 2: the Activities tab has dissolved into the
+     page, and Files, Notes, All Fields and Enrichment are still tabs beside the record. */
+  const residualTabs = r2 ? null : (
+    <section className="mt-6 rounded-lg border">
+      <Place id="parody.tabs" label="the tab strip" className="flex flex-wrap gap-1 border-b p-1">
+        {tabStrip.map(([k, l]) => (
+          <button key={k} type="button" onClick={() => setParodyTab(k as typeof parodyTab)}
+            className={cn("rounded-md px-2.5 py-1 text-xs", showingTab === k ? "bg-foreground text-background" : "hover:bg-muted")}>
+            {l}
+          </button>
+        ))}
+      </Place>
+      <div className="p-3 text-sm">{tabBodies}</div>
+    </section>
+  )
+
+  /* ------------------------------------------------ the common version, before any rule is applied */
+
+  /* Modelled on Apollo's deal profile page, with the contact and account profile pages where the deal
+     article is thin (spec 09 §5, from Apollo's knowledge base as fetched on 13 September 2026): a left
+     panel of stacked widgets — "general info, account, contacts, tasks, notes" — a right strip of tabs,
+     "See all fields", a gear to hide widgets, hover-to-edit, Delete inside a "…" menu, custom fields on
+     an All Fields tab, and probability and forecast category three levels away in Settings.
+     Same seed, same rows, same numbers as every later step. Nothing here is invented. */
+  if (!r1) {
+    const widget = (key: string, title: string, body: ReactNode, action?: ReactNode) =>
+      hiddenWidgets.includes(key) ? null : (
+        <section className="rounded-lg border bg-background p-3">
+          <div className="flex items-baseline gap-2 pb-2">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h3>
+            {action && <span className="ml-auto">{action}</span>}
+          </div>
+          <Place id={`widget.${key}`} label={`the ${title} widget`}>{body}</Place>
+        </section>
+      )
+
+    const row = (label: string, value: ReactNode, run?: () => void) => (
+      <div className="flex items-baseline justify-between gap-3 border-t py-1 first:border-t-0">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="min-w-0 text-right text-sm">{run ? withHover(value, run) : value}</span>
+      </div>
+    )
+
+    return (
+      <div className="min-h-full bg-muted/30">
+        <header className="border-b bg-background px-5 py-3">
+          <p className="text-xs text-muted-foreground">
+            Win deals › <a className="hover:underline" href={href("/ollopa/deals")}>Deals</a> › {deal.name}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold">{deal.name}</h2>
+            {gear}
+            <Place id="parody.actions" label="the actions row" className="ml-auto flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" data-item="timeline.email" data-item-label="Email all contacts"
+                onClick={() => toast(`Email all ${contacts.length} contacts on this deal.`)}>Email all contacts</Button>
+              <Button size="sm" variant="outline" data-item="tasks.create" data-item-label="Create task"
+                onClick={() => toast(`Task created on ${deal.name}.`)}>Create task</Button>
+              <Button size="sm" variant="outline" data-item="timeline.note" data-item-label="Create note"
+                onClick={() => toast("Note created. Associate note to records.")}>Create note</Button>
+              {bell}
+              {overflow}
+            </Place>
+          </div>
+        </header>
+
+        <div className="grid gap-4 p-4 lg:grid-cols-[23rem_minmax(0,1fr)] lg:items-start">
+          <Place id="parody.panel" label="the left widget panel" className="space-y-3">
+            {widget("general", "General deal information", (
+              <div>
+                {row("Deal name", name, ask("Deal name", name, setName))}
+                {row("Pipeline", <Thing id="deal.pipeline" label="Pipeline">{deal.pipeline}</Thing>)}
+                {row("Stage", <Thing id="deal.stage" label="Stage">{stage}</Thing>, ask("Stage", stage, (v) => { if ((stages as { name: string }[]).some((x) => x.name === v)) moveStage(v as DealStage) }))}
+                {row("Amount", <Thing id="deal.amount" label="Amount" className="tabular-nums">{money(amount, deal.currency)}</Thing>, ask("Amount", String(amount), (v) => setAmount(Number(v) || 0)))}
+                {row("Currency", <Thing id="deal.currency" label="Currency">{deal.currency}</Thing>)}
+                {row("Close date", <Thing id="deal.close-date" label="Close date" className="tabular-nums">{day(closeDate)}</Thing>, ask("Close date (YYYY-MM-DD)", closeDate, setCloseDate))}
+                {row("Owner", <Thing id="deal.owner" label="Owner">{deal.owner}</Thing>)}
+                {row("Next step", <Thing id="deal.next-step" label="Next step">{nextStep || "—"}</Thing>, ask("Next step", nextStep, setNextStep))}
+                {row("Next step date", <Thing id="deal.next-step-date" label="Next step date">{nextStepDue ? day(nextStepDue) : "—"}</Thing>)}
+                {row("Last activity", <Thing id="deal.last-activity" label="Last activity">{day(deal.lastActivity)}</Thing>)}
+                <p className="border-t pt-2 text-xs">{stageSemantics}</p>
+              </div>
+            ))}
+
+            {widget("details", "Record details", (
+              <div>
+                {customDefs.slice(0, 2).map((f) => (
+                  <div key={f.id} className="flex items-baseline justify-between gap-3 border-t py-1 first:border-t-0">
+                    <span className="text-xs text-muted-foreground">{f.label}</span>
+                    <span className="text-sm">{fieldValue(deal.custom[f.label])}</span>
+                  </div>
+                ))}
+                <button type="button" data-item="fields.all" data-item-label="See all fields"
+                  className="mt-2 text-xs underline" onClick={() => { setParodyTab("all"); setGroup("Commercial") }}>
+                  See all fields
+                </button>
+              </div>
+            ))}
+
+            {widget("account", "Account", (
+              <dl data-item="company.card" data-item-label="Company summary" className="space-y-1 text-sm">
+                <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Industry</dt><dd>{company?.industry ?? "—"}</dd></div>
+                <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Employees</dt><dd className="tabular-nums">{company?.employees?.toLocaleString() ?? "—"}</dd></div>
+                <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Owner</dt><dd>{company?.owner ?? "—"}</dd></div>
+              </dl>
+            ))}
+
+            {widget("contacts", "Contacts", (
+              <ul data-item="contacts.list" data-item-label="Contacts on the deal" className="space-y-1 text-sm">
+                {contacts.map((c) => <li key={c.contactId}>{c.name} <span className="text-xs text-muted-foreground">· {c.title}</span></li>)}
+                {contacts.length === 0 && <li className="text-muted-foreground">No contacts.</li>}
+              </ul>
+            ))}
+
+            {widget("tasks", "Tasks", (
+              <ul data-item="tasks.list" data-item-label="Open tasks" className="space-y-1 text-sm">
+                {openTasks.map((t) => <li key={t.id}>{t.kind}: {t.contact} <span className="text-xs text-muted-foreground">· due {day(t.due)}</span></li>)}
+                {openTasks.length === 0 && <li className="text-muted-foreground">No open tasks.</li>}
+              </ul>
+            ))}
+
+            {/* Notes are a left widget and a right tab: two doors onto the same content (§5.2). */}
+            {widget("notes", "Notes", (
+              pinned
+                ? <article data-item="timeline.pin" data-item-label="Pinned note" className="text-sm">
+                    <p>{pinned.body}</p>
+                    <p className="text-xs text-muted-foreground">{pinned.author} · {day(pinned.at)}</p>
+                  </article>
+                : <p className="text-sm text-muted-foreground">No notes.</p>
+            ))}
+          </Place>
+
+          <section className="rounded-lg border bg-background">
+            <Place id="parody.tabs" label="the tab strip" className="flex flex-wrap gap-1 border-b p-1">
+              {tabStrip.map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setParodyTab(k as typeof parodyTab)}
+                  className={cn("rounded-md px-3 py-1.5 text-xs", showingTab === k ? "bg-foreground text-background" : "hover:bg-muted")}>
+                  {l}
+                </button>
+              ))}
+            </Place>
+            <div className="p-3">{tabBodies}</div>
+          </section>
+        </div>
+      </div>
+    )
+  }
+
   /* ------------------------------------------------------------------------------------- render */
 
   return (
@@ -860,6 +1338,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         subtitle={company ? { label: deal.company, href: href(`/ollopa/companies/${company.id}`) } : undefined}
         chips={
           <span className="flex flex-wrap items-center gap-2">
+            {gear}{bell}{overflow}
             {showType && <Badge variant="secondary">{deal.dealType}</Badge>}
             {!isOwner && <span className="text-xs text-muted-foreground">{deal.owner} owns this deal — you can read it and comment</span>}
             {handoff && (
@@ -874,12 +1353,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         actions={{
           primary: canEdit ? [
             { label: "Log activity", onClick: () => composer.current?.querySelector("textarea")?.focus(), shortcut: "C" },
-            { label: "Mark won", onClick: () => { moveStage("Closed won"); toast("Deal won.") }, confirm: wonConsequence, shortcut: "W" },
+            { label: "Mark won", onClick: () => { moveStage("Closed won"); toast("Deal won.") }, confirm: r7 ? wonConsequence : undefined, shortcut: "W" },
           ] : [],
           secondary: canEdit ? [
             { label: "Mark lost and archive", onClick: () => setLostPanel(true), shortcut: "Shift+W" },
           ] : [],
-          destructive: canEdit ? {
+          destructive: canEdit && r7 ? {
             label: "Delete deal",
             consequence: `Removes this deal and its ${activities.length} activities. Contacts, the company and files stay on ${deal.company}.`,
             onConfirm: () => { toast("Deal deleted. Undo is in the notification for 10 seconds."); navigate("/ollopa/deals") },
@@ -887,44 +1366,16 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         }}
         main={{
           kind: "timeline",
-          composer: (
-            <div ref={composer}>
-              <Composer
-                session={session}
-                business={b.id}
-                contacts={contacts.map((c) => ({ contactId: c.contactId, name: c.name, role: c.role }))}
-                companyName={deal.company}
-                isOwner={isOwner}
-                owner={deal.owner}
-                mates={b.roles.filter((s2) => s2.user !== session.user).map((s2) => ({ user: s2.user, title: s2.title }))}
-                onLog={log}
-              />
-            </div>
-          ),
-          filters: FILTERS.map((f) => (
-            <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key}
-              className={cn("rounded-full border px-2.5 py-0.5 text-xs", filter === f.key ? "bg-foreground text-background" : "hover:bg-muted")}>
-              {f.label}
-            </button>
-          )),
-          pinned: pinned ? (
-            <article className="mb-3 rounded-md border border-dashed p-2.5">
-              <div className="text-xs font-medium text-muted-foreground">Pinned note</div>
-              <p className="text-sm">{pinned.body}</p>
-              <div className="text-xs text-muted-foreground">{pinned.author} · {day(pinned.at)}</div>
-            </article>
-          ) : undefined,
+          composer: composerBlock,
+          filters: filterChips,
+          pinned: pinnedNote,
           items: timelineItems,
-          footer: filtered.length > shown ? (
-            <div className="flex justify-center pt-3">
-              <Button variant="outline" size="sm" onClick={() => setShown((n) => n + 12)}>Load older</Button>
-            </div>
-          ) : undefined,
+          footer: loadOlder || residualTabs ? <>{loadOlder}{residualTabs}</> : undefined,
         }}
         side={cards}
         doors={doors}
         quickLook={{ fields: quickLookFields, editable: quickLookEditable }}
-        shortcuts={[
+        shortcuts={!r8 ? undefined : [
           { keys: "S", label: "Move stage", run: () => (document.querySelector("[role=radiogroup] button") as HTMLButtonElement | null)?.focus() },
           { keys: "C", label: "Log a call", run: () => composer.current?.querySelector("textarea")?.focus() },
           { keys: "E", label: "Write an email", run: () => (composer.current?.querySelectorAll("[role=tab]")[1] as HTMLButtonElement | null)?.click() },

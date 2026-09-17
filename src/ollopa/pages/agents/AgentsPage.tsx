@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { href, navigate, useRoute } from "@/app/router"
+import { useLesson } from "@/learn/context"
 import { ApproveBar } from "../../ui/ApproveBar"
 import { DoorGroup, useDoorState } from "../../ui/Door"
 import { SectionHeader } from "../../ui/SectionHeader"
@@ -26,15 +27,19 @@ import { Briefing } from "./Briefing"
 import { Ledger, NO_FILTERS, type Filters } from "./Ledger"
 import { WaitingItem } from "./WaitingItem"
 import { BatchPanel } from "./BatchPanel"
+import { ParodyAsk, ParodyChat, ParodyCredits, ParodyNote, ParodyTopBar, ParodyWorkflow } from "./Parody"
 import {
   adminOf, batchOf, byAgent, canPause as mayPause, consequenceFor, draftFor, exceptionsOf, lastSeen, mailboxPaused,
-  markSeen, overSecondApproval, queuesFor, queueOwner, since, spendOf, trackRecord, watchOf,
+  markSeen, overSecondApproval, queuesFor, queueOwner, ruleFlags, runsOf, since, spendOf, trackRecord, watchOf,
   type LocalDecision,
 } from "./model"
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 export function AgentsPage({ session }: { session: Session }) {
+  // Null in the product, so every rule is on and the page renders its final form. On a lesson stage
+  // it names the step, and the six rules this case applies arrive one at a time (spec 13 §7).
+  const rules = ruleFlags(useLesson())
   const seed = seedFor(session.business)
   const b = businessById(session.business)
   const d = useDisclosure("agents")
@@ -55,6 +60,7 @@ export function AgentsPage({ session }: { session: Session }) {
   const [result, setResult] = useState<string | null>(null)
   const [focus, setFocus] = useState<string | null>(null)
   const [announce, setAnnounce] = useState("")
+  const [answered, setAnswered] = useState<Set<string>>(() => new Set())
   const [filters, setFilters] = useState<Filters>(() =>
     route.query.get("kind") ? { ...NO_FILTERS, kind: route.query.get("kind")! } : NO_FILTERS)
   const search = useRef<HTMLInputElement>(null)
@@ -166,6 +172,9 @@ export function AgentsPage({ session }: { session: Session }) {
   const [doorOpen, setDoorOpen] = useDoorState(doorId)
 
   useEffect(() => {
+    // Rule 8: the accelerators arrive with the last step. Before it, every item is still reachable
+    // by Tab and every control still works; what is missing is the faster way past the scaffold.
+    if (!rules.r8) return
     const onKey = (ev: KeyboardEvent) => {
       const el = ev.target as HTMLElement | null
       const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)
@@ -227,6 +236,15 @@ export function AgentsPage({ session }: { session: Session }) {
     )
   }
 
+  // Apollo asks before "a credit-consuming Apollo action, such as saving contacts or enriching
+  // records" (KB 39359204112397), so at step 0 the reversible work asks too. Rule 7 cuts those out
+  // of the queue and logs them with an Undo instead: what is left is only what cannot be taken back.
+  const reversibleAsks = rules.r7 ? [] : ledgerAll.filter((e) => e.undoable && e.credits > 0 && !answered.has(e.id)).slice(0, 3)
+  const askIds = new Set(reversibleAsks.map((e) => e.id))
+  const chatRecent = ledgerAll.filter((e) => e.when === TODAY && !askIds.has(e.id))
+  const chatOlder = ledgerAll.filter((e) => e.when !== TODAY && !askIds.has(e.id)).slice(0, 24)
+  const runs = runsOf(seed.agentEvents.filter((e) => allLedger.includes(e) || queue.includes(e)))
+
   const bulkAtLevelOne = d.atLevelOne("wait.bulk")
   const chosen = queue.filter((e) => selected.has(e.id))
   const seenDate = seen.slice(0, 10)
@@ -237,7 +255,12 @@ export function AgentsPage({ session }: { session: Session }) {
 
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6">
-      <Briefing
+      {/* Step 0 and step 1: Apollo's top bar, with the balance pill and the second "power-up" meter. */}
+      {!rules.r1 && <ParodyTopBar spend={spend} showCredits={!rules.r7} showAssistant />}
+      {!rules.r7 && <ParodyNote className="mb-3" />}
+
+      {rules.r7 && <Briefing
+        rules={rules}
         seed={seed} session={session} d={d} spend={spend} sentence={sentence} workspace={workspace}
         agents={agents} pausedHere={pausedHere} onPause={pause}
         trackOf={(a) => trackRecord(a.name, session, seed, local)}
@@ -246,24 +269,25 @@ export function AgentsPage({ session }: { session: Session }) {
         onWatch={(on) => { setWatching(on); toast(on ? `Watching “${watch?.list}” again.` : `Stopped watching “${watch?.list}”. Nothing more is researched from it.`) }}
         canPause={canPause} admin={admin}
         filterAgent={filters.agent} onFilterAgent={(name) => setFilters({ ...filters, agent: name })}
-        exceptions={exceptions} onResume={(id) => { setResumed((r) => [...r, id]); toast("Resumed.") }}
-      />
+        exceptions={exceptions} onResume={(id) => { setResumed((was) => [...was, id]); toast("Resumed.") }}
+      />}
 
       {/* Waiting for you. Only the irreversible and the costly; everything else is in the ledger. */}
-      <section aria-labelledby="agents-waiting" className="mt-8">
+      {rules.r7 && <section aria-labelledby="agents-waiting" className="mt-8">
         <SectionHeader
           title="Waiting for you"
           count={queue.length}
           action={
-            queue.length > 0 && !bulkAtLevelOne
-              ? <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>Review all {queue.length}</Button>
+            queue.length > 0 && !bulkAtLevelOne && rules.r8
+              ? <Button data-item="wait.review-all" size="sm" variant="outline" onClick={() => setBatchOpen(true)}>Review all {queue.length}</Button>
               : undefined
           }
         />
         <h2 id="agents-waiting" className="sr-only">Waiting for you</h2>
 
         {batch && (
-          <p className="text-xs text-muted-foreground">
+          <p data-item="wait.batch-line" data-item-label="What arrived in this batch, and what it costs together"
+            className="text-xs text-muted-foreground">
             {batch.count} arrived while the agents ran, {batch.at}. Together:{" "}
             {[batch.sends && `${batch.sends} ${batch.sends === 1 ? "email" : "emails"} from your mailbox`,
               batch.enrols && `${batch.enrols.toLocaleString()} people added to sequences`,
@@ -272,7 +296,8 @@ export function AgentsPage({ session }: { session: Session }) {
             , {batch.credits.toLocaleString()} credits.{" "}
             {batch.skippedTotal > 0 && (
               <>
-                <a className="underline underline-offset-4" href={href("/ollopa/agents?kind=skipped")}
+                <a data-item="wait.skipped" data-item-label="What the run passed over"
+                  className="underline underline-offset-4" href={href("/ollopa/agents?kind=skipped")}
                   onClick={() => setFilters({ ...NO_FILTERS, kind: "skipped" })}>
                   {batch.skippedTotal} {batch.skippedTotal === 1 ? "record" : "records"} skipped
                 </a>
@@ -298,6 +323,7 @@ export function AgentsPage({ session }: { session: Session }) {
             )}
             <DoorGroup>
               <div aria-live="polite" className="sr-only">{announce || `${queue.length} waiting.`}</div>
+              <div data-container="waiting" data-container-label="Waiting for you">
               {byAgent(queue).map((group) => (
                 <div key={group.agent} className="mt-4">
                   <h3 className="pb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -313,6 +339,7 @@ export function AgentsPage({ session }: { session: Session }) {
                         session={session}
                         currency={b.currency}
                         admin={admin}
+                        rules={rules}
                         canApproveForOthers={session.role === "admin"}
                         selectable={bulkAtLevelOne}
                         selected={selected.has(e.id)}
@@ -331,6 +358,7 @@ export function AgentsPage({ session }: { session: Session }) {
                   </ul>
                 </div>
               ))}
+              </div>
             </DoorGroup>
 
             {bulkAtLevelOne && chosen.length > 0 && (
@@ -342,11 +370,47 @@ export function AgentsPage({ session }: { session: Session }) {
             )}
           </>
         )}
-      </section>
+      </section>}
 
       {result && <p role="status" className="mt-6 rounded-md bg-muted px-2 py-1.5 text-xs">{result}</p>}
 
-      <Ledger
+      {/* Step 0 and step 1: the assistant's conversation, which is where Apollo keeps the record. */}
+      {!rules.r1 && (
+        <div className="mt-6">
+          <ParodyChat
+            seed={seed} session={session} recent={chatRecent} older={chatOlder} r7={rules.r7}
+            onUndo={undo} undone={undone}
+            asks={
+              <>
+                {!rules.r7 && queue.map((e) => (
+                  <ParodyAsk key={e.id} e={e} seed={seed} itemId={`wait.item.${e.id}`} container={`item.${e.id}`}
+                    onApprove={() => approve(e)} onDecline={() => decline(e)} />
+                ))}
+                {reversibleAsks.map((e) => (
+                  <ParodyAsk key={e.id} e={e} seed={seed} itemId={`act.row.${e.id}`}
+                    onApprove={() => { setAnswered((was) => new Set(was).add(e.id)); toast(`Done. ${e.credits} credits spent.`) }}
+                    onDecline={() => { setAnswered((was) => new Set(was).add(e.id)); toast("Nothing was done.") }} />
+                ))}
+              </>
+            }
+          />
+        </div>
+      )}
+
+      {/* Step 0 to step 2: the workflow that actually runs the agents, and its Enrollment tab. */}
+      {!rules.r2 && (
+        <ParodyWorkflow
+          name={seed.workflows[0]?.name ?? "Inbound and outbound"}
+          runs={runs} agents={agents} exceptions={exceptions} seed={seed}
+          showFilters={!rules.r1} showSteps={!rules.r7} showFailures={!rules.r7} showSettingsLink={!rules.r7}
+        />
+      )}
+
+      {/* Step 0 to step 2: the credits, four levels down in Settings, behind a permission. */}
+      {!rules.r2 && <ParodyCredits spend={spend} runs={runs} showWeek={!rules.r7} />}
+
+      {rules.r1 && <Ledger
+        rules={rules}
         events={ledger}
         total={ledgerAll.length}
         seed={seed}
@@ -359,7 +423,7 @@ export function AgentsPage({ session }: { session: Session }) {
         onUndo={undo}
         searchRef={search}
         focusedId={focus}
-      />
+      />}
 
       <BatchPanel
         open={batchOpen}

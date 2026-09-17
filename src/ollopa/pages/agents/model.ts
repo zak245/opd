@@ -10,6 +10,7 @@ import {
   type Agent, type AgentEvent, type Seed,
 } from "../../data/seed"
 import type { ConsequenceProps } from "../../ui/ConsequenceLine"
+import { ruleOn, type Lesson } from "@/learn/context"
 import type { Session } from "../../session"
 import type { Business, Role } from "../../usage/model"
 import { daysBetween } from "../deal/format"
@@ -387,3 +388,47 @@ export function since(events: AgentEvent[], seen: string): number {
 }
 
 export const DRAFT_CREDITS = CREDITS.draft
+
+/* ------------------------------------------------------------------ the lesson's six rules */
+
+/**
+ * The six rules this page's case turns on, in the order the lesson applies them (spec 13 §7):
+ * 7, 1, 2, 4, 5, 8. Rules 3 and 6 are notes on the last step, so the page never branches on them —
+ * a branch on `ruleOn(lesson, 3)` would be false at the last step and the product would not match.
+ * In the product `lesson` is null and every flag is true: one component, one model, a layout per step.
+ */
+export interface RuleFlags { r1: boolean; r2: boolean; r4: boolean; r5: boolean; r7: boolean; r8: boolean }
+
+export function ruleFlags(lesson: Lesson | null): RuleFlags {
+  return {
+    r1: ruleOn(lesson, 1), r2: ruleOn(lesson, 2), r4: ruleOn(lesson, 4),
+    r5: ruleOn(lesson, 5), r7: ruleOn(lesson, 7), r8: ruleOn(lesson, 8),
+  }
+}
+
+/** The runs behind the ledger: one row per batch the agents ran, which is what Apollo's Enrollment tab shows. */
+export interface Run { key: string; when: string; at: string; label: string; completed: number; failed: number; reason: string | null; credits: number }
+
+export function runsOf(events: AgentEvent[]): Run[] {
+  const byKey = new Map<string, AgentEvent[]>()
+  for (const e of events) byKey.set(e.batchKey, [...(byKey.get(e.batchKey) ?? []), e])
+  return [...byKey]
+    .map(([key, items]) => {
+      const failed = items.filter((e) => e.kind === "skipped" || e.kind === "capped" || e.kind === "paused")
+      const first = items.reduce((a, b) => (`${a.when} ${a.at}` < `${b.when} ${b.at}` ? a : b))
+      return {
+        key, when: first.when, at: first.at,
+        label: key.slice(11).replace(/^-/, "") || "run",
+        completed: items.length - failed.length,
+        failed: failed.length,
+        reason: failed[0]
+          ? failed[0].kind === "capped" ? "credit limit"
+            : failed[0].kind === "paused" ? "inactive mailbox"
+              : failed[0].skipReason ?? "missing owner"
+          : null,
+        credits: items.reduce((n, e) => n + e.credits, 0),
+      }
+    })
+    .sort((a, b) => `${b.when} ${b.at}`.localeCompare(`${a.when} ${a.at}`))
+    .slice(0, 6)
+}

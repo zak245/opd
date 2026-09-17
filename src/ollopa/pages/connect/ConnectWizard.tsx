@@ -21,7 +21,9 @@ import { businessById } from "../../data/businesses"
 import { DEAL_STAGES, TODAY, seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import { day } from "../deal/format"
+import { ruleOn, useLesson } from "../../../learn/context"
 import { Check, Code, Confirm, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
+import { CONNECT_RULES, ConnectLesson } from "./lesson"
 import { discardDraft, peekDraft, useDraft, writeDraft } from "./drafts"
 import {
   ACTIVITY_TYPES, CONDITION_FIELDS, CONTACT_STAGES, ENRICH_FIELDS, KINDS, OBJECTS, OPERATORS,
@@ -92,7 +94,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
   return (
     <>
       {d.atLevelOne("wiz.template") && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-3">
+        <div data-item="wiz.template" data-item-label="start from a saved template" className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-3">
           <Button size="sm" variant="outline" onClick={() => toast(`Loaded the saved template · steps 3 to 5 filled in`)}>Start from a saved template</Button>
           <span className="text-xs text-muted-foreground">A template holds what syncs, the field pairs and the sync rules. Authorising is still yours to do.</span>
         </div>
@@ -160,7 +162,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
               )
             })}
             {group.name === "CRM" && (
-              <div className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
+              <div data-item="wiz.declare-no-crm" data-item-label="Ollopa is our CRM" className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
                 <Check
                   checked={noCrm.declared}
                   onChange={() => { saveNoCrm({ declared: !noCrm.declared }); toast(noCrm.declared ? "Ollopa is no longer marked as your CRM · the CRM row is back in the set-up list" : "Ollopa is your CRM · the CRM row has left the set-up list") }}
@@ -242,7 +244,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
   return (
     <section className="grid gap-4">
       {isSalesforce && (
-        <fieldset>
+        <fieldset data-item="wiz.sandbox" data-item-label="production or sandbox">
           <legend className="text-sm font-medium">Which Salesforce</legend>
           <div className="mt-2 grid max-w-md gap-2 sm:grid-cols-2">
             <Radio name="env" checked={draft.environment === "production"} onChange={() => save({ environment: "production" })} label="Production" />
@@ -252,7 +254,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
       )}
 
       {isSalesforce && (
-        <div className="rounded-md border bg-muted/40 p-3 text-sm">
+        <div data-item="wiz.sf-permissions" data-item-label="what the sync user must be able to do" className="rounded-md border bg-muted/40 p-3 text-sm">
           <p className="font-medium">What the sync user must be able to do</p>
           <p className="mt-1">
             The sync user needs create, read and edit on Accounts, Contacts, Leads, Opportunities and User Roles, and API Enabled under System Permissions. Salesforce Essentials cannot connect.
@@ -263,7 +265,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div data-item="wiz.authorise" data-item-label="authorising the CRM" className="flex flex-wrap items-center gap-3">
         <Button onClick={signIn}>Sign in to {draft.kind}{isSalesforce ? " as the sync user" : ""}</Button>
         {isSalesforce && <span className="text-xs text-muted-foreground">Use a shared account that stays active when a person leaves.</span>}
       </div>
@@ -298,7 +300,7 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
 
   return (
     <>
-      <section className="grid gap-3">
+      <section data-item="wiz.objects" data-item-label="what syncs, and which way" className="grid gap-3">
         {draft.objects.map((row) => (
           <div key={row.object} className="rounded-lg border p-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -346,7 +348,7 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
                   </div>
                 ) : (
                   <Door id={`connect.activities.${draft.slug}`} label="Which activities to push (emails, calls, tasks, meetings)" count={draft.activityTypes.length}>
-                    <div className="grid gap-1">{activityChecks}</div>
+                    <div data-item="wiz.activity-types" data-item-label="which activities push" className="grid gap-1">{activityChecks}</div>
                   </Door>
                 )}
               </div>
@@ -355,7 +357,7 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
         ))}
 
         {/* Custom objects keep their place in the object list, with the lock where the choice is made. */}
-        <div className="rounded-lg border p-3">
+        <div data-item="wiz.custom-objects" data-item-label="custom CRM objects" className="rounded-lg border p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-1 text-sm font-medium">Custom {draft.kind} objects {custom.locked && <Lock className="size-3.5 text-muted-foreground" aria-hidden="true" />}</h3>
             {custom.locked
@@ -401,7 +403,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
         {objects.map((o) => {
           const c = counts(o)
           return (
-            <TabsTrigger key={o} value={o} className="text-xs">
+            <TabsTrigger key={o} value={o} data-item={o === objects[0] ? "wiz.suggested-mappings" : undefined} data-item-label="mapped, suggested, required unmapped" className="text-xs">
               {o} · {c.mapped} mapped, {c.suggested} suggested{c.requiredUnmapped.length ? `, ${c.requiredUnmapped.length} required unmapped` : ""}
             </TabsTrigger>
           )
@@ -442,8 +444,8 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
               <Input className="mt-1" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="email, owner, amount…" />
             </label>
 
-            <div className="min-w-0 overflow-x-auto">
-              <table className="w-full min-w-[40rem] border-collapse text-sm">
+            <div data-item="wiz.mapping" data-item-label="the field pairs" className="min-w-0 overflow-x-auto">
+              <table data-container="connect.pairs" data-container-label="the field pair table" data-open="true" className="w-full min-w-[40rem] border-collapse text-sm">
                 <caption className="sr-only">Field pairs for {object}: the Ollopa field, the direction, the {draft.kind} field, the write rule and the state of each pair.</caption>
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
@@ -469,7 +471,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                         </select>
                       </td>
                       <td className="py-2 pr-3">
-                        <select aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 text-xs" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
+                        <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 text-xs" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
                           {WRITE_RULES.map((w) => <option key={w} value={w}>{w}</option>)}
                         </select>
                       </td>
@@ -505,7 +507,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
             </div>
 
             {object === "Deals" && (
-              <section>
+              <section data-item="wiz.stage-mapping" data-item-label="stage mapping">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-medium">Stages, one to one</h3>
                   <Button
@@ -588,7 +590,7 @@ function ConditionBuilder({ rows, onChange, label }: {
 export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Partial<ConnectDraft>) => void }) {
   return (
     <div className="grid gap-6">
-      <fieldset>
+      <fieldset data-item="wiz.pull-conditions" data-item-label="pull conditions">
         <legend className="text-sm font-medium">Pull: what comes into Ollopa</legend>
         <div className="mt-2 grid gap-2">
           <Radio name="pull" checked={draft.pullAll} onChange={() => save({ pullAll: true })} label={`Pull every record from ${draft.kind}`} />
@@ -597,7 +599,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset data-item="wiz.push-conditions" data-item-label="push conditions">
         <legend className="text-sm font-medium">Push: what goes out to {draft.kind}</legend>
         <div className="mt-2 grid gap-2">
           <Radio name="push" checked={draft.pushAll} onChange={() => save({ pushAll: true })} label={`Push every record to ${draft.kind}`} />
@@ -620,7 +622,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
         <legend className="text-sm font-medium">Deletions and merges</legend>
         <p className="mt-1 text-xs text-muted-foreground">The four questions that decide what this connection can destroy. They are read together, so they sit together.</p>
         <div className="mt-2 grid gap-3">
-          <div>
+          <div data-item="wiz.deletion" data-item-label="deletion sync">
             <h4 className="text-sm">When a record is deleted in {draft.kind}</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="crmdel" checked={draft.onCrmDelete === "unlink"} onChange={() => save({ onCrmDelete: "unlink" })} label="Unlink it in Ollopa" hint="The record stays and loses its link." />
@@ -647,7 +649,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
               <Radio name="crmmerge" checked={draft.onCrmMerge === "nothing"} onChange={() => save({ onCrmMerge: "nothing" })} label="Do nothing in Ollopa" />
             </div>
           </div>
-          <div>
+          <div data-item="wiz.merge" data-item-label="merge sync">
             <h4 className="text-sm">When two records are merged in Ollopa</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="ollmerge" checked={draft.onOllopaMerge === "nothing"} onChange={() => save({ onOllopaMerge: "nothing" })} label={`Do nothing in ${draft.kind}`} />
@@ -660,7 +662,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset data-item="wiz.matching-key" data-item-label="the matching key">
         <legend className="text-sm font-medium">Matching: which key says two records are the same person</legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <Radio name="match" checked={draft.matchKey === "Email, then CRM id"} onChange={() => save({ matchKey: "Email, then CRM id" })} label="Email, then CRM id" hint="Catches the same person added twice." />
@@ -808,7 +810,7 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border bg-muted/40 p-4">
+      <section data-item="wiz.first-sync" data-item-label="what the first sync will do" className="rounded-lg border bg-muted/40 p-4">
         <h3 className="text-sm font-semibold">What the first sync will do</h3>
         <p className="mt-2 text-sm">
           {pullSentence} and {pushSentence}.{" "}
@@ -819,7 +821,7 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
         </p>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div data-item="wiz.review" data-item-label="the review" className="grid gap-3 sm:grid-cols-2">
         {blocks.map((block) => (
           <section key={block.title} className="rounded-lg border p-3">
             <div className="flex items-baseline justify-between gap-2">
@@ -846,6 +848,7 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
 /* ------------------------------------------------------------------------------------ the page */
 
 export function ConnectWizard({ session, id }: { session: Session; id?: string }) {
+  const lesson = useLesson()
   const route = useRoute()
   const seed = seedFor(session.business)
   const slug = id && id !== "new" && kindBySlug(id) ? id : ""
@@ -856,6 +859,12 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
   const start = useMemo(() => startingDraft(session.business, slug || "new", session.user), [session.business, session.user, slug])
   const [draft, save, drop] = useDraft(draftKey(session.business, slug || "new") + (isAdmin ? "" : `.${session.user}`), start)
   const [discarding, setDiscarding] = useState(false)
+
+  // On a lesson stage, before every rule has landed, the page draws the layout that rule had not yet
+  // changed: the same model, the same seed, one component, a layout per step (`src/learn/context.ts`).
+  // The moment they are all on — and always in the product, where `useLesson()` is null — it is the
+  // wizard below and nothing else, so the last step of the lesson is the page as it shipped.
+  if (lesson && !CONNECT_RULES.every((r) => ruleOn(lesson, r))) return <ConnectLesson session={session} lesson={lesson} />
 
   // A kind this plan does not include never reaches step 2, however it was opened: the lock is at the
   // entry point, with the plan, the total and one button — never after work has been done.
@@ -960,7 +969,7 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
         go={go}
         constantLine={constant}
         onSaveAndExit={() => { toast(`Saved · ${draft.kind} setup, ${draft.stepsDone.length} of ${total} steps done`); navigate("/ollopa/settings/integrations") }}
-        footer={<>{primary()}{backLink}{slug && <Button variant="ghost" onClick={() => setDiscarding(true)}>Discard this setup</Button>}</>}
+        footer={<><span data-item="connect.primary" data-item-label="the primary button">{primary()}</span>{backLink}{slug && <Button variant="ghost" onClick={() => setDiscarding(true)}>Discard this setup</Button>}</>}
       >
         {draft.seededFrom === "integration" && current === 1 && (
           <p className="rounded-md border bg-muted/40 p-3 text-sm">

@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href } from "@/app/router"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
-import { Locked } from "../../ui/Locked"
+import { ruleOn, useLesson } from "@/learn/context"
+import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
@@ -25,7 +26,7 @@ import type { Session } from "../../session"
 import { CreditsPanel } from "../../shell/Credits"
 import { settingsFor } from "./derived"
 import { credits, longDay, money, plural } from "./format"
-import { personalRows, rowsFor, type PanelRequest, type SettingRow } from "./rows"
+import { Row, personalRows, rowsFor, type PanelRequest, type SettingRow } from "./rows"
 import { SaveBar, SettingsState, toast, useSettingsState } from "./state"
 import {
   CliPanel, DomainPanel, FieldPanel, HookPanel, KeyPanel, ListPanel, MailboxPanel, McpScopePanel,
@@ -59,11 +60,38 @@ export const AREA_BY_NODE: Record<string, string> = {
 
 const slug = (area: string) => area.toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "")
 
+/**
+ * Settings the category has nowhere at all, so the common version cannot show them and they arrive
+ * with the rule that creates them. Each is recorded as missing by the memo or by spec 14 §8, and
+ * none of them is a problem this case invented.
+ *
+ * Rule 7: no delete control ("no self-serve control... an admin must contact Support", memo §1.3); no
+ * upgrade-request queue; no credit-spike threshold; no second-approval threshold, which was a number
+ * inside a send dialog; no published API limits, cost table, per-key spend or 80% alert; no written
+ * webhook delivery contract.
+ *
+ * Rule 1: there is no agent settings page at all (memo §5, "Apollo does not ship a standalone AI SDR
+ * agent settings page"), so which agents are on, the no-overwrite rule and the team credit budget
+ * have no home; nor do the forecast target, the submission window, renewal reminders, expansion
+ * routing or the first-value signal (spec 14 §8).
+ *
+ * Rule 5: the workspace profile, the seats, the pages the profile leaves out and the running
+ * exposure. Before rule 5 the sidebar was simply the sidebar and none of these existed.
+ */
+const LATER = new Set([
+  "plan.delete", "plan.upgrade-requests", "plan.spike-alert", "ai.second-approval",
+  "dev.limits", "dev.cost-table", "dev.key-spend", "dev.alert-80", "dev.hook-contract",
+  "ai.agents", "ai.no-overwrite", "ai.credit-caps", "plan.team-budget",
+  "pipe.goal", "pipe.submission-window", "pipe.renewal-reminders",
+  "score.expansion-routing", "score.first-value",
+  "work.profile", "work.seats", "work.left-out", "work.exposure",
+])
+
 /* ----------------------------------------------------------------------------------- the strip */
 
-function StripLine({ label, children, tone }: { label: string; children: ReactNode; tone?: "warning" | "error" }) {
+function StripLine({ item, label, children, tone }: { item: string; label: string; children: ReactNode; tone?: "warning" | "error" }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 py-1">
+    <div data-item={item} data-item-label={label} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 py-1">
       <span className="w-36 shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
       <span className={cn("min-w-0 flex-1 text-sm", tone === "warning" && "text-amber-700 dark:text-amber-400", tone === "error" && "text-destructive")}>
         {children}
@@ -72,7 +100,7 @@ function StripLine({ label, children, tone }: { label: string; children: ReactNo
   )
 }
 
-function Strip({ session, role, user, onCredits }: { session: Session; role: Role; user: string; onCredits: () => void }) {
+function Strip({ session, role, user, onCredits, homeless }: { session: Session; role: Role; user: string; onCredits: () => void; homeless?: boolean }) {
   const b = businessById(session.business)
   const seed = seedFor(session.business)
   const st = settingsFor(session.business)
@@ -92,13 +120,13 @@ function Strip({ session, role, user, onCredits }: { session: Session; role: Rol
   const [cancelling, setCancelling] = useState(false)
 
   return (
-    <section aria-label="What this workspace costs and what can spend or stop it" className="border-b bg-muted/30 px-4 py-3 sm:px-6">
+    <section aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="border-b bg-muted/30 px-4 py-3 sm:px-6">
       {isAdmin ? (
         <>
-          <StripLine label="Plan and price">
+          <StripLine item="plan.price" label="Plan and price">
             {b.plan.name} · {b.plan.seats} seats · {money(ws.plan.monthlyTotal)} a month, billed {ws.plan.billing === "annual" ? "annually" : "monthly"} · renews {longDay(ws.plan.renews)}
             <Button variant="link" size="sm" className="h-auto px-2 text-sm" onClick={() => toast("Change plan: seats, plan cards and the total, with Due today on screen.")}>Change plan</Button>
-            <Button variant="link" size="sm" className="h-auto px-0 text-sm" onClick={() => setCancelling(true)}>Cancel plan</Button>
+            <Button variant="link" size="sm" data-item="plan.cancel" data-item-label="Cancel plan" className="h-auto px-0 text-sm" onClick={() => setCancelling(true)}>Cancel plan</Button>
           </StripLine>
           {cancelling && (
             <div role="dialog" aria-label="Cancel plan" className="my-2 rounded-md border p-3">
@@ -112,30 +140,51 @@ function Strip({ session, role, user, onCredits }: { session: Session; role: Rol
               </div>
             </div>
           )}
-          <StripLine label="Credits" tone={runsOutFirst ? "warning" : undefined}>
+          <StripLine item="plan.credits" label="Credits" tone={runsOutFirst ? "warning" : undefined}>
             {credits(c.balance)} of {credits(c.monthlyCap)} left this month · {credits(c.burnPerWeek)} a week ·{" "}
             {runsOutFirst ? `runs out about ${longDay(c.runsOutOn)}, before the cycle ends on ${longDay(c.cycleEnds)}` : `lasts to about ${longDay(c.runsOutOn)}`}
             <Button variant="link" size="sm" className="h-auto px-2 text-sm" onClick={onCredits}>Where it went</Button>
           </StripLine>
-          <StripLine label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
+          <StripLine item="mail.bounce-guard" label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
             {guard.state === "ok" ? "On" : guard.state === "warning" ? "Warning" : "Paused"} · {guard.observedPercent}% of {guard.volume7d.toLocaleString()} in 7 days ·
             {" "}warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% · {paused === 0 ? "nothing paused" : `${plural(paused, "mailbox", "mailboxes")} paused`}
           </StripLine>
-          <StripLine label="Agents">
+          <StripLine item="ai.approvals" label="Agents">
             {plural(seed.agents.filter((a) => a.on).length, "agent")} on · send, add-to-sequence, stage changes and spend over a cap need the owner's approval ·
-            {" "}a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits ·
-            {" "}caps {seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month
+            {" "}<span data-item="ai.second-approval" data-item-label="Second approval">a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits</span> ·
+            {" "}<span data-item="ai.credit-caps" data-item-label="Agent credit caps">caps {seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month</span>
             {waiting > 0 && <> · <a className="underline underline-offset-4" href={href("/ollopa/agents")}>{waiting} waiting for approval</a></>}
           </StripLine>
-          <StripLine label="Credit spike" tone={spiked ? "warning" : undefined}>
+          <StripLine item="plan.spike-alert" label="Credit spike" tone={spiked ? "warning" : undefined}>
             Alert at {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}× · {spiked ? "alerted" : "nothing alerted"}
           </StripLine>
-          <StripLine label="Do-not-call" tone={dncOverdue ? "error" : undefined}>
+          <StripLine item="pros.dnc" label="Do-not-call" tone={dncOverdue ? "error" : undefined}>
             Synchronised {longDay(st.prospecting.dnc.synchronisedOn)} · next due {longDay(st.prospecting.dnc.nextDueOn)}
             {dncOverdue && " · overdue — calls made now are outside safe harbour"}
           </StripLine>
+          {homeless && (
+            <>
+              {/* Decision-critical facts the category's settings have no page for at all: the memo
+                  records no delete control ("no self-serve control"), no published API limits and no
+                  written delivery contract. Rule 7 puts them on screen before rule 1 gives them an
+                  area to live in, so at the next step they move from here into their own areas. */}
+              <StripLine item="plan.delete" label="Delete workspace">
+                Deletes {seed.contacts.length.toLocaleString()} contacts, {plural(seed.sequences.length, "sequence")} and every person's data.
+                {" "}Fourteen days to change your mind, then it is gone. Export first.
+              </StripLine>
+              <StripLine item="dev.limits" label="API limits">
+                200 a minute · 6,000 an hour · 50,000 a day, per workspace, not per key
+                {" "}· <span data-item="dev.cost-table" data-item-label="Cost per endpoint">published cost per endpoint, typical and maximum</span>
+                {" "}· <span data-item="dev.key-spend" data-item-label="Spend per key">spend per key against the same balance</span>
+                {" "}· <span data-item="dev.alert-80" data-item-label="Alert the key's owner at 80%">the key's owner is told at 80%</span>
+              </StripLine>
+              <StripLine item="dev.hook-contract" label="Webhooks">
+                At least once, signed, attempt-numbered, retried for 24 hours, never silently disabled, and anything missed is readable from the reconciliation endpoint
+              </StripLine>
+            </>
+          )}
           {upgrades.length > 0 && (
-            <StripLine label="Upgrade requests">
+            <StripLine item="plan.upgrade-requests" label="Upgrade requests">
               {plural(upgrades.length, "upgrade request")} · {upgrades[0].requester.user} wants {upgrades[0].upgrade!.feature} ({upgrades[0].upgrade!.plan}, {money(upgrades[0].upgrade!.monthlyTotal)} a month for {b.plan.seats} seats)
               {" "}<a className="underline underline-offset-4" href={href("/ollopa/requests")}>Review</a>
             </StripLine>
@@ -143,15 +192,15 @@ function Strip({ session, role, user, onCredits }: { session: Session; role: Rol
         </>
       ) : (
         <>
-          <StripLine label="Your credits">
+          <StripLine item="plan.credits" label="Your credits">
             {mine ? `${credits(mine.used)} used this month${mine.limit ? ` · your limit is ${credits(mine.limit)}` : ""}` : `${credits(c.balance)} left in the workspace`}
             <Button variant="link" size="sm" className="h-auto px-2 text-sm" onClick={onCredits}>Where it went</Button>
           </StripLine>
-          <StripLine label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
+          <StripLine item="mail.bounce-guard" label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
             {guard.state === "ok" ? "On" : guard.state === "warning" ? "Warning" : "Paused"} · warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% ·
             {" "}{myMailboxes.length === 0 ? "you have no mailbox here" : myMailboxes.some((m) => m.paused) ? "one of yours is paused" : `${plural(myMailboxes.length, "mailbox", "mailboxes")} of yours, none paused`}
           </StripLine>
-          <StripLine label="Agents">
+          <StripLine item="ai.approvals" label="Agents">
             Agents never overwrite a field you set or confirmed; they propose instead. Sending, enrolling and spending over a cap wait for your approval ·
             {" "}a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits
           </StripLine>
@@ -161,76 +210,135 @@ function Strip({ session, role, user, onCredits }: { session: Session; role: Rol
   )
 }
 
-/* ------------------------------------------------------------------------------------ one row */
+/* ----------------------------------------------------------------------------------- one area */
 
-function Row({ row, admin, lit }: { row: SettingRow; admin: string; lit: boolean }) {
-  const g = row.feature ? gate(row.feature) : null
-  // The lock sits at the row, the entry point, and only once: either on the control, or beside the
-  // heading of a block. Never on a Save button at the end of work somebody has already done.
-  const locked = !!g?.locked
-  const wrapped = locked && row.value
-    ? <Locked feature={row.label} plan={g!.plan} pricePerMonth={g!.pricePerMonth} what={g!.what}>{row.value}</Locked>
-    : row.value
+/**
+ * The names the category gives these areas, used until rule 4 renames every one by its contents.
+ * Each is in the memo's sidebar (§6) or its "observed inconsistencies" list.
+ */
+const VAGUE_AREA: Record<string, string> = {
+  "Team and access": "Users and teams",
+  "Email sending": "Email setup and health",
+  "Prospecting rules": "Rules of engagement",
+  "Pipeline and data": "Objects, fields, stages",
+  "Sequences": "Team email & sequences",
+  "Signals, scoring and personas": "Ideal customer profile",
+  "Agents and AI": "AI context center",
+  "API, webhooks, MCP and CLI": "Integrations · developer",
+  "Plan, billing and usage": "Credits and activity",
+}
+
+/**
+ * The sub-pages the category puts inside these areas as a second row of horizontal tabs. They are
+ * the third level rule 2 forbids, so from step 3 they are gone and the rows sit in the area.
+ * Memo §6: "Sub-pages often add a second navigation level as horizontal tabs across the top".
+ */
+const TAB_GROUPS: Record<string, { id: string; label: string; items: string[] }[]> = {
+  "Team and access": [
+    { id: "users", label: "Users", items: ["team.users", "team.offboarding", "team.availability"] },
+    { id: "teams", label: "Teams", items: ["team.teams"] },
+    { id: "profiles", label: "Permission profiles", items: ["team.profiles", "team.grants", "team.viewas", "mail.unsubscribe-permission"] },
+    { id: "security", label: "Security", items: ["sec.mfa", "sec.ip", "sec.password", "sec.session", "sec.sso"] },
+  ],
+  "Email sending": [
+    { id: "overview", label: "Overview", items: ["mail.tracking", "mail.signature"] },
+    { id: "domains", label: "Domains", items: ["mail.domains"] },
+    { id: "mailboxes", label: "Mailboxes", items: ["mail.mailboxes", "mail.warmup", "mail.limits", "mail.tracking-subdomain"] },
+    { id: "policies", label: "Sending policies", items: ["mail.bounce-guard", "mail.catch-all", "mail.unsubscribe-text"] },
+  ],
+  "Sequences": [
+    { id: "rulesets", label: "Sequence rulesets", items: ["seq.rulesets"] },
+    { id: "priority", label: "Priority settings", items: ["seq.priority"] },
+    { id: "schedules", label: "Schedules", items: ["seq.schedules"] },
+  ],
+  "Pipeline and data": [
+    { id: "contact", label: "Contact fields & stages", items: ["pipe.contact-stages", "pipe.fields"] },
+    { id: "deal", label: "Deal fields & stages", items: ["pipe.stages", "pipe.currency", "pipe.required-at-stage", "pipe.deal-warnings", "pipe.forecast-categories", "pipe.goal", "pipe.submission-window", "pipe.renewal-reminders"] },
+    { id: "waterfall", label: "Waterfall enrichment", items: ["pipe.enrichment-order"] },
+  ],
+  "Plan, billing and usage": [
+    { id: "plan", label: "Plan overview", items: ["plan.seats", "plan.cancel", "plan.upgrade-requests", "plan.delete"] },
+    { id: "credits", label: "Credit usage", items: ["plan.credits", "plan.credit-breakdown", "plan.spike-alert", "plan.team-budget"] },
+    { id: "billing", label: "Billing", items: ["plan.invoices", "plan.tax-id", "plan.export", "plan.price"] },
+  ],
+}
+
+/** A row of tabs inside an area: a level the disclosed page does not have. */
+function AreaTabs({ area, rows, admin, honest }: { area: string; rows: SettingRow[]; admin: string; honest: boolean }) {
+  const groups = TAB_GROUPS[area]
+  const named = new Set(groups.flatMap((g) => g.items))
+  const shown = groups.map((g) => ({ ...g, rows: rows.filter((r) => g.items.includes(r.id)) })).filter((g) => g.rows.length > 0)
+  const rest = rows.filter((r) => !named.has(r.id))
+  const [active, setActive] = useState(shown[0]?.id ?? "")
 
   return (
-    <div
-      id={`row-${row.id}`}
-      data-row={row.id}
-      className={cn("border-t border-border/60 px-2 py-2.5 first:border-t-0", lit && "rounded-md bg-amber-100/70 dark:bg-amber-950/40")}
-    >
-      {row.block ? (
+    <>
+      {shown.length > 0 && (
         <>
-          <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5">
-            <h4 className="text-sm font-medium">{row.label}</h4>
-            <span className="flex items-center gap-3">
-              {row.readOnly && <span className="text-xs text-muted-foreground">set by {admin}</span>}
-              {locked && (
-                <Locked feature={row.label} plan={g!.plan} pricePerMonth={g!.pricePerMonth} what={g!.what}>
-                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs">{row.label} on {g!.plan}</Button>
-                </Locked>
-              )}
-            </span>
+          <div role="tablist" aria-label={`${area} pages`} className="mb-2 flex flex-wrap gap-1 border-b">
+            {shown.map((g) => (
+              <button
+                key={g.id}
+                role="tab"
+                aria-selected={active === g.id}
+                onClick={() => setActive(g.id)}
+                className={cn("-mb-px border-b-2 px-3 py-1.5 text-sm", active === g.id ? "border-foreground font-medium" : "border-transparent text-muted-foreground")}
+              >
+                {g.label}
+              </button>
+            ))}
           </div>
-          {row.block}
-          {row.note && <p className="pt-1.5 text-xs text-muted-foreground">{row.note}</p>}
+          {shown.map((g) => (
+            <div
+              key={g.id}
+              role="tabpanel"
+              data-container={`tab.${slug(area)}.${g.id}`}
+              data-container-label={`${area} › ${g.label}`}
+              data-open={active === g.id ? "true" : "false"}
+              hidden={active !== g.id}
+            >
+              {g.rows.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}
+            </div>
+          ))}
         </>
-      ) : (
-        <div className="grid gap-1 sm:grid-cols-[minmax(11rem,16rem)_1fr] sm:items-baseline sm:gap-4">
-          <div className="text-sm">{row.label}</div>
-          <div className="min-w-0">
-            {wrapped}
-            {row.note && <p className="mt-1 text-xs text-muted-foreground">{row.note}</p>}
-          </div>
-        </div>
       )}
-    </div>
+      {rest.length > 0 && <div>{rest.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}</div>}
+    </>
   )
 }
 
-/* ----------------------------------------------------------------------------------- one area */
-
-function Area({ area, one, two, admin, register }: {
+function Area({ area, one, two, admin, register, flat, honest }: {
   area: string
   one: SettingRow[]
   two: SettingRow[]
   admin: string
   register: (area: string, open: (o: boolean) => void) => void
+  /** Rule 2: no second row of tabs inside the area. */
+  flat: boolean
+  /** Rule 4: the area is named by its contents and the door lists what is behind it. */
+  honest: boolean
 }) {
   const doorId = `settings.${slug(area)}`
   const [, setOpen] = useDoorState(doorId)
-  const s = useSettingsState()
   useEffect(() => { register(area, setOpen) }, [area, register, setOpen])
+  const tabbed = !flat && !!TAB_GROUPS[area] && one.length > 0
 
   return (
     <section id={`area-${slug(area)}`} className="scroll-mt-4 border-b px-4 py-5 sm:px-6">
-      <h3 className="pb-2 text-base font-semibold">{area}</h3>
-      <div>
-        {one.map((r) => <Row key={r.id} row={r} admin={admin} lit={s.lit === r.id} />)}
+      <h3 className="pb-2 text-base font-semibold">{honest ? area : VAGUE_AREA[area] ?? area}</h3>
+      <div data-container={`area.${slug(area)}`} data-container-label={area}>
+        {tabbed
+          ? <AreaTabs area={area} rows={one} admin={admin} honest={honest} />
+          : one.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}
       </div>
       {two.length > 0 && (
         <div className={cn(one.length > 0 && "mt-2")}>
-          <Door id={doorId} label={two.map((r) => r.short).join(", ")} count={two.length}>
-            <div>{two.map((r) => <Row key={r.id} row={r} admin={admin} lit={s.lit === r.id} />)}</div>
+          <Door
+            id={doorId}
+            label={honest ? two.map((r) => r.short).join(", ") : "Advanced"}
+            count={honest ? two.length : undefined}
+          >
+            <div>{two.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}</div>
           </Door>
         </div>
       )}
@@ -242,10 +350,12 @@ function Area({ area, one, two, admin, register }: {
 
 interface Hit { id: string; area: string; label: string; value: string }
 
-function SettingsSearch({ rows, onJump, inputRef }: {
+function SettingsSearch({ rows, onJump, inputRef, accelerators = true }: {
   rows: { row: SettingRow; area: string }[]
   onJump: (id: string, area: string) => void
   inputRef: React.RefObject<HTMLInputElement | null>
+  /** Rule 8. Off: the box finds an area and scrolls to its heading, and there is no `/` to learn. */
+  accelerators?: boolean
 }) {
   const [q, setQ] = useState("")
   const [active, setActive] = useState(0)
@@ -264,13 +374,13 @@ function SettingsSearch({ rows, onJump, inputRef }: {
   }, [q, rows])
 
   return (
-    <div className="relative w-full sm:w-80">
+    <div data-item="settings.search" data-item-label="The settings search" className="relative w-full sm:w-80">
       <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
       <Input
         ref={inputRef}
-        className="h-9 pl-8"
-        placeholder="Find a setting…"
-        aria-label="Find a setting"
+        className={cn("h-9 pl-8", !accelerators && "pr-2")}
+        placeholder={accelerators ? "Find a setting…" : "Search settings"}
+        aria-label={accelerators ? "Find a setting" : "Search settings"}
         aria-expanded={hits.length > 0}
         value={q}
         onChange={(e) => { setQ(e.target.value); setActive(0) }}
@@ -281,7 +391,7 @@ function SettingsSearch({ rows, onJump, inputRef }: {
           if (e.key === "Escape") { setQ(""); (e.target as HTMLInputElement).blur() }
         }}
       />
-      <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono text-[10px] text-muted-foreground">/</kbd>
+      {accelerators && <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono text-[10px] text-muted-foreground">/</kbd>}
       {hits.length > 0 && (
         <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-md" role="listbox">
           {hits.map((h, i) => (
@@ -319,6 +429,15 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
   const st = settingsFor(session.business)
   const state = useSettingsState()
   const d = useDisclosure("settings")
+  // In the product `useLesson()` is null and `ruleOn` answers true for every rule: what follows is
+  // the page as it ships. On a lesson stage each flag is the one rule that step turned on.
+  const lesson = useLesson()
+  const rare = ruleOn(lesson, 1)          // one page in the main navigation, levels from the usage model
+  const twoLevels = ruleOn(lesson, 2)     // no second row of tabs inside an area
+  const honest = ruleOn(lesson, 4)        // areas and doors named by their contents; a lock is a real control
+  const together = ruleOn(lesson, 5)      // How your team works, and the pairs in one place
+  const critical = ruleOn(lesson, 7)      // the strip
+  const accelerators = ruleOn(lesson, 8)  // the search jumps to a setting, and `/` is taught
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
   const adminTitle = b.roles.find((r) => r.role === "admin")?.title ?? "RevOps admin"
 
@@ -365,10 +484,16 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
   const level = useCallback((item: UsageItem) => levelOf(item, session.business, role, hasReports), [session.business, role, hasReports])
   const weekly = useCallback((item: UsageItem) => weeklyUse(item, session.business, role, hasReports), [session.business, role, hasReports])
 
-  const present = d.items.filter((i) => weekly(i) > 0 && byId.has(i.id))
+  // Rule 5 creates the four rows of "How your team works" and brings the unsubscribe pair together.
+  // Until it lands, the pair sits where the category puts it: the text under the person's own
+  // profile, the permission to disable it under Permission profiles (memo §1.2, §1.3).
+  const SPLIT_AREA: Record<string, string> = { "mail.unsubscribe-text": "You", "mail.unsubscribe-permission": "Team and access" }
+  const areaOf = (i: UsageItem) => (together ? i.area : SPLIT_AREA[i.id] ?? i.area)
+
+  const present = d.items.filter((i) => weekly(i) > 0 && byId.has(i.id) && (together || i.area !== "How your team works"))
   const areas = AREA_ORDER
     .map((area) => {
-      const items = present.filter((i) => i.area === area)
+      const items = present.filter((i) => areaOf(i) === area)
       const one = items.filter((i) => level(i) === 1).map((i) => byId.get(i.id)!)
       return {
         area,
@@ -379,6 +504,8 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
     .filter((a) => a.one.length + a.two.length > 0)
 
   const searchable = areas.flatMap((a) => [...a.one, ...a.two].map((row) => ({ row, area: a.area })))
+  // Until rule 4 the index reads the same vague names the area headings do: the two never disagree.
+  const areaLabel = (area: string) => (honest ? area : VAGUE_AREA[area] ?? area)
 
   // `/` focuses the settings search, from anywhere on the page that is not already a field.
   useEffect(() => {
@@ -401,6 +528,32 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
 
   const register = useCallback((area: string, open: (o: boolean) => void) => { openers.current[area] = open }, [])
 
+  const stripEl = critical
+    ? <Strip session={session} role={role} user={effectiveUser} onCredits={() => setCreditsOpen(true)} homeless={!rare} />
+    : null
+
+  // Rule 1 off: the settings shell. The same rows, the same seat, dealt into the pages, groups,
+  // tabs and drawers the category ships (spec 14 §5, the memo). Nothing is drawn a second time.
+  if (!rare) {
+    if (import.meta.env.DEV) {
+      const homed = new Set(PARODY_IDS)
+      const lost = present.map((i) => i.id).filter((id) => !homed.has(id) && !LATER.has(id))
+      if (lost.length) console.warn("[settings] no parody home and not declared later:", lost)
+    }
+    return (
+      <>
+        <ParodyShell
+          ctx={ctx}
+          rows={[...rows, ...personal]}
+          present={new Set(present.map((i) => i.id).concat(personal.map((r) => r.id)))}
+          strip={stripEl}
+        />
+        <SaveBar />
+        <CreditsPanel session={session} open={creditsOpen} onOpenChange={setCreditsOpen} />
+      </>
+    )
+  }
+
   // The page scrolls in the shell's main region, not in a box of its own: the strip is the first
   // thing you read and then it scrolls away, and a deep link to an area lands on the area.
   return (
@@ -421,14 +574,12 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
             <p className="text-sm text-muted-foreground">{seed.workspace.name}</p>
           </div>
           <div className="flex items-center gap-2">
-            <SettingsSearch rows={searchable} onJump={jump} inputRef={search} />
-            <ExpandAll />
+            <SettingsSearch rows={searchable} onJump={jump} inputRef={search} accelerators={accelerators} />
+            {together && <ExpandAll />}
           </div>
         </div>
 
-        <div className="mt-3">
-          <Strip session={session} role={role} user={effectiveUser} onCredits={() => setCreditsOpen(true)} />
-        </div>
+        {stripEl && <div className="mt-3">{stripEl}</div>}
 
         <div>
           <div className="lg:flex lg:items-start">
@@ -439,7 +590,7 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
                   <li key={a.area}>
                     <a className="block rounded px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground" href={`#area-${slug(a.area)}`}
                       onClick={(e) => { e.preventDefault(); document.getElementById(`area-${slug(a.area)}`)?.scrollIntoView({ block: "start", behavior: "smooth" }) }}>
-                      {a.area}
+                      {areaLabel(a.area)}
                     </a>
                   </li>
                 ))}
@@ -450,11 +601,13 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
               <div className="px-4 pt-4 lg:hidden">
                 <Select onValueChange={(v) => document.getElementById(`area-${v}`)?.scrollIntoView({ block: "start" })}>
                   <SelectTrigger className="h-9" aria-label="Jump to an area"><SelectValue placeholder="Jump to…" /></SelectTrigger>
-                  <SelectContent>{areas.map((a) => <SelectItem key={a.area} value={slug(a.area)}>{a.area}</SelectItem>)}</SelectContent>
+                  <SelectContent>{areas.map((a) => <SelectItem key={a.area} value={slug(a.area)}>{areaLabel(a.area)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
-              {areas.map((a) => <Area key={a.area} area={a.area} one={a.one} two={a.two} admin={admin} register={register} />)}
+              {areas.map((a) => (
+                <Area key={a.area} area={a.area} one={a.one} two={a.two} admin={admin} register={register} flat={twoLevels} honest={honest} />
+              ))}
 
               {!isAdmin && (
                 <p className="px-4 py-6 text-sm text-muted-foreground sm:px-6">

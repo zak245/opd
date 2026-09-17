@@ -21,7 +21,7 @@ import { SURFACES, type AgentEvent, type Seed } from "../../data/seed"
 import type { Session } from "../../session"
 import { day, dayGroup } from "../deal/format"
 import {
-  AGENT_NAMES, KIND_LABEL, SURFACE_LABEL, type LocalDecision, adminOf, digestOf, expired,
+  AGENT_NAMES, KIND_LABEL, SURFACE_LABEL, type LocalDecision, type RuleFlags, adminOf, digestOf, expired,
   hasTeammateFilter, queueOwner,
 } from "./model"
 
@@ -64,6 +64,8 @@ function outcomeOf(e: AgentEvent, local?: LocalDecision): string {
 }
 
 export interface LedgerProps {
+  /** Which of the case's six rules have landed. Every flag is true in the product. */
+  rules: RuleFlags
   events: AgentEvent[]
   /** Every event this seat may read, for the "38 of 60" count. */
   total: number
@@ -80,7 +82,7 @@ export interface LedgerProps {
 }
 
 export function Ledger(p: LedgerProps) {
-  const { seed, session, d, filters: f } = p
+  const { seed, session, d, filters: f, rules } = p
   const [sheet, setSheet] = useState(false)
   const [hidden, setHidden] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(`ollopa.agents.columns.${session.user}`) ?? "[]") as string[] } catch { return [] }
@@ -125,14 +127,14 @@ export function Ledger(p: LedgerProps) {
   const filterControls = (
     <>
       <Select value={f.agent} onValueChange={(v) => set({ agent: v })}>
-        <SelectTrigger className="h-8 w-40" aria-label="Agent"><SelectValue /></SelectTrigger>
+        <SelectTrigger data-item="act.filter-agent" data-item-label="Filter by agent" className="h-8 w-40" aria-label="Agent"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Every agent</SelectItem>
           {AGENT_NAMES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
         </SelectContent>
       </Select>
       <Select value={f.who} onValueChange={(v) => set({ who: v })}>
-        <SelectTrigger className="h-8 w-48" aria-label="Contact or company"><SelectValue /></SelectTrigger>
+        <SelectTrigger data-item="act.filter-contact" data-item-label="Filter by contact or company" className="h-8 w-48" aria-label="Contact or company"><SelectValue /></SelectTrigger>
         <SelectContent className="max-h-72">
           <SelectItem value="all">Any contact or company</SelectItem>
           {whoOptions.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
@@ -162,7 +164,7 @@ export function Ledger(p: LedgerProps) {
 
   return (
     <DoorGroup>
-    <section aria-labelledby="agents-activity" className="mt-8">
+    <section aria-labelledby="agents-activity" data-container="ledger" data-container-label="the activity ledger" className="mt-8">
       <div className="flex flex-wrap items-center gap-2">
         <SectionHeader
           title={teammates ? "Activity" : "Your contacts’ activity"}
@@ -170,7 +172,7 @@ export function Ledger(p: LedgerProps) {
           className="pb-0"
         />
         <div className="ml-auto flex items-center gap-1">
-          <ExpandAll />
+          {rules.r5 && <span data-item="act.expand-all" data-item-label="Expand all steps or collapse all"><ExpandAll /></span>}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="size-8" aria-label="More actions for the activity list">
@@ -206,6 +208,7 @@ export function Ledger(p: LedgerProps) {
             onChange={(e) => set({ q: e.target.value })}
             placeholder="Search the activity"
             aria-label="Search the activity"
+            data-item="act.search" data-item-label="Search the ledger"
             className="h-8 w-56 pl-7"
           />
         </div>
@@ -242,14 +245,14 @@ export function Ledger(p: LedgerProps) {
 
       {/* The columns, at the widths that fit. Below `sm` every row is two lines and the header goes. */}
       <div className="mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-b px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:grid"
-        style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface) }}>
+        style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
         <span>When</span>
-        <span>Actor</span>
+        {rules.r4 && <span data-item="act.actor" data-item-label="Actor">Actor</span>}
         <span>What happened</span>
         {showContact && <span>Contact or company</span>}
         {showOutcome && <span>Outcome</span>}
         {showSurface && <span>Surface</span>}
-        <span className="text-right">Credits</span>
+        {rules.r2 && <span data-item="act.credits-per-event" data-item-label="Credits per event" className="text-right">Credits</span>}
       </div>
 
       <div>
@@ -266,16 +269,18 @@ export function Ledger(p: LedgerProps) {
           const digest = digestOf(events)
           return (
             <div key={when}>
-              <h3 className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-background/95 py-1.5 text-xs backdrop-blur">
+              <h3 {...(rules.r2 ? { "data-item": `act.day-digest.${when}`, "data-item-label": `Digest for ${dayGroup(when)}` } : {})}
+                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-background/95 py-1.5 text-xs backdrop-blur">
                 <span className="font-semibold">{dayGroup(when)}</span>
-                <span className="text-muted-foreground">
+                {rules.r2 && <span className="text-muted-foreground">
                   {digest.count} {digest.count === 1 ? "event" : "events"} · {digest.kinds} · <span className="tabular-nums">{digest.credits.toLocaleString()}</span> {digest.credits === 1 ? "credit" : "credits"}
-                </span>
+                </span>}
               </h3>
               <ul className="divide-y">
                 {events.map((e) => (
                   <Row
                     key={e.id}
+                    rules={rules}
                     e={e}
                     seed={seed}
                     session={session}
@@ -306,12 +311,12 @@ export function Ledger(p: LedgerProps) {
   )
 }
 
-function columnTemplate(contact: boolean, outcome: boolean, surface: boolean): string {
-  return ["6.5rem", "9.5rem", "minmax(0,1fr)", contact && "10rem", outcome && "9.5rem", surface && "5.5rem", "4.5rem"].filter(Boolean).join(" ")
+function columnTemplate(contact: boolean, outcome: boolean, surface: boolean, actor = true, credits = true): string {
+  return ["6.5rem", actor && "9.5rem", "minmax(0,1fr)", contact && "10rem", outcome && "9.5rem", surface && "5.5rem", credits && "4.5rem"].filter(Boolean).join(" ")
 }
 
-function Row({ e, seed, session, local, undone, onUndo, showContact, showOutcome, showSurface, focused }: {
-  e: AgentEvent; seed: Seed; session: Session; local?: LocalDecision; undone?: { by: string; at: string }
+function Row({ rules, e, seed, session, local, undone, onUndo, showContact, showOutcome, showSurface, focused }: {
+  rules: RuleFlags; e: AgentEvent; seed: Seed; session: Session; local?: LocalDecision; undone?: { by: string; at: string }
   onUndo: () => void; showContact: boolean; showOutcome: boolean; showSurface: boolean; focused: boolean
 }) {
   const row = useRef<HTMLLIElement>(null)
@@ -324,14 +329,16 @@ function Row({ e, seed, session, local, undone, onUndo, showContact, showOutcome
       : null
 
   return (
-    <li ref={row} tabIndex={-1} data-ledger-item={e.id} className={cn("py-1.5 outline-none", focused && "ring-2 ring-ring")}>
+    <li ref={row} tabIndex={-1} data-ledger-item={e.id}
+      data-item={`act.row.${e.id}`} data-item-label={e.summary}
+      className={cn("py-1.5 outline-none", focused && "ring-2 ring-ring")}>
       <div
         className="grid grid-cols-1 gap-x-3 px-2 text-sm sm:grid"
         style={{ gridTemplateColumns: undefined }}
       >
-        <div className="hidden sm:grid sm:gap-3" style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface) }}>
+        <div className="hidden sm:grid sm:gap-3" style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
           <span className="tabular-nums text-muted-foreground">{e.at}</span>
-          <span className="truncate">{e.surface === "mcp" || e.surface === "cli" ? e.actorUser : e.agent}</span>
+          {rules.r4 && <span className="truncate">{e.surface === "mcp" || e.surface === "cli" ? e.actorUser : e.agent}</span>}
           <span className="min-w-0">
             {e.summary}
             {e.kind === "skipped" && e.skipReason && <span className="text-muted-foreground"> · {e.skipReason}</span>}
@@ -343,7 +350,7 @@ function Row({ e, seed, session, local, undone, onUndo, showContact, showOutcome
           )}
           {showOutcome && <span className="truncate text-muted-foreground">{outcome}</span>}
           {showSurface && <span className="text-muted-foreground">{SURFACE_LABEL[e.surface]}</span>}
-          <span className="text-right tabular-nums">{e.credits.toLocaleString()}<span className="sr-only"> credits</span></span>
+          {rules.r2 && <span className="text-right tabular-nums">{e.credits.toLocaleString()}<span className="sr-only"> credits</span></span>}
         </div>
 
         {/* Phone: two lines, the same words, nothing moved to a third level. */}
@@ -364,7 +371,8 @@ function Row({ e, seed, session, local, undone, onUndo, showContact, showOutcome
 
       <div className="flex items-start gap-1 px-2">
         <div className="min-w-0 flex-1">
-          <Door id={`agents.steps.${e.id}`} label={`Step log · ${e.steps.length} ${e.steps.length === 1 ? "step" : "steps"} · ${e.steps.reduce((n, s) => n + s.credits, 0)} credits`}>
+          <Door id={`agents.steps.${e.id}`}
+            label={rules.r4 ? `Step log · ${e.steps.length} ${e.steps.length === 1 ? "step" : "steps"} · ${e.steps.reduce((n, s) => n + s.credits, 0)} credits` : "Details"}>
             <ol className="grid gap-1">
               {e.steps.map((s, i) => (
                 <li key={i} className="flex flex-wrap items-baseline gap-x-2">
@@ -372,7 +380,7 @@ function Row({ e, seed, session, local, undone, onUndo, showContact, showOutcome
                   <span className="min-w-0 flex-1">
                     {s.source ? <a className="underline underline-offset-4" href={s.source}>{s.text}</a> : s.text}
                   </span>
-                  <span className="tabular-nums text-muted-foreground">{s.credits} credits</span>
+                  {rules.r5 && <span className="tabular-nums text-muted-foreground">{s.credits} credits</span>}
                 </li>
               ))}
               {decidedBy && <li className="pt-1 text-muted-foreground">{decidedBy}</li>}
@@ -416,7 +424,7 @@ function toastCsv(n: number) {
 function KindFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
+      <SelectTrigger data-item="act.filter-kind" data-item-label="Filter by kind of event" className="h-8 w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Every kind</SelectItem>
         {KINDS.map((k) => <SelectItem key={k} value={k}>{KIND_LABEL[k]}</SelectItem>)}
@@ -428,7 +436,7 @@ function KindFilter({ value, onChange }: { value: string; onChange: (v: string) 
 function StatusFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-44" aria-label="Outcome"><SelectValue /></SelectTrigger>
+      <SelectTrigger data-item="act.filter-status" data-item-label="Filter by outcome" className="h-8 w-44" aria-label="Outcome"><SelectValue /></SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Every outcome</SelectItem>
         {STATUSES.map((s) => <SelectItem key={s} value={s}>{s === "waiting-second" ? "Waiting for a second approval" : s[0].toUpperCase() + s.slice(1)}</SelectItem>)}
@@ -440,7 +448,7 @@ function StatusFilter({ value, onChange }: { value: string; onChange: (v: string
 function DateFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-36" aria-label="Date range"><SelectValue /></SelectTrigger>
+      <SelectTrigger data-item="act.filter-date" data-item-label="Date range" className="h-8 w-36" aria-label="Date range"><SelectValue /></SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Every day</SelectItem>
         <SelectItem value="today">Today</SelectItem>
@@ -454,7 +462,7 @@ function DateFilter({ value, onChange }: { value: string; onChange: (v: string) 
 function SurfaceFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-36" aria-label="Surface"><SelectValue /></SelectTrigger>
+      <SelectTrigger data-item="act.surface" data-item-label="Which surface a run came from" className="h-8 w-36" aria-label="Surface"><SelectValue /></SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Every surface</SelectItem>
         {SURFACES.map((s) => <SelectItem key={s} value={s}>{SURFACE_LABEL[s]}</SelectItem>)}
@@ -466,7 +474,7 @@ function SurfaceFilter({ value, onChange }: { value: string; onChange: (v: strin
 function PersonFilter({ value, people, onChange }: { value: string; people: string[]; onChange: (v: string) => void }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-44" aria-label="Teammate"><SelectValue /></SelectTrigger>
+      <SelectTrigger data-item="act.filter-person" data-item-label="Filter by teammate" className="h-8 w-44" aria-label="Teammate"><SelectValue /></SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Everyone</SelectItem>
         {people.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}

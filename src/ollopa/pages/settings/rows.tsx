@@ -1147,3 +1147,70 @@ function DeleteWorkspace({ name, seed }: { name: string; seed: Seed }) {
     </span>
   )
 }
+
+/* ------------------------------------------------------------------------------------- one row */
+
+/**
+ * One setting, wherever it is standing: on the page, behind a door, inside a parody tab. It carries
+ * its usage item id as `data-item`, unchanged at every step, so the lesson view can see it move.
+ *
+ * `honest` is rule 4. When it is off, a control the plan does not include is greyed out with the
+ * sentence the vendor's FAQ gives, which conflates "your plan does not include it" with "your admin
+ * has not given you access". When it is on, the same control is a real button that opens a panel
+ * naming the plan and the price.
+ */
+export function Row({ row, admin, honest = true }: { row: SettingRow; admin: string; honest?: boolean }) {
+  const s = useSettingsState()
+  const lit = s.lit === row.id
+  const g = row.feature ? gate(row.feature) : null
+  // The lock sits at the row, the entry point, and only once: either on the control, or beside the
+  // heading of a block. Never on a Save button at the end of work somebody has already done.
+  const locked = !!g?.locked
+  const greyed = locked && !honest
+  const wrapped = locked && row.value
+    ? greyed
+      ? <span className="pointer-events-none select-none opacity-50" aria-disabled="true">{row.value}</span>
+      : <Locked feature={row.label} plan={g!.plan} pricePerMonth={g!.pricePerMonth} what={g!.what}>{row.value}</Locked>
+    : row.value
+  const note = greyed
+    ? "If a setting is greyed out and you can't select it, your Ollopa admin hasn't provided you access."
+    : row.note
+
+  return (
+    <div
+      id={`row-${row.id}`}
+      data-row={row.id}
+      data-item={row.id}
+      data-item-label={row.label}
+      className={cn("border-t border-border/60 px-2 py-2.5 first:border-t-0", lit && "rounded-md bg-amber-100/70 dark:bg-amber-950/40")}
+    >
+      {row.block ? (
+        <>
+          <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5">
+            <h4 className="text-sm font-medium">{row.label}</h4>
+            <span className="flex items-center gap-3">
+              {row.readOnly && <span className="text-xs text-muted-foreground">set by {admin}</span>}
+              {locked && (greyed ? (
+                <Button size="sm" variant="outline" disabled className="h-7 px-2 text-xs">{row.label}</Button>
+              ) : (
+                <Locked feature={row.label} plan={g!.plan} pricePerMonth={g!.pricePerMonth} what={g!.what}>
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs">{row.label} on {g!.plan}</Button>
+                </Locked>
+              ))}
+            </span>
+          </div>
+          {row.block}
+          {note && <p className="pt-1.5 text-xs text-muted-foreground">{note}</p>}
+        </>
+      ) : (
+        <div className="grid gap-1 sm:grid-cols-[minmax(11rem,16rem)_1fr] sm:items-baseline sm:gap-4">
+          <div className="text-sm">{row.label}</div>
+          <div className="min-w-0">
+            {wrapped}
+            {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

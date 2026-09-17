@@ -126,21 +126,22 @@ function stateWords(s: StepState, current: number): string {
   return "Not started"
 }
 
-function StepRows({ steps, current, go }: { steps: StepState[]; current: number; go: (n: number) => void }) {
+/** `tagged` marks the one copy the lesson view measures: the phone copy is the same list again. */
+function StepRows({ steps, current, go, tagged }: { steps: StepState[]; current: number; go: (n: number) => void; tagged?: boolean }) {
   return (
-    <ol className="grid gap-1">
+    <ol data-container={tagged ? "connect.steps" : undefined} data-container-label={tagged ? "the step list" : undefined} className="grid gap-1">
       {steps.map((s) => {
         const words = stateWords(s, current)
         const openable = s.n !== current && (s.done || !s.blocked)
         return (
           <li key={s.n} className={cn("rounded-md px-2 py-1.5 text-sm", s.n === current && "bg-muted")}>
             {openable ? (
-              <button type="button" className="text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
+              <button type="button" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`} className="text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
                 <span className="font-medium">Step {s.n}: {s.name}</span>
                 <span className="block text-xs text-muted-foreground">{words}</span>
               </button>
             ) : (
-              <span>
+              <span data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`}>
                 <span className={cn("font-medium", s.n === current && "text-foreground")} aria-current={s.n === current ? "step" : undefined}>Step {s.n}: {s.name}</span>
                 <span className="block text-xs text-muted-foreground">{words}</span>
               </span>
@@ -189,7 +190,7 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
         <h2 id="wiz-steps" className="px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Steps · {steps.filter((s) => s.done).length} of {steps.length} done
         </h2>
-        <div className="mt-2 hidden lg:block"><StepRows steps={steps} current={current} go={go} /></div>
+        <div className="mt-2 hidden lg:block"><StepRows steps={steps} current={current} go={go} tagged /></div>
         <div className="mt-2 lg:hidden">
           <button
             type="button"
@@ -215,9 +216,11 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
 
         <div className="mt-6 grid gap-6 [&>*]:min-w-0">{children}</div>
 
-        <div className="mt-8 flex flex-wrap items-center gap-3 border-t pt-5">
+        <div data-container="connect.footer" data-container-label="the footer" className="mt-8 flex flex-wrap items-center gap-3 border-t pt-5">
           {footer}
-          <Button variant="ghost" className="ml-auto" onClick={onSaveAndExit}>Save and exit <span className="ml-2 text-xs text-muted-foreground">⌘S</span></Button>
+          <span data-item="wiz.save-exit" data-item-label="Save and exit" className="ml-auto">
+            <Button variant="ghost" onClick={onSaveAndExit}>Save and exit <span className="ml-2 text-xs text-muted-foreground">⌘S</span></Button>
+          </span>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">Every answer is saved as you make it. Leaving and coming back returns this page exactly as it is.</p>
       </div>

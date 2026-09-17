@@ -66,10 +66,13 @@ function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry;
   )
 }
 
-export function AppShell({ session, page, title, children }: { session: Session; page: Page; title: string; children: ReactNode }) {
+export function AppShell({ session, page, title, children, defaultCollapsed }: { session: Session; page: Page; title: string; children: ReactNode; defaultCollapsed?: boolean }) {
   const b = businessById(session.business)
   const seed = seedFor(session.business)
+  // The person's own choice is remembered; a caller (the lesson stage, which is narrower than a
+  // desktop) may only set the starting state.
   const [collapsed, setCollapsed] = useState(() => {
+    if (defaultCollapsed !== undefined) return defaultCollapsed
     try { return localStorage.getItem(COLLAPSE_KEY) === "collapsed" } catch { return false }
   })
   const [palette, setPalette] = useState(false)
@@ -110,8 +113,9 @@ export function AppShell({ session, page, title, children }: { session: Session;
   }, [session.business, expiring])
 
   useEffect(() => {
+    if (defaultCollapsed !== undefined) return   // a stage's starting state is not the person's choice
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? "collapsed" : "open") } catch { /* ignore */ }
-  }, [collapsed])
+  }, [collapsed, defaultCollapsed])
 
   // The channels answer to events too, so the palette can open the bell without knowing about it.
   useEffect(() => {

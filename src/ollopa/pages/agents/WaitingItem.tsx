@@ -14,17 +14,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Door, useDoorState } from "../../ui/Door"
 import { TODAY, type AgentEvent, type Seed } from "../../data/seed"
 import type { Session } from "../../session"
 import { day } from "../deal/format"
 import {
   EXPIRY_DAYS, consequenceFor, daysLeft, mailboxFor, mailboxPaused, nearExpiry, overSecondApproval,
-  queueOwner, stageForecast,
+  queueOwner, stageForecast, type RuleFlags,
 } from "./model"
 
 export interface WaitingItemProps {
+  /** Which of the case's six rules have landed. Every flag is true in the product. */
+  rules: RuleFlags
   event: AgentEvent
   seed: Seed
   session: Session
@@ -58,7 +60,7 @@ function doorLabel(e: AgentEvent, draft: string): string {
 }
 
 export function WaitingItem(p: WaitingItemProps) {
-  const { event: e, seed, session, currency } = p
+  const { event: e, seed, session, currency, rules } = p
   const [editing, setEditing] = useState(false)
   const [asking, setAsking] = useState<null | "why" | "hand" | "snooze">(null)
   const [why, setWhy] = useState("")
@@ -72,6 +74,7 @@ export function WaitingItem(p: WaitingItemProps) {
   const mailbox = mailboxFor(e, seed)
   const paused = mailboxPaused(owner, seed)
   const consequence = consequenceFor(e, seed, currency)
+  const hasConsequence = consequenceText(consequence) !== ""
   const second = overSecondApproval(e, seed)
   const left = daysLeft(e)
   const forecast = stageForecast(e, seed, currency)
@@ -126,6 +129,10 @@ export function WaitingItem(p: WaitingItemProps) {
       ref={box}
       tabIndex={-1}
       data-queue-item={p.index}
+      data-item={`wait.item.${e.id}`}
+      data-item-label={e.summary}
+      data-container={`item.${e.id}`}
+      data-container-label="the item"
       className={cn("rounded-lg border bg-card", p.focused && "ring-2 ring-ring")}
     >
       <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:p-4">
@@ -139,17 +146,24 @@ export function WaitingItem(p: WaitingItemProps) {
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium">
-              {remote ? <Terminal className="size-3.5 text-muted-foreground" aria-hidden="true" /> : <Bot className="size-3.5 text-muted-foreground" aria-hidden="true" />}
-              {remote ? e.actorUser : e.agent}
-            </span>
+            {/* Rule 4: every item starts with the name of the actor that produced it. */}
+            {rules.r4 && (
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+                {remote ? <Terminal className="size-3.5 text-muted-foreground" aria-hidden="true" /> : <Bot className="size-3.5 text-muted-foreground" aria-hidden="true" />}
+                {remote ? e.actorUser : e.agent}
+              </span>
+            )}
             <span className="min-w-0 text-sm">
               {forecast ? `Proposes moving ${forecast.company} from ${forecast.from} to ${forecast.to}` : e.summary}
             </span>
           </div>
 
-          {/* What happens if you say yes. Beside Approve, never behind the door. */}
-          <ConsequenceLine {...consequence} className="mt-1.5 text-[13px] text-foreground" />
+          {/* What happens if you say yes. Beside Approve, never behind the door (rule 5). */}
+          {rules.r5 && hasConsequence && (
+            <div data-item={`wait.consequence.${e.id}`} data-item-label="What happens if you approve">
+              <ConsequenceLine {...consequence} className="mt-1.5 text-[13px] text-foreground" />
+            </div>
+          )}
 
           {forecast && (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -192,11 +206,11 @@ export function WaitingItem(p: WaitingItemProps) {
         <div className="flex w-full shrink-0 items-center gap-1.5 sm:w-auto">
           {/* An approval already given is removed, never greyed: the line above says who it waits for. */}
           {(e.status !== "waiting-second" || p.canApproveForOthers) && (
-            <Button size="sm" className="flex-1 sm:flex-none" onClick={() => approve()}>
+            <Button data-item={`wait.approve.${e.id}`} data-item-label="Approve" size="sm" className="flex-1 sm:flex-none" onClick={() => approve()}>
               {e.status === "waiting-second" ? "Approve as the second" : "Approve"}
             </Button>
           )}
-          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => p.onDecline()}>Decline</Button>
+          <Button data-item={`wait.decline.${e.id}`} data-item-label="Decline" size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => p.onDecline()}>Decline</Button>
           {menu}
         </div>
       </div>
@@ -252,7 +266,12 @@ export function WaitingItem(p: WaitingItemProps) {
 
       {/* Level two: what it was built from, and the thing itself. One door, never two. */}
       <div className="border-t px-1">
-        <Door id={`agents.item.${e.id}`} label={doorLabel(e, p.draft)}>
+        <Door id={`agents.item.${e.id}`} label={rules.r4 ? doorLabel(e, p.draft) : "Preview"}>
+          {!rules.r5 && hasConsequence && (
+            <div data-item={`wait.consequence.${e.id}`} data-item-label="What happens if you approve">
+              <ConsequenceLine {...consequence} className="mb-2 text-[13px] text-foreground" />
+            </div>
+          )}
           {editing ? (
             /* X-agent-edit: the read content is replaced, in place. */
             <div>
