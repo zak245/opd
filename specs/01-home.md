@@ -38,7 +38,7 @@ Append new random draws after the existing ones so current rows do not change.
 | `Task` | owner; status; snoozedUntil | user; "open" / "done" / "snoozed" / "skipped"; date or null | Your tasks only; Done, Snooze, Skip persist |
 | `Reply` | handled | boolean | A worked reply leaves the queue |
 | `Deal` | nextStep | nullable, about 20% null | Deals with no next step |
-| `AgentEvent` | to; draft; sources; confidence; decision; owner; decidedBy; needsSecondApproval; batchKey | contact; string; string[]; "low" / "medium" / "high"; "approved" / "declined" / null; user; user or null; boolean; string | Row recipient, detail door, decisions, who owns the object and therefore approves, the over-threshold second approval, and the task boundary the batch belongs to |
+| `AgentEvent` | to; draft; sources; inputs; decision; owner; decidedBy; needsSecondApproval; batchKey | contact; string; string[]; `{ label, href }[]`; "approved" / "declined" / null; user; user or null; boolean; string | Row recipient, detail door, decisions, who owns the object and therefore approves, the over-threshold second approval, and the task boundary the batch belongs to. There is no `confidence`: a number the reader cannot check is not evidence, so the door names the inputs the draft was built from and links each one |
 | `Company` | health, healthDelta7d, renewalDate, arr, expansionSignal | number, number, date, number, string or null (current clients) | Accounts section |
 | `Campaign` | read from the entity that spec 10 owns (id, name, kind, status, audienceId, sent, opened, converted, updatedAt and the rest); Home adds no fields of its own | spec 10 | Meridian 12 rows, Ridgeline 8, none elsewhere |
 | new `Audience` | id, name, size, sizeDelta | as named | Audiences door |
@@ -55,25 +55,33 @@ A header and up to seven sections. Which appear, and in what order, is decided b
 
 **Header.** "Good morning, Marcus", date, business name. The client workspace name at Halyard is in the top bar on every page, drawn by the shell (spec 00); Home does not repeat it. Credits pill, search and notifications stay in the app shell too.
 
-**Health strip.** One line above everything, for the roles that hold it: "Sending healthy · bounce 1.8% · sync clean · credits on track". An item in warning or paused state turns its words into a link to where it is fixed and the strip gets a border. Items: bounce guard state, outreach an agent paused, CRM sync errors, mailboxes near their daily limit, credit burn against the cap with the projected date, invitations not accepted, and the door "Setup steps remaining". The marketer and CS see the credits projection only.
+**Health strip.** One line above everything, for the roles that hold it: "Sending healthy · bounce 1.8% · sync clean · credits on track". An item in warning or paused state turns its words into a link to where it is fixed and the strip gets a border. Items: bounce guard state, outreach an agent paused, CRM sync errors, mailboxes near their daily limit, credit burn against the cap with the projected date, invitations not accepted, any workspace change the person will feel, and the door "Not set up yet: mailbox, CRM, invites (3)". The marketer and CS see the credits projection only.
+
+The bounce item links to where it is fixed, and that is a different place in each of three cases: to the **paused sequence at its health line** when one sequence is paused, to Sequences filtered to **Auto-paused** when several are, and to Settings › Email sending › Bounce guard when the trip is mailbox-level and belongs to no single sequence. The sync item is a count, not an alert: a sync error is digestible, so the strip and the Settings › Integrations row are where it is met.
+
+**Setup, and the row that declares itself away.** The door names its contents and then its count — "Not set up yet: mailbox, CRM, invites (3)" — never a fraction and never a percentage. A row leaves the list when its answer is *declared* as well as when it is done: answering "Ollopa is our CRM" on the CRM card removes the CRM row, and the answer is reversible from the same place. When the list empties the door is removed, not disabled. At Fathom, which has no CRM and does not want one, it empties.
+
+**One line for a workspace change.** When somebody changes a thing other people feel — a required field at a stage, a stage, a sending limit, a bounce threshold, a routing rule, a scoring threshold — the affected people get one line in the strip: what changed, who changed it, when, and a link. It expires after seven days or on first contact with the changed thing, and the same line appears in the next digest. It is not a tour, not a tooltip and not a modal.
 
 **Today.** Tasks due today for the signed-in user, oldest first; overdue tasks above with a count and a red date. Row: type badge, contact, company, source sequence, Done. Snooze and Skip in the row menu. Door: "Tomorrow and later (n)". Link: All tasks.
 
 **Replies.** Interested and question replies not yet handled, newest first. Row: contact, company, outcome badge, first line of the reply, Reply, Book a meeting. Mark not interested and Unsubscribe in the menu. Door: "Not now and out-of-office replies (n)". Link: Inbox.
 
-**Pipeline.** AE: "Your open deals" as a total and count, then "No next step (n)" and "Closing in 30 days (n)"; row: deal, amount, stage, close date, Open. Admin and CS: team total and count, and closing. Door: "By stage and forecast category". Link: Deals.
+**Pipeline.** AE: "Needs attention (n)" first, linking to Deals filtered to the six deal warnings — defined once in [09 Deal record](09-deal-record.md) §2 with their thresholds set by the admin in Settings › Pipeline and data, and rendered on the board by [08 Deals board](08-deals-board.md); Home counts them and states nothing about them of its own — then "Your open deals" as a total and count, then "No next step (n)" and "Closing in 30 days (n)"; row: deal, amount, stage, close date, Open. Admin and CS: team total and count, and closing. Door: "By stage and forecast category". Link: Deals.
 
 **Waiting for your approval.** The agent events that need a human, oldest first. Only irreversible or costly actions are here: sending an email, spending above a credit cap, changing a deal stage. Research, scoring and drafts saved but not sent are logged instead, and appear in "What agents did this week"; they never become a row to approve. You see the items for the objects you own; the admin sees everyone's and approves on their behalf, recorded as "approved by Daniel Okafor for Marcus Adeyemi".
 
-Rows arrive in **batches at a task boundary** — when a run finishes, not while you are working a task — and the section says which: "Outreach agent finished 3 drafts at 09:12". Row: agent, what it proposes ("Send a first email to Lena Costa at Bluefin Logistics"), the consequence in the same sentence, credits it will spend, Approve, Decline, and a per-row door "What the agent found" (full draft, sources, confidence, in place). With two or more waiting, the header has "Approve all (n) · 48 credits" with a confirmation listing what will be sent.
+Above the batch, one level-one line when a research agent ran since the last visit, for the seats that read it at 20 or above: "Research agent · 12 companies overnight · 3 strongest: Northwind Analytics, Bluefin Logistics, Calder Group · 24 credits", each name a link to the company. It is logged work, not an approval, and nothing on the page reorders because of it.
+
+Rows arrive in **batches at a task boundary** — when a run finishes, not while you are working a task — and the section says which: "Outreach agent finished 3 drafts at 09:12". Row: agent, what it proposes ("Send a first email to Lena Costa at Bluefin Logistics"), the consequence in the same sentence, credits it will spend, Approve, Decline, and a per-row door "Read the draft · 142 words · 3 inputs" (in place: the full draft, its sources, and a first line "Built from: company context · research 12 Sep · template 'Founder intro'", each of those a link to a page rather than a second door). There is no confidence score anywhere on the row or in the door. With two or more waiting, the header carries the batch button with its whole consequence in the label — "Approve 6 · send 4 emails, add 2 to sequences · 8 credits" — and it is **inactive until every item in the batch has been expanded or scrolled past once**, with the reason printed beside it ("2 items not yet read"). It approves one batch, never the queue.
 
 An action over the workspace threshold (a Settings item; default 1,000 recipients or 500 credits in one action) needs a second approval from the admin. The requester's row reads "Waiting on Daniel Okafor (RevOps admin) · 4,200 recipients"; the admin's row carries the same sentence with Approve and Decline. Door: "What agents did this week (n)". Link: Agents. Empty: "No agent actions waiting."
 
-**Campaigns.** Marketer. Campaigns running with sent, opened and converted since yesterday. Door: "Audiences that changed (n)". Link: Campaigns.
+**Campaigns.** Marketer. Campaigns running with sent, opened and converted since yesterday. Two more lines in the same section, both level one because they are the marketer's daily promise: "Routing: 34 leads today · 3 past the SLA window · 2 could not be routed", each number a link into the workflow that produced it; and "Forms: 61 submissions today · 4 could not be routed · enrichment 1,240 of 2,000 credits", where the credit figure is decision-critical because at the cap enrichment stops while submissions keep arriving. Neither line links to Tasks, which the marketer does not hold. Door: "Audiences that changed (n)". Link: Campaigns.
 
 **Accounts.** CS, and the Ridgeline AE. Three short lists: "Renewals in 60 days", "Health dropped this week", "Expansion signals". Row: account, owner, the number that matters, Open. Link: Accounts.
 
-**Your week.** One line: "Sent 212 · Calls 38 · Meetings booked 6 · Sequences: 4 active, 31 replied, 2 bounced". Link: Reports.
+**Your week.** One line: "Sent 212 · Calls 38 · Meetings booked 6 · Sequences: 4 active, 31 replied, 2 bounced". Under it, for a rep whose manager saved a coaching note on a logged call since the last visit, one line: "Feedback on your calls (2)", opening the call with the note. It is never a bell kind: it waits, and it is not safety state. Link: Reports.
 
 ### 3.2 Actions and outcomes
 
@@ -82,16 +90,16 @@ An action over the workspace threshold (a Settings item; default 1,000 recipient
 | Done | Task row | Row leaves, count drops, toast with Undo |
 | Snooze / Skip | Row menu; Skip below a divider | Moves to "Tomorrow and later" / sequence step skipped; toast with Undo |
 | Reply | Reply row | Opens Inbox with that thread and its in-panel composer focused; handled on send. Home has no composer of its own |
-| Book a meeting | Reply row | Meeting link sent; handled; toast |
+| Book a meeting | Reply row | Opens Inbox on that thread with the meeting panel ([06 Inbox](06-inbox.md) §3, "Book and run the meeting", owns `X-meeting`, which carries proposed → booked → held / no-show / cancelled): offer times or send the calendar link. Home never holds a booking form of its own |
 | Mark not interested | Row menu | Stage set, removed from sequence; toast with Undo |
 | Unsubscribe | Row menu, below a divider | Confirmation: "Lena Costa will never be emailed from this workspace again", then toast |
 | Open | Deal, account row | Navigates to the record |
 | Approve / Decline | Approval row | Agent proceeds and credits are spent, or agent stops; row moves to the week list; toast names the cost. An over-threshold item instead moves to "Waiting on {admin}" |
-| Approve all | Section header | Confirmation lists each action and total credits, then as Approve. It approves one batch, never the whole queue across batches |
+| Approve 6 · send 4 emails, add 2 to sequences · 8 credits | Section header | The consequence is in the label, so the click is the confirmation. Inactive until every item in the batch has been expanded or scrolled past once, with "2 items not yet read" beside it. It approves one batch, never the whole queue across batches |
 | Expand all / Collapse all | Page header | Every door on the page |
 | Retry | A failed section | Reloads that section only |
 
-Every destructive or credit-spending action states its consequence before it runs (Unsubscribe, Skip, Approve all) or in its toast with Undo. Approve states cost on the row, before the click.
+Every destructive or credit-spending action states its consequence before it runs (Unsubscribe, Skip, the batch approval) or in its toast with Undo. Approve states cost on the row, before the click.
 
 ### 3.3 Filters, search, sorting, columns
 
@@ -109,7 +117,7 @@ None. Home is a queue, not a table. Order is fixed: overdue then due, oldest fir
 
 ### 3.5 Keyboard and shortcuts
 
-Rows are focusable list items. J and K or arrows move; D done; S snooze; R reply; B book; A approve; X decline; Enter opens; E toggles the row's door. Tab moves between sections and doors. Every shortcut appears in the row menu next to its item and in the ⌘K palette ("Approve all pending agent actions · A"). Escape closes a menu and returns focus.
+Rows are focusable list items. J and K or arrows move; D done; S snooze; R reply; B book; A approve; X decline; Enter opens; E toggles the row's door. Tab moves between sections and doors. Every shortcut appears in the row menu next to its item and in the ⌘K palette, where the batch command reads what waits rather than offering to approve it: "Review 6 waiting · 4 emails · 8 credits", which opens the batch with the first item focused. No palette command approves anything. Escape closes a menu and returns focus.
 
 ### 3.6 Accessibility
 
@@ -130,7 +138,7 @@ One column, same order. The strip wraps to two lines. Each row shows one primary
 | Accounts | no | Ridgeline only | no | yes | no |
 | Your week | yes | yes | no | no | no |
 
-- **Fathom Labs.** The founder does two jobs, so the page stacks the SDR's sections above the admin's: strip, Today, Replies, Approvals, Pipeline, Your week. The strip is in warning from the seed: "Credits: at 2,300 a week the cap is reached on 25 September." "Setup steps remaining (2)" stays until the missing integrations are connected.
+- **Fathom Labs.** The founder does two jobs, so the page stacks the SDR's sections above the admin's: strip, Today, Replies, Approvals, Pipeline, Your week. The strip is in warning from the seed: "Credits: at 2,300 a week the cap is reached on 25 September." The setup door reads "Not set up yet: mailbox, invites (2)": the CRM row left the list when the founder declared "Ollopa is our CRM", and when the last two are done the door is removed.
 - **Meridian Software.** Baseline. Each seat gets only its column. An SDR approves the agent work on their own contacts; a send over the threshold names the admin it waits on.
 - **Halyard Agency.** Every task row shows the sequence, because the name tells the specialist which client it is. Bounce guard, mailboxes near limit and paused outreach sit in the strip for the SDR as well as the admin. Pipeline is the team total only. Halyard has no calendar connected, so the reply row offers "Connect a calendar to book from here" in place of Book a meeting, with the link Inbox uses; Meridian, Ridgeline and Fathom have one and book directly.
 - **Ridgeline.** Tasks are inbound follow-ups; replies and sequences drop to the tail. The expansion AE gets Accounts with expansion signals above the pipeline lists. CS gets a team pipeline line. The marketer's Audiences door is level one and open. The lifecycle marketer's agents research and score, which is logged rather than queued, so the approval section is usually empty for that seat and the over-threshold row (a lifecycle send above 1,000 people) is what they actually see.
@@ -154,13 +162,15 @@ Weekly use is the share of active users in the role touching the item in a typic
 | Not now and out-of-office replies (door) | Replies | 15 | 6 | | | 2 | Ridgeline SDR 5 |
 | Your open deals: total and count | Pipeline | 4 | 85 | | 6 | | Fathom admin 65, SDR 15; Ridgeline CS 10 |
 | Team pipeline total | Pipeline | 6 | 30 | 10 | 15 | 30 | Fathom admin 40; Halyard admin 25, SDR 4; Ridgeline CS 30 |
+| Needs attention: deals carrying a warning (defined in 09 §2, rendered by 08) | Pipeline | | 70 | | 10 | 25 | Ridgeline AE 45; Fathom admin 40 |
 | Deals with no next step | Pipeline | | 60 | | | 10 | Fathom admin 40 |
 | Closing in the next 30 days | Pipeline | | 55 | | 10 | 25 | Fathom admin 40; Ridgeline CS 15 |
 | Deals by stage and forecast category (door) | Pipeline | 2 | 15 | | 5 | 15 | |
 | Waiting for your approval * | Agents | 55 | 25 | 5 | 3 | 45 | Fathom admin 70, SDR 60; Halyard admin 60, SDR 55; Ridgeline SDR 20, AE 20, CS 5, Mkt 6 |
 | Credits each approval will spend * | Agents | 55 | 25 | 5 | 3 | 45 | as above |
 | Over the threshold: needs the admin's second approval * | Agents | 6 | 2 | 8 | 1 | 20 | Fathom admin 8, SDR 4; Halyard admin 25, SDR 12; Ridgeline Mkt 10, admin 12 |
-| What the agent found (door) | Agents | 18 | 10 | 8 | 3 | 18 | Fathom admin 30, SDR 25 |
+| Research agent: what it found overnight | Agents | 45 | 20 | 8 | | 30 | Fathom SDR 60, admin 65; Ridgeline SDR 12, Mkt 20 |
+| Read the draft · n words · n inputs (door) | Agents | 18 | 10 | 8 | 3 | 18 | Fathom admin 30, SDR 25 |
 | What agents did this week (door) | Agents | 15 | 6 | 8 | 2 | 25 | Fathom admin 40; Halyard admin 35 |
 | Outreach an agent paused * | Agents | 8 | 2 | | | 15 | Halyard admin 30, SDR 20; Ridgeline admin 3, SDR 2 |
 | Bounce guard state * | Health | 12 | 3 | | | 35 | Halyard admin 60, SDR 30; Fathom admin 30; Ridgeline admin 8, SDR 3 |
@@ -169,35 +179,39 @@ Weekly use is the share of active users in the role touching the item in a typic
 | CRM sync errors | Health | | 4 | | 4 | 30 | Fathom admin 3; Halyard admin 25 |
 | Credit burn against the monthly cap * | Health | 30 | 15 | 20 | 5 | 55 | Fathom admin 60, SDR 40 |
 | Invitations not yet accepted | Health | | | | | 15 | Fathom admin 3; Halyard admin 10 |
-| Setup steps remaining (door) | Health | | | | | 10 | Fathom admin 30; Halyard admin 20 |
+| Not set up yet: mailbox, CRM, invites (door) | Health | | | | | 10 | Fathom admin 30; Halyard admin 20 |
+| A workspace change you will feel | Health | 6 | 6 | 6 | 6 | 10 | |
 | Campaigns running | Campaigns | 3 | 3 | 85 | | 8 | Ridgeline Mkt 90, CS 10 |
 | Results since yesterday | Campaigns | | | 70 | | 3 | Ridgeline Mkt 80 |
+| Routing: leads today, past the SLA, unrouted | Campaigns | | | 65 | | 15 | Ridgeline Mkt 45, admin 20 |
+| Forms: submissions, unrouted, enrichment spend * | Campaigns | | | 30 | | 8 | Ridgeline Mkt 80, admin 15 |
 | Audiences that changed (door) | Campaigns | | | 18 | | 2 | Ridgeline Mkt 25 |
 | Renewals in the next 60 days | Accounts | | 10 | | 80 | 8 | Ridgeline CS 90, AE 40, admin 15 |
 | Accounts whose health dropped | Accounts | | 6 | | 75 | 4 | Ridgeline CS 85, AE 30 |
 | Expansion signals | Accounts | | 15 | | 40 | 3 | Ridgeline CS 70, AE 60, Mkt 15 |
 | Your week: sent, calls, meetings booked | Activity | 22 | 20 | 3 | 8 | 6 | Fathom admin 20; Ridgeline SDR 10, AE 8 |
+| Feedback on your calls | Activity | 25 | 20 | | | | Ridgeline 10 / 10; Halyard SDR 12 |
 | Team leaderboard (removed) | Activity | 4 | 4 | 1 | | 4 | |
 | Email funnel (removed) | Activity | 5 | | 8 | | 4 | Ridgeline SDR 1, Mkt 4 |
 | Edit layout, widgets, saved layouts (removed) | Layout | 2 | 2 | 3 | 2 | 3 | |
 
-Decision-critical (*): the approval queue and the credits each approval spends (an agent about to send or spend is a pending approval); the over-threshold row, because the person waiting must know the decision is not theirs and the admin must see what it will send; outreach paused by an agent and the bounce guard state (sending stopped without a human); credit burn against the cap (price).
+Decision-critical (*): the approval queue and the credits each approval spends (an agent about to send or spend is a pending approval); the over-threshold row, because the person waiting must know the decision is not theirs and the admin must see what it will send; outreach paused by an agent and the bounce guard state (sending stopped without a human); credit burn against the cap (price); the form enrichment spend against its daily cap, which is the same price argument on the marketer's page.
 
 Actions are folded into the row they belong to: "Tasks due today" carries Done, "Interested and question replies" carries Reply, "Waiting for your approval" carries Approve and Decline, deal and account rows carry Open. Only actions that are a separate choice (Snooze, Skip, Book, Mark not interested, Unsubscribe) are items of their own.
 
-**Shape check.** One rule across this group of specs: the denominator is every item in `home.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. Items that belong to other seats are not counted, because they are not on this person's page; seats a business does not declare return zero (`SEATS`). 39 items in the file.
+**Shape check.** One rule across this group of specs: the denominator is every item in `home.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. Items that belong to other seats are not counted, because they are not on this person's page; seats a business does not declare return zero (`SEATS`). 45 items in the file.
 
 | Seat at business | Items | Head | Body | Tail | Verdict |
 |---|---|---|---|---|---|
-| Meridian SDR | 29 | 10 (34%) | 14 (48%) | 5 (17%) | Over. Home is a queue: everything on the SDR's page is today's work, and the tail a real product accumulates lives on the pages Home links to |
-| Meridian AE | 34 | 11 (32%) | 14 (41%) | 9 (26%) | Over, same reason; the AE's body is the pipeline lists read a few times a week |
-| Meridian admin | 38 | 9 (24%) | 12 (32%) | 17 (45%) | Fits |
-| Meridian CS | 25 | 5 (20%) | 9 (36%) | 11 (44%) | Fits |
-| Meridian marketer | 18 | 3 (17%) | 8 (44%) | 7 (39%) | Fits, at the bottom of the band: most of Home belongs to other seats, so the marketer's page is short |
-| Ridgeline SDR | 29 | 8 (28%) | 12 (41%) | 9 (31%) | Slightly over |
-| Ridgeline AE | 34 | 13 (38%) | 11 (32%) | 10 (29%) | Over: expansion work is Accounts plus pipeline, and both are daily here |
-| Fathom admin | 39 | 18 (46%) | 7 (18%) | 14 (36%) | Over: one person holds two seats' areas; each band fits on its own |
-| Halyard SDR | 29 | 14 (48%) | 9 (31%) | 6 (21%) | Over by design: what is monthly elsewhere is daily at the agency |
+| Meridian SDR | 33 | 12 (36%) | 15 (45%) | 6 (18%) | Over. Home is a queue: everything on the SDR's page is today's work, and the tail a real product accumulates lives on the pages Home links to |
+| Meridian AE | 39 | 14 (36%) | 15 (38%) | 10 (26%) | Over, same reason; the AE's body is the pipeline lists read a few times a week |
+| Meridian admin | 43 | 11 (26%) | 15 (35%) | 17 (40%) | One point over the band; the strip and the approval queue are the admin's daily work and both are level one by rule 7 |
+| Meridian CS | 28 | 5 (18%) | 11 (39%) | 12 (43%) | Fits |
+| Meridian marketer | 22 | 5 (23%) | 10 (45%) | 7 (32%) | Fits: most of Home belongs to other seats, so the marketer's page is short, and routing and forms are now two of its five head items |
+| Ridgeline SDR | 33 | 8 (24%) | 15 (45%) | 10 (30%) | Slightly over |
+| Ridgeline AE | 39 | 15 (38%) | 13 (33%) | 11 (28%) | Over: expansion work is Accounts plus pipeline, and both are daily here |
+| Fathom admin | 44 | 20 (45%) | 10 (23%) | 14 (32%) | Over: one person holds two seats' areas; each band fits on its own |
+| Halyard SDR | 33 | 15 (45%) | 11 (33%) | 7 (21%) | Over by design: what is monthly elsewhere is daily at the agency |
 
 Home is the page where the band bends, and the reason is structural rather than a fudge: the usage model composes the page from the items a seat actually holds, so a queue built only of today's work has no tail to speak of. The check that matters here is the one below it — nothing decision-critical sits behind a door, and no door holds anything daily.
 
@@ -238,11 +252,11 @@ Desktop (1024 px and up): header, health strip across the full width, then two c
 
 | Role | Level one | Level two (doors) |
 |---|---|---|
-| SDR | Strip; overdue and due tasks with Done; hot replies with Reply and Book; approvals with cost; sequence line; your week | Tomorrow and later; other replies; agent detail; agent week; row menus |
-| AE | Strip (credits); your deals, no next step, closing; due tasks; hot replies; approvals | By stage and forecast; tomorrow and later; other replies; agent detail; agent week |
-| Marketer | Strip (credits); campaigns with results; approvals | Audiences that changed (open by default at Ridgeline); agent detail; agent week |
+| SDR | Strip; overdue and due tasks with Done; hot replies with Reply and Book; the overnight research line; approvals with cost; sequence line; your week; feedback on your calls | Tomorrow and later; other replies; agent detail; agent week; row menus |
+| AE | Strip (credits); needs attention; your deals, no next step, closing; due tasks; hot replies; approvals; feedback on your calls | By stage and forecast; tomorrow and later; other replies; agent detail; agent week |
+| Marketer | Strip (credits); campaigns with results; routing and forms with the enrichment spend; approvals | Audiences that changed (open by default at Ridgeline); agent detail; agent week |
 | CS | Strip (credits); renewals, health dropped, expansion; due tasks | Tomorrow and later; by stage (Ridgeline); agent detail |
-| Admin | Strip (all); approvals; team pipeline and closing; agent week | Setup steps remaining; by stage and forecast; agent detail |
+| Admin | Strip (all), including any workspace change announcement; approvals; team pipeline and closing; needs attention; agent week | Not set up yet: mailbox, CRM, invites; by stage and forecast; agent detail |
 
 Across businesses, as in 3.8: Fathom stacks the SDR band above the admin band; Halyard lifts health items and the sequence name to level one for the SDR; Ridgeline puts Accounts first for the AE; Meridian is the baseline.
 
@@ -253,10 +267,10 @@ Across businesses, as in 3.8: Fathom stacks the SDR band above the admin band; H
 | Tomorrow and later (n) | Tasks due in the next five days | In place | Bottom of Today |
 | Not now and out-of-office replies (n) | Remaining replies with Mark not interested and Snooze | In place | Bottom of Replies |
 | By stage and forecast category (n deals) | A count and total per stage for the five stages the product has (Qualified, Discovery, Proposal, Negotiation, Closed won) plus the forecast categories. There is no Closed lost column: a lost deal is archived | In place | Bottom of Pipeline |
-| What the agent found | Full draft, sources, confidence | In place, inside the row, next to Approve | Each approval row |
+| Read the draft · 142 words · 3 inputs | The full draft, its sources, and a first line "Built from: …" naming each input as a link to a page | In place, inside the row, next to Approve | Each approval row |
 | What agents did this week (n) | Researched, drafted, sent, scored, paused, credits used, decisions | In place | Bottom of Approvals |
 | Audiences that changed (n) | Audience, size, change since yesterday | In place | Bottom of Campaigns |
-| Setup steps remaining (n of m) | Steps not done, each a link into Settings or Connect; removed when done | In place | Health strip |
+| Not set up yet: mailbox, CRM, invites (3) | Steps not done, each a link into Settings or Connect; a row leaves when its answer is done or declared; the door is removed when the list empties | In place | Health strip |
 | Actions for {contact or deal} (…) | Secondary actions with shortcuts; destructive below a divider with its consequence in the label | Menu | Every row |
 
 Every door is a chevron plus text, in the reading path, directly under or inside what it reveals. No door contains a door. Section links (All tasks, Inbox, Deals, Agents, Campaigns, Accounts, Reports) are navigation, not doors.
@@ -267,11 +281,11 @@ Door state is saved per user and door (`ollopa.home.doors`) and restored next vi
 
 ### 6.5 Accelerators
 
-Row shortcuts (D, S, R, B, A, X, E, Enter, J and K), shown in every row menu. ⌘K commands for every section link and for "Approve all pending agent actions", each showing its key. Approve all with a cost total. Doors remember. The daily user reaches every level-one item without a door and every level-two item with one keystroke.
+Row shortcuts (D, S, R, B, A, X, E, Enter, J and K), shown in every row menu. ⌘K commands for every section link and for "Review 6 waiting · 4 emails · 8 credits", each showing its key; no palette command approves. Approve all with a cost total. Doors remember. The daily user reaches every level-one item without a door and every level-two item with one keystroke.
 
 ### 6.6 Decision-critical, always visible
 
-The approval queue and the credits on each row. Outreach paused by an agent. Bounce guard state. Credit burn against the cap with the date it runs out. The consequence of Unsubscribe, Skip and Approve all, stated before the action runs. Decline is as short a path as Approve.
+The approval queue and the credits on each row. Outreach paused by an agent. Bounce guard state. Credit burn against the cap with the date it runs out. The consequence of Unsubscribe, Skip and the batch approval, stated in the label before the action runs, with the batch button inactive until every item has been read once. The form enrichment spend against its cap. Decline is as short a path as Approve.
 
 ### 6.7 Removed, not hidden
 
@@ -289,7 +303,7 @@ Edit layout, widget library, resize, saved layouts and the layout switcher (unde
 | 6 | No dependent information split by a door | 2 | What, to whom and cost sit on the approval row with Approve; only the draft body is behind the door |
 | 7 | Door state persists; expand all and print | 2 | Section 6.4 |
 | 8 | Disclosure by user action or object state, never history | 2 | Strip and overdue by object state; no reordering; no layout memory |
-| 9 | Door usage instrumented, scheduled review | 1 | Events specified (`home.door.open` with door, role, business; `home.action` with action id) and a semi-annual promote, keep or delete review named, but OPD has no analytics, so the numbers are fitted, not measured |
+| 9 | Door usage instrumented, scheduled review | 1 | Events specified (`home.door.open` with door, role, business; `home.action` with action id) and, on approval rows, the decline rate and the expand rate per role and business, as spec 13 counts them, because a batch that is never declined and never expanded is a rubber stamp and the number is the evidence. A semi-annual promote, keep or delete review is named, but OPD has no analytics, so the numbers are fitted, not measured |
 
 **17 of 18.**
 

@@ -38,13 +38,22 @@ Lists per business. Meridian: 14 (5 segments), including "Q4 enterprise targets"
 
 **Shown.** A `TablePage` of lists: List (name, kind badge, mode badge), Records (count and "+n this week"), Feeds, Owner, Updated; a header count; a primary button. A row opens the detail at `/ollopa/lists/:id`.
 
-**Detail view.** Breadcrumb "Lists › name". Header: editable name, kind and mode badges, records, new this week, Feeds line ("Feeds Q4 enterprise outbound · new matches added automatically"), owner, updated or last refreshed. Segments show their filter chips under the header with "Edit filters". Static lists show "Add people" (or "Add companies"). Then the members table: Name and title, Company, Email and status, Stage, Sequence, Added (date, by whom), Last activity. Companies lists: Company, Industry, Employees, Contacts, Stage, Added.
+**Detail view.** Breadcrumb "Lists › name". Header: editable name, kind and mode badges, records, new this week, owner, updated or last refreshed.
+
+Beside the record count, in the same line and as plain text, is **what the count means as work**: "1,240 people · about 9 weeks of touches for one rep at 19 a day". The rate is the workspace's own observed touch rate, not a constant, and the sentence says so when it is asked. A list is bought or built as a number and worked as a calendar, and the number alone hides which of the two decisions is being made.
+
+Under it sit the standing arrangements on this list, one line each, each with its own off switch and its own running cost:
+
+- "New matches added to Q4 enterprise outbound automatically · Turn off" — the auto-feed.
+- "Research agent researches new matches · about 12 credits each · about 336 credits a week · Turn off" — shown only where an agent watches this list. The weekly figure is the standing cost of a decision made once, which is exactly the kind of spending nobody revisits unless it is written where the list is read.
+
+Both are level one and both are decision-critical: a thing that keeps spending without anyone touching it belongs in front of the person who owns it (rule 7). Segments show their filter chips under the header with "Edit filters". Static lists show "Add people" (or "Add companies"). Then the members table: Name and title, Company, Email and status, Stage, Sequence, Added (date, by whom), Last activity. Companies lists: Company, Industry, Employees, Contacts, Stage, Added.
 
 **Actions.**
 
 | Level | Action | Outcome |
 |---|---|---|
-| Page | New list | Chooser in place: Static list, Segment from filters, Import CSV. Static: name, kind, then the People or Companies table in a drawer to pick members. Segment: name, kind, filters, live count. CSV: file, field mapping, "Import 1,204 rows as a people list" |
+| Page | New list | Chooser in place, each choice with one sentence under it saying what it does: **Static list** — "The members are frozen. Nothing is added unless you add it." **Segment from filters** — "Keeps matching. It refreshes on a schedule and can alert you when it gains people." **Import CSV** — "Opens the import wizard: file and columns, duplicates, enrichment with a ten-row trial, then the run." Static: name, kind, then the People or Companies table in a drawer to pick members. Segment: name, kind, filters, live count. Import CSV leaves this page for the wizard ([18 Import and enrichment](18-import-and-enrichment.md)) with the new list as the destination, and ends on the job record |
 | Row, visible on hover and focus | Add to sequence (people lists; SDR, admin); Add to campaign (marketer) | Picker names the sequence or campaign, shows credits and "n already in another sequence", confirms with "Add 1,240 people" |
 | Row, always in "…", named "Actions for {list}" | Open · Add to sequence or campaign · Export CSV · Duplicate · Rename · Pin to top · Change who can see it · Convert to segment / Freeze as static · Archive · Delete list (people stay in People) | Export: all emails or verified only; file downloads; order matches the table. Delete: confirm names the list and states "The 1,240 people stay in People. Running sequences keep their contacts." Undo for 10 seconds in the toast |
 | Companies list rows | "Find people at these companies" replaces Add to sequence | Opens People filtered to the companies |
@@ -53,7 +62,7 @@ Lists per business. Meridian: 14 (5 segments), including "Q4 enterprise targets"
 | Detail, member row (hover, focus, and "…") | Remove from list · Sequence · Call · View · Enrich (2 credits) · Set stage · Assign owner · Create call task | Toast per action; Remove has undo |
 | Detail, bulk | Remove, Add to sequence, Export, Enrich, Set stage, Assign owner, Create call tasks, Set a custom field, Merge duplicates | Credits stated in the bar before Enrich runs |
 
-**Filters and search.** Search box (name, owner). Filters at level one: Kind (people, companies), Owner (mine, team, a person). Behind one door "Mode, source, archived ▾": Mode (static, segment), Source, Show archived. Filter and door state persist per user.
+**Filters and search.** Search box (name, owner). Filters at level one: Kind (people, companies), Owner (mine, team, a person). Behind one door "Mode, source, archived ▾ (1 on)": Mode (static, segment), Source, Show archived. The count of active filters inside the door is part of its label, as it is on every other filter door in the product: a filter that is changing the table from behind a closed door and does not say so is a hidden cause. Filter and door state persist per user.
 
 **Sorting and columns.** Sort by Updated (default, newest first), Records, Name; clicking a header. Columns door "Columns: visibility, source, created ▾" adds the three tail columns; choice persists. Detail members table sorts by Added (default), Name, Last activity.
 
@@ -83,13 +92,13 @@ Weekly share of active users per role, baseline Meridian. Overrides where the bu
 | Search lists | 30 | 25 | 20 | F 8; H sdr 45, admin 40; R sdr 5, mk 18, admin 6 |
 | Filter by kind | 15 | 12 | 6 | F 3 |
 | Filter by owner | 18 | 15 | 22 | F 2; H sdr 18, admin 40; R sdr 4, mk 12, admin 10 |
-| Filter by mode | 6 | 12 | 4 | R mk 18 |
+| Filter by mode; the door carries the active count | 6 | 12 | 4 | R mk 18 |
 | Sort | 12 | 10 | 8 | H sdr 15 |
 | Show archived lists | 2 | 3 | 5 | H admin 15 |
 | Open a list | 85 | 60 | 25 | F admin 55; H sdr 90, admin 45; R sdr 15, mk 75, admin 10 |
 | New list (static) | 30 | 15 | 10 | F admin 30; H sdr 45, admin 15; R sdr 5, mk 10, admin 3 |
 | New segment | 12 | 35 | 8 | F admin 15; H sdr 15; R sdr 3, mk 55, admin 6 |
-| Import a CSV | 10 | 15 | 8 | F sdr 5, admin 10; H 18; R sdr 2, mk 12, admin 4 |
+| Import a CSV (opens the import wizard page) | 10 | 15 | 8 | F sdr 5, admin 10; H 18; R sdr 2, mk 12, admin 4 |
 | Add to sequence | 60 | 5 | 10 | F admin 40; H sdr 75, admin 20; R sdr 8, mk 2, admin 2 |
 | Add to campaign | 3 | 50 | 4 | F 0; H 0; R sdr 2, mk 65, admin 4 |
 | Export CSV | 12 | 15 | 10 | F sdr 6, admin 8; H sdr 30, admin 25; R sdr 3, mk 15, admin 6 |
@@ -108,6 +117,8 @@ Weekly share of active users per role, baseline Meridian. Overrides where the bu
 | Credits this action will spend † | 30 | 10 | 15 | F sdr 45, admin 50; H sdr 40, admin 30; R sdr 5, mk 12, admin 8 |
 | Already in another sequence † | 25 | 5 | 5 | F admin 20; H sdr 45, admin 15; R sdr 3, mk 2, admin 1 |
 | New matches added automatically † | 10 | 30 | 8 | F admin 12; R sdr 2, mk 45, admin 6 |
+| Research agent watches this list · weekly credit cost † | 20 | 12 | 15 | F sdr 55, admin 60; H sdr 25, admin 30; R sdr 3, mk 15, admin 6 |
+| Weeks of touches the count represents | 40 | 15 | 10 | F sdr 45, admin 45; H sdr 55, admin 20; R sdr 8, mk 12, admin 4 |
 | Refresh now, last refreshed | 8 | 15 | 4 | R mk 25 |
 | Email me when the segment gains matches | 5 | 12 | 2 | R mk 15 |
 | Choose columns | 6 | 8 | 4 | |
@@ -125,7 +136,7 @@ Weekly share of active users per role, baseline Meridian. Overrides where the bu
 | Find and merge duplicates | 3 | 4 | 6 | |
 | Push list to the CRM as a campaign | 2 | 8 | 8 | F sdr 0, admin 1 |
 
-**Shape check.** One rule across this group: the denominator is every item in `lists.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 51 items in the file. Head / body / tail: Meridian SDR 51 items, 22 / 45 / 33; Meridian marketer 50 items, 22 / 56 / 22; Meridian admin 51 items, 14 / 51 / 35; Halyard SDR 50 items, 26 / 42 / 32; Ridgeline marketer 50 items, 22 / 50 / 28; Fathom admin 48 items, 25 / 31 / 44. Heads sit at the top of or just over the 15 to 25% band; tails run under 45% for the seats that live here, which is expected on a screen with few settings and many actions. Ridgeline's inbound SDR has no item above 20%: the page shows the row and the four decision-critical items and doors the rest, the honest result for a seat that hardly uses it. Account executives and customer success hold no row here, because the page is not theirs to open.
+**Shape check.** One rule across this group: the denominator is every item in `lists.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 53 items in the file. Head / body / tail: Meridian SDR 53 items, 25 / 43 / 32; Meridian marketer 52 items, 21 / 58 / 21; Meridian admin 53 items, 13 / 53 / 34; Halyard SDR 52 items, 29 / 40 / 31; Ridgeline marketer 52 items, 21 / 52 / 27; Fathom admin 50 items, 28 / 30 / 42. Heads sit at the top of or just over the 15 to 25% band; tails run under 45% for the seats that live here, which is expected on a screen with few settings and many actions. Ridgeline's inbound SDR has no item above 20%: the page shows the row and the four decision-critical items and doors the rest, the honest result for a seat that hardly uses it. Account executives and customer success hold no row here, because the page is not theirs to open.
 
 ## 5. Before: the common version
 
@@ -165,8 +176,8 @@ Across businesses: Fathom removes Add to campaign and shows Source on the row fo
 
 | Door label | Contains | Container |
 |---|---|---|
-| New list ▾ | Static list · Segment from filters · Import CSV | In place, under the button |
-| Mode, source, archived ▾ | Three filters | In place, toolbar row |
+| New list ▾ | Static list · Segment from filters · Import CSV, each with one sentence saying what it does (frozen members; keeps matching, refreshes and can alert; opens the import wizard) | In place, under the button |
+| Mode, source, archived ▾ (1 on) | Three filters, with the count of active ones in the label | In place, toolbar row |
 | Columns: visibility, source, created ▾ | Column checklist | In place |
 | "Actions for {list}" (…), per row | Open, Add to sequence or campaign, Export, Duplicate, Rename, Pin, Change who can see it, Convert or freeze, Archive, Delete list (people stay in People) | Menu, 11 items, destructive last with its consequence in the label |
 | Edit filters (segments) | The filter builder with live count | In place, replaces the chips |
@@ -182,16 +193,16 @@ Every door has a chevron and text, sits next to what it reveals, and works by ke
 
 **Accelerators.** Keys listed in §3; the palette shows each key every time. Daily users reach every action without a door.
 
-**Decision-critical, always visible.** Credits before enrol or enrich ("212 net-new emails = 212 credits · balance 1.84M"). "96 already in another sequence" before enrol, with badges on the rows. "New matches added to Q4 enterprise outbound automatically · Turn off" on any segment that feeds something. Delete states what stays. The path to remove a list from a sequence's feed is one click, the same as adding it.
+**Decision-critical, always visible.** Credits before enrol or enrich ("212 net-new emails = 212 credits · balance 1.84M"). "96 already in another sequence" before enrol, with badges on the rows. "New matches added to Q4 enterprise outbound automatically · Turn off" on any segment that feeds something. "Research agent researches new matches · about 12 credits each · about 336 credits a week · Turn off" wherever an agent watches the list: a standing arrangement that spends every week is the same kind of fact as the feed, and it is shown in the same place, in the same shape, with its own off switch. Delete states what stays. The path to remove a list from a sequence's feed is one click, the same as adding it.
 
-**Lists owns the feed.** The auto-feed and its off switch live here and nowhere else. A sequence or a campaign fed by a list shows one read-only line, "Fed by Q4 enterprise targets · new matches added automatically", linking to that list; it carries no control of its own, so there is one place to turn the feed off and one sentence describing it.
+**Lists owns every standing arrangement on a list.** The auto-feed, the agent watch and their off switches live here and nowhere else. A sequence or a campaign fed by a list shows one read-only line, "Fed by Q4 enterprise targets · new matches added automatically", linking to that list; it carries no control of its own, so there is one place to turn the feed off and one sentence describing it.
 
 **Removed, not hidden.** "Saved searches" and "saved records" as separate concepts: a segment is the saved search, People is the saved records. "View companies" as an action: the Company column links. Reload after create. The 100-page cap: segments show a live count instead.
 
 **Score.**
 
 1. Decision-critical visible: credits, double-enrol, auto-feed, delete consequence, all at level one. 2.
-2. Every visible item has a number: 51 items in `lists.ts`, shape checked. 2.
+2. Every visible item has a number: 53 items in `lists.ts`, shape checked. 2.
 3. Two levels on every screen size: page and one door; phone keeps the same doors. 2.
 4. Doors labelled by content with chevron and text. The row and member menus were "More actions" and are now "Actions for {list}" and "Actions for {person}"; no door in this spec is called More, Other or Advanced. 2.
 5. Doors adjacent, keyboard and touch: in-place expansions under their cause; drawers return focus. 2.

@@ -7,6 +7,14 @@ export interface RoleSeat {
   /** The demo user you sign in as. */
   user: string
   initials: string
+  /**
+   * Direct reports, for an AE seat that manages other AEs — the sales leader.
+   * Not a sixth seat: PRODUCT.md declares five and IA-MAP 6.4j keeps it that way, so a leader is an
+   * AE seat with `reports` set, and every leader-only item is an AE item conditioned on this being
+   * non-empty. The usage model reads it as the `ae_plus` modifier (`weeklyUse(item, business, role,
+   * hasReports)` in usage/model.ts); `SEATS` is unchanged, because no business declares a new seat.
+   */
+  reports?: string[]
 }
 
 export interface BusinessDef {
@@ -41,10 +49,11 @@ export const businesses: BusinessDef[] = [
     name: "Meridian Software",
     tagline: "Mid-size SaaS with separated roles",
     size: "300 people",
-    how: "Marketing feeds SDRs, SDRs feed AEs, AEs hand to customer success. One RevOps admin. Strict permissions.",
+    how: "Marketing feeds SDRs, SDRs feed AEs, AEs hand to customer success. One of the AE seats manages the others. One RevOps admin. Strict permissions.",
     roles: [
       { role: "sdr", title: "SDR", user: "Marcus Adeyemi", initials: "MA" },
       { role: "ae", title: "Account executive", user: "Elena Vasquez", initials: "EV" },
+      { role: "ae", title: "Sales manager", user: "Priya Raman", initials: "PR", reports: ["Elena Vasquez"] },
       { role: "marketer", title: "Demand generation manager", user: "Jonas Weber", initials: "JW" },
       { role: "cs", title: "Customer success manager", user: "Aisha Rahman", initials: "AR" },
       { role: "admin", title: "RevOps admin", user: "Daniel Okafor", initials: "DO" },

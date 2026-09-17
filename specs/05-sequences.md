@@ -72,9 +72,13 @@ Reached from the list, a contact's "In sequence" link, a reply in Inbox, or an a
 
 ### 3.3 Steps
 
-A vertical list of numbered cards. Each shows without a click: kind and icon, title (email subject; "Call task"; "LinkedIn: connection request"; "Wait 3 business days"), on or off, and one results line (Email: sent 812 · delivered 96% · opened 44% · replied 6.9% · bounced 1.2%. Task: 210 created · 184 done · 12 skipped · 3 overdue. Wait: 38 waiting now). A/B steps show one results line per variant.
+A vertical list of numbered cards. Each shows without a click: kind and icon, title (email subject; "Call task"; "LinkedIn: connection request"; "Wait 3 business days"), on or off, and one results line (Email: sent 812 · delivered 96% · opened 44% · replied 6.9% · bounced 1.2%. Task: 210 created · 184 done · 12 skipped · 3 overdue. Wait: 38 waiting now). A/B steps show one results line per variant, and above them the decision bar, which says how far the test has got before it says anything about which is winning: "A 96 of ~200 · B 91 of ~200 · not enough to call yet". Past that point the bar reads the result and offers one control, **"Promote A · turns B off for everyone in this sequence"**, with the consequence in the label. The owner clicks it. An agent may propose a promotion and may never make one: it changes what every person in the sequence receives from tomorrow, which is the definition of a change that waits for a human.
 
-**Open step ⌄** expands the card in place. Email: subject, body, **Insert variable ⌄** (first name, company, title, signal, owner; inserts and closes), **Draft with the outreach agent** (writes into the body, marked "Agent draft, not sent" until a person saves it; a draft that is saved and not sent is cheap and reversible, so it is logged on Agents and never queued for approval — only sending is), **Preview for…** (a person from the sequence), **Add variant** (stacks B under A, each with its own fields; variants are stacked, never tabbed), Save, Cancel. Call and LinkedIn tasks: a note the task will show, the LinkedIn action kind, "due within" days. Wait: days, "business days only".
+**Open step ⌄** expands the card in place. Email: subject, body, **Insert variable ⌄** (first name, company, title, signal, owner; inserts and closes), **Draft with the outreach agent** (writes into the body, marked "Agent draft, not sent" until a person saves it; a draft that is saved and not sent is cheap and reversible, so it is logged on Agents and never queued for approval — only sending is), **Preview for…** (a person from the sequence), **Use a template ⌄**, **Add variant** (stacks B under A, each with its own fields; variants are stacked, never tabbed), Save, Cancel.
+
+**Use a template ⌄** inserts and closes, the way the variable menu does. It lists the workspace's templates with their folder and last-used date, and each insertion is a choice between two behaviours, stated on the control rather than learned afterwards: **"Link — edits change this step everywhere it is used (4 steps today)"** and **"Copy — this step keeps its own text"**. A linked step then prints one read-only line above the body, "Linked to template 'Founder intro' · 4 steps and 1 campaign use it · Unlink", so nobody edits four sequences by accident and nobody wonders why their edit travelled.
+
+Call tasks: the call's purpose, "due within" days. LinkedIn steps: **the message text itself**, with the same variable menu as an email, because the task the SDR opens tomorrow shows the copy written here once rather than asking them to write it again for every contact; plus the LinkedIn action kind and "due within" days. A note to self is not a message, and what the step holds is the message. Wait: days, "business days only".
 
 Card actions, text buttons on focus and hover and in the card "…" menu: Move up, Move down (or drag by the handle), Turn off / Turn on, Change type, Delete. Delete states its consequence: "14 people are waiting at this step. They move to step 4."
 
@@ -92,7 +96,13 @@ Row actions, on focus and hover and in the "…" menu: Pause / Resume (Pause ask
 
 A sequence fed by a list carries one read-only line under the counts strip: "Fed by Q4 enterprise targets · new matches added automatically", linking to that list. Lists owns the feed and its off switch; this page shows it and changes nothing (spec 04).
 
-**Add people** opens a drawer over the page: search contacts, pick a list, or paste emails; choose the mailbox (the sequence's by default; rotation at Halyard). A preview line reads "212 will be added · 9 skipped: 4 already in a sequence, 3 unverified emails, 2 do not contact", with the nine listed by reason, before anything is committed.
+**Add people** opens a drawer over the page: search contacts, pick a list, or paste emails; choose the mailbox. The mailbox picker is not a bare list of names: each mailbox carries its capacity beside it — "marcus@meridian.com · daily limit 100 · 42 sent today · shared with 3 sequences" — because the choice being made is a capacity choice and the names alone do not describe it.
+
+Rotation is offered in one place, not two. The sequence's own setting is the default, and the drawer names it rather than repeating the choice: "Sequence default: rotate across 3 mailboxes · change for this batch", with one line saying that a change here applies to this batch only and leaves the sequence's setting alone.
+
+A preview line reads "212 will be added · 9 skipped: 4 already in a sequence, 3 unverified emails, 2 do not contact", with the nine listed by reason. Under it, the **day-one volume**, because "added" and "sent" are not the same number and the gap between them is a day or three: "212 added · 116 can send tomorrow from 2 mailboxes · the rest start Wednesday". Nothing is committed until the button, and the button repeats the count.
+
+The same panel, with the same three blocks, opens when people are added from a list, so the capacity picture is not something a person sees on one route and not the other.
 
 Empty: "Nobody in this sequence yet. Add people, or add from People and Lists." Loading and error follow the list.
 
@@ -103,7 +113,7 @@ One door in the header, **Change sending settings ⌄**, expanding in place unde
 - **Sending mailbox**: one of the user's linked mailboxes, or "Rotate across" with checkboxes. Under it: "Daily limit 100, 42 sent today, 3 other sequences share this mailbox", and a link "Mailboxes and limits (Settings)".
 - **Emails per day from this sequence**: a number, default "no cap", with the mailbox limit it shares printed under it.
 - **Sending schedule**: a select of workspace schedules; the chosen one's days and hours printed under it. "New schedule (Settings)" for admins; for others, "RevOps admins add schedules."
-- **Ruleset**: a select; the chosen rules printed under it ("Stops on reply · Skips Replied, Interested, Not interested · 1 email per person per day").
+- **Ruleset**: a select; the chosen rules printed under it ("Stops on reply · Skips Replied, Interested, Not interested · 1 email per person per day"). At the top of the ruleset block, present from the moment the door opens and not after any work has been done, sits **"Save as a reusable ruleset · Growth"**: a real control with the plan name and the monthly total, which opens the upgrade panel. The per-sequence rules underneath it save normally on every plan. The gate is at the entry to the capability, never at the exit from work already done.
 - **Priority**: Normal, High, Low; "When a mailbox hits its limit, High sends first."
 - **Open and click tracking**: on or off; "Workspace default: on".
 
@@ -134,9 +144,19 @@ Sharing inside the area is an object permission and behaves like every other rec
 
 Fathom removes the owner filter, the owner field and sharing, and "Draft with the outreach agent" is the first button in an open email step. Halyard promotes Duplicate to a button on rows and in the header, turns the Mailbox column on in People, and opens the sending-settings door with mailbox and daily cap first. Ridgeline shows its two sequences, "Renewal 60 days" and "Expansion: new seats", with the "Customer-safe" ruleset and, under the list title, "Ridgeline runs lifecycle outreach; cold outbound is off by workspace rule." Both are owned by the inbound SDR; customer success reads what happened on the account record, not here. Meridian is the baseline.
 
+### 3.9 Templates
+
+Copy is written once and used in many places, so it is an object with a page, not a paste buffer. Two nodes, both owned by this spec because a step is where a template is used most.
+
+**The templates page** (`/ollopa/templates`). A table: Template (name and folder), Owner, Last used, **Used by** (a count: "4 steps · 1 campaign"), Updated. Search by name and by body text. Filters at level one: folder and owner. New template, Duplicate, Rename, Move to folder, Archive in the row menu, with Archive stating what happens to the steps that link to it: "4 steps keep the text they have today; nothing changes for anyone in a sequence."
+
+**The template record** (`/ollopa/templates/:id`), from the shared record template. Header: name, folder, owner, updated. Level one: the subject and body with the variable menu and any snippets it nests, each snippet named and linked rather than flattened, so a person editing the body can see what is not theirs to change here. Then a section, not a door, **"Used by 4 steps and 1 campaign"**, listing each use with its sequence or campaign and a link: a person about to edit shared copy has to see who else receives the edit, and that fact cannot sit behind a door (rule 5, rule 7). Then **Preview on a real contact**, which renders every variable against a person the signed-in user can see and names the unfilled ones ("2 variables have no value for Amara Okonkwo: {{signal}}, {{mutual}}"), and **Send a test to me**, which sends to the signed-in person's own address and says so.
+
+Seats: SDR, account executive, marketer and admin. No profile puts Templates in the sidebar by default: it is reached from the step that uses it, from a campaign, from ⌘K and by deep link, and its header offers "Add to sidebar" like any other page the profile left out. Customer success does not hold it.
+
 ## 4. Usage items
 
-Weekly use is the share of active users in the seat who touch the item in a typical week; the baseline is Meridian (USAGE-MODEL.md). Override cells: F Fathom, H Halyard, R Ridgeline; s SDR, e AE, a admin. There are no marketer or customer-success columns: those seats do not hold the Sequences area at all, so they carry no numbers here (see 3.8). Decision-critical items are level one whatever their use, and every destructive action is one of them. The data and its notes are in `src/ollopa/usage/sequences.ts`; this table is generated from that file.
+Weekly use is the share of active users in the seat who touch the item in a typical week; the baseline is Meridian (USAGE-MODEL.md). Override cells: F Fathom, H Halyard, R Ridgeline; s SDR, e AE, a admin. There are no marketer or customer-success columns for the sequence itself: those seats do not hold the Sequences area (see 3.8). The marketer does hold Templates, which this spec owns from §3.9, so the template rows carry a marketer number in their override cell. Decision-critical items are level one whatever their use, and every destructive action is one of them. The data and its notes are in `src/ollopa/usage/sequences.ts`; this table is generated from that file.
 
 | Item | SDR | AE | Admin | Overrides |
 |---|---|---|---|---|
@@ -174,6 +194,10 @@ Weekly use is the share of active users in the seat who touch the item in a typi
 | Preview a step for one person | 8 | – | 2 | F s12 a12 · H s10 a5 · R s3 |
 | Ask the outreach agent to draft the step | 10 | – | 2 | F s30 a30 · H s10 a5 · R s3 |
 | A/B variants on an email step | 4 | – | 2 | F s3 a4 · H s5 a4 · R s1 |
+| Variant progress before any verdict | 20 | – | 10 | F s35 a25 · H s30 a25 · R s4 |
+| Promote a variant, turning the other off **(critical)** | 12 | – | 6 | F s15 a12 · H s18 a15 · R s2 |
+| Use a template, linked or copied | 30 | 10 | 15 | F s45 a35 · H s50 a40 · R s8 e5 a4 |
+| The LinkedIn step's message text | 25 | – | 8 | F s30 a25 · H s35 a20 · R s4 |
 | Add a step | 8 | 2 | 3 | F s10 a12 · H s12 a12 · R s2 a1 |
 | Change a wait | 5 | – | 2 | F s8 a8 · H s8 a5 · R s2 |
 | Reorder steps | 3 | – | 1 | H s4 a3 · F s4 a4 |
@@ -187,6 +211,8 @@ Weekly use is the share of active users in the seat who touch the item in a typi
 | People in the sequence with status and step | 75 | 25 | 15 | F s80 a75 · H s85 a55 · R s25 e14 a5 |
 | Filter people by status | 35 | 8 | 8 | F s30 a25 · H s40 a25 · R s10 e4 a2 |
 | Find a person in the sequence | 10 | 6 | 3 | F s8 a8 · H s10 a4 · R s4 e3 |
+| Mailbox capacity in the picker, and the day-one volume **(critical)** | 55 | 15 | 30 | H s85 a60 · F s60 a55 · R s15 e8 a8 |
+| The sequence's rotation default, changeable for this batch only | 20 | 6 | 12 | H s45 a35 · F s15 a15 · R s3 a2 |
 | Add people | 50 | 15 | 6 | F s60 a55 · H s65 a35 · R s20 e12 a3 |
 | Open the reply in Inbox | 30 | 12 | 3 | F s35 a30 · H s40 a12 · R s12 e8 |
 | Pause one person | 12 | 6 | 2 | F s12 a10 · H s15 a6 · R s5 e4 |
@@ -200,27 +226,35 @@ Weekly use is the share of active users in the seat who touch the item in a typi
 | Sending mailbox and today's limit | 5 | 2 | 6 | F s8 a10 · H s20 a22 · R s2 a2 |
 | Sending schedule | 4 | 1 | 5 | F s4 a5 · H s10 a10 · R s2 a2 |
 | Ruleset | 3 | – | 5 | F s3 a4 · H s5 a6 · R a1 |
+| Save as a reusable ruleset · Growth (locked, priced, at the top of the block) | 2 | – | 6 | H s4 a12 · F a3 |
 | Priority among sequences | 3 | – | 2 | H s4 a4 |
 | Emails per day from this sequence | 3 | – | 4 | H s8 a10 · F s4 a5 |
 | Open and click tracking for this sequence | 2 | – | 2 | – |
+| **Templates (§3.9)** | | | | |
+| Templates table: name and folder, owner, last used, used by | 25 | 10 | 15 | H s40 a30 · F s30 a25 · R s6 e5 a4 (marketer 20; Ridgeline 15) |
+| Template body, variables and nested snippets | 22 | 8 | 12 | H s38 a28 · F s28 a22 · R s5 (marketer 18; Ridgeline 12) |
+| Used by 4 steps and 1 campaign, as a section **(critical)** | 18 | 6 | 12 | H s35 a30 · F s20 a18 (marketer 15) |
+| Preview on a real contact, naming unfilled variables | 20 | 8 | 8 | H s32 a20 · F s25 a18 (marketer 15) |
+| Send a test to me | 10 | 4 | 6 | H s18 a12 (marketer 8) |
+| Archive a template, stating what happens to linked steps | 3 | 1 | 4 | H a10 (marketer 3) |
 | **Results** | | | | |
 | Results by step and by audience | 10 | 3 | 10 | F s10 a15 · H s15 a25 · R s4 a3 |
 | **History** | | | | |
 | Change history (edits, pauses, bounce guard events) | 3 | – | 10 | H s4 a15 · F a3 |
 
-**Shape check.** One rule across this group of specs: the denominator is every item in `sequences.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 60 items in the file; head 20 and above, body 5 to 20, tail under 5; target about 15–25 / 25–35 / 45–60.
+**Shape check.** One rule across this group of specs: the denominator is every item in `sequences.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 73 items in the file; head 20 and above, body 5 to 20, tail under 5; target about 15–25 / 25–35 / 45–60.
 
 | Seat at business | Items | Head | Body | Tail | Level one |
 |---|---|---|---|---|---|
-| SDR at Meridian | 60 | 13 (22%) | 20 (33%) | 27 (45%) | List, open, pause/resume, counts, results strip, pause/resume on the page, steps, open step, people, status filter, add people, open reply; plus the two health items and the four destructive ones |
-| Admin at Fathom | 57 | 15 (26%) | 18 (32%) | 24 (42%) | The SDR's set less two, plus edit email and agent draft |
-| SDR at Fathom | 58 | 14 (24%) | 18 (31%) | 26 (45%) | The same page; the founder and the SDR do the same job here |
-| SDR at Halyard | 60 | 16 (27%) | 23 (38%) | 21 (35%) | Adds duplicate and the sending mailbox: the same sequence built ten times |
-| Admin at Halyard | 60 | 15 (25%) | 24 (40%) | 21 (35%) | Adds results by step; the fat body is the agency's "same tasks ten times" |
-| Admin at Meridian | 60 | 7 (12%) | 15 (25%) | 38 (63%) | List, open, counts, results strip, steps, the health and destructive items |
-| SDR at Ridgeline | 60 | 6 (10%) | 8 (13%) | 46 (77%) | List, open, counts, steps, people, add people |
+| SDR at Meridian | 73 | 21 (29%) | 23 (32%) | 29 (40%) | List, open, pause/resume, counts, results strip, pause/resume on the page, steps, open step, people, status filter, add people, open reply, mailbox capacity, rotation default, variant progress, use a template, the LinkedIn message, the templates table, its body and preview; plus the health items and the destructive ones |
+| Admin at Fathom | 70 | 21 (30%) | 23 (33%) | 26 (37%) | The SDR's set less two, plus edit email and agent draft |
+| SDR at Fathom | 71 | 22 (31%) | 21 (30%) | 28 (39%) | The same page; the founder and the SDR do the same job here |
+| SDR at Halyard | 73 | 25 (34%) | 25 (34%) | 23 (32%) | Adds duplicate and the sending mailbox: the same sequence built ten times, and templates carry that repetition |
+| Admin at Halyard | 73 | 24 (33%) | 28 (38%) | 21 (29%) | Adds results by step; the fat body is the agency's "same tasks ten times" |
+| Admin at Meridian | 73 | 8 (11%) | 26 (36%) | 39 (53%) | List, open, counts, results strip, steps, the health and destructive items |
+| SDR at Ridgeline | 73 | 7 (10%) | 14 (19%) | 52 (71%) | List, open, counts, steps, people, add people |
 
-Halyard's SDR head is a little over the band, and the data file says why. Ridgeline's SDR is far under it, which is right: two lifecycle sequences are not a day's work, and the page is mostly closed doors for that seat. The account executive at Meridian holds 38 of the 60 items, five of them in the head (the list, opening a sequence, the counts strip, the people table, and adding people) and the two bounce-guard items level one as safety state; that is a weekly visitor, and the page opens for them with the same level one as the SDR, not a reduced one.
+Halyard's SDR and admin heads run over the band, and the data file says why: templates and mailbox capacity are daily there because the same sequence is built ten times from the same copy across ten mailboxes. Ridgeline's SDR is far under it, which is right: two lifecycle sequences are not a day's work, and the page is mostly closed doors for that seat. The account executive at Meridian holds 48 of the 73 items, five of them in the head (the list, opening a sequence, the counts strip, the people table, and adding people) and the two bounce-guard items level one as safety state; that is a weekly visitor, and the page opens for them with the same level one as the SDR, not a reduced one. The marketer's fourteen items are the templates block plus the decision-critical rows the seat would meet through a campaign; the sequence itself stays outside that seat's area.
 
 ## 5. Before: the common version
 

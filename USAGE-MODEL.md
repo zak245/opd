@@ -42,6 +42,10 @@ The same item has different numbers at different businesses. That is the point o
 - **Halyard Agency** (25 people, ten client workspaces). Workspace-level settings are touched every day because the team switches between ten workspaces. What is rare elsewhere is routine here.
 - **Ridgeline** (80 people, product-led). Almost no outbound. Sequences and lists are low; account health, signals and lifecycle campaigns are high.
 
+## The one seat modifier
+
+**AE+ is an AE seat with direct reports** — the sales leader. It is not a sixth seat: PRODUCT.md declares five and IA-MAP 6.4j keeps it that way, so no business has to declare a new one and `SEATS` is unchanged. An item carries an `ae_plus` number only where the leader's week genuinely differs from an AE's — the team roll-up and the submissions strip on Forecast, the team and person filters, coverage against win rate, calls logged and calls with a coaching note, the comment composer on a deal she does not own. Everywhere else the AE number stands for both, and `weeklyUse(item, business, role, hasReports)` falls back to it. Meridian is the only business that declares such a seat (`businesses.ts`: Priya Raman, sales manager, with Elena Vasquez reporting).
+
 ## How a number is chosen
 
 Ask, for the role: "Is this part of their daily job (60 and above), a weekly routine (20 to 60), something they touch monthly or during setup (5 to 20), or something they touch a few times a year or never (under 5)?" Then check the page against the shape table. Then write a note when the reasoning is not obvious.

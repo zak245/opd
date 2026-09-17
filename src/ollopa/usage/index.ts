@@ -16,6 +16,10 @@ import { reportsItems } from "./reports"
 import { agentsItems } from "./agents"
 import { connectItems } from "./connect"
 import { setupItems } from "./setup"
+import { developerItems } from "./developer"
+import { enrichmentItems } from "./enrichment"
+import { workflowsItems } from "./workflows"
+import { requestsItems } from "./requests"
 
 export * from "./model"
 
@@ -38,6 +42,10 @@ export const allItems: UsageItem[] = [
   ...settingsItems,
   ...connectItems,
   ...setupItems,
+  ...developerItems,
+  ...enrichmentItems,
+  ...workflowsItems,
+  ...requestsItems,
 ]
 
 export function itemsFor(page: Page): UsageItem[] {

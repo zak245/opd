@@ -42,7 +42,7 @@ export function SignIn() {
         <div className="mt-2 flex flex-wrap gap-2">
           {b.roles.map((r) => (
             <button
-              key={r.role}
+              key={r.user}
               type="button"
               onClick={() => setRole(r.role)}
               aria-pressed={role === r.role}

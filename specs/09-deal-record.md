@@ -42,13 +42,17 @@ Every field on the page, where it comes from, and what the seed must gain. `Deal
 | Lost reason and archive date | add `Deal.lostReason`, `Deal.archivedAt` | A reason is required when a deal is archived as lost: Price, No decision, Competitor, Timing. An archived deal keeps its last open stage, leaves the board and the forecast, and stays on the company and in Reports |
 | Custom fields | add `Deal.custom: Record<string, string \| number \| boolean>` and `customFieldDefs` per business | See 2.3 |
 | CRM record | add `Deal.crmId`, `Deal.crmSyncedAt`, `Deal.crmError` | Only where a CRM is connected |
-| Contacts on the deal | add `DealContact { dealId, contactId, role }` | Role: Champion, Economic buyer, Technical, User, Other |
+| Contacts on the deal | add `DealContact { dealId, contactId, role }` | Role: Champion, Economic buyer, Technical, User, **Blocker**, Other. A blocker is a named person who is against the deal; leaving the role out did not make the person disappear, it only meant the deal record could not say why it was stuck |
 | Activity timeline | add `DealActivity` | See 2.2 |
 | Tasks | `Task`, add `Task.dealId` | |
 | Files | add `DealFile { id, dealId, name, size, uploadedBy, at }` | |
 | History | derived from `DealActivity` of kind `stage` and `field` | |
 | Company signals | add `Company.signals: Signal[]` | Ridgeline: product usage. Others: news and hiring from the research agent |
 | Agent proposal | `AgentEvent`, add `AgentEvent.dealId` | Kind `proposed` with `needsApproval` |
+| Qualification | add `Deal.qualification: Record<element, { value, state: "suggested" \| "edited" \| "validated", source, updatedBy, at }>` over the eight MEDDPICC elements: Metrics, Economic buyer, Decision criteria, Decision process, Paper process, Identified pain, Champion, Competition | The AE's weekly work. A value is never just a value: it carries how it got there, who touched it last and when. Nothing generated ever overwrites a validated value |
+| Qualification evidence | add `QualEvidence { id, dealId, element, quote, sourceKind: "call" \| "email" \| "meeting" \| "note", sourceId, at }` | The words the buyer actually used, with the conversation they came from. A model's answer is checkable only if the quote is beside it |
+| The six deal warnings | computed, never stored, from `lastActivity`, `lastProspectActivityAt`, `closeDate`, `contactCount`, `seniorSponsor` and `stageEnteredAt`. Defined here and read by [08 Deals board](08-deals-board.md), Home and Reports | No activity (14 days) · Ghosted (21 days of no reply from them) · Overdue (close date passed) · Too few contacts (under 3 at Proposal or later) · No senior sponsor (at Proposal or later) · Stalled in stage (30 days). Each carries its observed number and its threshold; the thresholds are admin-set in Settings › Pipeline and data, one place, and every page reads them |
+| Notes and comments | add `Note.to?: user`, `Note.mentions: user[]`, and an unanswered state | A comment is a note addressed to one teammate, not a thirty-second object. It lands on the timeline carrying "For Priya Raman", it can be replied to in place on the timeline item, and it stays marked unanswered until someone replies |
 | All fields tail | add to `Deal`: `dealType, source, campaign, competitor, contractTerm, paymentTerms, discount, proposalLink, esign, splitOwners, tags, priority, lineItems` | Weighted amount is computed: amount × probability |
 
 ### 2.2 Timeline items
@@ -59,10 +63,12 @@ Every field on the page, where it comes from, and what the seed must gain. `Deal
 
 | Business | Fields | Group |
 |---|---|---|
-| Meridian | Use case (picklist), Legal review (Not started, In review, Approved), Security review (same), Procurement portal (checkbox), Region (picklist), Champion confirmed (checkbox) | Commercial; Legal |
+| Meridian | Use case (picklist), Legal review (Not started, In review, Approved), Security review (same), Procurement portal (checkbox), Region (picklist) | Commercial; Legal |
 | Fathom | none | door removed |
 | Halyard | Hand-off status (Booked, Handed off, Client accepted, Client rejected), Meeting date (date), Client feedback (multi-line) | Client hand-off |
 | Ridgeline | Plan tier (picklist), Seats (number), Renewal type (Auto, Negotiated), Usage score (number, read-only from signals) | Plan |
+
+Meridian's "Champion confirmed" checkbox is gone. A checkbox inside a door, five levels from the conversation it describes, was the whole of qualification in the old spec; the Champion element in the qualification card replaces it, with its value, its state and the quote behind it. Five custom fields remain, so the door's count reads (5).
 
 ### 2.4 Pipelines
 
@@ -72,38 +78,56 @@ Add `pipelines` per business: name, stages, and per stage a default probability 
 
 ### 3.1 What is shown
 
-- **Header.** Back link to Deals. Title. Company link. A status ribbon only when the deal is closed or has a sync error. A field grid: stage stepper with probability and forecast category under it; amount; close date; next step with date; owner; last activity. Pipeline and currency appear only where the business has more than one. Actions: Log activity, Mark won, Mark lost and archive, Delete deal.
+- **Header.** Back link to Deals. Title, with the **deal type** as a chip beside it for the CS seat at every business and for the AE at Ridgeline — a CSM's whole book is renewals and expansions, so the type is the first thing read, not a line in All fields. Company link. Where the deal came from a hand-off, one line: "Handed over by Marcus Adeyemi · handoff brief", the brief a link. A status ribbon only when the deal is closed, blocked by stage requirements, or has a sync error. A field grid: stage stepper with probability and forecast category under it; amount; close date; **next step with its date, always on one line**; owner; last activity; and the warning chips where any fire, each printing its number against its threshold. Pipeline and currency appear only where the business has more than one. Actions: Log activity, Mark won, Mark lost and archive, Delete deal.
 - **Main column.** The activity timeline. A composer at the top (Call, Email, Meeting, Note). Filter chips: All, Emails, Calls, Meetings, Notes, Changes. Items grouped by day, newest first. Each item: kind icon, who, when, summary. Emails show two lines and a "Show full email" door. A pinned note sits above the day groups.
-- **Side panel.** Cards: Next step (mirrors the header on phone only); Contacts on the deal; Open tasks; Company summary. Then doors: Custom fields, History, Files, Company signals and news, All fields, Sync history. A pending agent proposal is a card above the contacts while it exists.
+- **Side panel.** Cards, in order: the agent proposal while one exists; **Qualification**; the **meeting**; Contacts on the deal; Open tasks; Company summary; and, on a renewal- or expansion-typed deal, **Account health · why**. Then doors: Evidence and source quotes, Custom fields, History, Files and the proposal, Company signals and news, All fields, Sync history.
+
+- **The Qualification card.** Heading: "Qualification · 5 of 8 · 2 to validate". One row per MEDDPICC element: the element, the value, a state chip (suggested · edited · validated), one line of provenance under it, and two controls, **Validate** and **Edit**.
+
+  > **Economic buyer** · Priya Natarajan, VP Engineering — *suggested* · from the call with Ben Fischer, 11 Sep — Validate · Edit
+
+  A human validates; the model proposes. Nothing generated overwrites a value a person validated, and there is no setting anywhere that turns that off. The card is level one for the AE, a door for the Meridian admin and CS, and removed at Halyard, where there is no AE seat and nobody qualifies anything.
+
+- **The meeting card.** Attendees with their roles on the deal, the meeting's state, a link to the prep brief, and the count of qualification elements still unanswered. After the call: the summary, the action items, and the follow-up draft. The panel behind it is `X-meeting`, specified once in [06 Inbox](06-inbox.md) §3 and rendered here unchanged.
+
+- **Account health on a renewal or an expansion.** A side card, **"Account health · why"**: the band, the number, and the driver lines that sum to it, with a link to the account. It is object state, not history: a new-business deal does not have an account behind it, so the card is **removed there, never disabled**.
+
+- **State chips.** Every field an agent can write carries one: *suggested*, *edited* or *validated*. A value with no chip was typed by a person and was never proposed.
 
 ### 3.2 Actions
 
 | Action | Where | Outcome |
 |---|---|---|
 | Edit any header field | Click or Enter on the field | Editor opens in place; Enter saves, Esc cancels; toast with Undo; a `field` item lands on the timeline |
-| Move stage | Click a step in the stepper, or S | Stage, probability and forecast update together; a `stage` item lands on the timeline; the board reflects it |
+| Move stage | Click a step in the stepper, or S | Stage, probability and forecast update together; a `stage` item lands on the timeline; the board reflects it. Where the workspace requires fields to enter a stage, **the stepper shows the gate before the click**, on the step itself: "Proposal needs Economic buyer and Metrics. Set by Daniel Okafor in Settings › Pipeline and data". A rule the person only meets after clicking is a rule hidden behind a door (rules 4 and 7) |
 | Set next step | Header | Text and date; empty state reads "No next step" in the warning colour |
 | Log call, meeting, note | Composer, or C, M, N | Item added; Last activity updates |
-| Email | Composer, or E | Pick recipients from the deal's contacts; drafts in place; sending logs the email |
+| Email | Composer, or E | The composer's Email **is** the reply panel: the agent's draft sits beside the human's, marked as a draft, and the send button carries the mailbox it goes from, the credits it costs and where replies will land. Recipients come from the deal's contacts. Sending is the approval and logs the email |
+| Comment to a teammate | Composer, or N then a name | A note addressed to one person. It lands on the timeline like any note, carrying "For Priya Raman", and stays marked unanswered until someone replies in place on the item. It reaches the teammate on Home and in the daily digest. It is **not** a bell kind: a colleague's question is not an interruption |
 | Create task | Tasks card, or T | Task with due date, assigned to owner by default; appears on the Tasks page |
+| Create the follow-up tasks | The meeting's follow-up panel, offered when the panel closes | The action items are listed with checkboxes and one button, **"Create 4 tasks"**. Four tasks made one at a time is four trips through the same dialog; the offer arrives at the task boundary, when the panel closes, never mid-call (rule 6) |
+| Validate a qualification element | Qualification card | The state becomes *validated* and records who and when. Nothing generated may overwrite it afterwards |
+| Edit a qualification element | Qualification card | The state becomes *edited*; the provenance line keeps the original source and adds the person |
 | Mark task done | Tasks card | Row leaves the card; a `task` item lands on the timeline |
 | Add contact | Contacts card | Search people at the company; set role |
 | Set contact role, remove contact | Contacts card row menu | Role chip changes; removal keeps the contact record |
-| Mark won | Header, or W | Confirm: "Stage becomes Closed won, forecast Closed, 2 open tasks close." Deal locks; Reopen appears |
+| Mark won | Header, or W | **One consequence sentence, owned here and read by [08 Deals board](08-deals-board.md) word for word**, so the board and the record can never say two different things: "Stage becomes Closed won. Forecast category becomes Closed. 2 open tasks close. Salesforce is updated. Northwind Analytics moves to customer success, and the hand-off arrives in Aisha Rahman's queue." Where a CS seat exists, the action is gated on the hand-off brief being written, and the button says so before the click; where no CS seat exists (Fathom, Halyard) the last two clauses and the gate are **removed, not greyed**. Deal locks; Reopen appears |
 | Mark lost and archive | Header, or Shift+W | A reason is required. The consequence is written before confirming: "Archived as lost. The deal leaves the board and the forecast, its 2 open tasks close, and it stays on Northwind Analytics and in Reports." Fields lock; Reopen appears |
 | Reopen | Ribbon | Returns the deal to its last open stage |
 | Delete deal | Header | Confirm: "Removes this deal and its 14 activities. Contacts, the company and files stay on the company." Undo for 10 seconds |
 | Enrich | Signals door | Button reads "Enrich · 2 credits"; runs and lists changed fields |
-| Approve or dismiss agent proposal | Proposal card | Approve applies the next step or sends the draft; the card says which and any credits |
+| Use or dismiss an agent proposal | Proposal card | The card carries, in this order: the actor; old → new ("Stage · Discovery → Proposal"); the quote it rests on with the speaker and the date; the state chip; then the consequence sentence in full — "Stage becomes Proposal. Probability 25% → 50%, forecast category Pipeline → Best case. The forecast you submit on Friday moves by $24,000. Salesforce is updated. 0 credits." Approve and Dismiss are the same size. A link, "Open the full evidence", opens the evidence door. This card and the row in the Agents queue are **one object, decided once in either place**, writing one ledger row |
 | Ask research agent | Proposal card footer or palette | "Research this company · 12 credits" |
 | Upload, delete file | Files door | Drag or pick; delete asks once |
 | Copy link, follow, duplicate, export | Header "…" menu | Each shows a toast naming what happened |
+
+**Created from a reply, and who owns it.** A deal created from the Inbox ([06](06-inbox.md) §3) arrives prefilled: company, the contact as a Champion-role `DealContact`, the four hand-off fields as the first note, stage Qualified, amount and close date empty. **The owner is the account executive of the territory the company falls in**, named on the control before the click and changeable there; where the business declares no AE seat, the owner is the person who clicked. The deal's header then shows "Handed over by Marcus Adeyemi · handoff brief" as a link, so the AE can read what was promised without asking, and the SDR's acceptance rate has something to count.
 
 There are no bulk actions on a record. Bulk lives on the board.
 
 ### 3.3 Filters, search, sorting
 
-The timeline filter chips are the only filter. Filter state persists per user. Timeline is always newest first; "Load older" appends. The Contacts card is ordered by role then last touch. Files by upload date. There is no search on the page; the browser's find works because doors use `hidden=until-found`.
+The timeline filter chips are the only filter. Filter state persists per user. Timeline is always newest first; "Load older" appends. The Contacts card is headed **"Contacts · 5 · 2 have replied"** and each row carries its last two-way contact, because five names on a deal where only one has ever answered is not five relationships. It is ordered by role then last touch. Files by upload date. There is no search on the page; the browser's find works because doors use `hidden=until-found`.
 
 ### 3.4 States
 
@@ -117,6 +141,8 @@ The timeline filter chips are the only filter. Filter state persists per user. T
 | No contacts | "No contacts on this deal yet. Add the people you are talking to." |
 | No next step | The field reads "No next step" in the warning colour |
 | Closed or archived | Ribbon "Won on 12 Sep 2026" or "Archived as lost on 11 Sep 2026 · Price"; fields read-only; Reopen |
+| Blocked by stage requirements | The step in the stepper carries the gate before it is clicked: "Proposal needs Economic buyer and Metrics. Set by Daniel Okafor in Settings › Pipeline and data", each missing element a link to its row in the Qualification card. The step is a real control that explains itself, never a greyed one |
+| No qualification yet | The card reads "Nothing answered yet. The prep brief lists what the next call should establish." with a link to the brief |
 | Sync error | Ribbon "Not synced to Salesforce since Tuesday: field mapping error. Sync history ›" |
 
 ### 3.5 Keyboard and shortcuts
@@ -144,12 +170,17 @@ One column. Order: back and title; stage as a horizontally scrolling stepper; am
 | History | Door | Door | Open by default | Door |
 | Other deals at the company | Door | Door | Door | Card for AE and CS |
 | Agent proposal | Card when pending | Card when pending; Ask research agent visible | Card when pending | Card when pending |
+| Qualification | Card for the AE; door for CS and admin | Card | Removed: no AE seat, and nothing at Halyard qualifies a deal | Card for AE and CS |
+| Evidence and source quotes | Door | Door | Removed: no conversation input exists | Door |
+| Meeting card | Card when a meeting exists | Card when a meeting exists | Removed: no calendar connected | Card when a meeting exists |
+| Account health on a renewal or expansion | Card for CS and AE on typed deals; removed on new business | No typed deals | No typed deals | Card for CS and AE; most deals are typed |
+| Deal type beside the title | Chip for CS; in All fields for AE and admin | In All fields | In All fields | Chip for AE and CS |
 
 Role differences at one business come from the usage model only. The admin at Meridian sees Owner and History at level one; the AE sees Log call and Tasks at level one. Same page, no mode.
 
 ## 4. Usage items
 
-68 items in 9 areas. Code: `src/ollopa/usage/deal.ts`. Numbers are share of active users in the role touching the item in a typical week. "Touch" means reading to decide or editing. Baseline is Meridian; overrides where the business changes the number. Decision-critical items are marked ★ and always level one.
+78 items in 11 areas. Code: `src/ollopa/usage/deal.ts`. Numbers are share of active users in the role touching the item in a typical week. "Touch" means reading to decide or editing. Baseline is Meridian; overrides where the business changes the number. Decision-critical items are marked ★ and always level one.
 
 | Item | AE | CS | Admin | Overrides |
 |---|---|---|---|---|
@@ -177,6 +208,7 @@ Role differences at one business come from the usage model only. The admin at Me
 | Email a contact from the deal | 40 | 40 | 10 | Fathom admin 45 · Halyard admin 8 |
 | Log a meeting | 15 | 12 | 8 | Fathom admin 20 |
 | Add a note | 60 | 55 | 25 | Fathom admin 50 · Halyard admin 55 |
+| Comment to a teammate, answered in place | 30 (AE+ 65) | 15 | 12 | Fathom admin 8 · Halyard admin 10 · Ridgeline AE 20, CS 18 |
 | Filter the timeline by kind | 30 | 20 | 25 | |
 | Show the full email | 25 | 20 | 10 | |
 | Pin a note to the top | 8 | 10 | 3 | |
@@ -195,6 +227,7 @@ Role differences at one business come from the usage model only. The admin at Me
 | Other deals at this company | 12 | 30 | 10 | Ridgeline AE 30, CS 45 |
 | Company signals and news | 15 | 10 | 5 | Fathom admin 30 · Ridgeline AE 45, CS 50 |
 | Enrich company and contacts (credits) | 6 | 3 | 8 | Fathom admin 20 |
+| Account health and its drivers, on a renewal or expansion | 8 | 55 | 6 | Fathom, Halyard 0 (no typed deals) · Ridgeline AE 35, CS 75 |
 | **Details** | | | | |
 | Custom fields | 12 | 10 | 15 | Fathom admin 0 · Halyard admin 65 · Ridgeline AE 40, CS 45, admin 20 |
 | All fields | 6 | 4 | 12 | Fathom admin 4 |
@@ -202,13 +235,23 @@ Role differences at one business come from the usage model only. The admin at Me
 | Files | 12 | 15 | 5 | Halyard admin 3 · Fathom admin 8 |
 | Upload a file | 8 | 10 | 3 | |
 | Delete a file | 1 | 1 | 1 | |
+| **Qualification** | | | | |
+| Qualification card: 8 elements, value, state, provenance | 65 | 10 | 12 | Fathom admin 20 · Halyard 0 (removed) · Ridgeline AE 45, CS 15 |
+| Validate an extracted value | 55 | 8 | 6 | Fathom admin 12 · Halyard 0 · Ridgeline AE 35, CS 10 |
+| Evidence and source quotes | 18 | 6 | 10 | Fathom admin 15 · Halyard 0 · Ridgeline AE 10, CS 6 |
+| The stage gate, shown on the step before the click ★ | 30 | 6 | 10 | Fathom admin 4 · Halyard 0 · Ridgeline AE 20, CS 5 |
+| **The meeting** | | | | |
+| Meeting card: attendees and roles, state, prep brief, gaps | 55 | 30 | 8 | Fathom admin 35 · Halyard 0 · Ridgeline AE 40, CS 35 |
+| Prepare from the brief | 65 | 30 | 5 | Fathom admin 30 · Halyard 0 · Ridgeline AE 45, CS 35 |
+| Correct the summary and the action items | 55 | 25 | 4 | Fathom admin 25 · Halyard 0 · Ridgeline AE 35, CS 30 |
+| Send the follow-up and create the tasks | 60 | 28 | 4 | Fathom admin 28 · Halyard 0 · Ridgeline AE 38, CS 32 |
 | **Sync and agents** | | | | |
 | CRM sync status and link | 20 | 10 | 35 | Fathom admin 0 · Halyard admin 55 · Ridgeline AE 15, CS 10, admin 25 |
 | Sync history and errors for this deal | 4 | 2 | 15 | Fathom admin 0 · Halyard admin 20 |
-| Pending agent proposal | 20 | 10 | 10 | Fathom admin 40 · Ridgeline AE 25, CS 15 |
+| Pending agent proposal ★ | 20 | 10 | 10 | Fathom admin 40 · Ridgeline AE 25, CS 15 |
 | Ask the research agent (credits) | 10 | 5 | 5 | Fathom admin 35 |
 | **All fields (the tail)** | | | | |
-| Deal type | 4 | 4 | 6 | Ridgeline CS 8 |
+| Deal type (a chip beside the title for CS, and for the AE at Ridgeline) | 4 | 45 | 6 | Ridgeline CS 70, AE 30 |
 | Lead source | 3 | 1 | 8 | |
 | Campaign attribution | 2 | 1 | 6 | |
 | Competitor | 8 | 3 | 4 | |
@@ -237,13 +280,15 @@ Computed with `shape()` from `usage/model.ts`.
 
 | Pair | Head | Body | Tail | Reading |
 |---|---|---|---|---|
-| Meridian, admin | 21% | 47% | 32% | Fits the shape. A weekly visitor |
-| Meridian, CS | 29% | 35% | 35% | Slightly head-heavy; CS works renewals here weekly |
-| Meridian, AE | 32% | 41% | 26% | Head-heavy by a third. The AE is the resident role; the page is dense on purpose (PRODUCT.md: "the SDR and the AE are the density argument"). Every head item is one the AE touches on most deals most days |
-| Halyard, admin | 28% | 34% | 38% | Head-heavy because hand-off fields, history and sync are promoted |
-| Ridgeline, CS | 32% | 35% | 32% | Signals, related deals and plan fields promoted |
+| Meridian, admin | 18% | 51% | 31% | Fits the shape. A weekly visitor, and the qualification and meeting items are a rep's work, not hers |
+| Meridian, CS | 33% | 37% | 29% | Head-heavy; CS works renewals here weekly and now reads the deal type, the account health and the meeting |
+| Meridian, AE | 38% | 38% | 23% | Head-heavy by half. The AE is the resident role and the page is dense on purpose (PRODUCT.md: "the SDR and the AE are the density argument"). Qualification, the meeting and the follow-up added ten items in this pass and eight of them are the AE's weekly work |
+| Halyard, admin | 24% | 31% | 45% | Just over the band. Hand-off fields, history and sync are promoted; qualification, the meeting and account health are all removed here, so the tail grew |
+| Ridgeline, CS | 36% | 36% | 28% | Signals, related deals, plan fields, deal type at 70 and account health at 75 |
 
-Two decisions do not follow the number alone. Probability stays with stage although it is at 15: it is set by the stage and never crosses a door from it (rule 5). Delete stays visible at 1: it is destructive (rule 7).
+Two things are stated rather than fitted. The AE's head at 38% is above the ceiling and is the density case for the resident role, exactly as it was at 32% before this pass; the honest reading is that the page got wider, not deeper, because every item added is a card or a row inside a card, and the one new door (evidence) sits beside the value it explains. Halyard's admin is the counter-example that makes the model credible: eleven items are zero there, so the same page is a quarter head for the ops lead and more than a third for the AE, from one table.
+
+Two decisions do not follow the number alone. Probability stays with stage although it is at 15: it is set by the stage and never crosses a door from it (rule 5). Delete stays visible at 1: it is destructive (rule 7). The agent proposal is level one for every seat when one exists and removed when none does, whatever the number: a decision waiting for a person is not something one seat may be shown and another may not (rule 7).
 
 ## 5. Before: the common version
 
@@ -333,26 +378,37 @@ Two levels. The page is level one. Each door is level two. No door contains a do
 | Other deals at company | 2 | 2 | 1 (card) | 2 | 2 | 1 (card) | 1 (card) |
 | Sync status line | 1 | 1 | 2 | removed | 1 | 2 | 2 |
 | Sync history | 2 | 2 | 2 | removed | 1 (open) | 2 | 2 |
-| Agent proposal | 1 when pending | 2 | 2 | 1 when pending | 2 | 1 when pending | 2 |
+| Agent proposal ★ | 1 when pending | 1 when pending | 1 when pending | 1 when pending | 1 when pending | 1 when pending | 1 when pending |
+| Qualification card | 1 | 2 (door) | 2 (door) | 1 | removed | 1 | 1 |
+| Evidence and source quotes | 2 | 2 | 2 | 2 | removed | 2 | 2 |
+| The stage gate on the step ★ | 1 | 1 | 1 | 1 | removed | 1 | 1 |
+| Meeting card | 1 when a meeting exists | 2 | 1 | 1 | removed | 1 | 1 |
+| Account health on a typed deal | 2 | 2 | 1 | removed | removed | 1 | 1 |
+| Deal type | 2 (All fields) | 2 (All fields) | 1 (chip by the title) | 2 | 2 | 1 (chip) | 1 (chip) |
 | Files, All fields, Enrich, Ask agent | 2 | 2 | 2 | 2 (Enrich and Ask agent 1) | 2 | 2 | 2 |
 
 "Owner 2" for the AE means the field is in the All fields door, not the header. When a role is at level 2 for Mark won, the action moves to the "…" menu with text; it is never removed, because an admin does close deals.
+
+Two rows do not read from the usage number. **The agent proposal** is level one for every seat when one exists and removed when none does: a decision waiting for a person is not something one seat may be shown and another may not, so its 10% for the Meridian admin does not put it behind a door (rule 7). **The stage gate** is the same: a requirement a person only meets after clicking is a requirement hidden behind a door.
+
+"Removed" at Halyard is not a lock and not a greyed control. There is no AE seat there, nothing qualifies a deal, no calendar is connected and no deal is typed, so the qualification card, the evidence door, the stage gate, the meeting card and the account-health card do not exist on that page at all (rule 4).
 
 ### 6.3 Doors
 
 | Door label | Count shown | Container | Content | Why a door |
 |---|---|---|---|---|
-| Custom fields (6) | number of fields | In place, side panel | The business's custom fields, grouped as the admin grouped them; inline editors | 12–15% at Meridian |
+| Evidence and source quotes (n) | number of quotes | In place, side panel, directly under the Qualification card | Every quote with its speaker, its date and the conversation it came from, and the extraction runs that produced the values. Removed where no conversation input exists | 18% AE; opened when a value looks wrong |
+| Custom fields (5) | number of fields | In place, side panel | The business's custom fields, grouped as the admin grouped them; inline editors | 12–15% at Meridian |
 | History (12 changes) | number of changes | In place, side panel | Stage and field changes with who and when; "Stages are set in Settings › Pipelines by Daniel Okafor" as its last line | 12% AE; admins audit |
-| Files (2) | number | In place, side panel | List with upload target; delete per file | 12% |
+| Files and the proposal (2) | number | In place, side panel | List with upload target; delete per file. The proposal is the file people come here for, so the label says so | 12% |
 | Open tasks (2) | number of open tasks | In place, side panel | The tasks card's rows and Create; a card, not a door, wherever the role is at 20 or above | 15% for the Meridian admin |
-| Company signals and news | none | Drawer | Signals, news, hiring; "Enrich · 2 credits" button; last enriched date; "Research this company · 12 credits" | Heavy content; keeps deal context |
-| All fields | none | In place, side panel | Every remaining field with editors: owner (AE), deal type, source, campaign, competitor, contract term, payment terms, discount, proposal link, signature status, split owners, tags, priority, weighted amount, line items, CRM id, created | The tail |
-| Sync history | none | In place, side panel | Last ten syncs; errors with the field that failed; link to Settings › Integrations for the admin, the admin's name for others. Holds the sync status line too for roles where that line is level two | 4% AE |
-| Show full email | none | In place, on the item | The whole message | Two lines answer most reads |
+| Company signals and news (n) | number of live signals | Drawer | Signals, news, hiring; "Enrich · 2 credits" button; last enriched date; "Research this company · 12 credits" | Heavy content; keeps deal context |
+| All fields (17) | number of fields inside | In place, side panel | Every remaining field with editors: owner (AE), deal type, source, campaign, competitor, contract term, payment terms, discount, proposal link, signature status, split owners, tags, priority, weighted amount, line items, CRM id, created | The tail |
+| Sync history · last 10 | the window, not a count | In place, side panel | Last ten syncs; errors with the field that failed; link to Settings › Integrations for the admin, the admin's name for others. Holds the sync status line too for roles where that line is level two | 4% AE |
+| Show full email | none, and it needs none: it is one email | In place, on the item | The whole message | Two lines answer most reads |
 | All 5 contacts (phone only) | number | In place | Remaining contacts | Screen height |
 
-Removed rather than hidden: currency where one currency; pipeline where one pipeline; the custom-fields door where none exist; the sync line and sync history where no CRM; split owners at Fathom.
+Removed rather than hidden: currency where one currency; pipeline where one pipeline; the custom-fields door where none exist; the sync line and sync history where no CRM; split owners at Fathom; Meridian's "Champion confirmed" checkbox, replaced by the Champion element with its state and its quote; the qualification card, the evidence door, the meeting card and the account-health card wherever the business has no AE seat, no calendar or no typed deals.
 
 ### 6.4 Persistence
 
@@ -364,7 +420,14 @@ Shortcuts as listed in 3.5. The palette (⌘K) lists each action with its shortc
 
 ### 6.6 Decision-critical items
 
-Visible without a click: the delete button with its consequence sentence next to it; the credit cost on Enrich and on Ask the research agent; the consequence sentence on Mark won and on Mark lost and archive before confirming; the sync error ribbon; what approving an agent proposal will do (send an email, spend credits, move the stage) on the proposal card. The path to reopen a closed or archived deal is one click, the same as closing it.
+Visible without a click: the delete button with its consequence sentence next to it; the credit cost on Enrich and on Ask the research agent; the consequence sentence on Mark won and on Mark lost and archive before confirming, written once here and read word for word by [08 Deals board](08-deals-board.md); the sync error ribbon; the stage gate on the step before it is clicked; the six warnings with their numbers and thresholds; what using an agent proposal will do (send an email, spend credits, move the stage, move Friday's forecast by a stated amount) on the proposal card, with Use and Dismiss the same size. The path to reopen a closed or archived deal is one click, the same as closing it.
+
+**Provenance, stated in full.** This is where the product's rule about generated values lives, and every other spec reads it from here.
+
+1. Every generated value carries its **state** (suggested · edited · validated), its **author** (the agent by name, or the person) and its **source** (the conversation, with a date). A value with no chip was typed by a person and was never proposed.
+2. A **brief carries a human signature per section**: "Written by the research agent" or "Approved by Elena Vasquez, 12 Sep". A section nobody has stood behind says "Not yet approved" at the top.
+3. **Nothing generated overwrites a value a person has validated.** An agent that finds a newer answer proposes it beside the validated one; it does not replace it.
+4. **There is no auto-accept setting.** Not off by default: absent. A setting that lets a workspace turn off human validation is a setting that makes every state chip on the page a lie.
 
 Who approves, and how often. The deal's owner approves their own agent's actions and the admin may approve for anyone (the policy is one item in Settings, not a rule invented per page). Research, scoring and drafts that are saved rather than sent are logged, never queued. Only irreversible or costly actions wait for a person: sending an email, spending above the credit cap, changing the stage. A second, admin approval is required above a threshold that is a setting. The proposal card waits for the next visit to the deal instead of interrupting, because a suggestion arriving at a task boundary is taken and the same suggestion mid-task is dismissed (52% engagement post-commit against 62% dismissal mid-edit, Kuo et al. 2026). And the queue is kept short on purpose: shown a problematic agent action and asked to approve it, people saw it 88.5% of the time and stopped it 23.9% (Chen et al., N=48), so disclosure past a reviewer's capacity is the same as hiding it.
 
@@ -378,12 +441,14 @@ The deal page is the first use of `RecordPage`, the second shared template after
 
 **A record is disclosed in two levels, and often should be.** This is the pattern named in RULES.md, and this spec is where it is defined for every record in the product.
 
+**One object, one record.** A company and an account are one object with a customer state (PLAN.md, 15 September 2026), so there is one record page for both: `/ollopa/companies/:id`, whose header fields, sections and doors switch on that state. `/ollopa/accounts/:id` redirects there. Accounts stays a **page** — its own table of customers, with its own columns, quick look and row actions — but it does not build a second record. A second record page for the same object is a second version of the record, which is what the pattern's test forbids, and it is how two pages end up disagreeing about one company.
+
 - **The quick look** is level one: a flat drawer opened from a table row, keeping the table in view. It shows the few fields a glance needs, in the same order and with the same labels as the top of the full record. Nothing collapses inside it. It is read-only except for the one field the glance exists for — a deal's stage on the board, an account's next step on the accounts table. It serves scanning tasks, where a person moves through many rows and needs a glance at each.
 - **The record page** is level two: everything about the object, from this template. Header, key fields, related lists as scrolling sections (people at a company, deals, activity), and doors only for long content that is rarely needed alongside the rest — full history, enrichment data, custom fields, files. At most one tab, for a related table big enough to be a page of its own, with a count in its label; sections otherwise, because tabs hide what a person may need to see side by side. It serves dwelling tasks, where a person has chosen the object and is working on it.
 - **The test.** Remove the drawer and you lose only speed. If removing it would lose a feature, it has become a second version of the record, and that is against the rules.
 - **The count.** Table to drawer is one level, table to page is one level, page to a door or a tab is a second. Nothing reaches three, because the drawer has no doors and a tab has none.
 
-The deal uses both: the board's card opens a quick look with stage editable in place (the one field the glance exists for), and the card title opens this page. The account page in [11 Accounts](11-accounts.md) is the same arrangement on a table instead of a board.
+The deal uses both: the board's card opens a quick look and the card title opens this page. The quick look holds **stage, amount, close date, next step with its date, owner and last activity**, in this page's order and with this page's labels, and its one editable field depends on who is looking. The **owner** edits the stage, because moving a deal is the reason to glance at it from a board. **Anyone else** — a manager on My team, the admin, a CSM — gets the comment composer instead: they came to say something to the owner, and the board already refuses a move they do not own. One editable field either way; the rule is "one", not "the same one for everybody". [11 Accounts](11-accounts.md) is the same arrangement on a table instead of a board.
 
 ```
 RecordPage<T> {
@@ -425,10 +490,10 @@ How the other pages fill it:
 
 | Page | Header fields (level one at Meridian, primary role) | Main | Side cards | Doors | Quick look |
 |---|---|---|---|---|---|
-| Deal | Stage, amount, close date, next step, owner, last activity | Timeline | Contacts, tasks, company | Custom fields, History, Files, Signals (drawer), All fields, Sync history | Stage, amount, close date, next step; stage editable |
-| Contact | Name, title, company, email with status, phone, stage, owner, in sequence | Timeline | Company, open deals, tasks | Sequences (2), Custom fields, History, Enrichment (drawer), Files, All fields | Name, title, company, email with status, phone; email status read-only, stage editable |
-| Company | Name, domain, industry, employees, stage, owner, open deals count | Sections: contacts, open deals, activity | Contacts (top 5), open deals, signals | Custom fields, Locations, History, Enrichment (drawer), Files, All fields; one tab, "People (48)", where the list is big enough to be its own page | Name, domain, industry, employees, stage, owner |
-| Account | Health with band, renewal and days left, contract value, open risks, last touch, next step | Sections: health drivers, renewal terms, risks, signals, hand-off, touches, usage, seats, contacts, deals | Renewal, champion, CRM sync | History, Files, All fields, Enrichment (drawer) | Health, renewal and days left, value, open risks, next step; next step editable |
+| Deal | Stage, amount, close date, next step with its date, owner, last activity, the warning chips, deal type where the seat reads it | Timeline | Agent proposal, Qualification, the meeting, contacts, tasks, company, account health on a typed deal | Evidence and source quotes · n, Custom fields (5), History, Files and the proposal, Signals (drawer), All fields (17), Sync history · last 10 | Stage, amount, close date, next step with its date, owner, last activity; the owner edits the stage, anyone else gets the comment composer |
+| Contact | Name, title, company, email with status, phone, stage, owner, in sequence | Timeline, with its filter chips. **No activity door**: the activity *is* the page, and a door onto the main content is a door onto nothing new. The call panel opens from a call item on it | Company, open deals, tasks | Sequences (2), Custom fields, History, Enrichment (drawer), Files, All fields | Name, title, company, email with status, phone; email status read-only, stage editable |
+| Company (account when a customer) | Name, domain, industry, employees, stage, owner, open deals count. **The header switches on the customer state**: when `Company.stage` is Current client or Churned it also carries health with its band, renewal and days left, contract value, open risks, last touch and next step | Sections: contacts, open deals, activity. When the company is a customer the sections gain the customer-state block — health and its drivers, renewal terms, risks, expansion signals, the hand-off, touches, usage over 90 days, seats, goals, first value — and lose it again when it is not | Contacts (top 5), open deals, signals; renewal, champion and CRM sync when a customer | "All activity · n"; "Agent research · n runs"; "Signals and news · n"; "CRM sync · synced hh:mm"; "Parent and subsidiaries"; "Full history, custom fields and files"; Enrichment (drawer); one tab, "People (n)", where the list is big enough to be its own page | Name, domain, industry, employees, stage, owner; and, for a customer, health, renewal and days left, value, open risks, next step with next step editable |
+| Brief | About, author (a person or an agent by name), assembled on, the records it covers, the run's credit cost | Sections as written: the angle, the evidence, the people, what to say. Generated lines are marked apart from written ones, and a section nobody has stood behind says "Not yet approved" | The source records it was built from | "Sources and citations · n"; "History". "Research again · 12 credits" prices itself before the click | None. A brief is opened and read, never scanned from a row |
 | Settings › user | Name, email, role, permission profile, credit limit, status | Sections: access, mailboxes, activity | Credit usage this month, last sign-in | Teams, Territories, Sessions, Audit log | Name, email, role, status |
 | Settings › mailbox | Address, owner, warm-up status, daily limit and sent today, deliverability score | Sections: limits, signature | Bounce guard state ★ (warn 4%, pause 6%, with the observed rate) | Warm-up settings, Tracking, Forwarding, History | Address, owner, warm-up status, sent today |
 
@@ -436,14 +501,14 @@ How the other pages fill it:
 
 | # | Question | Score | Line |
 |---|---|---|---|
-| 1 | Decision-critical visible without interaction | 2 | Delete with consequence, credit costs, close consequences, sync error, agent consequence all on the page |
-| 2 | Every visible item backed by a usage number with a source | 2 | 68 items in `deal.ts`, USAGE-MODEL.md shape, the two exceptions explained by rules 5 and 7 |
+| 1 | Decision-critical visible without interaction | 2 | Delete with consequence, credit costs, the close consequence owned here and read by 08, the sync error, the stage gate on the step, the six warnings with their numbers, and the agent proposal's full consequence with Use and Dismiss the same size |
+| 2 | Every visible item backed by a usage number with a source | 2 | 78 items in `deal.ts`, USAGE-MODEL.md shape, the exceptions explained by rules 5 and 7. The AE's head is at 38%, stated as the density case rather than fitted; Halyard's admin, with eleven items removed, sits at 24% from the same table |
 | 3 | No path exceeds two levels on any screen size | 2 | Page and one door; phone reorders but never nests |
-| 4 | Every door labelled by content with chevron and text | 2 | Counts on Custom fields, History, Files; no "More" or "Advanced" |
+| 4 | Every door labelled by content with chevron and text | 2 | Counts on Evidence, Custom fields, History, Files and the proposal, Signals, All fields; "Sync history · last 10" names its window; "Show full email" needs none because it is one email; no "More" or "Advanced" |
 | 5 | Every door next to what it reveals; keyboard and touch | 2 | Doors in the side panel next to the cards they extend; buttons with `aria-expanded` |
-| 6 | No dependent information split across a door | 2 | Stage, probability and forecast in one group; next step with its date; amount with currency |
+| 6 | No dependent information split across a door | 2 | Stage, probability and forecast in one group; next step with its date; amount with currency; a qualification value with its state and its provenance, and the evidence door directly beneath the card it explains; a health band with the drivers that sum to it |
 | 7 | Door state persists; expand-all and print exist | 2 | Per user across deals; expand all, collapse all, print CSS |
-| 8 | Disclosure driven by user action or object state | 2 | Agent proposal and ribbons by object state; nothing reorders by history |
+| 8 | Disclosure driven by user action or object state | 2 | Agent proposal, warning chips, the account-health card and the ribbons by object state; nothing reorders by history, and nothing generated overwrites a validated value |
 | 9 | Door usage instrumented and a scheduled review | 1 | Door opens are logged to the console event bus in the demo; the semi-annual promote, keep or delete review is written into this spec but no analytics exist |
 
 Total: 17 of 18.
@@ -483,7 +548,7 @@ Lesson 3 starts from the common version and applies one rule per step. Each step
 | Empty, error and no-access states | Yes | Added not-found and closed states, which the brief's list does not name but a record needs |
 | Keyboard | Yes | Shift+W for lost replaced an earlier X, which collides with common cut bindings |
 | Phone width | Yes | The "All 5 contacts" in-place door is phone-only; added to the doors table so it is not a hidden extra level |
-| Decision-critical visible | Yes | Agent approval consequence was missing; added to the proposal card |
+| Decision-critical visible | Yes | Agent approval consequence was missing; added to the proposal card with its old → new, its quote, the amount Friday's forecast moves by, and Use and Dismiss the same size. A stage requirement was met only after the click; moved onto the step |
 | Two levels maximum | Yes | *All fields › field group* was a nested level; groups are headings inside one door, not doors. The quick-look drawer is flat and adds no level of its own |
 | Five stages | Yes | An earlier draft added "Closed lost" as a sixth stage with a lost reason. Closed: five stages defined here, and losing a deal means archiving it with a reason; the board, Reports and Settings read this list |
 | The quick look | Yes | The pattern was only implied. Section 6.8 now states it for every record in the product: flat drawer, sections not tabs, at most one tab, same fields in the same order as the top of the page |
@@ -491,7 +556,12 @@ Lesson 3 starts from the common version and applies one rule per step. Each step
 | Dependent fields together | Yes | Probability at 15% would have gone behind a door by number; rule 5 keeps it with stage, stated in 4.1 |
 | State persists | Yes | Per user across deals, not per deal, so a resident's preference holds |
 | Accelerators present | Yes | Section 6.5 |
-| Usage shape checked | Yes | Five pairs in 4.1; the AE's head-heavy shape is explained, not hidden |
+| Usage shape checked | Yes | Five pairs recomputed in 4.1 after ten items arrived; the AE's head at 38% is explained as the density case, not hidden, and Halyard's admin at 24% shows the same table producing a different page |
+| Qualification | Yes | The AE's weekly work, named in four of five live job postings, existed in the product only as a Meridian checkbox inside a door. Closed: eight elements with value, state, provenance and a Validate control; the checkbox deleted; the evidence door beside the card; the stage gate on the step |
+| Provenance | Yes | Generated values carried no author and no source, and nothing said what happened when an agent found a newer answer. Closed: 6.6 states the four rules in full, including that no auto-accept setting exists |
+| One record per object | Yes | The template listed Company and Account as two rows with different headers, sections and doors, which is two record pages for one object. Closed: one row, "Company (account when a customer)", whose header and sections switch on the customer state |
+| The brief | Yes | `R-brief` was one of the nine nodes IA-MAP §6.5 handed to the specs and belonged to none. Closed: a Brief row in 6.8, with its authorship rule and no quick look |
+| One fact, one owner | Yes | Close-won had two consequence sentences, the quick look was asserted here and absent from the board, and forecast category sat at two levels. Closed: this spec owns the close-won sentence, the quick look's contents and the six warnings, and 08 renders them |
 | Nothing hover-only | Yes | Hover-to-edit replaced; card row actions appear on focus and in a menu |
 | Role gaps explain themselves | Yes | Stage editing and field management name the admin seat inside the History and Custom fields doors; no-access page names seats |
 | No usage numbers or teaching text in the product | Yes | Counts on doors are object counts, not usage; nothing from section 4 renders |

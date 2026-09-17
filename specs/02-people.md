@@ -39,9 +39,9 @@ Counts beside filter values are live: the number next to "Verified" is the numbe
 
 ### Layout, top to bottom
 
-1. **Header.** "People", the total, **Add people ▾** (search the database, import CSV, sync from CRM now; the first two are later cases and say so).
+1. **Header.** "People", the total, **Add people ▾** (search the database, import CSV, sync from CRM now). **Import CSV** opens the import wizard page ([18 Import and enrichment](18-import-and-enrichment.md)), not a drawer: it is an independent task with its own steps, its own credit trial and a job record at the end, and a page is what carries a deep link back to it. **Search the database** opens the Find people drawer, which is a later case and says so.
 2. **Views row.** Chips for the role's views, the active one marked; **All views (n) ▾**; **Save view**.
-3. **Filter bar.** Search box; the role's level-one filter chips; every *active* filter as a chip whatever its level; **All filters (31) ▾**; **Clear**. Right side: result count and **Columns and density ▾**.
+3. **Filter bar.** Search box; the role's level-one filter chips; every *active* filter as a chip whatever its level; **All filters (33) ▾**; **Clear**. Right side: result count and **Columns and density · 6 of 25 ▾**, the shown count and the total in the label like every other door on the page.
 4. **Selection bar.** Appears when at least one row is selected: "25 selected", **Select all 312 matching** with **Limit per company** beside it, the role's level-one bulk buttons, **Edit or export selected ▾**.
 5. **Table.** Checkbox column, the role's columns, row actions.
 6. **Footer.** "Show 25 more"; rows per page.
@@ -52,13 +52,13 @@ One box, `/` focuses it. Matches name, title, company and email. Combines with f
 
 ### Filters
 
-Thirty-one filters in one flat panel; the head ones for the role are also chips in the bar. AND across filters, OR within one. Every value shows a live count.
+Thirty-three filters in one flat panel; the head ones for the role are also chips in the bar. AND across filters, OR within one. Every value shows a live count.
 
 | Group | Filters |
 |---|---|
-| Person | Title (type-ahead, "contains"); Seniority (5 values); Department (6); Location (country, city); Time in role; Languages; Time zone |
+| Person | Title (type-ahead, "contains"); **Persona** (the personas defined in Settings › Signals, scoring and personas, each with its size); Seniority (5 values); Department (6); Location (country, city); Time in role; Languages; Time zone |
 | Company | Company (type-ahead); Company size (5 bands); Industry (10); Technology; Keywords; Signals (chips, last 7/30/90 days); Funding stage; Revenue; Founded year; Headcount growth |
-| Reach | Email (Verified only · Any · None · Bounced); Has phone; Not in a sequence; Not contacted in the last N days (default 14); Replied; Opened or clicked; Do not contact (excluded by default; the toggle says how many) |
+| Reach | **Score** (bands with a count each, plus "Above the MQL threshold"); Email (Verified only · Any · None · Bounced); Has phone; Not in a sequence; Not contacted in the last N days (default 14); Replied; Opened or clicked; Do not contact (excluded by default; the toggle says how many) |
 | Ownership | Owner ("Me" first); Stage (7); In list; Synced to CRM; Source; Custom fields |
 | History | Last activity date; Created date; Changed job recently |
 
@@ -68,7 +68,9 @@ Rules for every filter:
 - The panel is a non-modal side panel that pushes the table. Every filter is a flat field under a group heading; nothing inside expands. Top values and counts are printed, with a "search values" box for the rest. The panel can be pinned open; pinned state persists per user.
 - An active level-two filter shows as a chip while active. A hidden cause is not allowed.
 - **Clear** removes all filters and search in one click; `⌘Z` undoes it for 10 seconds.
-- Filters that cannot apply are removed, not disabled: Fathom has no "Synced to CRM" (no CRM) and no "Custom fields" (none defined).
+- Filters that cannot apply are removed, not disabled: Fathom has no "Synced to CRM" (no CRM) and no "Custom fields" (none defined). Persona and Score are removed at a business that defines neither.
+
+**Persona and Score are level-one chips, not panel rows, for the seats that work by them.** The SDR carries **Persona** in the bar: the SDR does not prospect by title, the SDR prospects by persona, and the definitions are declared once in Settings › Signals, scoring and personas rather than retyped as a title filter every morning. The same control sits at the top of the Find people drawer, so the persona chosen in the workspace is the persona bought from the database. The marketer carries **Score**, with the bands and "Above the MQL threshold" as its values. Beside the Score chip, in text, is the state of the thing it filters on: "Threshold 62, published 12 Sep by Grace Mwangi". A score whose threshold moved yesterday and does not say so is a filter that quietly means something else.
 
 ### Saved views
 
@@ -79,6 +81,8 @@ A view is a named set of filters, columns, sort and density, owned by a user, sh
 | Meridian SDR | My prospects to work | Owner: me · Email: verified · Not in a sequence · Stage: Cold, Approaching | – |
 | Meridian AE | My accounts' people | Owner: me · Stage: Replied, Interested, Meeting booked | Phone, Last activity |
 | Meridian marketer | Audience: verified | Email: verified | Lists, Industry, Company size |
+| Meridian marketer (second seeded view) | Above the MQL threshold | Score: above the MQL threshold | Score, Lists, Last activity |
+| Every business, admin and SDR (shipped) | Needs enrichment | Two or more of email, phone, job title, company name and last enrichment date missing or older than 12 months | Email, Phone, Title, Company, Last enriched |
 | Meridian admin | Everyone | none | Owner, Source, CRM |
 | Fathom, both roles | To work this week | Email: verified · Not in a sequence · Signals in 30 days | Signals, Phone |
 | Halyard SDR | Client ICP, one per workspace | Title, Company size, Industry, Location for that client | Location |
@@ -86,11 +90,13 @@ A view is a named set of filters, columns, sort and density, owned by a user, sh
 | Ridgeline SDR | Signals this week | Signals in 7 days · Stage not Not interested | Signals, Last activity |
 | Ridgeline AE | My expansion accounts | Owner: me · Signals in 30 days | Signals, Last activity |
 
+The **Needs enrichment** view ships with the product rather than being built by each workspace, because the work it describes — the data quality pass — is the same work everywhere, and its count is the number that tells an admin whether the pass is needed at all. Its rows feed the enrichment panel and the import wizard directly: selecting from it and choosing Enrich opens `X-enrich` with the missing fields already chosen.
+
 Actions: save (name field inline in the views row), rename, set as my default, share with everyone, email me when it gains people (daily or weekly), delete with undo. Switching views replaces filters, columns and sort. Editing a filter inside a view marks the chip "edited" and offers **Save** or **Revert** inline; nothing saves silently. A view lives in the workspace it was made in; at Halyard that is one client workspace.
 
 ### Columns, sorting, density
 
-- **Columns and density ▾** holds a checklist of the 25 columns in display order, drag to reorder, **Reset to the SDR default** (named for the role), density (Comfortable, Compact) and rows per page (25, 50, 100). All of it persists per user and per view.
+- **Columns and density · n of 25 ▾** holds a checklist of the 25 columns in display order, drag to reorder, **Reset to the SDR default** (named for the role), density (Comfortable, Compact) and rows per page (25, 50, 100). All of it persists per user and per view.
 - Defaults are the head columns in §4. SDR: Name, Company, Email, Stage, Sequence, Last contacted. AE: adds Phone, Last activity, Owner; drops Sequence. Marketer: Name, Company, Email, Lists. Admin: Name, Company, Email, Owner. Fathom adds Signals and Phone; Ridgeline adds Signals and Last activity.
 - **Sort.** Click a header to sort, again to reverse, a third time to clear. The arrow is always drawn. Secondary sort by name. Sort is part of the view.
 - **Density.** Compact halves row padding and moves the title under Name into the row's accessible name and tooltip.
@@ -103,7 +109,7 @@ Every row has: the name as a link, the stage badge as an inline picker, the phon
 | Action | Outcome | Level one for |
 |---|---|---|
 | Quick look | A flat drawer beside the table, the table still in view: photo-less header (name, title, company, owner), email and status, phone, stage, sequence and step, last contacted, do-not-contact state. Read-only except the stage badge, the one field the glance exists for. No doors and no sections inside it; it is the top of the record page, cut short. `Esc` closes it, `j`/`k` move it down the table without closing. | SDR; Halyard SDR; Fathom admin; Ridgeline SDR |
-| Open the full contact record | The record page at `/people/:id`, from the shared record template (spec 09 owns the template): header, key fields, then related lists — companies' people, deals, activity, tasks — as scrolling sections, with doors only for long rarely-needed content (full history, enrichment, custom fields, files). At most one tab, and this record does not need it. Back restores scroll, selection and filters. | AE, everyone by link |
+| Open the full contact record | The record page at `/people/:id`, from the shared record template (spec 09 owns the template): header, key fields, then related lists — the company's people, deals, tasks — as scrolling sections, with doors only for long rarely-needed content (full history, enrichment, custom fields, files). **Activity is not one of them.** The contact's activity is the record's main timeline, at level one, with its filter chips (all · emails · calls · meetings · notes · sequence steps) as object state rather than a level; there is no "All activity" door, because the timeline is what a person opened the record to read. A call item in the timeline opens `X-calllog` — purpose, disposition, duration, notes, and the transcript where an integration supplied one — which anyone who can see the record may read and its owner may log. At most one tab, and this record does not need it. Back restores scroll, selection and filters. | AE, everyone by link |
 | Add to sequence | Picker of active sequences anchored to the row; Sequence cell updates; toast with undo. Already in one: the picker says so and offers to move. | SDR; Fathom admin |
 | Add to list | Picker with "New list"; Lists cell updates; toast with undo. The toast links to People filtered to that list, not to the Lists page, because account executives and customer success do not hold Lists. | SDR, marketer |
 | Create a call task | Task due today; toast links to Tasks. | SDR, AE |
@@ -112,6 +118,7 @@ Every row has: the name as a link, the stage badge as an inline picker, the phon
 | Enrich · 2 credits | Refreshes email, title, company, phone. Enriched within 30 days: "Enriched 12 days ago · enrich again · 2 credits". | Fathom |
 | Ask the research agent · 12 credits | Queues a run; toast links to Agents. | Fathom |
 | One-off email; Copy email; Open the company; Edit fields; Add a note; Add to a deal | Compose drawer; clipboard; navigation; edit drawer with the note field; deal picker for that company. | Menu |
+| Job change · confirm and update | Shown on the row and in the record header while the job-change signal is live on that person, and removed when it is not. Two controls, each with what it keeps: **"Update this record"** (keeps the history, the notes and the owner; changes company, title and email, and takes the person out of any sequence aimed at the old employer) and **"Create a new contact"** (leaves this record as it was, at the old employer, and starts a new one). One line under both names the new employer and what the workspace already knows about it: "Bluefin Logistics — already an account · owner Elena Vasquez · 2 open deals", or "Bluefin Logistics — not in the workspace yet". | SDR; Ridgeline SDR |
 | Mark do not contact | Confirms in place: "Removes from all sequences and blocks outreach. Undo for 10 seconds." | Menu |
 | Assign owner | User picker. Meridian: AE on their accounts, admin on all; the SDR's menu shows "Owner changes: Daniel Okafor (RevOps admin)" in its place. | Menu; admin body |
 | Push to CRM now; Merge duplicate | Pushes with result or error text (absent at Fathom); side-by-side merge drawer. | Menu |
@@ -124,8 +131,13 @@ A picker or drawer that follows a chosen action is the action's form, not a thir
 - Checkbox, `x` on a focused row, Shift-click for a range, `⌘A` for the page. **Select all 312 matching** names the count. **Limit per company** beside it caps per company and restates the result: "Select 212 people, up to 2 per company". They sit together because one changes the meaning of the other.
 - Every bulk button repeats the count: **Add 25 to sequence**, **Add 25 to list**, **Enrich 25 · 50 credits**, **Export 25 · no credits**.
 - Outcomes: Add to sequence skips people already in one ("3 skipped, already in a sequence"); Enrich skips people enriched within 30 days; Export opens a small panel (columns as shown or all fields, "no credits") and downloads; Change stage; Ask the research agent with cost; Email selected; Assign owner; Push to CRM; Merge (enabled only with exactly two selected, otherwise the item says "select two"); Remove.
-- A spend above 100 credits confirms inline in the bar: "Enrich 312 people for 624 credits? 1,838,376 will remain. Enrich · Cancel". Below that, the button acts at once.
+- **Enrich opens `X-enrich` from the selection bar**, rather than spending from the bar. The panel is flat and holds four things before its button: what to reveal, as a choice with a price on each option ("Verified email · 2 credits each" · "Email and mobile · 10 credits each"); the per-row estimate; the total and the balance after it ("624 credits · 1,838,376 left"); and the exclusions, stated rather than silently applied — "18 of 25 carry a do-not-call flag; a mobile for those is charged and cannot be called — excluded; include them anyway". Nothing about the spend is behind a door, and the same panel opens from the Needs enrichment view and from the import wizard, because it is the same decision in three places.
+- A spend below that threshold still prints its total on the button; above 100 credits the panel is the confirmation, and there is no second dialog after it.
 - Escape clears the selection. It survives paging and sorting; a filter change clears it with an undoable toast.
+
+### The form submission on a contact
+
+When a person arrives through a form, the answers they typed are a note on the contact titled "Form: {name}, {date}", and it sits at level one on the record while the stage is still pre-first-touch — not behind the history door. The reason is plain: the only thing anyone knows about that person is what they wrote, and the first email is written from it. Once the person has been contacted, the note takes its place in the timeline like any other item. The note records which fields were asked and which were enriched, so nobody mistakes an enrichment guess for something the person said.
 
 ### Credit cost at the moment of intent
 
@@ -175,7 +187,7 @@ Same items, no level change. Header: "People · 312", **Add people**. Views scro
 
 ### By role and by business
 
-Level-one sets follow §4 and the seeded views. SDR: sequence-first chips and buttons. AE: account-first chips (Company, Owner, Stage, Not contacted), Phone and Last activity columns, stage badge. Marketer: audience chips (Seniority, Company size, Industry, In list), list and export buttons. Admin: Owner and Synced to CRM chips, Assign owner in the selection bar. Fathom's admin is a founder doing outbound: the SDR's page plus Enrich, Research and Reveal at level one, no Owner, no CRM items. Halyard's SDR keeps Company size, Industry and Location as chips because the ICP changes with the client, and Export in the bar because lists go to clients. Ridgeline swaps sequence for signals: Signals is a chip, a column and the default view; Add to sequence drops to the menu; Change stage becomes a row button.
+Level-one sets follow §4 and the seeded views. SDR: sequence-first chips and buttons, with **Persona** first among them. AE: account-first chips (Company, Owner, Stage, Not contacted), Phone and Last activity columns, stage badge. Marketer: audience chips (**Score**, Seniority, Company size, Industry, In list) with the published threshold printed beside the Score chip, list and export buttons. Admin: Owner and Synced to CRM chips, Assign owner in the selection bar. Fathom's admin is a founder doing outbound: the SDR's page plus Enrich, Research and Reveal at level one, no Owner, no CRM items. Halyard's SDR keeps Company size, Industry and Location as chips because the ICP changes with the client, and Export in the bar because lists go to clients. Ridgeline swaps sequence for signals: Signals is a chip, a column and the default view; Add to sequence drops to the menu; Change stage becomes a row button.
 
 ## 4. Usage items
 
@@ -186,9 +198,12 @@ Weekly use is the share of active users in a role touching the item in a typical
 | Search | 85 | 60 | 25 | 25 | Ridgeline SDR 60 |
 | Result count | 90 | 60 | 40 | 30 | |
 | Saved views | 55 | 15 | 25 | 10 | Halyard SDR 80, admin 35; Fathom SDR 40, admin 30; Ridgeline SDR 30 |
+| Needs enrichment (a shipped view, with its count) | 15 | 5 | 8 | 25 | Halyard admin 35, SDR 22; Fathom admin 20, SDR 14 |
 | Save view | 12 | 3 | 8 | 5 | Halyard SDR 18, admin 15 |
 | Share view | 4 | 1 | 5 | 8 | Halyard admin 25; Fathom 0 |
 | Set default · Rename · Delete · Alerts | 3 · 3 · 2 · 3 | 2 · 1 · 1 · 2 | 2 · 2 · 2 · 4 | 4 · 2 · 2 · 1 | Halyard SDR default 10; Ridgeline alerts SDR 12, AE 6 |
+| Filter: Persona | 30 | 10 | 35 | 6 | Ridgeline SDR 20, Mkt 40; Fathom 12 |
+| Filter: Score (bands, and above the MQL threshold) | 30 | 25 | 55 | 10 | Ridgeline Mkt 60, SDR 35; Fathom 2 |
 | Filter: Title | 45 | 20 | 25 | 10 | Ridgeline SDR 20; Fathom admin 40 |
 | Filter: Email | 40 | 12 | 30 | 8 | Fathom admin 35 |
 | Filter: Not in a sequence | 45 | 8 | 5 | 3 | Ridgeline SDR 6; Fathom admin 40 |
@@ -220,6 +235,7 @@ Weekly use is the share of active users in a role touching the item in a typical
 | Column: Owner | 18 | 30 | 10 | 30 | Fathom 3 |
 | Column: Phone | 15 | 25 | 3 | 5 | Halyard SDR 15; Fathom 25 |
 | Column: Signals | 12 | 12 | 8 | 3 | Ridgeline SDR 55, AE 40; Fathom 22 |
+| Column: Score | 25 | 12 | 45 | 8 | Ridgeline Mkt 50, SDR 30 |
 | Column: Location | 12 | 10 | 12 | 4 | Halyard SDR 18 |
 | Column: Lists | 4 | 3 | 20 | 3 | |
 | Column: Seniority · Department · Company size · Industry | 4 · 3 · 4 · 4 | 5 · 4 · 10 · 8 | 12 · 10 · 15 · 15 | 2 · 2 · 3 · 3 | |
@@ -238,12 +254,15 @@ Weekly use is the share of active users in a role touching the item in a typical
 | Row: One-off email | 12 | 18 | 1 | 2 | |
 | Row: Research agent (12 credits) | 10 | 8 | 2 | 3 | Fathom 30 |
 | Row: Open company · Edit · Note · Copy email | 10 · 4 · 4 · 4 | 15 · 12 · 15 · 8 | 3 · 3 · 1 · 2 | 3 · 8 · 1 · 2 | |
+| Row: Job change · confirm and update | 12 | 6 | 3 | 4 | Ridgeline SDR 30, AE 12; Fathom 18 |
 | Row: Add to deal · Do not contact ✱ · Assign owner · Push to CRM · Merge · Remove ✱ | 3 · 4 · 3 · 4 · 1 · 3 | 12 · 4 · 6 · 6 · 1 · 2 | 0 · 3 · 2 · 2 · 1 · 2 | 1 · 4 · 15 · 10 · 4 · 6 | Ridgeline AE deal 18; Fathom owner 0, CRM 1 |
 | Bulk: Select rows, page, all matching | 50 | 20 | 30 | 15 | Fathom admin 40 |
 | Bulk: Limit per company | 10 | 2 | 5 | 1 | |
 | Bulk: Add to sequence | 45 | 10 | 2 | 4 | Ridgeline SDR 8; Fathom admin 40 |
 | Bulk: Add to list | 28 | 8 | 35 | 5 | Fathom admin 20 |
 | Bulk: Enrich (2 credits each) | 12 | 4 | 8 | 8 | Fathom 25 |
+| Bulk: the enrichment panel (what to reveal, estimate, total, balance after) | 45 | 15 | 10 | 10 | Fathom admin 80, SDR 55; Halyard 30 / 30 |
+| Bulk: do-not-call rows excluded from a mobile reveal ✱ | 30 | 8 | 4 | 10 | Fathom admin 60, SDR 40 |
 | Bulk: Export CSV | 8 | 5 | 25 | 15 | Halyard SDR 30, admin 40 |
 | Bulk: Stage · Research · Email · Assign owner · Push to CRM · Merge · Remove ✱ | 4 · 4 · 3 · 2 · 3 · 0.5 · 1 | 8 · 4 · 6 · 3 · 3 · 0.5 · 1 | 2 · 2 · 2 · 2 · 3 · 1 · 2 | 3 · 3 · 1 · 20 · 10 · 3 · 5 | Fathom research 25, owner 0, CRM 1; Halyard admin owner 20 |
 | ✱ Credit cost and balance before enrich, reveal or research | 25 | 15 | 5 | 15 | Fathom SDR 35, admin 40 |
@@ -253,19 +272,19 @@ Weekly use is the share of active users in a role touching the item in a typical
 | Command palette | 15 | 10 | 5 | 8 | |
 | Shortcuts sheet · Copy view link · Sync from CRM · Print | 4 · 4 · 1 · 0.5 | 3 · 3 · 2 · 1 | 2 · 4 · 1 · 1 | 2 · 4 · 8 · 1 | Fathom sync 1 |
 
-**Shape check.** One rule across this group: the denominator is every item in `people.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 114 items in the file; head 20 and above, body 5–20, tail under 5; target about 15–25 / 25–35 / 45–60.
+**Shape check.** One rule across this group: the denominator is every item in `people.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 121 items in the file; head 20 and above, body 5–20, tail under 5; target about 15–25 / 25–35 / 45–60.
 
 | Pair | Items | Head | Body | Tail |
 |---|---|---|---|---|
-| Meridian SDR | 114 | 27 (24%) | 29 (25%) | 58 (51%) |
-| Meridian AE | 114 | 23 (20%) | 43 (38%) | 48 (42%) |
-| Meridian marketer | 112 | 19 (17%) | 42 (38%) | 51 (46%) |
-| Meridian admin | 114 | 10 (9%) | 48 (42%) | 56 (49%) |
-| Fathom SDR | 111 | 34 (31%) | 22 (20%) | 55 (50%) |
-| Halyard SDR | 114 | 31 (27%) | 29 (25%) | 54 (47%) |
-| Ridgeline SDR | 114 | 26 (23%) | 31 (27%) | 57 (50%) |
+| Meridian SDR | 121 | 32 (26%) | 31 (26%) | 58 (48%) |
+| Meridian AE | 121 | 24 (20%) | 49 (40%) | 48 (40%) |
+| Meridian marketer | 119 | 22 (18%) | 44 (37%) | 53 (45%) |
+| Meridian admin | 121 | 11 (9%) | 53 (44%) | 57 (47%) |
+| Fathom SDR | 118 | 37 (31%) | 25 (21%) | 56 (47%) |
+| Halyard SDR | 121 | 37 (31%) | 30 (25%) | 54 (45%) |
+| Ridgeline SDR | 121 | 32 (26%) | 32 (26%) | 57 (47%) |
 
-The Meridian admin head is under the band because the admin does not live here. Fathom's and Halyard's SDR heads run over it, which is the point of those customers: one person doing every job, and ten ICPs in one week. Customer success does not hold this page at Meridian or Ridgeline, so there is no row for it: four decision-critical items would otherwise be counted for a page that seat cannot open.
+The Meridian admin head is under the band because the admin does not live here. Fathom's and Halyard's SDR heads run over it, which is the point of those customers: one person doing every job, and ten ICPs in one week. Customer success does not hold this page at Meridian or Ridgeline, so there is no row for it: five decision-critical items would otherwise be counted for a page that seat cannot open.
 
 ## 5. Before: the common version
 
@@ -310,9 +329,9 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 
 | Role | Level one | Level two, top of its door |
 |---|---|---|
-| SDR | Search, count, views; chips Title, Email, Not in a sequence, Stage, Owner, Company; columns Name, Company, Email, Stage, Sequence, Last contacted; the quick look; row buttons Sequence, List, Call; bulk Add to sequence, Add to list; Add people; price on every paid control | Seniority, Company size, Location, Not contacted, In list, Signals; Phone and Last activity columns; Enrich, Reveal phone, Change stage, One-off email; bulk Enrich, Export |
+| SDR | Search, count, views; chips Persona, Title, Email, Not in a sequence, Stage, Owner, Company; columns Name, Company, Email, Stage, Sequence, Last contacted; the quick look; row buttons Sequence, List, Call; bulk Add to sequence, Add to list; Add people; price on every paid control | Seniority, Company size, Location, Not contacted, In list, Signals; Phone and Last activity columns; Enrich, Reveal phone, Change stage, One-off email; bulk Enrich, Export |
 | AE | Chips Title, Stage, Owner, Company, Not contacted; columns add Phone, Last activity, Owner; row buttons Sequence, Call; stage badge | One-off email, Add a note, Edit fields, Add to a deal; Signals; Last activity date |
-| Marketer | Chips Title, Email, Seniority, Company size, Industry, In list; columns Name, Company, Email, Lists; row button List; bulk Add to list, Export | Department, Location; Industry and Company size columns; Import CSV |
+| Marketer | Chips Score (with its published threshold beside it), Title, Email, Seniority, Company size, Industry, In list; columns Name, Company, Email, Lists, Score; row button List; bulk Add to list, Export | Department, Location; Industry and Company size columns; Import CSV |
 | Admin | Chips Owner, Synced to CRM; columns Name, Company, Email, Owner; bulk Assign owner | Source, Created, Custom fields; CRM column; Push to CRM; Import; Sync now |
 
 **Across the businesses.** Fathom: the admin's page is the SDR's plus Enrich, Research and Reveal at level one; no Owner chip or column; no CRM items exist. Halyard: Company size, Industry and Location join the SDR's chips, Export joins the selection bar, Share a view is level one for the ops lead. Ridgeline: Signals and Last activity are chips and columns for SDR and AE; Add to sequence and Not in a sequence fall to level two; Change stage rises to a row button.
@@ -322,11 +341,11 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 | Door | Label | Content | Container | Persists |
 |---|---|---|---|---|
 | Filter chip | "Title ▾", then "Title: VP Sales ▾" | Values with counts | Popover in place | Value, in the view |
-| All filters | "All filters (31) ▾", "2 more active" | Every filter, flat, grouped | Non-modal side panel, pinnable | Open and pinned |
+| All filters | "All filters (33) ▾", "2 more active" | Every filter, flat, grouped | Non-modal side panel, pinnable | Open and pinned |
 | Views | "All views (12) ▾" | Mine, shared, search | Popover | Active view |
 | Save view | "Save view" | Name field | Inline | – |
 | Add people | "Add people ▾" | Database, Import CSV, Sync from CRM | Menu | – |
-| Columns and density | "Columns and density ▾" | Checklist, order, reset, density, rows per page | Popover | All, per user and view |
+| Columns and density | "Columns and density · 6 of 25 ▾" | Checklist, order, reset, density, rows per page | Popover | All, per user and view |
 | Row menu | "Actions for Amara Okonkwo" | Every row action with shortcut | Menu | – |
 | Stage badge | "Cold ▾" | Seven stages | Popover | – |
 | Selection menu | "Edit or export selected ▾" | Stage, email, research, owner, CRM, merge, export, remove | Menu | – |
@@ -366,7 +385,7 @@ Modelled on Apollo's People page, from Apollo's knowledge base (fetched through 
 
 **Step 3, rule 3: split by task frequency, not user skill.** "Most popular" versus "more", and the word "advanced", are deleted. One panel; what sits in the bar is decided per seat and business by the numbers, not by a mode. The marketer's bar and the SDR's bar differ; neither is labelled for its audience. Density (Comfortable, Compact) is the one user-controlled mode, because it asks the user to declare nothing about their skill. Evidence: Cooper's perpetual intermediates; Home Assistant 2026 on audience labels; McGrenere, Baecker and Booth 2002, where a two-interface design the user fills in themselves beat adaptive menus (13 of 20 preferred it); Airtable's 2023 experiment for routing by the job rather than the title; Salesforce and AWS Cloudscape for density as a legitimate mode.
 
-**Step 4, rule 4: make the door obvious and honest.** One "Add to list", with the count in the label. "All filters (31)", "All views (12)", "Columns and density", "Edit or export selected", "Actions for Amara Okonkwo". Chevron and text on every door. Doors that cannot apply are removed: no CRM items at Fathom. Evidence: ryan P., Capterra, 31 Oct 2025; NN/g 2014, 0% click-through on an unlabelled icon; Microsoft Windows UX Guide, remove rather than disable.
+**Step 4, rule 4: make the door obvious and honest.** One "Add to list", with the count in the label. "All filters (33)", "All views (12)", "Columns and density · 6 of 25", "Edit or export selected", "Actions for Amara Okonkwo". Chevron and text on every door. Doors that cannot apply are removed: no CRM items at Fathom. Evidence: ryan P., Capterra, 31 Oct 2025; NN/g 2014, 0% click-through on an unlabelled icon; Microsoft Windows UX Guide, remove rather than disable.
 
 **Step 5, rule 5: keep context across the boundary.** Select all matching and Limit per company sit together and restate the result. An active level-two filter shows as a chip beside its effect. The default view is set on the page. The panel remembers its pin. Evidence: Fluent 2, never split referenced information across items; Microsoft Windows UX Guide on persisting expand state; Cowan 2001.
 

@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-Campaigns is where the marketer sends email to many people at once and watches what came back. Two objects live here. An **audience** is a set of people built from lists and segments, with the people who must not be mailed removed. A **campaign** sends to an audience. An **email campaign** sends once, now or at a scheduled time. A **lifecycle campaign** runs: a trigger (trial day 7, renewal in 60 days, seat usage over 80%) adds people and the campaign mails them while it runs.
+Campaigns is where the marketer sends email to many people at once, collects the people who put their hand up, and watches what came back. Three objects live here. A **form** is a page a visitor fills in; its submissions are enriched, within a daily credit cap, and routed.  An **audience** is a set of people built from lists and segments, with the people who must not be mailed removed. A campaign sends to an audience. An **email campaign** sends once, now or at a scheduled time. A **lifecycle campaign** runs: a trigger (trial day 7, renewal in 60 days, seat usage over 80%) adds people and the campaign mails them while it runs, and it is measured on enrolment over the period rather than on one send.
 
 Who lives here: the marketer, daily, for an hour or two. The RevOps admin, weekly, for sending policy, owners and anything paused. Nobody else has the page in their navigation. The one thing the marketer must never lose sight of: **what is about to go out, to how many people, and what it cost last time** (bounces and unsubscribes). Every other number is a result they can wait for.
 
@@ -35,7 +35,9 @@ There is no `channel` field: `kind` says whether the campaign sends once or runs
 | `owner` | Owner column | `b.roles` users |
 | `sendsByDay[]` (30 days, lifecycle), `variants[]` (0 or 2), `activity[]` | Detail doors | New; two Meridian campaigns have A/B variants |
 | `Audience.id, name, type ("Static" \| "Segment"), size, lastRebuilt, sources[]` | Audiences view | New. Meridian 6, Ridgeline 5. Sources name Lists page lists ("Webinar attendees, August") or segment text ("Trial day 7–14"). A list that feeds itself is owned by Lists: the audience shows a read-only line, "Fed by Q4 enterprise outbound · new matches added automatically", linking to that list, and the switch that turns the feed off lives there ([04 Lists](04-lists.md)) |
-| `suppressed: {unsubscribed, bounced, inSequence}` | Audiences view, detail | New; `inSequence` counted from `seed.contacts` |
+| `suppressed: {unsubscribed, bounced, customers, openDeals, closedLost, inSequence}` | Audiences view, detail | New. Six counts, not three. **Unsubscribed and bounced are always applied** and are marked so; **customers, open deals, closed-lost and in-sequence are the four the marketer chooses**, and each shows whether it is on. `inSequence` and `openDeals` are counted from `seed.contacts` and `seed.deals` |
+| `Audience.mode: "live" \| "frozen"`, `refreshAt`, `frozenAt`, `feeds` | Audiences view, detail | New. A live audience keeps matching and keeps adding people to the campaign it feeds. Meridian: 4 live, 2 frozen. Ridgeline: all 5 live |
+| `Form { id, name, status, fields[], enrichOnSubmit, enrichCapDaily, enrichUsedToday, matched, submissions7d, routesTo, reportsTo, lastSubmission, unrouted }` | Forms view, form record | New. Meridian 4 forms, Ridgeline 6, Fathom and Halyard none. A field is marked `asked` or `enriched` with its credit cost |
 | `usedBy` | Audiences door | Derived from campaigns |
 | Policy line: bounce guard thresholds, the observed bounce rate, daily cap and used | Above the table | The thresholds are one pair for the whole product, owned by Settings (`mail.bounce-guard`): warn at 4%, pause at 6%, adjustable by the admin. This page reads them and prints the observed rate beside them; it never carries a number of its own. Cap and used are new (Meridian 10,000 / 3,400; Ridgeline 4,000 / 900) |
 
@@ -43,23 +45,49 @@ Fathom and Halyard get empty arrays. Recipients are sampled from `seed.contacts`
 
 ## 3. Features
 
-**Shown.** A view switch, "Campaigns 12 · Audiences 6", above one table. Level-one columns for the Meridian marketer: Campaign (name, kind, subject on a second line), Status, Audience (name and size), Delivery (sent, delivered %, bounced count and rate, marked when it passes the workspace's warn threshold), Opened %, Clicked %, Replied, Converted (count and goal), Unsubscribed, Send (scheduled, last or next send). Rates carry their count in muted text; nothing is hover-only. Above the table, one line: "Bounce guard: warn 4%, pause 6% · observed 0.8% this week · 3,400 of 10,000 sends used today · mail.meridian.io healthy". The two thresholds are the workspace's, set in Settings; the 0.8% is what actually happened. Audiences view columns: Audience, Type, Size, Suppressed (three counts), Last rebuilt, Used by.
+**Shown.** A view switch, "Campaigns 12 · Audiences 6 · Forms 4", above one table. Level-one columns for the Meridian marketer: Campaign (name, kind, subject on a second line), Status, Audience (name and size), Delivery (sent, delivered %, bounced count and rate, marked when it passes the workspace's warn threshold), Opened %, Clicked %, Replied, Converted (count and goal), Unsubscribed, Send (scheduled, last or next send). Rates carry their count in muted text; nothing is hover-only. Above the table, one line: "Bounce guard: warn 4%, pause 6% · observed 0.8% this week · 3,400 of 10,000 sends used today · mail.meridian.io healthy". The two thresholds are the workspace's, set in Settings; the 0.8% is what actually happened. Audiences view columns: Audience, Type, Mode, Size, Net size, Suppressed (six counts), Last rebuilt, Used by. Forms view columns: Form, Status, Submissions 7 days, Enrichment spend against the cap, Routes to, Reports to, Last submission.
 
-**Row actions** depend on status (object state, rule 6), appear on hover and focus, and repeat in the row menu, which is named for what it holds: "Open, duplicate, compare, export results, archive, delete draft". Draft: Edit, Send test. Scheduled: Pause (holds the send, keeps the time), Send test. Sending or Running: Pause. Paused: Resume (if the kept time has passed, Resume asks for a new one). Sent: Duplicate. The menu adds Open, Duplicate, Compare with…, Export results, and below a divider Archive and, for drafts, Delete draft, whose confirmation reads "Deletes the draft and its test sends. Sent campaigns are archived, never deleted."
+**Row actions** depend on status (object state, rule 6), appear on hover and focus, and repeat in the row menu, which is named for what it holds: "Open, duplicate, compare, export results, archive, delete draft". Draft: Edit, Send test. Scheduled: Pause (holds the send, keeps the time), Send test. Sending or Running: Pause. Paused: Resume (if the kept time has passed, Resume asks for a new one). Sent: Duplicate. The menu adds Open, Duplicate, Compare with…, Export results, and below a divider Archive and, for drafts, Delete draft, whose confirmation reads "Deletes the draft and its test sends. Sent campaigns are archived, never deleted." **Archiving asks for one line** and writes it to the campaign's Notes and to its row in Reports: "Retired 14 Sep 2026 by Jonas Weber — audience overlapped with the trial nudge." Results are kept. Twice a year somebody asks why a campaign stopped, and a date with no reason cannot answer (rule 8).
 
 **Bulk.** Pause, Resume, Archive, Change owner (admin; the marketer sees "Change owner: Daniel Okafor can do this"). The shared table behaviours — sortable headers, the columns popover, the bulk bar, skeleton loading, row actions on focus — are specified once in [02 People](02-people.md); this spec records only its deltas.
 
-**Page actions.** "New campaign" (primary) asks Email or Lifecycle, then opens a draft detail page. "New audience" opens a draft: name, pick lists, add segment filters, with size and suppressed counts updating as you pick.
+**Page actions.** "New campaign" (primary) asks Email or Lifecycle, then opens a draft detail page. "New audience" opens a draft: name, pick lists, add segment filters, mode (live with a cadence, or frozen), with size, net size and the six suppressed counts updating as you pick. "New form" opens a form draft.
 
-**Filters and search.** Search on name, subject and audience. Level-one filters: Status, Kind. A door named for its contents, "More filters: owner, audience, date, goal", ends the filter row and shows the count of active ones. Sort by any header; it persists.
+**Hand to sales**, on an audience. It writes the people to a named sales-owned list and states the consequence **before** the click: "Adds 42 people to 'Marketing-qualified, September', owned by Marcus Adeyemi. Nothing is sent. Marcus decides what happens next." The marketer never reaches the sequence enrolment panel — that is the SDR's seat, and the line says so rather than leaving a dead control (rule 4, seat gaps explain themselves).
+
+**Filters and search.** Search on name, subject and audience. Level-one filters: Status, Kind. A door named for its contents, "Additional filters: owner, audience, date, goal (n)", ends the filter row and carries the count of active ones. "More" names nothing and is not used anywhere in the product (PLAN.md, door labels, 14 September 2026). Sort by any header; it persists.
 
 **Columns.** A door at the end of the header row, named for what it holds: "Columns: owner, trigger, last send, from, tags, created (6)". Choices persist per user. At Ridgeline, Trigger and Last send are default and Send is not, so the door reads "Columns: owner, from, tags, created, send (5)".
 
-**Campaign detail** at `/ollopa/campaigns/<id>`, a page with a breadcrumb back. Header: name, kind, status with reason, owner, the row's actions in the same order. Body: Results (sent → delivered → opened → clicked → replied → converted, count and rate each; bounced and unsubscribed on the same line), Audience (name, size, three suppressed counts, "Open audience"), Content (subject, preview text, from, rendered preview), then Schedule (time, timezone, send speed) for email or Trigger (trigger, delay, exit rule) for lifecycle. Below, the doors listed in §6, one level deep; "Recipients" opens a drawer with a per-person table. Doors that do not apply are removed. At Ridgeline "Sends by day" is open by default, directly under Results.
+**Campaign detail** at `/ollopa/campaigns/<id>`, a page with a breadcrumb back. Header: name, kind, status with reason, owner, the row's actions in the same order. Body: Results (sent → delivered → opened → clicked → replied → converted, count and rate each; bounced and unsubscribed on the same line), then, for an event or link-goal campaign, one level-one line under Results — **"Build an audience from: attended 212 · did not attend 84 · hand-raisers 31"**, each one click to a pre-filled audience, because the reason to read the result is to act on it. Audience (name, **mode and refresh cadence with Freeze**, total size, net size, the **six suppressed counts** with the two always-applied ones marked, every count a link into the records panel, "Open audience"), Content (subject, preview text, from, and **the desktop and 400 px previews side by side**, not one behind a menu — a marketer compares them, and a comparison across a menu is the split rule 5 forbids), then Schedule (time, timezone, send speed) for email or Trigger (trigger, delay, exit rule, and the line "Measured on enrolment over the period") for lifecycle.
+
+The **QA line** sits directly above the Schedule button, never disabled and never blocking: **"QA: 2 checks failed — merge fields, plain-text version. Run 14:02 by Jonas Weber, who built this campaign"**, or **"QA not run"**. It travels with a request for approval, so the approver sees it too. A send is the sender's decision; the page's job is to make sure nobody makes it blind.
+
+**While Sending**, the row and the detail do not show the same columns as a finished send. They show **sent-so-far against the total**, the **observed bounce rate against both thresholds** (warn 4%, pause 6%), and **Pause the same size as Schedule**. A send in flight is the one moment the page has a safety state, and the columns of a completed send hide it. Below, the doors listed in §6, one level deep; "Recipients" opens a drawer with a per-person table. Doors that do not apply are removed. At Ridgeline "Sends by day" is open by default, directly under Results.
 
 **Send test** is a small dialog: recipient (yours, prefilled), variant if any, Send. The test carries a working "test unsubscribe" link that unsubscribes nobody. The toast names the mailbox.
 
-**Schedule** is a dialog: date, time, timezone (workspace default or each recipient's local time), send speed, and a summary "Sends to 1,240 people from marketing@meridian.io on Tue 16 Sep, 09:00 CET" with the suppressed counts. A marketer schedules their own sends; there is no queue for ordinary work. Above the workspace's second-approval threshold — a Settings item, default 1,000 recipients or 500 credits in one action — the button reads "Request approval", the dialog states what the approver will see, and the row shows "Awaiting approval: Daniel Okafor". The threshold is read from Settings, never written here, and the number in the dialog is the workspace's current one.
+**Schedule** is a dialog: date, time, timezone (workspace default or each recipient's local time), send speed, and a summary "Sends to 1,240 people from marketing@meridian.io on Tue 16 Sep, 09:00 CET" with the suppressed counts. **The sender approves their own send.** There is no queue for ordinary work: a marketer schedules their own campaign, and the QA line and the suppression counts are what makes that safe. Above the workspace's second-approval threshold — a Settings item, default 1,000 recipients or 500 credits in one action — the button reads "Request approval", the dialog states what the approver will see, and the row shows "Awaiting approval: Daniel Okafor". The threshold is read from Settings, never written here, and the number in the dialog is the workspace's current one.
+
+**The audience record.** Level one, above everything else: **total size, net size after suppressions, and the six counts on one line** — "1,412 total · 1,240 after suppressions · unsubscribed 84 and bounced 21, always applied · customers 42 · open deals 18 · closed-lost 7 · in sequence 0, off". Every one of those numbers is a link that opens the records panel, titled by the number, so "42 customers" can be read as forty-two names in one click. The door beside them, "Suppression rules: customers, open deals, closed-lost, in sequence (4 applied)", holds the rules and the uploaded suppression list — the rules, not the counts. A count behind a door is a count nobody checks before a send.
+
+Beside the size, the audience's mode, in words: **"Mode: live · refreshes daily 06:00 · new matches are added to Q4 launch announcement · Freeze"**, or **"Frozen at 1,240 on 12 Sep"**. Off is one click. A live audience that keeps mailing new people is a commitment the marketer made once and must be able to see every time (rule 7), and which campaign the new matches land in belongs beside the cadence that finds them (rule 5).
+
+An audience also carries "Built for: Q4 launch announcement" as a link where one campaign owns it; the campaign's brief lives in that campaign's Notes, which is what Notes is for.
+
+**Pre-send QA (`X-qa`).** A flat panel on the campaign record — no doors inside it — holding eight checks, each pass, fail or not run:
+
+1. Every merge field resolves for every recipient. 2. Every link works and is tracked. 3. The unsubscribe link is present and points at the workspace footer. 4. The plain-text version exists. 5. The from mailbox is warmed and under its daily cap. 6. The subject renders under 60 characters on a phone. 7. The audience's suppressions are applied and its mode is what the sender expects. 8. No recipient has had another campaign in the frequency-cap window.
+
+Each failure is stated **in words** — "3 of 1,240 recipients have no first name; they will read 'Hi ,'" — with a **Fix** link that navigates to the thing that is wrong. Nothing is a red dot. The panel's last line names **who ran the checks and when**, and says so when the runner is the person who built the campaign: "Run 14:02 by Jonas Weber, who built this campaign."
+
+**Forms (`R-form`).** A form is a record from the shared template. Its sections:
+
+- **Fields.** Each one marked **asked** or **enriched (2 credits)**. A field already known for a returning visitor is **removed from the form, not pre-filled invisibly**, and the form tells the visitor in one line: "We already have your company and role." Silently posting data the visitor did not see is not disclosure.
+- **Enrichment**, level one and decision-critical: **"Enrichment cap 400 credits a day · 312 used today · 46 of 61 submissions matched"**. At the cap, enrichment stops and **submissions are still accepted and still routed**, marked "not enriched — daily cap reached 15:40" on the person and on the run row, with **"Raise the cap"** beside it. A form that starts refusing people because a credit budget ran out is a form that loses the pipeline it exists to collect.
+- **Routing**, with the rule that decides and the count that **could not be routed**, never behind a door.
+- **Reporting**: which campaign or report the submissions count towards.
+- The submission's answers become a note on the contact titled "Form: Demo request, 14 Sep", shown at level one while the contact is pre-first-touch, not behind the history door.
 
 **States.** Empty (Fathom, Halyard): "No campaigns yet. A campaign sends one email to an audience built from your lists. Start with an audience, or create an email campaign." with both buttons; Halyard adds "This workspace has no marketing domain. Ravi Sethi can add one in Settings › Email sending." Loading: eight skeleton rows and a skeleton policy line. Error: "Results didn't load. Showing last night's snapshot." with Retry; actions stay enabled. No results: the template's "Nothing matches" row. No access (SDR, AE, CS): "Campaigns is for marketers and admins. At Meridian, Jonas Weber and Daniel Okafor can see it." A deleted audience shows "Audience removed; 1,240 people at send time".
 
@@ -142,29 +170,47 @@ Two marks changed in this pass, to keep rule 7 to what it covers — price, fees
 | **Audiences** | | | |
 | Audience name, type, size, rebuilt | 50 | 10 | 50 |
 | Source lists and segment filters | 15 | 4 | 15 |
-| Suppressed counts ★ | 25 | 15 | 25 |
+| Suppressed: six counts, two always applied, four chosen ★ | 45 | 15 | 55 |
+| Live or frozen, the refresh cadence, and what it feeds ★ | 45 | 8 | 60 |
 | New audience | 12 | 2 | 12 |
 | Rebuild now | 12 | 2 | 12 |
 | Campaigns using this audience | 15 | 4 | 15 |
 | Upload a suppression list | 4 | 3 | 4 |
 | Frequency cap per person | 4 | 5 | 4 |
 | Delete audience | 2 | 1 | 2 |
+| **QA** | | | |
+| Run the eight pre-send checks | 55 | 8 | 60 |
+| The failures in words, each with a Fix link ★ | 35 | 6 | 40 |
+| Who ran the checks and when | 30 | 10 | 30 |
+| **Forms** | | | |
+| Form row: status, submissions, spend, routes to, reports to | 25 | 10 | 85 |
+| Submissions in the last 7 days | 25 | 10 | 90 |
+| Enrichment cap, used today, and how many matched ★ | 18 | 12 | 75 |
+| Submissions that could not be routed ★ | 15 | 10 | 45 |
+| Where submissions go, and the rule that decides | 12 | 12 | 50 |
+| Field editor: each field marked asked or enriched (n credits) | 10 | 4 | 35 |
 | **Policy** | | | |
 | Bounce guard thresholds (warn 4%, pause 6%) with the observed rate ★ | 15 | 30 | 15 |
 | Daily send cap and used | 12 | 15 | 12 |
 | Marketing domain health | 4 | 20 | 4 |
 | Consent rules by region | 3 | 4 | 3 |
 
-**Shape check** (69 items, computed from the file with `shape()`):
+**Shape check** (79 items, computed from the file with `shape()`):
 
 | Pair | Head ≥20 | Body 5–20 | Tail <5 | Level one |
 |---|---|---|---|---|
-| Meridian, marketer | 23 (33%) | 19 (28%) | 27 (39%) | 25 |
-| Meridian, admin | 13 (19%) | 24 (35%) | 32 (46%) | 17 |
-| Ridgeline, marketer | 23 (33%) | 17 (25%) | 29 (42%) | 25 |
-| Fathom or Halyard, admin | 0 | 1 | 68 | 7, all critical, over an empty table |
+| Meridian, marketer | 29 (37%) | 23 (29%) | 27 (34%) | 33 |
+| Meridian, admin | 13 (16%) | 33 (42%) | 33 (42%) | 20 |
+| Ridgeline, marketer | 33 (42%) | 17 (22%) | 29 (37%) | 36 |
+| Fathom or Halyard, admin | 0 | 1 | 78 | 11, all critical, over an empty table |
 
-The admin fits the target shape. The marketer's head is above the 25% target because this is the role's first screen and the items are daily: the 26 level-one items spread over three surfaces (list, detail, audiences), nine or ten each. Hiding a daily item to fit a curve would break rule 1. The seven that stay level one on Fathom's and Halyard's empty tables are the delivery cell, unsubscribes, pause or resume, delete draft, the audience block, the suppressed counts and the bounce guard line.
+The admin fits the target shape, and moves further into it as the page grows: the QA panel, the audience mode and the forms are the marketer's work, not hers.
+
+The marketer's head is above the 25% target and moved further above it in this pass, from 33% to 37% at Meridian and from 33% to 42% at Ridgeline. The cause is one thing: the page gained the pre-send QA panel, the live-or-frozen mode and the forms object — three pieces of the marketer's daily work that previously existed in no spec. Ridgeline is the extreme because it is a product-led business, where the form is where the pipeline starts and the form row is read every day; Meridian's marketer has four forms and checks them weekly, so every Forms baseline there is about half the Ridgeline number.
+
+This is stated, not fitted. Hiding a daily item to make a curve look right is exactly the failure rule 1 describes, and the page did not get deeper as it got wider: the QA panel is flat, the six suppression counts came **out** of a door onto the audience record, and the previews came out of a menu onto the page. The one honest concession is that Ridgeline's marketer now has a very wide first screen, and the twice-yearly review named in §6 is where items get deleted rather than re-rated.
+
+The eleven that stay level one on Fathom's and Halyard's empty tables are the delivery cell, unsubscribes, pause or resume, delete draft, the audience block, the six suppressed counts, the audience mode, the QA failures, the enrichment cap, the unrouted count and the bounce guard line.
 
 ## 5. Before: the common version
 
@@ -190,13 +236,13 @@ The admin fits the target shape. The marketer's head is above the 25% target bec
 
 ## 6. After: the disclosed version
 
-**Layout.** One page, one table, one view switch, a policy line above. Level one for the Meridian marketer is the ten columns and six actions in §3; the admin swaps Replied, Opened/Clicked and Send for Owner and the Owner filter. At Ridgeline the marketer gets Trigger and Last send in place of Send, and the detail opens "Sends by day". At Fathom and Halyard only the critical items remain: the policy line and the empty state.
+**Layout.** One page, one table, one view switch across three objects (Campaigns · Audiences · Forms), a policy line above. Level one for the Meridian marketer is the ten columns and six actions in §3; the admin swaps Replied, Opened/Clicked and Send for Owner and the Owner filter. At Ridgeline the marketer gets Trigger and Last send in place of Send, and the detail opens "Sends by day". At Fathom and Halyard only the critical items remain: the policy line and the empty state.
 
 **Doors and containers.**
 
 | Door label | Where | Container | Notes |
 |---|---|---|---|
-| More filters: owner, audience, date, goal | End of filter row | In place | Removed under six rows; shows the count of active filters |
+| Additional filters: owner, audience, date, goal (n) | End of filter row | In place | Removed under six rows; carries the count of active filters |
 | Columns: owner, trigger, last send, from, tags, created (6) | End of header row | Popover | Contents and count change by business |
 | Open, duplicate, compare, export results, archive, delete draft | Each row, on a "…" button whose accessible name is that list | Menu | The visible actions for the row's status plus the rare ones. No door in this product is called "More actions" |
 | Sends by day (30 days) | Detail | In place | Open by default at Ridgeline |
@@ -207,7 +253,10 @@ The admin fits the target shape. The marketer's head is above the 25% target bec
 | Delivery settings: tracking, reply-to, unsubscribe text, footer | Detail | In place | Unsubscribe text and its permission stay together (rule 5) |
 | Resend to people who did not open | Detail | In place | Removed unless Sent |
 | Activity (14), Notes | Detail | In place | |
+| Suppression rules: customers, open deals, closed-lost, in sequence (4 applied) | Audience record | In place | Holds the **rules** and the uploaded suppression list. The six **counts** are level one on the record, not in here |
 | Campaigns using this audience (3) | Audience row | Expandable row | |
+| Pre-send checks (8) | Campaign record | Panel, flat, no doors inside | Opened by "Run the checks"; its one-line result stays at level one above Schedule |
+| Fields (7): 5 asked, 2 enriched | Form record | In place | The credit cost per enriched field is on its row |
 | Filters and columns (2 active) | Phone only | Sheet | One door replacing two |
 
 Every door: chevron plus text, a count where there is one, next to what it reveals, keyboard and touch. Inapplicable doors are removed, never disabled.
@@ -216,15 +265,15 @@ Every door: chevron plus text, a count where there is one, next to what it revea
 
 **Accelerators.** The shortcuts in §3, shown in every menu. A "keep results doors open" preference. Duplicate keeps audience, content and schedule and resets results.
 
-**Decision-critical, always visible.** Sent, delivered and bounced with the observed rate beside the workspace's two thresholds (warn 4%, pause 6%, owned by Settings); unsubscribed; suppressed counts; the daily cap and what is used; Pause beside Schedule with the same number of clicks; the schedule summary naming recipients, mailbox, time and who must approve when the send is above the threshold; what Delete draft does, on the item. Status and audience size are on the row too, as head items rather than as rule 7 obligations.
+**Decision-critical, always visible.** Sent, delivered and bounced with the observed rate beside the workspace's two thresholds (warn 4%, pause 6%, owned by Settings); unsubscribed; the six suppression counts on the audience record, with the two always-applied ones marked; whether the audience is live, how often it refreshes and which campaign it feeds; the QA line above Schedule; while a campaign is Sending, sent-so-far against the total with Pause the same size as Schedule; a form's enrichment cap, what is used today and how many submissions matched; the count of submissions that reached nobody; the daily cap and what is used; Pause beside Schedule with the same number of clicks; the schedule summary naming recipients, mailbox, time and who must approve when the send is above the threshold; what Delete draft does, on the item. Status and audience size are on the row too, as head items rather than as rule 7 obligations.
 
-**Removed rather than hidden.** The Report tab. The second and third analytics surfaces (one metric set, defined once). "Include bots" (scanner opens always excluded; the funnel says "excludes 214 scanner opens"). Send test via templates. Per-user unsubscribe text (workspace text, read-only in Delivery settings with "Daniel Okafor can change it"). Folders. Auto-archive by inactivity (nothing moves on its own, rule 6). The device-timezone trap (the dialog names the timezone it will use). Apollo gates click metrics and A/B tests by plan; Ollopa's plan table gates seats, mailboxes, teams and permission profiles, agents, reports, CRM sync, SSO and the API, and campaign results are on every plan — so those two gates are removed rather than reproduced.
+**Removed rather than hidden.** The Report tab. The second and third analytics surfaces (one metric set, defined once). "Include bots" (scanner opens always excluded; the funnel says "excludes 214 scanner opens"). Send test via templates. Per-user unsubscribe text (workspace text, read-only in Delivery settings with "Daniel Okafor can change it"). Folders. Auto-archive by inactivity (nothing moves on its own, rule 6). The device-timezone trap (the dialog names the timezone it will use). Apollo gates click metrics and A/B tests by plan; Ollopa's plan table gates seats, mailboxes, teams and permission profiles, agents, reports, CRM sync, SSO and the API, and campaign results are on every plan — so those two gates are removed rather than reproduced. HubSpot's "Preview and test" dropdown: the desktop and phone previews sit side by side instead. Invisible pre-fill on a form: a field already known is removed and the visitor is told.
 
 **Score.**
 
 1. Decision-critical visible without interaction: 2. Status, audience size, bounces, unsubscribes, policy line, pause.
-2. Every visible item backed by a usage number with a source: 2. All 69 items in `campaigns.ts`.
-3. No path over two levels on any screen size: 2. List → door; detail → door; the drawer holds no doors; phone merges two doors into one.
+2. Every visible item backed by a usage number with a source: 2. All 79 items in `campaigns.ts`. The marketer's head is above the target band and rose in this pass; §4 states it with its cause rather than re-rating a daily item downwards.
+3. No path over two levels on any screen size: 2. List → door; detail → door; the QA panel and the records panel hold no doors; the phone merges two doors into one. Three things moved up a level in this pass — the suppression counts, the phone preview and the QA result — and none moved down.
 4. Doors labelled by content with chevron and text: 2. Every door names its contents and carries a count where there is one; the row menu's accessible name lists what is in it, so nothing in this page is called "More actions".
 5. Doors adjacent, keyboard and touch: 2. Column door in the header row, filter door in the filter row, detail doors under the block they extend.
 6. No dependent information split: 2. Sent/delivered/bounced in one cell; size with suppressed; time with timezone and speed; unsubscribe text with its permission.
@@ -240,6 +289,7 @@ Total 17 of 18.
 - **Rule 1.** Results moved from a tab to the row: 85–95% of marketers read them weekly; under 20% open recipients or links.
 - **Rule 5.** Sent, delivered and bounced became one cell; size and suppressed one block; time, timezone and speed one dialog.
 - **Rule 2.** Three analytics surfaces became one page and one door; the lifecycle campaign became one object instead of five.
+- **Rule 4.** "More filters" became "Additional filters: owner, audience, date, goal (n)", the suppression door became "Suppression rules … (4 applied)", and a QA failure is a sentence with a link that navigates rather than a coloured dot.
 
 ## 8. Review
 
@@ -261,7 +311,12 @@ Total 17 of 18.
 | Dependent fields together | Four pairs in §6 |
 | State persists | Per user and business |
 | Accelerators | Shortcuts, expand-all, keep-open preference, duplicate |
-| Usage shape | Four pairs in §4; the marketer head is above target and the reason is stated |
+| Usage shape | Four pairs recomputed in §4 after ten items arrived; the marketer's head rose to 37% at Meridian and 42% at Ridgeline, stated with its cause and not fitted |
+| Suppressions | Gap: the audience showed three counts and said nothing about which rules were on or whether they were optional. Closed: six counts at level one, the two always-applied ones marked, the rules behind a door named "(4 applied)", and every count a link into the records panel |
+| Live audiences | Gap: nothing said whether an audience kept adding people to a running campaign. Closed: the mode, the cadence and the campaign it feeds sit together at level one with Freeze beside them |
+| Pre-send QA | Gap: no QA existed anywhere in the specs; a marketer could schedule to 1,240 people with broken merge fields. Closed: `X-qa`, eight checks, failures in words with Fix links, the runner named, and a line above Schedule that never disables it |
+| Forms | Gap: forms are inside the boundary as of 15 Sep 2026 and belonged to no spec. Closed: a third object on this page, with the enrichment cap, what is used, what matched and what could not be routed all at level one, and submissions still accepted at the cap |
+| Sending state | Gap: a campaign in flight showed a finished send's columns. Closed: sent-so-far against the total, the observed bounce rate against both thresholds, and Pause the same size as Schedule |
 | Nothing hover-only | Row actions also on focus and in the menu; counts printed |
 | Role gaps explain themselves | Change owner, sending policy, unsubscribe text and the Halyard domain each name the person |
 | No usage numbers or teaching text in the product | The page shows row and result counts only; numbers and sources stay in this file and the usage file |

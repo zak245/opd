@@ -2,11 +2,11 @@
 
 *Written 15 September 2026, after the boundary was widened and the 31 objects and 54 journeys were approved. This is the structure of the product before any screen is designed: every place a person meets Ollopa, every node inside it, every route between nodes, the level of each, and the 54 journeys walked across it.*
 
-**What this file supersedes.** The fourteen-page table in [PRODUCT.md](PRODUCT.md) and the page list implied by the specs in [specs/](specs/). Those specs remain correct about door labels, containers, level-one decisions and copy; they are wrong about *how many nodes there are*, because they were written before the boundary widened on 15 September. Where a spec and this map disagree about the existence or the parent of a node, the map wins and the spec is amended in journey order.
+**What this file supersedes.** The fourteen-page table that used to stand in [PRODUCT.md](PRODUCT.md) — since 15 September that file points here and lists the pages this map holds — and the page list implied by the specs in [specs/](specs/). Those specs remain correct about door labels, containers, level-one decisions and copy; they are wrong about *how many nodes there are*, because they were written before the boundary widened on 15 September. Where a spec and this map disagree about the existence or the parent of a node, the map wins and the spec is amended in journey order.
 
 **What it does not do.** It does not decide what is on a screen. Level one *inside* a node stays the usage model's job, item by item. The map decides what the nodes are, what reaches what, and how deep any route runs.
 
-**Three conventions, stated once.**
+**Four conventions, stated once.**
 
 1. **Navigation is not a door.** Moving from a page to another page — a row click, a section link, a breadcrumb, ⌘K — costs no disclosure level. A door is a disclosure: an in-place expansion, a drawer, a panel, a menu. The level counter therefore resets at every page. This is rule 2 read as it is written — "the screen, and one door" — and it is why RULES.md says to count *per channel*.
 2. **Level 1 / level 2.** A level-1 node is a destination: reachable from the sidebar, from a Home section, from a row, from a link, from ⌘K or from a deep link, for a seat that holds it. A level-2 node is a disclosure hanging off a level-1 node: a door, a drawer, a quick look, a panel, a menu. **No level-2 node contains another level-2 node.** That is the whole of the level check in part 4.
@@ -23,23 +23,23 @@ A surface is a place a person meets Ollopa. Nine of them. Four have no screen we
 
 **Sign-in and workspace set-up.** Sign-in picks the business and the person and carries no gating. Workspace set-up runs once, before the sidebar exists: three questions about the job to be done — what are you here to do first, how many people, which of these jobs exist here — and a result block naming the profile, previewing the sidebar and listing what it leaves out. Price sits at question two, as one total for the period, because seats are the workspace's first commitment. This surface carries the whole declared-sidebar promise in plain words: a left-out page still opens, its header offers "Add to sidebar", and a strong signal shows it for two weeks and then asks once. It is the only surface where the product asks instead of reading a seat.
 
-**Notifications: the bell.** A panel, never a page, with four time sections and no expansion inside it: a grouped row navigates to its page filtered rather than growing a third level. It is a channel of its own, so it never counts against a page's one door, and it carries three interrupting kinds only — bounce guard tripped, sync error, credits low. Agent approvals appear in the bell as a *count with a task-boundary sentence* ("6 arrived while the outreach agent ran, 09:02 — 4 emails, 2 enrolments, 8 credits"), and the row opens the queue; the bell never holds an Approve button, because approving without the consequence line in front of you is exactly the 76% pass-through rule 7's corollary warns about.
+**Notifications: the bell.** A panel, never a page, with four time sections and no expansion inside it: a grouped row navigates to its page filtered rather than growing a third level. It is a channel of its own, so it never counts against a page's one door, and it carries three interrupting kinds only — bounce guard tripped, a second approval over the threshold, credits low — because each of the three means something is sending or spending now. A sync error is digestible, at the frequency chosen on the integration; its count still sits at level one on Home's health strip and on the Settings row. Agent approvals appear in the bell as a *count with a task-boundary sentence* ("6 arrived while the outreach agent ran, 09:02 — 4 emails, 2 enrolments, 8 credits"), and the row opens the queue; the bell never holds an Approve button, because approving without the consequence line in front of you is exactly the 76% pass-through rule 7's corollary warns about.
 
-**Notifications: Slack.** A Slack message is a deep link with a summary, not a control. Five event kinds, set at connection time: reply received, meeting booked, deal moved, agent needs approval, sync error. An agent-approval message carries the four things the queue row carries — actor, consequence sentence, credit cost, and whether a second admin approval is needed — and then a link, because a person who approves from a notification has read a notification, not a decision.
+**Notifications: Slack.** A Slack message is a deep link with a summary, not a control. Seven event kinds, set at connection time: reply received, meeting booked, deal moved, agent needs approval, sync error, account signal, and scoring threshold published. The account-signal message carries the account, what fired, the routed owner and the due date, and then a link; like every Slack message it holds no control. Scoring threshold published is **off by default**, because it fires for the workspace rather than for one person. An agent-approval message carries the four things the queue row carries — actor, consequence sentence, credit cost, and whether a second admin approval is needed — and then a link, because a person who approves from a notification has read a notification, not a decision.
 
-**Notifications: the email digest.** Daily, on by default, per person. A digest of what waits, not a queue: overdue tasks, unhandled replies, the agent batch total with its credit cost, any paused sequence with its observed rate beside the threshold pair, and the credit run-out date when it falls inside the billing period. The cap and the burn are in the body, not behind the link: an email that says "review 6 items" and hides the 8 credits is a deferred fee. Every line deep-links to a node in this map.
+**Notifications: the email digest.** Daily, on by default, per person. A digest of what waits, not a queue: overdue tasks, unhandled replies, the agent batch total with its credit cost, any paused sequence with its observed rate beside the threshold pair, any failing webhook subscription with its failure count and cause, the credit run-out date when it falls inside the billing period, a coaching note saved on your calls ("Feedback on your calls"), and any workspace change you will feel, which expires after seven days or on first contact with the changed thing. The cap and the burn are in the body, not behind the link: an email that says "review 6 items" and hides the 8 credits is a deferred fee. Every line deep-links to a node in this map.
 
 **Deep links from outside.** A bookmark, a Slack link, a CRM record, a calendar invite, a ticket. The deep link is a first-class route, not a fallback: a large share of B2B navigation never touches the menu. Every level-1 node has a stable URL, every level-2 node worth landing on has an anchor or query parameter that opens it — a settings item, a record door, a report with its filters, a specific agent item — and landing deep never skips a level, because the parent renders with the child open. A deep link into an area the seat does not hold lands on the no-access page; a deep link into a page the profile left out opens the page with "Add to sidebar" in the header.
 
-**⌘K.** A command palette is a channel of its own: a button, then results, two deep, never more. It reaches every level-1 node in the product for the seat that holds it, not only the ones in the sidebar, which is what makes the declared sidebar safe to subtract from. It carries three staged commands that look like a second level and are not — "Add {name} to sequence…", "Add {name} to list…", "Approve all pending agent actions" — each of which refines the same dialog rather than opening a new one. Every shortcut is printed beside its command, and the palette's inline hint is treated as the floor of teaching, never the mechanism.
+**⌘K.** A command palette is a channel of its own: a button, then results, two deep, never more. It reaches every level-1 node in the product for the seat that holds it, not only the ones in the sidebar, which is what makes the declared sidebar safe to subtract from. It carries three staged commands that look like a second level and are not — "Add {name} to sequence…", "Add {name} to list…", "Review n waiting · 4 emails · 8 credits" — each of which refines the same dialog rather than opening a new one. No palette command ever approves: the review command opens `X-agent-batch` focused, because approving without the consequence line in front of you is the failure the bell already avoids. Every shortcut is printed beside its command, and the palette's inline hint is treated as the floor of teaching, never the mechanism.
 
-**The API.** Keys are created and scoped in Settings, stored outside the app, and every key's spend is attributed to it and shown against the workspace balance. Limits are published per team, not per key, so minting keys is not a workaround. Reads are free; enrichment costs, and the tail is published, because one waterfall phone lookup can reach 45 credits. Here "decision-critical is never behind a door" becomes a header and a document: remaining requests in a response header, the per-key allocation readable at any time, an 80% alert to the key's owner. A write that crosses the second-approval threshold does not silently succeed and does not silently fail — it returns a pending approval object with the consequence line, the credit cost and the approver's name, and the same item appears in the app's queue. API is a Growth-plan entitlement; on Starter the key row is visible, locked, with the plan name.
+**The API.** Keys are created and scoped in Settings, stored outside the app, and every key's spend is attributed to it and shown against the workspace balance. Limits are published per team, not per key, so minting keys is not a workaround. Reads are free; enrichment costs, and the tail is published, because one waterfall phone lookup can reach 45 credits. Here "decision-critical is never behind a door" becomes a header and a document: two headers on every credit-consuming response, `X-Credits-Remaining` beside `X-RateLimit-Remaining`; the per-key allocation readable at any time; an 80% alert to the key's owner. At the cap the call is refused, naming the cap, the reset and the approver — never a partial result. The three kinds of "cannot see it" take the same shapes here as everywhere: a record the key's owner does not own returns its readable fields with an `owner` field; an area that owner's seat does not hold returns a refusal naming the seats that hold it and the admin to ask; profile omission does not exist for a key, and the documentation says so. A write that crosses the second-approval threshold does not silently succeed and does not silently fail — it returns a pending approval object with the consequence line, the credit cost and the approver's name, and the same item appears in the app's queue. API is a Growth-plan entitlement; on Starter the key row is visible, locked, with the plan name.
 
 **Webhooks.** Outbound only, with a written contract the product states rather than the customer discovers: at-least-once, signed, attempt-numbered, retried for 24 hours, never silently disabled, plus a reconciliation endpoint so the nightly sweep is cheap. The subscription's own state is visible, not only the receiver's uptime. Approvals do not travel by webhook — a webhook fires on what *happened*, never on what needs deciding — because a surface with no reply path cannot carry a decision. The delivery log lives in the subscription drawer with the failure grouped by cause, the same way sync errors are grouped.
 
-**MCP, three scopes.** A per-user remote endpoint, authorised as the person, carrying their permissions, their credit limit and the workspace's compliance restrictions. Three scope tiers — **read**, **safe writes**, **destructive writes** — and inside the chosen tier each action is allowed, approval-required or blocked. This is the hardest case for the approval rule, because there is no screen: the approval batch has to arrive **in the client**, as a card the model cannot summarise away, carrying the actor, the consequence sentence, the recipients or the record, the credit cost, and the second-approval line when it applies. The same item lands in the app's queue and the same run lands in the ledger with the surface marked "MCP" and the user named. The three kinds of "cannot see it" arrive as text with the same three shapes: an object you do not own returns its readable fields and a line naming the owner; an area your seat does not hold returns a refusal naming the seats that hold it and the admin to ask; a page the profile left out is not a concept here at all, because MCP has no sidebar. **Read scope is on every plan**; safe and destructive writes ride the API entitlement at Growth and above, and the lock is stated by the endpoint at connection time, not at the moment a write fails.
+**MCP, three scopes.** A per-user remote endpoint, authorised as the person, carrying their permissions, their credit limit and the workspace's compliance restrictions. Three scope tiers — **read**, **safe writes**, **destructive writes** — and inside the chosen tier each action is allowed, approval-required or blocked. This is the hardest case for the approval rule, because there is no screen: the approval batch has to arrive **in the client**, as a card the model cannot summarise away, carrying the actor, the consequence sentence, the recipients or the record, the credit cost, and the second-approval line when it applies. The batch boundary is the end of the client's turn: every approval-required action from one turn arrives as one card with the total ("3 actions · 2 emails, 1 enrolment · 12 credits") and each item's own consequence line beneath it, never one card per call. The same item lands in the app's queue and the same run lands in the ledger with the surface marked "MCP" and the user named. The three kinds of "cannot see it" arrive as text with the same three shapes: an object you do not own returns its readable fields and a line naming the owner; an area your seat does not hold returns a refusal naming the seats that hold it and the admin to ask; a page the profile left out is not a concept here at all, because MCP has no sidebar — the server's tool list is exactly the seat's areas, with no profile filtering, and the connection document says so. **Read scope is on every plan**; safe and destructive writes ride the API entitlement at Growth and above, and the lock is stated by the endpoint at connection time, not at the moment a write fails.
 
-**The CLI.** Narrow on purpose: authenticate (browser, or device flow where there is no browser), search, export, bulk update with a resume variant on every bulk operation, allocation check, analytics. It is the agency's surface — ten workspaces, one loop — so every command takes a workspace and the workspace name is echoed in every confirmation. Before a bulk write the CLI prints the same three facts the app prints: what will change, how many records, how many credits, and it checks the allocation before the run rather than failing halfway. Above the threshold it blocks and prints the approval line with the admin's name, and the resume token means the run continues rather than restarts once the approval lands. A locked capability prints the plan name and the monthly total, not a 403.
+**The CLI.** Narrow on purpose: authenticate (browser, or device flow where there is no browser), search, export, bulk update with a resume variant on every bulk operation, allocation check, analytics. It is the agency's surface — ten workspaces, one loop — so every command takes a workspace and the workspace name is echoed in every confirmation; a destructive bulk write requires the workspace name typed back, as Delete workspace already does. Before a bulk write the CLI prints the same three facts the app prints: what will change, how many records, how many credits, and it checks the allocation before the run rather than failing halfway. Above the threshold it blocks and prints the approval line with the admin's name, and the resume token means the run continues rather than restarts once the approval lands. A locked capability prints the plan name and the monthly total, not a 403. The three kinds of "cannot see it" have terminal shapes too: a record the user does not own exports its readable fields with an `owner` column; an area the seat does not hold exits 3, naming the seats that hold it and the admin to ask; profile omission does not apply, and `--help` says so.
 
 ---
 
@@ -47,7 +47,7 @@ A surface is a place a person meets Ollopa. Nine of them. Four have no screen we
 
 Derived from the 31 objects and the 54 journeys, not from the old fourteen-page table. Nothing the journeys need was removed. What the widened boundary needs was added: call logging, the meeting object, forms, signals and scoring, API keys and webhooks, the MCP and CLI surfaces, the admin's intake request queue, notes and briefs, workflows, templates and enrichment jobs.
 
-Column notes. **Type** is one of page, record, quick look, wizard, panel, settings area, door, surface. *Surface* is the eighth type, added because MCP, the CLI, the API, webhooks, Slack and the digest are places a person meets the product that have no page in the app; they carry nodes but are not reached from the sidebar. **Sidebar** says which of the four workspace profiles put the node's entry point in the sidebar by default; `—` means the node is not a sidebar entry at all and is reached by link, row, ⌘K or deep link. **Gate** is the plan on which the node or its key control unlocks; `—` means every plan.
+Column notes. **Type** is one of page, record, quick look, wizard, panel, settings area, door, surface, plus three states that are not disclosures and cost no level of their own: **detail pane** (`X-thread`, the open half of a master-detail page), **page mode** (`X-viewas`, a state of the page it sits on) and **in-place edit state** (`X-agent-edit`, which replaces the read content of the door it sits in rather than opening beside it). *Surface* is the eighth type, added because MCP, the CLI, the API, webhooks, Slack and the digest are places a person meets the product that have no page in the app; they carry nodes but are not reached from the sidebar. **Sidebar** says which of the four workspace profiles put the node's entry point in the sidebar by default; `—` means the node is not a sidebar entry at all and is reached by link, row, ⌘K or deep link. **Gate** is the plan on which the node or its key control unlocks; `—` means every plan.
 
 ### 2.1 Shell and entry
 
@@ -62,7 +62,7 @@ Column notes. **Type** is one of page, record, quick look, wizard, panel, settin
 | `G-noaccess` | Not part of your seat | page | user, profile | URL only | 1 | all | — | — | O5 |
 | `X-upgrade` | Upgrade panel | panel | plan, workspace, request | any gated control | 2 | all | — | n/a | O10, O5, M6, D1, D3 |
 | `X-credits` | Credit breakdown by feature, person and surface | panel | credit, user, key, agent | credits pill, `S-plan` | 2 | all | all | — | O6, S4, D1, D3 |
-| `X-viewas` | View as | panel | user, profile, seat | `S-team` | 2 | OPS | — | Growth | O2, O5 |
+| `X-viewas` | View as: a mode of Team and access, with a persistent "Viewing as … · Exit" banner | page mode | user, profile, seat | `S-team` | 1 | OPS | — | Growth | O2, O5 |
 
 ### 2.2 Home
 
@@ -77,33 +77,38 @@ Home is the only node whose sections are chosen by seat rather than by object. E
 | `D-home-agents` | What agents did this week (n) | door | agent run | `P-home` | 2 | all | all | — | S1, G1 |
 | `D-home-item` | What the agent found | door | agent run, person, company | `P-home` | 2 | all | all | — | S1, G2, G4, G5 |
 | `D-home-audiences` | Audiences that changed (n) | door | audience | `P-home` | 2 | MK, OPS | SEP, PLG | — | M1, M6 |
-| `D-home-setup` | Setup steps remaining | door | integration, mailbox, user | `P-home` | 2 | OPS | all | — | O1, O3 |
+| `D-home-setup` | Not set up yet: mailbox, CRM, invites (3) | door | integration, mailbox, user | `P-home` | 2 | OPS | all | — | O1, O3 |
 
 ### 2.3 People
+
+The contact record's activity is the record's main timeline with its filter chips — object state, no level — so there is no activity door on `R-person`; `X-calllog` opens from a call item in that timeline. A **comment** is a note addressed to one teammate, so it is `X-note` with a recipient, not a node of its own; it reaches the teammate on Home and in the digest, never through the bell.
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
 | `P-people` | People | page | person, list, sequence, score, signal, credit | sidebar | 1 | SDR, AE, MK, OPS | all | — | S3, S4, S6, M3, M4, O8, D1 |
 | `Q-person` | Contact quick look | quick look | person | `P-people` | 2 | SDR, AE, MK, OPS | — | — | S3, S4, S11, M4 |
 | `R-person` | Contact record | record | person, company, thread, task, call, meeting, note, score | `P-people` row / any link | 1 | SDR, AE, MK, CS, OPS | — | — | S2, S6, S9, S11, S12, A3, C5, G3 |
-| `D-people-filters` | All filters (31) | door | person, persona, signal, score, list | `P-people` | 2 | SDR, AE, MK, OPS | — | — | S3, S6, M3, M4, O8 |
+| `D-people-filters` | All filters (33) | door | person, persona, signal, score, list | `P-people` | 2 | SDR, AE, MK, OPS | — | — | S3, S6, M3, M4, O8 |
 | `D-people-views` | All views (12) | door | person (saved view) | `P-people` | 2 | SDR, AE, MK, OPS | — | — | S3 |
-| `D-people-columns` | Columns and density | door | person, field | `P-people` | 2 | SDR, AE, MK, OPS | — | — | O4 |
+| `D-people-columns` | Columns and density · 6 of 25 columns | door | person, field | `P-people` | 2 | SDR, AE, MK, OPS | — | — | O4 |
 | `X-findpeople` | Find people | panel | person, persona, company, credit | `P-people`, `R-company` | 2 | SDR, AE, OPS | — | — | S2, S3 |
 | `X-enrich` | Reveal and enrich, with the credit estimate | panel | person, company, enrichment job, credit | `P-people`, `P-companies`, `R-list` | 2 | SDR, AE, MK, OPS | — | — | S4, S5, S6, M5, O4, D1 |
-| `D-person-activity` | All activity · n | door | thread, call, meeting, task | `R-person` | 2 | all | — | — | S11, A3 |
 | `D-person-enrich` | Enrichment data and sources | door | enrichment job, credit | `R-person` | 2 | SDR, AE, OPS | — | — | S6, O4 |
 | `D-person-history` | Full history, custom fields and files | door | field, note | `R-person` | 2 | all | — | — | S6, A3 |
-| `X-note` | Write a note | panel | note, person, company, deal | any record | 2 | all | — | — | S2, S9, A4, C3, C5 |
+| `X-note` | Write a note or a comment | panel | note, person, company, deal, user | any record's composer → own channel | 2 | all | — | — | S2, S9, A4, C3, C5, L1 |
 
 ### 2.4 Companies and accounts
 
-Company and account are one object with a customer state, so there is one record and two entry tables. Accounts is not a second record; it is the customer-state view with its own columns, its own level-one field set and its own row actions.
+Company and account are one object with a customer state, so there is one record and two entry tables. Accounts is not a second record; it is the customer-state view with its own columns, its own level-one field set and its own row actions, and its rows open the same `Q-company` quick look before the same `R-company` record.
+
+**The health score has no door.** The four stored drivers sum to the score and never sit across a door from it: flat lines under the health field in the quick look, a section on the record, a side card on a renewal- or expansion-typed deal. A score always travels with its reasons, so `D-acct-health` is deleted rather than relabelled.
+
+**The Enrichment drawer is a node on the record, not on the table.** `X-enrich` is the panel that spends credits from a table or a list; `D-co-enrich` is the door on `R-company` that shows what was enriched, from which source and when, and it opens as a drawer because the provenance table is wider than the record column. It is the company twin of `D-person-enrich` in 2.3, named by `specs/09` §6.8 and rendered by `specs/03` §6. It was added on **16 September 2026** and is the only node change of that pass.
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
 | `P-companies` | Companies | page | company, person, signal, score, list | sidebar | 1 | SDR, AE, CS, OPS | all | — | S3, S6, M1, O4, O8 |
-| `Q-company` | Company quick look | quick look | company | `P-companies` | 2 | SDR, AE, CS, OPS | — | — | S3, S6, M1 |
+| `Q-company` | Company quick look (customer-state field set when the company is a customer, health and its drivers as flat lines) | quick look | company, score, signal | `P-companies`, `P-accounts` | 2 | SDR, AE, CS, OPS | — | — | S3, S6, M1, C3, C4, G3 |
 | `R-company` | Company record (account when a customer) | record | company, person, deal, signal, score, note, brief, file, health | row / any link | 1 | all | — | — | S2, S6, S12, A7, C1–C5, G1 |
 | `D-co-filters` | Additional filters: owner, location, activity, signals, lists, fields | door | company, signal, score, territory | `P-companies` | 2 | SDR, AE, CS, OPS | — | — | S3, M1, O8 |
 | `X-findcos` | Find companies | panel | company, persona, signal, credit | `P-companies` | 2 | SDR, AE, OPS | — | — | S3 |
@@ -111,17 +116,19 @@ Company and account are one object with a customer state, so there is one record
 | `D-co-signals` | Signals and news · n | door | signal, score | `R-company`, `P-accounts` row | 2 | all | — | — | S2, S6, C3, C5 |
 | `D-co-crm` | CRM sync · synced hh:mm | door | integration, field | `R-company` | 2 | AE, CS, OPS | — | — | O3, O4 |
 | `D-co-hierarchy` | Parent and subsidiaries | door | company | `R-company` | 2 | AE, CS, OPS | — | — | S3, C4 |
+| `D-co-activity` | All activity · n | door | thread, call, meeting, task | `R-company` | 2 | all | — | — | C1, C3, S6 |
+| `D-co-history` | Full history, custom fields and files | door | field, note, file | `R-company` | 2 | all | — | — | C1, S6 |
+| `D-co-enrich` | Enrichment data and sources | door | enrichment job, company, credit | `R-company` | 2 | SDR, AE, CS, OPS | — | — | S6, O4 |
 | `P-accounts` | Accounts | page | company, score, deal (renewal), signal, task | sidebar | 1 | AE, CS, OPS | SEP, PLG | — | C3, C4, C5, C6, A7 |
-| `D-acct-health` | How this health score was built | door | score, signal | `P-accounts`, `R-company` | 2 | AE, CS, OPS | — | — | C3, C4, C6, G3 |
 | `X-play` | Run a risk or expansion play | panel | task, note, person, signal | `P-accounts`, `R-company` | 2 | CS, AE, OPS | — | — | C3, C5 |
 
 ### 2.5 Lists and segments
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
-| `P-lists` | Lists | page | list, segment, person, company | sidebar | 1 | SDR, MK, OPS | FO, SEP, AG | — | S3, S5, M1, O8 |
+| `P-lists` | Lists | page | list, segment, person, company | sidebar | 1 | SDR, MK, OPS | FO, SEP, AG; PLG for the MK seat only | — | S3, S5, M1, O8 |
 | `R-list` | List or segment | record | list, person, company, sequence, credit | `P-lists` row | 1 | SDR, MK, OPS | — | — | S3, S4, S5, S8, M1 |
-| `D-lists-filters` | Mode, source, archived | door | list | `P-lists` | 2 | SDR, MK, OPS | — | — | S3 |
+| `D-lists-filters` | Mode, source, archived (n on) | door | list | `P-lists` | 2 | SDR, MK, OPS | — | — | S3 |
 | `D-list-refresh` | Refresh and alerts | door | list, signal, workflow | `R-list` | 2 | SDR, MK, OPS | — | — | S3, M1 |
 | `D-list-history` | History: n changes | door | list | `R-list` | 2 | SDR, MK, OPS | — | — | M1 |
 | `X-listadd` | Add people to this list | panel | person, company, credit | `R-list` | 2 | SDR, MK, OPS | — | — | S3, S5, M1 |
@@ -142,28 +149,30 @@ Company and account are one object with a customer state, so there is one record
 
 ### 2.7 Inbox, meetings, briefs
 
+The Inbox is master-detail: the list stays in view and the thread is the open half of the page, not a disclosure, so `X-thread` is level 1 and its own doors — the filters, the agent draft, the composer — are level 2 on it. Booking and the meeting are one node: `X-meeting` carries the states proposed → booked → held / no-show / cancelled, so `X-book` is deleted rather than kept beside it.
+
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
 | `P-inbox` | Inbox | page | thread, person, sequence, task | sidebar | 1 | SDR, AE | SEP, AG, PLG | — | S11, S12, O1 |
-| `X-thread` | The thread | panel | thread, person, sequence, meeting | `P-inbox` | 2 | SDR, AE | — | — | S11, S12, A2 |
+| `X-thread` | The thread | detail pane | thread, person, sequence, meeting | `P-inbox` (master-detail; open by default, not a disclosure) | 1 | SDR, AE | — | — | S11, S12, A2, G2 |
 | `D-inbox-filters` | Outcome, sequence, owner, date | door | thread | `P-inbox` | 2 | SDR, AE | — | — | S11 |
-| `X-reply` | Reply, with the agent draft beside it | panel | email, thread, agent run, template | `X-thread`, `R-person` | 2 | SDR, AE | — | — | S11, A2, G2 |
-| `X-book` | Book a meeting | panel | meeting, person, task, sequence | `X-thread`, `P-tasks`, `R-deal`, `R-company` | 2 | SDR, AE, CS | — | — | S12, C1, C2, C4 |
-| `X-meeting` | The meeting: attendees, status, prep, follow-up | panel | meeting, person, note, brief, task, email | `P-tasks`, `R-deal`, `R-company`, `X-thread` | 2 | SDR, AE, CS | — | — | S12, A2, C1, C2, C4, L3 |
+| `D-thread-agent` | Agent draft · n words | door | agent run, email, thread | `X-thread` | 2 | SDR, AE | — | — | S11, G2 |
+| `X-reply` | Reply, with the agent draft beside it | door | email, thread, agent run, template | `X-thread` (the composer), `R-person`, `R-deal` | 2 | SDR, AE | — | — | S11, A2, G2 |
+| `X-meeting` | The meeting: propose or book, attendees, status, prep, follow-up | panel | meeting, person, note, brief, task, email | `X-thread`, `P-tasks`, `R-deal`, `R-company` | 2 | SDR, AE, CS | — | — | S12, A2, C1, C2, C4 |
 | `R-brief` | Brief | record | note, brief, company, deal, person, meeting | `R-deal`, `R-company`, `X-meeting`, `P-home` | 1 | all | — | — | S2, S12, A2, A7, C1, C4, C5, G1 |
 
 ### 2.8 Tasks, calls and LinkedIn
 
-A call is not a task. The task is the instruction; the call is the outcome, and the disposition decides whether the contact advances. So the call log is its own node, reachable from the task row, from the queue console and from any record's activity.
+A call is not a task. The task is the instruction; the call is the outcome, and the disposition decides whether the contact advances. So the call log is its own node, reachable from the task row, from the queue console and from any record's timeline. It has two modes: the owner logs, anyone who can see the record reads, and the coaching note with its fixed headings lives inside the call rather than beside it. Tasks opens in queue mode for the SDR and AE seats with "All tasks (n)" as the labelled in-place switch to the list; the switch replaces rather than nests, so the list's doors stay level two.
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
-| `P-tasks` | Tasks | page | task, person, company, deal, sequence | sidebar | 1 | SDR, AE, CS, OPS | all | — | S1, S9, S10, A1, C2, C5, M4 |
+| `P-tasks` | Tasks (queue mode for SDR and AE, list for CS and OPS; the switch is labelled and in place) | page | task, person, company, deal, sequence | sidebar | 1 | SDR, AE, CS, OPS | all | — | S1, S9, S10, A1, C2, C5 |
 | `D-task-row` | History and contact | door | task, person, note, call | `P-tasks` | 2 | SDR, AE, CS, OPS | — | — | S9, S10 |
-| `D-task-filters` | More filters: source, status, sort | door | task, sequence, user | `P-tasks` | 2 | SDR, AE, CS, OPS | — | — | S9, M4 |
+| `D-task-filters` | Additional filters: source, status, sort (n) | door | task, sequence, user | `P-tasks` | 2 | SDR, AE, CS, OPS | — | — | S9 |
 | `D-task-options` | Table options: columns, export | door | task, field | `P-tasks` | 2 | SDR, AE, CS, OPS | — | — | D4 |
-| `X-queue` | Work the queue | panel | task, call, person, note, sequence | `P-tasks` | 2 | SDR, AE | — | — | S9, S10 |
-| `X-calllog` | Log the call: purpose, disposition, duration, notes | panel | call, person, task, sequence, note | `P-tasks`, `X-queue`, `R-person`, `R-deal` | 2 | SDR, AE, CS | — | — | S9, A2, L3 |
+| `X-queue` | Work the queue | panel | task, call, person, note, sequence | `P-tasks` (the default mode for SDR and AE; opened from the header for CS and OPS) | 2 | SDR, AE | — | — | S9, S10 |
+| `X-calllog` | The call: purpose, disposition, duration, notes, transcript, coaching note | panel | call, person, task, sequence, note | `P-tasks`, `X-queue`, `R-person` timeline, `R-deal` | 2 | SDR, AE, CS (AE+ writes the coaching note) | — | — | S9, A2, L3 |
 | `X-linkedin` | LinkedIn step: the message, copy, mark complete | panel | task, step, snippet, person | `P-tasks`, `X-queue` | 2 | SDR, AE | — | — | S10 |
 | `X-task` | New task: contact, type, due, title, note, owner | panel | task, person, company, deal, user | `P-tasks`, any record | 2 | SDR, AE, CS, OPS | — | — | S2, S12, A2, A6, C2, C5, O9 |
 
@@ -172,10 +181,10 @@ A call is not a task. The task is the instruction; the call is the outcome, and 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
 | `P-deals` | Deals | page | deal, company, person, task, report | sidebar | 1 | AE, CS, OPS | SEP, PLG | — | A1, A4, A5, A6, C6, L1 |
-| `Q-deal` | Deal quick look (stage editable) | quick look | deal | `P-deals` | 2 | AE, CS, OPS | — | — | A1, A4, L1 |
+| `Q-deal` | Deal quick look (one editable field, by ownership: stage for the owner, the comment composer for a non-owner) | quick look | deal | `P-deals` | 2 | AE, CS, OPS | — | — | A1, A4, L1 |
 | `R-deal` | Deal | record | deal, company, person and roles, task, meeting, note, field, brief | `P-deals` card / any link | 1 | AE, CS, OPS, SDR (read) | — | — | A1–A7, C4, C6, L1, L2, G5 |
 | `D-deals-view` | View options: columns, density, saved views | door | deal, field | `P-deals` | 2 | AE, CS, OPS | — | — | A1, L1 |
-| `D-deals-filters` | Warnings, owner, stage, close date, forecast category | door | deal, user, report | `P-deals` | 2 | AE, CS, OPS | — | — | A1, A4, A6, L1, C6 |
+| `D-deals-filters` | Warnings, no next step, owner, stage, close date, forecast category | door | deal, user, report | `P-deals` | 2 | AE, CS, OPS | — | — | A1, A4, A6, L1, C6 |
 | `D-deal-evidence` | Evidence and source quotes · n | door | conversation input, field, agent run, note | `R-deal` | 2 | AE, OPS | — | — | A3, G5 |
 | `D-deal-activity` | All activity · n | door | thread, call, meeting, task | `R-deal` | 2 | AE, CS, OPS | — | — | A2, A6, L1 |
 | `D-deal-history` | Full history and custom fields | door | field, note, deal | `R-deal` | 2 | AE, CS, OPS | — | — | A5, G5 |
@@ -191,8 +200,8 @@ Forms are a third view on Campaigns rather than a page of their own: a form is h
 | `R-campaign` | Campaign | record | campaign, audience, email, template, report, sequence | `P-campaigns` row | 1 | MK, OPS | — | — | M2, M5, M6 |
 | `R-audience` | Audience or segment | record | audience, person, company, deal, persona | `P-campaigns` row | 1 | MK, OPS | — | — | M1, M2, M6 |
 | `R-form` | Form | record | form, field, enrichment job, credit, campaign, workflow | `P-campaigns` row | 1 | MK, OPS | — | — | M5 |
-| `D-camp-filters` | More filters: owner, audience, date, goal | door | campaign | `P-campaigns` | 2 | MK, OPS | — | — | M6 |
-| `D-aud-suppress` | Suppressions: customers, open deals, closed-lost, in sequence | door | audience, company, deal, sequence | `R-audience` | 2 | MK, OPS | — | — | M1, M2 |
+| `D-camp-filters` | Additional filters: owner, audience, date, goal (n) | door | campaign | `P-campaigns` | 2 | MK, OPS | — | — | M6 |
+| `D-aud-suppress` | Suppression rules: customers, open deals, closed-lost, in sequence (4 applied) | door | audience, company, deal, sequence | `R-audience` | 2 | MK, OPS | — | — | M1, M2 |
 | `X-qa` | QA checklist, run by someone who did not build it | panel | campaign, audience, email, user | `R-campaign` | 2 | MK, OPS | — | — | M2 |
 | `X-schedule` | Schedule and send | panel | campaign, audience, mailbox, credit, request | `R-campaign` | 2 | MK, OPS | — | — | M2, G4 |
 | `X-sendtest` | Send a test | panel | campaign, email, mailbox | `R-campaign` | 2 | MK, OPS | — | — | M2 |
@@ -200,7 +209,7 @@ Forms are a third view on Campaigns rather than a page of their own: a form is h
 
 ### 2.11 Workflows and requests
 
-Two nodes the old page table had nowhere to put. Routing rules were invisible, and the admin's intake queue was in Slack, where it cannot be counted.
+Two nodes the old page table had nowhere to put. Routing rules were invisible, and the admin's intake queue was in Slack, where it cannot be counted. `P-requests` keeps its sidebar profiles; the Founder-led signal that brings it back is **the second upgrade request in a week**, and until then the entry points are the Settings plan strip line, ⌘K and "Add to sidebar".
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
@@ -212,12 +221,12 @@ Two nodes the old page table had nowhere to put. Routing rules were invisible, a
 
 ### 2.12 Reports
 
-Five tabs, one page. Forecast is the fifth and it is where A5, L2 and C6 land; the renewal book is the Forecast tab filtered to renewal-typed deals, not a sixth report.
+Five tabs, one page. Forecast is the fifth and it is where A5, L2 and C6 land; the renewal book is the Forecast tab filtered to renewal-typed deals, not a sixth report. Spec 12 owns the Forecast tab, `X-forecast` and the goal denominator. `X-forecast` and `X-report-records` are siblings on the Forecast tab, both panels on `P-reports`, never one inside the other.
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
 | `P-reports` | Reports: Activity, Pipeline, Sequences, Campaign results, Forecast | page | report, goal, deal, campaign, sequence, user | sidebar | 1 | AE, MK, CS, OPS | SEP, AG, PLG | — | A5, A6, M3, M6, C6, O4, L1, L2, L3 |
-| `X-report-records` | The records behind this number | panel | deal, person, campaign, sequence | `P-reports` | 2 | AE, MK, CS, OPS | — | — | M3, M6, L1 |
+| `X-report-records` | The records behind this number | panel | deal, person, call, campaign, sequence | `P-reports`, `R-audience` | 2 | AE, MK, CS, OPS | — | — | M1, M3, M6, L1, L2, L3, C6 |
 | `D-report-conv` | Stage-to-stage conversion and archived reasons | door | deal, report | `P-reports` | 2 | AE, OPS, MK | — | — | L1, M3 |
 | `D-report-columns` | Columns: n of n | door | report, field | `P-reports` | 2 | AE, MK, CS, OPS | — | — | M6 |
 | `X-forecast` | Submit your forecast | panel | deal, report, goal, note, user hierarchy | `P-reports` (Forecast tab) | 2 | AE, CS, OPS | — | — | A5, C6, L2 |
@@ -225,18 +234,20 @@ Five tabs, one page. Forecast is the fifth and it is where A5, L2 and C6 land; t
 
 ### 2.13 Agents
 
+The ledger carries a **Surface** column — App, Automation, API, MCP, CLI, Agent — so a run made from a client or a terminal is readable beside one made in the app, and the filter door names it. Editing a draft is not a second channel: `X-agent-edit` replaces the read content of `D-agent-item` in place, so the depth is the door and nothing more.
+
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
-| `P-agents` | Agents | page | agent, agent run, credit, person, deal, sequence | sidebar | 1 | SDR, AE, MK, OPS | all | 2 / 3 / all | S1, A1, G1–G5, O6 |
+| `P-agents` | Agents | page | agent, agent run, credit, surface, person, deal, sequence | sidebar | 1 | SDR, AE, MK, OPS | all | 2 / 3 / all | S1, A1, G1–G5, O6, D3 |
 | `D-agent-item` | Read the draft · n words / Research · n sources / Score n · how it was built | door | agent run, email, person, score | `P-agents` | 2 | SDR, AE, MK, OPS | — | — | G2, G4, G5, S11 |
 | `D-agent-steps` | Step log · n steps, n credits | door | agent run, credit | `P-agents` | 2 | SDR, AE, MK, OPS | — | — | G1, G3, O6 |
-| `D-agent-filters` | Date, outcome, kind, teammate | door | agent run, user | `P-agents` | 2 | SDR, AE, MK, OPS | — | — | O6, G3 |
+| `D-agent-filters` | Date, outcome, kind, teammate, surface | door | agent run, user | `P-agents` | 2 | SDR, AE, MK, OPS | — | — | O6, G3 |
 | `X-agent-batch` | Approve n · decline n, with the total consequence | panel | agent run, credit, mailbox, sequence | `P-agents`, `P-home` | 2 | SDR, AE, MK, OPS | — | — | S1, G2, G4 |
-| `X-agent-edit` | Edit then approve | panel | agent run, email, deal, field | `D-agent-item` → own channel | 2 | SDR, AE, MK, OPS | — | — | G2, G5 |
+| `X-agent-edit` | Edit then approve | in-place edit state | agent run, email, deal, field | `D-agent-item` (replaces the door's read content) | 2 | SDR, AE, MK, OPS | — | — | G2, G5 |
 
 ### 2.14 Settings
 
-One page, no settings shell, no settings sidebar. Each area is a node with at most one door. Three new areas: **Signals, scoring and personas** (the missing configuration behind agents that already score leads), **API, webhooks, MCP and CLI** (the developer surfaces), and **How your team works** (the declared sidebar), which the 14 September decision already added.
+One page, no settings shell, no settings sidebar. Each area is a node with at most one door. Three new areas: **Signals, scoring and personas** (the missing configuration behind agents that already score leads, holding three panels of its own — score model, persona, signal — each a separate channel the way `S-pipeline` already holds `X-field`), **API, webhooks, MCP and CLI** (the developer surfaces; its workspace rows are the admin's, and the MCP and CLI scope rows are personal and reachable from `S-you` by any seat), and **How your team works** (the declared sidebar), which the 14 September decision already added. **View as** is not a panel inside a panel: it is a mode of `S-team`, entered from a users-table row action or the area heading, with a persistent "Viewing as … · Exit" banner.
 
 | id | name | type | objects | parent | lvl | seats | sidebar | gate | journeys |
 |---|---|---|---|---|---|---|---|---|---|
@@ -252,13 +263,16 @@ One page, no settings shell, no settings sidebar. Each area is a node with at mo
 | `S-scoring` | Signals, scoring and personas | settings area | signal, score, persona, routing threshold | `P-settings` | 1 | OPS, MK | all | — | M3, M4, C3, C5, G3 |
 | `S-agents` | Agents and AI | settings area | agent, credit cap, approval policy, model key, company context | `P-settings` | 1 | OPS | all | 2 / 3 / all | O6, O10, G1–G5 |
 | `S-integrations` | Integrations | settings area | integration, field, error log | `P-settings` | 1 | OPS | all | Growth / Scale | O3, O4, O1 |
-| `S-developer` | API, webhooks, MCP and CLI | settings area | key, webhook, token, credit, surface | `P-settings` | 1 | OPS | all | Growth (read MCP: all) | D1, D2, D3, D4, O6, O8 |
+| `S-developer` | API, webhooks, MCP and CLI | settings area | key, webhook, token, credit, surface | `P-settings` | 1 | OPS; the MCP and CLI scope rows: all | all | Growth (read MCP: all) | D1, D2, D3, D4, O6, O8 |
 | `S-plan` | Plan, billing and usage | settings area | plan, seat, credit, invoice, workspace | `P-settings` | 1 | OPS | all | — | O6, O10, O2 |
 | `X-mailbox` | Mailbox: warm-up, limits, signature, unlink | panel | mailbox, user, domain | `S-sending`, `S-you` | 2 | OPS, SDR, AE | — | Growth (2nd box) | S13, O2, O7 |
-| `X-domain` | Sending domain: SPF, DKIM, DMARC, bounce rate | panel | domain, mailbox | `S-sending` | 2 | OPS | — | — | S13, O7 |
+| `X-domain` | Sending domain: SPF, DKIM, DMARC, bounce rate | panel | domain, mailbox | `S-sending` | 2 | OPS, SDR (read) | — | — | S13, O7 |
 | `X-user` | User: seat, profile, team, territory, credit limit | panel | user, seat, profile, team, territory, credit | `S-team` | 2 | OPS | — | Growth | O2, O5, O6 |
 | `X-field` | Field or stage: type, values, required-at-stage, CRM mapping | panel | field, stage, integration | `S-pipeline` | 2 | OPS | — | — | O9, O3, A3 |
-| `X-territory` | Territory: filters and owners | panel | territory, user, company | `S-team`, `S-prospecting` | 2 | OPS | — | Growth | O5, M4 |
+| `X-score` | Score model: inputs, weights, decay, distribution preview, publish | panel | score, signal, persona, routing threshold | `S-scoring` | 2 | OPS, MK | — | — | M3, G3 |
+| `X-persona` | Persona: title, seniority, department, industry, size, geography | panel | persona, person, company | `S-scoring` | 2 | OPS, MK | — | — | M3, S3 |
+| `X-signal` | Signal: definition, source, freshness, talking tips | panel | signal, score, company, person | `S-scoring` | 2 | OPS, MK | — | — | M4, C3, C5 |
+| `X-territory` | Territory: filters and owners | panel | territory, user, company | `S-team`, `S-prospecting` | 2 | OPS | — | Growth | O5 |
 | `X-removal` | Removal list: review, export, delete everywhere | panel | person, list, enrichment job, integration, key, agent | `S-prospecting` | 2 | OPS | — | — | O8 |
 
 ### 2.15 Integrations, imports and jobs
@@ -292,7 +306,7 @@ One page, no settings shell, no settings sidebar. Each area is a node with at mo
 | `U-slack` | Slack messages | surface | thread, meeting, deal, agent run, error log | `S-integrations` | 1 | all | — | — | S11, M4, O4, C5 |
 | `U-digest` | The daily email digest | surface | task, thread, agent run, credit, sequence | `S-you` | 1 | all | — | — | S1, O6, D2 |
 
-**Totals.** 144 nodes: 18 pages, 14 records, 3 quick looks, 3 wizards, 44 panels, 13 settings areas, 43 doors, 6 surfaces. Every node above is touched by at least one journey except `G-shortcuts`; see part 6.
+**Totals.** 148 nodes: 18 pages, 14 records, 3 quick looks, 3 wizards, 42 panels, 13 settings areas, 46 doors, 6 surfaces, and three state nodes that cost no level of their own — `X-thread` (detail pane), `X-viewas` (page mode), `X-agent-edit` (in-place edit state). Three nodes were removed by the journey walk of 15 September: `D-acct-health` (a score never sits across a door from its reasons), `D-person-activity` (the contact record's activity is its main timeline) and `X-book` (merged into `X-meeting`, which now carries the proposed state). Six were added: `D-thread-agent`, `D-co-activity`, `D-co-history`, `X-score`, `X-persona`, `X-signal`. A seventh, `D-co-enrich`, was added on 16 September when the company record was found to render an Enrichment drawer the map did not hold, which is what takes the count from 147 to 148 and the doors from 45 to 46. Every node above is touched by at least one journey except `G-shortcuts`; see part 6.
 
 ---
 
@@ -325,30 +339,30 @@ One page, no settings shell, no settings sidebar. Each area is a node with at mo
 | `P-home` §Pipeline | `P-deals` | `LK` | seat AE, CS, OPS |
 | `P-home` §Waiting | `P-agents` | `LK` | any seat with agents on |
 | `P-home` §Campaigns | `P-campaigns` | `LK` | seat MK, OPS |
-| `P-home` §Health strip | `X-errors` `S-sending` `X-credits` `W-connect` | `LK` | the item is in warning or paused state |
+| `P-home` §Health strip | `X-errors` `S-sending` `X-credits` `W-connect` `R-sequence` | `LK` | the item is in warning or paused state; a bounce-guard trip links to the paused sequence at its health line, to Sequences filtered to Auto-paused when several are paused, and to `S-sending` only when no single sequence is named |
 | `P-home` agent row | `X-agent-batch` | `PN` | two or more items waiting, at a task boundary |
 | `P-people` row | `Q-person` → `R-person` | `RC`, `QO` | — |
 | `P-people` toolbar | `D-people-filters` `D-people-views` `D-people-columns` | `DR` | — |
 | `P-people` actions | `X-findpeople` `X-enrich` `X-enrol` `W-import` | `PN` / `LK` | `W-import` is a page: an independent, staged, resumable task |
 | `P-companies` row | `Q-company` → `R-company` | `RC`, `QO` | — |
-| `P-accounts` row | `R-company` | `RC` | company carries a customer state; no second record |
-| `P-accounts` row | `X-play` `D-acct-health` | `PN`, `DR` | seat CS, AE, OPS |
+| `P-accounts` row | `Q-company` → `R-company` | `RC`, `QO` | one object, one quick look; the customer-state field set renders, health and its drivers flat under the health field |
+| `P-accounts` row | `X-play` `D-co-signals` | `PN`, `DR` | seat CS, AE, OPS |
 | `R-company` sections | `R-person` `R-deal` `R-brief` `R-list` | `LK` | related lists are scrolling sections, not doors |
-| `R-company` doors | `D-co-research` `D-co-signals` `D-co-crm` `D-co-hierarchy` | `DR` | `D-co-crm` removed at Fathom (no CRM) |
+| `R-company` doors | `D-co-research` `D-co-signals` `D-co-crm` `D-co-hierarchy` `D-co-activity` `D-co-history` | `DR` | `D-co-crm` removed at Fathom (no CRM); health and its drivers are a section, not a door |
 | `P-lists` row | `R-list` | `RC` | a list is an independent task, so a page, not a drawer |
 | `R-list` | `X-listadd` `X-enrich` `X-enrol` `D-list-refresh` `D-list-history` | `PN`, `DR` | `D-list-refresh` only for segments |
 | `P-sequences` row | `R-sequence` | `RC` | — |
 | `R-sequence` | `D-seq-step` `D-seq-send` `D-seq-results` | `DR` | — |
 | `D-seq-step` | `X-preview` `R-template` | `PN`, `LK` | preview is a separate channel; a template is a page |
-| `P-inbox` row | `X-thread` | `RC` | master-detail; the list stays in view |
-| `X-thread` | `X-reply` `X-book` `X-enrol` `R-person` `R-deal` | `PN`, `LK` | classification decides which actions show (object state) |
-| `P-tasks` row | `D-task-row` `X-calllog` `X-linkedin` `X-book` `R-person` | `DR`, `PN`, `RC` | the panel shown follows the task type |
-| `P-tasks` header | `X-queue` | `PN` | at least one open task; full screen on phone |
+| `P-inbox` row | `X-thread` | `RC` | master-detail; the list stays in view and the thread is the open half of the page, so it costs no level |
+| `X-thread` | `D-thread-agent` `X-reply` `X-meeting` `X-enrol` `R-person` `R-deal` | `DR`, `PN`, `LK` | classification decides which actions show (object state); the agent draft is a door beside the composer and sending it is the approval |
+| `P-tasks` row | `D-task-row` `X-calllog` `X-linkedin` `X-meeting` `R-person` | `DR`, `PN`, `RC` | the panel shown follows the task type; `X-meeting` opens from a meeting task row, never from inside the row door |
+| `P-tasks` header | `X-queue` | `PN` / `TB` | the default mode for SDR and AE, with "All tasks (n)" as the labelled in-place switch back to the list; a header button for CS and OPS; full screen on phone |
 | `X-queue` | `X-calllog` `X-linkedin` | (body) | the console's body, not a nested door — see part 4 |
 | `P-deals` card | `Q-deal` → `R-deal` | `RC`, `QO` | quick look edits stage only |
 | `P-deals` toolbar | `D-deals-view` `D-deals-filters` | `DR` | — |
 | `R-deal` | `D-deal-evidence` `D-deal-activity` `D-deal-history` `D-deal-files` | `DR` | evidence door only where a conversation input exists |
-| `R-deal` | `X-meeting` `X-calllog` `X-note` `R-brief` `R-company` `R-person` | `PN`, `LK` | — |
+| `R-deal` | `X-meeting` `X-calllog` `X-note` `X-reply` `R-brief` `R-company` `R-person` | `PN`, `LK` | `X-note` opens from the record's composer on its own channel, as `X-preview` does; a comment is a note addressed to one teammate |
 | `P-campaigns` | `R-campaign` `R-audience` `R-form` | `RC` after `TB` | three views on one table; the view switch is state, not a door |
 | `R-campaign` | `X-qa` `X-schedule` `X-sendtest` `X-recipients` | `PN` | `X-schedule` becomes "Request approval" above the threshold |
 | `R-audience` | `D-aud-suppress` `X-report-records` | `DR`, `PN` | — |
@@ -361,18 +375,21 @@ One page, no settings shell, no settings sidebar. Each area is a node with at mo
 | `P-reports` (Forecast) | `X-forecast` | `PN` | seat AE, CS, OPS; AE+ sees the team roll-up first |
 | `P-reports` | `X-export` `D-report-conv` `D-report-columns` | `PN`, `DR` | CSV at Growth, scheduled email at Scale |
 | `P-agents` | `D-agent-item` `D-agent-steps` `D-agent-filters` `X-agent-batch` | `DR`, `PN` | — |
-| `D-agent-item` | `X-agent-edit` | `PN` | "Edit then approve" — a separate channel |
+| `D-agent-item` | `X-agent-edit` | (in place) | "Edit then approve" replaces the door's read content; it is not a second channel and adds no level |
 | `P-agents` ledger row | `R-person` `R-company` `R-deal` `R-sequence` | `LK` | — |
 | `P-settings` | the 13 areas | `LK` | in-page anchors; the sticky index is a table of contents, not navigation |
 | `S-sending` | `X-mailbox` `X-domain` | `PN` | second mailbox per user is Growth |
-| `S-team` | `X-user` `X-viewas` `X-territory` | `PN` | teams, profiles, territories Growth; SSO, IP allowlist Scale |
+| `S-team` | `X-user` `X-territory` | `PN` | teams, profiles, territories Growth; SSO, IP allowlist Scale |
+| `S-team` row action / heading | `X-viewas` | `TB` | a mode of the page with a persistent "Viewing as … · Exit" banner, never a panel inside `X-user` |
 | `S-pipeline` | `X-field` | `PN` | — |
+| `S-scoring` | `X-score` `X-persona` `X-signal` | `PN` | three separate channels, each flat, the way `S-pipeline` holds `X-field` |
 | `S-prospecting` | `X-removal` `X-territory` | `PN` | — |
 | `S-integrations` | `W-connect` `R-integration` | `LK` | the wizard is a page; editing is on the integration page, never the wizard |
 | `R-integration` | `X-errors` | `PN` | error count above zero |
-| `S-developer` | `U-api` `U-hooks` `U-mcp` `U-cli` `X-key` `X-hook` `X-mcpscope` `X-cliauth` | `PN` / (docs) | writes Growth; MCP read on every plan |
+| `S-developer` | `U-api` `U-hooks` `U-mcp` `U-cli` `X-key` `X-hook` `X-mcpscope` `X-cliauth` | `PN` / (docs) | writes Growth; MCP read on every plan; the lock sits on the two write tiers inside `X-mcpscope`, before any work exists |
+| `X-key` | `R-job` | `LK` | the enrichment jobs that key paid for, filtered to it |
 | `S-plan` / credits pill | `X-credits` | `PN` | spend by feature, person and **surface**: app, automation, API, MCP, CLI, agents |
-| `G-bell` row | any level-1 node, filtered | `ND` | grouped rows navigate, never expand |
+| `G-bell` row | any level-1 node, filtered | `ND` | grouped rows navigate, never expand; the bounce-guard row opens the paused `R-sequence` at its health line |
 | `U-slack` / `U-digest` | any level-1 node, filtered | `ND` | five Slack events; the digest is a summary with the credit total in the body |
 | `U-mcp` / `U-cli` / `U-api` | `X-approve-remote` | `AI` | any irreversible or costly action, and anything over the threshold |
 | `X-approve-remote` | `P-agents` | `XL` | the same item is in the app's queue; the ledger marks the surface |
@@ -390,19 +407,19 @@ flowchart LR
   end
   subgraph Engage
     SQ["P-sequences"]
-    IN["P-inbox · 1 door"]
+    IN["P-inbox · 1 door + thread pane"]
     TA["P-tasks · 3 doors"]
     TE["P-templates"]
   end
   subgraph Win
     DE["P-deals · 2 doors"]
     CA["P-campaigns · 1 door"]
-    AC["P-accounts · 1 door"]
+    AC["P-accounts · 1 row door"]
   end
   subgraph Run
     WF["P-workflows"]
     RQ["P-requests"]
-    RE["P-reports · 2 doors"]
+    RE["P-reports · 2 doors, 5 tabs"]
     AG["P-agents · 3 doors"]
     ST["P-settings · 13 areas"]
   end
@@ -472,28 +489,34 @@ Renewals and expansions are `R-deal` with a type, so they appear once in this gr
 
 | business | seat | sidebar | level-1 total | level-2 total | deepest path |
 |---|---|---|---|---|---|
-| Fathom (FO, Starter) | founder (OPS+SDR) | 11 | 24 | 58 | 2 |
-| Fathom | SDR | 8 | 19 | 41 | 2 |
-| Meridian (SEP, Scale) | SDR | 9 | 22 | 56 | 2 |
-| Meridian | AE | 11 | 25 | 59 | 2 |
-| Meridian | AE+ (manager) | 11 | 26 | 62 | 2 |
-| Meridian | MK | 8 | 20 | 47 | 2 |
+| Fathom (FO, Starter) | founder (OPS+SDR) | 11 | 26 | 60 | 2 |
+| Fathom | SDR | 8 | 20 | 42 | 2 |
+| Meridian (SEP, Scale) | SDR | 9 | 23 | 57 | 2 |
+| Meridian | AE | 11 | 26 | 59 | 2 |
+| Meridian | AE+ (Priya Raman, sales manager) | 11 | 27 | 62 | 2 |
+| Meridian | MK | 8 | 20 | 51 | 2 |
 | Meridian | CS | 8 | 19 | 44 | 2 |
-| Meridian | OPS | 13 | 31 | 78 | 2 |
-| Halyard (AG, Growth) | ops lead (OPS+SDR) | 13 | 32 | 80 | 2 |
-| Halyard | SDR | 8 | 19 | 42 | 2 |
-| Ridgeline (PLG, Growth) | SDR | 9 | 22 | 56 | 2 |
-| Ridgeline | AE (expansion) | 10 | 24 | 57 | 2 |
-| Ridgeline | MK | 8 | 21 | 49 | 2 |
+| Meridian | OPS | 13 | 32 | 81 | 2 |
+| Halyard (AG, Growth) | ops lead (OPS+SDR) | 13 | 34 | 82 | 2 |
+| Halyard | SDR | 8 | 20 | 43 | 2 |
+| Ridgeline (PLG, Growth) | SDR | 9 | 23 | 57 | 2 |
+| Ridgeline | AE (expansion) | 10 | 25 | 57 | 2 |
+| Ridgeline | MK | 8 | 21 | 53 | 2 |
 | Ridgeline | CS | 8 | 20 | 45 | 2 |
-| Ridgeline | OPS | 11 | 28 | 72 | 2 |
+| Ridgeline | OPS | 11 | 29 | 75 | 2 |
+
+**What the 15 September journey walk moved in this table, node by node.** `X-thread` left level 2 for level 1 for the SDR and AE seats (a master-detail pane is not a disclosure) and `X-viewas` did the same for OPS (a page mode is not a disclosure): +1 level 1, −1 level 2 each. `D-person-activity` was deleted for every seat, `X-book` merged into `X-meeting` for SDR, AE and CS, and `D-acct-health` deleted for AE, CS and OPS: −1 level 2 each. `D-thread-agent` was added for SDR and AE, `D-co-activity` and `D-co-history` for every seat, and `X-score`, `X-persona` and `X-signal` for MK and OPS. No seat's deepest path changed, and no row moved off 2.
+
+**What the 16 September closing pass moved.** `D-co-enrich` was added as a level-2 door on `R-company` for the four seats that hold Companies — SDR, AE, CS and OPS — so every row above except the two marketer rows gains one level-2 node: +1 each for Fathom's founder and SDR, Meridian's SDR, AE, AE+, CS and OPS, Halyard's ops lead and SDR, and Ridgeline's SDR, AE, CS and OPS. The marketer does not hold the area, so Meridian MK stays at 51 and Ridgeline MK at 53. No level-1 total changed, no seat's deepest path changed, and every row is still 2: the drawer hangs off the record page, which is level 1, and it holds no door of its own.
 
 **Per channel, per surface, nothing exceeds two.**
 
 | channel | level 1 | level 2 | how three is avoided |
 |---|---|---|---|
 | Page body | the page | one door per section, one drawer per row action | no door contains a door; a form after a chosen action is not a door |
-| Record page | the record | its doors, and at most one tab for a related table big enough to be its own page | the tab holds no doors; related lists are scrolling sections |
+| Record page | the record | its doors, and at most one tab for a related table big enough to be its own page | the tab holds no doors; related lists and the activity timeline are scrolling sections |
+| Master-detail page | the list and the open detail pane together | the pane's own doors: the filters, the agent draft, the composer | the pane is open by default and is not a disclosure, so its doors are the page's one level of doors, not a second |
+| Page mode | the page in its other state | that state's own doors | a mode replaces the page's body and announces itself in a persistent banner or a labelled switch; it never opens beside what it replaces |
 | Quick look | the drawer | — | the drawer is flat by definition; removing it loses only speed |
 | ⌘K | the dialog | the staged refinement ("Add {name} to sequence…") | the refinement replaces the input in the same dialog; `Backspace` returns |
 | Bell | the panel | — | a grouped row navigates to its page filtered rather than expanding |
@@ -501,26 +524,29 @@ Renewals and expansions are `R-deal` with a type, so they appear once in this gr
 | Row menu | the menu | — | every item in it is also a visible control or a panel |
 | Phone bottom bar | four pages plus "All pages" | the sheet listing the rest | any page is two taps; nothing one level deep on desktop becomes two |
 | Settings | the page and its 13 areas | one door per area, one drawer per row | when every item in an area is level two, the door sits under the heading and carries the whole list |
+| Agent item | the item's door | the edit state that replaces its read content | editing is a state of the door, not a panel opened from it |
 | Wizard | the step | one door inside a step | steps are time, not space; a step's door never contains a door |
 | `U-mcp` | the scope tier | the approval card | scope is set once in `X-mcpscope`; the card is the only interruption |
 | `U-cli` | the command | the approval or allocation prompt | no sub-command below two words; `--resume` replaces a nested flow |
 | `U-api` | the endpoint | the pending-approval object | the approval is a returned object, not a second call the client must discover |
 | `U-slack` / `U-digest` | the message | the deep link | the message never holds a control |
 
-**Four nodes that wanted a third level, and what was done instead.**
+**Six nodes that wanted a third level, and what was done instead.**
 
 1. **The step editor's template library.** A sequence step is a door on `R-sequence`; opening a template library inside it would be level three. Resolution: `P-templates` and `R-template` are pages. A template is an independent task and gets a page, per rule 5's container guidance.
 2. **The call console inside the queue.** `X-queue` is a panel on `P-tasks`; the call form inside it looked like a nested door. Resolution: `X-calllog` *is* the console's body when the queue is open, and a panel in its own right when reached from a task row or a record. One node, two parents, never nested.
 3. **Field mapping inside the connect wizard.** Step 4 has a door, "Show 42 unmapped Salesforce fields", and each pair has a write rule. Resolution: the write rule sits in the row of the pair it governs, never on another step and never behind the door — rule 5, mutually dependent fields.
 4. **Credit spend by surface, inside the plan area.** A door for credits inside a door for billing would be three. Resolution: balance, burn and run-out date are level one in the strip and in the header pill; `X-credits` is a panel opened from either, on its own channel.
+5. **Edit then approve, inside an agent item's door.** `D-agent-item` is a door on `P-agents`; a panel opened from inside it would be three. Resolution: `X-agent-edit` is an in-place edit state that *replaces* the door's read content. One node, one level, and `Backspace` returns the way ⌘K's staged refinement does.
+6. **View as, inside the user panel.** `X-user` is a panel on `S-team`; a second panel opened from inside it would be three. Resolution: View as is a mode of the page, entered from a users-table row action or the area heading, with a persistent "Viewing as … · Exit" banner. Nothing is nested, and the banner means the mode can never be forgotten.
 
-**One place two levels is genuinely tight.** `P-tasks` for the Meridian and Halyard SDR is denser than the published shape allows — 38% and 44% of items at level one against a 15–25% head band. That is an argument from all-day use, not a measurement. No third level is introduced to relieve it.
+**One place two levels is genuinely tight.** `P-tasks` for the Meridian and Halyard SDR is denser than the published shape allows — 38% and 44% of items at level one against a 15–25% head band. That is an argument from all-day use, not a measurement. No third level is introduced to relieve it, and the queue-mode default does not relieve it either: the queue is the page's default state for the SDR and AE seats and "All tasks (n)" is a labelled in-place switch back to the list, so the list's doors stay level two and the depth is unchanged.
 
 ---
 
 ## 5. The journey walk
 
-Fifty-four journeys, each as an ordered list of node ids with the edge type between each pair. Read one row per review sitting. Edge codes are from part 3.
+Fifty-four journeys, each as an ordered list of node ids with the edge type between each pair. Read one row per review sitting. Edge codes are from part 3; `─RT→` is a return to the page or record the previous node hung off, and it is written wherever a chain would otherwise read as one level-2 node opening another. Every walk below was re-cut on 15 September after the journey walk re-typed `X-thread` and `X-viewas`, deleted `D-acct-health`, `D-person-activity` and `X-book`, and added `D-thread-agent`, `D-co-activity`, `D-co-history`, `X-score`, `X-persona` and `X-signal`.
 
 ### SDR
 
@@ -534,10 +560,10 @@ Fifty-four journeys, each as an ordered list of node ids with the edge type betw
 | S6 | `G-bell` ─ND→ `P-people` ─DR→ `D-people-filters` ─RC→ `Q-person` ─QO→ `R-person` ─DR→ `D-person-history` ─DR→ `D-person-enrich` ─PN→ `X-enrich` ─LK→ `R-company` ─DR→ `D-co-hierarchy` ─PN→ `X-enrol` |
 | S7 | `P-sequences` ─RC→ `R-sequence` ─DR→ `D-seq-send` ─DR→ `D-seq-step` ─LK→ `P-templates` ─RC→ `R-template` ─LK→ `R-sequence` ─DR→ `D-seq-step` ─PN→ `X-preview` ─DR→ `D-seq-results` |
 | S8 | `P-lists` ─RC→ `R-list` ─PN→ `X-enrol` ─LK→ `R-sequence` ─DR→ `D-seq-send` |
-| S9 | `P-tasks` ─DR→ `D-task-filters` ─DR→ `D-task-row` ─PN→ `X-queue` ─(body)→ `X-calllog` ─(repeat)→ `X-calllog` ─PN→ `X-note` |
-| S10 | `P-tasks` ─DR→ `D-task-row` ─PN→ `X-linkedin` ─(outside Ollopa)→ ─RT→ `X-linkedin` (mark complete) ─RT→ `P-tasks` |
-| S11 | `P-inbox` ─DR→ `D-inbox-filters` ─RC→ `X-thread` ─DR→ `D-agent-item` ─PN→ `X-reply` ─PN→ `X-book` ─LK→ `R-person` ─PN→ `X-enrol` |
-| S12 | `X-thread` ─PN→ `X-book` ─PN→ `X-meeting` ─LK→ `R-brief` ─LK→ `R-deal` ─PN→ `X-task` ─PN→ `X-enrol` (no-show sequence) |
+| S9 | `P-tasks` (queue mode, the SDR and AE default) ─(body)→ `X-calllog` ─(repeat)→ `X-calllog` ─PN→ `X-note`; the "All tasks (24)" switch and `D-task-filters` open only when a subset is wanted |
+| S10 | `P-tasks` (queue mode) ─(body)→ `X-linkedin` ─(outside Ollopa)→ ─RT→ `X-linkedin` (mark complete) ─(next)→ `X-linkedin` |
+| S11 | `P-inbox` ─DR→ `D-inbox-filters` ─RC→ `X-thread` (the open half of the page) ─DR→ `D-thread-agent` ─RT→ `X-thread` ─DR→ `X-reply` (the composer; sending is the approval) ─PN→ `X-meeting` ─LK→ `R-person` ─PN→ `X-enrol` |
+| S12 | `X-thread` ─PN→ `X-meeting` (proposed → booked → held / no-show) ─LK→ `R-brief` ─LK→ `R-deal` ─PN→ `X-task` ─PN→ `X-enrol` (no-show sequence) |
 | S13 | `P-home` ─LK→ `S-you` ─LK→ `S-sending` ─PN→ `X-domain` ─PN→ `X-mailbox` ─LK→ `P-sequences` ─RC→ `R-sequence` ─DR→ `D-seq-send` ─DR→ `D-seq-results` ─PN→ `X-enrich` |
 
 ### Account executive
@@ -550,7 +576,7 @@ Fifty-four journeys, each as an ordered list of node ids with the edge type betw
 | A4 | `P-deals` ─DR→ `D-deals-filters` ─RC→ `Q-deal` ─QO→ `R-deal` ─PN→ `X-note` ─AI→ `P-agents` ─DR→ `D-agent-item` |
 | A5 | `P-reports` ─TB→ (Forecast) ─PN→ `X-report-records` ─RC→ `R-deal` ─DR→ `D-deal-history` ─LK→ `P-reports` ─PN→ `X-forecast` |
 | A6 | `P-deals` ─DR→ `D-deals-filters` ─RC→ `R-deal` ─DR→ `D-deal-activity` ─PN→ `X-note` ─PN→ `X-task` ─LK→ `P-reports` |
-| A7 | `R-deal` ─LK→ `R-brief` ─DR→ `D-deal-files` ─LK→ `R-company` ─PN→ `X-book` ─PN→ `X-task` ─LK→ `P-accounts` |
+| A7 | `R-deal` ─LK→ `R-brief` ─LK→ `R-deal` ─DR→ `D-deal-files` ─LK→ `R-company` ─PN→ `X-meeting` ─PN→ `X-task` ─LK→ `P-accounts` |
 
 ### Marketer
 
@@ -559,43 +585,43 @@ Fifty-four journeys, each as an ordered list of node ids with the edge type betw
 | M1 | `P-home` ─DR→ `D-home-audiences` ─LK→ `P-campaigns` ─TB→ (Audiences) ─RC→ `R-audience` ─DR→ `D-aud-suppress` ─PN→ `X-report-records` ─LK→ `R-list` ─DR→ `D-list-history` ─LK→ `R-campaign` |
 | M2 | `P-campaigns` ─RC→ `R-campaign` ─LK→ `P-templates` ─LK→ `R-campaign` ─PN→ `X-sendtest` ─PN→ `X-qa` ─PN→ `X-schedule` ─PN→ `X-recipients` ─LK→ `P-reports` |
 | M3 | `P-reports` ─TB→ (Pipeline) ─DR→ `D-report-conv` ─PN→ `X-report-records` ─LK→ `P-settings` ─LK→ `S-scoring` (weights, distribution preview, publish) ─LK→ `P-people` ─DR→ `D-people-filters` |
-| M4 | `P-workflows` ─RC→ `R-workflow` ─DR→ `D-wf-runs` ─LK→ `S-scoring` ─LK→ `X-territory` ─LK→ `P-tasks` ─DR→ `D-task-filters` |
-| M5 | `P-campaigns` ─TB→ (Forms) ─RC→ `R-form` ─LK→ `R-job` ─LK→ `R-workflow` ─LK→ `P-tasks` ─LK→ `R-campaign` |
+| M4 | `P-workflows` ─RC→ `R-workflow` ─DR→ `D-wf-runs` ─LK→ `S-scoring` ─PN→ `X-score` ─RT→ `S-scoring` ─LK→ `R-workflow` (the rule row, naming the named-account override with its owner and count) ─DR→ `D-wf-runs` (exceptions). The marketer never lands on `P-tasks`: routing is about records and stays on Workflows |
+| M5 | `P-campaigns` ─TB→ (Forms) ─RC→ `R-form` ─LK→ `R-job` ─LK→ `R-workflow` ─DR→ `D-wf-runs` ─LK→ `R-campaign` |
 | M6 | `P-home` ─DR→ `D-home-audiences` ─LK→ `P-reports` ─TB→ (Campaign results) ─DR→ `D-report-columns` ─PN→ `X-report-records` ─PN→ `X-export` ─LK→ `P-campaigns` ─DR→ `D-camp-filters` |
 
 ### Customer success
 
 | # | walk |
 |---|---|
-| C1 | `G-bell` ─ND→ `R-deal` ─LK→ `R-brief` ─DR→ `D-deal-files` ─LK→ `R-company` ─PN→ `X-note` ─PN→ `X-book` ─DR→ `D-acct-health` |
-| C2 | `P-tasks` ─PN→ `X-meeting` ─LK→ `R-company` ─PN→ `X-note` ─PN→ `X-task` ─DR→ `D-acct-health` |
-| C3 | `P-accounts` ─DR→ `D-acct-health` ─RC→ `R-company` ─DR→ `D-co-signals` ─PN→ `X-play` ─PN→ `X-note` ─PN→ `X-task` |
-| C4 | `P-accounts` ─RC→ `R-company` ─DR→ `D-acct-health` ─DR→ `D-co-hierarchy` ─LK→ `R-brief` ─PN→ `X-meeting` ─PN→ `X-task` ─LK→ `R-deal` ─LK→ `P-reports` ─PN→ `X-forecast` |
+| C1 | `G-bell` ─ND→ `R-deal` ─LK→ `R-brief` ─LK→ `R-deal` ─DR→ `D-deal-files` ─LK→ `R-company` (the hand-off section, and health with its drivers as a section) ─PN→ `X-note` ─PN→ `X-meeting` |
+| C2 | `P-tasks` ─PN→ `X-meeting` ─LK→ `R-company` (health, drivers and the first-value milestone as sections) ─PN→ `X-note` ─PN→ `X-task` |
+| C3 | `P-accounts` ─RC→ `Q-company` (health and its four drivers, flat) ─QO→ `R-company` ─DR→ `D-co-signals` ─RT→ `R-company` ─PN→ `X-play` ─PN→ `X-note` ─PN→ `X-task` |
+| C4 | `P-accounts` ─RC→ `Q-company` ─QO→ `R-company` (health and drivers as a section) ─DR→ `D-co-hierarchy` ─LK→ `R-brief` ─PN→ `X-meeting` ─PN→ `X-task` ─LK→ `R-deal` ─LK→ `P-reports` ─PN→ `X-forecast` |
 | C5 | `U-slack` ─ND→ `P-accounts` ─DR→ `D-co-signals` ─RC→ `R-company` ─PN→ `X-play` ─LK→ `R-brief` ─PN→ `X-task` ─LK→ `R-deal` |
-| C6 | `P-reports` ─TB→ (Forecast, renewals) ─PN→ `X-report-records` ─RC→ `R-deal` ─DR→ `D-acct-health` ─LK→ `P-reports` ─PN→ `X-forecast` |
+| C6 | `P-reports` ─TB→ (Forecast, renewals) ─PN→ `X-report-records` ─RC→ `R-deal` (the Account health · why card in the side panel) ─LK→ `P-reports` ─PN→ `X-forecast` |
 
 ### RevOps admin
 
 | # | walk |
 |---|---|
 | O1 | `G-signin` ─WS→ `W-setup` ─WS→ `P-home` ─DR→ `D-home-setup` ─LK→ `W-connect` ─LK→ `S-you` ─LK→ `S-sending` ─PN→ `X-mailbox` ─LK→ `S-howteam` ─LK→ `S-team` ─PN→ `X-user`; later, exposure: sidebar ─SB→ `P-inbox`, then "keep it?" once |
-| O2 | `P-settings` ─LK→ `S-team` ─PN→ `X-user` ─PN→ `X-viewas` ─LK→ `S-sending` ─PN→ `X-mailbox`; offboarding: `X-user` (reassign first) ─LK→ `R-integration` ─LK→ `S-plan` |
+| O2 | `P-settings` ─LK→ `S-team` ─PN→ `X-user` ─RT→ `S-team` ─TB→ `X-viewas` (mode, banner) ─RT→ `S-team` ─LK→ `S-sending` ─PN→ `X-mailbox`; offboarding: `X-user` (reassign first) ─LK→ `R-integration` ─LK→ `S-plan` |
 | O3 | `P-settings` ─LK→ `S-integrations` ─LK→ `W-connect` ─WS→ (choose) ─WS→ (authorise) ─WS→ (what syncs) ─WS→ (map fields) ─WS→ (sync rules) ─WS→ (review and start) ─LK→ `R-integration` |
-| O4 | `P-home` ─LK→ `R-integration` ─PN→ `X-errors` ─LK→ `R-company` ─DR→ `D-co-crm` ─LK→ `P-people` ─DR→ `D-people-columns` ─PN→ `X-enrich` ─LK→ `R-job` ─LK→ `P-reports` ─PN→ `X-export` |
-| O5 | `P-settings` ─LK→ `S-team` ─PN→ `X-user` ─PN→ `X-viewas` ─XL→ `G-noaccess` (confirming the gap explains itself) ─PN→ `X-territory` ─LK→ `P-requests` ─RC→ `R-request` |
+| O4 | `P-home` ─LK→ `R-integration` ─PN→ `X-errors` ─RT→ `R-integration` ─LK→ `R-company` ─DR→ `D-co-crm` ─LK→ `P-people` ─DR→ `D-people-columns` ─RT→ `P-people` ─PN→ `X-enrich` ─LK→ `R-job` ─LK→ `P-reports` ─PN→ `X-export` |
+| O5 | `P-settings` ─LK→ `S-team` ─PN→ `X-user` ─RT→ `S-team` ─TB→ `X-viewas` ─XL→ `G-noaccess` (confirming the gap explains itself) ─RT→ `S-team` ─PN→ `X-territory` ─LK→ `P-requests` ─RC→ `R-request` |
 | O6 | credits pill ─PN→ `X-credits` ─LK→ `S-plan` ─LK→ `S-agents` ─LK→ `S-team` ─PN→ `X-user` ─LK→ `S-developer` ─PN→ `X-mcpscope` ─LK→ `R-job` |
 | O7 | `P-settings` ─LK→ `S-workspace` ─LK→ `S-sending` ─PN→ `X-domain` ─PN→ `X-mailbox` ─LK→ `S-sequences` |
 | O8 | `P-settings` ─LK→ `S-prospecting` ─PN→ `X-removal` ─LK→ `P-people` ─DR→ `D-people-filters` ─LK→ `S-developer` ─PN→ `X-key` ─LK→ `S-agents` |
-| O9 | `P-requests` ─RC→ `R-request` ─LK→ `S-pipeline` ─PN→ `X-field` ─LK→ `P-workflows` ─RC→ `R-workflow` ─DR→ `D-wf-runs` ─PN→ `X-task` ─LK→ `R-request` |
+| O9 | `P-requests` ─RC→ `R-request` ─LK→ `S-pipeline` ─PN→ `X-field` ─RT→ `S-pipeline` ─LK→ `P-workflows` ─RC→ `R-workflow` ─DR→ `D-wf-runs` ─RT→ `R-workflow` ─PN→ `X-task` ─LK→ `R-request` |
 | O10 | any locked control ─PN→ `X-upgrade` → admin: ─LK→ `S-plan`; non-admin: creates `R-request`, visible in `P-requests` |
 
 ### Sales leader (AE seat with reports)
 
 | # | walk |
 |---|---|
-| L1 | `P-deals` ─DR→ `D-deals-view` ─DR→ `D-deals-filters` ─RC→ `Q-deal` ─QO→ `R-deal` ─DR→ `D-deal-activity` ─PN→ `X-note` ─LK→ `P-reports` ─DR→ `D-report-conv` |
-| L2 | `P-reports` ─TB→ (Forecast) ─PN→ `X-forecast` ─PN→ `X-report-records` ─RC→ `R-deal` ─LK→ `P-reports` ─DR→ `D-report-columns` |
-| L3 | `P-reports` ─TB→ (Activity) ─PN→ `X-report-records` ─RC→ `R-person` ─DR→ `D-person-activity` ─PN→ `X-calllog` (read the logged outcome and the attached transcript) ─PN→ `X-note` |
+| L1 | `P-deals` ─DR→ `D-deals-view` ─RT→ `P-deals` ─DR→ `D-deals-filters` ─RC→ `Q-deal` (the comment composer is the leader's one editable field on a rep's deal) ─QO→ `R-deal` ─DR→ `D-deal-activity` ─RT→ `R-deal` ─(composer, own channel)→ `X-note` ─LK→ `P-reports` ─DR→ `D-report-conv` |
+| L2 | `P-reports` ─TB→ (Forecast, the team roll-up first) ─PN→ `X-forecast` ─RT→ `P-reports` ─PN→ `X-report-records` (a sibling panel, never inside the forecast panel) ─RC→ `R-deal` ─LK→ `P-reports` ─DR→ `D-report-columns` |
+| L3 | `P-reports` ─TB→ (Activity, calls logged and calls with a coaching note) ─PN→ `X-report-records` ─RC→ `R-person` ─(timeline, a call item)→ `X-calllog` (read the logged outcome, the transcript where an integration supplied one, and write the coaching note inside the call) |
 
 ### Developer (OPS seat)
 
@@ -603,18 +629,18 @@ Fifty-four journeys, each as an ordered list of node ids with the edge type betw
 |---|---|
 | D1 | `P-settings` ─LK→ `S-developer` ─PN→ `X-key` ─LK→ `U-api` ─AI→ `X-approve-remote` (over the threshold) ─LK→ `X-credits` ─LK→ `R-job` |
 | D2 | `P-settings` ─LK→ `S-integrations` ─LK→ `W-connect` ─WS→ (webhook: URL, secret, test event) ─LK→ `S-developer` ─PN→ `X-hook` ─LK→ `U-hooks` (delivery log, reconcile) |
-| D3 | `P-settings` ─LK→ `S-developer` ─PN→ `X-mcpscope` ─LK→ `U-mcp` ─AI→ `X-approve-remote`; a write on Starter ─PN→ `X-upgrade`; the run lands ─LK→ `P-agents` ─DR→ `D-agent-steps` |
-| D4 | `P-settings` ─LK→ `S-developer` ─PN→ `X-cliauth` ─LK→ `U-cli` (list, export, bulk with `--resume`) ─AI→ `X-approve-remote` ─LK→ `G-account` (switch workspace, repeat) ─LK→ `P-tasks` ─DR→ `D-task-options` |
+| D3 | `P-settings` ─LK→ `S-developer` ─PN→ `X-mcpscope` (read is on every plan; the two write tiers carry the lock, the plan name and the monthly total) ─PN→ `X-upgrade` (from the locked tier, before any work exists, never at the moment a write fails) ─RT→ `X-mcpscope` ─LK→ `U-mcp` ─AI→ `X-approve-remote` (one card per client turn); the run lands ─LK→ `P-agents` ─DR→ `D-agent-steps` |
+| D4 | `P-settings` ─LK→ `S-developer` ─PN→ `X-cliauth` ─LK→ `U-cli` (list, export, bulk with `--resume`; `--workspace` repeats the loop without leaving the terminal) ─AI→ `X-approve-remote` ─LK→ `P-tasks` ─DR→ `D-task-options` |
 
 ### Agents as the actor
 
 | # | walk |
 |---|---|
-| G1 | `R-list` → `R-company` ─DR→ `D-co-research` ─LK→ `R-brief` ─HS→ `P-home` ─DR→ `D-home-agents` ─LK→ `P-agents` ─DR→ `D-agent-steps` |
-| G2 | `P-agents` ─DR→ `D-agent-item` ─PN→ `X-agent-edit` ─PN→ `X-agent-batch`; the same draft also appears ─LK→ `X-thread` ─PN→ `X-reply` |
-| G3 | `P-agents` ─DR→ `D-agent-filters` ─DR→ `D-agent-steps` ─LK→ `P-tasks`; the reasons read ─LK→ `P-accounts` ─DR→ `D-acct-health`; recalibration ─LK→ `S-scoring` |
+| G1 | `R-list` ─RC→ `R-company` ─DR→ `D-co-research` ─LK→ `R-brief` ─HS→ `P-home` ─DR→ `D-home-agents` ─LK→ `P-agents` ─DR→ `D-agent-steps` |
+| G2 | `P-agents` ─DR→ `D-agent-item` ─(edit in place)→ `X-agent-edit` ─RT→ `P-agents` ─PN→ `X-agent-batch`; the same draft also appears ─LK→ `X-thread` ─DR→ `D-thread-agent`, where sending it is the approval and it does not also queue |
+| G3 | `P-agents` ─DR→ `D-agent-filters` ─RT→ `P-agents` ─DR→ `D-agent-steps` ─LK→ `P-tasks` (the score changes in place; nothing moves); the reasons read ─LK→ `P-accounts` ─RC→ `Q-company` (health and its drivers, flat); recalibration ─LK→ `S-scoring` ─PN→ `X-score` |
 | G4 | `P-agents` ─PN→ `X-agent-batch` (count, recipients, mailboxes, credits) → over the threshold ─LK→ the admin's `P-agents`; run from a client ─AI→ `X-approve-remote`; a campaign send ─PN→ `X-schedule` |
-| G5 | `P-agents` ─DR→ `D-agent-item` ─PN→ `X-agent-edit` ─LK→ `R-deal` ─DR→ `D-deal-evidence` ─DR→ `D-deal-history` |
+| G5 | `P-agents` ─DR→ `D-agent-item` ─(edit in place)→ `X-agent-edit` ─LK→ `R-deal` ─DR→ `D-deal-evidence` ─RT→ `R-deal` ─DR→ `D-deal-history` |
 
 **Steps that land on no node, by design.** Four, all boundary decisions rather than gaps: the dial itself in S9 (no telephony — the rep dials however they dial and `X-calllog` records the outcome); the send in S10 (no extension — `X-linkedin` holds the message and the manual completion); the recorder joining the call in A2 (no recording — a transcript arrives as an integration input and attaches to `X-meeting`); and the visitor filling in the form in M5 (no page builder — `R-form` is where the form and its credit cap live). In each case the *next* step lands on a node, so no journey breaks.
 
@@ -632,7 +658,11 @@ Every other node in part 2 is touched by at least one of the 54 journeys. The th
 
 ### 6.2 Journey steps with no node
 
-Four, listed at the end of part 5, and all four are boundary decisions already made on 15 September: the dial, the LinkedIn send, the recorder, the form submission. **Decision:** none of them becomes a node, and none of them is hinted at in the product. A fifth is real and needs a decision: **L3, "coach from the calls", depends on recordings, transcripts, a scorecard and a call library, and recording is outside the line.** Decision: L3 is re-scoped to what Ollopa owns. The leader reads the Activity report, opens the rep's contact record, reads the logged call — purpose, disposition, duration, notes, and the transcript when an integration supplied one — and writes the feedback as a note on the call. The **scorecard becomes a coaching note with fixed headings**, an attribute of the call, not a new object or node. The call library and the clip are lost; the map records that as a known reduction rather than inventing a conversation record Ollopa does not own.
+Four, listed at the end of part 5, and all four are boundary decisions already made on 15 September: the dial, the LinkedIn send, the recorder, the form submission. **Decision:** none of them becomes a node, and none of them is hinted at in the product.
+
+**A fifth, found by the RevOps walk: the admin has nowhere to try a change before it is real.** There is no sandbox and no change set, and building either would be a second copy of the workspace. **Decision:** no node. Ollopa's answer is staged rollout — `R-request` carries an "applies to" scope (one team, one territory, everyone) that is applied first and widened from the same row, and the request's verify state counts how many of the affected people have used the changed thing since it shipped. The sandbox and the change set are recorded here as a known reduction rather than invented.
+
+**A sixth is real and needs a decision:** **L3, "coach from the calls", depends on recordings, transcripts, a scorecard and a call library, and recording is outside the line.** Decision: L3 is re-scoped to what Ollopa owns. The leader reads the Activity report, opens the rep's contact record, reads the logged call — purpose, disposition, duration, notes, and the transcript when an integration supplied one — and writes the feedback **inside the call**, not in a panel beside it. The **scorecard becomes a coaching note with fixed headings**, an attribute of the call, not a new object or node; the rep sees it on Home and in the digest. The call library and the clip are lost; the map records that as a known reduction rather than inventing a conversation record Ollopa does not own.
 
 ### 6.3 Objects with no home
 
@@ -646,11 +676,13 @@ Checked against all 31. Twenty-eight land on a node in part 2. Three did not:
 
 ### 6.4 Places where two journeys expect different structures
 
-**a. What the Founder-led profile leaves out.** Spec 00 says Campaigns, Accounts, Reports, and Inbox until the first reply. Spec 16 says Inbox and Campaigns. **Decision:** the wider list wins — **Inbox, Campaigns, Accounts, Reports** — with a named signal for each: Inbox on the first reply, Campaigns on the first audience or campaign, Accounts on the first deal reaching Closed won, Reports on the first full week with more than ten sends. O1's exposure example is the Inbox and is unaffected. Spec 16 is amended.
+**a. What the Founder-led profile leaves out.** Spec 00 says Campaigns, Accounts, Reports, and Inbox until the first reply. Spec 16 says Inbox and Campaigns. PLAN.md's map-decisions row of 15 September says Campaigns, Accounts, Reports and Requests. **Decision:** the widest list wins, and it is the union of all three — **Inbox, Campaigns, Accounts, Reports, Requests** — with a named signal for each: Inbox on the first reply, Campaigns on the first audience or campaign, Accounts on the first deal reaching Closed won, Reports on the first full week with more than ten sends, Requests on the second upgrade request in a week. Until each signal fires, the page is reached by ⌘K, by deep link and by the line that names it (the Settings plan strip for Requests), and its header offers "Add to sidebar". O1's exposure example is the Inbox and is unaffected. Spec 16 is amended and so is this paragraph's earlier four-item form.
+
+**Workflows is a sixth omission and it is not a profile argument at all**, so it is recorded here rather than debated: `P-workflows` carries the sidebar column **SEP, PLG** in 2.11, which leaves it out of the Founder-led *and* the Agency sidebar by the node table itself. Fathom is on Starter and `P-workflows` is Growth-gated, so the page is visible with a lock and the plan name and has nothing to route yet; Halyard's routing lives in each client's own systems. Its signal is the first workflow anybody creates. Spec 00 §3.2 and spec 16 §3 both carry the six-page Founder-led list and the three-page Agency list (Campaigns, Accounts, Workflows) for that reason; the five pages above are the ones PLAN.md's decision resolved, and Workflows is the one the node table settles.
 
 **b. Lists (S3) versus audiences (M1).** Both filter the same rows and both produce a named set. **Decision:** one filter grammar, two homes, and no merging. A **list** is prospecting-owned, lives on `P-lists`, feeds sequences, and its level-one question is "how many touches is this". An **audience** is campaign-owned, lives on `P-campaigns`, carries suppressions, and its level-one question is "who must not receive this". An audience may point at a list; a list is never renamed into an audience. Both read the same persona and signal definitions from `S-scoring`.
 
-**c. Routing exceptions (M4) versus intake requests (O9).** Both are admin queues and an earlier draft put them in one place. **Decision:** they separate by what they are about. Routing exceptions are about **records** and stay on `P-workflows`, where the rule that produced them is one click away. Intake requests are about the **workspace** and stay on `P-requests`, alongside upgrade requests, because both are somebody asking the admin to change what other people see.
+**c. Routing exceptions (M4) versus intake requests (O9).** Both are admin queues and an earlier draft put them in one place. **Decision:** they separate by what they are about. Routing exceptions are about **records** and stay on `P-workflows`, where the rule that produced them is one click away, in the "Could not route (n)" section of `D-wf-runs`. Intake requests are about the **workspace** and stay on `P-requests`, alongside upgrade requests, because both are somebody asking the admin to change what other people see. One consequence, applied in three places by the marketer walk: **the marketer never lands on `P-tasks`.** M4 and M5 end on the workflow's run history, not on a task queue the marketer seat does not hold, and `P-tasks`, `D-task-filters` and `X-territory` no longer list M4 or M5 in their journeys column.
 
 **d. Three journeys, one forecast.** A5 (AE), L2 (leader) and C6 (CS renewal book) all submit a number. **Decision:** one node, `X-forecast`, on one Forecast tab. The roll-up level is the seat's position in the hierarchy, not a different screen: an AE sees their own deals, an AE with reports sees the team roll-up first and can drill to a rep, a CSM sees renewal-typed deals for their book. The predicted number sits beside the human's with the deals driving the difference, on all three, and no agent ever submits.
 
@@ -664,8 +696,27 @@ Checked against all 31. Twenty-eight land on a node in part 2. Three did not:
 
 **i. The agency has ten workspaces and the credit model has one.** O6 reviews credits per workspace; D4 loops over ten. **Decision:** no cross-workspace roll-up node. `X-credits` is per workspace, `G-account` switches, and the CLI is the cross-workspace answer — which is why it came inside the boundary. A cross-workspace console is out of this map.
 
-**j. Leader and developer are not seats.** JOURNEYS.md names seven actors; PRODUCT.md declares five seats. **Decision:** the leader is an AE seat with direct reports, and every leader-only node is an AE node conditioned on `reports > 0` — the team roll-up on `X-forecast`, the rep filter on `D-deals-filters`, comments on `R-deal`. The developer is the OPS seat. No sixth or seventh seat is created, so no business has to declare one.
+**j. Leader and developer are not seats.** JOURNEYS.md names seven actors; PRODUCT.md declares five seats. **Decision:** the leader is an AE seat with direct reports, and every leader-only node is an AE node conditioned on `reports > 0` — the team roll-up on `X-forecast`, the rep filter and the owner column on `D-deals-filters` and `P-deals`, the coverage figure on the forecast strip, comments on `R-deal` and `Q-deal`, the coaching note inside `X-calllog`. The developer is the OPS seat. No sixth or seventh seat is created, so no business has to declare one.
+
+When this was written no business declared such a seat, which left the AE+ row of part 4 hypothetical. The leader walk closed that: **Meridian Software declares one sales-manager seat — Priya Raman, an AE seat with Elena Vasquez reporting to her** — so `reports > 0` is a live condition with seed data behind it, and the usage model carries an optional `aePlus` number on the items whose week differs. Ridgeline, Fathom and Halyard keep one flat AE seat or none.
 
 ### 6.5 What this map hands to the specs
 
-Three things the sixteen specs must now absorb, in journey order: the nine new nodes the widened boundary created (`X-calllog`, `X-linkedin`, `X-meeting`, `R-form`, `R-brief`, `P-workflows`, `P-requests`, `S-scoring`, `S-developer`), the level rule stated in convention 2 — no level-2 node contains another level-2 node, counted per channel — and the four screenless surfaces, which need the approval batch, the consequence line and the credit cap written as text before any screen for them is designed.
+Three things the specs must absorb, in journey order: the nine nodes the widened boundary created (`X-calllog`, `X-linkedin`, `X-meeting`, `R-form`, `R-brief`, `P-workflows`, `P-requests`, `S-scoring`, `S-developer`), the level rule stated in convention 2 — no level-2 node contains another level-2 node, counted per channel — and the four screenless surfaces, which need the approval batch, the consequence line and the credit cap written as text before any screen for them is designed.
+
+The journey walk of 15 September assigned an owner to every one of them, and added three spec files to the sixteen. **Nothing on this list is a new node**: each spec writes down a node that is already in part 2.
+
+| node | owner |
+|---|---|
+| `X-calllog`, `X-linkedin` | spec 07, tasks |
+| `X-meeting` | spec 06 §3, "Book and run the meeting", owns it; specs 07 and 09 render it |
+| `R-brief` | spec 09 §6.8, with the company-side section in spec 03 |
+| `P-templates`, `R-template` | spec 05 §3.9 |
+| `S-scoring`, `X-score`, `X-persona`, `X-signal` | spec 14 |
+| `R-form` | spec 10 |
+| `S-developer`, `X-key`, `X-hook`, `X-mcpscope`, `X-cliauth`, `X-approve-remote`, `U-api`, `U-hooks`, `U-mcp`, `U-cli` | **spec 17, developer surfaces** (new) |
+| `W-import`, `R-job`, `X-enrich` | **spec 18, import and enrichment** (new) |
+| `P-workflows`, `R-workflow`, `D-wf-runs` | **spec 19, workflows** (new) |
+| `P-requests`, `R-request` | **spec 20, requests** (new); the RevOps walk drafted its contents |
+
+Four things the specs must also read from this map rather than restate: the fifth Reports tab and `X-forecast` belong to spec 12 and to nobody else; the ledger's **Surface** column — App, Automation, API, MCP, CLI, Agent — belongs to spec 13 and is what makes a run from a client or a terminal readable beside one made in the app; the interrupting notification kinds are exactly three; and `X-thread`, `X-viewas` and `X-agent-edit` are states, not disclosures, so no spec may draw them as a panel opened from inside another.

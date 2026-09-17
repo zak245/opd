@@ -50,7 +50,7 @@ Counts in the header come from `businesses.ts` (`counts.companies`).
 
 **Columns.** Seven by default per role; "Columns: 7 of 20" opens a popover of checkboxes in table order. Choices persist. Widths are fixed; no horizontal scroll at desktop width.
 
-**The record has two levels.** Clicking the row (or `Space`) opens the **quick look**: a flat drawer beside the table, the table still in view, holding the few fields a glance needs in the same order and with the same labels as the top of the record page — name and domain, stage, owner, contacts held, contacts in a sequence, last activity, open deals. Nothing collapses inside it and nothing is editable except the stage badge, the one field the glance exists for. `Esc` closes it; `j` and `k` move it down the table. The name, `Enter`, and every link from elsewhere open the **record page**. Removing the drawer would cost only speed, which is the test it has to pass.
+**The record has two levels.** Clicking the row (or `Space`) opens the **quick look**: a flat drawer beside the table, the table still in view, holding the few fields a glance needs in the same order and with the same labels as the top of the record page — name and domain, stage, owner, contacts held, contacts in a sequence, last activity, open deals. Nothing collapses inside it and nothing is editable except the stage badge, the one field the glance exists for. `Esc` closes it; `j` and `k` move it down the table. The name, `Enter`, and every link from elsewhere open the **record page**. Removing the drawer would cost only speed, which is the test it has to pass. It is the same quick look Accounts opens from its own rows, rendered there with the customer-state field set — health with its band and 30-day change, the four health drivers as flat lines directly under it, renewal and days left, value, open risks, last touch, champion, owner and the next step — so a health score is never across a door from the reasons that sum to it ([11 Accounts](11-accounts.md) §3).
 
 **Row actions.** The seat's level-one actions appear as text buttons with icons on hover and on keyboard focus; the "…" button is always visible, is named "Actions for {company}", and its menu repeats the visible actions, then the rest, with Remove last below a divider and its consequence written into the label.
 
@@ -69,9 +69,19 @@ Counts in the header come from `businesses.ts` (`counts.companies`).
 | Flag data as wrong | Popover: field, what is wrong, Send |
 | Remove | Item reads "Remove · leaves 2 lists, stops sequences for 2 contacts, keeps the contacts"; inline confirm repeats it; toast "Removed · Undo" for 10 seconds |
 
+**Agent research, and the brief it produces.** The research door on the record lists runs, newest first, and every row carries its provenance in words rather than an icon: which agent ran it, when, and how many sources it read — "Research agent · 12 Sep 09:02 · 14 sources · 12 credits". The latest run carries **"Open the brief"**.
+
+The brief is a record page built from the shared record template, which spec 09 §6.8 owns; what this page settles is what a research brief about a company has to carry. The header names the actor and the run time, so nobody has to ask whether a person or an agent wrote it. Every source is listed with a link, so every generated line can be checked at its origin. The run's credit cost sits on the record itself, not in a billing screen, because the next thing a reader decides is whether to spend again. And that decision has one control, **"Research again · 12 credits"**, which prices itself before the click. The brief has no doors: it is read top to bottom, and a brief with a door is a brief somebody skims.
+
+One brief opens from four places and is the same object in all four: the research door here, the meeting panel, the deal record, and Home's overnight research line.
+
 **Bulk.** Checkbox per row and in the header, which offers "This page (25)" and "All 3,100 matching". While anything is selected a bar replaces the filter row: "12 selected · Add to list · Find people · Change stage · Change owner · Export · Push to CRM · Remove · Clear". Bulk Remove and Push show what they affect before confirming. Escape clears.
 
-**Page actions.** "Find companies" (primary) opens a drawer over the table: a flat list of database filters (industry, employees, location, revenue, funding, hiring, technology, keywords, intent), a live count, results with Save and Find people per row, bulk Save. The header says saving is free and finding people costs "1 credit per verified email". Drawer filters persist. "Import CSV" is a drawer: file, column mapping, stage, owner, list, duplicates ("update existing" default); progress and result appear as a banner on this page, not in Settings. "Views" is a popover of saved views (Mine, Shared, Default) with Set as default and Delete as text buttons; "Save view" appears in the filter row when the filters differ from the active view. "Alert me" on a view sends a daily or weekly digest. The page actions that sit under level one for the seat live in one menu named by its contents: "Import, export all, merge, alerts".
+**Page actions.** "Find companies" (primary) opens a drawer over the table: a flat list of database filters (industry, employees, location, revenue, funding, hiring, technology, keywords, intent), a live count, results with Save and Find people per row, bulk Save. The header says saving is free and finding people costs "1 credit per verified email". Drawer filters persist.
+
+Two **exclusions sit at level one in that drawer, above the database filters**, and both are on by default for the SDR: "Exclude companies I already own" and "Exclude companies with a contact in a sequence". Each restates the count as it is turned on or off — "2,860 matching · 240 excluded, already yours" — so the number in front of the person is always the number they would buy. They are level one because they are the difference between prospecting and prospecting the same accounts twice, and a person who finds that out after spending credits has been charged for a mistake the product could have named. They are removed, not disabled, for a seat that owns nothing.
+
+"Import CSV" opens the **import wizard page** with Companies as the destination, and ends on the job record, never on a toast. There is one import wizard in the product, reached from People, Companies and Lists, and [18 Import and enrichment](18-import-and-enrichment.md) owns its five steps, its ten-row credit trial and its job record. This page holds the entry point and nothing else: no drawer body, and no second copy of the flow. "Views" is a popover of saved views (Mine, Shared, Default) with Set as default and Delete as text buttons; "Save view" appears in the filter row when the filters differ from the active view. "Alert me" on a view sends a daily or weekly digest. The page actions that sit under level one for the seat live in one menu named by its contents: "Import, export all, merge, alerts".
 
 **States.** Empty workspace: "No companies yet" with Find companies and Import CSV. Filtered empty: "Nothing matches. Clear the search or a filter" with a Clear button (built). Loading: header and filter row at once, 10 skeleton rows, counts as "…". Error: a banner "Companies could not load. Retry" above the last loaded rows. No access: Companies is an area the marketer's seat does not hold, so the marketer gets the shell's no-access page, "Companies is not part of your seat. It is used by: SDR, Account executive, Customer success, RevOps admin. If you need it, ask Daniel Okafor (RevOps admin) to change your permissions", with Back to Home. There is no read-only view. Actions the seat may not take (Change owner for a Meridian SDR, Push to CRM for CS) are removed from menus, and the menu ends with one line in body contrast, "Owner changes: ask Daniel Okafor". If the workspace profile had left Companies out of a seat's sidebar, the page would open as normal and its header would offer "Add to sidebar"; the three kinds of "cannot see it" are kept apart (spec 00).
 
@@ -148,7 +158,9 @@ Weekly use, share of active users in the role, baseline Meridian. Overrides as b
 | Flag data as wrong | 2 | 1 | 1 | 1 | — |
 | **Page actions** | | | | | |
 | Find companies in the database | 70 | 15 | 3 | 10 | Fat ADMIN 55; Hal SDR 75; Hal ADMIN 30; Rid SDR 10; Rid ADMIN 3 |
-| Import a CSV | 5 | 2 | 3 | 12 | Hal ADMIN 35; Hal SDR 15 |
+| Exclude companies I already own (Find companies) ✱ | 55 | 12 | 2 | 10 | Fat ADMIN 45; Hal SDR 60, ADMIN 25; Rid SDR 8 |
+| Exclude companies with a contact in a sequence ✱ | 50 | 10 | 2 | 8 | Fat ADMIN 40; Hal SDR 55, ADMIN 22; Rid SDR 6 |
+| Import a CSV (opens the import wizard page) | 5 | 2 | 3 | 12 | Hal ADMIN 35; Hal SDR 15 |
 | Saved views | 18 | 12 | 25 | 8 | Hal SDR 45; Hal ADMIN 25 |
 | Sort by a column | 12 | 20 | 18 | 10 | — |
 | Choose columns | 4 | 4 | 6 | 6 | — |
@@ -162,27 +174,41 @@ Weekly use, share of active users in the role, baseline Meridian. Overrides as b
 | Contacts in sequences here | 25 | 6 | 2 | 3 | Hal SDR 45; Rid SDR 3; Fat ADMIN 25 |
 | Notes | 8 | 20 | 30 | 3 | — |
 | Open tasks here | 12 | 18 | 18 | 3 | — |
-| Agent research, last run and cost | 18 | 10 | 6 | 6 | Fat SDR 45; Fat ADMIN 40 |
+| Health score with its band and 30-day change | 2 | 18 | 45 | 8 | Rid CS 60, AE 40; Fat ADMIN 20; Hal ADMIN 2 |
+| Health drivers: the four numbers that sum to the score | 1 | 8 | 25 | 5 | Rid CS 45, AE 20; Fat ADMIN 10; Hal ADMIN 1 |
+| Renewal terms: date, days left and contract value ✱ | 1 | 20 | 40 | 10 | Rid CS 25, AE 25; Fat ADMIN 18; Hal ADMIN 2 |
+| Next step with its date | 2 | 18 | 40 | 5 | Rid CS 40, AE 30; Fat ADMIN 12; Hal ADMIN 1 |
+| Open risks ✱ | 1 | 12 | 35 | 6 | Rid CS 45, AE 25; Fat ADMIN 12; Hal ADMIN 2 |
+| First value and the goals agreed at the start | 0.5 | 5 | 22 | 3 | Rid CS 18, AE 8; Fat ADMIN 6; Hal ADMIN 0.5 |
+| Expansion signals | 2 | 12 | 15 | 3 | Rid CS 40, AE 45; Fat ADMIN 8; Hal ADMIN 1 |
+| The hand-off brief: why they bought and what was promised | 0.5 | 10 | 18 | 2 | Rid CS 12, AE 15; Fat ADMIN 0; Hal ADMIN 0 |
+| Touches: the logged calls, emails and meetings | 3 | 12 | 30 | 3 | Rid CS 18, AE 12; Fat ADMIN 8; Hal ADMIN 1 |
+| Usage over 90 days | 0.5 | 5 | 15 | 2 | Rid CS 35, AE 25; Fat ADMIN 4; Hal ADMIN 0.5 |
+| Seats and last sign-in | 0.5 | 4 | 12 | 2 | Rid CS 18, AE 20; Fat ADMIN 3; Hal ADMIN 0.5 |
+| Agent research: runs, each with agent, date, sources and cost | 18 | 10 | 6 | 6 | Fat SDR 45; Fat ADMIN 40 |
+| Open the brief from the latest run | 25 | 15 | 5 | 8 | Fat SDR 50, ADMIN 45; Rid SDR 10, AE 20 |
+| Research again · 12 credits ✱ | 12 | 6 | 3 | 5 | Fat SDR 30, ADMIN 25 |
 | Company details: industry, size, location, founded, description | 18 | 15 | 12 | 8 | Fat ADMIN 20 |
 | All activity | 10 | 15 | 18 | 4 | — |
 | Signals and news | 8 | 6 | 8 | 2 | Fat SDR 18; Fat ADMIN 15; Rid CS 15 |
-| Custom fields | 3 | 5 | 8 | 10 | — |
 | CRM sync status and last error | 4 | 8 | 6 | 20 | Fat SDR 0; Fat ADMIN 0 |
 | Parent and subsidiaries | 1 | 3 | 4 | 2 | — |
-| Similar companies | 4 | 2 | 1 | 1 | Fat SDR 12; Fat ADMIN 10 |
-| Files | 1 | 4 | 5 | 1 | — |
-| Lists this company is in | 4 | 3 | 5 | 3 | Hal SDR 15 |
+| Full history, custom fields and files: custom fields | 3 | 5 | 8 | 10 | — |
+| Full history, custom fields and files: files | 1 | 4 | 5 | 1 | — |
+| Full history, custom fields and files: lists this company is in | 4 | 3 | 5 | 3 | Hal SDR 15 |
+| Enrichment: each field, where it came from and when | 6 | 4 | 3 | 15 | Fat SDR 12, ADMIN 12; Hal ADMIN 20; Rid SDR 3 |
+| Re-enrich this company · credit estimate shown ✱ | 4 | 2 | 1 | 8 | Fat SDR 10, ADMIN 10; Hal ADMIN 15 |
 
-**Shape check.** One rule across this group: the denominator is every item in `companies.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 78 items in the file.
+**Shape check.** One rule across this group: the denominator is every item in `companies.ts` that the seat has at that business — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `model.ts`. 94 items in the file: the eleven customer-state items and the two enrichment-drawer items the record renders were added and Similar companies was removed with its door.
 
 | Pair | Items | Head | Body | Tail | Read |
 |---|---|---|---|---|---|
-| Meridian SDR | 78 | 22 (28%) | 26 (33%) | 30 (38%) | Head over the 25% mark. The SDR lives on this page; it is the density case named in PRODUCT.md, and 22 items is still a search box, four chips, seven columns, five row actions, one button, the quick look and three record blocks |
-| Ridgeline CS | 78 | 18 (23%) | 29 (37%) | 31 (40%) | Within shape |
-| Meridian admin | 78 | 10 (13%) | 35 (45%) | 33 (42%) | A visitor's profile: search, owner, CRM |
-| Halyard SDR | 78 | 28 (36%) | 21 (27%) | 29 (37%) | The agency case: views, location and in-sequence are daily, so the head grows, which is the point of the per-business override |
+| Meridian SDR | 94 | 25 (27%) | 28 (30%) | 41 (44%) | Just over the 25% mark, and closer to the band than before: the SDR lives on this page and it is the density case named in PRODUCT.md, but the customer state is almost nothing to this seat, so twelve of the thirteen new items land in the tail, enrichment provenance is the thirteenth and sits in the body, and the head does not move at all. 25 items is still a search box, four chips, seven columns, five row actions, one button, the two exclusions in Find companies, the quick look and three record blocks |
+| Ridgeline CS | 94 | 25 (27%) | 34 (36%) | 35 (37%) | The second density case on this page, and the reason the customer state is measured here at all: at Ridgeline every account is a current client, so seven of the eleven customer-state items are head for this seat — health and its drivers, renewal, next step, risks, expansion signals and usage over 90 days. Over the band by two points, stated rather than corrected by pretending a CSM does not read them |
+| Meridian admin | 94 | 10 (11%) | 46 (49%) | 38 (40%) | A visitor's profile: search, owner, CRM. The head does not move; enrichment provenance is the one new item this seat reads often, and at 15 it sits near the top of its door, which is where the admin's questions about where a field came from belong |
+| Halyard SDR | 94 | 31 (33%) | 23 (24%) | 40 (43%) | The agency case: views, location, in-sequence and the two prospecting exclusions are daily, so the head grows, which is the point of the per-business override. The customer state costs the agency nothing — its clients are workspaces, not accounts — so the added items are tail here and the head share falls five points |
 
-The marketer holds no row here: the seat cannot open the page, so measuring its two decision-critical items would describe a page that does not exist for them.
+The marketer holds no row here: the seat cannot open the page, so measuring its five decision-critical items would describe a page that does not exist for them.
 
 Reading a column counts as touching it only when the role reads it to decide something or sorts by it; that is why Employees (filtered on, then ignored) sits under 20 for everyone.
 
@@ -234,31 +260,33 @@ Modelled on Apollo's Companies page and account profile. Two of these articles a
 | Views | "Views: All companies" | Popover | Saved views with Set as default, Delete |
 | Row menu | "…" with `aria-label="Actions for Northwind Analytics"` | Menu | All row actions; Remove last with its consequence in the label |
 | Quick look | the row, or "Quick look" in the row menu | Drawer beside the table | The glance fields, flat: no doors and no sections inside |
-| Find companies | "Find companies" | Drawer | Flat database filters, count, results with Save and Find people; cost line in the header |
-| Import CSV | "Import CSV" | Drawer | File, mapping, stage, owner, list, duplicates |
+| Find companies | "Find companies" | Drawer | Two exclusions first — already owned, contact in a sequence — each restating the count; then flat database filters, count, results with Save and Find people; cost line in the header |
+| Import CSV | "Import CSV" | A page, not a door | The import wizard ([18](18-import-and-enrichment.md)), with Companies as the destination; it ends on the job record. The entry point is all this page owns |
 | Page actions | "Import, export all, merge, alerts" | Menu | Page actions under 20% for the seat |
-| Record doors | The record page's own doors, for long content rarely needed beside the rest: "All activity · 48", "Agent research · 3 runs, last 2 Sep, 12 credits a run", "Signals and news · 3", "Custom fields · 2", "CRM sync · synced 09:10", "Parent and subsidiaries", "Similar companies", "Files · 0", "Lists · 2" | In place | Each opens on its content; a zero count opens on the add control |
+| Record doors | The eight the record template names ([09](09-deal-record.md) §6.8), for long content rarely needed beside the rest: "All activity · 48", "Agent research · 3 runs, last 2 Sep, 12 credits a run", "Signals and news · 3", "CRM sync · synced 09:10", "Parent and subsidiaries", "Full history, custom fields and files", Enrichment, and one tab, "People (n)" | In place; Enrichment is a drawer and People is the one tab | Each opens on its content; a zero count opens on the add control. The research door's first row is the latest run, carrying **"Open the brief"** and the provenance line beneath it |
 
 Every door is a button with chevron and text, sits directly above what it reveals, and is removed rather than disabled when it cannot apply (CRM at Fathom; Change owner for a role that may not change owners is replaced by the one-line explanation).
 
-**The record page.** Level two of the record, from the template shared with the deal record (spec 09 owns it). Header: name, domain, stage badge, owner, last activity, company details (industry, size, location, founded) as key fields; actions Find people, Add to list, Research (12 credits), "…" (edit, push, remove with its consequence).
+**The record page.** Level two of the record, from the template shared with the deal record ([09](09-deal-record.md) §6.8 owns it). Header: name, domain, stage badge, owner, last activity, open deals count, company details (industry, size, location, founded) as key fields; actions Find people, Add to list, Research (12 credits), "…" (edit, push, remove with its consequence). **The header switches on the customer state**: when `Company.stage` is Current client or Churned it also carries health with its band, renewal and days left, contract value, open risks, last touch and next step, and loses them again when the stage changes back. There is one record, not two: `/ollopa/accounts/:id` redirects here, and [11 Accounts](11-accounts.md) builds no record of its own.
 
-Then the related lists, as **scrolling sections, not tabs**: Contacts at this company (name, title, stage, sequence, last activity, row actions Sequence and Call), Open deals, Recent activity, Notes, Open tasks, Contacts in sequences. Sections are headings with content under them; a person reading a company reads its people *and* its deals *and* its last activity together, and a tab would hide one behind another. The template allows at most one tab, for a related table big enough to be a page of its own with a count in its label; this record does not use it, because the largest related list at Meridian is 40 contacts and a section holds that with a "Show all 40" link into People.
+Then the related lists, as **scrolling sections, not tabs**: Contacts at this company (name, title, stage, sequence, last activity, row actions Sequence and Call), Open deals, Recent activity, Notes, Open tasks, Contacts in sequences. Sections are headings with content under them; a person reading a company reads its people *and* its deals *and* its last activity together, and a tab would hide one behind another. The template allows at most one tab, "People (n)", for a related table big enough to be a page of its own; this record does not use it at Meridian, because the largest related list there is 40 contacts and a section holds that with a "Show all 40" link into People.
 
-Below the sections sit the doors, in usage order for the seat, for long content rarely needed alongside the rest: all activity, agent research, signals and news, custom fields, CRM sync, hierarchy, similar companies, files, lists. "Expand all" sits at the top of that group; print expands all. The order of the header fields and of the first section is exactly the order of the quick look, so the drawer is the top of this page cut short.
+**When the company is a customer**, the sections gain the customer-state block and lose it again when it is not, in this order: health drivers (the four stored numbers that sum to the score, as a section directly under the health field — never across a door from it), renewal terms, first value and the goals agreed at the start, open risks, expansion signals, the hand-off brief, touches, usage over 90 days, seats and last sign-in. Side cards gain renewal, champion and CRM sync. The field set, the section order and the quick look's customer-state fields are [11 Accounts](11-accounts.md) §3's to describe and [09](09-deal-record.md) §6.8's to define; this page renders them, adds nothing of its own, and keeps the same labels in the same order so the drawer stays the top of the page cut short.
+
+Below the sections sit the **eight** doors [09](09-deal-record.md) §6.8 names, in usage order for the seat, for long content rarely needed alongside the rest: "All activity · 48", "Agent research · 3 runs", "Signals and news · 3", "CRM sync · synced 09:10", "Parent and subsidiaries", "Full history, custom fields and files", Enrichment (a drawer), and the one tab, "People (n)", where the list is big enough to be its own page. Custom fields, history and files are one door and not three, because a person who opens it reads whichever of the three they came for and the usage model counts them one at a time; Similar companies and Locations are removed rather than kept as doors onto a single field or a guess. The research door's first row is the latest run, carrying **"Open the brief"** and the provenance line beneath it. "Expand all" sits at the top of that group; print expands all. The order of the header fields and of the first section is exactly the order of the quick look, so the drawer is the top of this page cut short.
 
 **Persistence.** Per user per business under `ollopa.companies.<business>.<user>`: filter values, the additional-filters door open or closed, columns, sort, active view, drawer filters, each record door, Expand all. Nothing resets on navigation.
 
 **Accelerators.** The shortcuts in section 3, shown in the palette and on menu items; the additional-filters door kept open; type-ahead in every popover; the bulk bar; a default view as the one-click daily setup.
 
-**Decision-critical, visible without a click.** The credit cost on Research and in the Find companies header; the Do not prospect badge on the row; what Remove, Do not prospect and Push to CRM will do, on the control and again in the inline confirmation, with the credit balance. No price lives on this page. Undo is one click in the toast, no longer than the action.
+**Decision-critical, visible without a click.** The credit cost on Research, on "Research again" in the brief, and in the Find companies header, where the two exclusions and the counts they remove sit above the filters; the Do not prospect badge on the row; what Remove, Do not prospect and Push to CRM will do, on the control and again in the inline confirmation, with the credit balance. No price lives on this page. Undo is one click in the toast, no longer than the action.
 
-**Removed, not hidden.** The Net new / Saved / Total split; the per-user layout builder; the eleven record tabs, which become sections (the two deprecated ones are gone); Prospect on LinkedIn, Workflows, Conversations, Meeting assistant and Locations (outside the boundary, or a single field); the separate "Qualify account" power-up, folded into Research with its cost; hover-only ticks and edits; the 100-page cap; import status in Settings. Apollo's plan-gated filters are removed rather than copied: Ollopa does gate by plan (Starter, Growth, Scale) and does it by the named gated-features pattern in `RULES.md`, but nothing on this page is on the plan table, so there is no lock to show here and no filter behind one.
+**Removed, not hidden.** The Net new / Saved / Total split; the per-user layout builder; the eleven record tabs, which become sections (the two deprecated ones are gone); Prospect on LinkedIn, Workflows, Conversations, Meeting assistant, Locations and Similar companies (outside the boundary, or a single field, or a door onto a guess); the separate "Qualify account" power-up, folded into Research with its cost; hover-only ticks and edits; the 100-page cap; import status in Settings. Apollo's plan-gated filters are removed rather than copied: Ollopa does gate by plan (Starter, Growth, Scale) and does it by the named gated-features pattern in `RULES.md`, but nothing on this page is on the plan table, so there is no lock to show here and no filter behind one.
 
 **Score.**
 
 1. Decision-critical visible: 2. Cost, consequence and blocklist state are on the controls and the row.
-2. Usage-backed: 2. Seventy-seven items in `companies.ts`, four shape checks.
+2. Usage-backed: 2. Ninety-four items in `companies.ts`, four shape checks.
 3. Two levels: 2. Page, then one door; drawer contents are flat; phone is the same depth.
 4. Doors labelled by content with chevron and text: 2. Counts on every door, and the two doors that were labelled by nothing are renamed: "More filters" is now "Additional filters: owner, location, activity, signals, lists, fields", and the page menu "More" is now "Import, export all, merge, alerts". Nothing in this spec is called More, Other or Advanced.
 5. Adjacent, keyboard, touch: 2. In-place rows and popovers under their buttons; every action has a key and a visible "…".
@@ -291,7 +319,7 @@ Total: 17 of 18.
 | Doors labelled by content | Section 6, with counts. Gap found in the reconciliation pass: "More filters" and "More" named nothing; both renamed after what is behind them |
 | Dependent fields together | Contacts and In a sequence; action and cost; stage and consequence. Gap: Apollo hides the parent field behind "See all fields" and the hierarchy elsewhere; closed by one door holding both |
 | State persists, accelerators | Section 6 |
-| Usage shape | Four pairs in section 4 against one stated denominator; SDR head at 28% explained |
+| Usage shape | Four pairs in section 4 against one stated denominator; the SDR head and the Ridgeline CS head both at 27% and each explained |
 | Nothing hover-only | Row actions also on focus and in "…"; no hover ticks |
 | Role gaps explain themselves | No-access page and the in-menu line |
 | No usage numbers or teaching text | Numbers live in `companies.ts` and here; the page shows counts of data only |

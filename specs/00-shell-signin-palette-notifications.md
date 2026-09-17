@@ -104,19 +104,19 @@ By business: only the card text and the chip count differ (two at Fathom and Hal
 
 | Profile | Business | Leaves out of every sidebar |
 |---|---|---|
-| Founder-led outbound | Fathom Labs | Campaigns, Accounts, Reports; Inbox until the first reply arrives |
+| Founder-led outbound | Fathom Labs | Campaigns, Accounts, Reports, Workflows, Requests; Inbox until the first reply arrives. Requests comes back on its own signal: the second upgrade request in a week |
 | Separated sales team | Meridian Software | nothing; the seat is the whole answer |
-| Agency | Halyard Agency | Campaigns, Accounts |
-| Product-led growth | Ridgeline | Sequences for the account executive, who expands accounts rather than prospecting; it still opens by link and offers "Add to sidebar" |
+| Agency | Halyard Agency | Campaigns, Accounts, Workflows |
+| Product-led growth | Ridgeline | Sequences for the account executive and for the admin, who expand accounts rather than prospect; Lists for the admin. The marketer keeps Lists: segments are the marketer's daily work at a product-led business. Every page left out still opens by link and offers "Add to sidebar" |
 
 | Seat | Sidebar, in order (before the profile subtracts) |
 |---|---|
 | SDR | Home · People, Companies, Lists · Sequences, Inbox, Tasks · Agents, Settings |
 | Account executive | Home · People, Companies · Sequences, Inbox, Tasks · Deals, Accounts · Reports, Agents, Settings |
-| Marketer | Home · People, Lists · Campaigns · Reports, Agents, Settings |
+| Marketer | Home · People, Lists · Campaigns, Workflows · Reports, Agents, Settings |
 | Customer success | Home · Companies · Tasks · Deals, Accounts · Reports, Settings |
-| RevOps admin | Home · People, Companies, Lists · Sequences · Deals, Campaigns, Accounts · Reports, Agents, Settings |
-| RevOps admin + SDR (Fathom founder, Halyard ops lead) | the admin list plus Inbox and Tasks, in the SDR's positions |
+| RevOps admin | Home · People, Companies, Lists · Sequences · Deals, Campaigns, Accounts, Workflows, Requests · Reports, Agents, Settings |
+| RevOps admin + SDR (Fathom founder, Halyard ops lead) | the admin list plus Inbox and Tasks, in the SDR's positions; the Agency profile leaves Workflows out and the Founder-led profile leaves Workflows and Requests out |
 
 Order never changes by role, business or history (rule 6). Settings is in every sidebar because every role has personal items there (mailbox, signature, credit usage). The current page carries `aria-current="page"`. A chevron button at the foot labelled "Collapse" turns the sidebar into an icon rail; collapsed, each icon keeps its label as a tooltip on hover and focus, and the state persists per user. A collapsed rail is layout, not a disclosure level: every page stays one click.
 
@@ -134,7 +134,7 @@ Order never changes by role, business or history (rule 6). Settings is in every 
 
 **Top bar (56 px).** Left: the page title (`h1`, the sidebar label; record pages read "{record} · {page}"), and at Halyard the client workspace name beside it as a muted chip ("Northwind · client workspace"), on every page. The shell owns that chip; no page draws its own copy. Right: the search button ("Search or jump to…" with a `⌘K` badge), the credits pill, the bell, the account menu.
 
-**Credits pill.** Text "{balance} credits · {burn}/wk": "1.84M credits · 410k/wk" at Meridian, "4.1k credits · 2.3k/wk" at Fathom. It links to Settings › Plan, billing and usage › Credit balance and burn rate. Tone is neutral above two weeks of runway, warning between one and two (Fathom today), error under one; the tone is also written in the tooltip so colour is never the only signal. Tooltip on hover and focus: "Balance and this week's burn. Cap {cap} per month, resets {date}. About {n} weeks at this rate." At Meridian and Ridgeline a seat with its own limit gets a second line: "Your limit: {left} of {limit} left this month." Both numbers live in the pill itself; the tooltip only adds detail. The pill never collapses to an icon.
+**Credits pill.** Text "{balance} credits · {burn}/wk", and the run-out date as a third part whenever it falls inside the billing period: "1.84M credits · 410k/wk" at Meridian, "4.1k credits · 2.3k/wk · out 26 Sep" at Fathom. Clicking it opens the credits panel (`X-credits`) over the current page on its own channel, the way the bell does, so a person never leaves the work to read what they are spending. The panel is flat: balance, burn and run-out date at the top, then spend broken down by feature, by person and by surface (app, automation, API, MCP, CLI, agents), top five of each with one "show the rest", every row a link to the job, person or key. One link at the foot opens Settings › Plan, billing and usage › Credit balance and burn rate, which stays as the second route. Tone is neutral above two weeks of runway, warning between one and two (Fathom today), error under one; the tone is also written in the tooltip so colour is never the only signal. Tooltip on hover and focus: "Balance and this week's burn. Cap {cap} per month, resets {date}. About {n} weeks at this rate." At Meridian and Ridgeline a seat with its own limit gets a second line: "Your limit: {left} of {limit} left this month." Both numbers live in the pill itself; the tooltip only adds detail. The pill never collapses to an icon.
 
 **Bell.** Icon button named "Notifications, {n} unread" with a count badge up to "9+". Opens the panel (3.4). Shortcut `g n`.
 
@@ -144,7 +144,7 @@ Order never changes by role, business or history (rule 6). Settings is in every 
 
 **No-access page.** The answer to the second kind of "cannot see it": an area the seat does not hold. Reached only by URL (a bookmark or shared link). Content: `h2` "{Page} is not part of your seat"; one paragraph: "It is used by: {seats that hold it}. If you need it, ask {admin person} ({admin title}) to change your permissions."; buttons "Back to Home" and "Copy a request for {admin first name}" (copies one line naming the page). Sidebar and top bar stay in place. The admin named is Priya Natarajan at Fathom, Daniel Okafor at Meridian, Ravi Sethi at Halyard, Grace Mwangi at Ridgeline. If the signed-in person is the admin, the paragraph ends "You can add it to your seat in Settings › Team and access › Permission profiles." A page the *profile* left out never lands here: it opens, and its header offers "Add to sidebar".
 
-**Toasts.** One `role="status"` region, bottom centre, for outcomes ("Amara Okonkwo added to a sequence."), auto-dismissed after 2.2 s. Interrupting notifications use a `role="alert"` region, top centre, that stays until dismissed: "Bounce guard paused Q4 enterprise outbound at 6.2%. [Open sequence] [Dismiss]". Interrupting kinds: bounce guard tripped, sync error, credits low (3.4).
+**Toasts.** One `role="status"` region, bottom centre, for outcomes ("Amara Okonkwo added to a sequence."), auto-dismissed after 2.2 s. Interrupting notifications use a `role="alert"` region, top centre, that stays until dismissed: "Bounce guard paused Q4 enterprise outbound at 6.2%. [Open sequence] [Dismiss]". Interrupting kinds: bounce guard tripped, a second approval over the threshold, credits low (3.4). Each means something is sending or spending now.
 
 **Session expiry.** Meridian and Ridgeline enforce a session timeout. Five minutes before expiry a `role="alert"` bar under the top bar reads "Your session ends in 5 minutes. [Stay signed in]". Fathom and Halyard never show it.
 
@@ -160,7 +160,7 @@ Order never changes by role, business or history (rule 6). Settings is in every 
 
 Any page is at most two taps. The top bar keeps the title, a search icon (opens the palette full screen), the pill shortened to "4.1k · 2.3k/wk" (both numbers stay), the bell and the avatar. The panel and the account menu open as bottom sheets with a visible close button. Interrupting toasts sit under the top bar.
 
-**Keyboard.** Focus order: skip link ("Skip to content", visible on focus) → logo → sidebar items → collapse → search → credits pill → bell → account menu → main. `⌘K`/`Ctrl+K` opens the palette anywhere; `Esc` closes any panel and returns focus to its trigger. `g` then a letter jumps: `g h` Home, `g p` People, `g c` Companies, `g l` Lists, `g s` Sequences, `g i` Inbox, `g t` Tasks, `g d` Deals, `g m` Campaigns, `g a` Accounts, `g r` Reports, `g g` Agents, `g ,` Settings, `g n` Notifications. `?` opens the shortcut sheet (also in the account menu). Sequences are ignored while focus is in an input. Every shortcut is printed beside its item in the palette and in the sheet; none is the only way to do anything.
+**Keyboard.** Focus order: skip link ("Skip to content", visible on focus) → logo → sidebar items → collapse → search → credits pill → bell → account menu → main. `⌘K`/`Ctrl+K` opens the palette anywhere; `Esc` closes any panel and returns focus to its trigger. `g` then a letter jumps: `g h` Home, `g p` People, `g c` Companies, `g l` Lists, `g s` Sequences, `g i` Inbox, `g t` Tasks, `g d` Deals, `g m` Campaigns, `g a` Accounts, `g w` Workflows, `g q` Requests, `g r` Reports, `g g` Agents, `g ,` Settings, `g n` Notifications. `?` opens the shortcut sheet (also in the account menu). Sequences are ignored while focus is in an input. Every shortcut is printed beside its item in the palette and in the sheet; none is the only way to do anything.
 
 **Accessibility.** Landmarks `nav` "Main", `header`, `main`. Panels are `dialog`s with focus trapped and returned. Tooltips show on focus and dismiss on `Esc` (WCAG 1.4.13). The pill's tone is paired with text.
 
@@ -191,14 +191,21 @@ Any page is at most two taps. The top bar keeps the title, a search icon (opens 
 | Reply (Interested, Question) | contact or sequence owner (SDR, AE) | digestible | sequence, per day | "4 replies to Q4 enterprise outbound · 2 interested" | Inbox filtered to the sequence |
 | Meeting booked | contact owner (SDR, AE); account owner (CS) | digestible | day | "Meeting booked: Amara Okonkwo, Northwind Analytics, Thu 10:00" | The contact record page (spec 02 §3: quick look for the glance, record page for the visit; a notification is a link, so it opens the page) |
 | Agent approvals waiting | the owner of the object the agent worked on; the admin may approve for anyone and gets one row a day for the workspace | digestible | agent, per day, at a task boundary | "Outreach agent: 3 sends waiting for your approval · 36 credits" | Agents filtered to pending |
+| Signal fired | the signal's owner and anyone subscribed to it (SDR, AE, MK) | digestible | signal, per day | "3 contacts changed job · Ridgeline ICP" | People filtered to that signal |
+| Hand-off received | the receiving CSM | digestible | none | "Hand-off from Marcus Adeyemi: Northwind Analytics, closed won 12 Sep" | The company record at its hand-off section |
+| Account signal | the account owner (CS, AE) | digestible | account, per day | "Seats at 94% at Northwind Analytics — expansion signal, routed to you, due Thu" or "Health dropped to Watch at Vantive: usage −38%" | Accounts filtered to that account |
+| Sync error | admin (Fathom: both seats) | digestible | integration, per day | "HubSpot sync: 3 contacts failed to push" | Settings › Integrations › Sync error log |
 | Over the threshold: second approval | the admin only, plus a "waiting on {admin}" line for the requester | interrupting | none | "Campaign send to 4,200 people needs your approval (over 1,000 recipients)" | Agents, that item |
-| Bounce guard tripped | admin and owners of the affected sequence or mailbox | interrupting | sequence or mailbox | "Bounce guard paused Q4 enterprise outbound: 6.2%, pauses at 6%" or "…warned: 4.3%, warns at 4%" | Settings › Email sending › Bounce guard, sequence named |
-| Sync error | admin (Fathom: both seats) | interrupting | integration, per day | "HubSpot sync: 3 contacts failed to push" | Settings › Integrations › Sync error log |
+| Bounce guard tripped | admin and owners of the affected sequence or mailbox | interrupting | sequence or mailbox | "Bounce guard paused Q4 enterprise outbound: 6.2%, pauses at 6%" or "…warned: 4.3%, warns at 4%" | The paused sequence at its health line. A mailbox-level trip that belongs to no single sequence opens Settings › Email sending › Bounce guard |
 | Credits low | admin; a seat past 80% of its own limit | interrupting | none | "Credits: 4.1k left, 2.3k/wk. Runs out in about 12 days, before the reset on 2 Oct." | Settings › Plan › Credit balance and burn rate |
 
-Interrupting means a `role="alert"` toast that stays until dismissed, a browser push if allowed, an email at once, and the row pinned under "Needs you now". Digestible means the badge and the panel, plus the daily email digest at 08:00 workspace time if it is on. The split is by kind and fixed: a person can mute a digestible kind, never an interrupting one, because those are safety state (rule 7). Replies are never interrupting even though SDRs want them most: they are frequent, they wait, and Inbox is one click away. This is Nielsen's disclose-by-exception: interrupt for decision-critical events, digest milestones, keep the ledger one click away.
+Interrupting means a `role="alert"` toast that stays until dismissed, a browser push if allowed, an email at once, and the row pinned under "Needs you now". Digestible means the badge and the panel, plus the daily email digest at 08:00 workspace time if it is on. **There are exactly three interrupting kinds** — bounce guard tripped, a second approval over the threshold, credits low — because each one means something is sending or spending right now and a person's answer changes what happens next. The split is by kind and fixed: a person can mute a digestible kind, never an interrupting one, because those are safety state (rule 7). Replies are never interrupting even though SDRs want them most: they are frequent, they wait, and Inbox is one click away. **A sync error is digestible**: nothing is sending because of it and the records are still there to fix. Its review cadence is a choice on the integration itself — instantly, daily or weekly, daily by default — and the failure count stays at level one in two places that do not depend on a notification at all: Home's health strip and the Settings › Integrations row. This is Nielsen's disclose-by-exception: interrupt for decision-critical events, digest milestones, keep the ledger one click away.
 
 **Agent approvals are batched, never an interruption.** The approval policy is one policy, owned by Settings and applied everywhere: the owner of the object approves their agent's actions, and the admin may approve for anyone, recorded as such. Low-cost reversible work — research, scoring, a draft saved and not sent — is **logged, not queued**, so it never becomes a row to approve. Only irreversible or costly actions queue: sending email, spending above a cap, changing a deal stage. Above a workspace threshold (a Settings item; default 1,000 recipients or 500 credits in one action) a second, admin approval is needed. Notifications about approvals arrive **in batches at a task boundary**, one row per agent per day, never as an interruption mid-task, and each row carries its consequence and its cost. Two findings sit behind that: suggestions are accepted at a task boundary and dismissed mid-task (post-commit interventions 52% engagement against 62% dismissal on a declined edit, Kuo et al. 2026, `knowledge-base/11-what-changed-2018-2026.md` rule 6), and step-by-step approval queues rubber-stamp — a problematic action was visible 88.5% of the time and stopped 23.9% of the time (Chen et al., arXiv 2604.04918, n=48). Fewer, better-placed approvals is the design answer; a longer queue is not.
+
+**Slack and the digest.** Two surfaces carry notifications outside the app and neither carries a control. **Slack**: a message is a deep link with a summary. Seven event kinds, set at connection time — reply received, meeting booked, deal moved, agent needs approval, sync error, account signal (a health band change or an expansion signal on an account you own, carrying the account, what fired, the routed owner and the due date), and scoring threshold published, which is **off by default** because it fires for the workspace rather than for one person. An agent-approval message carries the four things the queue row carries — actor, consequence sentence, credit cost, and whether a second admin approval is needed — and then a link, because a person who approves from a notification has read a notification, not a decision. **The daily digest** is a list of what waits, not a queue: overdue tasks, unhandled replies, the agent batch total with its credit cost, any paused sequence with its observed rate beside the threshold pair, the credit run-out date when it falls inside the billing period, any webhook subscription that is failing with its failure count and cause, a coaching note saved on your calls ("Feedback on your calls"), and any workspace change you will feel. The cap and the burn are in the body, not behind the link: an email that says "review 6 items" and hides the 8 credits is a deferred fee.
+
+**One announcement mechanism, for the whole product.** A change to the workspace that other people feel — a required field at a stage, a stage itself, a sending limit, a bounce threshold, a routing rule, a scoring threshold — writes exactly one line into the affected people's Home health strip and into their next digest: what changed, who changed it, when, and a link to the changed thing. The line expires after seven days or on first contact with the changed thing, whichever is first. It is not a tour, not a tooltip, not a modal, and it never becomes a bell kind, interrupting or otherwise. Announcements are exposure, and exposure is what teaches (rule 8).
 
 **The panel.** A right drawer (360 px; a full sheet on phone) titled "Notifications", with "Mark all read" and an "Unread only" toggle chip in the header. Sections in order: "Needs you now", "Today", "Yesterday", "This week". Each row: kind icon, text, when, an unread dot. Rows are links; opening one marks it read and closes the panel. Grouped rows never expand inside the panel; they open the page filtered to their members, so the panel never grows a third level. Hover and focus show "Snooze until tomorrow" and "Mark read" as buttons, and a "…" menu holds the same two so nothing is hover-only. Footer: "Show older than seven days" (30-day retention) and "Notification delivery", which opens Settings at your own user's row, where the delivery preferences live: daily email digest (on by default), Slack direct message (row absent unless Slack is connected), browser push for interrupting kinds, mute per digestible kind, quiet hours. There is no separate Notifications settings page to link to, and this spec does not ask for one; the preferences are fields on your user. That link is navigation to a page, not a second door.
 
@@ -208,7 +215,7 @@ Interrupting means a `role="alert"` toast that stays until dismissed, a browser 
 
 ## 4. Usage items
 
-All 80 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`). The `Page` type has no "shell" value, so the shape check below reads `shellItems` directly; `itemsFor("home")` would return Home's items as well and reproduces neither spec's numbers. Numbers are baseline Meridian as SDR · AE · Marketer · CS · Admin; "—" means the seat does not hold the item; overrides follow. ★ marks decision-critical.
+All 85 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`). The `Page` type has no "shell" value, so the shape check below reads `shellItems` directly; `itemsFor("home")` would return Home's items as well and reproduces neither spec's numbers. Numbers are baseline Meridian as SDR · AE · Marketer · CS · Admin; "—" means the seat does not hold the item; overrides follow. ★ marks decision-critical.
 
 **Sign-in and top bar**
 
@@ -217,7 +224,7 @@ All 80 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`
 | Choose workspace; choose seat; sign in (three items) | 30 each | Halyard 90; Fathom 20 |
 | Forgot password | 2 each | |
 | Search or jump to (⌘K) | 60 · 50 · 35 · 30 · 55 | Halyard 80 / 75 |
-| Credits pill ★ | 30 · 15 · 20 · 5 · 55 | Fathom 40 / 60 |
+| Credits pill (balance, burn, run-out date; opens the credits panel) ★ | 30 · 15 · 20 · 5 · 55 | Fathom 40 / 60 |
 | Bell | 85 · 80 · 40 · 50 · 70 | Ridgeline 50 / 55 |
 | Account menu | 15 each | Halyard 80 |
 | Your profile | 6 each | |
@@ -241,6 +248,8 @@ All 80 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`
 | Deals | — · 95 · — · 40 · 30 | Fathom admin 60 |
 | Campaigns | — · — · 95 · — · 15 | Ridgeline admin 20 |
 | Accounts | — · 30 · — · 95 · 15 | Ridgeline 70 / 95 / 30 |
+| Workflows | — · — · 55 · — · 30 | Ridgeline 70 / 25; Halyard admin 10; Fathom admin 5 |
+| Requests | — · — · — · — · 45 | Halyard 50; Ridgeline 30; Fathom 8 |
 | Reports | — · 25 · 60 · 35 · 55 | |
 | Agents | 60 · 25 · 20 · — · 45 | Fathom 75 / 80 |
 | Settings | 20 · 10 · 12 · 8 · 90 | Fathom 45 / 90; Halyard 40 / 95 |
@@ -252,7 +261,7 @@ All 80 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`
 | No-access page | 3 · 3 · 4 · 4 · 0 | |
 | Add to sidebar (a page the profile left out) | 3 · 3 · 3 · 3 · 4 | Fathom 6 / 6; Halyard 5 / 5 |
 | "Keep this page?" after a two-week exposure | 1 each | Fathom 3 / 3 |
-| Interrupting toast ★ | 15 · 5 · 3 · 2 · 35 | Fathom 40 / 50; Halyard 30 / 55; Ridgeline 3 / 15 |
+| Interrupting toast (bounce guard, second approval, credits low) ★ | 15 · 5 · 3 · 2 · 35 | Fathom 40 / 50; Halyard 30 / 55; Ridgeline 3 / 15 |
 | `g` then a letter | 15 · 10 · 4 · 4 · 12 | |
 | `?` shortcut list; skip link | 3; 1 | |
 | Collapse sidebar; session expiry notice | 4; 3 | Fathom expiry 1 |
@@ -291,7 +300,10 @@ All 80 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`
 | Meeting booked | 35 · 40 · — · 12 · — | Ridgeline 20 / 30 / 25 |
 | Agent items waiting for approval | 45 · 20 · 15 · — · 40 | Fathom 60 / 70; Ridgeline 20 / 30 |
 | Bounce guard tripped ★ | 15 · — · — · — · 20 | Halyard 35 / 55; Ridgeline 2 / 3; Fathom 20 / 20 |
-| CRM sync error | — · — · — · — · 35 | Fathom 5 (both seats); Halyard 30; Ridgeline 20 |
+| Signal fired | 30 · 12 · 20 · — · — | Ridgeline 12 / 35; Fathom 25 (both seats) |
+| Hand-off received | — · 5 · — · 12 · — | Ridgeline CS 20 |
+| Account signal | — · 10 · — · 25 · — | Ridgeline 20 / 60 |
+| CRM sync error (digestible; cadence on the integration) | — · — · — · — · 35 | Fathom 5 (both seats); Halyard 30; Ridgeline 20 |
 | Credits low ★ | 8 · 3 · 5 · 1 · 25 | Fathom 50 / 60; Halyard 15 / 40 |
 | Mark all read | 30 · 25 · 15 · 15 · 25 | |
 | Unread only | 12 · 10 · 5 · 5 · 8 | |
@@ -299,18 +311,18 @@ All 80 items are in `src/ollopa/usage/shell.ts` (`page: "home"`, `area: "shell"`
 | Show older | 4 each | |
 | Delivery: digest; Slack; push; mute; quiet hours | 3; 2; 2; 2 (admin 1); 1 | Fathom Slack 0 |
 
-**Shape check.** One rule for every spec in this group: the denominator is **every item in the page's own usage file that the seat has at that business** — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `usage/model.ts`. Seats a business does not declare return zero (`SEATS` in `model.ts`), so no phantom seat is ever measured. For this surface only, the figure in brackets leaves out the thirteen sidebar rows, because the seat and the profile decide those, not usage.
+**Shape check.** One rule for every spec in this group: the denominator is **every item in the page's own usage file that the seat has at that business** — a weekly number above zero, or decision-critical — computed with `weeklyUse()` and `bandOf()` from `usage/model.ts`. Seats a business does not declare return zero (`SEATS` in `model.ts`), so no phantom seat is ever measured. For this surface only, the figure in brackets leaves out the fifteen sidebar rows, because the seat and the profile decide those, not usage.
 
 | Pair | Items | Head | Body | Tail |
 |---|---|---|---|---|
-| Meridian · SDR | 72 (63) | 35% (25%) | 29% (33%) | 36% (41%) |
-| Meridian · admin | 72 (61) | 32% (25%) | 26% (26%) | 42% (49%) |
-| Meridian · marketer | 65 (58) | 23% (16%) | 28% (29%) | 49% (55%) |
-| Ridgeline · CS | 62 (55) | 27% (20%) | 19% (20%) | 53% (60%) |
-| Halyard · SDR | 72 (63) | 44% (37%) | 28% (32%) | 28% (32%) |
-| Fathom · admin | 73 (60) | 34% (25%) | 30% (32%) | 36% (43%) |
+| Meridian · SDR | 73 (64) | 36% (27%) | 29% (33%) | 36% (41%) |
+| Meridian · admin | 74 (61) | 34% (25%) | 26% (26%) | 41% (49%) |
+| Meridian · marketer | 67 (59) | 25% (17%) | 27% (29%) | 48% (54%) |
+| Ridgeline · CS | 64 (57) | 30% (23%) | 19% (19%) | 52% (58%) |
+| Halyard · SDR | 73 (64) | 45% (38%) | 27% (31%) | 27% (31%) |
+| Fathom · admin | 76 (61) | 34% (26%) | 32% (31%) | 34% (43%) |
 
-Read without the navigation, every Meridian and Ridgeline seat sits inside the 15–25% head band. Read with it, every seat is over, and that is the honest reading of a surface whose thirteen navigation rows are level one by construction: a sidebar entry is not a disclosure decision, it is the decision the seat and the profile already made. Halyard's SDR is over on both readings because sign-in (three items) and "Switch account" are daily there: that is the missing workspace switcher showing up as usage, and the later case removes it. Fathom's founder is over because one person holds two seats' worth of areas.
+Read without the navigation, every Meridian and Ridgeline seat sits inside the 15–25% head band or within two points of it; Meridian's SDR is the one over, at 27%, because the signal-fired row is daily work for that seat. Read with it, every seat is over, and that is the honest reading of a surface whose fifteen navigation rows are level one by construction: a sidebar entry is not a disclosure decision, it is the decision the seat and the profile already made. Halyard's SDR is over on both readings because sign-in (three items) and "Switch account" are daily there: that is the missing workspace switcher showing up as usage, and the later case removes it. Fathom's founder is over because one person holds two seats' worth of areas.
 
 ## 5. Before: the common version
 
@@ -347,11 +359,11 @@ Modelled on Apollo's global chrome as documented in `knowledge-base/sources/07-a
 |---|---|---|
 | SDR | Home, People, Companies, Lists, Sequences, Inbox, Tasks, Agents, Settings; title, search, credits, bell with count, avatar | Palette results and actions; panel (replies, meetings, batched approvals, bounce guard on their sequence); account menu |
 | AE | Home, People, Companies, Sequences, Inbox, Tasks, Deals, Accounts, Reports, Agents, Settings; same chrome | Palette (deals first in use); panel (replies, meetings, approvals) |
-| Marketer | Home, People, Lists, Campaigns, Reports, Agents, Settings; same chrome | Palette (campaigns, lists, Company context); panel (approvals; credits if past own limit) |
+| Marketer | Home, People, Lists, Campaigns, Workflows, Reports, Agents, Settings; same chrome | Palette (campaigns, lists, Company context); panel (approvals; credits if past own limit) |
 | CS | Home, Companies, Tasks, Deals, Accounts, Reports, Settings; same chrome | Palette (companies, deals); panel (meetings for their accounts) |
-| Admin | Home, People, Companies, Lists, Sequences, Deals, Campaigns, Accounts, Reports, Agents, Settings; same chrome; interrupting toasts | Palette (45 settings with paths); panel (bounce guard, sync errors, credits low, over-threshold approvals, the daily approvals batch) |
+| Admin | Home, People, Companies, Lists, Sequences, Deals, Campaigns, Accounts, Workflows, Requests, Reports, Agents, Settings; same chrome; interrupting toasts | Palette (45 settings with paths); panel (bounce guard, sync errors, credits low, over-threshold approvals, the daily approvals batch) |
 
-**Across the businesses.** Fathom: two seats, both admin plus SDR; the Founder-led outbound profile left Campaigns, Accounts and Reports out, and left Inbox out until the first reply exposed it and the founder kept it; pill in warning tone; the credits-low toast pinned at sign-in. Meridian: the baseline; the Separated sales team profile subtracts nothing, so the seat is the whole sidebar; notifications routed by owner; the no-access page names Daniel Okafor. Halyard: the Agency profile leaves out Campaigns and Accounts; the client workspace name sits in the top bar on every page; sign-in and "Switch account" are daily and high in Recent; the switcher is the later case. Ridgeline: the Product-led growth profile leaves Sequences out for the account executive; Companies and Accounts carry the load; a quiet bell; two sequences.
+**Across the businesses.** Fathom: two seats, both admin plus SDR; the Founder-led outbound profile left Campaigns, Accounts, Reports, Workflows and Requests out, and left Inbox out until the first reply exposed it and the founder kept it; pill in warning tone; the credits-low toast pinned at sign-in. Meridian: the baseline; the Separated sales team profile subtracts nothing, so the seat is the whole sidebar; notifications routed by owner; the no-access page names Daniel Okafor. Halyard: the Agency profile leaves out Campaigns, Accounts and Workflows; the client workspace name sits in the top bar on every page; sign-in and "Switch account" are daily and high in Recent; the switcher is the later case. Ridgeline: the Product-led growth profile leaves Sequences out for the account executive and the admin and Lists out for the admin, and keeps Lists for the marketer, whose segments are the daily work; Companies and Accounts carry the load; a quiet bell; two sequences.
 
 **Doors.**
 
@@ -364,13 +376,14 @@ Modelled on Apollo's global chrome as documented in `knowledge-base/sources/07-a
 | All pages (phone) | grid icon + "All pages" | bottom sheet | none |
 | `?` | "Keyboard shortcuts" | side sheet | none |
 | Add to sidebar | "Add to sidebar" (page header; a page the profile left out) | in place, no panel | the added page, per person per workspace |
+| Credits pill | balance, burn and the run-out date | panel over the page, own channel | none |
 | Pill tooltip | the pill text | tooltip on hover and focus | none |
 
 **Accelerators.** `⌘K`; `g` + letter for every page, printed beside each page row in the palette and in the shortcut sheet; `g n`; `?`; `⌘Enter`; the collapsed rail.
 
-**Decision-critical without a click.** Balance and weekly burn in the pill on every page at every width, with runway and tone written in the tooltip. Bounce guard (with both thresholds and the observed rate), sync errors and credits low as alerts that stay, and as "Needs you now". An approval over the workspace threshold, on the admin's screen with what it will send and what it will cost. Sign out and switch account are two clicks, no longer than any setting.
+**Decision-critical without a click.** Balance, weekly burn and the run-out date in the pill on every page at every width, with the tone written out in the tooltip so colour is never the only signal. Bounce guard (with both thresholds and the observed rate), a second approval over the workspace threshold, and credits low as alerts that stay, and as "Needs you now" — the three kinds where something is sending or spending now. A sync error is not one of them: it interrupts nobody, and its count is level one on Home's health strip and on the Settings › Integrations row instead. An approval over the workspace threshold, on the admin's screen with what it will send and what it will cost. Sign out and switch account are two clicks, no longer than any setting.
 
-**Removed rather than hidden.** The AI Assistant button (agents live on Agents and in approvals; no chat box in the chrome). The onboarding percentage and the 24-task checklist (spec 16 asks three questions at set-up instead, and what remains is one door in Home's health strip). "Add teammates" (Settings › Users has invite). Language in the account menu (a workspace setting). "Developer Tools" (API keys are a setting). The second, settings-only search box. Greyed nav items. Read-only-by-link views of an area a seat does not hold: there is one answer, the no-access page. Pages outside the boundary (Meetings, Calls, Conversations, Workflows) do not exist and are not hinted at.
+**Removed rather than hidden.** The AI Assistant button (agents live on Agents and in approvals; no chat box in the chrome). The onboarding percentage and the 24-task checklist (spec 16 asks three questions at set-up instead, and what remains is one door in Home's health strip). "Add teammates" (Settings › Users has invite). Language in the account menu (a workspace setting). "Developer Tools" (API keys are a setting). The second, settings-only search box. Greyed nav items. Read-only-by-link views of an area a seat does not hold: there is one answer, the no-access page. Pages outside the boundary (Meetings, Calls, Conversations) do not exist as pages and are not hinted at: a logged call and a meeting are panels on the record and the task that own them.
 
 **Nine-point score.**
 

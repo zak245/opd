@@ -39,17 +39,39 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 | `syncState` | synced, error, null | Only where a CRM is connected (Meridian, Ridgeline); one in twenty in error |
 | `agentProposal` | string or null | A proposed next step awaiting approval; more often at Fathom |
 | `currency` | ISO code, optional | A handful at Meridian and Halyard, to show conversion |
+| `lastProspectActivityAt` | date or null | The last time *they* did something: replied, opened the proposal, attended. Distinct from `lastActivity`, which counts our touches too. A deal where only we have spoken is not a deal that is moving |
+| `contactCount` | number | Derived from `DealContact`. Feeds the "Too few contacts" warning |
+| `seniorSponsor` | boolean | Derived: true when any `DealContact.role` is Economic buyer or Champion at director level or above. Feeds the "No senior sponsor" warning |
+| `warnings[]` | computed, never stored | The six below, each carrying its observed number and the threshold it crossed |
 | Row count | generate `counts.openDeals` rows, not `min(openDeals, 40)` | Column counts must match the business |
+
+**The six deal warnings.** They are computed from the fields above, never stored, and the thresholds are set once by the admin in Settings › Pipeline and data, where each one shows the observed workspace value beside it. The warnings themselves, their names and their defaults are defined in [09 Deal record](09-deal-record.md) §2 and read here, so one fact has one owner:
+
+| Warning | Fires when | Default |
+|---|---|---|
+| No activity | `lastActivity` older than the threshold | 14 days |
+| Ghosted | `lastProspectActivityAt` older than the threshold while `lastActivity` is recent | 21 days |
+| Overdue | `closeDate` before today and the stage is open | — |
+| Too few contacts | `contactCount` under the threshold at Proposal or later | 3 |
+| No senior sponsor | `seniorSponsor` false at Proposal or later | — |
+| Stalled in stage | `stageEnteredAt` older than the threshold for that stage | 30 days |
 
 ## 3. Features
 
 ### Shown
 
 - **Header.** "Deals", the pipeline name when there is more than one, scope (Mine, My team, All), period (Closing: any time, this month, this quarter, next quarter, overdue), search, Board or Table, and "New deal".
-- **Forecast strip.** Commit, Best case (commit plus best case), Pipeline (all open), Closed won, each as count and sum for the current scope and period. Omitted appears only when its count is above zero.
+- **Forecast strip.** Commit, Best case (commit plus best case), Pipeline (all open), Closed won, each as count and sum for the current scope and period. Omitted appears only when its count is above zero. For an AE with direct reports a fifth figure sits beside them, observed and required on one line: **"Coverage 3.1x · this team's 20% win rate needs 5.0x"**. Either number alone is unreadable, so neither is shown alone. The pair is **read, not recomputed here**: the win rate and the coverage it requires are computed once in [12 Reports](12-reports.md) at the foot of the stage-to-stage conversion door, and this strip prints the same figure word for word, so the board and the Pipeline report can never disagree about what coverage is enough.
 - **Board.** One column per open stage in pipeline order; header shows stage, count and sum. Closed won is a narrow rail at the right with count and sum; clicking it expands it into a column. There is no lost rail: a deal that is lost is archived and leaves the board, and the filter "Archived deals and the reason each was lost" brings them back into view.
-- **Card.** Deal name (link to the record), company, amount, next step, close date. Object-state markers: "3 days overdue"; "Stale, 21 days"; "Not syncing to CRM"; "Agent proposes: Send security questionnaire. Approve · Dismiss". Owner initials sit on the card where the role's usage puts them at level one (admin, Halyard), else inside the card's door.
-- **Table view.** Built on `TablePage`. Columns: Deal, Company, Stage, Amount, Forecast, Close date, Next step, Owner, Last activity, Days in stage. Same scope, period, search and filters.
+- **Card.** Deal name (link to the record), company, amount, **next step with its date on the same line** ("Security review · Thu 18 Sep", or "No next step" where there is none), close date, and, for the AE, the forecast category. Next step and its date are never separated: a next step without a date is a wish, and the record shows them together, so the card does too.
+- **The warnings on the card**, as text chips, never colour alone, each printing the observed number against its threshold:
+
+  > No activity · 19d of 14 — Ghosted · 24d of 21 — Overdue · 3d — Too few contacts · 2 of 3 — No senior sponsor — Stalled in stage · 41d of 30
+
+  A chip appears only when its warning fires, which is object state, not history (rule 6). The number and the threshold travel together because a bare "Stale" tells the AE nothing she can act on, and the threshold lives in Settings where she cannot see it from here.
+- **The touch pair.** "Last touch 3d · last reply 19d" replaces the single stale line. Our activity and theirs are two different facts and the gap between them is the deal's real temperature.
+- Other object-state markers: "Not syncing to CRM"; the agent proposal card. Owner initials sit on the card where the role's usage puts them at level one (the admin, Halyard, and an AE with direct reports), else inside the quick look.
+- **Table view.** Built on `TablePage`. Columns: Deal, Company, Stage, Amount, Forecast, Close date, **Next step and its date in one column**, Owner, Last touch and last reply, Warnings, Days in stage. Same scope, period, search and filters.
 
 ### Actions
 
@@ -58,22 +80,22 @@ Rows come from `seedFor(business).deals` (`src/ollopa/data/seed.ts`, type `Deal`
 | Open record | Card title, Enter on a card, table row | The deal record |
 | Drag to stage | Pointer or touch; Space, arrows, Space | Stage changes; toast "Moved to Proposal. Undo"; live region announces |
 | Move to stage | Card menu, stages listed flat | Same as drag |
-| Edit in place | Click amount, close date or next step | Becomes an input; Enter saves, Escape cancels |
+| Edit in place | Click amount, close date or next step | Becomes an input; Enter saves, Escape cancels. The next-step editor is **one control with two fields, the text and its date**, saved together: a next step with no date is not a next step, and an editor that can save one without the other invites exactly that |
 | Close won | Drop on the rail, or menu | A sheet on the card states what happens: pushed to the CRM where connected, account moves to Customer success, counted as Closed. Confirm or cancel |
 | Mark lost and archive | Card menu | A sheet states what happens: a reason is required, the deal leaves the board and the forecast, it stays on the company and in Reports, and the CRM opportunity is not deleted. Confirm or cancel; Undo in the toast |
 | Reopen | Menu on a closed card, or from the archived filter | Back to the last open stage |
 | Log a call or note | Card menu | Short form in a drawer; saved to the deal's activity |
 | Change owner, change forecast category | Card menu | Inline select |
-| Approve or dismiss an agent proposal | Buttons on the card | Approve sets the next step; both clear the badge and write to the agent log. The deal's owner approves their own agent's proposals and the admin may approve for anyone, as the approval policy in Settings says. Research, scoring and saved drafts are logged, not queued; only an irreversible or costly act (sending the email, moving the stage, spending above the credit cap) waits for a person, and the card states which it is. Proposals wait on the card for the next time the AE looks at the deal; nothing interrupts a person mid-task |
+| Use this next step, or dismiss it | Buttons on the card, the same size | The buttons read **"Use this next step · Dismiss"**, not Approve and Decline: setting a next step is cheap and reversible, it is applied with Undo in the toast, and the ledger records it either way. Approve and Decline are reserved for the irreversible and the costly, so that the words keep their meaning where they matter. The deal's owner approves their own agent's proposals and the admin may approve for anyone, as the approval policy in Settings says. Research, scoring and saved drafts are logged, not queued; only an irreversible or costly act (sending the email, moving the stage, spending above the credit cap) waits for a person, and the card states which it is. Proposals wait on the card for the next time the AE looks at the deal; nothing interrupts a person mid-task |
 | New deal | Header button, N | Drawer: name, company, pipeline (if more than one), stage, amount, close date, owner, next step |
 | Bulk: change owner, move, change close date, export, delete | Selection bar on checking cards or rows | Applies to the selection; delete asks once and names what goes |
 | Export, Import, Print, Edit stages | Page menu "Import, export, print and stages" | Export downloads the view; import opens a CSV drawer; print expands all; Edit stages goes to Settings › Pipeline and data |
-| Delete | Card menu, below a divider, consequence beside it | Dialog: "Delete Northwind · Platform? Its 14 activities and notes go with it. The CRM opportunity is not deleted." |
+| Delete | **Not on the card.** The deal record's header carries it with its consequence visible without a click, and the bulk bar carries it for a selection, naming what goes | The record's dialog: "Delete Northwind · Platform? Its 14 activities and notes go with it. The CRM opportunity is not deleted." The bulk bar names the count and the same consequence. A card menu is a door, and a destructive action whose consequence only appears after the door is opened is behind a door (rule 7) |
 
 ### Filters, search, sorting, columns
 
-- Level one: scope, period, search (deal name, company, owner, next step).
-- The filter door, "Filters: owner, forecast category, stale, amount, company, created, archived and its reason, custom fields", opens in place under the header and shows "2 filters on". Owner and forecast category sit at level one for the admin at Meridian and Halyard.
+- Level one: scope, period, search (deal name, company, owner, next step), and two counting chips: **"No next step (n)"** and, where the seat has reports, **"Comments waiting for you (n)"**. Both are filters that carry their own count, so the number is read without opening anything and clicking applies it.
+- The filter door, **"Filters: warnings, no next step, owner, forecast category, amount, company, created, archived and its reason, custom fields"**, opens in place under the header and shows "2 filters on". Warnings is first, and each of the six carries its count inside the door. The old "stale" filter is gone: it was one of the six warnings without a name, and the door now says which one it means. Owner and forecast category sit at level one for the admin at Meridian and Halyard and for an AE with reports, who reads the board by rep.
 - Cards are ordered by close date within a column; other orders, table columns ("Columns, 10 of 16"), density and saved views live in the view options door. Table sorts by any header.
 
 ### States
@@ -102,12 +124,14 @@ Columns become one column with a row of stage chips at the top, each with count 
 
 ### By role and by business
 
-| | AE | CS | Admin |
-|---|---|---|---|
-| Meridian | Scope defaults to Mine; owner inside the card door; owner and forecast filters inside the filter door | Scope All; strip collapsed to its door; card shows name, company, amount, close date | Scope All; owner on the card; owner and forecast filters in the header; weighted sum in the column header |
-| Fathom | No AE seat exists | No seat | The founder's admin seat works the pipeline, and the Founder-led outbound profile puts Deals in her sidebar; scope All; no pipeline picker; no CRM badges (removed); agent proposals common; strip at level one |
-| Halyard | No seat | No seat | One small pipeline per client workspace, with the workspace's name shown by the shell's top bar rather than by this page; owner on the card; strip is a door; saved views per client |
-| Ridgeline | Pipeline picker at level one | Pipeline picker and New deal at level one; next step and close date on the card | Sync badges where the CRM is connected |
+An account executive with direct reports is not a sixth seat. It is an AE seat with `reports > 0` (IA-MAP 6.4j), and it changes three things on this page. At Meridian that seat is Priya Raman, the sales manager, and Elena Vasquez reports to her.
+
+| | AE | AE with reports | CS | Admin |
+|---|---|---|---|---|
+| Meridian | Scope defaults to Mine; owner inside the quick look; owner and forecast filters inside the filter door | Scope defaults to **My team**; owner on the card at level one; the owner filter in the header beside scope; the coverage figure in the strip; the "Comments waiting for you (n)" chip | Scope All; strip collapsed to its door; card shows name, company, amount, close date | Scope All; owner on the card; owner and forecast filters in the header; weighted sum in the column header |
+| Fathom | No AE seat exists | No such seat | No seat | The founder's admin seat works the pipeline, and the Founder-led outbound profile puts Deals in her sidebar; scope All; no pipeline picker; no CRM badges (removed); agent proposals common; strip at level one |
+| Halyard | No seat | No such seat | No seat | One small pipeline per client workspace, with the workspace's name shown by the shell's top bar rather than by this page; owner on the card; strip is a door; saved views per client |
+| Ridgeline | Pipeline picker at level one | Ridgeline declares one AE seat and no reports, so the column does not apply | Pipeline picker and New deal at level one; next step and close date on the card | Sync badges where the CRM is connected |
 
 ## 4. Usage items
 
@@ -118,9 +142,9 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Stage columns | Board | 95 | 20 | 40 | F 90, H 35, R cs 60 |
 | Deal name and company | Board | 95 | 20 | 40 | F 90, H 35, R cs 60 |
 | Amount | Board | 90 | 20 | 40 | F 85, H 30, R cs 50 |
-| Next step | Board | 80 | 10 | 10 | F 70, H 25, R cs 40 |
+| Next step, with its date | Board | 80 | 10 | 10 | F 70, H 25, R cs 40 |
 | Close date | Board | 75 | 20 | 25 | F 60, H 20, R cs 55 |
-| Owner | Board | 15 | 10 | 60 | F 10, H 35, R cs 15 |
+| Owner | Board | 15 (AE+ 60) | 10 | 60 | F 10, H 35, R cs 15 |
 | Days in stage | Board | 18 | 4 | 15 | F 8, R ae 10 |
 | Last activity | Board | 15 | 8 | 15 | F 8, H 8 |
 | Forecast category on the card | Board | 15 | 3 | 15 | F 6, H 2 |
@@ -129,7 +153,8 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Original currency when it differs | Board | 3 | 0 | 2 | R 0 (removed) |
 | CRM sync error on the card * | Board | 3 | 1 | 20 | F 0, H 0 (removed), R admin 10 |
 | Agent-proposed next step awaiting approval * | Board | 12 | 2 | 5 | F 35, R ae 18, cs 10 |
-| Stale marker | Board | 18 | 5 | 15 | |
+| The six warnings, each with its number against its threshold | Board | 80 (AE+ 85) | 15 | 40 | F 60, H 25, R ae 50, cs 30 |
+| Last touch and last reply, side by side | Board | 45 (AE+ 50) | 10 | 20 | F 35, H 15, R ae 30, cs 20 |
 | Count and sum per column | Board | 85 | 15 | 40 | F 70, H 35, R cs 30 |
 | Weighted sum per column | Board | 12 | 2 | 30 | F 2, H 3 |
 | Stale deals per column | Board | 4 | 0 | 12 | |
@@ -148,9 +173,11 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Mine, my team or all | Filters | 65 | 25 | 45 | F 6, H 15, R cs 35 |
 | Search | Filters | 40 | 15 | 25 | F 15, H 25 |
 | Closing period | Filters | 55 | 15 | 35 | F 30, H 6, R cs 30 |
-| Owner filter | Filters | 4 | 6 | 45 | F 2, H 30 |
+| Owner filter | Filters | 4 (AE+ 55) | 6 | 45 | F 2, H 30 |
 | Forecast category filter | Filters | 12 | 2 | 35 | F 2, H 3 |
-| No activity for 14 days | Filters | 18 | 6 | 15 | F 10 |
+| Filter by warning (the six, each with its count) | Filters | 80 (AE+ 80) | 15 | 40 | F 45, H 25, R ae 50, cs 25 |
+| No next step (n), as a chip at level one | Filters | 60 (AE+ 60) | 10 | 30 | F 35, H 20, R ae 45, cs 20 |
+| Comments waiting for you (n) | Filters | 20 (AE+ 55) | 6 | 10 | F 4, H 4, R ae 12 |
 | Amount range | Filters | 3 | 1 | 3 | |
 | Company | Filters | 4 | 8 | 3 | R cs 15 |
 | Created date | Filters | 2 | 0 | 4 | |
@@ -170,27 +197,32 @@ Method: USAGE-MODEL.md. Baseline is Meridian. Overrides: F = Fathom admin, H = H
 | Bulk: change close date | Actions | 3 | 0 | 4 | |
 | Export CSV | Actions | 4 | 2 | 12 | F 3, H 10 |
 | Import CSV | Actions | 0 | 0 | 1 | F 2 |
-| Delete deal, showing what is lost * | Actions | 2 | 0 | 3 | |
+| Delete deal, showing what is lost * (on the record and in the bulk bar, not the card) | Actions | 2 | 0 | 3 | |
 | Edit stages (opens Settings) | Actions | 2 | 0 | 4 | F 8 |
 | Print the board | Actions | 1 | 0 | 2 | |
 | Forecast strip | Forecast | 45 | 6 | 40 | F 30, H 8, R ae 40, cs 15 |
+| Coverage against required coverage | Forecast | 12 (AE+ 70) | 1 | 15 | F 8, H 5, R ae 10 |
 | Omitted deals in the period | Forecast | 3 | 0 | 4 | |
 | Keyboard shortcuts | Shortcuts | 10 | 2 | 4 | |
 | Command palette | Shortcuts | 8 | 3 | 4 | F 6 |
 
-**Shape check** (62 items, computed with `shape()` from `model.ts`):
+**Shape check** (66 items, computed with `shape()` from `model.ts`):
 
 | Pair | Head | Body | Tail |
 |---|---|---|---|
-| Meridian, AE | 13 (21%) | 21 (34%) | 28 (45%) |
-| Meridian, admin | 15 (24%) | 18 (29%) | 29 (47%) |
-| Fathom, admin | 15 (24%) | 15 (24%) | 32 (52%) |
-| Halyard, admin | 10 (16%) | 20 (32%) | 32 (52%) |
-| Ridgeline, AE | 14 (23%) | 20 (32%) | 28 (45%) |
-| Ridgeline, CS | 13 (21%) | 14 (23%) | 35 (56%) |
-| Meridian, CS | 6 (10%) | 17 (27%) | 39 (63%) |
+| Meridian, AE | 18 (27%) | 20 (30%) | 28 (42%) |
+| Meridian, admin | 19 (29%) | 18 (27%) | 29 (44%) |
+| Fathom, admin | 19 (29%) | 14 (21%) | 33 (50%) |
+| Halyard, admin | 13 (20%) | 20 (30%) | 33 (50%) |
+| Ridgeline, AE | 18 (27%) | 20 (30%) | 28 (42%) |
+| Ridgeline, CS | 17 (26%) | 13 (20%) | 36 (55%) |
+| Meridian, CS | 6 (9%) | 20 (30%) | 40 (61%) |
 
-Six pairs fit the published shape. Meridian's CSMs visit for handoffs only, so their head is under the band by design; the CS view is deliberately lean.
+Halyard's admin is inside the band. Five pairs are two to four points over it and one is under, and both directions are stated rather than fitted.
+
+The overshoot has one cause: this pass added the six deal warnings, the touch pair, the warning filter, the no-next-step chip, the comments chip and the coverage figure, and removed the two unnamed "stale" items they replace. Every one of them is something an AE reads on a Monday morning, so every one lands in the head. Two to four points over a band drawn from Word in 2000 and Pendo's 2024 median is not a reason to re-rate a number downward; re-rating one to fit the band is exactly the lie the check exists to catch. The page also did not get deeper as it got wider: the warnings are chips on the card, the chips are counting filters at level one, and the card's door was deleted in this same pass.
+
+Meridian's CSMs visit for handoffs only, so their head is under the band by design; the CS view is deliberately lean.
 
 ## 5. Before: the common version
 
@@ -218,33 +250,45 @@ Modelled on Apollo's Deals page as documented in its knowledge base (articles up
 
 | Role | Level one | Level two |
 |---|---|---|
-| AE | Columns with count and sum; card with name, company, amount, next step, close date and object-state badges; drag; scope; period; search; edit in place; forecast strip; close won; mark lost and archive; delete with consequence | Card door: owner, days in stage, last activity, forecast category, probability, contacts, currency. Filter door. View options. Card menu. Page menu |
-| CS | Columns; card with name, company, amount, close date and badges; scope; open record; close won; mark lost and archive; delete | Card door adds next step. Strip collapsed to "Forecast for this quarter". Same doors |
+| AE | Columns with count and sum; card with name, company, amount, next step **with its date**, close date, **forecast category**, the warning chips and the touch pair; drag; scope; period; search; the "No next step (n)" chip; edit in place; forecast strip; close won; mark lost and archive | The quick look. Filter door, warnings first. View options. Card menu. Page menu |
+| AE with reports | As the AE, plus scope defaulting to My team, owner on the card, the owner filter beside scope, the coverage figure in the strip, and the "Comments waiting for you (n)" chip | The same doors |
+| CS | Columns; card with name, company, amount, close date, next step with its date and the warning chips; scope; open record; close won; mark lost and archive | The quick look. Strip collapsed to "Forecast for this quarter". Same doors |
 | Admin | As AE plus owner on the card, weighted sum in the header, owner and forecast filters in the header, sync badges | The rest of the filter door; the same menus |
+
+Forecast category is level one on the card for the AE, matching the record. It was in the card's door and the record's header at the same time, which meant the same fact sat at two levels depending on which page you were on; one fact, one level.
 
 **Every door, label and container.**
 
 | Door | Label | Container | Persists |
 |---|---|---|---|
-| Card | "Owner, activity and forecast", chevron, owner initials as preview | In place under the card | Per user; "Expand all cards" sets all |
+| Card (the quick look, `Q-deal`) | The card itself is the control: clicking it opens a flat drawer beside the board | Drawer, level one of the record, no doors inside it | Width per user; it opens on the card that was clicked |
 | Column header | "Weighted total and stale deals" | In place under the header | Per column |
 | Closed won rail | "Closed won · 9 · $612k" | Expands into a column | Per user |
-| Filters | "Filters: owner, forecast category, stale, amount, company, created, archived and its reason, custom fields", with "n filters on" | In place under the header | Open state and values |
+| Filters | "Filters: warnings, no next step, owner, forecast category, amount, company, created, archived and its reason, custom fields", with "n filters on" | In place under the header | Open state and values |
 | Forecast strip (CS, Halyard) | "Forecast for this quarter: commit, best case, pipeline, closed won" | In place | Per user |
 | View options | "View: table columns, card order, density, saved views" | Popover | Values |
-| Card menu | "…", named "Actions for Northwind · Platform: open, next step, log, owner, forecast, move, close won, mark lost" | Menu: Open, Edit next step, Log a call or note, Change owner, Change forecast category, Move to (the five stages, flat), Close won, Mark lost and archive, divider, Delete with consequence text | n/a |
+| Card menu | "…", named "Actions for Northwind · Platform: open, next step, log, owner, forecast, move, close won, mark lost" | Menu: Open, Edit next step, Log a call or note, Change owner, Change forecast category, Move to (the five stages, flat), Close won, Mark lost and archive. **No Delete**: it lives on the record, where its consequence is visible without a click, and in the bulk bar | n/a |
 | Page menu | "Import, export, print and stages" | Menu | n/a |
 | New deal; Log a call or note | Button; menu item | Drawer | Draft kept |
 | Close won; mark lost and archive | Drop or menu item | Sheet on the card | n/a |
 | Delete | Menu item | Dialog (a confirmation, not a disclosure) | n/a |
 
+**The quick look.** The card's door is gone. A card no longer expands under itself into "Owner, activity and forecast"; clicking it opens `Q-deal`, a flat drawer beside the board holding **stage, amount, close date, next step with its date, owner, last activity** — the same fields, in the record's order, with the record's labels. It is the top of the record cut short, which is the test the quick-look pattern sets: remove the drawer and you lose only speed.
+
+It is read-only except for one field, and which one depends on ownership:
+
+- **The owner** edits the stage, because moving a deal is the whole reason to glance at it from a board.
+- **Anyone else** — the manager on My team, the admin, the CSM — gets the comment composer instead. They came to say something to the owner, not to move someone else's deal, and the board already refuses that move.
+
+A footer link, "Open the deal record", is the only way deeper. Table to drawer is one level; table to record is one level; the drawer has no doors, so nothing here reaches three. The old card door was a second version of the record growing inside the board, which is what the pattern's test forbids.
+
 No door contains a door: the move list is flat, the filter row has no sub-menus, the popover has no tabs.
 
-**Decision-critical, always visible.** The consequence of closing (CRM push, handoff, counted as closed) is on the sheet before the drop lands, and so is the consequence of archiving a lost deal (off the board, out of the forecast, kept on the company). A pending agent proposal and a CRM sync error are on the card, and the proposal card says what approving will do. Delete sits in the menu with its consequence beside it, and the confirmation names what goes. Undo for a move is as short as the move.
+**Decision-critical, always visible.** The consequence of closing is on the sheet before the drop lands. That sentence has one owner: [09 Deal record](09-deal-record.md) §3.2 writes it and this page renders it word for word, so the board and the record can never say two different things about what closing a deal does. So is the consequence of archiving a lost deal (off the board, out of the forecast, kept on the company). The six warnings are on the card with their numbers and thresholds, because a deal that nobody has touched in three weeks is state the AE answers for. A pending agent proposal and a CRM sync error are on the card, and the proposal states what using it will do. Delete is not on the card at all: it is on the record with its consequence in view, and in the bulk bar naming what goes. Undo for a move is as short as the move.
 
 One caution the evidence forces. Showing someone a pending agent action is not the same as having it reviewed: asked to approve step by step, people saw a planted problematic action 88.5% of the time and stopped it 23.9% (Chen et al., N=48, in [11 What changed](../knowledge-base/11-what-changed-2018-2026.md)). That is why the board queues nothing that can be undone cheaply, states the consequence on the item rather than in a policy page, and keeps the number of approvals small enough to be read.
 
-**Removed rather than hidden.** A sixth "Closed lost" column and an outcome flag: a lost deal is archived with a reason, so the board shows the five stages a live deal passes through. The creation-date default sort. The pipeline picker where there is one pipeline. CRM badges where no CRM is connected. The custom-field filter where no custom fields exist. The currency line where one currency is used. "Group by" anything other than stage. "Customize deal form" from the create dialog; Settings › Pipeline and data owns it and the page menu links there. The separate Analytics tab; the strip is on the board and Reports has the rest. Deal type.
+**Removed rather than hidden.** A sixth "Closed lost" column and an outcome flag: a lost deal is archived with a reason, so the board shows the five stages a live deal passes through. The creation-date default sort. The pipeline picker where there is one pipeline. CRM badges where no CRM is connected. The custom-field filter where no custom fields exist. The currency line where one currency is used. "Group by" anything other than stage. "Customize deal form" from the create dialog; Settings › Pipeline and data owns it and the page menu links there. The separate Analytics tab; the strip is on the board and Reports has the rest. Deal type on the card, except for the CS seat, where every deal is a renewal or an expansion and the type is the first thing read (see 09). The card's own door, deleted in favour of the quick look. Delete from the card menu. A bare "Stale" marker with no number and no threshold behind it.
 
 **Persistence.** View, scope, period, filters, open doors, expanded rails and cards, table columns and sort, per user per workspace, in localStorage under `ollopa.deals.<business>.<role>`. A door left open is open next visit. Print expands every door and rail into a list by stage.
 
@@ -256,9 +300,9 @@ One caution the evidence forces. Showing someone a pending agent action is not t
 
 | # | Point | Score | Why |
 |---|---|---|---|
-| 1 | Decision-critical visible | 2 | Close consequences, sync errors, agent approvals and delete's consequence are on the surface |
-| 2 | Every visible item backed by a number | 2 | Sixty-two items in `deals.ts`, fitted to the Nielsen, Pendo and McGrenere shape |
-| 3 | Two levels on every screen size | 2 | Flat move list, no sub-menus; phone keeps the same doors |
+| 1 | Decision-critical visible | 2 | Close consequences (owned by 09), the six warnings with their numbers, sync errors, agent proposals, and delete moved to where its consequence is visible without a click |
+| 2 | Every visible item backed by a number | 2 | Sixty-six items in `deals.ts`. Five of the seven pairs now sit two to four points above the head band after the warnings arrived; the numbers are stated with their cause in section 4 rather than re-rated to fit |
+| 3 | Two levels on every screen size | 2 | Flat move list, no sub-menus; the card's door replaced by a flat quick look whose only route deeper is the record; phone keeps the same doors |
 | 4 | Doors labelled by content, chevron and text | 2 | No "More", "Advanced" or "Other" |
 | 5 | Doors adjacent, keyboard and touch | 2 | Card door under the card, column door under the header, filter row under the header; every door a button |
 | 6 | Dependent information together | 2 | Sum with weighted sum; amount with currency; close with its consequence; archiving with its reason |
@@ -272,7 +316,8 @@ Total 17 of 18.
 
 Not a lesson. The rules that mattered most:
 
-- **Rule 1.** The board, sums and next step are what AEs touch daily; they are level one, and the table is the alternative, not the default.
+- **Rule 1.** The board, sums, next step with its date and the six warnings are what AEs touch daily; they are level one, and the table is the alternative, not the default.
+- **Rule 5.** Next step and its date, an observed number and its threshold, and coverage and required coverage are three pairs that are useless apart, so none of them is ever split.
 - **Rule 7.** Closing a deal, archiving a lost one, a failed sync, a pending agent proposal and delete all show their consequence without a click — and the number of things asking for approval is kept small, because a queue nobody can read is the same as hiding it.
 - **Rule 2.** Stages, forecast categories and the deal form no longer live three settings places away; the page links once to one place, and no menu holds a menu.
 - **Rule 4.** Access failures name who can open the page; the filter door and card door say what they hold.
@@ -281,7 +326,7 @@ Not a lesson. The rules that mattered most:
 
 | Check | Result |
 |---|---|
-| All roles covered | AE, CS, admin have level-one tables; SDR and marketer have the no-access state. Gap: the spec called Fathom's founder "the AE". Closed: Fathom has no AE seat; the founder's admin seat works the pipeline and her workspace profile puts Deals in the sidebar |
+| All roles covered | AE, AE with reports, CS and admin have level-one tables; SDR and marketer have the no-access state. Gap: no column described an AE with direct reports, although IA-MAP 6.4j names the seat; closed with the AE+ column and `ae_plus` numbers in `deals.ts`. Gap: the spec called Fathom's founder "the AE". Closed: Fathom has no AE seat; the founder's admin seat works the pipeline and her workspace profile puts Deals in the sidebar |
 | All four businesses covered | Section 3 table and section 4 overrides. Gap: only the admin opens the page at Halyard; stated |
 | Every field has a source | Section 2. Gap: forecast category, days in stage and the archive fields were missing from the seed; listed |
 | Five stages | Gap: an earlier draft added a sixth stage, Closed lost. Closed: five stages, defined once in 09; a lost deal is archived with a reason and leaves the board and the forecast |
@@ -289,13 +334,13 @@ Not a lesson. The rules that mattered most:
 | Empty, error, no-access states | Section 3, plus no-match, empty column and cannot-move |
 | Keyboard | Full list, ARIA drag pattern, undo |
 | Phone width | Chips for columns, menu for moves, same doors |
-| Decision-critical visible | Five items marked in section 4, placed in section 6 |
-| Two levels maximum | Checked door by door; the move list was a sub-menu in the first draft and is now flat |
+| Decision-critical visible | The marked items in section 4, placed in section 6. Gap: delete sat in the card menu, so its consequence appeared only after a door was opened; closed by moving it to the record and the bulk bar. Gap: the card said "Stale, 21 days" without saying what 21 days was measured against; closed by the six named warnings, each printing its number against its threshold |
+| Two levels maximum | Checked door by door; the move list was a sub-menu in the first draft and is now flat. Gap: the card's door had grown into a second version of the record, which the quick-look pattern forbids; closed by deleting it and opening `Q-deal` instead |
 | Doors labelled by content | Section 6 table |
 | Dependent fields together | Sum with weighted; amount with currency; close with consequence; archiving with its reason |
 | State persists | Section 6 |
 | Accelerators present | Shortcuts, palette, expand all, bulk, undo |
-| Usage shape checked | Seven pairs computed; six fit; Meridian CS explained |
+| Usage shape checked | Seven pairs recomputed from `deals.ts` after the warnings arrived; one fits, five are two to four points over and one is under, all stated with their cause in section 4 |
 | Nothing hover-only | Card menu and edit in place work by click, keyboard and touch; the card door is a button |
 | Role gaps explain themselves | No-access and cannot-move states name who can |
 | No usage numbers or teaching text in the product | The page shows counts and sums of deals, never usage shares; numbers live in `deals.ts` and here |

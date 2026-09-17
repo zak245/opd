@@ -7,8 +7,10 @@ import type { UsageItem } from "./model"
 // Fathom overrides: no CS role; the founder (admin) keeps the accounts herself, and there is no AE to hand off from.
 // Halyard overrides: the agency's ten clients are workspaces, not accounts; the page only holds each client's own
 // customers, kept out of sequences, so nearly everything is tail.
-// An account opens two ways: the quick-look drawer (flat, a glance while scanning the table) and the account record
-// page built from the shared record template in specs/09-deal-record.md. Both show the same fields in the same order.
+// An account opens two ways: the quick-look drawer (flat, a glance while scanning the table) and the COMPANY record,
+// which renders the customer-state fields and sections when Company.stage is Current client or Churned. There is no
+// second record page: a company and an account are one object with a customer state (PLAN.md, 15 Sep 2026), and the
+// record template lives in specs/09-deal-record.md. Both show the same fields in the same order.
 
 const r = (cs: number, ae?: number, admin?: number) => ({ ridgeline: { cs, ...(ae !== undefined ? { ae } : {}), ...(admin !== undefined ? { admin } : {}) } })
 const hal = { halyard: { admin: 3 } }
@@ -67,7 +69,7 @@ export const accountsItems: UsageItem[] = [
   { id: "work.email", page: "accounts", area: "Working an account", label: "Email the champion", weekly: { cs: 15, ae: 6, admin: 1 } },
   { id: "work.meeting", page: "accounts", area: "Working an account", label: "Book a review meeting", weekly: { cs: 12, ae: 5, admin: 1 } },
   { id: "work.timeline", page: "accounts", area: "Working an account", label: "Activity timeline", weekly: { cs: 18, ae: 12, admin: 4 }, note: "Read when a score has moved, not every day." },
-  { id: "work.health-drivers", page: "accounts", area: "Working an account", label: "What makes up the score", weekly: { cs: 18, ae: 5, admin: 8 }, overrides: r(50, 15), note: "Never a number without its reasons; the drivers sum to the score." },
+  { id: "work.health-drivers", page: "accounts", area: "Working an account", label: "What makes up the score", weekly: { cs: 18, ae: 5, admin: 8 }, overrides: r(50, 15), note: "Never a number without its reasons. Level one at every business as a stated rule-5 exception: the drivers sum to the score and never sit across a door from it, so they are flat lines under the health field in the quick look and a section on the record. 18% describes how often a Meridian CSM *reads* them, not where they live." },
   { id: "work.usage-chart", page: "accounts", area: "Working an account", label: "Usage over 90 days", weekly: { cs: 15, ae: 5, admin: 2 }, overrides: r(60, 25) },
   { id: "work.seat-list", page: "accounts", area: "Working an account", label: "Who has a seat and last sign-in", weekly: { cs: 12, ae: 5, admin: 2 }, overrides: r(45, 20) },
   { id: "work.contacts", page: "accounts", area: "Working an account", label: "Contacts at the account", weekly: { cs: 18, ae: 10, admin: 2 } },
@@ -80,6 +82,13 @@ export const accountsItems: UsageItem[] = [
   { id: "work.churned", page: "accounts", area: "Working an account", label: "Mark churned", critical: true, weekly: { cs: 3, ae: 1, admin: 2 }, note: "Destructive in effect: the account leaves the default view and stops being sequenced. The consequence is written on the control, never one door further (rule 7)." },
   { id: "work.remove", page: "accounts", area: "Working an account", label: "Remove account", critical: true, weekly: { cs: 1, ae: 0.5, admin: 2 }, note: "Destructive, so it is marked like every other delete in the product (rule 7); undo lives in the notification." },
   { id: "work.push-crm", page: "accounts", area: "Working an account", label: "Push to CRM now", weekly: { cs: 3, ae: 2, admin: 6 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 1 } } },
+
+  { id: "work.play", page: "accounts", area: "Working an account", label: "Run a play: what it creates, before the button", critical: true, weekly: { cs: 35, ae: 6, admin: 2 }, overrides: { ridgeline: { cs: 70, ae: 15 }, fathom: { admin: 10 } }, note: "\"Creates 3 tasks for you, a note on the account, and emails nobody.\" A play that quietly emails a customer is what this line prevents (rule 7). Daily at Ridgeline, where C3 is the CS lead's morning." },
+  { id: "work.signals-door", page: "accounts", area: "Risks and signals", label: "Signals and news on the row: what fired, when, from where, routed to whom", weekly: { cs: 15, ae: 15, admin: 2 }, overrides: { ridgeline: { cs: 55, ae: 50 } }, note: "Opens in place under the row. A signal that fired and reached nobody is the failure the object exists to prevent, so the routed owner and the due date are inside it." },
+  { id: "work.first-value", page: "accounts", area: "Working an account", label: "First value: its definition, target, and when it was confirmed", weekly: { cs: 30, ae: 4, admin: 2 }, overrides: { ridgeline: { cs: 55 }, fathom: { admin: 8 } }, note: "Onboarding has no end without a definition of first value. Ninety days without one raises the Onboarding stalled risk." },
+  { id: "work.goals", page: "accounts", area: "Working an account", label: "The goals agreed at the start, with when and from where", weekly: { cs: 25, ae: 5, admin: 2 }, overrides: { ridgeline: { cs: 40 }, fathom: { admin: 6 } }, note: "A business review has nothing to measure against without them, so the result and what it is measured against sit together (rule 5)." },
+  { id: "work.flag-wrong", page: "accounts", area: "Working an account", label: "\"This flag was wrong\", which writes a request", weekly: { cs: 8, ae: 2, admin: 3 }, overrides: { ridgeline: { cs: 15 } }, note: "A CSM who cannot change the model must still be able to say it is broken; the request carries the account, the input and the reason, and the line above names the admin who owns the weights (rule 4)." },
+  { id: "renew.ladder", page: "accounts", area: "Renewals", label: "Renewal reminder tasks at 120, 90, 60 and 30 days", weekly: { cs: 45, ae: 6, admin: 4 }, overrides: { ridgeline: { cs: 60 }, fathom: { admin: 12 } }, note: "Created for the account owner from the setting in Settings > Pipeline and data and landing on Tasks. Customer success does not hold the Workflows page, so the ladder is not a workflow." },
 
   // Views and filters
   { id: "view.search", page: "accounts", area: "Views and filters", label: "Search", weekly: { cs: 65, ae: 30, admin: 20 }, overrides: { fathom: { admin: 25 }, halyard: { admin: 5 } } },

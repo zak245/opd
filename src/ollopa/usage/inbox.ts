@@ -1,6 +1,6 @@
 import type { UsageItem } from "./model"
 
-// Inbox: replies from sequences grouped by what the person meant. 58 items in 7 areas (specs/06-inbox.md).
+// Inbox: replies from sequences grouped by what the person meant. 63 items in 8 areas (specs/06-inbox.md).
 // Baseline numbers describe Meridian Software, where the SDR sees replies to their own mailbox and hands
 // interested people to an AE.
 // Fathom overrides: no AE exists, so "hand to AE" is removed; the founder (admin seat) does outbound, and the
@@ -22,6 +22,7 @@ export const inboxItems: UsageItem[] = [
 
   // List (the table)
   { id: "inbox.list.row", page: "inbox", area: "List", label: "Reply row: waiting time, who, what they meant, first line", weekly: { sdr: 95, ae: 60 }, overrides: { fathom: { admin: 85 }, ridgeline: { sdr: 60, ae: 40 } } },
+  { id: "inbox.agent-class", page: "inbox", area: "List", label: "\"Read as: Interested · by the reply agent · change\"", weekly: { sdr: 70, ae: 40 }, overrides: { fathom: { admin: 65 }, halyard: { sdr: 75 }, ridgeline: { sdr: 45, ae: 30 } }, note: "The classifier reads every reply first, so the meaning on the row is an agent's answer and says so. Read on almost every reply the SDR opens; the correction control behind it is the existing inbox.act.change-meaning at 12." },
   { id: "inbox.list.sequence-step", page: "inbox", area: "List", label: "Sequence and step column", weekly: { sdr: 18, ae: 8 }, overrides: { fathom: { sdr: 15, admin: 15 }, halyard: { sdr: 60 }, ridgeline: { sdr: 5, ae: 2 } }, note: "Five sequences per SDR at Meridian; forty across Halyard's clients, where the sequence names the client." },
   { id: "inbox.list.owner", page: "inbox", area: "List", label: "Owner column", weekly: { sdr: 4, ae: 12 }, overrides: { fathom: { sdr: 4, admin: 4 } }, note: "The AE wants to see which SDR handed a reply over. Shown in the thread header instead." },
   { id: "inbox.list.sort", page: "inbox", area: "List", label: "Sort by column", weekly: { sdr: 3, ae: 3 }, note: "Default order is longest waiting first; almost nobody changes it." },
@@ -59,6 +60,7 @@ export const inboxItems: UsageItem[] = [
   // Thread panel
   { id: "inbox.thread.panel", page: "inbox", area: "Thread panel", label: "Thread panel: the reply in full, contact header, actions", weekly: { sdr: 90, ae: 55 }, overrides: { fathom: { admin: 80 }, ridgeline: { sdr: 55, ae: 35 } } },
   { id: "inbox.thread.earlier-messages", page: "inbox", area: "Thread panel", label: "Earlier messages in this thread (the steps we sent)", weekly: { sdr: 18, ae: 30 }, overrides: { fathom: { admin: 15 }, ridgeline: { sdr: 10, ae: 30 } }, note: "The SDR wrote the steps; the AE receiving a hand-off did not and reads them." },
+  { id: "inbox.agent-draft", page: "inbox", area: "Thread panel", label: "Agent draft door beside the composer", critical: true, weekly: { sdr: 55, ae: 30 }, overrides: { fathom: { admin: 50 }, halyard: { sdr: 60 }, ridgeline: { sdr: 30, ae: 20 } }, note: "Sending is the approval, so the recipient and the whole text are on screen before the click (rule 7). Critical at every business, including Ridgeline's 20% AE." },
   { id: "inbox.thread.saved-replies", page: "inbox", area: "Thread panel", label: "Insert a saved reply", weekly: { sdr: 18, ae: 6 }, overrides: { fathom: { admin: 18 }, halyard: { sdr: 35 }, ridgeline: { sdr: 6, ae: 2 } } },
   { id: "inbox.thread.contact-details", page: "inbox", area: "Thread panel", label: "Contact details: title, email status, phone, open deal", weekly: { sdr: 12, ae: 25 }, overrides: { fathom: { admin: 12 }, ridgeline: { ae: 30 } } },
   { id: "inbox.thread.schedule-send", page: "inbox", area: "Thread panel", label: "Schedule send", weekly: { sdr: 4, ae: 5 }, overrides: { fathom: { admin: 4 } } },
@@ -70,6 +72,11 @@ export const inboxItems: UsageItem[] = [
   { id: "inbox.thread.translate", page: "inbox", area: "Thread panel", label: "Translate reply", weekly: { sdr: 1, ae: 1 } },
   { id: "inbox.thread.print", page: "inbox", area: "Thread panel", label: "Print thread", weekly: { sdr: 1, ae: 1 } },
   { id: "inbox.thread.signature", page: "inbox", area: "Thread panel", label: "Include signature", weekly: { sdr: 2, ae: 2 } },
+
+  // Meeting and handoff (X-meeting, owned here and rendered by Tasks and the deal record)
+  { id: "inbox.meeting-panel", page: "inbox", area: "Meeting and handoff", label: "Meeting panel: state, times, attendees, prep brief, summary, follow-up", weekly: { sdr: 45, ae: 35, cs: 20 }, overrides: { fathom: { admin: 40 }, halyard: { sdr: 0 }, ridgeline: { sdr: 25, ae: 30, cs: 25 } }, note: "One node, three parents: this page, a meeting task row and the deal record. The CS number describes the same panel opened from Tasks and the deal record, where a kickoff and a business review are meetings; customer success has no Inbox area. Zero at Halyard, where no calendar is connected and the panel is replaced by the connect line, not disabled." },
+  { id: "inbox.handoff-block", page: "inbox", area: "Meeting and handoff", label: "Handoff block: four fields in the buyer's words, checklist, Create the deal and assign", critical: true, weekly: { sdr: 40, ae: 10 }, overrides: { fathom: { sdr: 20, admin: 20 }, halyard: { sdr: 12 }, ridgeline: { sdr: 20, ae: 8 } }, note: "\"Create the deal and assign\" names the owner and the territory before the click (rule 7). Where no AE seat exists the assignment half is removed and the control creates the deal for the person clicking, which is why Fathom and Halyard are lower rather than zero." },
+  { id: "inbox.acceptance-rate", page: "inbox", area: "Meeting and handoff", label: "Your handoffs accepted this quarter", weekly: { sdr: 20, ae: 4 }, overrides: { fathom: { sdr: 0, admin: 0 }, halyard: { sdr: 0 }, ridgeline: { sdr: 12 } }, note: "The number the SDR is paid on, so it sits beside the control that produces it and never behind a door. Zero where there is no AE to accept a handoff." },
 
   // Bulk (appears once a row is selected)
   { id: "inbox.bulk.select", page: "inbox", area: "Bulk", label: "Select rows", weekly: { sdr: 15, ae: 3 }, overrides: { fathom: { admin: 15 }, halyard: { sdr: 18 } } },

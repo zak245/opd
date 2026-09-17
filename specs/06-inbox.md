@@ -44,8 +44,9 @@ The calendar link for Book meeting comes from Settings › Integrations › Cale
 - Header: "Inbox", the line "Replies from your sequences, grouped by what the person meant", and the count "9 waiting · longest 3 d".
 - Group tabs with counts. Which tabs are visible depends on the usage model (section 6); the rest sit in one dropdown tab labelled with their names and counts.
 - The table: Waiting, From (name, then title and company), Meant (badge with text, never colour alone), Reply (first line), and, where usage puts it at level one, Sequence · step. Longest-waiting first.
-- The thread panel on the right, open by default, 420 px, resizable. Header: name, title, company, email with its status, sequence and step, owner mailbox, open deal, "Handed over by Marcus" when applicable. Body: the reply in full, the earlier messages, the composer.
-- The composer: To and Subject prefilled, a text area, Insert a saved reply, Send, and a Send menu with Schedule.
+- The Meant cell names its author in text: "Read as: Interested · by the reply agent · change". The classifier ran first and a person is reading its answer, so the answer says whose it is (rule 6: disclosure by object state, and the state includes who set it). "change" is the existing Change what they meant control; a correction is logged for the classifier exactly as a human correction always was. Where a person set the meaning the line reads "Read as: Interested · by you"; where nothing classified it, the line is removed, not left blank.
+- The thread panel on the right, open by default, 420 px, resizable. The page is **master-detail**: the list stays in view and the thread is the *open half of the page*, not a disclosure, so `X-thread` is level one and its own doors — the filters, the agent draft, the composer — are the one level below it (IA-MAP 2.7). It is never drawn as a panel opened from inside another. Header: name, title, company, email with its status, sequence and step, owner mailbox, open deal, "Handed over by Marcus" when applicable. Body: the reply in full, the earlier messages, the composer.
+- The composer: To and Subject prefilled, a text area, Insert a saved reply, Send, and a Send menu with Schedule. Beside it, where the drafting agent wrote one, the door "Agent draft · 142 words", which loads the draft into the composer marked "Agent draft, not sent". The recipient and the full text are on screen and Send is the approval, so the reply draft is approved here and does not also queue on Agents; the ledger still records it (spec 13). Nothing is ever sent by the agent from this page.
 
 ### Actions
 
@@ -53,7 +54,7 @@ Row actions appear on hover and on keyboard focus, and every one also lives in t
 
 | Group | Visible actions | Outcome |
 |---|---|---|
-| Interested | Reply · Book meeting | Reply focuses the composer. Book meeting drafts a reply with the calendar link; when the calendar reports a booking, the contact stage becomes Meeting booked. |
+| Interested | Reply · Book meeting | Reply focuses the composer, with the agent draft door beside it. Book meeting opens the meeting panel (below): offer times or send the calendar link; when the calendar reports a booking, the meeting's state becomes Booked and the contact stage becomes Meeting booked. |
 | Question | Reply · Book meeting | As above. |
 | Not now | Follow up on… · Done | Follow up on… opens a date picker with In 2 weeks, Next month, and the date parsed from the reply; creates a Follow-up task and moves the reply to Handled. |
 | Out of office | Resume on {date} · Done | The sequence resumes on the parsed return date; the menu also offers Resume now. |
@@ -64,6 +65,25 @@ Menu actions, every group unless noted: Hand to an AE (SDR only, where an AE sea
 Bulk: x or Select in the menu shows checkboxes and a bar with Mark done, Mark not interested, Hand to an AE, Confirm unsubscribes (only when every selected row is in Unsubscribe), Export CSV, and the count. Escape clears it.
 
 Page actions: none. An inbox creates nothing; one-off email lives on the contact page. There is no reply drawer anywhere in the product: the composer is inside this page's thread panel, and Reply on a Home row opens this page with that thread selected.
+
+### Book and run the meeting
+
+This page owns the meeting panel (`X-meeting`) for the whole product. Tasks renders it from a meeting task row and the deal record renders it from the meeting card (specs 07 and 09); all three open the same panel with the same blocks in the same order. It is flat: one level, no doors inside it, so it is level two wherever it opens.
+
+Ollopa does not own the booking page; the calendar does. The boundary is the meeting object and its events.
+
+- **State.** Proposed → Booked → Held, No-show or Cancelled. The four outcome buttons are marked by a person, never inferred from a calendar's silence; the state and who set it, with the time, are printed above them.
+- **Times.** Offer two or three times from the connected calendar, or send the calendar link. At Halyard, where no calendar is connected, both are replaced by "Connect a calendar to book from here", linking to Settings › Integrations; removed, not disabled.
+- **Attendees.** Name, title and, once a deal exists, the role on the deal (Champion, Economic buyer, Technical, User, Blocker, Other). Added and removed by hand.
+- **Before the call.** The prep brief as a link to the brief record, with the count of qualification elements still unanswered beside it ("Qualification · 3 to answer") where a deal exists, and "Write the handoff brief" where one does not.
+- **After the call.** The summary, the action items with checkboxes and one "Create n tasks" button, and the follow-up draft. All three are agent-written where a conversation input exists, marked as drafts, logged and not queued; the person edits and sends. Where an integration supplied a transcript, the transcript is a block in the panel; where none did, the block is removed, not disabled.
+- **No-show.** One control, "Start the reminder and reschedule sequence", which names the sequence and what it sends before the click: "Enrols Amara in 'Meeting no-show follow-up' · 3 emails over 8 days from marcus@meridian.software".
+
+**The handoff block.** Where an AE seat exists, the panel carries the hand-off under the meeting. The four fields are in the buyer's words — the problem, why now, who is involved, what success looks like — and each carries the drafting agent's text marked "Agent draft" until the person edits it, at which point the state reads "edited". Under them, the business's binary qualification checklist. Then one control:
+
+> **Create the deal and assign** — "Creates a deal at Qualified for Elena Vasquez — territory UK enterprise · change"
+
+and under it, in text, the SDR's own record: "Your handoffs accepted this quarter: 88% (17 of 19)". That number is what the SDR is paid on, so it is never behind a door. Where no AE seat exists (Fathom, Halyard) the assignment half is removed and the control reads "Create the deal", keeping the owner as the person clicking.
 
 ### Filters, search, sorting, columns
 
@@ -104,7 +124,7 @@ The list becomes two-line rows: name and Meant badge, then the first line, with 
 
 ## 4. Usage items
 
-Fifty-eight items in seven areas. Baseline numbers describe Meridian; overrides follow the business profiles in USAGE-MODEL.md. Decision-critical items are marked * and are level one whatever their number. Overrides are written business: role number.
+Sixty-three items in eight areas. Baseline numbers describe Meridian; overrides follow the business profiles in USAGE-MODEL.md. Decision-critical items are marked * and are level one whatever their number. Overrides are written business: role number.
 
 | Item | Area | SDR | AE | Overrides |
 |---|---|---|---|---|
@@ -115,6 +135,7 @@ Fifty-eight items in seven areas. Baseline numbers describe Meridian; overrides 
 | Unsubscribe * | Groups | 25 | 4 | fathom: admin 25; halyard: sdr 40; ridgeline: sdr 10, ae 2 |
 | Handled | Groups | 12 | 8 | fathom: admin 12; halyard: sdr 15 |
 | Reply row | List | 95 | 60 | fathom: admin 85; ridgeline: sdr 60, ae 40 |
+| "Read as … · by the reply agent · change" | List | 70 | 40 | fathom: admin 65; halyard: sdr 75; ridgeline: sdr 45, ae 30 |
 | Sequence and step column | List | 18 | 8 | fathom: sdr 15, admin 15; halyard: sdr 60; ridgeline: sdr 5, ae 2 |
 | Owner column | List | 4 | 12 | fathom: sdr 4, admin 4 |
 | Sort by column | List | 3 | 3 | |
@@ -146,6 +167,7 @@ Fifty-eight items in seven areas. Baseline numbers describe Meridian; overrides 
 | Report a misread reply | Row actions | 2 | 1 | |
 | Thread panel | Thread | 90 | 55 | fathom: admin 80; ridgeline: sdr 55, ae 35 |
 | Earlier messages | Thread | 18 | 30 | fathom: admin 15; ridgeline: sdr 10, ae 30 |
+| Agent draft door * | Thread | 55 | 30 | fathom: admin 50; halyard: sdr 60; ridgeline: sdr 30, ae 20 |
 | Insert a saved reply | Thread | 18 | 6 | fathom: admin 18; halyard: sdr 35; ridgeline: sdr 6, ae 2 |
 | Contact details | Thread | 12 | 25 | fathom: admin 12; ridgeline: ae 30 |
 | Schedule send | Thread | 4 | 5 | fathom: admin 4 |
@@ -157,6 +179,9 @@ Fifty-eight items in seven areas. Baseline numbers describe Meridian; overrides 
 | Translate | Thread | 1 | 1 | |
 | Print thread | Thread | 1 | 1 | |
 | Include signature | Thread | 2 | 2 | |
+| Meeting panel | Meeting and handoff | 45 | 35 | cs 20 (opened from Tasks and the deal record); fathom: admin 40; halyard: sdr 0 (no calendar); ridgeline: sdr 25, ae 30, cs 25 |
+| Handoff block * | Meeting and handoff | 40 | 10 | fathom: sdr 20, admin 20; halyard: sdr 12; ridgeline: sdr 20, ae 8 |
+| Handoffs accepted this quarter | Meeting and handoff | 20 | 4 | fathom: 0; halyard: 0; ridgeline: sdr 12 |
 | Select rows | Bulk | 15 | 3 | fathom: admin 15; halyard: sdr 18 |
 | Mark selected done | Bulk | 12 | 2 | fathom: admin 12; halyard: sdr 18 |
 | Mark selected not interested | Bulk | 4 | 2 | fathom: admin 4; halyard: sdr 12 |
@@ -171,13 +196,17 @@ Shape check, computed with `shape()` from `model.ts` (target: head 15–25%, bod
 
 | Pair | Head | Body | Tail |
 |---|---|---|---|
-| Meridian, SDR | 14 (24%) | 15 (26%) | 29 (50%) |
-| Meridian, AE | 11 (19%) | 18 (31%) | 29 (50%) |
-| Halyard, SDR | 14 (24%) | 16 (28%) | 28 (48%) |
-| Ridgeline, AE | 11 (19%) | 14 (24%) | 33 (57%) |
-| Fathom, admin | 13 (22%) | 15 (26%) | 30 (52%) |
+| Meridian, SDR | 19 (30%) | 15 (24%) | 29 (46%) |
+| Meridian, AE | 14 (22%) | 19 (30%) | 30 (48%) |
+| Halyard, SDR | 16 (25%) | 17 (27%) | 30 (48%) |
+| Ridgeline, AE | 14 (22%) | 15 (24%) | 34 (54%) |
+| Fathom, admin | 17 (27%) | 15 (24%) | 31 (49%) |
 
-Every pair fits the published shape. Halyard's SDR reaches the top of the head band for the agency reason: the sequence names the client, so the sequence column, the sequence filter and the saved replies are daily there. Book meeting, level one everywhere else, is zero at Halyard because no calendar is connected, so the action is removed rather than shown dead.
+Three pairs fit the published shape. Two are over the head band and are stated rather than fitted: **Meridian's SDR at 30%** and **Fathom's founder at 27%**, both five to ten points over the 15–25% target. The cause is the same at both and is not a number chosen too generously: this page absorbed the meeting and the hand-off, which are the SDR's daily work and which previously lived in no spec at all. The classification line, the agent draft, the meeting panel, the hand-off block and the acceptance rate are five head items added at once to a page whose SDR already worked it all day. Bending any of them under 20 to hit the band would be the lie the shape check exists to catch: an SDR at Meridian hands a meeting over most days and is paid on whether it is accepted.
+
+The same judgement was made for the Tasks page, which PLAN.md accepts as the density case, and for Halyard's Settings head at 29%. It is recorded here so it is visible, not hidden: the head is wide because the seat is a single-screen seat, and the fix if it ever grows further is to remove items, not to re-rate them.
+
+Halyard's SDR sits at the top of the band for the agency reason: the sequence names the client, so the sequence column, the sequence filter and the saved replies are daily there. Book meeting and the meeting panel, level one everywhere else, are zero at Halyard because no calendar is connected, so both are removed rather than shown dead.
 
 ## 5. Before: the common version
 
@@ -214,8 +243,8 @@ Modelled on Apollo's **Emails** hub. Sources: [View and Respond to Emails](https
 
 | | Level one | Level two, by door |
 |---|---|---|
-| Meridian SDR | Interested, Question, Not now, Unsubscribe tabs; the row; search; Reply, Book meeting, Hand to an AE, Mark done, Mark not interested, Follow up on, Confirm unsubscribe; the panel with the composer | Tab "Out of office (2) · Handled (6)"; door "Filter by sequence, owner, mailbox, date"; row "…"; panel "Earlier messages (3)"; "Insert a saved reply"; Send menu with Schedule; "Contact details" |
-| Meridian AE | Interested, Question, Unsubscribe tabs; the row; Reply, Book meeting, Mark done, Confirm unsubscribe, Create deal, Open contact; the panel with earlier messages and contact details open | Tab "Not now (1) · Out of office (0) · Handled (4)"; door "Search and filter by sequence, owner, date"; row "…" |
+| Meridian SDR | Interested, Question, Not now, Unsubscribe tabs; the row; search; the "Read as … · by the reply agent · change" line; Reply, Book meeting, Hand to an AE, Mark done, Mark not interested, Follow up on, Confirm unsubscribe; the panel with the composer; the meeting panel with its handoff block and the acceptance rate | Tab "Out of office (2) · Handled (6)"; door "Filter by sequence, owner, mailbox, date"; row "…"; panel "Earlier messages (3)"; "Insert a saved reply"; Send menu with Schedule; "Contact details" |
+| Meridian AE | Interested, Question, Unsubscribe tabs; the row; the "Read as …" line; Reply, Book meeting, Mark done, Confirm unsubscribe, Create deal, Open contact; the panel with earlier messages and contact details open; the meeting panel, without the handoff block | Tab "Not now (1) · Out of office (0) · Handled (4)"; door "Search and filter by sequence, owner, date"; row "…" |
 | Fathom SDR and founder (admin seat) | As Meridian SDR, minus Hand to an AE, plus Create deal | Same doors; CRM sync line removed |
 | Halyard SDR | As Meridian SDR, minus Hand to an AE and minus Book meeting, plus the Sequence · step column, the Sequence filter beside search, and Insert a saved reply as a visible button | Door "Filter by owner, mailbox, date"; the rest as Meridian |
 | Ridgeline SDR | As Meridian SDR | Same doors |
@@ -230,9 +259,11 @@ Modelled on Apollo's **Emails** hub. Sources: [View and Respond to Emails](https
 | Row "…" | the menu actions, fixed order per group, shortcut beside each | menu | none needed |
 | "Earlier messages (3)" | the steps we sent, full text | expands in place in the panel | open or closed, per user |
 | "Contact details" | title, email status, phone, open deal, owner | expands in place | open or closed, per user |
+| "Agent draft · 142 words" | the drafting agent's reply, loaded into the composer marked "Agent draft, not sent" | expands in place beside the composer | open or closed, per user |
 | "Insert a saved reply" | five saved texts | menu on the composer | none |
 | Send ▾ | Schedule for later, Include signature, Cc and Bcc, Attach | menu on the Send button | none |
 | Select (x) | bulk bar | contextual bar, driven by selection state | cleared on Escape |
+| "Book meeting" | the meeting panel: state, times, attendees, prep brief, summary and action items, follow-up draft, the handoff block | panel on its own channel, flat, no doors inside | the panel's scroll position only; state lives on the meeting |
 
 Two levels, counted per channel: the page and one door. The panel is part of level one, so its doors are second level. On the phone the panel is a page, and its doors stay one deep.
 
@@ -240,7 +271,7 @@ Two levels, counted per channel: the page and one door. The panel is part of lev
 
 **Accelerators.** Shortcuts on every menu item; the palette; the panel kept open; saved replies; Book meeting as one click where a calendar is connected. A daily SDR reaches every level-one action without a door. The shortcut printed beside a menu item is a floor, not a teacher: 749 tooltip exposures produced two shortcut activations, while showing every shortcut for a while took usage from 9.79% to 86.20% and left it at 73.09% after the exposure ended (Harrison, Malacria and Cockburn, IHM 2025, in [11 What changed](../knowledge-base/11-what-changed-2018-2026.md)). The product's teaching device is the two-week sidebar exposure in section 1, not a hint.
 
-**Decision-critical, always visible.** The Unsubscribe tab count. Confirm unsubscribe with its consequence written on the confirmation. Hand to an AE names the person receiving it. Mark not interested says it ends the sequence. Undo in every toast, one click, the same length as doing.
+**Decision-critical, always visible.** The Unsubscribe tab count. Confirm unsubscribe with its consequence written on the confirmation. Hand to an AE names the person receiving it. Mark not interested says it ends the sequence. The agent draft is marked as a draft and its recipient and full text are on screen before Send, because sending is the approval. "Create the deal and assign" names the owner and the territory before the click. The no-show sequence names itself and what it sends. Undo in every toast, one click, the same length as doing.
 
 **Removed rather than hidden.** Drafts, scheduled and bounced emails (they belong to Sequences and Tasks). A Sentiment filter (the groups replace it). Mark interested (corrections go through Change what they meant). Unmark as reply. Email from a different user in bulk. Column chooser, density toggle and saved views: the page has five fixed columns, so none of the three earns a place and none carries a number in `inbox.ts`. Open and click popovers: replies are the signal, as Apollo's own KB says.
 
@@ -253,7 +284,8 @@ The Inbox is a real page, not a lesson. The rules that mattered most:
 - Rule 1: group by meaning, because the meaning decides the action, and put the four groups people touch weekly on the tab row.
 - Rule 4: remove Hand to an AE where there is no AE, and remove the CRM line where there is no CRM; never grey them out.
 - Rule 5: the reply, its outcome and its actions on one row and one panel; the marking never lives on a different page.
-- Rule 7: the count of people who asked to stop is never behind a door, and the unsubscribe confirmation says what it does.
+- Rule 7: the count of people who asked to stop is never behind a door, the unsubscribe confirmation says what it does, and an agent-written reply is approved by the person who can see the recipient and the whole text, never by a count in a queue.
+- Rule 6: the classification line names its author, so the state on screen explains itself instead of a person guessing whether a human or the classifier decided.
 
 ## 8. Review
 
@@ -273,7 +305,7 @@ The Inbox is a real page, not a lesson. The rules that mattered most:
 | Dependent fields together | Outcome marking and the reply | Same row, same panel |
 | State persists | Panel width and door state | Per user and workspace |
 | Accelerators | Shortcuts existed but were not shown | Beside each menu item and in the palette |
-| Usage shape | Fathom admin had no body; Halyard's SDR sat one item over the head band | Overrides adjusted; five pairs recomputed in section 4 from `inbox.ts`, all inside the band |
+| Usage shape | Fathom admin had no body; Halyard's SDR sat one item over the head band. After the meeting panel and the hand-off arrived, Meridian's SDR reached 30% head and Fathom's founder 27% | Overrides adjusted; five pairs recomputed in section 4 from `inbox.ts`. Three fit; the two over the band are stated with their cause and not fitted, because the items causing it are the SDR's daily work |
 | Nothing hover-only | Row actions on hover | Also on focus and in "…"; Apollo's status hover becomes text |
 | Role gaps explain themselves | Meridian SDR sees only own mailbox | One line names the admin who can widen it |
 | No usage numbers or teaching text | None | Numbers live in `inbox.ts` and this file only |
