@@ -92,7 +92,7 @@ export function ImportWizard({ session }: { session: Session }) {
   const markDone = (step: number) => save({ stepsDone: [...new Set([...draft.stepsDone, step])] })
 
   /* The file's overlap with the workspace, computed at render rather than written down: the rows that
-     name a company Ollopa already holds are the rows a duplicate policy decides about. */
+     name a company ollopA already holds are the rows a duplicate policy decides about. */
   const client = draft.file.split(/[-_.]/)[0]
   const matchedContacts = seed.contacts.filter((c) => c.company.toLowerCase().replace(/\s/g, "").startsWith(client.toLowerCase().slice(0, 6)))
   const matched = matchedContacts.length
@@ -178,7 +178,7 @@ export function ImportWizard({ session }: { session: Session }) {
   const dncLine = draft.fields.includes("Mobile") ? (
     <div className="grid gap-1 rounded-md border border-amber-300 p-3 dark:border-amber-800">
       <Consequence>
-        About {n(dncRows)} of the {n(draft.rows)} rows will be numbers you cannot call: {pct(dncRate)} of the people in this workspace carry a do-not-call flag{matched > 0 ? `, and ${n(dnc)} of the ${n(matched)} rows Ollopa already holds carry one today` : ""}. A mobile for those is charged and cannot be called, and it is not refunded.
+        About {n(dncRows)} of the {n(draft.rows)} rows will be numbers you cannot call: {pct(dncRate)} of the people in this workspace carry a do-not-call flag{matched > 0 ? `, and ${n(dnc)} of the ${n(matched)} rows ollopA already holds carry one today` : ""}. A mobile for those is charged and cannot be called, and it is not refunded.
       </Consequence>
       <Check
         checked={draft.includeDnc}
@@ -317,7 +317,7 @@ export function ImportWizard({ session }: { session: Session }) {
         {current === 2 && (
           <>
             <fieldset>
-              <legend className="text-sm font-medium">{n(matched)} of the {n(draft.rows)} rows are already in Ollopa</legend>
+              <legend className="text-sm font-medium">{n(matched)} of the {n(draft.rows)} rows are already in ollopA</legend>
               <div className="mt-2 grid gap-2">
                 <Radio name="dup" checked={draft.duplicates === "update"} onChange={() => save({ duplicates: "update" })}
                   label="Update existing"
@@ -487,7 +487,7 @@ export function ImportWizard({ session }: { session: Session }) {
         body={
           <>
             <p>{draft.file} goes, with the column mapping, the duplicate choice and the provider order on it.</p>
-            <p className="mt-2">{draft.credits > 0 ? `${n(draft.credits)} credits already spent are not refunded, and the ${n(draft.done)} rows already enriched stay in Ollopa.` : "Nothing has been charged yet."}</p>
+            <p className="mt-2">{draft.credits > 0 ? `${n(draft.credits)} credits already spent are not refunded, and the ${n(draft.done)} rows already enriched stay in ollopA.` : "Nothing has been charged yet."}</p>
           </>
         }
         confirmLabel="Discard the import"

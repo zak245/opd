@@ -58,7 +58,7 @@ Row actions appear on hover and on keyboard focus, and every one also lives in t
 | Question | Reply · Book meeting | As above. |
 | Not now | Follow up on… · Done | Follow up on… opens a date picker with In 2 weeks, Next month, and the date parsed from the reply; creates a Follow-up task and moves the reply to Handled. |
 | Out of office | Resume on {date} · Done | The sequence resumes on the parsed return date; the menu also offers Resume now. |
-| Unsubscribe | Confirm unsubscribe · Not interested | Confirm adds the address to the do-not-contact list and ends every sequence. The confirmation reads: "Ollopa will not email amara.okonkwo@… again from any sequence. Undo is in the notification for 10 seconds." |
+| Unsubscribe | Confirm unsubscribe · Not interested | Confirm adds the address to the do-not-contact list and ends every sequence. The confirmation reads: "ollopA will not email amara.okonkwo@… again from any sequence. Undo is in the notification for 10 seconds." |
 
 Menu actions, every group unless noted: Hand to an AE (SDR only, where an AE seat exists; pick the AE, add a note; the reply moves to the AE's Inbox with a task "Reply to Amara", and leaves the SDR's list), Mark done, Mark not interested (stage Not interested, sequence finished, reply handled), Create deal from this reply (opens the deal record prefilled), Open contact, Change what they meant (five options; the row moves group; the correction is logged for the classifier), Remove from sequence keeping history, Add a note, Forward thread, Open in Gmail or Outlook, Assign to another SDR, Add to list, Mark unread, Mark as spam or bot reply, Report a misread reply. Every action toasts its outcome with Undo.
 
@@ -70,7 +70,7 @@ Page actions: none. An inbox creates nothing; one-off email lives on the contact
 
 This page owns the meeting panel (`X-meeting`) for the whole product. Tasks renders it from a meeting task row and the deal record renders it from the meeting card (specs 07 and 09); all three open the same panel with the same blocks in the same order. It is flat: one level, no doors inside it, so it is level two wherever it opens.
 
-Ollopa does not own the booking page; the calendar does. The boundary is the meeting object and its events.
+ollopA does not own the booking page; the calendar does. The boundary is the meeting object and its events.
 
 - **State.** Proposed → Booked → Held, No-show or Cancelled. The four outcome buttons are marked by a person, never inferred from a calendar's silence; the state and who set it, with the time, are printed above them.
 - **Times.** Offer two or three times from the connected calendar, or send the calendar link. At Halyard, where no calendar is connected, both are replaced by "Connect a calendar to book from here", linking to Settings › Integrations; removed, not disabled.

@@ -60,9 +60,9 @@ const DIRECTION_WORDS: Record<Direction, string> = {
 function directionSentence(kind: string, object: ObjectName, direction: Direction): string {
   const remote = `${kind} ${remotePlural(kind, object).toLowerCase()}`
   switch (direction) {
-    case "both": return `Ollopa will create and update ${remote} and take updates back.`
-    case "pull": return `Ollopa will read ${remote} and change nothing there.`
-    case "push": return `Ollopa will create and update ${remote} and ignore changes made there.`
+    case "both": return `ollopA will create and update ${remote} and take updates back.`
+    case "pull": return `ollopA will read ${remote} and change nothing there.`
+    case "push": return `ollopA will create and update ${remote} and ignore changes made there.`
     case "off": return `${object} do not sync at all.`
   }
 }
@@ -162,16 +162,16 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
               )
             })}
             {group.name === "CRM" && (
-              <div data-item="wiz.declare-no-crm" data-item-label="Ollopa is our CRM" className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
+              <div data-item="wiz.declare-no-crm" data-item-label="ollopA is our CRM" className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
                 <Check
                   checked={noCrm.declared}
-                  onChange={() => { saveNoCrm({ declared: !noCrm.declared }); toast(noCrm.declared ? "Ollopa is no longer marked as your CRM · the CRM row is back in the set-up list" : "Ollopa is your CRM · the CRM row has left the set-up list") }}
-                  label="Ollopa is our CRM"
+                  onChange={() => { saveNoCrm({ declared: !noCrm.declared }); toast(noCrm.declared ? "ollopA is no longer marked as your CRM · the CRM row is back in the set-up list" : "ollopA is your CRM · the CRM row has left the set-up list") }}
+                  label="ollopA is our CRM"
                   hint="A decision, not an absence. It takes the CRM row out of the set-up list on Home, and it is reversible here."
                 />
                 {noCrm.declared && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Ollopa is your CRM. It is holding your {n(b.counts.contacts)} contacts, {n(b.counts.companies)} companies and {n(b.counts.openDeals)} open deals. Connect Salesforce or HubSpot if that changes.
+                    ollopA is your CRM. It is holding your {n(b.counts.contacts)} contacts, {n(b.counts.companies)} companies and {n(b.counts.openDeals)} open deals. Connect Salesforce or HubSpot if that changes.
                   </p>
                 )}
               </div>
@@ -233,7 +233,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
         {draft.webhookTest && (
           <div className="grid gap-2 rounded-md border p-3 text-sm">
             <div>Sent to {draft.webhookUrl || "your endpoint"} on {day(draft.webhookTest)}.</div>
-            <Code block text={`POST ${draft.webhookUrl || "https://example.com/hooks/ollopa"}\nOllopa-Event: connection.test\nOllopa-Attempt: 1\nOllopa-Signature: t=1789012345,v1=<HMAC-SHA256 of the body with your secret>`} label="Copy the request" />
+            <Code block text={`POST ${draft.webhookUrl || "https://example.com/hooks/ollopa"}\nollopA-Event: connection.test\nollopA-Attempt: 1\nollopA-Signature: t=1789012345,v1=<HMAC-SHA256 of the body with your secret>`} label="Copy the request" />
             <p className="text-xs text-muted-foreground">The answer your endpoint gives appears here and in the delivery log. Delivery is at-least-once and out of order.</p>
           </div>
         )}
@@ -446,10 +446,10 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
 
             <div data-item="wiz.mapping" data-item-label="the field pairs" className="min-w-0 overflow-x-auto">
               <table data-container="connect.pairs" data-container-label="the field pair table" data-open="true" className="w-full min-w-[40rem] border-collapse text-sm">
-                <caption className="sr-only">Field pairs for {object}: the Ollopa field, the direction, the {draft.kind} field, the write rule and the state of each pair.</caption>
+                <caption className="sr-only">Field pairs for {object}: the ollopA field, the direction, the {draft.kind} field, the write rule and the state of each pair.</caption>
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th scope="col" className="py-2 pr-3 font-medium">Ollopa field</th>
+                    <th scope="col" className="py-2 pr-3 font-medium">ollopA field</th>
                     <th scope="col" className="py-2 pr-3 font-medium">Direction</th>
                     <th scope="col" className="py-2 pr-3 font-medium">{draft.kind} field</th>
                     <th scope="col" className="py-2 pr-3 font-medium">Write rule</th>
@@ -591,7 +591,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
   return (
     <div className="grid gap-6">
       <fieldset data-item="wiz.pull-conditions" data-item-label="pull conditions">
-        <legend className="text-sm font-medium">Pull: what comes into Ollopa</legend>
+        <legend className="text-sm font-medium">Pull: what comes into ollopA</legend>
         <div className="mt-2 grid gap-2">
           <Radio name="pull" checked={draft.pullAll} onChange={() => save({ pullAll: true })} label={`Pull every record from ${draft.kind}`} />
           <Radio name="pull" checked={!draft.pullAll} onChange={() => save({ pullAll: false })} label="Pull only records that match" />
@@ -625,15 +625,15 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
           <div data-item="wiz.deletion" data-item-label="deletion sync">
             <h4 className="text-sm">When a record is deleted in {draft.kind}</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
-              <Radio name="crmdel" checked={draft.onCrmDelete === "unlink"} onChange={() => save({ onCrmDelete: "unlink" })} label="Unlink it in Ollopa" hint="The record stays and loses its link." />
+              <Radio name="crmdel" checked={draft.onCrmDelete === "unlink"} onChange={() => save({ onCrmDelete: "unlink" })} label="Unlink it in ollopA" hint="The record stays and loses its link." />
               <div className="grid gap-1">
-                <Radio name="crmdel" checked={draft.onCrmDelete === "delete"} onChange={() => save({ onCrmDelete: "delete" })} label="Delete it in Ollopa" />
-                <Consequence>{"Deletes the person, their activity and their sequence history in Ollopa. Nothing restores it."}</Consequence>
+                <Radio name="crmdel" checked={draft.onCrmDelete === "delete"} onChange={() => save({ onCrmDelete: "delete" })} label="Delete it in ollopA" />
+                <Consequence>{"Deletes the person, their activity and their sequence history in ollopA. Nothing restores it."}</Consequence>
               </div>
             </div>
           </div>
           <div>
-            <h4 className="text-sm">When a record is deleted in Ollopa</h4>
+            <h4 className="text-sm">When a record is deleted in ollopA</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="olldel" checked={draft.onOllopaDelete === "nothing"} onChange={() => save({ onOllopaDelete: "nothing" })} label={`Do nothing in ${draft.kind}`} />
               <div className="grid gap-1">
@@ -645,12 +645,12 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
           <div>
             <h4 className="text-sm">When two records are merged in {draft.kind}</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
-              <Radio name="crmmerge" checked={draft.onCrmMerge === "mirror"} onChange={() => save({ onCrmMerge: "mirror" })} label="Mirror the merge in Ollopa" hint="The loser's activity moves onto the winner." />
-              <Radio name="crmmerge" checked={draft.onCrmMerge === "nothing"} onChange={() => save({ onCrmMerge: "nothing" })} label="Do nothing in Ollopa" />
+              <Radio name="crmmerge" checked={draft.onCrmMerge === "mirror"} onChange={() => save({ onCrmMerge: "mirror" })} label="Mirror the merge in ollopA" hint="The loser's activity moves onto the winner." />
+              <Radio name="crmmerge" checked={draft.onCrmMerge === "nothing"} onChange={() => save({ onCrmMerge: "nothing" })} label="Do nothing in ollopA" />
             </div>
           </div>
           <div data-item="wiz.merge" data-item-label="merge sync">
-            <h4 className="text-sm">When two records are merged in Ollopa</h4>
+            <h4 className="text-sm">When two records are merged in ollopA</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="ollmerge" checked={draft.onOllopaMerge === "nothing"} onChange={() => save({ onOllopaMerge: "nothing" })} label={`Do nothing in ${draft.kind}`} />
               <div className="grid gap-1">
@@ -668,7 +668,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
           <Radio name="match" checked={draft.matchKey === "Email, then CRM id"} onChange={() => save({ matchKey: "Email, then CRM id" })} label="Email, then CRM id" hint="Catches the same person added twice." />
           <Radio name="match" checked={draft.matchKey === "CRM id only"} onChange={() => save({ matchKey: "CRM id only" })} label="CRM id only" hint="Two records with one address stay two records." />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Contact stages Ollopa can push: {CONTACT_STAGES.join(" · ")}.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Contact stages ollopA can push: {CONTACT_STAGES.join(" · ")}.</p>
       </fieldset>
     </div>
   )
@@ -695,7 +695,7 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
           </div>
         </fieldset>
         <fieldset>
-          <legend className="text-sm font-medium">What Ollopa reads</legend>
+          <legend className="text-sm font-medium">What ollopA reads</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <Radio name="detail" checked={draft.busyOnly} onChange={() => save({ busyOnly: true })} label="Busy time only" hint="Enough to stop a double-booking. No titles, no attendees." />
             <Radio name="detail" checked={!draft.busyOnly} onChange={() => save({ busyOnly: false })} label="Event detail" hint="Titles and attendees, so a meeting matches itself to a deal." />
@@ -796,16 +796,16 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
       title: "Sync rules", step: 5, lines: [
         draft.pullAll ? "Pull every record" : `Pull where ${draft.pullConditions.map((c) => `${c.field} ${c.op} ${c.value}`).join(" and ") || "a condition you have not written yet"}`,
         draft.pushAll ? "Push every record" : `Push where ${draft.pushConditions.map((c) => `${c.field} ${c.op} ${c.value}`).join(" and ") || "a condition you have not written yet"}`,
-        `Deletions in ${draft.kind}: ${draft.onCrmDelete === "unlink" ? "unlink in Ollopa" : "delete in Ollopa"} · Deletions in Ollopa: ${draft.onOllopaDelete === "nothing" ? `nothing in ${draft.kind}` : `delete in ${draft.kind}`}`,
-        `Merges in ${draft.kind}: ${draft.onCrmMerge === "mirror" ? "mirrored" : "ignored"} · Merges in Ollopa: ${draft.onOllopaMerge === "mirror" ? "mirrored" : "ignored"} · Matching on ${draft.matchKey}`,
+        `Deletions in ${draft.kind}: ${draft.onCrmDelete === "unlink" ? "unlink in ollopA" : "delete in ollopA"} · Deletions in ollopA: ${draft.onOllopaDelete === "nothing" ? `nothing in ${draft.kind}` : `delete in ${draft.kind}`}`,
+        `Merges in ${draft.kind}: ${draft.onCrmMerge === "mirror" ? "mirrored" : "ignored"} · Merges in ollopA: ${draft.onOllopaMerge === "mirror" ? "mirrored" : "ignored"} · Matching on ${draft.matchKey}`,
       ],
     },
     { title: "Source value and unverified emails", step: 5, lines: [`Source field written as "${draft.sourceValue}" · unverified emails ${draft.pushUnverified ? "are pushed" : "are not pushed"}`] },
   ]
 
   const pullSentence = live
-    ? `Ollopa will pull ${pulling.map((o) => `${about(live.remoteCounts[o] ?? 0)} ${o.toLowerCase()}`).join(" and ")} from ${draft.kind}`
-    : `Ollopa will pull every ${draft.kind} record that matches your pull rule — ${draft.kind} has not been counted yet, and the first run reports what it found`
+    ? `ollopA will pull ${pulling.map((o) => `${about(live.remoteCounts[o] ?? 0)} ${o.toLowerCase()}`).join(" and ")} from ${draft.kind}`
+    : `ollopA will pull every ${draft.kind} record that matches your pull rule — ${draft.kind} has not been counted yet, and the first run reports what it found`
   const pushSentence = `push ${pushing.map((o) => `${about((o === "Contacts" ? pushContacts * scale : o === "Companies" ? b.counts.companies : o === "Deals" ? b.counts.openDeals : Math.round(seed.tasks.length * scale)))} ${o.toLowerCase()}`).join(" and ")} to ${draft.kind}`
 
   return (
@@ -814,10 +814,10 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
         <h3 className="text-sm font-semibold">What the first sync will do</h3>
         <p className="mt-2 text-sm">
           {pullSentence} and {pushSentence}.{" "}
-          Deletions in {draft.kind} will {draft.onCrmDelete === "unlink" ? "unlink records in Ollopa" : "delete records in Ollopa"}.{" "}
-          Deletions in Ollopa will {draft.onOllopaDelete === "nothing" ? `change nothing in ${draft.kind}` : `delete the record in ${draft.kind}`}.{" "}
+          Deletions in {draft.kind} will {draft.onCrmDelete === "unlink" ? "unlink records in ollopA" : "delete records in ollopA"}.{" "}
+          Deletions in ollopA will {draft.onOllopaDelete === "nothing" ? `change nothing in ${draft.kind}` : `delete the record in ${draft.kind}`}.{" "}
           Merges in {draft.kind} will be {draft.onCrmMerge === "mirror" ? "mirrored" : "ignored"}.{" "}
-          Merges in Ollopa will be {draft.onOllopaMerge === "mirror" ? `mirrored in ${draft.kind}` : `kept in Ollopa only`}.
+          Merges in ollopA will be {draft.onOllopaMerge === "mirror" ? `mirrored in ${draft.kind}` : `kept in ollopA only`}.
         </p>
       </section>
 
@@ -994,7 +994,7 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
         body={
           <>
             <p>{draft.stepsDone.length} of {total} steps go, with the field pairs, the rules and the answers on them.</p>
-            <p className="mt-2">{draft.authorised ? `The token granted to ${draft.authUser} is revoked.` : "No token has been granted yet."} Nothing that is already in Ollopa changes.</p>
+            <p className="mt-2">{draft.authorised ? `The token granted to ${draft.authUser} is revoked.` : "No token has been granted yet."} Nothing that is already in ollopA changes.</p>
           </>
         }
         confirmLabel="Discard the setup"

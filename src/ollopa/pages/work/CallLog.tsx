@@ -5,7 +5,7 @@
 // see the record reads it, which is how a manager coaches without a second surface.
 //
 // The line above the disposition is the point of the panel: the consequence sits with the control
-// that causes it (rules 5 and 7). Ollopa has no dialer — the rep dials however they dial and this
+// that causes it (rules 5 and 7). ollopA has no dialer — the rep dials however they dial and this
 // records what happened.
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -232,7 +232,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
         )}
         <a className="ml-auto text-xs underline underline-offset-4" href={href(`/ollopa/people/${task.contactId}`)}>Open contact</a>
       </div>
-      <p className="text-xs text-muted-foreground">Ollopa does not dial. You dial, and this is where what happened is kept — {day(TODAY)}.</p>
+      <p className="text-xs text-muted-foreground">ollopA does not dial. You dial, and this is where what happened is kept — {day(TODAY)}.</p>
     </div>
   )
 }

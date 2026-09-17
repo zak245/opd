@@ -4,7 +4,7 @@
 // whole product: Tasks renders it from a meeting task row and the deal record from the meeting card,
 // and all three open this component with the same blocks in the same order.
 //
-// It is flat — one level, no doors inside it — so it is level two wherever it opens. Ollopa does not
+// It is flat — one level, no doors inside it — so it is level two wherever it opens. ollopA does not
 // own the booking page; the calendar does. The boundary is the meeting object and its events.
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -143,7 +143,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
               <Button key={o.key} size="sm" variant={state === o.key ? "default" : "outline"} onClick={() => mark(o.key)}>{o.label}</Button>
             ))}
           </div>
-          <p className="pt-1.5 text-xs text-muted-foreground">A person marks the outcome. Ollopa never reads it from the calendar's silence.</p>
+          <p className="pt-1.5 text-xs text-muted-foreground">A person marks the outcome. ollopA never reads it from the calendar's silence.</p>
         </section>
 
         {/* -------------------------------------------------------------------------- the times */}
@@ -164,7 +164,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
               <Button size="sm" variant="ghost" className="mt-2 px-2 text-xs" onClick={() => p.say(`Your calendar link sent to ${p.contactName} from ${mailbox}. The booking happens in ${calendar.name}.`)}>
                 Send the calendar link instead
               </Button>
-              <p className="pt-1 text-xs text-muted-foreground">Times come from {calendar.name}. The booking page is the calendar's, not Ollopa's.</p>
+              <p className="pt-1 text-xs text-muted-foreground">Times come from {calendar.name}. The booking page is the calendar's, not ollopA's.</p>
             </>
           ) : (
             <p className="pt-1 text-sm">

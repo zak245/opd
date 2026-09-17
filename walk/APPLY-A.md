@@ -58,7 +58,7 @@ All seven walk logs were read. 56 changes applied, 4 skipped. `npx tsc -b` passe
 
 ### From WALK-revops
 
-| 2 | `specs/01-home.md` | The CRM row leaves the setup list when "Ollopa is our CRM" is declared, reversibly; the door is removed when the list empties; Fathom's §3.8 line rewritten |
+| 2 | `specs/01-home.md` | The CRM row leaves the setup list when "ollopA is our CRM" is declared, reversibly; the door is removed when the list empties; Fathom's §3.8 line rewritten |
 | 4 (map, mirrored) | `specs/01-home.md` + `home.ts` | The setup door is "Not set up yet: mailbox, CRM, invites (3)" — contents then count, no fraction, no percentage |
 | 6 | `specs/00…` §3.2 | Product-led growth leaves out Sequences for the account executive **and the admin**, and Lists for the admin; the marketer keeps Lists |
 | 19 | `specs/00…` §3.4 + `shell.ts` | Sync error becomes **digestible** with a cadence choice on the integration; exactly three interrupting kinds — bounce guard tripped, second approval over the threshold, credits low; the mute sentence, the Toasts line, §6 and the `shell.toast` label all matched |

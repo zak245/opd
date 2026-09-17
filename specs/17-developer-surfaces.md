@@ -1,10 +1,10 @@
 # Developer surfaces: the API, webhooks, MCP and the CLI
 
-*The seventeenth spec. One settings area, four panels, and four surfaces with no screen Ollopa controls. Usage items: `src/ollopa/usage/developer.ts` (the surfaces) and the "API, webhooks, MCP and CLI" area of `src/ollopa/usage/settings.ts` (the rows on the Settings page). Nodes: IA-MAP 2.16, plus `S-developer` in 2.14. IA-MAP 6.5 asked for this file by name: the approval batch, the consequence line and the credit cap "written as text before any screen for them is designed".*
+*The seventeenth spec. One settings area, four panels, and four surfaces with no screen ollopA controls. Usage items: `src/ollopa/usage/developer.ts` (the surfaces) and the "API, webhooks, MCP and CLI" area of `src/ollopa/usage/settings.ts` (the rows on the Settings page). Nodes: IA-MAP 2.16, plus `S-developer` in 2.14. IA-MAP 6.5 asked for this file by name: the approval batch, the consequence line and the credit cap "written as text before any screen for them is designed".*
 
 ## 1. Purpose
 
-Four surfaces where a person meets Ollopa and Ollopa draws nothing: **the API** (`U-api`), **webhooks** (`U-hooks`), **MCP** (`U-mcp`) and **the CLI** (`U-cli`). One settings area configures all four — `S-developer`, "API, webhooks, MCP and CLI" — through four panels: `X-key`, `X-hook`, `X-mcpscope`, `X-cliauth`. And one node belongs to none of the four and to all of them: `X-approve-remote`, the approval card that has to arrive in a chat client or a terminal.
+Four surfaces where a person meets ollopA and ollopA draws nothing: **the API** (`U-api`), **webhooks** (`U-hooks`), **MCP** (`U-mcp`) and **the CLI** (`U-cli`). One settings area configures all four — `S-developer`, "API, webhooks, MCP and CLI" — through four panels: `X-key`, `X-hook`, `X-mcpscope`, `X-cliauth`. And one node belongs to none of the four and to all of them: `X-approve-remote`, the approval card that has to arrive in a chat client or a terminal.
 
 Who lives here: the **RevOps admin**, for the workspace rows. The MCP scope and the CLI device authorisations are personal, so **every seat** reaches those two from "You" in Settings, the way every seat reaches their own mailbox.
 
@@ -97,7 +97,7 @@ Approval needed · 3 actions · 2 emails, 1 enrolment · 12 credits
   3. Add Lena Fischer to "Q4 enterprise outbound"; step 1 sends Mon 09:00; enriches first — 12 credits
 Requested by Priya Natarajan · Claude (MCP) · 09:14
 Over 1,000 recipients or 500 credits? No.
-Approve all · Approve one · Decline all          Also waiting in Ollopa › Agents
+Approve all · Approve one · Decline all          Also waiting in ollopA › Agents
 ```
 
 Five rules govern it, and four of the five are spec 13's rules re-expressed rather than new:
@@ -147,7 +147,7 @@ The key list and the subscription list sort by last used, newest first, and have
 |---|---|
 | No keys | "No API keys. A key lets a script read and write this workspace. Limits are per workspace: 200 a minute, 6,000 an hour, 50,000 a day." Then "Create a key" |
 | Locked by plan (Starter) | Keys, webhooks and the CLI rows sit where they always sit, with a lock, "Growth" and one total for the period. MCP read is not locked. Never greyed, never moved |
-| No subscriptions | "No webhooks. Ollopa will POST to your endpoint when something happens. Delivery is at-least-once and out of order." Then "Connect a webhook", which opens the wizard |
+| No subscriptions | "No webhooks. ollopA will POST to your endpoint when something happens. Delivery is at-least-once and out of order." Then "Connect a webhook", which opens the wizard |
 | A subscription failing | The row reads "Failing since 11 Sep, 14:02 · 18 deliveries · handler returned 500", with the group and "Replay these 18" one click away. It is never disabled by us |
 | At the credit cap | The area's top line reads what the strip reads: balance, burn, run-out. Every surface refuses with the cap, the reset and the approver |
 | Awaiting approval | The card, on the surface; the same item in `P-agents`; exit code `6` and a resume token in the terminal |
@@ -251,7 +251,7 @@ Apollo has no page called "developer surfaces". What this spec covers is spread 
 ### 5.1 Where the work lives in Apollo
 
 1. **API keys.** Settings (its own shell) → Integrations → a marketplace-style list with category chips → the **Apollo API** card → *API keys* → *Create new key* (name, description, endpoint scopes, *Set as master key*), plus *OAuth registration* for partners (`07-apollo-settings-map.md` §Integrations, citing [Use Apollo API](https://knowledge.apollo.io/hc/en-us/articles/4416173158541)). Four levels from the app before a key exists.
-2. **Webhooks.** "Only documented in the developer docs and via Zapier/Workflows; a 'Settings → Integrations → Webhooks' page is cited by third parties only — **unverified**" (`07-apollo-settings-map.md` §Integrations). The retry policy Ollopa's contract answers is not Apollo's: Apollo's own webhook row in the comparison table reads "n/a (poll fallback), 30 days pollable" (`19-revops-and-developer-notes.md` §10).
+2. **Webhooks.** "Only documented in the developer docs and via Zapier/Workflows; a 'Settings → Integrations → Webhooks' page is cited by third parties only — **unverified**" (`07-apollo-settings-map.md` §Integrations). The retry policy ollopA's contract answers is not Apollo's: Apollo's own webhook row in the comparison table reads "n/a (poll fallback), 30 days pollable" (`19-revops-and-developer-notes.md` §10).
 3. **Rate limits.** Published at docs.apollo.io/docs/rate-limits, not in the product. The sentence that matters most is there and only there: "Every limit is: **Per team, not per API key or per user**" (§9). Also there: "Apollo uses **fixed time windows**… windows are not aligned to the clock", and the headers `x-rate-limit-minute|hourly|24-hour`, `x-*-usage`, `x-*-requests-left`, `retry-after` (§9).
 4. **Credit cost per call.** Also documentation only (docs.apollo.io/docs/api-pricing, updated 21 Aug 2026): "Endpoints that create, update, list, or manage records consume **0 credits**"; people enrichment "**1-9 credits** per person… **+8 credits if mobile phone is returned**"; and the line the whole cost table in §3.1 exists to answer: "**Email waterfall enrichment typically uses 1–4 credits, but some vendor configurations or successful higher-cost matches may result in 20+ credits. Phone waterfall enrichment typically uses 8–25 credits, but some configurations may result in 45+ credits.**" (§9)
 5. **MCP.** `https://mcp.apollo.io/mcp`, Streamable HTTP, OAuth 2.0 or a master API key — "scoped keys fail with `403 API_INACCESSIBLE`". Prerequisites, verbatim: an active account, feature access, "**Available credits for enrichment and other credit-consuming actions**", and "**model training turned off in your AI account or client settings**". 40+ actions; some consume credits (§11).
@@ -275,13 +275,13 @@ A key is minted four levels down inside a marketplace card, with an endpoint-sco
 | The industry's webhook failure mode, which any contract must answer | Outreach: "does not retry webhook deliveries upon receiving any of the Status Codes including `500`", 5-second timeout — "a 500 from your handler = permanent data loss". Salesloft: "retried **three additional times, spaced 15 seconds apart**" — a 45-second window that "will not survive a deploy or cold start". Calendly: auto-disabled, "must recreate" | 19§10 |
 | Spend attribution behind a permission, three levels down | Settings › Credits and activity › Credit usage › AI runs | 07§1.0, 07§6 |
 
-### 5.4 What the industry gets right, and Ollopa keeps
+### 5.4 What the industry gets right, and ollopA keeps
 
-- **Close's three-tier scope header.** `Close-Scope`: `mcp.read`, `mcp.write_safe`, `mcp.write_destructive` — "the cleanest published safety design in GTM MCP" (19§11). Ollopa's three tiers are these three.
-- **Clay's device flow.** `clay login --device`, "OAuth 2.0 device authorization flow for headless environments", and a CLI that "signals rate limiting via **exit code 4** with `retryAfter|limit|remaining|reset` in `details`" (19§12, §15.5). Ollopa's exit codes are that idea finished.
-- **HubSpot's attempt number.** A payload that includes `attemptNumber` "precisely so you can detect replays" (19§10). Ollopa's contract says at-least-once and numbers the attempt for the same reason.
+- **Close's three-tier scope header.** `Close-Scope`: `mcp.read`, `mcp.write_safe`, `mcp.write_destructive` — "the cleanest published safety design in GTM MCP" (19§11). ollopA's three tiers are these three.
+- **Clay's device flow.** `clay login --device`, "OAuth 2.0 device authorization flow for headless environments", and a CLI that "signals rate limiting via **exit code 4** with `retryAfter|limit|remaining|reset` in `details`" (19§12, §15.5). ollopA's exit codes are that idea finished.
+- **HubSpot's attempt number.** A payload that includes `attemptNumber` "precisely so you can detect replays" (19§10). ollopA's contract says at-least-once and numbers the attempt for the same reason.
 - **Zapier's honest per-call metering.** "Each successful call uses two tasks from your Zapier plan, and **failed calls do not count**" (19§11).
-- **Salesforce's allocation check.** `sf org list limits` as a first-class command (19§12). Ollopa's CLI checks the allocation before a run rather than failing halfway.
+- **Salesforce's allocation check.** `sf org list limits` as a first-class command (19§12). ollopA's CLI checks the allocation before a run rather than failing halfway.
 
 ## 6. After: the disclosed version
 

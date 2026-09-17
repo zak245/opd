@@ -54,8 +54,8 @@ function Heading({ children, sub }: { children: React.ReactNode; sub?: React.Rea
 
 /** The documented Salesforce sync errors (16-apollo-workflow-inventory.md §20). */
 const ERRORS = [
-  { code: "DUPLICATES_DETECTED", what: "Salesforce refused the push: a matching record already exists.", fix: "Merge the Salesforce duplicates, then retry. Ollopa mirrors Salesforce and will not merge for you." },
-  { code: "INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST", what: "A stage value Ollopa sent is not in the Salesforce picklist.", fix: "Add the value to the picklist, or map the stage to one that exists." },
+  { code: "DUPLICATES_DETECTED", what: "Salesforce refused the push: a matching record already exists.", fix: "Merge the Salesforce duplicates, then retry. ollopA mirrors Salesforce and will not merge for you." },
+  { code: "INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST", what: "A stage value ollopA sent is not in the Salesforce picklist.", fix: "Add the value to the picklist, or map the stage to one that exists." },
   { code: "STORAGE_LIMIT_EXCEEDED", what: "The Salesforce org is out of data storage.", fix: "Free storage in Salesforce, then retry. Nothing pushes until there is room." },
   { code: "No participant as contact or lead", what: "An email had no matching contact or lead in Salesforce.", fix: "Push the contact first, or turn off pushing emails for unknown participants." },
 ]
@@ -281,11 +281,11 @@ function Tabbed({ session, draft, on }: { session: Session; draft: ConnectDraft;
               <div className="grid gap-3">
                 <Item id="wiz.deletion" label="deletion sync">
                   <p className="text-sm font-medium">Deletion sync</p>
-                  <Check checked={false} onChange={() => {}} label="Delete in Ollopa when deleted in Salesforce" />
+                  <Check checked={false} onChange={() => {}} label="Delete in ollopA when deleted in Salesforce" />
                 </Item>
                 <Item id="wiz.merge" label="merge sync">
                   <p className="text-sm font-medium">Merge sync</p>
-                  <Check checked={false} onChange={() => {}} label="Mirror Salesforce merges in Ollopa" />
+                  <Check checked={false} onChange={() => {}} label="Mirror Salesforce merges in ollopA" />
                 </Item>
               </div>
             </Door>
@@ -328,7 +328,7 @@ function Tabbed({ session, draft, on }: { session: Session; draft: ConnectDraft;
           </Item>
           <Item id="wiz.matching-key" label="duplicate handling">
             <p className="text-sm font-medium">Duplicate handling</p>
-            <p className="text-xs text-muted-foreground">Ollopa mirrors Salesforce. Clean and deduplicate Salesforce before connecting.</p>
+            <p className="text-xs text-muted-foreground">ollopA mirrors Salesforce. Clean and deduplicate Salesforce before connecting.</p>
           </Item>
         </Place>
 
@@ -350,7 +350,7 @@ function Tabbed({ session, draft, on }: { session: Session; draft: ConnectDraft;
 
         <Place id="connect.tab.authentication" label="the Authentication tab" open={false} className="rounded-lg border p-3">
           <Item id="connect.sync-user" label="the team sync user">
-            <p className="text-sm">The Ollopa user whose Salesforce connection drives team sync: {seed.users[0]?.name ?? b.roles[0].user}.</p>
+            <p className="text-sm">The ollopA user whose Salesforce connection drives team sync: {seed.users[0]?.name ?? b.roles[0].user}.</p>
           </Item>
         </Place>
 
@@ -446,15 +446,15 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
     <Item id="wiz.deletion" label="deletion sync">
       <p className="text-sm font-medium">When a record is deleted in Salesforce</p>
       <div className="mt-1 grid gap-1">
-        <Radio name="del" checked onChange={() => {}} label="Unlink it in Ollopa" />
-        <Radio name="del" checked={false} onChange={() => {}} label="Delete it in Ollopa" />
+        <Radio name="del" checked onChange={() => {}} label="Unlink it in ollopA" />
+        <Radio name="del" checked={false} onChange={() => {}} label="Delete it in ollopA" />
       </div>
-      {on(7) && <Consequence>Deletes the person, their activity and their sequence history in Ollopa. Nothing restores it.</Consequence>}
+      {on(7) && <Consequence>Deletes the person, their activity and their sequence history in ollopA. Nothing restores it.</Consequence>}
     </Item>
   )
   const merge = (
     <Item id="wiz.merge" label="merge sync">
-      <p className="text-sm font-medium">When two records are merged in Ollopa</p>
+      <p className="text-sm font-medium">When two records are merged in ollopA</p>
       <div className="mt-1 grid gap-1">
         <Radio name="mrg" checked onChange={() => {}} label="Do nothing in Salesforce" />
         <Radio name="mrg" checked={false} onChange={() => {}} label="Mirror the merge in Salesforce" />
@@ -490,13 +490,13 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
         <Item id="wiz.choose" label="the Salesforce card" className="rounded-lg border bg-background p-3">
           <p className="text-sm font-medium">Salesforce</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Sync contacts, companies, deals and activities with Salesforce, and decide what Ollopa may write, delete and merge there.
+            Sync contacts, companies, deals and activities with Salesforce, and decide what ollopA may write, delete and merge there.
           </p>
           {on(4) && <p className="mt-1 text-xs text-muted-foreground">Starter syncs one way · Growth both ways · Scale adds custom objects. You are on {b.plan.name}.</p>}
         </Item>
         {on(4) && (
-          <Item id="wiz.declare-no-crm" label="Ollopa is our CRM" className="rounded-lg border bg-muted/40 p-3">
-            <Check checked={false} onChange={() => {}} label="Ollopa is our CRM" hint="A decision, not an absence. It takes the CRM row out of the set-up list, and it is reversible here." />
+          <Item id="wiz.declare-no-crm" label="ollopA is our CRM" className="rounded-lg border bg-muted/40 p-3">
+            <Check checked={false} onChange={() => {}} label="ollopA is our CRM" hint="A decision, not an absence. It takes the CRM row out of the set-up list, and it is reversible here." />
           </Item>
         )}
         {on(8) && (
@@ -580,7 +580,7 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
           <table data-container="connect.pairs" data-container-label="the field pair table" data-open="true" className="w-full min-w-[30rem] text-xs">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
-                <th className="py-1 pr-3 font-medium">Ollopa field</th>
+                <th className="py-1 pr-3 font-medium">ollopA field</th>
                 <th className="py-1 pr-3 font-medium">Salesforce field</th>
                 {on(5) && <th className="py-1 font-medium">Write rule</th>}
               </tr>
@@ -636,7 +636,7 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
 
       <Step n={5} name="Set sync rules">
         <Item id="wiz.pull-conditions" label="pull conditions">
-          <p className="text-sm font-medium">Pull: what comes into Ollopa</p>
+          <p className="text-sm font-medium">Pull: what comes into ollopA</p>
           <div className="mt-1 grid gap-1">
             <Radio name="pull" checked={!on(6)} onChange={() => {}} label="Pull every record from Salesforce" />
             <Radio name="pull" checked={on(6)} onChange={() => {}} label="Pull only records that match" />
@@ -667,10 +667,10 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
           <Item id="wiz.first-sync" label="what the first sync will do" className="rounded-lg border bg-muted/40 p-3">
             <p className="text-sm font-semibold">What the first sync will do</p>
             <p className="mt-1 text-sm">
-              Ollopa will pull about {n(Math.round((live?.remoteCounts.Contacts ?? 18_400) / 100) * 100)} contacts and{" "}
+              ollopA will pull about {n(Math.round((live?.remoteCounts.Contacts ?? 18_400) / 100) * 100)} contacts and{" "}
               about {n(Math.round((live?.remoteCounts.Companies ?? 3_100) / 100) * 100)} companies from Salesforce and push
-              about {n(b.counts.contacts)} contacts to Salesforce. Deletions in Salesforce will unlink records in Ollopa.
-              Merges in Ollopa will be kept in Ollopa only.
+              about {n(b.counts.contacts)} contacts to Salesforce. Deletions in Salesforce will unlink records in ollopA.
+              Merges in ollopA will be kept in ollopA only.
             </p>
           </Item>
         )}

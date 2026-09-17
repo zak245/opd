@@ -107,7 +107,7 @@ Meridian, weekly and monthly, AE+. Walk: `P-reports` ─TB→ (Forecast) ─PN�
 
 Meridian, weekly, AE+. Walk: `P-reports` ─TB→ (Activity) ─PN→ `X-report-records` ─RC→ `R-person` ─DR→ `D-person-activity` ─PN→ `X-calllog` ─PN→ `X-note`.
 
-IA-MAP 6.2 already re-scoped this journey to what Ollopa owns and recorded the loss of the call library and the clip as a known reduction. That decision stands and is not revisited. What follows is what the re-scoping did not finish.
+IA-MAP 6.2 already re-scoped this journey to what ollopA owns and recorded the loss of the call library and the clip as a known reduction. That decision stands and is not revisited. What follows is what the re-scoping did not finish.
 
 ### Stop 1 · `P-reports`, Activity tab
 
@@ -301,7 +301,7 @@ The brief's four tests, in the terminal.
 
 49. **The wrong workspace is the only failure mode that matters here, and the confirmation does not guard it.** IA-MAP part 1 says the workspace is echoed in every confirmation. Ten workspaces, one loop, weekly: echoing is not enough for a destructive bulk write. Spec 14 already has the right pattern — Delete workspace asks for the workspace name typed back. Rule 7. **Decision:** a destructive bulk write requires the workspace name typed back in the confirmation; a non-destructive one echoes it. One pattern, two places.
 
-50. **A script cannot branch on prose.** 19§15.5, Clay: the CLI *"signals rate limiting via exit code 4 with `retryAfter|limit|remaining|reset` in `details`"*. Ollopa's CLI publishes no exit codes, so every failure is a string a script must match. Rule 7 — the states a caller must handle are the equivalent of safety state on a screen. **Decision:** publish the exit codes in the area beside the CLI authorisations: 0 ok · 1 error · 2 usage · 3 permission · 4 rate limited · 5 over the credit cap · 6 awaiting approval, with the resume token printed on 6.
+50. **A script cannot branch on prose.** 19§15.5, Clay: the CLI *"signals rate limiting via exit code 4 with `retryAfter|limit|remaining|reset` in `details`"*. ollopA's CLI publishes no exit codes, so every failure is a string a script must match. Rule 7 — the states a caller must handle are the equivalent of safety state on a screen. **Decision:** publish the exit codes in the area beside the CLI authorisations: 0 ok · 1 error · 2 usage · 3 permission · 4 rate limited · 5 over the credit cap · 6 awaiting approval, with the resume token printed on 6.
 
 51. **Two of the three "cannot see it" shapes are missing from the terminal.** IA-MAP part 1 writes only the locked capability — "prints the plan name and the monthly total, not a 403". **Decision:** the same three shapes as MCP: a record you do not own exports with its readable fields and an `owner` column; an area your seat does not hold exits 3 with the seats named and the admin named; profile omission does not apply and `--help` says so.
 
@@ -328,7 +328,7 @@ Worth recording, because the walk is not only a defect list.
 - **Spec 13, Agents.** The queue holds only irreversible or costly actions; research, scoring and saved drafts are logged and never queued; the batch line states the total consequence; over-threshold items name the second approver before the decision, not after it; "Select all" carries the total. That is rule 7's corollary applied correctly, and it is the pattern the four screenless surfaces copy rather than reinvent.
 - **Spec 15, Connect.** The webhook lock sits on the card in step 1, before anything is built — gated-features pattern rule 7, and the only place in the group where the gate is already in the right place.
 - **Spec 12's fee line.** "Exports and prints spend no credits" was moved out of the Export menu and onto the control bar, with the reasoning written down. That is the FTC tooltip finding applied to the product's own copy, and it is the model for changes 26 and 32.
-- **IA-MAP 6.2 and 6.4f.** The L3 re-scoping records what was lost instead of inventing a conversation record Ollopa does not own; the MCP read scope on every plan protects discovery where the founders already work. Both are right and neither is revisited above.
+- **IA-MAP 6.2 and 6.4f.** The L3 re-scoping records what was lost instead of inventing a conversation record ollopA does not own; the MCP read scope on every plan protects discovery where the founders already work. Both are right and neither is revisited above.
 
 ---
 

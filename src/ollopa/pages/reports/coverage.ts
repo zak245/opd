@@ -8,7 +8,7 @@
 //     import { coverageFor } from "../reports/coverage"
 //     const { line } = coverageFor(seedFor(session.business))
 //
-// Ollopa has no "Closed lost" stage and no outcome flag (PLAN.md, 13 Sep 2026): **won** means the deal
+// ollopA has no "Closed lost" stage and no outcome flag (PLAN.md, 13 Sep 2026): **won** means the deal
 // reached Closed won, **lost** means it was archived. Both words are printed beside the number so a
 // reader can check the arithmetic against the same rows.
 import { TODAY, type Deal, type Seed } from "../../data/seed"

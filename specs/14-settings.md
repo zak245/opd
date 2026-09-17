@@ -1,6 +1,6 @@
 # 14. Settings
 
-*Full page. Lesson 1. The whole settings inventory of Ollopa on one page, laid out by the usage model for the signed-in role and business.*
+*Full page. Lesson 1. The whole settings inventory of ollopA on one page, laid out by the usage model for the signed-in role and business.*
 
 ## 1. Purpose
 
@@ -74,17 +74,17 @@ One `settings` object per business in `src/ollopa/data/settings.ts`, determinist
 | Team | 42 users (5 from `roles[]`, 37 generated); 4 teams; 5 profiles; MFA enforced; SSO Okta; 2 IP ranges | 3 users, all Admin; MFA optional; teams, permission profiles, SSO and the IP allowlist locked on Starter | 25 users, 6 with mailboxes here; 2 teams; 2 profiles; MFA enforced; SSO and IP allowlist locked on Growth | 14 users; 2 teams; 5 profiles; SSO and IP allowlist locked on Growth |
 | Email | 34 mailboxes; 3 domains, all records green; bounce 1.9% of 14,200 in 7 days, none paused; users may not disable unsubscribe text | 3 mailboxes, one per user, which is Starter's limit; all warming; fathomlabs.com, DMARC missing; bounce 3.6% of 620, under the 4% warning; users may disable | 6 mailboxes on 2 client domains; bounce 4.4% of 9,800, over the 4% warning; 1 mailbox paused at 6.2%, over the 6% pause | 9 mailboxes; 1 domain; bounce 0.8% of 410; tracking off |
 | Prospecting | EU and UK restricted; DNC US, UK, DE, FR; business email; prompt on duplicate; 5 per account; 3 territories | EU; DNC US; any email; auto-merge; 3 per account; territories locked on Starter | EU and UK; 4 per account; 2 client territories | EU; auto-merge; 2 per account; no territories set |
-| Pipeline | 2 pipelines; 14 custom fields; EUR, multi-currency on; Northlight Data → Beacon Verify → Ollopa | 1 pipeline; 3 fields; Northlight Data → Ollopa | 1 pipeline; 6 fields | 2 pipelines; 9 fields; Northlight Data → Beacon Verify |
+| Pipeline | 2 pipelines; 14 custom fields; EUR, multi-currency on; Northlight Data → Beacon Verify → ollopA | 1 pipeline; 3 fields; Northlight Data → ollopA | 1 pipeline; 6 fields | 2 pipelines; 9 fields; Northlight Data → Beacon Verify |
 | Sequences | 3 schedules, 2 rulesets | 1 and 1 | 4 client-hour schedules, 2 rulesets | 1 and 1 |
 | Agents | 3 on; research, scoring and drafts are logged not queued; add-to-sequence, send, spend over a cap and stage changes need the owner's approval; second approval over 1,000 recipients or 500 credits; caps Research 40/run and 300k a month, Outreach 10 and 60k, Scoring 2 and 40k; own model key available | 2 on (Starter's limit); same approvals; second approval over 400 recipients or 200 credits, lowered by the founder; Research 25 and 3,000, Outreach 5 and 800; own model key locked | 2 on; same approvals; threshold at the default; Research 30 and 80k, Outreach 8 and 20k; own model key locked | 3 on, Outreach off; same approvals; threshold at the default; Research 20 and 60k, Scoring 2 and 30k; own model key locked |
-| Integrations | **Salesforce** production (3 errors, synced 4 min ago), two-way with custom objects; Google Workspace mail, Google Calendar, Slack, Northlight Data; 2 API keys; 1 webhook | Google Workspace mail, Google Calendar, Northlight Data; **no CRM** — Ollopa is the CRM here; API keys and webhooks locked on Starter | Google Workspace mail; **one client CRM per workspace**, HubSpot in the current one (1 error); custom objects locked on Growth | **HubSpot** (0 errors), two-way; Google Calendar, Slack, Northlight Data; custom objects locked |
+| Integrations | **Salesforce** production (3 errors, synced 4 min ago), two-way with custom objects; Google Workspace mail, Google Calendar, Slack, Northlight Data; 2 API keys; 1 webhook | Google Workspace mail, Google Calendar, Northlight Data; **no CRM** — ollopA is the CRM here; API keys and webhooks locked on Starter | Google Workspace mail; **one client CRM per workspace**, HubSpot in the current one (1 error); custom objects locked on Growth | **HubSpot** (0 errors), two-way; Google Calendar, Slack, Northlight Data; custom objects locked |
 | Plan | 12 invoices; DE tax ID | 4 invoices | 12 invoices; GB tax ID | 6 invoices |
 
 Per-user credits used this month are generated as shares of `monthlyCap − balance`, weighted to SDRs.
 
 ### 2.3 The three plans
 
-Ollopa gates features by plan, and this page owns the table. Every other spec renders its own row of it and adds nothing.
+ollopA gates features by plan, and this page owns the table. Every other spec renders its own row of it and adds nothing.
 
 | | Starter | Growth | Scale |
 |---|---|---|---|
@@ -206,7 +206,7 @@ The mailboxes table and the users table have a search box and filters (mailboxes
 
 | State | What the page does |
 |---|---|
-| Empty | An area with nothing configured shows the honest sentence and the action: "No sending domains yet · Add a domain"; "No territories: everyone can prospect everywhere". At Fathom the CRM row is not empty and not a to-do: **"Ollopa is your CRM. It is holding your contacts, companies and deals. Connect Salesforce or HubSpot if that changes."** "Ollopa is our CRM" is a declarable answer on the CRM group in the connect wizard, it takes the CRM row out of Home's setup list, and it is reversible from the same place |
+| Empty | An area with nothing configured shows the honest sentence and the action: "No sending domains yet · Add a domain"; "No territories: everyone can prospect everywhere". At Fathom the CRM row is not empty and not a to-do: **"ollopA is your CRM. It is holding your contacts, companies and deals. Connect Salesforce or HubSpot if that changes."** "ollopA is our CRM" is a declarable answer on the CRM group in the connect wizard, it takes the CRM row out of Home's setup list, and it is reversible from the same place |
 | Locked by plan | The row is where it always is, with its label, a lock and the plan name: "Territories · Growth". It is a real control; it opens the panel. Never greyed out, never moved, never removed, and never a lock on something that would not work here anyway |
 | Loading | Skeleton rows for the strip and tables; the header and index render at once; never a spinner alone |
 | Error | Row-level: "Couldn't refresh mailbox health; showing values from 2 minutes ago · Retry". The rest of the page works. A failed Save keeps the bar up with the error under it |
@@ -245,7 +245,7 @@ One column. The index becomes a "Jump to" select under the header. The strip sta
 | Signals, scoring | Door: the whole area (the admin sets it, the marketer reads it) | Same | Absent | Door: the whole area; no marketer seat here |
 | Agents | On or off, approvals, caps, the no-overwrite line, second-approval threshold at level one; door: context, own key | Same; own key locked (Scale) | Approvals, the no-overwrite line and the threshold at level one, read-only; door: which agents are on | Same as Meridian; own key locked; the threshold lowered to 400 recipients |
 | API, webhooks, MCP and CLI | Keys with their spend, the limits, the cost table, MCP scope, CLI devices at level one; door: the 80% alert, the contract | Same, plus CLI devices high: the loop is weekly | Only the personal rows — your MCP and CLI connections — then one sentence naming the admin | MCP read at level one and the two write tiers locked and priced; keys, webhooks and CLI locked in place with "Growth" |
-| Integrations | Salesforce sync with error count at level one; door: four (field mapping, calendar, Slack, enrichment provider) | Client HubSpot at level one with its error count; door: four, custom objects locked | Door: calendar | "Ollopa is your CRM" at level one; door: the rest. API keys and webhooks are no longer in this door: they moved to the developer area |
+| Integrations | Salesforce sync with error count at level one; door: four (field mapping, calendar, Slack, enrichment provider) | Client HubSpot at level one with its error count; door: four, custom objects locked | Door: calendar | "ollopA is your CRM" at level one; door: the rest. API keys and webhooks are no longer in this door: they moved to the developer area |
 | Plan | Strip; Change and Cancel; Delete, Export and upgrade requests at level one; door: invoices, tax ID | Same | Own credits only | Same as Meridian; two upgrade requests waiting |
 
 AEs see You, own mailboxes (level one at Meridian, door at Ridgeline), credits, availability, and a door with signature, tracking, pipeline stages and custom fields read-only, forecast categories and the submission window read-only, calendar, default currency. Marketers see You, company context at level one, **Signals, scoring and personas at level one — the threshold with the share above it, the models, the personas and the signals with their freshness** — credits, availability, and a door with tracking, custom fields, signature and the retired-definitions list. Customer success sees You, credits, availability, the renewal-reminder ladder and the expansion routing thresholds read-only, and a door with signature and calendar. Ridgeline's admin sees mailboxes, warm-up, limits and domains drop into the Email door; Users, CRM, agents and the strip stay, and "How your team works" shows Sequences and Lists as the two pages the Product-led growth profile leaves out of an admin's sidebar.
@@ -379,7 +379,7 @@ Level one, counting critical items: Meridian admin 34 of 101, Halyard admin 40, 
 
 ## 5. Before: the common version
 
-The common version is a faithful parody of Apollo's settings as documented in `knowledge-base/sources/07-apollo-settings-map.md` (the memo), trimmed to Ollopa's boundary: no dialer, conversations, meetings or extension pages, because Ollopa does not have those products. Everything else is kept, including the mistakes. Every problem below names its section in the memo, which cites the Apollo knowledge-base article or review.
+The common version is a faithful parody of Apollo's settings as documented in `knowledge-base/sources/07-apollo-settings-map.md` (the memo), trimmed to ollopA's boundary: no dialer, conversations, meetings or extension pages, because ollopA does not have those products. Everything else is kept, including the mistakes. Every problem below names its section in the memo, which cites the Apollo knowledge-base article or review.
 
 ### 5.1 Layout
 

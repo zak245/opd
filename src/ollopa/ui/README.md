@@ -1,6 +1,6 @@
 # `src/ollopa/ui` — the shared primitives
 
-Every Ollopa page codes against these. They carry the rules so a page does not have to remember them:
+Every ollopA page codes against these. They carry the rules so a page does not have to remember them:
 a door that persists and prints, a panel that traps focus, a consequence written before the click, a
 lock that sells instead of hiding, and one place to ask what sits at level one.
 

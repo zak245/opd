@@ -128,7 +128,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
               variant="outline"
               onClick={() => setConfirm({
                 title: "Apply the mapping to existing records?",
-                body: `Rewrites the mapped fields on ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies in Ollopa and in ${kind}. It runs as one pass and appears in the sync history.`,
+                body: `Rewrites the mapped fields on ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies in ollopA and in ${kind}. It runs as one pass and appears in the sync history.`,
                 label: `Apply to ${n(b.counts.contacts + b.counts.companies)} records`,
                 run: () => toast(`Applying the mapping to ${n(b.counts.contacts + b.counts.companies)} records · it will appear in the sync history`),
               })}
@@ -200,7 +200,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     ),
   })
 
-  const disconnectConsequence = `Stops syncing. Records already in ${kind} stay. Records pulled into Ollopa stay and lose their link.`
+  const disconnectConsequence = `Stops syncing. Records already in ${kind} stay. Records pulled into ollopA stay and lose their link.`
 
   const doorIds = doors.map((d) => d.id)
   const ribbon = justStarted

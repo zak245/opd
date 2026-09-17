@@ -292,7 +292,7 @@ Eleven of the twelve journeys break, and they break for one reason, not twelve. 
 
 ## S9 · Work a call block and disposition every call
 
-*Meridian, daily — the org's highest-volume work, 44 dials a day at the median. `[BOUNDARY: dialer]` — Ollopa logs the call, it does not place it. Map walk as written: `P-tasks` → `D-task-filters` → `D-task-row` → `X-queue` → `X-calllog` → repeat → `X-note`.*
+*Meridian, daily — the org's highest-volume work, 44 dials a day at the median. `[BOUNDARY: dialer]` — ollopA logs the call, it does not place it. Map walk as written: `P-tasks` → `D-task-filters` → `D-task-row` → `X-queue` → `X-calllog` → repeat → `X-note`.*
 
 ### The stops, as the S1 decision leaves them
 
@@ -335,7 +335,7 @@ S1 decided that Tasks opens in **queue mode** for the SDR and AE seats, with the
 
 ## S10 · Complete a LinkedIn task
 
-*Meridian, daily — 19 touches a day, roughly a fifth of the activity budget, capped near 100 invites a week. `[BOUNDARY: extension]` — the send happens outside Ollopa and Ollopa never claims it happened. Map walk: `P-tasks` → `D-task-row` → `X-linkedin` → (outside) → `X-linkedin` (mark complete) → `P-tasks`.*
+*Meridian, daily — 19 touches a day, roughly a fifth of the activity budget, capped near 100 invites a week. `[BOUNDARY: extension]` — the send happens outside ollopA and ollopA never claims it happened. Map walk: `P-tasks` → `D-task-row` → `X-linkedin` → (outside) → `X-linkedin` (mark complete) → `P-tasks`.*
 
 ### The stops
 
@@ -349,13 +349,13 @@ S1 decided that Tasks opens in **queue mode** for the SDR and AE seats, with the
 ### Issues
 
 1. **The message the step holds has nowhere to be read.** Sequence steps store the LinkedIn action kind and a note (spec 05 §3.3), and the task that step creates shows "What to do" as a line of text. The journey's first step is "read the message the step holds, copy it". *A step the specs forgot.*
-2. **The weekly cap is invisible.** Roughly 100 invites a week is a hard external limit; exceeding it costs the account. The journey's second decision is "does the invite cap force a wait". *Rule 7: a limit that binds is decision-critical, and the same rule already makes Ollopa print "over your limit" on credit controls.*
-3. **Honesty about what the product can see.** 16§16 records that Apollo never auto-completes a LinkedIn task and has no connection-status column. Ollopa must say so rather than imply a status it cannot know. *Rule 4: the door is honest about what is behind it.*
+2. **The weekly cap is invisible.** Roughly 100 invites a week is a hard external limit; exceeding it costs the account. The journey's second decision is "does the invite cap force a wait". *Rule 7: a limit that binds is decision-critical, and the same rule already makes ollopA print "over your limit" on credit controls.*
+3. **Honesty about what the product can see.** 16§16 records that Apollo never auto-completes a LinkedIn task and has no connection-status column. ollopA must say so rather than imply a status it cannot know. *Rule 4: the door is honest about what is behind it.*
 
 ### Decisions
 
-- **C-28.** Spec 07 §3 gains **"LinkedIn step"** (`X-linkedin`): the message text as written on the step (editable for this send, with "Personalise for Amara" leaving the step's copy alone), **Copy message**, **Open the profile** (an outward link), and **Mark complete**, under which one line reads: "Ollopa cannot see LinkedIn. Marking complete records that you sent it and advances the sequence." Opens from a LinkedIn task row and is the body of the queue for a LinkedIn task. Rules 4 and 7.
-- **C-29.** Same panel and the queue header: **"Invites this week: 38 of about 100"**, counted from LinkedIn tasks marked complete, with the line "the cap is LinkedIn's, not Ollopa's" and, when the count is within ten of the cap, "Snooze the rest to Monday" as a visible control. Rule 7.
+- **C-28.** Spec 07 §3 gains **"LinkedIn step"** (`X-linkedin`): the message text as written on the step (editable for this send, with "Personalise for Amara" leaving the step's copy alone), **Copy message**, **Open the profile** (an outward link), and **Mark complete**, under which one line reads: "ollopA cannot see LinkedIn. Marking complete records that you sent it and advances the sequence." Opens from a LinkedIn task row and is the body of the queue for a LinkedIn task. Rules 4 and 7.
+- **C-29.** Same panel and the queue header: **"Invites this week: 38 of about 100"**, counted from LinkedIn tasks marked complete, with the line "the cap is LinkedIn's, not ollopA's" and, when the count is within ten of the cap, "Snooze the rest to Monday" as a visible control. Rule 7.
 - **C-30.** Spec 05 §3.3, the LinkedIn step editor: the note field becomes the **message text**, with the variable menu available, so that the text the task shows is written once in the step and not re-typed per contact. Rule 5.
 
 ### Reality check
@@ -414,7 +414,7 @@ S1 decided that Tasks opens in **queue mode** for the SDR and AE seats, with the
 | Stop | What is visible first | The doors | Container | The one thing that must stay in sight |
 |---|---|---|---|---|
 | the thread panel | The positive reply, the contact, the sequence, the open deal if any. | As S11 | In the page | Who this becomes, once it is booked. |
-| `X-book` | Offer times, or send the calendar link. Spec 06 has this much: "Book meeting drafts a reply with the calendar link; when the calendar reports a booking, the contact stage becomes Meeting booked." At Halyard the control is replaced by "Connect a calendar to book from here" — removed, not disabled, which is right. | — | In the panel | That Ollopa does not own the booking page; the calendar does. |
+| `X-book` | Offer times, or send the calendar link. Spec 06 has this much: "Book meeting drafts a reply with the calendar link; when the calendar reports a booking, the contact stage becomes Meeting booked." At Halyard the control is replaced by "Connect a calendar to book from here" — removed, not disabled, which is right. | — | In the panel | That ollopA does not own the booking page; the calendar does. |
 | `X-meeting` | **Not specified.** No attendees, no status (booked, held, no-show, cancelled), no prep brief, no follow-up. | — | — | — |
 | the handoff fields | **Not specified.** "The problem in the buyer's words, why now, who is involved, what success looks like" exists in no spec. | — | — | — |
 | `R-brief` | **Not specified** (as S2). | — | — | — |
@@ -432,7 +432,7 @@ S1 decided that Tasks opens in **queue mode** for the SDR and AE seats, with the
 ### Decisions
 
 - **C-34.** IA-MAP §2.7: `X-book` is merged into **`X-meeting`** as its create state — one node with states (proposed → booked → held / no-show / cancelled), parents `P-inbox` (the thread panel), `P-tasks`, `R-deal` and `R-company`. A form that follows a chosen action is the action's form, not a level. The S12, A2, C1, C2 and C4 rows are updated to name `X-meeting` alone. Rule 2.
-- **C-35.** Spec 06 gains **§3.6, "Book and run the meeting"**, owning `X-meeting` for the whole product; specs 07 and 09 render it and add nothing of their own, exactly as `WorkspaceHealth` is owned by spec 01 and rendered elsewhere. The panel holds: times or the calendar link; attendees with their titles; **status** (Booked · Held · No-show · Cancelled) as visible buttons, since a person marks it and Ollopa does not watch the room; the prep brief with "Write the handoff brief"; the follow-up draft after the meeting; and, on a no-show, **"Start the reminder and reschedule sequence"** naming the sequence and what it sends. Rule 7.
+- **C-35.** Spec 06 gains **§3.6, "Book and run the meeting"**, owning `X-meeting` for the whole product; specs 07 and 09 render it and add nothing of their own, exactly as `WorkspaceHealth` is owned by spec 01 and rendered elsewhere. The panel holds: times or the calendar link; attendees with their titles; **status** (Booked · Held · No-show · Cancelled) as visible buttons, since a person marks it and ollopA does not watch the room; the prep brief with "Write the handoff brief"; the follow-up draft after the meeting; and, on a no-show, **"Start the reminder and reschedule sequence"** naming the sequence and what it sends. Rule 7.
 - **C-36.** Same section, the handoff block, at level one inside the panel: the four fields in the buyer's words (the problem, why now, who is involved, what success looks like), each with the agent's draft marked as a draft; the **binary qualification checklist** the business declares; and the button **"Create the deal and assign"** whose label states the consequence: "Creates a deal at Qualified for Elena Vasquez — territory UK enterprise · change". Under it, one line: "Your handoffs accepted this quarter: 88% (17 of 19)". Rules 7 and 5.
 - **C-37.** Spec 09 §3.2: "Create deal from a reply or a meeting" states its prefill and its owner rule, and the deal's header shows "Handed over by Marcus Adeyemi · handoff brief" as a link. Rule 5.
 
@@ -542,8 +542,8 @@ Eleven of twelve fail, and nine of the eleven fail on absent nodes rather than b
 | C-25 | specs/07-tasks.md | §3, call task row and queue body | Phone in the row door; local time in the door (Due cell at Halyard) | Phone with its **do-not-call badge** and the contact's local time at level one for every business | 7 |
 | C-26 | specs/07-tasks.md | §3, queue header | Fixed order: overdue, then due date, then type | Adds "Sort: due · call score" with "Ranked by the scoring agent · how it was built"; due stays the default, the score is never applied unless chosen, and the choice persists | 6 |
 | C-27 | IA-MAP.md | §5, the S9 row | `P-tasks` ─DR→ `D-task-filters` ─DR→ `D-task-row` ─PN→ `X-queue` ─(body)→ `X-calllog` | `P-tasks` (queue mode) ─(body)→ `X-calllog` ─(repeat)→ `X-calllog` ─PN→ `X-note`; the list switch and the filters door appear only when a subset is wanted | 1, 2 |
-| C-28 | specs/07-tasks.md | §3, new subsection | LinkedIn is a task kind and nothing more | **"LinkedIn step"** (`X-linkedin`): the message text (editable for this send; "Personalise for Amara" leaves the step's copy alone), Copy message, Open the profile, Mark complete under the line "Ollopa cannot see LinkedIn. Marking complete records that you sent it and advances the sequence." | 4, 7 |
-| C-29 | specs/07-tasks.md | §3, the LinkedIn panel and the queue header | No counter anywhere | **"Invites this week: 38 of about 100"**, counted from completed LinkedIn tasks, with "the cap is LinkedIn's, not Ollopa's"; within ten of the cap, "Snooze the rest to Monday" as a visible control | 7 |
+| C-28 | specs/07-tasks.md | §3, new subsection | LinkedIn is a task kind and nothing more | **"LinkedIn step"** (`X-linkedin`): the message text (editable for this send; "Personalise for Amara" leaves the step's copy alone), Copy message, Open the profile, Mark complete under the line "ollopA cannot see LinkedIn. Marking complete records that you sent it and advances the sequence." | 4, 7 |
+| C-29 | specs/07-tasks.md | §3, the LinkedIn panel and the queue header | No counter anywhere | **"Invites this week: 38 of about 100"**, counted from completed LinkedIn tasks, with "the cap is LinkedIn's, not ollopA's"; within ten of the cap, "Snooze the rest to Monday" as a visible control | 7 |
 | C-30 | specs/05-sequences.md | §3.3, the LinkedIn step editor | "A note the task will show" | The **message text** with the variable menu, so the task shows copy written once on the step | 5 |
 | C-31 | IA-MAP.md | §2.7 and §5 (S11) | `X-thread` is a level-2 panel; `X-reply` hangs off it; S11 goes thread → `D-agent-item` → `X-reply` | `X-thread` becomes **level 1** (the detail half of a master-detail page); `X-reply` is a level-2 door on `P-inbox` and `R-person`; S11 becomes `P-inbox` ─DR→ `D-inbox-filters` ─RC→ (thread) ─DR→ `D-thread-agent` ─(composer)→ send ─PN→ `X-meeting` ─LK→ `R-person` ─PN→ `X-enrol` | 2 |
 | C-32 | specs/06-inbox.md | §3 Actions and §6 doors | The agent is absent from the page | On the row and at the top of the panel: "Read as: Interested · by the reply agent · change" as text, the correction logged through the existing control. Beside the composer: the door **"Agent draft · 142 words"**, loading the draft marked "Agent draft, not sent". Sending is the approval, per item, recipient and text on screen | 6, 7 |

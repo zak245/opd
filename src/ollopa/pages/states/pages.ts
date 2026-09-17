@@ -29,7 +29,7 @@ export const PURPOSE: Partial<Record<Page, string>> = {
   settings: "Settings holds the workspace and your own: mailbox, signature, plan, credit usage and who can do what.",
   enrichment: "Enrichment fills in what a record is missing, and says what each field costs before it spends.",
   developer: "The developer surfaces are the API keys, webhooks, MCP tokens and CLI devices this workspace uses.",
-  connect: "Connect links Ollopa to your CRM, calendar and mailboxes, and shows what is failing to sync.",
+  connect: "Connect links ollopA to your CRM, calendar and mailboxes, and shows what is failing to sync.",
 }
 
 /**

@@ -2,7 +2,7 @@ import type { UsageItem } from "./model"
 
 // Connect an integration: 29 items in 2 areas (specs/15-connect-integration.md). Baseline numbers describe Meridian Software.
 // Halyard overrides: the agency connects a client's CRM whenever a client is onboarded, so the wizard is routine there.
-// Fathom overrides: no CRM at all (PLAN.md, 13 Sep 2026 — Ollopa is Fathom's CRM); a calendar and an enrichment
+// Fathom overrides: no CRM at all (PLAN.md, 13 Sep 2026 — ollopA is Fathom's CRM); a calendar and an enrichment
 // provider are the whole list. Only "sdr" and "admin" roles exist there.
 // Ridgeline overrides: HubSpot, a calendar, Slack and enrichment; little outbound, so Slack is about deals and agents.
 // Non-admin roles reach the wizard only to connect their own calendar.
@@ -13,7 +13,7 @@ import type { UsageItem } from "./model"
 export const connectItems: UsageItem[] = [
   // Wizard
   { id: "wiz.choose", page: "connect", area: "Wizard", label: "Choose what to connect", weekly: { sdr: 4, ae: 5, marketer: 1, cs: 4, admin: 5 }, overrides: { fathom: { admin: 5 }, halyard: { admin: 25 }, ridgeline: { admin: 3 } }, note: "Non-admins connect their own calendar only. Halyard connects a client CRM most months." },
-  { id: "wiz.declare-no-crm", page: "connect", area: "Wizard", label: "Ollopa is our CRM: a declarable answer on the CRM group", weekly: { admin: 3 }, overrides: { fathom: { admin: 12 }, halyard: { admin: 2 }, ridgeline: { admin: 1 } }, note: "Declaring it takes the CRM row out of Home's set-up list and empties the list at Fathom, so the door goes rather than nagging for ever. Reversible from the same place. A permanent to-do for a decision already made is a door onto nothing (rule 4)." },
+  { id: "wiz.declare-no-crm", page: "connect", area: "Wizard", label: "ollopA is our CRM: a declarable answer on the CRM group", weekly: { admin: 3 }, overrides: { fathom: { admin: 12 }, halyard: { admin: 2 }, ridgeline: { admin: 1 } }, note: "Declaring it takes the CRM row out of Home's set-up list and empties the list at Fathom, so the door goes rather than nagging for ever. Reversible from the same place. A permanent to-do for a decision already made is a door onto nothing (rule 4)." },
   { id: "wiz.sf-permissions", page: "connect", area: "Wizard", label: "What the sync user must be able to do, above the sign-in button", critical: true, weekly: { admin: 2 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 5 }, ridgeline: { admin: 0 } }, note: "Create, read and edit on Accounts, Contacts, Leads, Opportunities and User Roles, plus API Enabled under System Permissions; Salesforce Essentials cannot connect. A requirement discovered after the consent screen is a requirement discovered too late (rule 7)." },
   { id: "wiz.authorise", page: "connect", area: "Wizard", label: "Authorise (sign in, key, test event)", weekly: { sdr: 4, ae: 5, marketer: 1, cs: 4, admin: 6 }, overrides: { fathom: { admin: 5 }, halyard: { admin: 25 }, ridgeline: { admin: 3 } } },
   { id: "wiz.sandbox", page: "connect", area: "Wizard", label: "Salesforce: production or sandbox", weekly: { admin: 2 }, overrides: { fathom: { admin: 0 }, halyard: { admin: 4 }, ridgeline: { admin: 0 } }, note: "Fathom and Ridgeline have no Salesforce." },

@@ -1,6 +1,6 @@
 # The usage model
 
-*Every page in Ollopa decides what to show first from one model: for every item on every page, how many users in a role touch it in a typical week, per business. This file explains the method. The data is in `src/ollopa/usage/`. Nothing here appears in the product; it drives the product and is shown in lessons.*
+*Every page in ollopA decides what to show first from one model: for every item on every page, how many users in a role touch it in a typical week, per business. This file explains the method. The data is in `src/ollopa/usage/`. Nothing here appears in the product; it drives the product and is shown in lessons.*
 
 ## What a number means
 

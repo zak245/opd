@@ -17,7 +17,7 @@
 | 7 | Overrides changed to match what each plan allows: Fathom pipeline 50→8, sequences 40→6, activity 40→55, steps 30→4, export 10→2; Halyard export 70→8 and print 30→65; Ridgeline marketer export 18→5; scheduled email locked | Same decision. The agency's weekly client report leaves as a PDF, and the gap is stated rather than hidden |
 | 8 | New "Locked rather than removed" block, separating a thing that cannot exist here (no campaigns) from a thing this plan does not include | Gated-features pattern rule 1 |
 | 9 | New "Locked report" state and a "What each plan includes" block in §3 | Same |
-| 10 | Apollo problem 6 rewritten: the fault is not the gate but the gate told in documentation, with no way to see which reports your plan has and no admin named | Claims audit: Ollopa now gates too, so the criticism had to be made precise |
+| 10 | Apollo problem 6 rewritten: the fault is not the gate but the gate told in documentation, with no way to see which reports your plan has and no admin named | Claims audit: ollopA now gates too, so the criticism had to be made precise |
 | 11 | Shape check recomputed from the code with one stated denominator (items that exist for that role at that business); a Fathom row added; the Halyard head stated at 40% and argued | REVIEW §3 ("Pick one rule" for the denominator) |
 | 12 | Score line 1 rewritten; §7 gains a gated-features line; §8 gains five review rows | Follows from the above |
 
@@ -49,7 +49,7 @@
 | 6 | New item `plan.upgrade-requests`, marked critical, carrying requester, feature, plan, monthly cost, origin, reason and time; a line in the strip when any wait | Plan-gating decision ("adds one settings item"); pattern rule 5 (the approver is making a price decision) |
 | 7 | New item `ai.second-approval`, marked critical: the threshold Agents and Campaigns read | PLAN.md agent approvals; REVIEW §1.7 |
 | 8 | `mail.bounce-guard` relabelled "warns at 4%, pauses at 6%" and stated as the one pair for the product that every other page reads | PLAN.md bounce guard; REVIEW §1.6 and §2 |
-| 9 | CRM per business fixed: Meridian Salesforce with custom objects, Ridgeline HubSpot, Fathom none (Ollopa is the CRM), Halyard one client CRM per workspace | PLAN.md, 13 Sep 2026, CRM per business; REVIEW §1.4 |
+| 9 | CRM per business fixed: Meridian Salesforce with custom objects, Ridgeline HubSpot, Fathom none (ollopA is the CRM), Halyard one client CRM per workspace | PLAN.md, 13 Sep 2026, CRM per business; REVIEW §1.4 |
 | 10 | Account stages stated as five, including "Do not prospect", owned here through `pipe.contact-stages` | REVIEW §1.2 |
 | 11 | New item `me.notify-delivery`: digest or as-they-happen, Slack, push, mute and quiet hours in one row in "You", which is what the shell's notification panel links to; what you are notified about stays beside the thing that notifies | REVIEW §2 and §4, the open Notifications conflict (the page was deleted while 00-shell linked to it) |
 | 12 | Item count 59 → 66; shape check recomputed for five pairs on the stated denominator; Halyard's head stated at 29% and kept as the named stretch case | REVIEW §3 |

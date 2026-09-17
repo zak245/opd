@@ -88,7 +88,7 @@ Walkthrough done: keyboard only, both versions [x]. Screen reader, disclosed ver
 - **Rule 2's demonstration is on the page, not inside the drawers.** The mailbox drawer's four tabs and the permission-profile editor's six accordions are described in the step text, but the panels in `panels.tsx` are already flat and this case did not add tabs to them in order to take them away again. What the viewer sees move at step 3 is the five areas whose rows come out of their tab strips.
 - **Steps 2 and 3 look alike above the fold**, because the strip is tall and the areas that change at step 3 are further down. The moves are real and the delta finds them; the viewer has to scroll.
 - **A row whose place is deleted leaves no ghost.** `applyDelta` puts a ghost where the thing was, and when the container itself is gone — a parody page at step 2, a tab strip at step 3 — there is nowhere to put one. The sidebar entries, which sat on the shell itself, do ghost: 36 of them at step 2.
-- **The parody is trimmed to Ollopa's boundary**, as spec 14 §5 says: no dialer, conversations, meetings or extension pages, because Ollopa does not have those products. Everything else the memo records is kept, mistakes included.
+- **The parody is trimmed to ollopA's boundary**, as spec 14 §5 says: no dialer, conversations, meetings or extension pages, because ollopA does not have those products. Everything else the memo records is kept, mistakes included.
 
 ## Files in this folder
 

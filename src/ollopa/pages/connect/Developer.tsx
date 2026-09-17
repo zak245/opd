@@ -99,14 +99,14 @@ export function DeveloperSurfaces({ session, node }: { session: Session; node: s
   "consequence": "${batch[0] ? `Sends 1 email to ${batch[0].to ?? batch[0].contact ?? "a contact"} from ${mailbox} · ${batch[0].credits} credits` : "Sends 1 email · 4 credits"}",
   "approver": "${batch[0]?.actorUser ?? session.user}",
   "over_threshold": ${batchCredits > SECOND_APPROVAL.credits},
-  "also_waiting_in": "Ollopa › Agents"
+  "also_waiting_in": "ollopA › Agents"
 }`
 
   const approvalCard = `Approval needed · ${batch.length} action${batch.length === 1 ? "" : "s"} · ${batch.filter((e) => e.kind === "drafted" || e.kind === "sent").length} emails, ${batch.filter((e) => e.kind === "proposed").length} proposals · ${batchCredits} credits
 ${batch.map((e, i) => `  ${i + 1}. ${e.summary} — ${e.credits} credits`).join("\n")}
 Requested by ${batch[0]?.actorUser ?? session.user} · ${mine?.client ?? "Claude"} (MCP) · ${batch[0]?.at ?? "09:14"}
 Over ${n(SECOND_APPROVAL.recipients)} recipients or ${n(SECOND_APPROVAL.credits)} credits? ${batchCredits > SECOND_APPROVAL.credits ? "Yes — a second approver is needed." : "No."}
-Approve all · Approve one · Decline all          Also waiting in Ollopa › Agents`
+Approve all · Approve one · Decline all          Also waiting in ollopA › Agents`
 
   const cliSession = `$ ollopa credits --workspace "${b.name}"
 ${b.name}: ${n(seed.credits.balance)} credits left · cap ${n(seed.credits.monthlyCap)} a month · resets ${seed.credits.cycleEnds}
@@ -118,7 +118,7 @@ Done. ${n(seed.lists[0]?.memberIds.length ?? 0)} records changed.               
 
 $ ollopa sequences enrol --workspace "${b.name}" --list "${seed.lists[0]?.name ?? "Q4 outbound"}" --sequence "${seed.sequences[0]?.name ?? "Q4 enterprise outbound"}"
 Approval needed · 1 action · ${n(seed.lists[0]?.memberIds.length ?? 0)} enrolments · ${n((seed.lists[0]?.memberIds.length ?? 0) * 2)} credits
-Decide in Ollopa › Agents, or run: ollopa approvals decide --resume ap_7f31c0
+Decide in ollopA › Agents, or run: ollopa approvals decide --resume ap_7f31c0
 Interrupted, resume with the token printed.                                exit 7`
 
   return (
@@ -235,7 +235,7 @@ Interrupted, resume with the token printed.                                exit 
               <h3 className="text-sm font-medium">One delivery, as it arrives</h3>
               <Code
                 block label="Copy the delivery"
-                text={`POST ${hook?.url ?? "https://hooks.example.com/ollopa/1"}\nOllopa-Event: ${deliveries[0]?.event ?? "deal.updated"}\nOllopa-Delivery: ${deliveries[0]?.id ?? "del-1"}\nOllopa-Attempt: ${deliveries[0]?.attemptNumber ?? 1}\nOllopa-Signature: t=1789012345,v1=<HMAC-SHA256 of the raw body with your secret>\nContent-Type: application/json\n\n{ "event": "${deliveries[0]?.event ?? "deal.updated"}", "id": "${deliveries[0]?.recordId ?? "deal-1"}", "at": "${deliveries[0]?.at ?? ""}" }`}
+                text={`POST ${hook?.url ?? "https://hooks.example.com/ollopa/1"}\nollopA-Event: ${deliveries[0]?.event ?? "deal.updated"}\nollopA-Delivery: ${deliveries[0]?.id ?? "del-1"}\nollopA-Attempt: ${deliveries[0]?.attemptNumber ?? 1}\nollopA-Signature: t=1789012345,v1=<HMAC-SHA256 of the raw body with your secret>\nContent-Type: application/json\n\n{ "event": "${deliveries[0]?.event ?? "deal.updated"}", "id": "${deliveries[0]?.recordId ?? "deal-1"}", "at": "${deliveries[0]?.at ?? ""}" }`}
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 Verify the signature over the raw body before you parse it. The attempt number is how you tell a retry from a second event.
@@ -246,8 +246,8 @@ Interrupted, resume with the token printed.                                exit 
               <h3 className="text-sm font-medium">The delivery contract</h3>
               <ol className="mt-1 grid gap-1 text-sm">
                 <li>1. At-least-once: the same event can arrive twice.</li>
-                <li>2. Signed: every body carries <code className="font-mono text-xs">Ollopa-Signature</code>.</li>
-                <li>3. Attempt-numbered: <code className="font-mono text-xs">Ollopa-Attempt</code> counts from 1.</li>
+                <li>2. Signed: every body carries <code className="font-mono text-xs">ollopA-Signature</code>.</li>
+                <li>3. Attempt-numbered: <code className="font-mono text-xs">ollopA-Attempt</code> counts from 1.</li>
                 <li>4. Retried for 24 hours, with a widening gap.</li>
                 <li>5. Never silently disabled: a failing subscription keeps its place and says how long it has been failing.</li>
                 <li className="flex flex-wrap items-center gap-2">6. Reconcile nightly: <Code text="GET /v1/changes?since=<cursor>" label="Copy the endpoint" /></li>
@@ -441,9 +441,9 @@ Interrupted, resume with the token printed.                                exit 
                 <li key={c.event} className="border-b py-1 last:border-b-0">{c.event} → {c.channel}</li>
               ))}
             </ul>
-            <Code block label="Copy the message" text={`Ollopa · ${slack?.channels[0]?.channel ?? "#revenue"}\n${seed.replies[0]?.contact ?? "A contact"} replied to "${seed.sequences[0]?.name ?? "a sequence"}" — ${seed.replies[0]?.outcome ?? "Interested"}\nOpen in Ollopa › Inbox`} />
+            <Code block label="Copy the message" text={`ollopA · ${slack?.channels[0]?.channel ?? "#revenue"}\n${seed.replies[0]?.contact ?? "A contact"} replied to "${seed.sequences[0]?.name ?? "a sequence"}" — ${seed.replies[0]?.outcome ?? "Interested"}\nOpen in ollopA › Inbox`} />
             <Consequence tone="plain">
-              What this surface promises: a notification, not a control. An approval posted here carries a link, and the decision is taken in Ollopa or on the client's own card.
+              What this surface promises: a notification, not a control. An approval posted here carries a link, and the decision is taken in ollopA or on the client's own card.
             </Consequence>
           </Surface>
 
@@ -454,7 +454,7 @@ Interrupted, resume with the token printed.                                exit 
           >
             <Code
               block label="Copy the digest"
-              text={`Ollopa · ${b.name} · ${day(seed.workspace.declaredAt)}\n${n(seed.tasks.filter((t) => t.status === "Open").length)} tasks due · ${n(seed.replies.filter((r) => r.status === "open").length)} replies open · ${n(waiting.length)} approvals waiting\nCredits: ${n(seed.credits.burnPerWeek)} this week · ${n(seed.credits.balance)} left · cap ${n(seed.credits.monthlyCap)}\n${seed.webhooks.some((h) => h.state === "failing") ? "1 webhook failing · handler returned 500" : "No failing subscriptions"}\nOpen in Ollopa`}
+              text={`ollopA · ${b.name} · ${day(seed.workspace.declaredAt)}\n${n(seed.tasks.filter((t) => t.status === "Open").length)} tasks due · ${n(seed.replies.filter((r) => r.status === "open").length)} replies open · ${n(waiting.length)} approvals waiting\nCredits: ${n(seed.credits.burnPerWeek)} this week · ${n(seed.credits.balance)} left · cap ${n(seed.credits.monthlyCap)}\n${seed.webhooks.some((h) => h.state === "failing") ? "1 webhook failing · handler returned 500" : "No failing subscriptions"}\nOpen in ollopA`}
             />
             <Consequence tone="plain">
               What this surface promises: the same numbers as the app, in the body of the message, with one link per line back to the place the work is.

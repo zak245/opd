@@ -4,7 +4,7 @@
 //   1. An object you do not own opens and reads normally, with the edit controls absent and one
 //      line naming the owner. That is the record's own page, not this one.
 //   2. An area your seat does not hold is this page, and this page is the only answer: there is no
-//      read-only-by-link view of an area anywhere in Ollopa and no greyed control.
+//      read-only-by-link view of an area anywhere in ollopA and no greyed control.
 //   3. A page the workspace profile left out is not a gap at all. It opens as normal and its header
 //      offers "Add to sidebar", so it never lands here.
 //
@@ -33,7 +33,7 @@ export function NoAccess({ session, page }: { session: Session; page: Page }) {
   const [copied, setCopied] = useState(false)
   const isAdmin = session.role === "admin"
 
-  const request = `Please add ${label} to my seat in Ollopa (${b.name}). — ${session.user}`
+  const request = `Please add ${label} to my seat in ollopA (${b.name}). — ${session.user}`
 
   const copy = () => {
     navigator.clipboard?.writeText(request).catch(() => { /* clipboard blocked: the line is on screen below */ })

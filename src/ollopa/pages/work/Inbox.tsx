@@ -139,7 +139,7 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
       case "not-interested": change(r.id, { handled: true }, `${r.contact} marked not interested. The sequence is finished and the stage is Not interested.`); break
       case "follow-up": change(r.id, { handled: true, followUpOn: arg ?? r.followUpOn }, `Follow-up task created for ${day(arg ?? r.followUpOn)}. ${r.contact} moves to Handled.`); break
       case "resume": change(r.id, { handled: true }, arg === "now" ? `“${r.sequence}” resumed for ${r.contact} now.` : `“${r.sequence}” resumes for ${r.contact} on ${day(r.returnsOn)}.`); break
-      case "confirm-unsub": change(r.id, { handled: true }, `Ollopa will not email ${contactOf(r.contactId)?.email ?? r.contact} again from any sequence.`); break
+      case "confirm-unsub": change(r.id, { handled: true }, `ollopA will not email ${contactOf(r.contactId)?.email ?? r.contact} again from any sequence.`); break
       case "create-deal": navigate(`/ollopa/deals/${r.dealId ?? seed.deals[0].id}`); break
       case "open-contact": navigate(`/ollopa/people/${r.contactId}`); break
       case "change-meaning": change(r.id, { outcome: arg as Outcome, meantBy: "you" }, `Read as ${arg}, by you. The correction is logged for the classifier.`); break

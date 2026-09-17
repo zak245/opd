@@ -188,7 +188,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                         const open = seed.deals.filter((d) => d.companyId === m.jobChange?.newCompanyId && d.stage !== "Closed won").length
                         return (
                           <div key={m.id} className="rounded-lg border p-3">
-                            <div className="text-sm font-medium">{m.name} · {m.jobChange?.previousCompany} → {company?.name ?? "a company Ollopa does not hold"}</div>
+                            <div className="text-sm font-medium">{m.name} · {m.jobChange?.previousCompany} → {company?.name ?? "a company ollopA does not hold"}</div>
                             <p className="text-xs text-muted-foreground">Signal fired {day(m.jobChange?.firedOn ?? "")} from {m.jobChange?.source}.</p>
                             <p className="mt-1 text-sm">
                               {company && account
@@ -218,7 +218,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                       <div className="flex flex-wrap items-center gap-2 rounded-lg border p-3">
                         <Button size="sm" onClick={() => setConfirm({
                           title: `Enrol the ${n(movers.length)} movers in "${sequence}"?`,
-                          body: `${n(netNew)} of them work somewhere Ollopa does not own yet. Verifying ${n(movers.length)} new addresses costs about ${n(movers.length * CREDITS.revealEmail)} credits, and the first step sends on the sequence's own schedule.`,
+                          body: `${n(netNew)} of them work somewhere ollopA does not own yet. Verifying ${n(movers.length)} new addresses costs about ${n(movers.length * CREDITS.revealEmail)} credits, and the first step sends on the sequence's own schedule.`,
                           label: `Enrol ${n(movers.length)} · about ${n(movers.length * CREDITS.revealEmail)} credits`,
                           run: () => toast(`Enrolled ${n(movers.length)} movers in ${sequence}`),
                         })}>

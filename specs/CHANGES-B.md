@@ -30,7 +30,7 @@ Sources cited below: **PLAN** = a decision in PLAN.md section 2; **RULES** = a n
 | Row menu renamed: the "…" button's accessible name lists its contents instead of reading "More actions" | PLAN, Door labels |
 | Self-score corrected: point 2 drops from 2 to 1, total 16 of 18, and the shape paragraph now says plainly that four of five pairs are over the head band on an argument rather than a measurement | REVIEW §4 (07 scored 2 where 02 and 03 scored down for less); sweep 15 (no density-versus-disclosure test exists) |
 | Usage table: the task rows lose the decision-critical mark (they are the page's own content, head by usage); the due-today and overdue counts keep it with the safety-state argument written out; Delete a manual task gains it | REVIEW §3 (critical marks that rule 7 does not cover; destructive actions unmarked) |
-| Apollo plan gating on call tasks no longer implies Ollopa gates nothing: the removed-list now says what Ollopa's plan table actually gates and that it never gates the day's work | PLAN, Plan gating |
+| Apollo plan gating on call tasks no longer implies ollopA gates nothing: the removed-list now says what ollopA's plan table actually gates and that it never gates the day's work | PLAN, Plan gating |
 | Rule 8 line: the printed shortcut is a floor; the queue is the exposure that teaches | sweep 09 |
 | Table behaviours cite 02 People; only deltas are recorded here | REVIEW §2 |
 | `usage/tasks.ts`: marketer numbers removed from all three items that carried them; `tasks.rows` unmarked; `tasks.summary` note rewritten; `tasks.delete` marked critical; header comment records the seat-versus-profile split | PLAN, Seats per business and Three kinds of "cannot see it"; REVIEW §3 |
@@ -75,7 +75,7 @@ Sources cited below: **PLAN** = a decision in PLAN.md section 2; **RULES** = a n
 | Audiences show a read-only "Fed by {list}" line linking to Lists, which owns the feed and its off switch | REVIEW §1 #8 |
 | Usage marks: Status and Audience lose the decision-critical mark (head items anyway; the rule 7 obligation sits on the send dialog), Delete draft gains it, and the Fathom and Halyard level-one count drops from 8 to 7, all seven named | REVIEW §3 |
 | Section 4 records that `weeklyUse` returns zero for the marketer seat Fathom and Halyard never declared | PLAN, Seats per business; REVIEW §3 |
-| Apollo's plan gates on click metrics and A/B tests are still removed, but the text now says what Ollopa's own plan table gates instead of implying nothing is gated | PLAN, Plan gating; REVIEW §1 #10 resolved in PLAN's direction |
+| Apollo's plan gates on click metrics and A/B tests are still removed, but the text now says what ollopA's own plan table gates instead of implying nothing is gated | PLAN, Plan gating; REVIEW §1 #10 resolved in PLAN's direction |
 | Table behaviours cite 02 People; three new review rows record the approval, bounce guard and entity fixes | REVIEW §2 |
 | `usage/campaigns.ts`: approval item relabelled and its note now points at the Settings threshold; bounce guard item relabelled with both numbers and the observed rate; delivery note carries the pair; `camp.list.status` and `camp.list.audience` unmarked; `camp.act.delete-draft` marked | PLAN, Agent approvals and Bounce guard; REVIEW §3 |
 

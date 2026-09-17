@@ -84,7 +84,7 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
         </span>
       ),
       under: <span className="text-xs text-muted-foreground">
-        Ollopa has no sandbox and no change set. A change is applied to one team or one territory first and widened from this row; each widening keeps its date.
+        ollopA has no sandbox and no change set. A change is applied to one team or one territory first and widened from this row; each widening keeps its date.
       </span>,
     },
     {
@@ -212,7 +212,7 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
           <div className="grid gap-3 text-sm">
             <p>
               <span className="text-muted-foreground">Shipped:</span>{" "}
-              {request.shippedOn ? `${longDay(request.shippedOn)} by ${request.shippedBy}` : "Not yet. Ollopa does not make the change for you — the link above opens the place it is made."}
+              {request.shippedOn ? `${longDay(request.shippedOn)} by ${request.shippedBy}` : "Not yet. ollopA does not make the change for you — the link above opens the place it is made."}
             </p>
             {request.announcement && (
               <div>

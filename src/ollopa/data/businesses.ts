@@ -40,7 +40,7 @@ export interface BusinessDef {
   roles: RoleSeat[]
   /** Declared at set-up, visible and editable in Settings under "How your team works". Never inferred. */
   profile: Profile
-  /** The CRM of record (PLAN.md, 13 Sep 2026). Fathom has none: Ollopa is their CRM. */
+  /** The CRM of record (PLAN.md, 13 Sep 2026). Fathom has none: ollopA is their CRM. */
   crm: string | null
   timezone: string
   currency: string

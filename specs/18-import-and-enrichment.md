@@ -31,7 +31,7 @@ Sources are `src/ollopa/data/seed.ts`, `businesses.ts` and the `settings` object
 | Duplicate counts: matched, of which owned by someone else | Step 2 | `seed.contacts` (exists) | computed at render from the file against the seed; the counts are real, not written down |
 | Owner, list, stage for new rows | Step 2 | `businesses.roles`, `seed.lists`, `STAGES` | nothing |
 | Fields enrichment may fill | Step 3 | `Contact` fields | nothing |
-| Provider lineup and the workspace default | Step 3 | Settings `pipe.enrichment-order` (exists: Northlight Data → Beacon Verify → Ollopa) | nothing; the step names the setting and links to it |
+| Provider lineup and the workspace default | Step 3 | Settings `pipe.enrichment-order` (exists: Northlight Data → Beacon Verify → ollopA) | nothing; the step names the setting and links to it |
 | Stop rule and per-row ceiling | Step 3 | none | `settings.prospecting.waterfall: { stopAtFirstVerified: true, ceilingPerRow: 12 }` per business |
 | Trial result: hit rate by field, credits, cost per hit, projected total | Step 4 | none | computed from `enrichmentRates` per business: `{ field, hitRate, typicalCost }` — email 0.72 at 2, mobile 0.41 at 9, title 0.88 at 1, company size 0.93 at 1 |
 | Run progress, stopped at, resume token | Step 5 | none | `importDrafts[].progress: { done, total, credits, stoppedAt? }` |
@@ -60,7 +60,7 @@ Route `import`, with the source object in the query (`?object=people`). One step
 
 Then owner, list and stage for the new rows. The duplicate rule the workspace declared is named with a link: "Workspace rule: prompt on duplicate · Settings › Prospecting rules."
 
-**Step 3 — Fields and providers.** Which fields enrichment may fill, each with its typical cost beside it. The **provider lineup** in order, with the workspace default named and where it is set: "Workspace default: Northlight Data → Beacon Verify → Ollopa · Settings › Pipeline and data › Enrichment provider order. Change it for this run only." Then two price controls at level one: **stop at the first verified result, or continue down the waterfall**, and **the most this run may spend on one row**. These two are not preferences; the first is the difference between 8 credits and 45 on a phone waterfall, and rule 7 puts a price control where the price is.
+**Step 3 — Fields and providers.** Which fields enrichment may fill, each with its typical cost beside it. The **provider lineup** in order, with the workspace default named and where it is set: "Workspace default: Northlight Data → Beacon Verify → ollopA · Settings › Pipeline and data › Enrichment provider order. Change it for this run only." Then two price controls at level one: **stop at the first verified result, or continue down the waterfall**, and **the most this run may spend on one row**. These two are not preferences; the first is the difference between 8 credits and 45 on a phone waterfall, and rule 7 puts a price control where the price is.
 
 **Step 4 — The ten-row trial.** Run ten rows. Print, as a table: field, hit rate, credits spent, **cost per hit**. Then one line: "At this rate, 1,240 rows will cost about 4,900 credits — 2,660 of your balance after this run. Email lands on about 7 in 10; mobile on about 4 in 10." Then two buttons: "Run the other 1,230" and "Change the fields or the providers", which goes back to step 3 and returns. The trial's ten rows are charged, and the line says so.
 
@@ -277,7 +277,7 @@ And from `19-revops-and-developer-notes.md` §9, the published API price for the
 | A settings toggle gates a whole workflow | Job Change Alerts is off until someone finds Prospecting config | 16§4 |
 | Attribution arrived late and has an "Uncategorized" bucket | Surface attribution "only from 1 Feb 2026" | 16, credit model |
 
-### 5.4 What Apollo gets right, and Ollopa keeps
+### 5.4 What Apollo gets right, and ollopA keeps
 
 The estimate before the confirm ("estimates shown before you confirm", 16§4). "Charged only when a source returns data" — an honest rule, kept and printed. The stop-on-verified switch, kept and promoted to a price control. "Never charged twice for data already bought", kept. The enrichment report's matched-versus-unmatched split, kept and given a cost-per-hit column. And the update-or-create choice on a job change, which is the right pair of options; what is added is what each one keeps and who owns the new employer.
 

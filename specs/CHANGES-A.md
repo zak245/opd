@@ -66,7 +66,7 @@
 - §3: the marketer's no-access state rewritten as an area the seat does not hold, with the profile case kept separate.
 - §4: `companies.ts` gains `co.act.quick-look`; `co.act.open` re-weighted; Remove marked decision-critical; shape check recomputed (78 items) with the marketer row dropped.
 - §5 problem 8: the Spool figure re-based and the argument moved onto tabs and rules 1 and 8. Finding: sweep 15; NN/g on tabs.
-- §6: "Removed, not hidden" now explains plan gating instead of implying Ollopa has none: Ollopa gates by plan through the named pattern, but nothing on this page is on the plan table, so no lock appears here. Decision: Plan gating (13 Sep), which overrides REVIEW §1 #10.
+- §6: "Removed, not hidden" now explains plan gating instead of implying ollopA has none: ollopA gates by plan through the named pattern, but nothing on this page is on the plan table, so no lock appears here. Decision: Plan gating (13 Sep), which overrides REVIEW §1 #10.
 - §5: added the source note on which articles are in the knowledge base and which were fetched live.
 
 ## 04 Lists
@@ -103,7 +103,7 @@
 
 Removed outright, because they could not be traced to the knowledge base:
 
-1. **00 §5 and §6**: "The mobile app was retired on 28 August 2026 and 'no longer sends push notifications'; mobile is the browser only." No Apollo mobile article is recorded in `knowledge-base/sources/07-apollo-settings-map.md`. The problems row now reads "Phone behaviour: not documented in the memo (unverified)" and Ollopa makes no claim about Apollo's.
+1. **00 §5 and §6**: "The mobile app was retired on 28 August 2026 and 'no longer sends push notifications'; mobile is the browser only." No Apollo mobile article is recorded in `knowledge-base/sources/07-apollo-settings-map.md`. The problems row now reads "Phone behaviour: not documented in the memo (unverified)" and ollopA makes no claim about Apollo's.
 2. **00 §5**: the quoted line "Click a notification to view more details and take any necessary action." Not in the memo; the surrounding description, which is in memo §1.5, was kept.
 3. **00 §7**: "Evidence: Superhuman's palette." The Superhuman figures in circulation are unsourced in the guide that carries them (`knowledge-base/11-what-changed-2018-2026.md`, "Numbers this knowledge base got wrong"). Replaced with Bailly et al. (IHM 2025) and ExposeHK (IHM 2025).
 

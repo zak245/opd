@@ -223,7 +223,7 @@ And the dataset that makes the clock the page's centre, same section: Optifai's 
 | Approval is a task nobody sees | "enrolment approval (auto, or Apollo creates **review tasks**)" puts an approval into a task queue with no consequence line | 16§17 |
 | A webhook action and a notification action sit beside each other | A webhook cannot carry a decision, and nothing says so | 16§17; 19§10 |
 
-### 5.4 What Apollo gets right, and Ollopa keeps
+### 5.4 What Apollo gets right, and ollopA keeps
 
 The two credit guardrails, kept and promoted: a per-run cap and a whole-workflow ceiling, with the observed spend beside them. The failure categories, kept as the exception reasons. "Retry failed records", kept, and given a price and a re-evaluation sentence. The long trigger list, trimmed to the ones a rule can be reasoned about from. And the enrolment approval idea, kept — but moved out of the task queue and given a consequence line, because approving an automation is a decision about other people's work.
 

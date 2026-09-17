@@ -57,7 +57,7 @@ export function SignIn() {
         onSubmit={(e) => { e.preventDefault(); submit() }}
       >
         <div className="mb-8 flex items-center gap-2 text-lg font-semibold tracking-tight sm:mb-10">
-          <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" /> Ollopa
+          <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" /> ollopA
         </div>
         <h1 className="text-2xl font-semibold">Sign in</h1>
         <p className="mt-1 text-sm text-muted-foreground">Choose the workspace and the seat you are signing in to. The seat decides what you see.</p>

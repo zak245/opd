@@ -1,6 +1,6 @@
 # Sign-in, app shell, ⌘K palette and notifications
 
-The four cross-cutting surfaces of Ollopa. They are not pages; they wrap every page, so this spec follows the page structure with "page" read as "surface". Usage items: `src/ollopa/usage/shell.ts`. What exists: `pages/SignIn.tsx`, `shell/AppShell.tsx`, `nav.ts`, `session.ts`, `Product.tsx`.
+The four cross-cutting surfaces of ollopA. They are not pages; they wrap every page, so this spec follows the page structure with "page" read as "surface". Usage items: `src/ollopa/usage/shell.ts`. What exists: `pages/SignIn.tsx`, `shell/AppShell.tsx`, `nav.ts`, `session.ts`, `Product.tsx`.
 
 ## 1. Purpose
 
@@ -81,7 +81,7 @@ Add `seed.notifications` to `seed.ts`, deterministic per business, about 40 rows
 
 ### 3.1 Sign-in
 
-Shown: the Ollopa mark, "Sign in", one line of help, four workspace cards (name, size · tagline, one sentence on how they work), the chosen workspace's seats as chips (person · title), and the button "Sign in as {person}". While no seat is chosen the button is disabled and the text "Pick a seat to continue." sits beside it.
+Shown: the ollopA mark, "Sign in", one line of help, four workspace cards (name, size · tagline, one sentence on how they work), the chosen workspace's seats as chips (person · title), and the button "Sign in as {person}". While no seat is chosen the button is disabled and the text "Pick a seat to continue." sits beside it.
 
 Actions: pick a workspace (resets the seat), pick a seat, sign in. Signing in stores `{ business, role }` and lands on Home. The last workspace is preselected next time. "Forgot password" is a link under the button; in the demo it says "Password reset is not part of this demo."
 
@@ -125,7 +125,7 @@ Order never changes by role, business or history (rule 6). Settings is in every 
 | Kind | What the person gets | Where it is specified |
 |---|---|---|
 | An object you do not own | The record opens and reads normally; the edit controls are absent, and one line names the owner | the record's own spec |
-| An area your seat does not hold | The no-access page: what the page is for, which seats use it, who to ask | below, and it is the only answer; no read-only-by-link view exists anywhere in Ollopa |
+| An area your seat does not hold | The no-access page: what the page is for, which seats use it, who to ask | below, and it is the only answer; no read-only-by-link view exists anywhere in ollopA |
 | A page the workspace profile left out | The page opens as normal from a link, ⌘K or a section link; its header offers **Add to sidebar** | below |
 
 **Add to sidebar.** A page the profile left out carries one button in its page header, to the right of the title: "Add to sidebar". Clicking it puts the page at the *end* of its group and leaves it there for good; the button is replaced by nothing (the page is now in the sidebar). Added pages persist per person per workspace. Removing one is the same button in reverse, "Remove from sidebar", so the path out is as short as the path in.
@@ -140,7 +140,7 @@ Order never changes by role, business or history (rule 6). Settings is in every 
 
 **Account menu.** Avatar initials plus chevron, named "Account menu". Contents: header (person, "{title} ({role}) · {business}"); "Your profile" (Settings, your user); "Credit usage"; divider; "Theme" (light, dark, system as a radio row); "Keyboard shortcuts" (opens the shortcut sheet); "Help and docs"; "Contact support"; "What changed this month"; divider; "Switch account"; "Sign out". "Switch account" signs out and returns to sign-in with the current workspace preselected; "Sign out" preselects nothing. Items that do not apply are removed, never disabled. Nothing inside opens a second menu.
 
-**Page titles.** `document.title` is "{page} · {business} · Ollopa"; record pages "{record} · {page} · {business} · Ollopa". The `h1` always equals the sidebar label.
+**Page titles.** `document.title` is "{page} · {business} · ollopA"; record pages "{record} · {page} · {business} · ollopA". The `h1` always equals the sidebar label.
 
 **No-access page.** The answer to the second kind of "cannot see it": an area the seat does not hold. Reached only by URL (a bookmark or shared link). Content: `h2` "{Page} is not part of your seat"; one paragraph: "It is used by: {seats that hold it}. If you need it, ask {admin person} ({admin title}) to change your permissions."; buttons "Back to Home" and "Copy a request for {admin first name}" (copies one line naming the page). Sidebar and top bar stay in place. The admin named is Priya Natarajan at Fathom, Daniel Okafor at Meridian, Ravi Sethi at Halyard, Grace Mwangi at Ridgeline. If the signed-in person is the admin, the paragraph ends "You can add it to your seat in Settings › Team and access › Permission profiles." A page the *profile* left out never lands here: it opens, and its header offers "Add to sidebar".
 
@@ -346,7 +346,7 @@ Modelled on Apollo's global chrome as documented in `knowledge-base/sources/07-a
 | No mark-read, grouping or interrupt-versus-digest rule documented; the feed is a list to click through | Memo §1.5, the Notifications article. Anything beyond the documented checkboxes is unverified. |
 | Admin settings are a flyout inside the nav, then a 300 px settings sidebar of expandable groups plus tabs plus drawers | §1.0, §1.4: "Settings › Email setup and health › Mailboxes › Show filters › mailbox › Overview › signature = 6 interactions." |
 | A table that overflows is left to the user | KB: "zoom out on your browser or try scrolling horizontally in the table." |
-| Phone behaviour | Not documented in the memo (unverified). Ollopa specifies its own; no claim is made about Apollo's. |
+| Phone behaviour | Not documented in the memo (unverified). ollopA specifies its own; no claim is made about Apollo's. |
 | Keyboard shortcuts: only a third-party cheat sheet found | Unverified. |
 
 ## 6. After: the disclosed version

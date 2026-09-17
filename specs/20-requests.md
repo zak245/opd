@@ -14,7 +14,7 @@ Who lives here: the **RevOps admin**, and nobody else. The requester never opens
 
 The one thing they must never lose sight of: **who is waiting, for how long, and what will change for other people if this is approved.** Two numbers carry that — the **waiting time against a two-business-day answer target**, and the **count of people who will feel the change**. The answer target is the intake SLA the field publishes: a deal desk's own targets are "same or next business day" for a standard ask and 2–3 business days for a complex multi-approver one, with DealHub tiering it 24h / 48h / 72h (`18-ae-and-sales-leader-notes.md`, deal desk). Two business days is a promise about an **answer** — approve to investigate, approve to implement, or decline — never about a shipped change.
 
-Three things this page owns and no other page redefines: the **two approvals** as two separately-dated actions, the **"applies to" rollout scope** that stands in for a sandbox Ollopa does not have (IA-MAP 6.2), and the **verify count** that reads whether the change was used. Two things it does not own: the settings it changes (each is a link into Settings, where the field, stage, profile or plan row actually lives) and the announcement itself, which is one mechanism for the whole product (spec 00 §3.4, rendered on Home's health strip by spec 01 and written by spec 19 for routing changes).
+Three things this page owns and no other page redefines: the **two approvals** as two separately-dated actions, the **"applies to" rollout scope** that stands in for a sandbox ollopA does not have (IA-MAP 6.2), and the **verify count** that reads whether the change was used. Two things it does not own: the settings it changes (each is a link into Settings, where the field, stage, profile or plan row actually lives) and the announcement itself, which is one mechanism for the whole product (spec 00 §3.4, rendered on Home's health strip by spec 01 and written by spec 19 for routing changes).
 
 ## 2. Data
 
@@ -98,12 +98,12 @@ A change that other people feel writes **one announcement line** on approval to 
 | Approve to implement | Record only | The consequence in the label and the confirmation; the change is applied at its scope; the announcement line is written; the state becomes shipped and the verify count starts |
 | Decline | Row, record | A reason is required. The requester reads it where they asked: at the lock, on Home, in the next digest. For an upgrade, the lock stays exactly where it was and nothing moves (gated-features pattern rule 10) |
 | Hand the decision over | Row, record | The decision owner changes with one line saying why; the waiting clock does not restart, because the requester's week does not restart |
-| Widen the scope | Record | From the same row: one team → one territory → everyone, each widening recorded with its date. This is Ollopa's answer to "build and test somewhere safe": staged rollout, stated on the row, with the loss of a sandbox recorded rather than hidden |
-| Ship it | Record | Marked shipped with who and when, and a link to the thing that changed. Ollopa does not make the change for you: the link opens `X-field`, `R-workflow` or `X-user`, where the change is actually made |
+| Widen the scope | Record | From the same row: one team → one territory → everyone, each widening recorded with its date. This is ollopA's answer to "build and test somewhere safe": staged rollout, stated on the row, with the loss of a sandbox recorded rather than hidden |
+| Ship it | Record | Marked shipped with who and when, and a link to the thing that changed. ollopA does not make the change for you: the link opens `X-field`, `R-workflow` or `X-user`, where the change is actually made |
 | Verify | Record | Reads the count of affected people who have used the changed thing since it shipped. No target and no green tick: the number is the evidence |
 | Reopen | Record | For a verified request whose change did not hold; the history keeps both passes |
 | Merge two requests | Row | Both requesters are kept and both are told; the older raised date wins, because the queue owes an answer from the first ask |
-| Copy out | Record | The request's fields and its link as text, for a company that runs intake in its own tracker. Ollopa does not pretend to be that tracker |
+| Copy out | Record | The request's fields and its link as text, for a company that runs intake in its own tracker. ollopA does not pretend to be that tracker |
 | Archive | Row | For a declined or superseded request: "It stops appearing in the queue. The record, the reason and the history stay readable, and declined requests are kept for a year" |
 | Export the queue | Page | CSV. Exporting a table a seat can already read is on every plan (spec 14 owns that sentence) |
 
@@ -198,7 +198,7 @@ Share of active users in a role touching the item in a typical week (USAGE-MODEL
 | Applies to: one team, one territory, everyone — widened from the row | What it changes | 10 | 2 / 4 / 7 | ★ |
 | The rollback path in words, and what happens to values entered | What it changes | 10 | 2 / 5 / 7 | ★ |
 | The approved baseline: what the setup did before | What it changes | 4 | 2 / 3 / 4 | |
-| What Ollopa does instead of a sandbox, stated on the row | What it changes | 3 | 1 / 3 / 3 | |
+| What ollopA does instead of a sandbox, stated on the row | What it changes | 3 | 1 / 3 / 3 | |
 | Shipping writes one line into the affected people's Home strip and digest | Rollout and verification | 9 | 2 / 4 / 5 | |
 | Verified: how many of the affected have used it since it shipped | Rollout and verification | 10 | 2 / 4 / 7 | |
 | Shipped but not verified, with how long since | Rollout and verification | 4 | 1 / 3 / 4 | |
@@ -265,13 +265,13 @@ So the before is **no queue**: the request arrives as a Slack message or an emai
 
 The decision this spec answers is the one JOURNEYS.md already recorded as a modelling call: "**The request is an object, because the admin's inbox is the product's real queue.** … A product with nowhere to put the request pushes it into Slack, where it cannot be counted" (JOURNEYS.md §2, decision 4).
 
-### 5.3 What the field gets right, and Ollopa keeps
+### 5.3 What the field gets right, and ollopA keeps
 
 Nothing is copied from Apollo, because there is nothing there. What is copied is the practice the research documents:
 
-- **"Intake through one door"**, and **"Decide within the SLA"** — two of the deal desk's eight published steps, with the published targets: standard "same or next business day", complex multi-approver "2–3 business days with active shepherding", DealHub tiering 24h / 48h / 72h (18, deal desk). Ollopa's answer target is two business days to an answer.
+- **"Intake through one door"**, and **"Decide within the SLA"** — two of the deal desk's eight published steps, with the published targets: standard "same or next business day", complex multi-approver "2–3 business days with active shepherding", DealHub tiering 24h / 48h / 72h (18, deal desk). ollopA's answer target is two business days to an answer.
 - **The two approvals**, and the nine-field record, from 19§8.2, kept whole rather than sampled.
-- **"Deploy in smaller, safer batches rather than all at once"** (19§8.3), kept as the "applies to" scope — because the sandbox the same section describes is a second copy of the workspace and Ollopa does not have one. The loss is recorded rather than invented (IA-MAP 6.2).
+- **"Deploy in smaller, safer batches rather than all at once"** (19§8.3), kept as the "applies to" scope — because the sandbox the same section describes is a second copy of the workspace and ollopA does not have one. The loss is recorded rather than invented (IA-MAP 6.2).
 - **"Measure adherence as the success metric"** (19§8.4), kept as the verify count.
 
 ## 6. After: the disclosed version

@@ -64,7 +64,7 @@ export function Site() {
             href="#/ollopa"
             className="ml-auto rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent"
           >
-            Open Ollopa
+            Open ollopA
           </a>
         </div>
       </header>
@@ -79,7 +79,7 @@ export function Site() {
           <a className="hover:text-foreground" href="#/cases">Cases</a>
           <a className="hover:text-foreground" href="#/kb">Knowledge base</a>
           <a className="hover:text-foreground" href="#/contribute">Add a case</a>
-          <a className="hover:text-foreground" href="#/ollopa">Open Ollopa</a>
+          <a className="hover:text-foreground" href="#/ollopa">Open ollopA</a>
         </div>
       </footer>
     </div>
@@ -120,13 +120,13 @@ function Home() {
           OPD is an open library. The rules below are the whole method; every one carries the studies
           it rests on and a test you can run on any screen. A case takes one real screen and changes
           it one rule at a time, so you can watch what moves and read why. The screens are pages of
-          Ollopa, a sales platform built to the rules, which you can open and use.
+          ollopA, a sales platform built to the rules, which you can open and use.
         </p>
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <Cta href="#/cases" primary>Read the cases</Cta>
           <Cta href="#/kb">The knowledge base</Cta>
           <Cta href="#/contribute">Add a case</Cta>
-          <Cta href="#/ollopa">Open Ollopa</Cta>
+          <Cta href="#/ollopa">Open ollopA</Cta>
         </div>
       </section>
 

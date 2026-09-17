@@ -28,8 +28,8 @@ Item counts after the pass: inbox 63 (was 58), tasks 48 (34), deals 66 (62), dea
 | sdr C-24 | `X-calllog` defined: purpose, the nine dispositions, a correctable duration timer, notes, and the always-visible line saying which two dispositions end the sequence. One node, four parents. The four outcome buttons stay as the queue's fast path |
 | sdr C-25 | The phone with its do-not-call badge and the contact's local time move out of the row door onto the row, at every business |
 | sdr C-26 | Queue header "Sort: due · call score", due the default, the agent's ranking applied only when chosen, the choice persists, with "how it was built" linking to the model |
-| sdr C-28 | `X-linkedin`: the message text editable for this send, Copy, Open the profile, Mark complete under "Ollopa cannot see LinkedIn…" |
-| sdr C-29 | "Invites this week: 38 of about 100", with "the cap is LinkedIn's, not Ollopa's" and "Snooze the rest to Monday" within ten of the cap |
+| sdr C-28 | `X-linkedin`: the message text editable for this send, Copy, Open the profile, Mark complete under "ollopA cannot see LinkedIn…" |
+| sdr C-29 | "Invites this week: 38 of about 100", with "the cap is LinkedIn's, not ollopA's" and "Snooze the rest to Monday" within ten of the cap |
 | sdr C-46 | The nine call and LinkedIn usage items, plus `tasks.mode-switch`, `tasks.call-read`, `tasks.call-coaching-note`, `tasks.call-transcript` |
 | cs 16 | `Meeting` added to `Task.kind`, in the Type filter, with the meeting panel as its row action |
 | cs 17 | The meeting panel opens **from the row, never from inside the row door** — stated explicitly in the doors table and in the §8 review |

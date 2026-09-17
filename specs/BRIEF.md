@@ -1,11 +1,11 @@
 # Brief for page specs
 
-Every page of Ollopa gets one spec in this folder. Written in plain English. No open questions inside a spec: what is written is decided by the spec author and reviewed; questions for the owner go to the owner in conversation, never into the file.
+Every page of ollopA gets one spec in this folder. Written in plain English. No open questions inside a spec: what is written is decided by the spec author and reviewed; questions for the owner go to the owner in conversation, never into the file.
 
 ## Read first
 
 - `RULES.md`: the eight rules and the nine-point review score. The spec must obey them and score itself.
-- `PRODUCT.md`: what Ollopa is, the five roles, the four example customers, the fourteen pages, the settings inventory, and the rules the product itself follows.
+- `PRODUCT.md`: what ollopA is, the five roles, the four example customers, the fourteen pages, the settings inventory, and the rules the product itself follows.
 - `USAGE-MODEL.md`: how weekly-use numbers are chosen and the shape they must fit.
 - `knowledge-base/00-core-model.md` and `knowledge-base/08-principles-and-checklists.md`: the reasoning and the per-pattern checklists.
 - `knowledge-base/sources/07-apollo-settings-map.md`: how Apollo, the product we parody, is organised; also its complaints and praise.

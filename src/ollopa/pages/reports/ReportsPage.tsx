@@ -751,9 +751,9 @@ function ActivityBody({ activity, compare, view, onView, leader, onEmails, onCal
       <BreakdownTable caption="By rep" rows={activity.rows} rowKey={(r) => r.user} columns={columns} storageKey="activity" />
       <Definitions
         lines={[
-          ["Emails sent", "One row per email an Ollopa mailbox sent, campaigns included."],
+          ["Emails sent", "One row per email an ollopA mailbox sent, campaigns included."],
           ["Calls made", "One row per dial logged, connected or not."],
-          ["Meetings booked", "A contact moved to the stage Meeting booked. Ollopa has no booking tool."],
+          ["Meetings booked", "A contact moved to the stage Meeting booked. ollopA has no booking tool."],
           ["Tasks done", "A task closed in the range, whoever created it."],
         ]}
       />

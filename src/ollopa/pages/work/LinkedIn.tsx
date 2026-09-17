@@ -2,9 +2,9 @@
 //
 // Opened from a LinkedIn task row and rendered as the queue's body. Flat.
 //
-// Two things are never hidden here. Ollopa cannot see LinkedIn, so marking complete is a claim the
+// Two things are never hidden here. ollopA cannot see LinkedIn, so marking complete is a claim the
 // person makes and the line above the button says so. And the weekly invite cap is LinkedIn's, not
-// Ollopa's: a cap that is invisible until it is hit is a limit hidden from the person who will be
+// ollopA's: a cap that is invisible until it is hit is a limit hidden from the person who will be
 // punished by it (rule 7), so the count is on screen before the send, not after.
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -31,7 +31,7 @@ export function InviteCounter({ session, onSnoozeRest }: { session: Session; onS
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
       <span className="tabular-nums">Invites this week: {sent} of about {cap}</span>
-      <span className="text-muted-foreground">the cap is LinkedIn's, not Ollopa's</span>
+      <span className="text-muted-foreground">the cap is LinkedIn's, not ollopA's</span>
       {near && onSnoozeRest && (
         <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={onSnoozeRest}>Snooze the rest to Monday</Button>
       )}
@@ -91,7 +91,7 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
 
       <div className="border-t pt-3">
         <p className="text-xs text-muted-foreground">
-          Ollopa cannot see LinkedIn. Marking complete records that you sent it and advances the sequence.
+          ollopA cannot see LinkedIn. Marking complete records that you sent it and advances the sequence.
         </p>
         <Button size="sm" className="mt-2" onClick={() => {
           say(`${task.contact}: LinkedIn step marked complete. “${task.sequence ?? "The sequence"}” moves to the next step.`)

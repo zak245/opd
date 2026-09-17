@@ -96,7 +96,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const groups = ["top", "Prospect", "Engage", "Win", "bottom"].filter((g) => entries.some((e) => e.item.group === g))
 
   // The page title, everywhere the browser shows one.
-  useEffect(() => { document.title = `${title} · ${b.name} · Ollopa` }, [title, b.name])
+  useEffect(() => { document.title = `${title} · ${b.name} · ollopA` }, [title, b.name])
 
   // The two-week exposure appears on the next load of Home, never mid-task.
   useEffect(() => {
@@ -178,7 +178,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
       <aside className={cn("hidden shrink-0 flex-col border-r bg-muted/30 md:flex", collapsed ? "w-14" : "w-56")}>
         <a href={href("/ollopa")} className={cn("flex h-14 items-center gap-2 border-b px-4 font-semibold tracking-tight", collapsed && "justify-center px-0")}>
           <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
-          {!collapsed && "Ollopa"}
+          {!collapsed && "ollopA"}
         </a>
         <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Main">
           {groups.map((g) => (

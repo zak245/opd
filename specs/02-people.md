@@ -8,7 +8,7 @@
 
 People holds every contact in the workspace: 18,400 at Meridian, 2,200 at Fathom, 1,000 to 6,000 in each Halyard client workspace, 9,800 at Ridgeline. An SDR opens it many times a day to find who to work next and push them into a sequence or a list. An AE opens it daily to see everyone at an account and log a call task. A marketer opens it a few times a week to build an audience from a list. The RevOps admin opens it weekly to fix owners and check what synced. Customer success does not have the page in its navigation; Accounts serves them.
 
-A contact is disclosed in two levels here, as every record in Ollopa is: a **quick look** drawer beside the table for the glance, and the **full record page** for the visit that dwells. Prospecting is a scanning task, so the SDR lives in the drawer; research is a dwelling task, so the AE opens the page.
+A contact is disclosed in two levels here, as every record in ollopA is: a **quick look** drawer beside the table for the glance, and the **full record page** for the visit that dwells. Prospecting is a scanning task, so the SDR lives in the drawer; research is a dwelling task, so the AE opens the page.
 
 The one thing nobody on this page may lose sight of: **what a click will cost and how many people it will touch.** Every action that spends credits prints the price on the control. Every bulk action repeats the count it will act on. Apollo's reviewers complain about two things above all: filters with a learning curve, and money or contacts moving without a clear moment of consent. Both are disclosure mistakes.
 

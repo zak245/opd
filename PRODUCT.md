@@ -1,8 +1,8 @@
-# Ollopa: the product behind every case
+# ollopA: the product behind every case
 
-*Ollopa is the invented GTM platform that all OPD cases are built on. It exists so that every case has the same roles, the same customers and the same data, and so that progressive disclosure is tested where it is hardest: one product used in different ways by different kinds of businesses. Nothing here is a real company.*
+*ollopA is the invented GTM platform that all OPD cases are built on. It exists so that every case has the same roles, the same customers and the same data, and so that progressive disclosure is tested where it is hardest: one product used in different ways by different kinds of businesses. Nothing here is a real company.*
 
-## What Ollopa is
+## What ollopA is
 
 A go-to-market platform for B2B companies. Teams use it to find companies and people, reach out to them, run the pipeline from first reply to closed deal, and keep the account after the sale.
 
@@ -14,7 +14,7 @@ The full object model and the 54 approved journeys are in [JOURNEYS.md](JOURNEYS
 
 ## The five seats
 
-| Seat | How often in Ollopa | What they do there | First screen they need |
+| Seat | How often in ollopA | What they do there | First screen they need |
 |---|---|---|---|
 | **SDR** | All day | Builds lists, runs sequences, books meetings, works replies | Today's tasks and replies |
 | **Account executive** | All day | Works deals through stages, logs calls, forecasts | Pipeline |
@@ -27,13 +27,13 @@ The admin is the only seat that sees the danger zone and the plan. The SDR and t
 **Five seats, seven actors.** JOURNEYS.md walks a sales leader and a developer as well. Neither is a sixth seat (IA-MAP §6.4j):
 
 - **AE+** is an account executive seat with direct reports (`reports > 0`). It adds no page: it changes defaults and adds level-one items on pages the AE already holds — the team roll-up first on the forecast, the coverage figure on the deals strip, the rep filter and owner column, comments on a rep's deal, the coaching note inside a logged call. **Meridian Software declares one: Priya Raman, sales manager, with Elena Vasquez reporting to her.** No other business declares one. The usage model carries an optional `aePlus` number on the items whose week differs.
-- **The developer** of journeys D1–D4 is the RevOps admin seat. The live job postings title the role RevOps or GTM engineer, and giving it a seat of its own would give Ollopa a seat no business here declares.
+- **The developer** of journeys D1–D4 is the RevOps admin seat. The live job postings title the role RevOps or GTM engineer, and giving it a seat of its own would give ollopA a seat no business here declares.
 
 ## The four example customers
 
 Every case shows its screen serving these four. The point is that the same screen has a different "most used" set for each, and the split must hold for all of them.
 
-| Customer | Size | How they use Ollopa | What that does to the split |
+| Customer | Size | How they use ollopA | What that does to the split |
 |---|---|---|---|
 | **Fathom Labs** | 12 people, seed stage | Two founders and one SDR do outbound. No marketer, no CS. Everyone is admin. | Settings and sequences are daily for everyone; pipeline is small; agents do research the team has no time for |
 | **Meridian Software** | 300 people | Marketing feeds SDRs who feed AEs who hand to CS. One RevOps admin. Strict permissions. | Roles are separated; each role's first screen is different; admin items must be invisible to the rest |

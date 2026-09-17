@@ -30,7 +30,7 @@ export interface SetupRow {
   noun: string
   text: string
   href: string
-  /** A row that can be answered rather than done ("Ollopa is our CRM"). */
+  /** A row that can be answered rather than done ("ollopA is our CRM"). */
   declare?: string
 }
 
@@ -240,7 +240,7 @@ export function homeData(session: Session) {
       ? []
       : seed.integrations.some((i) => i.kind === seed.workspace.crm?.split(" ")[0])
         ? []
-        : [{ id: "crm", noun: "CRM", text: `Connect ${crmName}`, href: "/ollopa/settings/integrations", declare: "Ollopa is our CRM" }]),
+        : [{ id: "crm", noun: "CRM", text: `Connect ${crmName}`, href: "/ollopa/settings/integrations", declare: "ollopA is our CRM" }]),
     ...(health.invitesPending > 0
       ? [{ id: "invites", noun: "invites", text: `${plural(health.invitesPending, "invitation")} not accepted`, href: "/ollopa/settings/team" }]
       : []),

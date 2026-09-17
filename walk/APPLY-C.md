@@ -75,7 +75,7 @@ Thirteen areas, 102 items (from 66). New areas **Signals, scoring and personas**
 
 Applied: O1 (change 1), O3 (changes 14–18), L-48, L-51.
 
-"Ollopa is our CRM" as a declarable answer on the CRM group, which empties Home's set-up list at Fathom and is reversible; the Salesforce permission requirement **above** the sign-in button (including that Essentials cannot connect); pre-mapped rows marked **suggested** and counted in the tab label, confirmed by saving the step; errors **grouped by cause**, largest first, with "Retry these 340" and the nine named causes; every retry stating its count and batching, with the group count as the confirmation; the field-mapping removal consequence raised at the pair before Save with the full pull offered there; the hand-over named by kind (a webhook goes to the developer area); and one line saying approvals are not webhook events.
+"ollopA is our CRM" as a declarable answer on the CRM group, which empties Home's set-up list at Fathom and is reversible; the Salesforce permission requirement **above** the sign-in button (including that Essentials cannot connect); pre-mapped rows marked **suggested** and counted in the tab label, confirmed by saving the step; errors **grouped by cause**, largest first, with "Retry these 340" and the nine named causes; every retry stating its count and batching, with the group count as the confirmation; the field-mapping removal consequence raised at the pair before Save with the full pull offered there; the hand-over named by kind (a webhook goes to the developer area); and one line saying approvals are not webhook events.
 
 ## 8. `specs/16-workspace-setup.md`
 

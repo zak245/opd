@@ -909,7 +909,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       </span>
     ) : (
       <span className="text-sm">
-        <strong>Ollopa is your CRM.</strong> It is holding your contacts, companies and deals. Connect Salesforce or HubSpot if that changes.
+        <strong>ollopA is your CRM.</strong> It is holding your contacts, companies and deals. Connect Salesforce or HubSpot if that changes.
         <Button size="sm" variant="outline" className="ml-2 h-7 px-2 text-xs" onClick={() => { location.hash = "#/ollopa/connect/salesforce" }}>Connect a CRM</Button>
       </span>
     ),
@@ -1173,7 +1173,7 @@ export function Row({ row, admin, honest = true }: { row: SettingRow; admin: str
       : <Locked feature={row.label} plan={g!.plan} pricePerMonth={g!.pricePerMonth} what={g!.what}>{row.value}</Locked>
     : row.value
   const note = greyed
-    ? "If a setting is greyed out and you can't select it, your Ollopa admin hasn't provided you access."
+    ? "If a setting is greyed out and you can't select it, your ollopA admin hasn't provided you access."
     : row.note
 
   return (

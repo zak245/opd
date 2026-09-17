@@ -20,13 +20,13 @@ export interface KindDef {
 }
 
 export const KINDS: KindDef[] = [
-  { slug: "salesforce", kind: "Salesforce", group: "CRM", crm: true, what: "Sync contacts, companies, deals and activities with Salesforce, and decide what Ollopa may write, delete and merge there." },
-  { slug: "hubspot", kind: "HubSpot", group: "CRM", crm: true, what: "Sync contacts, companies, deals and engagements with HubSpot, and decide what Ollopa may write, delete and merge there." },
-  { slug: "google-calendar", kind: "Google Calendar", group: "Calendar", what: "Meetings booked in Ollopa land in your calendar, and your busy time is read back so nothing double-books." },
-  { slug: "microsoft-365", kind: "Microsoft 365 Calendar", group: "Calendar", what: "Meetings booked in Ollopa land in your calendar, and your busy time is read back so nothing double-books." },
+  { slug: "salesforce", kind: "Salesforce", group: "CRM", crm: true, what: "Sync contacts, companies, deals and activities with Salesforce, and decide what ollopA may write, delete and merge there." },
+  { slug: "hubspot", kind: "HubSpot", group: "CRM", crm: true, what: "Sync contacts, companies, deals and engagements with HubSpot, and decide what ollopA may write, delete and merge there." },
+  { slug: "google-calendar", kind: "Google Calendar", group: "Calendar", what: "Meetings booked in ollopA land in your calendar, and your busy time is read back so nothing double-books." },
+  { slug: "microsoft-365", kind: "Microsoft 365 Calendar", group: "Calendar", what: "Meetings booked in ollopA land in your calendar, and your busy time is read back so nothing double-books." },
   { slug: "slack", kind: "Slack", group: "Team and data", what: "Five events post to the channels you choose: a reply, a meeting, a deal moving, an agent needing approval, a sync error." },
   { slug: "enrichment", kind: "Northlight Data", group: "Team and data", what: "An enrichment provider fills email, mobile, job title and company size, in the order you set." },
-  { slug: "webhook", kind: "Webhook", group: "Team and data", what: "Ollopa POSTs to your endpoint when something happens, signed and attempt-numbered." },
+  { slug: "webhook", kind: "Webhook", group: "Team and data", what: "ollopA POSTs to your endpoint when something happens, signed and attempt-numbered." },
 ]
 
 export function kindBySlug(slug: string): KindDef | undefined {
@@ -109,7 +109,7 @@ export const OPERATORS = ["is", "is not", "contains", "is set", "is not set", "i
 
 export const CONDITION_FIELDS = ["Owner", "Stage", "Email status", "Created date", "Country", "Lead source"]
 
-/** The Ollopa fields a CRM object maps from: the entity's own fields plus this workspace's custom ones. */
+/** The ollopA fields a CRM object maps from: the entity's own fields plus this workspace's custom ones. */
 export function ollopaFields(seed: Seed, object: ObjectName): string[] {
   const standard: Record<ObjectName, string[]> = {
     Contacts: ["Name", "Email", "Email status", "Phone", "Title", "Seniority", "Department", "Company", "Owner", "Stage", "Location", "LinkedIn", "Source", "Score"],
@@ -170,7 +170,7 @@ export function draftKey(business: Business, slug: string): string {
   return `ollopa.connect.${business}.${slug}`
 }
 
-/** The workspace's answer to "Ollopa is our CRM", which is a decision and not an absence. */
+/** The workspace's answer to "ollopA is our CRM", which is a decision and not an absence. */
 export function noCrmKey(business: Business): string {
   return `ollopa.connect.${business}.ollopa-is-our-crm`
 }
@@ -221,7 +221,7 @@ export function startingDraft(business: Business, slug: string, user: string): C
     pushAll: !live,
     pushConditions: live ? [{ field: "Email status", op: "is", value: "Verified" }] : [],
     pushUnverified: live?.rules.pushUnverified ?? false,
-    sourceValue: live?.rules.sourceValue ?? "Ollopa",
+    sourceValue: live?.rules.sourceValue ?? "ollopA",
     onCrmDelete: live && /delete/i.test(live.rules.onDelete) ? "delete" : "unlink",
     onOllopaDelete: "nothing",
     onCrmMerge: "mirror",

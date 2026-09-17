@@ -1,6 +1,6 @@
 // The signal that brings a left-out page back for two weeks.
 //
-// This is the one place in Ollopa where the product changes a person's navigation on its own, and it
+// This is the one place in ollopA where the product changes a person's navigation on its own, and it
 // is bounded on purpose: it fires on an object-state event, it adds one item at the end of a group,
 // it appears on the next load of Home and never mid-task, it asks after two weeks, and either answer
 // is one click (RULES.md rule 8, the declared sidebar).

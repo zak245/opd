@@ -1,6 +1,6 @@
 # Build brief
 
-How Ollopa is built, so that many builders working in parallel produce one product. Every builder reads this first, then the spec for their node(s), then the map rows for those nodes.
+How ollopA is built, so that many builders working in parallel produce one product. Every builder reads this first, then the spec for their node(s), then the map rows for those nodes.
 
 ## Sources of truth, in order
 

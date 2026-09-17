@@ -1,4 +1,4 @@
-// Deterministic seed data for Ollopa. Same business, same rows, every time.
+// Deterministic seed data for ollopA. Same business, same rows, every time.
 //
 // One random stream per business, drawn in a fixed order, so a page renders the same rows on every
 // reload and two pages reading the same object agree. Everything the specs read lives here: the 31
@@ -1253,7 +1253,7 @@ export function seedFor(business: Business): Seed {
   const shippedView: SavedView = {
     id: "view-needs-enrichment", name: "Needs enrichment", object: "person", filters: [],
     columns: ["people.col.email", "people.col.phone", "people.col.company"],
-    sort: "", owner: "Ollopa", sharedWith: "everyone", defaultFor: [], alert: "off", shipped: true,
+    sort: "", owner: "ollopA", sharedWith: "everyone", defaultFor: [], alert: "off", shipped: true,
   }
   const halyardClients = Array.from(new Set(companies.map((c) => c.custom.Client).filter(Boolean))).slice(0, 3)
   const personViews: SavedView[] = business === "fathom"
@@ -1779,7 +1779,7 @@ export function seedFor(business: Business): Seed {
     return {
       id: `camp-${i + 1}`, name: lifecycle ? lifecycleNames[i % lifecycleNames.length] : campaignNames[i % campaignNames.length],
       kind: lifecycle ? "Lifecycle" : "Email", status, pausedBy: guardPaused ? "Bounce guard" : status === "Paused" ? mkUser : null,
-      subject: lifecycle ? "A quicker way to get your team started" : "What changed in Ollopa this quarter",
+      subject: lifecycle ? "A quicker way to get your team started" : "What changed in ollopA this quarter",
       previewText: "Two minutes, one number, no slides.", fromName: `${mkUser.split(" ")[0]} at ${b.name}`, fromMailbox: `marketing@${wsDomain}`,
       audienceId: aud?.id ?? "aud-1", audienceSize: aud?.size ?? 0,
       sendAt: lifecycle ? null : status === "Scheduled" ? shift(int(r, 1, 10)) : dateBack(r, 40),
@@ -1792,7 +1792,7 @@ export function seedFor(business: Business): Seed {
       links: many(linkCount, (k) => ({ url: `https://${wsDomain}${linkTargets[k % linkTargets.length]}`, clicks: clickSplit[k] ?? 0 })),
       attributionDays: lifecycle ? 14 : 30,
       sendsByDay: lifecycle ? many(30, (d) => ({ day: shift(-29 + d), sent: int(r, 4, 90) })) : [],
-      variants: i < 2 && business === "meridian" ? [{ label: "A", subject: "What changed in Ollopa this quarter", sent: Math.round(sent / 2), opened: Math.round(opened / 2), replied: 4 }, { label: "B", subject: "Three things your team asked for", sent: Math.round(sent / 2), opened: Math.round(opened / 2) + 40, replied: 7 }] : [],
+      variants: i < 2 && business === "meridian" ? [{ label: "A", subject: "What changed in ollopA this quarter", sent: Math.round(sent / 2), opened: Math.round(opened / 2), replied: 4 }, { label: "B", subject: "Three things your team asked for", sent: Math.round(sent / 2), opened: Math.round(opened / 2) + 40, replied: 7 }] : [],
       activity: many(int(r, 2, 5), (k) => ({ at: dateBack(r, 30), by: mkUser, what: pick(r, ["Audience attached", "Copy rewritten", "QA passed", "Scheduled", "Paused by the bounce guard"]) + (k === 0 ? "" : "") })),
       dealsCreated: int(r, 0, 12), pipelineAmount: int(r, 0, 12) * 24_000, pipelineInfluenced: int(r, 0, 20) * 24_000,
     }
@@ -1819,7 +1819,7 @@ export function seedFor(business: Business): Seed {
     { field: "Email", hitRate: 0.72, typicalCost: 2 }, { field: "Mobile", hitRate: 0.41, typicalCost: 9 },
     { field: "Job title", hitRate: 0.88, typicalCost: 1 }, { field: "Company size", hitRate: 0.93, typicalCost: 1 },
   ]
-  const providerOrder = business === "meridian" ? ["Northlight Data", "Beacon Verify", "Ollopa"] : business === "fathom" ? ["Northlight Data", "Ollopa"] : business === "ridgeline" ? ["Northlight Data", "Beacon Verify"] : ["Northlight Data", "Datakite"]
+  const providerOrder = business === "meridian" ? ["Northlight Data", "Beacon Verify", "ollopA"] : business === "fathom" ? ["Northlight Data", "ollopA"] : business === "ridgeline" ? ["Northlight Data", "Beacon Verify"] : ["Northlight Data", "Datakite"]
   const enrichmentJobs: EnrichmentJob[] = many(sz.enrichmentJobs, (i) => {
     const rows = int(r, 25, 4_000)
     const matched = Math.round(rows * (0.4 + r() * 0.5))
@@ -1889,7 +1889,7 @@ export function seedFor(business: Business): Seed {
     return {
       id, name: { research: "Research agent", outreach: "Outreach agent", scoring: "Scoring agent" }[id],
       on: !(business === "ridgeline" && id === "outreach"), owner: adminUser,
-      model: "Ollopa default model" + (business === "meridian" ? " (own key available)" : ""),
+      model: "ollopA default model" + (business === "meridian" ? " (own key available)" : ""),
       can: id === "research" ? ["Read public sources and write a brief with citations", "Write signals on a company", "Draft a shortlist"]
         : id === "outreach" ? ["Draft an email and save it", "Propose adding a person to a sequence", "Pre-classify a reply"]
           : ["Score a person or company", "Explain the score from its inputs"],
@@ -2223,9 +2223,9 @@ export function seedFor(business: Business): Seed {
       status: errorsToday > 0 ? "needs attention" : "syncing",
       auth: { user: adminUser, validUntil: shift(int(r, 40, 300)) },
       objects: isCrm ? [{ object: "Contacts", direction: "both" }, { object: "Companies", direction: "both" }, { object: "Deals", direction: business === "fathom" ? "off" : "both" }, { object: "Activities", direction: "push" }] : [],
-      mappings: isCrm ? [{ ollopa: "email", remote: "Email", direction: "both", writeRule: "Ollopa wins on conflict" }, { ollopa: "title", remote: "Title", direction: "both", writeRule: "Never overwrite a non-empty value" }, { ollopa: "stage", remote: "Stage", direction: "push", writeRule: "Ollopa wins on conflict" }, { ollopa: "amount", remote: "Amount", direction: "both", writeRule: "The CRM wins on conflict" }] : [],
+      mappings: isCrm ? [{ ollopa: "email", remote: "Email", direction: "both", writeRule: "ollopA wins on conflict" }, { ollopa: "title", remote: "Title", direction: "both", writeRule: "Never overwrite a non-empty value" }, { ollopa: "stage", remote: "Stage", direction: "push", writeRule: "ollopA wins on conflict" }, { ollopa: "amount", remote: "Amount", direction: "both", writeRule: "The CRM wins on conflict" }] : [],
       stageMap: isCrm ? DEAL_STAGES.map((s) => ({ ollopa: s, remote: s === "Closed won" ? "Closed Won" : s })) : [],
-      rules: { pullWhen: "Owner is a user in this workspace", pushWhen: "Email status is Verified", pushUnverified: false, sourceValue: "Ollopa", onDelete: "Keep the record and mark it out of sync", onMerge: "Keep the oldest record", matchKey: "Email, then CRM id" },
+      rules: { pullWhen: "Owner is a user in this workspace", pushWhen: "Email status is Verified", pushUnverified: false, sourceValue: "ollopA", onDelete: "Keep the record and mark it out of sync", onMerge: "Keep the oldest record", matchKey: "Email, then CRM id" },
       remoteCounts: { Contacts: b.counts.contacts + int(r, 200, 4_000), Companies: b.counts.companies + int(r, 50, 900), Deals: b.counts.openDeals + int(r, 20, 300) },
       lastSync: `${TODAY} ${clockTime(r)}`, nextSync: `${TODAY} ${clockTime(r)}`,
       recordsToday: isCrm ? int(r, 200, 1_400) : int(r, 0, 90), errorsToday, pausedBy: null,
@@ -2239,7 +2239,7 @@ export function seedFor(business: Business): Seed {
   })
   const errorMessages: [string, string][] = [
     ["Stage value Negotiation is not in the CRM picklist", "Add the value in the CRM, or map it to an existing one"],
-    ["Required field Industry is empty", "Fill the field in Ollopa, or make it optional in the CRM"],
+    ["Required field Industry is empty", "Fill the field in ollopA, or make it optional in the CRM"],
     ["Field Amount is read-only for the integration user", "Give the integration user edit rights on Amount"],
     ["Duplicate email: two CRM records match", "Merge the CRM records, or change the matching key"],
   ]

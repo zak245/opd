@@ -38,7 +38,7 @@ interface ParodyPage {
   tabs?: Tab[]
 }
 
-/** The sidebar, top to bottom, as memo §6 lists it, trimmed to Ollopa's boundary (spec 14 §5). */
+/** The sidebar, top to bottom, as memo §6 lists it, trimmed to ollopA's boundary (spec 14 §5). */
 const PAGES: ParodyPage[] = [
   { id: "get-started", label: "Get started", group: null },
 
@@ -109,7 +109,7 @@ const PAGES: ParodyPage[] = [
       { id: "slack", label: "Slack", items: ["int.slack"] },
       { id: "calendar", label: "Calendar", items: ["int.calendar"] },
       { id: "enrichment", label: "Enrichment", items: ["int.enrichment"] },
-      { id: "api", label: "Ollopa API", items: ["dev.api-keys", "dev.webhooks", "dev.mcp", "dev.cli", "me.mcp-token"] },
+      { id: "api", label: "ollopA API", items: ["dev.api-keys", "dev.webhooks", "dev.mcp", "dev.cli", "me.mcp-token"] },
       { id: "models", label: "AI models", items: ["ai.own-key"] },
     ],
   },
@@ -405,7 +405,7 @@ export function ParodyShell({ ctx, rows, present, strip }: {
       {/* The chrome above Settings: a search-or-ask bar, the credit pill that also lives on three
           other surfaces (memo §1.2 and §6), a bell and the avatar. */}
       <div className="flex shrink-0 items-center gap-3 border-b px-4 py-2">
-        <div className="min-w-0 flex-1 truncate rounded border px-2 py-1 text-xs text-muted-foreground">Search or ask a question in Ollopa ⌘K</div>
+        <div className="min-w-0 flex-1 truncate rounded border px-2 py-1 text-xs text-muted-foreground">Search or ask a question in ollopA ⌘K</div>
         <span data-item="parody.credit-pill" data-item-label="The credit balance pill" className="shrink-0 rounded-full border px-2 py-0.5 text-xs tabular-nums">
           {credits(seed.credits.balance)} credits
         </span>

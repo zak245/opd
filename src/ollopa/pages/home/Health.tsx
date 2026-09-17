@@ -95,7 +95,7 @@ export function needsAttention(lines: HealthLine[]): boolean {
 
 /**
  * The steps the workspace has not finished. A row leaves when its answer is done or declared —
- * "Ollopa is our CRM" removes the CRM row — and the door is removed, not disabled, when the list empties.
+ * "ollopA is our CRM" removes the CRM row — and the door is removed, not disabled, when the list empties.
  */
 export function SetupDoor({ rows }: { rows: SetupRow[] }) {
   const [declared, setDeclared] = useState<Record<string, string>>({})

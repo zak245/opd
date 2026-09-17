@@ -1,4 +1,4 @@
-// The shared primitives every Ollopa page codes against. Documented, with an example each, in README.md.
+// The shared primitives every ollopA page codes against. Documented, with an example each, in README.md.
 export { Door, DoorGroup, ExpandAll, useDoorState, FlatProvider, useFlat, type DoorProps } from "./Door"
 export { Panel, type PanelProps } from "./Panel"
 export { ConsequenceLine, consequenceText, type ConsequenceProps } from "./ConsequenceLine"
