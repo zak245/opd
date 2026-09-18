@@ -10,6 +10,7 @@ A research-backed knowledge base on how progressive disclosure works, why it wor
 4. **[12 Gaps we accept](knowledge-base/12-gaps-we-accept.md)**: the register of what is still unproven, what we stand on instead, and the smallest study that would close each gap.
 5. **[09 Expert voices](knowledge-base/09-expert-voices.md)**: who said what. Nielsen, Carroll, Apple HIG, Cooper, Norman, Tognazzini, Shneiderman, Lidwell, Krug, Raskin, Tidwell, Harris, Spool, McGovern, Rauch, the SwiftUI team, Linear, Anthropic, Google PAIR, Microsoft HAX.
 6. **[10 Glossary](knowledge-base/10-glossary.md)**: the vocabulary.
+7. **[13 Chains of work](knowledge-base/13-chains-of-work.md)**: the problem one level above screens. What B2B work looks like as chains of moves across related objects, what it costs when software cuts them, and what perfect would have to mean. Synthesis of six memos across eight domains; describes the problem and proposes nothing.
 
 ## Source memos (full research, verbatim quotes, bibliographies)
 
@@ -37,6 +38,19 @@ Eight passes run in September 2026, each closing one gap and looking only at evi
 | [13 Density and all-day users](knowledge-base/sources/13-sweep-density-all-day-users.md) | Dense expert interfaces versus disclosed ones: density toggles, clinical eye-tracking, four vendor reversals, shortcut teaching |
 | [14 Agent disclosure](knowledge-base/sources/14-sweep-agent-disclosure.md) | Agent traces, approval queues and rubber-stamping, explanation depth, confidence displays, cost readouts |
 | [15 Enterprise field studies](knowledge-base/sources/15-sweep-enterprise-field-studies.md) | Real B2B usage data: feature-adoption distributions, the Pendo corrections, within-tenant variation, feature removal, settings usage |
+
+## The chains-of-work research
+
+Six memos written in September 2026 against a draft model of work as chains of moves ([CHAINS-BRIEF.md](knowledge-base/sources/CHAINS-BRIEF.md)), with the instruction to test it, not confirm it. Each ends with a verdict per hypothesis and a section on what the model has no words for. Synthesised in [13 Chains of work](knowledge-base/13-chains-of-work.md).
+
+| Memo | Covers |
+|---|---|
+| [20 Theories of work structure](knowledge-base/sources/20-theories-of-work-structure.md) | Activity theory, GOMS, instrumental interaction, direct manipulation, locus of attention, information foraging, distributed cognition, sensemaking |
+| [21 Measured costs of cutting a chain](knowledge-base/sources/21-measured-costs-of-cutting-a-chain.md) | Task switching, interruption and resumption, working memory, split attention, latency, re-finding, coordinated views, animated transitions, enterprise telemetry |
+| [22 Clinical and support work](knowledge-base/sources/22-clinical-and-support-work.md) | Electronic health records (the audit-log and click-burden literature) and customer support tools |
+| [23 Finance and procurement](knowledge-base/sources/23-finance-and-procurement.md) | Accounts payable and the ERP (a 1.6-million-event purchase-to-pay log), procurement and supply chain |
+| [24 Engineering and operations](knowledge-base/sources/24-engineering-and-operations.md) | Issue tracking and project work, incident response and observability |
+| [25 People and revenue operations](knowledge-base/sources/25-people-and-revenue-operations.md) | Recruiting and HR, and CRM as one domain among eight |
 
 ## The short version
 
