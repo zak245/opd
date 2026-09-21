@@ -52,6 +52,26 @@ Everything else is education, and education lives on the library site, never in 
 
 **The test.** Cover every sentence on the surface with your hand. If the person can still do the task, delete the sentence.
 
-## 4. What is still open
+## 4. The visual grammar of controls
+
+The same act must look the same and sit in the same place everywhere, because the measured memory people have for controls is memory for position and for colour meaning, not for shape (memo 21: locations known to within 92 px; a known location worth about a 37% time saving; [memo 27](knowledge-base/sources/27-button-anatomy-states-and-placement.md) for the anatomy and state rules). Values are for our tokens in `src/index.css` and `src/components/ui/button.tsx`; the `Actions` primitive applies them by surface so a page never sets a size or a variant.
+
+**Size, one per surface.** Page header and dialog: the default height (36 px). Pane, card, row, bulk bar, queue footer: the small height (32 px). The extra-small size is for chips and pagers, never for an act. Emphasis never comes from size. On a phone every act has a hit region of at least 44 px whatever its drawn height (Apple 44 pt, Material 48 dp; WCAG 2.5.8 sets a floor of 24 px, which is too small for a lap).
+
+**Shape.** One radius everywhere, the token's 10 px. No pills. The label sets the width; a label is never truncated. Full width only on a phone sheet (section 1).
+
+**Labels.** Verb first, sentence case, no end punctuation, the object named when it is not obvious: "Add to list", "Mark won", "Set the next step". The same verb for the same act on every surface. A count travels in the label ("Approve 6 · 156 credits"); a sentence never does.
+
+**Icons.** No icon inside an act's button; the label is the icon. Icon-only controls are allowed for exactly three things, the "…" menu trigger, close, and the pane's previous and next, and each carries an accessible name and a tooltip. (Chosen: Pajamas forbids icon plus label; Carbon puts icons right; we avoid the question.)
+
+**States, and how each looks.** Rest: as the kind draws it. Hover: the fill or outline one step darker, nothing moves. Focus-visible: a 3 px ring that reaches 3:1 against both themes (WCAG 1.4.11), so the ring token gets a hue of its own rather than the grey it has today. Pressed: one step darker again, no scale. Loading: the label stays, a spinner joins it at the leading edge, the width does not change, and the control accepts no second press. Disabled: only for object state the person can change here, with the reason beside it, never a tooltip on a disabled control (chosen against Fluent, with Atlassian).
+
+**Colour has one meaning each.** The primary fill is neutral (near-black on light, near-white on dark) and belongs to the one primary act. The destructive hue belongs to destructive acts and their confirmations and to nothing else. Success is a text colour for "Done · Undo" feedback and is never a button (chosen: only Pajamas ships a success button). Warning belongs to ribbons and the health strip. No other element may borrow any of the four.
+
+**Placement, one place per surface type.** Page header: the acts row sits at the right of the title, primary first (leftmost in the row), then secondaries, then the destructive act in the "…" menu. Pane: a stack under the fields, primary first, destructive absent by rule. Card and row: the acts at the trailing edge of the card or row, primary first. Dialog: the affirmative at the trailing edge, Cancel before it. Bulk bar and queue footer: primary first at the leading edge. Form and settings panel: the Save bar at the bottom, Save at the leading edge (GOV.UK and Polaris left-align full-page forms). This map does not change by page or by seat; it is what the eye learns.
+
+**Motion.** Hover and press change colour in about 100 ms. "Done · Undo" fades in over 150 ms where the act was caused. Nothing slides, scales or bounces on a control, and all of it stops under `prefers-reduced-motion`.
+
+## 5. What is still open
 
 Where the sources disagree and we have not needed to choose: dialog button order beyond the affirmative at the trailing edge; whether a low-severity destructive act (remove from a list) needs the destructive colour at all. Decided if and when a screen forces it.
