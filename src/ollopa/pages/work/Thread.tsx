@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useRoute } from "@/app/router"
+import { href } from "@/app/router"
+import { useEdit } from "../../edits"
 import { Actions } from "../../ui/Actions"
 import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
@@ -23,6 +25,7 @@ import type { Session } from "../../session"
 import type { Disclosure } from "../../ui/useDisclosure"
 import { day, waiting } from "./format"
 import { contactIndex, dealFor, mailboxOf, savedReplies, type InboxReply } from "./data"
+import { sendReply, undoSend } from "./acts"
 
 export interface ThreadProps {
   session: Session
@@ -64,6 +67,8 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
   const [cc, setCc] = useState(false)
   const [signature, setSignature] = useState(true)
   const area = useRef<HTMLTextAreaElement>(null)
+  /** What was typed when Send was pressed, so undo can put it back. */
+  const pulled = useRef("")
   const heading = useRef<HTMLHeadingElement>(null)
 
   // Opening the thread moves focus to its heading; Reply on the row moves it to the composer.
@@ -94,6 +99,32 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
 
   const savedRepliesAtLevelOne = disclosure.level("inbox.thread.saved-replies") === 1
 
+  /**
+   * Sending acts at once and leaves ten seconds to pull it back, so it asks nothing first
+   * (DESIGN.md §2). What happened shows here, where it was caused, and on the reply's row in the
+   * list behind — one record in the shared store, so the two cannot say different things. Undo
+   * within the window puts the words back in the composer as well as stopping the send.
+   */
+  const sendState = useEdit("reply", reply.id)
+  const send = () => {
+    pulled.current = body
+    sendReply(reply.id, `to ${reply.contact} from ${mailbox}`)
+    setBody("")
+    setFromDraft(false)
+  }
+  const pullBack = () => {
+    if (!undoSend(reply.id)) return
+    say(`Nothing was sent to ${reply.contact}. Your words are back in the composer.`)
+  }
+
+  // Pulled back from here or from the row — it is one record either way — the words come back to
+  // the composer they were written in, because a draft nobody sent is still a draft.
+  useEffect(() => {
+    if (sendState || !pulled.current) return
+    setBody(pulled.current)
+    pulled.current = ""
+  }, [sendState])
+
   return (
     <section
       aria-label={`Thread with ${reply.contact}`}
@@ -102,10 +133,17 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
       <DoorGroup>
         <header className="shrink-0 border-b px-4 py-3">
           <div className="flex items-start gap-2">
+            {/* A destination, so a real link: it copies, it opens in a new tab, and the click
+                keeps the list where it is rather than reloading it (DESIGN.md §1). */}
             {onBack && (
-              <Button size="icon-sm" variant="ghost" className="md:hidden" aria-label="Back to the list" onClick={onBack}>
+              <a
+                href={href("/ollopa/inbox")}
+                aria-label="Back to the list"
+                className="-ml-1 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground md:hidden"
+                onClick={(e) => { if (!e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); onBack?.() } }}
+              >
                 <ArrowLeft className="size-4" />
-              </Button>
+              </a>
             )}
             <div className="min-w-0 flex-1">
               <h2 ref={heading} tabIndex={-1} className="text-base font-semibold outline-none">{reply.contact}</h2>
@@ -253,7 +291,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 items={[{
                   kind: "primary",
                   label: "Send",
-                  onClick: () => { say(`Reply sent to ${reply.contact} from ${mailbox}.`); setBody(""); setFromDraft(false) },
+                  onClick: send,
                   cost: "1 email",
                   consequence: `to ${reply.contact} from ${mailbox}`,
                   disabledBecause: body.trim() ? undefined : "Write something first",
@@ -295,6 +333,18 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 <Actions surface="card" items={[{ kind: "secondary", label: "Book a meeting", onClick: onBook }]} />
               </span>
             </div>
+
+            {/* What the send is doing, where it was caused. For ten seconds it can be pulled back;
+                after that it reads Sent and there is nothing to undo. */}
+            {sendState?.sending === true && (
+              <p role="status" aria-live="polite" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-xs">
+                <span className="min-w-0 flex-1">Sending · to {reply.contact} from {mailbox}</span>
+                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={pullBack}>Undo</Button>
+              </p>
+            )}
+            {sendState?.sent === true && (
+              <p role="status" className="mt-2 rounded-md bg-muted px-2.5 py-1.5 text-xs">Sent · to {reply.contact} from {mailbox}</p>
+            )}
           </div>
         </div>
       </DoorGroup>

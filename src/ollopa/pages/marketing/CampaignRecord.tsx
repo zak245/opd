@@ -128,7 +128,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   if (!c) {
     return (
       <div className="p-10">
-        <EmptyState title="That campaign is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Campaigns", onClick: () => navigate("/ollopa/campaigns") }]} />} />
+        <EmptyState title="That campaign is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "link", label: "Back to Campaigns", href: href("/ollopa/campaigns") }]} />} />
       </div>
     )
   }
@@ -477,18 +477,21 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         // Resuming and scheduling both send, and a send cannot be undone, so each carries its
         // confirmation with the verb in the affirmative and the consequence above it.
         <Actions surface="page" items={[
+          // The page header already carries the filled control for whichever of these applies, so
+          // here the same acts are outline: one filled control per surface, and never the same act
+          // filled twice on one page (DESIGN.md §1).
           ...(c.status === "Sending" || c.status === "Running"
-            ? [{ kind: "primary" as const, label: "Pause", onClick: pause, keys: "P" }]
+            ? [{ kind: "secondary" as const, label: "Pause", onClick: pause, keys: "P" }]
             : c.status === "Paused"
               ? [{
-                kind: "primary" as const, label: "Resume", onClick: resume, keys: "P",
+                kind: "secondary" as const, label: "Resume", onClick: resume, keys: "P",
                 irreversible: {
                   title: `Resume ${c.name}?`,
                   consequence: `Sending starts again to ${num(recipients)} people from ${c.fromMailbox}. Emails already sent cannot be recalled.`,
                   confirmLabel: "Resume sending",
                 },
               }]
-              : [{ kind: "primary" as const, label: needsSecond ? "Request approval" : "Schedule", onClick: () => setScheduleOpen(true) }]),
+              : [{ kind: "secondary" as const, label: needsSecond ? "Request approval" : "Schedule", onClick: () => setScheduleOpen(true) }]),
           { kind: "secondary" as const, label: "Send test", onClick: () => setTestOpen(true), keys: "T" },
         ]} />
       )}
@@ -530,7 +533,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         chips={<span className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{c.kind}</Badge><StatusBadge c={c} /></span>}
         ribbon={
           c.status === "Sending"
-            ? { tone: "warning", text: `Sending: ${num(c.sent)} of ${num(recipients)} · bounced ${pct(c.bounced, c.sent)} against warn ${BOUNCE_GUARD.warnPercent}% and pause ${BOUNCE_GUARD.pausePercent}%`, action: <Actions surface="card" items={[{ kind: "primary", label: "Pause", onClick: pause }]} /> }
+            ? { tone: "warning", text: `Sending: ${num(c.sent)} of ${num(recipients)} · bounced ${pct(c.bounced, c.sent)} against warn ${BOUNCE_GUARD.warnPercent}% and pause ${BOUNCE_GUARD.pausePercent}%`, action: <Actions surface="card" items={[{ kind: "secondary", label: "Pause", onClick: pause }]} /> }
             : c.pausedBy === "Bounce guard"
               ? {
                 tone: "error",

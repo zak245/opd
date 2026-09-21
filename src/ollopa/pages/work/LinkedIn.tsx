@@ -10,6 +10,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import type { Task } from "../../data/seed"
 import type { Session } from "../../session"
@@ -93,12 +94,22 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
         <p className="text-xs text-muted-foreground">
           ollopA cannot see LinkedIn. Marking complete records that you sent it and advances the sequence.
         </p>
-        <Button size="sm" className="mt-2" onClick={() => {
-          say(`${task.contact}: LinkedIn step marked complete. “${task.sequence ?? "The sequence"}” moves to the next step.`)
-          onComplete?.()
-        }}>
-          Mark complete
-        </Button>
+        {/* An outline, not a filled control: in the queue the page is the one task and Done in the
+            footer is the act it exists for, so this is a second way to the same place and never the
+            surface's one primary (DESIGN.md §1). */}
+        <div className="mt-2">
+          <Actions
+            surface="card"
+            items={[{
+              kind: "secondary",
+              label: "Mark complete",
+              onClick: () => {
+                say(`${task.contact}: LinkedIn step marked complete. “${task.sequence ?? "The sequence"}” moves to the next step.`)
+                onComplete?.()
+              },
+            }]}
+          />
+        </div>
       </div>
     </div>
   )

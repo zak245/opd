@@ -115,6 +115,99 @@ export const observe = (page) => page.evaluate(() => {
   }
 })
 
+/**
+ * DESIGN.md checks A and B, read off the DOM rather than off the source.
+ * A surface is a page header, a pane, a dialog or a card (DESIGN.md §1) — those four and no others,
+ * so a control in the middle of a page section is counted against no surface and reported apart.
+ */
+export const auditSurfaces = (page) => page.evaluate(() => {
+  const txt = (el, n = 170) => (el?.innerText ?? "").replace(/\s+/g, " ").trim().slice(0, n)
+  const name = (e) => txt(e, 56) || e.getAttribute("aria-label")?.slice(0, 56) || "(unnamed)"
+  const BTN = 'button[data-slot="button"]'
+  const isFilled = (e) => e.matches(BTN) && (e.getAttribute("data-variant") ?? "default") === "default"
+  const isDestructive = (e) => e.matches(BTN) && (e.getAttribute("data-variant") === "destructive"
+    || /(^|\s)text-destructive(\s|$)/.test(e.getAttribute("class") ?? ""))
+  const isControl = (e) => e.matches("button, a[href], input, select, textarea")
+  // offsetParent is not enough: content-visibility:hidden (a closed Door) keeps it non-null while
+  // the control has no box at all, which is how "Save" buttons inside closed steps looked visible.
+  const onScreen = (e) => e.getClientRects().length > 0 && !e.closest("[hidden]")
+
+  /** Any text sitting next to a control — used for a disabled control's reason, which may be short. */
+  const besideFor = (el) => {
+    const found = []
+    const push = (e) => { const t = txt(e, 200); if (t && !isControl(e) && !e.querySelector?.("button, a[href], input")) found.push(t) }
+    const wrap = el.parentElement
+    if (wrap && wrap.children.length <= 4 && !wrap.matches("header")) for (const c of wrap.children) if (c !== el) push(c)
+    if (el.nextElementSibling) push(el.nextElementSibling)
+    return [...new Set(found)]
+  }
+
+  /** Sentences sitting next to a control: the wrapper's own text, or the control's next sibling. */
+  const linesFor = (el) => {
+    const found = []
+    const push = (e) => { const t = txt(e, 200); if (t && /\s/.test(t) && !isControl(e) && !e.querySelector?.("button, a[href], input")) found.push(t) }
+    const wrap = el.parentElement
+    if (wrap && wrap.children.length <= 4 && !wrap.matches("header")) for (const c of wrap.children) if (c !== el) push(c)
+    if (el.nextElementSibling) push(el.nextElementSibling)
+    // A sentence, not a value and not a count: four words or more, with a verb-shaped word in it.
+    return [...new Set(found)].filter((t) => t.split(" ").length >= 4
+      && /\b(is|are|was|were|can|cannot|will|would|goes|go|sends?|send|spends?|charge[ds]?|stops?|starts?|takes?|keeps?|leaves?|moves?|needs?|has|have|only|behind|next|owns?|owned|change[sd]?|update[sd]?|add[eds]*|remove[sd]?|land[s]?)\b/i.test(t))
+  }
+
+  const look = (root, surface, label) => {
+    if (!root || !onScreen(root)) return null
+    const controls = Array.from(root.querySelectorAll("button, a[href]"))
+      .filter((e) => onScreen(e) && !e.closest("[role=menu]"))
+    const buttons = controls.filter((e) => e.matches(BTN))
+    const filled = buttons.filter(isFilled)
+    const destructive = buttons.filter(isDestructive)
+    const last = buttons[buttons.length - 1]
+    return {
+      surface, label,
+      filled: filled.map(name),
+      destructive: destructive.map((e) => ({ label: name(e), filled: isFilled(e), last: e === last })),
+      disabled: buttons.filter((e) => e.disabled).map((e) => ({ label: name(e), beside: besideFor(e).join(" / ") })),
+      // A destination that is a button instead of a link.
+      destinationsAsButtons: buttons.filter((e) => /^(open |see |go to |view |back to )|›/i.test(name(e))
+        && !/^open the page$|beside|^open the task beside$/i.test(name(e))).map(name),
+      links: controls.filter((e) => e.tagName === "A").length,
+      sentences: controls.flatMap((e) => linesFor(e).map((t) => ({ control: name(e), text: t }))),
+    }
+  }
+
+  const active = document.querySelector('[data-page-active="true"]')
+  const out = []
+  out.push(look(active?.querySelector("header"), "page header", txt(document.querySelector("header h1"), 40)))
+  const pane = document.querySelector('aside[aria-label*=" beside "]')
+  if (pane) out.push(look(pane, "pane", txt(pane.querySelector("h2"), 40)))
+  const dialog = document.querySelector('[role="dialog"]')
+  if (dialog) out.push(look(dialog, "dialog", txt(dialog.querySelector("h2"), 40) || "dialog"))
+  const cards = Array.from(active?.querySelectorAll('li[tabindex], [data-card-id], tbody tr, ul li[data-item], [role="listitem"]') ?? [])
+    .filter((e) => onScreen(e)).slice(0, 2)
+  for (const c of cards) out.push(look(c, "card", txt(c, 34)))
+  // Filled controls outside all four surfaces, for the record.
+  if (active) {
+    const stray = Array.from(active.querySelectorAll(BTN)).filter((e) => onScreen(e) && isFilled(e)
+      && !e.closest('header, aside[aria-label*=" beside "], [role="dialog"], li[tabindex], [data-card-id], tbody tr, ul li[data-item], [role="listitem"]'))
+    if (stray.length) out.push({ surface: "page body", label: "(outside the four surfaces)", filled: stray.map(name), destructive: [], disabled: [], destinationsAsButtons: [], links: 0, sentences: [] })
+  }
+  return out.filter(Boolean)
+})
+
+export function reportAudit(rows) {
+  for (const r of rows) {
+    note(`    [${r.surface}] ${r.label} · filled=${r.filled.length}${r.filled.length ? ` (${r.filled.join(", ")})` : ""} · destructive=${r.destructive.length} · links=${r.links ?? 0} · sentences=${r.sentences.length}`)
+    if (r.filled.length > 1) note(`      A-FAIL two or more filled: ${r.filled.join(" / ")}`)
+    for (const d of r.destructive) {
+      if (d.filled) note(`      A-FAIL destructive is filled: "${d.label}"`)
+      if (!d.last) note(`      A-CHECK destructive not last: "${d.label}"`)
+    }
+    for (const d of r.disabled) note(`      A-CHECK disabled: "${d.label}" — beside it: ${d.beside || "(nothing)"}`)
+    for (const b of r.destinationsAsButtons) note(`      A-CHECK destination as a button: "${b}"`)
+    for (const s of r.sentences) note(`      B-SENTENCE "${s.control}" → "${s.text}"`)
+  }
+}
+
 export function report(o, label) {
   note(`  ${label}`)
   note(`    hash      ${o.hash}`)
@@ -132,6 +225,12 @@ export function report(o, label) {
   note(`    mounted   ${o.mounted.map((m) => `${m.key}${m.active ? "*" : ""}${m.hidden ? " hidden" : ""}${m.inert ? " inert" : ""}${m.display === "none" ? " DISPLAY-NONE" : ""}@${m.scroll}`).join(" , ")}`)
   if (o.renders.length) note(`    renders   ${o.renders.join(" · ")}`)
   note(`    h-scroll  doc=${o.docScrollW}`)
+}
+
+/** report(), plus the DESIGN.md surface audit for whatever is on screen. */
+export async function reportWithAudit(page, o, label) {
+  report(o, label)
+  reportAudit(await auditSurfaces(page))
 }
 
 /** What the page said to the console during this walk, de-duplicated. */
@@ -153,7 +252,7 @@ export { base, appendFileSync }
 
 /* ============================================================== the chains, one function each */
 
-const DIR = process.env.OPD_SHOTS ?? "shots/chains/review5"
+const DIR = process.env.OPD_SHOTS ?? "shots/chains/review6"
 /** The pane, told apart from the shell's own <aside> sidebar by its aria-label. */
 export const PANE = 'aside[aria-label*=" beside "]' 
 
@@ -314,7 +413,7 @@ export async function chain1(w, h) {
   await page.evaluate(() => document.querySelector('[data-page-active="true"] #seq-people')?.scrollIntoView({ block: "start" }))
   await wait(500)
   const scroll0 = await page.evaluate(() => document.querySelector("[data-page]")?.scrollTop)
-  report(await observe(page), "1. the sequence, enrolled list in view")
+  await reportWithAudit(page, (await observe(page)), "1. the sequence, enrolled list in view")
   note(`    scroll    ${scroll0}`)
   await shot("sequence")
 
@@ -327,20 +426,20 @@ export async function chain1(w, h) {
   await page.keyboard.press("Enter")
   await wait(500)
   const o2 = await observe(page)
-  report(o2, "2. Enter on the first enrolled person — the pane")
+  await reportWithAudit(page, o2, "2. Enter on the first enrolled person — the pane")
   note(`    scroll    ${await page.evaluate(() => document.querySelector('[data-page-active="true"]')?.scrollTop)} (was ${scroll0})`)
   await shot("pane")
 
   // 3. ]
   await page.keyboard.press("BracketRight")
   await wait(400)
-  report(await observe(page), "3. ] — next in the enrolled list")
+  await reportWithAudit(page, (await observe(page)), "3. ] — next in the enrolled list")
   await shot("next")
 
   // 4. [
   await page.keyboard.press("BracketLeft")
   await wait(400)
-  report(await observe(page), "4. [ — previous, back to the first")
+  await reportWithAudit(page, (await observe(page)), "4. [ — previous, back to the first")
   await shot("previous")
 
   // 4b. Act from the pane, and watch the row behind it.
@@ -382,7 +481,7 @@ export async function chain1(w, h) {
   note(`    row moved ${rowBefore === rowAfter ? "NO — the page behind still says the old thing" : "yes"}`)
   note(`    renders   ${rBefore.join(" · ")}  →  ${oAct.renders.join(" · ")}`)
   note(`    heading   ${await page.evaluate(() => { const h = Array.from(document.querySelectorAll('[data-page-active="true"] h3')).find((x) => /^People \(/.test(x.innerText)); return h ? h.innerText.replace(/\s+/g, " ").trim() : "(no People heading)" })}`)
-  report(oAct, "4b. after the pane's action")
+  await reportWithAudit(page, oAct, "4b. after the pane's action")
   await shot("acted")
 
   // 5. Open the page, by keyboard, counted from wherever the action left focus.
@@ -391,7 +490,7 @@ export async function chain1(w, h) {
   if (op.tabs === 0) { await clickText(page, "Open the page", PANE); note('    (not reachable by keyboard; clicked it)') }
   else await page.keyboard.press("Enter")
   await wait(800)
-  report(await observe(page), "5. Open the page — the contact record with the trail")
+  await reportWithAudit(page, (await observe(page)), "5. Open the page — the contact record with the trail")
   await shot("page")
 
   // 6. back by the crumb, by keyboard, counted from wherever the arrival put focus.
@@ -401,7 +500,7 @@ export async function chain1(w, h) {
   else await page.keyboard.press("Enter")
   await wait(900)
   const o6 = await observe(page)
-  report(o6, "6. the crumb — back on the sequence")
+  await reportWithAudit(page, o6, "6. the crumb — back on the sequence")
   note(`    scroll    ${await page.evaluate(() => document.querySelector('[data-page-active="true"]')?.scrollTop)} (was ${scroll0})`)
   note(`    focus vis ${await focusInfo(page)}`)
   await shot("back")
@@ -415,17 +514,17 @@ export async function chain2(w, h) {
   const { b, page } = await browser(w, h)
   const shot = shotter(page, `${DIR}/02-campaign`, w)
   await signIn(page, "ridgeline", "marketer", "/ollopa/campaigns/camp-4")
-  report(await observe(page), "1. the campaign")
+  await reportWithAudit(page, (await observe(page)), "1. the campaign")
   await shot("campaign")
 
   note(`    ok=${await clickText(page, "Read the audience beside this")}  (the audience, beside)`)
   await wait(600)
-  report(await observe(page), "2. the audience beside the campaign")
+  await reportWithAudit(page, (await observe(page)), "2. the audience beside the campaign")
   await shot("audience-beside")
 
   note(`    ok=${await clickText(page, "Open the page", PANE)}`)
   await wait(900)
-  report(await observe(page), "3. the audience record, campaign on the trail")
+  await reportWithAudit(page, (await observe(page)), "3. the audience record, campaign on the trail")
   await shot("audience-page")
 
   const rows = await rowsOf(page, "")
@@ -438,12 +537,12 @@ export async function chain2(w, h) {
     }, person.id)
     await wait(600)
   } else note("    !! no person row found on the audience record")
-  report(await observe(page), "4. a person beside the audience")
+  await reportWithAudit(page, (await observe(page)), "4. a person beside the audience")
   await shot("person-beside")
 
   note(`    ok=${await clickText(page, "Open the page", PANE)}`)
   await wait(900)
-  report(await observe(page), "5. the person's record, two crumbs")
+  await reportWithAudit(page, (await observe(page)), "5. the person's record, two crumbs")
   await shot("person-page")
 
   // back to the audience, then back to the campaign
@@ -451,12 +550,12 @@ export async function chain2(w, h) {
   note(`    keyboard  arrived on ${c1.from}; audience crumb is ${c1.how} away → ${c1.on}`)
   if (c1.tabs !== 0) await page.keyboard.press("Enter"); else await page.evaluate(() => document.querySelectorAll('nav[aria-label="Your path"] ol button')[1]?.click())
   await wait(900)
-  report(await observe(page), "6. back on the audience")
+  await reportWithAudit(page, (await observe(page)), "6. back on the audience")
   await shot("back-audience")
 
   await page.evaluate(() => document.querySelector('nav[aria-label="Your path"] ol button')?.click())
   await wait(900)
-  report(await observe(page), "7. back on the campaign")
+  await reportWithAudit(page, (await observe(page)), "7. back on the campaign")
   await shot("back-campaign")
   dumpConsole(page); await b.close()
 }
@@ -469,7 +568,7 @@ export async function chain3(w, h) {
   const shot = shotter(page, `${DIR}/03-company`, w)
   await signIn(page, "meridian", "ae", "/ollopa/companies/co-1")
   const o1 = await observe(page)
-  report(o1, "1. Northwind Analytics, the biggest account in the seed")
+  await reportWithAudit(page, o1, "1. Northwind Analytics, the biggest account in the seed")
   const contacts = await page.evaluate(() => {
     const t = (e) => (e?.innerText || "").replace(/\s+/g, " ").trim()
     const h = Array.from(document.querySelectorAll('[data-page-active="true"] h3')).find((x) => /Contacts at this company/.test(t(x)))
@@ -511,28 +610,28 @@ export async function chain3(w, h) {
     await wait(600)
   }
   const o3 = await observe(page)
-  report(o3, "2. the contact beside the company")
+  await reportWithAudit(page, o3, "2. the contact beside the company")
   await shot("beside")
 
   // act: the first real action the pane offers
   await actInPane(page)
-  report(await observe(page), "3. after the action — is the effect visible where it was caused?")
+  await reportWithAudit(page, (await observe(page)), "3. after the action — is the effect visible where it was caused?")
   note(`    page says ${await page.evaluate(() => (document.querySelector('[data-page-active="true"]')?.innerText || "").replace(/\s+/g, " ").match(/.{0,80}(sequence|added|Added).{0,60}/)?.[0] ?? "(no mention)")}`)
   await shot("acted")
 
   await page.keyboard.press("BracketRight")
   await wait(500)
-  report(await observe(page), "4. ] — the next contact at this company")
+  await reportWithAudit(page, (await observe(page)), "4. ] — the next contact at this company")
   await shot("next")
 
   await clickText(page, "Open the page", PANE)
   await wait(900)
-  report(await observe(page), "5. Open the page")
+  await reportWithAudit(page, (await observe(page)), "5. Open the page")
   await shot("page")
 
   await page.evaluate(() => document.querySelector('nav[aria-label="Your path"] ol button, nav[aria-label="Your path"] button')?.click())
   await wait(900)
-  report(await observe(page), "6. back on the company")
+  await reportWithAudit(page, (await observe(page)), "6. back on the company")
   await shot("back")
   dumpConsole(page); await b.close()
 }
@@ -546,7 +645,7 @@ export async function chain4(w, h) {
   await signIn(page, "meridian", "admin", "/ollopa/sequences/seq-1")
   await page.evaluate(() => document.querySelector('[data-page-active="true"] #seq-settings')?.scrollIntoView({ block: "start" }))
   await wait(400)
-  report(await observe(page), "1. the sequence's sending settings")
+  await reportWithAudit(page, (await observe(page)), "1. the sequence's sending settings")
   const links = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] a[href*="settings"]')).map((a) => `${a.innerText.replace(/\s+/g, " ").trim()} → ${a.getAttribute("href")}`))
   note(`    links     ${links.join(" | ")}`)
   await shot("sequence")
@@ -558,13 +657,13 @@ export async function chain4(w, h) {
   else await clickText(page, "Bounce guard thresholds (Settings)")
   await wait(1200)
   const o2 = await observe(page)
-  report(o2, "2. Settings, arrived by follow")
+  await reportWithAudit(page, o2, "2. Settings, arrived by follow")
   note(`    door open ${await page.evaluate(() => { const d = document.querySelector('[data-page-active="true"] [data-door]'); return Array.from(document.querySelectorAll('[data-page-active="true"] [aria-expanded="true"]')).map((x) => x.innerText.replace(/\s+/g, " ").slice(0, 40)).join(" | ") })}`)
   await shot("settings")
 
   await page.evaluate(() => document.querySelector('nav[aria-label="Your path"] ol button, nav[aria-label="Your path"] button')?.click())
   await wait(1000)
-  report(await observe(page), "3. back on the sequence, at the row we left")
+  await reportWithAudit(page, (await observe(page)), "3. back on the sequence, at the row we left")
   await shot("back")
   dumpConsole(page); await b.close()
 }
@@ -578,20 +677,20 @@ export async function chain5(w, h) {
   await signIn(page, "meridian", "admin", "/ollopa/settings")
   const rows = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] a, [data-page-active="true"] button')).map((b) => b.innerText.replace(/\s+/g, " ").trim()).filter((t) => /team works|answers|set-up|setup/i.test(t)))
   note(`    candidates ${rows.join(" | ")}`)
-  report(await observe(page), "1. Settings")
+  await reportWithAudit(page, (await observe(page)), "1. Settings")
   await shot("settings")
 
   let ok = await clickText(page, "How your team works")
   if (!ok) ok = await page.evaluate(() => { const el = Array.from(document.querySelectorAll('[data-page-active="true"] a,[data-page-active="true"] button')).find((b) => /team works/i.test(b.innerText)); el?.click(); return !!el })
   await wait(900)
-  report(await observe(page), "2. How your team works")
+  await reportWithAudit(page, (await observe(page)), "2. How your team works")
   await shot("how-your-team-works")
 
   const changed = await page.evaluate(() => { const el = Array.from(document.querySelectorAll('[data-page-active="true"] a,[data-page-active="true"] button')).find((b) => /change the answers|change these answers|answers/i.test(b.innerText)); el?.click(); return el?.innerText.replace(/\s+/g, " ").trim() ?? null })
   note(`    clicked   ${changed ?? "(no 'change the answers' control found)"}`)
   await wait(1200)
   const o3 = await observe(page)
-  report(o3, "3. the set-up questions — inside the shell, or fallen out of it?")
+  await reportWithAudit(page, o3, "3. the set-up questions — inside the shell, or fallen out of it?")
   note(`    sidebar   ${await page.evaluate(() => !!document.querySelector('nav[aria-label="Pages"], aside nav, [data-sidebar]') || /Home/.test(document.body.innerText.slice(0, 400)))}`)
   note(`    chrome    ${await page.evaluate(() => (document.body.innerText || "").replace(/\s+/g, " ").slice(0, 200))}`)
   await shot("setup")
@@ -616,7 +715,7 @@ export async function chain5(w, h) {
   note(`    finished  by "${finished}"`)
   await wait(1500)
   const o4 = await observe(page)
-  report(o4, "4. after finishing")
+  await reportWithAudit(page, o4, "4. after finishing")
   note(`    notice    ${await page.evaluate(() => { const m = (document.body.innerText || "").replace(/\s+/g, " ").match(/[^.]{0,90}(moved|added to your sidebar|no longer in|now in your sidebar)[^.]{0,90}/i); return m ? m[0].trim() : "(no line saying what moved)" })}`)
   note(`    sidebar   ${await page.evaluate(() => Array.from(document.querySelectorAll('aside nav a, nav a')).map((a) => a.innerText.replace(/\s+/g, " ").trim()).filter(Boolean).join(" · ").slice(0, 220))}`)
   await shot("finished")
@@ -630,7 +729,7 @@ export async function chain6(w, h) {
   const { b, page } = await browser(w, h)
   const shot = shotter(page, `${DIR}/06-deals`, w)
   await signIn(page, "meridian", "ae", "/ollopa/deals")
-  report(await observe(page), "1. the board")
+  await reportWithAudit(page, (await observe(page)), "1. the board")
   await shot("board")
   const cards = await rowsOf(page, "")
   const card = cards.find((c) => /^d-/.test(c.id))
@@ -656,7 +755,7 @@ export async function chain6(w, h) {
   }, card.id)
   await wait(900)
   const o2 = await observe(page)
-  report(o2, "2. a click on the card body — the quick look")
+  await reportWithAudit(page, o2, "2. a click on the card body — the quick look")
   note(`    drawer    ${await page.evaluate(() => { const d = document.querySelector('[role="dialog"]'); return d ? (d.innerText || "").replace(/\s+/g, " ").slice(0, 260) : "(nothing opened)" })}`)
   note(`    doors in  ${await page.evaluate(() => document.querySelectorAll('[role="dialog"] [data-door]').length)}`)
   await shot("quick-look")
@@ -664,12 +763,12 @@ export async function chain6(w, h) {
   const opened = await page.evaluate(() => { const el = Array.from(document.querySelectorAll('[role="dialog"] button, [role="dialog"] a')).find((x) => /open/i.test(x.innerText)); el?.click(); return el?.innerText.replace(/\s+/g, " ").trim() ?? null })
   note(`    opened by "${opened}"`)
   await wait(1000)
-  report(await observe(page), "3. the deal record")
+  await reportWithAudit(page, (await observe(page)), "3. the deal record")
   await shot("deal")
 
   await page.evaluate(() => document.querySelector('nav[aria-label="Your path"] ol button, nav[aria-label="Your path"] button')?.click())
   await wait(1000)
-  report(await observe(page), "4. back on the board, the card lit")
+  await reportWithAudit(page, (await observe(page)), "4. back on the board, the card lit")
   await shot("back-board")
 
   // The company beside, from the board card
@@ -681,7 +780,7 @@ export async function chain6(w, h) {
   }, card.id)
   note(`    company   opened from the card by "${co}"`)
   await wait(800)
-  report(await observe(page), "5. board card › company beside")
+  await reportWithAudit(page, (await observe(page)), "5. board card › company beside")
   await shot("board-company")
   await page.keyboard.press("Escape")
   await wait(500)
@@ -696,7 +795,7 @@ export async function chain6(w, h) {
     await page.evaluate((id) => { const e = document.querySelector(`[data-page-active="true"] [data-item="${id}"]`); (e.matches("button,a") ? e : e.querySelector("button,a"))?.click() }, contacts[0])
     await wait(700)
   }
-  report(await observe(page), "6. deal record › contact beside")
+  await reportWithAudit(page, (await observe(page)), "6. deal record › contact beside")
   await shot("deal-contact")
   await page.keyboard.press("Escape")
   await wait(500)
@@ -714,7 +813,7 @@ export async function chain6(w, h) {
   note(`    company   the deal record's company control is "${link}"`)
   await wait(1000)
   const o7 = await observe(page)
-  report(o7, "7. deal record › company — beside, or a whole page with no way back?")
+  await reportWithAudit(page, o7, "7. deal record › company — beside, or a whole page with no way back?")
   await shot("deal-company")
   dumpConsole(page); await b.close()
 }
@@ -728,7 +827,7 @@ export async function chain7(w, h) {
 
   // --- Inbox
   await signIn(page, "meridian", "sdr", "/ollopa/inbox")
-  report(await observe(page), "1. Inbox")
+  await reportWithAudit(page, (await observe(page)), "1. Inbox")
   await shot("inbox")
   const replies = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [id^="reply-"]')).map((e) => `${e.id}/${e.getAttribute("data-item")}:${e.getAttribute("data-item-label")}`))
   note(`    replies   ${replies.join(" | ")}`)
@@ -752,7 +851,7 @@ export async function chain7(w, h) {
   note(`    chose     "${picked}"`)
   await wait(800)
   const o2 = await observe(page)
-  report(o2, "2. the contact beside the reply")
+  await reportWithAudit(page, o2, "2. the contact beside the reply")
   await shot("inbox-contact")
 
   // The one in-pane step: the deal behind the reply, from inside the contact's pane or from the
@@ -768,7 +867,7 @@ export async function chain7(w, h) {
   })
   note(`    nested    "${nested ?? "(no deal offered inside the pane)"}"`)
   await wait(800)
-  report(await observe(page), "3. one step inside the pane")
+  await reportWithAudit(page, (await observe(page)), "3. one step inside the pane")
   note(`    header    ${await page.evaluate(() => (document.querySelector('aside[aria-label*=" beside "] header')?.innerText || "").replace(/\s+/g, " ").slice(0, 120))}`)
   await shot("inbox-nested")
 
@@ -779,12 +878,12 @@ export async function chain7(w, h) {
 
   await page.evaluate(() => { const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] header button, aside[aria-label*=" beside "] header a')).find((x) => x.innerText.trim() && !/Open the page/.test(x.innerText)); el?.click() })
   await wait(700)
-  report(await observe(page), "4. the one step back inside the pane")
+  await reportWithAudit(page, (await observe(page)), "4. the one step back inside the pane")
   await shot("inbox-back")
 
   await page.keyboard.press("BracketRight")
   await wait(600)
-  report(await observe(page), "5. ] — the next reply")
+  await reportWithAudit(page, (await observe(page)), "5. ] — the next reply")
   await shot("inbox-next")
   await page.keyboard.press("Escape")
   await wait(500)
@@ -792,24 +891,24 @@ export async function chain7(w, h) {
 
   // --- Tasks
   await signIn(page, "meridian", "sdr", "/ollopa/tasks")
-  report(await observe(page), "6. Tasks")
+  await reportWithAudit(page, (await observe(page)), "6. Tasks")
   await shot("tasks")
   const first = await page.evaluate(() => { const e = Array.from(document.querySelectorAll('[data-page-active="true"] [data-item^="c-"]')).find((x) => x.offsetParent !== null); const btn = e?.matches("button,a") ? e : e?.querySelector("button,a"); const name = btn?.innerText.replace(/\s+/g, " ").trim(); btn?.click(); return name ?? null })
   note(`    opened    "${first}"`)
   await wait(800)
   const o7 = await observe(page)
-  report(o7, "7. the contact beside the task")
+  await reportWithAudit(page, o7, "7. the contact beside the task")
   await shot("task-contact")
   const doneBtn = await page.evaluate(() => { const el = Array.from(document.querySelectorAll('[data-page-active="true"] button')).find((x) => /^(Done|Mark complete)$/i.test(x.innerText.trim()) && x.offsetParent !== null); el?.click(); return el?.innerText.trim() ?? null })
   note(`    done      clicked "${doneBtn}"`)
   await wait(1000)
-  report(await observe(page), "8. after Done — the next task, and where focus went")
+  await reportWithAudit(page, (await observe(page)), "8. after Done — the next task, and where focus went")
   note(`    now on    ${await page.evaluate(() => (document.querySelector('[data-page-active="true"] h3')?.innerText || "").replace(/\s+/g, " ").slice(0, 60))}`)
   await shot("task-done")
 
   // --- Home
   await signIn(page, "meridian", "sdr", "/ollopa")
-  report(await observe(page), "9. Home")
+  await reportWithAudit(page, (await observe(page)), "9. Home")
   await shot("home")
   const hr = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-item]')).filter((e) => e.offsetParent !== null).map((e) => `${e.getAttribute("data-item")}:${(e.innerText || "").replace(/\s+/g, " ").slice(0, 26)}`))
   note(`    items     ${hr.length}: ${hr.slice(0, 8).join(" | ")}`)
@@ -822,11 +921,11 @@ export async function chain7(w, h) {
   })
   note(`    home reply ${replyRow ?? "(no reply row with data-item r-* on Home)"}`)
   await wait(900)
-  report(await observe(page), "10. a Home reply, opened")
+  await reportWithAudit(page, (await observe(page)), "10. a Home reply, opened")
   await shot("home-open")
   const back = await page.evaluate(() => { const el = document.querySelector('nav[aria-label="Your path"] ol button, nav[aria-label="Your path"] button'); el?.click(); return !!el })
   await wait(1100)
-  report(await observe(page), `11. back on Home by the crumb (${back})`)
+  await reportWithAudit(page, (await observe(page)), `11. back on Home by the crumb (${back})`)
   await shot("home-back")
   dumpConsole(page); await b.close()
 }

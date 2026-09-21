@@ -62,7 +62,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   if (!a) {
     return (
       <div className="p-10">
-        <EmptyState title="That audience is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Campaigns", onClick: () => navigate("/ollopa/campaigns") }]} />} />
+        <EmptyState title="That audience is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "link", label: "Back to Campaigns", href: href("/ollopa/campaigns") }]} />} />
       </div>
     )
   }
@@ -70,7 +70,13 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   const counts = suppressionCounts(a)
   const net = netSize(a)
   const patch = (p: Partial<Audience>) => patchRow(session.business, "audiences", a.id, p)
-  const builtFor = a.usedBy[0]
+  /**
+   * Which campaigns use this audience *now*, read from the campaigns this session is looking at and
+   * not from the seed's frozen list — so deleting the draft that used it frees the audience here, in
+   * place, instead of leaving a page that still claims to be blocked by a campaign that is gone.
+   */
+  const usedBy = rows.campaigns.filter((c) => c.audienceId === a.id).map((c) => c.name)
+  const builtFor = usedBy[0]
   const campaign = rows.campaigns.find((c) => c.name === builtFor)
 
   /* ------------------------------------------------------------------- the two ways off this page */
@@ -117,7 +123,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
 
   /* -------------------------------------------------------------------------------- the header */
 
-  const usedByIds = a.usedBy.map((name) => rows.campaigns.find((x) => x.name === name)?.id ?? "").filter(Boolean)
+  const usedByIds = usedBy.map((name) => rows.campaigns.find((x) => x.name === name)?.id ?? "").filter(Boolean)
 
   const fields: RecordField[] = [
     { key: "type", label: "Type", value: a.type },
@@ -290,22 +296,33 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
         title={{ value: a.name, onRename: (v) => { patch({ name: v }); toast("Saved · Audience name") } }}
         chips={<Badge variant="secondary">{a.mode === "live" ? "Live" : "Frozen"}</Badge>}
         fields={fields}
-        actions={{
-          primary: [{ label: "Rebuild now", onClick: () => { patch({ lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(net)} after suppressions.`) } }],
-          secondary: [{ label: "Hand to sales", onClick: () => setHandOff(true) }],
-          destructive: {
-            label: "Delete audience",
-            consequence: a.usedBy.length
-              ? `${a.usedBy[0]} uses this audience, so it cannot be deleted while that campaign exists.`
-              : "Removes the audience. The people stay; only the set goes.",
-            onConfirm: () => {
-              if (a.usedBy.length) { toast(`${a.name} is used by ${a.usedBy[0]} and was not deleted.`); return }
-              removeRow(session.business, a.id)
-              toast(`${a.name} deleted.`)
-              navigate("/ollopa/campaigns")
-            },
-          },
-        }}
+        actions={{ primary: [], secondary: [] }}
+        headerActions={
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Actions surface="page" items={[
+              { kind: "primary", label: "Rebuild now", onClick: () => { patch({ lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(net)} after suppressions.`) } },
+              { kind: "secondary", label: "Hand to sales", onClick: () => setHandOff(true) },
+              // A campaign using this audience is what stops it being deleted, and it is not
+              // something this page can change — so there is no control at all, and the sentence
+              // beside names the campaign to delete first (DESIGN.md §1).
+              ...(usedBy.length === 0
+                ? [{
+                  kind: "destructive" as const,
+                  label: "Delete audience",
+                  onClick: () => { removeRow(session.business, a.id); toast(`${a.name} deleted.`); navigate("/ollopa/campaigns") },
+                  irreversible: {
+                    title: `Delete ${a.name}?`,
+                    consequence: "Removes the audience and its suppression rules. The people stay; only the set goes.",
+                    confirmLabel: "Delete the audience",
+                  },
+                }]
+                : []),
+            ]} />
+            {usedBy.length > 0 && (
+              <p className="text-xs text-muted-foreground">Used by {usedBy[0]}; delete that campaign first</p>
+            )}
+          </div>
+        }
         main={{
           kind: "sections",
           label: "Audience",
@@ -320,12 +337,12 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           ],
         }}
         side={[{
-          id: "used-by", title: "Campaigns using this audience", count: a.usedBy.length,
-          children: a.usedBy.length === 0
+          id: "used-by", title: "Campaigns using this audience", count: usedBy.length,
+          children: usedBy.length === 0
             ? <p className="text-sm text-muted-foreground">No campaign uses it yet.</p>
             : (
               <ul className="space-y-1 text-sm">
-                {a.usedBy.map((name) => {
+                {usedBy.map((name) => {
                   const cc = rows.campaigns.find((x) => x.name === name)
                   if (!cc) return <li key={name}>{name}</li>
                   return (

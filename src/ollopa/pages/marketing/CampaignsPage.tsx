@@ -243,13 +243,15 @@ export function CampaignsPage({ session }: { session: Session }) {
     { key: "name", header: "Campaign", sortBy: (c) => c.name, className: "min-w-[13rem] whitespace-normal", cell: (c) => (
       <div className="min-w-0">
         <div>
-          <button
-            type="button"
+          {/* The name is the destination, so it is a real link: ⌘-click opens a new tab, and the
+              ordinary click follows, keeping this page and this row on the trail. */}
+          <a
+            href={href(`/ollopa/campaigns/${c.id}`)}
             className="font-medium hover:underline"
-            onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/campaigns/${c.id}`, c.id) }}
+            onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/campaigns/${c.id}`, c.id) } }}
           >
             {c.name}
-          </button>
+          </a>
           <span className="text-muted-foreground"> · {c.kind}</span>
         </div>
         <div className="truncate text-xs text-muted-foreground">{c.subject}</div>
@@ -298,7 +300,7 @@ export function CampaignsPage({ session }: { session: Session }) {
   const audienceColumns: GridColumn<Audience>[] = [
     { key: "name", header: "Audience", sortBy: (a) => a.name, className: "min-w-[11rem] whitespace-normal", cell: (a) => (
       <div className="min-w-0">
-        <button type="button" className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/audiences/${a.id}`, a.id) }}>{a.name}</button>
+        <a href={href(`/ollopa/audiences/${a.id}`)} className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/audiences/${a.id}`, a.id) } }}>{a.name}</a>
         <ActedNote business={session.business} kind="audience" id={a.id} edit={audienceEdits[a.id]} />
       </div>
     ) },
@@ -327,7 +329,7 @@ export function CampaignsPage({ session }: { session: Session }) {
   const formColumns: GridColumn<Form>[] = [
     { key: "name", header: "Form", sortBy: (f) => f.name, className: "min-w-[11rem] whitespace-normal", cell: (f) => (
       <div className="min-w-0">
-        <button type="button" className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/forms/${f.id}`, f.id) }}>{f.name}</button>
+        <a href={href(`/ollopa/forms/${f.id}`)} className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/forms/${f.id}`, f.id) } }}>{f.name}</a>
         <ActedNote business={session.business} kind="form" id={f.id} edit={formEdits[f.id]} />
       </div>
     ) },

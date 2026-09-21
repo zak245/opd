@@ -20,6 +20,7 @@ import { useRoute } from "@/app/router"
 import { openBeside, openBesideNested } from "../../beside"
 import { Actions, type Action, type ActionKind } from "../../ui/Actions"
 import { follow } from "../../chain"
+import { useEdits } from "../../edits"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -27,7 +28,7 @@ import { seedFor, type Reply } from "../../data/seed"
 import type { Session } from "../../session"
 import { day, daysBetween, overdueWait, waiting } from "./format"
 import { adminSeat, aeSeats, calendarOf, contactIndex, repliesFor, sdrSeats, visibleReplies, type InboxReply } from "./data"
-import { originHere, useRenderCount } from "./acts"
+import { originHere, undoSend, useRenderCount } from "./acts"
 import { Thread } from "./Thread"
 import { MeetingPanel } from "./MeetingPanel"
 import { useUndo } from "./undo"
@@ -82,13 +83,19 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
     return named ? [named, ...seen] : seen
   }, [session, thread])
   const [changes, setChanges] = useState<Record<string, Change>>({})
+  // What a pane or a composer did to these replies, from the one store every surface reads: a reply
+  // handled in the pane beside Home, and a reply that is on its way out of the composer here. One
+  // source, so a row and a pane can never say different things about the same reply.
+  const acted = useEdits("reply")
   const rows: InboxReply[] = useMemo(
     () => base.map((r) => {
       const c = changes[r.id]
-      if (!c) return r
-      return { ...r, outcome: c.outcome ?? r.outcome, handled: c.handled ?? r.handled, status: (c.handled ?? r.handled) ? "handled" : r.status, handedTo: c.handedTo !== undefined ? c.handedTo : r.handedTo, followUpOn: c.followUpOn !== undefined ? c.followUpOn : r.followUpOn }
+      const a = acted[r.id] as { handled?: boolean; handedTo?: string } | undefined
+      if (!c && !a) return r
+      const handled = a?.handled ?? c?.handled ?? r.handled
+      return { ...r, outcome: c?.outcome ?? r.outcome, handled, status: handled ? "handled" : r.status, handedTo: a?.handedTo ?? (c?.handedTo !== undefined ? c.handedTo : r.handedTo), followUpOn: c?.followUpOn !== undefined ? c.followUpOn : r.followUpOn }
     }).filter((r) => !changes[r.id]?.hidden),
-    [base, changes],
+    [base, changes, acted],
   )
 
   // A deep link names the thread, and the group follows the reply it names — object state, not history.
@@ -365,6 +372,15 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
               </div>
             )}
             <div className="truncate pt-0.5 text-sm text-muted-foreground">{r.snippet}</div>
+            {/* The same record the composer is reading: for ten seconds the reply can be pulled
+                back from the row it was written on, and after that the row says it has gone. */}
+            {acted[r.id]?.sending === true && (
+              <div role="status" aria-live="polite" className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                <span>Sending</span>
+                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); undoSend(r.id) }}>Undo</Button>
+              </div>
+            )}
+            {acted[r.id]?.sent === true && <div className="pt-1 text-xs text-muted-foreground">Sent</div>}
             {(showSequenceColumn || showOwnerColumn) && (
               <div className="pt-0.5 text-xs text-muted-foreground">
                 {showSequenceColumn && <>{r.sequence} · step {r.step.n} of {r.step.of}</>}

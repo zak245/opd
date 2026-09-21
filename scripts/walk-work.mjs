@@ -19,6 +19,8 @@ const chrome = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/M
 // At phone width the Inbox is the list, and the thread is a page reached by tapping a row; the same
 // lap is walked, from the thread's own controls rather than from the row's menu.
 const phone = Number(w) < 640
+/** The window a send can be pulled back in, the same ten seconds src/ollopa/pages/work/acts.ts holds. */
+const SEND_WINDOW = 10_000
 
 mkdirSync(dir, { recursive: true })
 
@@ -330,6 +332,45 @@ for (const [biz, role] of [["meridian", "sdr"], ["ridgeline", "sdr"]]) {
   await wait(700)
   console.log(`F ${biz}/${role} task pane:`.padEnd(30), await paneFields())
 }
+
+/* ------------------- G. The send that can be pulled back: ten seconds, twice over */
+
+await page.goto(base + "/#/", { waitUntil: "networkidle0" })
+await page.evaluate(() => localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: "sdr" })))
+await go("/ollopa/inbox")
+
+/** The state of the open thread and of its row in the list, in one line each. */
+const sending = () => page.evaluate(() => {
+  const root = document.querySelector('[data-page-active="true"]')
+  const thread = root?.querySelector('section[aria-label^="Thread"]')
+  const line = (el) => Array.from(el?.querySelectorAll("[role=status], .text-xs") ?? [])
+    .map((x) => x.textContent.trim())
+    .find((t) => t.startsWith("Sending") || t.startsWith("Sent")) ?? "(nothing)"
+  return { thread: line(thread), row: line(root?.querySelector('[role="row"]')) }
+})
+const write = async (text) => {
+  await page.evaluate(() => document.querySelector('[data-page-active="true"] textarea[aria-label^="Reply to"]')?.focus())
+  await page.keyboard.type(text)
+}
+
+await write("Thursday works — I will send an invite.")
+console.log("G sent:", await clickReal('[data-page-active="true"] button', "Send"))
+await wait(700)
+console.log("G within the window:", JSON.stringify(await sending()))
+
+// Pulled back inside the ten seconds: nothing was sent, and the words come back.
+await clickReal('[data-page-active="true"] button', "Undo")
+await wait(600)
+console.log("G after undo:       ", JSON.stringify(await sending()))
+console.log("G composer after undo:", JSON.stringify(await page.evaluate(() =>
+  document.querySelector('[data-page-active="true"] textarea[aria-label^="Reply to"]')?.value ?? "")))
+await shot("g1-undo-put-it-back")
+
+// Sent again and left alone: after ten seconds it has gone and says so.
+console.log("G sent again:", await clickReal('[data-page-active="true"] button', "Send"))
+await wait(SEND_WINDOW + 1500)
+console.log("G after the window: ", JSON.stringify(await sending()))
+await shot("g2-sent")
 
 console.log(noise.length === 0 ? "\nconsole: silent" : `\nconsole: ${noise.length} complaint(s)\n  ${[...new Set(noise)].join("\n  ")}`)
 

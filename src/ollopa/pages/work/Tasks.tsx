@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { href, useRoute } from "@/app/router"
 import { closeBeside, openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
@@ -112,6 +113,22 @@ export function Tasks({ session }: { session: Session }) {
   /** Done on a call task first shows the four outcome buttons inline, which write the disposition. */
   const [outcoming, setOutcoming] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+
+  // The route "Open the LinkedIn step" and "Open the meeting" name. Arriving with it open opens
+  // that step on that task, once: a link that does nothing when it is followed is not a link.
+  const route = useRoute()
+  const opened = useRef<string | null>(null)
+  useEffect(() => {
+    const want = route.query.get("task")
+    if (!want || opened.current === want) return
+    const t = base.find((x) => x.id === want)
+    if (!t) return
+    opened.current = want
+    if (t.kind === "Call") setCalling(t)
+    else if (t.kind === "LinkedIn") setLinking(t)
+    else if (t.kind === "Meeting") setMeeting(t)
+    else setMode("queue")
+  }, [route.raw, base])
 
   useEffect(() => { remember(session, "mode", mode) }, [session, mode])
   useEffect(() => { remember(session, "sort", sort) }, [session, sort])
@@ -317,11 +334,15 @@ export function Tasks({ session }: { session: Session }) {
     const overdue = isOverdue(t.due)
     const waiting = !!t.sequence && overdue
     const selected = selection.includes(t.id)
-    const primary =
-      t.kind === "Call" ? { label: "Log the call", run: () => setCalling(t) }
-        : t.kind === "LinkedIn" ? { label: "Open the LinkedIn step", run: () => setLinking(t) }
-          : t.kind === "Meeting" ? { label: "Open the meeting", run: () => setMeeting(t) }
-            : { label: "Write", run: () => setMode("queue") }
+    // "Open the LinkedIn step" and "Open the meeting" name a place, so they are links with a route
+    // of their own — `/ollopa/tasks?task=<id>` opens the page with that step open, which is what
+    // makes them copyable and openable in a new tab (DESIGN.md §1). Logging a call and writing an
+    // email are acts, and stay controls.
+    const primary: Action =
+      t.kind === "Call" ? { kind: "secondary", label: "Log the call", onClick: () => setCalling(t) }
+        : t.kind === "LinkedIn" ? { kind: "link", label: "Open the LinkedIn step", href: href(`/ollopa/tasks?task=${t.id}`), onClick: () => setLinking(t) }
+          : t.kind === "Meeting" ? { kind: "link", label: "Open the meeting", href: href(`/ollopa/tasks?task=${t.id}`), onClick: () => setMeeting(t) }
+            : { kind: "secondary", label: "Write", onClick: () => setMode("queue") }
 
     return (
       <div role="listitem" data-task-row={t.id} data-item={t.id} data-item-label={`${t.kind} · ${t.contact}`} className="group border-b px-3 py-2 sm:px-4">
@@ -388,7 +409,7 @@ export function Tasks({ session }: { session: Session }) {
                 items={[
                   { kind: "primary", label: "Done", keys: "d", onClick: () => (t.kind === "Call" ? setOutcoming(t.id) : done(t)) },
                   { kind: "secondary", label: "Open the task beside", keys: "o", onClick: () => openTask(t) },
-                  { kind: "secondary", label: primary.label, onClick: primary.run },
+                  primary,
                   { kind: "secondary", label: "Snooze", keys: "s", onClick: () => snooze(t) },
                 ]}
               />
@@ -399,7 +420,7 @@ export function Tasks({ session }: { session: Session }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => done(t)}>Done<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">d</span></DropdownMenuItem>
-                <DropdownMenuItem onSelect={primary.run}>{primary.label}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">{t.kind === "Call" ? "l" : t.kind === "Email" ? "e" : ""}</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => primary.onClick?.()}>{primary.label}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">{t.kind === "Call" ? "l" : t.kind === "Email" ? "e" : ""}</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => snooze(t)}>Snooze to tomorrow<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">s</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Snooze until…</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => skip(t)}>Skip<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
@@ -503,7 +524,9 @@ export function Tasks({ session }: { session: Session }) {
             <Actions
               surface="page"
               items={([
-                { kind: "primary", label: "New task", keys: "n", onClick: () => setNewTask(true) },
+                // In queue mode the whole page is the one task, and Done is the act it exists for,
+                // so making a task steps back to an outline here (DESIGN.md §1).
+                { kind: mode === "queue" ? "secondary" : "primary", label: "New task", keys: "n", onClick: () => setNewTask(true) },
                 { kind: "secondary", label: switchLabel, keys: "w", onClick: () => setMode(mode === "queue" ? "list" : "queue") },
               ]) as Action[]}
             />

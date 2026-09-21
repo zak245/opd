@@ -94,7 +94,22 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
   const currentStage = stage ?? p.stage
   const owned = p.owner === session.user
   const canEdit = owned || session.role === "admin"
-  const admin = b.roles.find((r) => r.role === "admin")
+  // Who a seat that cannot act should ask. Never the owner: an escalation that points back at the
+  // person you are already blocked by names nobody. The seat is named by its title, not by a second
+  // person, so the sentence reads the same whoever holds it.
+  const admin = b.roles.find((r) => r.role === "admin" && r.user !== person?.owner) ?? b.roles.find((r) => r.role === "admin")
+  /**
+   * The admin seat as a thing you can go and ask, in this workspace's own words. A title that ends
+   * in a person ("RevOps admin", "Agency ops lead") takes an article; a team's name ("Revenue
+   * operations") does not, because "a Revenue operations" is not English.
+   */
+  const escalation = (() => {
+    const title = admin && admin.user !== person?.owner ? admin.title : null
+    if (!title) return null
+    const last = title.split(" ").pop()!.toLowerCase()
+    const isAPerson = ["admin", "lead", "manager", "founder", "owner", "head", "director"].includes(last)
+    return isAPerson ? `${/^[aeiou]/i.test(title) ? "an" : "a"} ${title}` : title
+  })()
   const company = p.co
   const colleagues = rows.filter((x) => x.companyId === p.companyId && x.id !== p.id)
   const deals = seed.deals.filter((dl) => dl.companyId === p.companyId && !dl.archivedAt)
@@ -258,7 +273,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             </tbody>
           </table>
           <Actions surface="card" items={[
-            { kind: "primary", label: "Enrich again", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits` },
+            { kind: "primary", label: "Enrich again", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits`, consequence: "Charged once" },
           ]} />
         </div>
       ),
@@ -356,7 +371,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
     },
     {
       item: "people.row.enrich",
-      action: { kind: "secondary", label: "Enrich", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits` },
+      action: { kind: "secondary", label: "Enrich", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits`, consequence: "Charged once" },
     },
     {
       item: "people.row.research-agent",
@@ -365,6 +380,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
         label: "Ask the research agent",
         onClick: () => toast(`Research queued for ${p.name} · ${CREDITS.research} credits · ${(balance - CREDITS.research).toLocaleString()} left`),
         cost: `${CREDITS.research} credits`,
+        consequence: "Charged once",
       },
     },
     { item: "people.row.list", action: { kind: "secondary", label: "Add to list", onClick: () => toast(`${p.name} added to a list.`) } },
@@ -407,7 +423,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             {/* A seat that cannot act gets no control and one sentence naming who can (DESIGN.md §1). */}
             {!canEdit && (
               <span className="text-xs text-muted-foreground">
-                {p.owner} owns this contact{admin ? `; only they or ${admin.user} can change or remove it` : ""}
+                Owned by {p.owner}; only the owner{escalation ? ` or ${escalation}` : ""} can change or remove it
               </span>
             )}
           </span>

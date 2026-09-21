@@ -91,7 +91,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   if (!w) {
     return (
       <div className="p-10">
-        <EmptyState title="That workflow is not here" body="It may have been archived, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Workflows", onClick: () => navigate("/ollopa/workflows") }]} />} />
+        <EmptyState title="That workflow is not here" body="It may have been archived, or the link may be old." action={<Actions surface="card" items={[{ kind: "link", label: "Back to Workflows", href: href("/ollopa/workflows") }]} />} />
       </div>
     )
   }

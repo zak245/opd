@@ -125,7 +125,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
     // The name is the control, as it is on People: one thing to tab to, one thing to press.
     { key: "name", header: "Workflow", sortBy: (w) => w.name, className: "min-w-[10rem] whitespace-normal", cell: (w) => (
       <div className="min-w-0">
-        <button type="button" className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}`, w.id) }}>{w.name}</button>
+        <a href={href(`/ollopa/workflows/${w.id}`)} className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}`, w.id) } }}>{w.name}</a>
         {w.folder && <div className="text-xs text-muted-foreground">{w.folder}</div>}
         <ActedNote business={session.business} kind="workflow" id={w.id} edit={workflowEdits[w.id]} />
       </div>

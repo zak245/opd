@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Actions, type Action } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
+import { useEdits } from "../../edits"
 import { originHere } from "../work/register"
 import { toast } from "../../templates/TablePage"
 import { Door, type Disclosure } from "../../ui"
@@ -108,12 +109,16 @@ function ReplyRow({ r, canBook, confirming, ids, onNotInterested, onAsk, onUnsub
 
 export function Replies({ data, d, order }: { data: HomeData; d: Disclosure; order: number }) {
   const [gone, setGone] = useState<Record<string, string>>({})
+  // What the reply pane did, from the one store the Inbox reads too: a reply handled beside this
+  // page leaves this list here, at once, without a second channel between them.
+  const acted = useEdits("reply")
   const [confirming, setConfirming] = useState<string | null>(null)
   const [note, setNote, clearNote] = useUndo()
   const canBook = data.replies.hasCalendar && d.weekly("home.replies.book") > 0
 
-  const hot = data.replies.hot.filter((r) => !gone[r.id])
-  const other = data.replies.other.filter((r) => !gone[r.id])
+  const handled = (r: Reply) => !!gone[r.id] || acted[r.id]?.handled === true
+  const hot = data.replies.hot.filter((r) => !handled(r))
+  const other = data.replies.other.filter((r) => !handled(r))
 
   function leave(r: Reply, what: string, sentence: string, undoable = true) {
     setGone((g) => ({ ...g, [r.id]: what }))

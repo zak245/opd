@@ -50,7 +50,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
   if (!f) {
     return (
       <div className="p-10">
-        <EmptyState title="That form is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Campaigns", onClick: () => navigate("/ollopa/campaigns") }]} />} />
+        <EmptyState title="That form is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "link", label: "Back to Campaigns", href: href("/ollopa/campaigns") }]} />} />
       </div>
     )
   }
