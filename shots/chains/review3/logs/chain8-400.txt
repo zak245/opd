@@ -1,0 +1,51 @@
+
+=== CHAIN 8 · index laps: row › record › back to the row lit (400) ===
+
+  -- Sequences (meridian sdr)
+    landed    h1="Sequences" trail=(empty)
+  [shot] shots/chains/review3/08-indexes/01-sequences-index-400.png
+    opened    "null" → hash=#/ollopa/sequences h1="Sequences" trail=(EMPTY — no crumb) pane=none
+  [shot] shots/chains/review3/08-indexes/02-sequences-record-400.png
+    back by   (nothing to go back with) → h1="Sequences" lit=(NOTHING LIT) focus=BODY "Skip to content Sequences 1.84M · 410k/wk 9+ MA NEEDS 
+  [shot] shots/chains/review3/08-indexes/03-sequences-back-400.png
+
+  -- People (meridian sdr)
+    landed    h1="People" trail=(empty)
+  [shot] shots/chains/review3/08-indexes/04-people-index-400.png
+    opened    "the name "Mateo Novak"" → hash=#/ollopa/people/c-763 h1="Mateo Novak" trail=People pane=none
+  [shot] shots/chains/review3/08-indexes/05-people-record-400.png
+    back by   crumb → h1="People" lit=Mateo Novak VP Sales · Wayfare Systems Approaching focus=A "Mateo Novak"
+  [shot] shots/chains/review3/08-indexes/06-people-back-400.png
+
+  -- Companies (meridian sdr)
+    landed    h1="Companies" trail=(empty)
+  [shot] shots/chains/review3/08-indexes/07-companies-index-400.png
+    opened    "the name "Kestrel Health"" → hash=#/ollopa/companies/co-3 h1="Kestrel Health" trail=Companies pane=none
+  [shot] shots/chains/review3/08-indexes/08-companies-record-400.png
+    back by   crumb → h1="Companies" lit=Kestrel Health kestrelhealth.com 7 contacts · 1 in focus=BUTTON "Kestrel Health"
+  [shot] shots/chains/review3/08-indexes/09-companies-back-400.png
+
+  -- Lists (meridian sdr)
+    landed    h1="Lists" trail=(empty)
+  [shot] shots/chains/review3/08-indexes/10-lists-index-400.png
+    opened    "null" → hash=#/ollopa/lists h1="Lists" trail=(EMPTY — no crumb) pane=none
+  [shot] shots/chains/review3/08-indexes/11-lists-record-400.png
+    back by   (nothing to go back with) → h1="Lists" lit=(NOTHING LIT) focus=BODY "Skip to content Lists 1.84M · 410k/wk 9+ MA NEEDS YOU 
+  [shot] shots/chains/review3/08-indexes/12-lists-back-400.png
+
+  -- Templates (meridian sdr)
+    landed    h1="Templates" trail=(empty)
+  [shot] shots/chains/review3/08-indexes/13-templates-index-400.png
+    opened    "null" → hash=#/ollopa/templates h1="Templates" trail=(EMPTY — no crumb) pane=none
+  [shot] shots/chains/review3/08-indexes/14-templates-record-400.png
+    back by   (nothing to go back with) → h1="Templates" lit=(NOTHING LIT) focus=BODY "Skip to content Templates Add to sidebar 1.84M · 410k/
+  [shot] shots/chains/review3/08-indexes/15-templates-back-400.png
+
+  -- Campaigns (ridgeline marketer)
+    landed    h1="Campaigns" trail=(empty)
+  [shot] shots/chains/review3/08-indexes/16-campaigns-index-400.png
+    opened    "the name "Case study: Kestrel Health · Email"" → hash=#/ollopa/campaigns/camp-7 h1="Case study: Kestrel Health" trail=Campaigns pane=none
+  [shot] shots/chains/review3/08-indexes/17-campaigns-record-400.png
+    back by   crumb → h1="Campaigns" lit=Case study: Kestrel Health · Email Status Paused b focus=BUTTON "Case study: Kestrel Health · Email"
+  [shot] shots/chains/review3/08-indexes/18-campaigns-back-400.png
+  [console] nothing — no warning, no error, no failed request

@@ -27,6 +27,20 @@ export async function browser(width, height, opts = {}) {
     args: ["--hide-scrollbars", ...(opts.reducedMotion ? ["--force-prefers-reduced-motion"] : [])],
   })
   const page = await b.newPage()
+  // Everything the page says to the console, kept so a run against the dev build can be reported
+  // rather than guessed at. React's own dev warnings and the pane's usage-model warning land here.
+  page.__console = []
+  page.on("console", (msg) => {
+    const t = msg.type()
+    const text = msg.text().replace(/\s+/g, " ").slice(0, 300)
+    // The only thing neither server has is a favicon; it says nothing about the product.
+    const where = msg.location?.().url ?? ""
+    if (/favicon\.ico/.test(text) || /favicon\.ico/.test(where)) return
+    if (t === "warning" || t === "error" || t === "assert") page.__console.push(`${t}: ${text}`)
+  })
+  page.on("pageerror", (err) => page.__console.push(`pageerror: ${String(err).replace(/\s+/g, " ").slice(0, 300)}`))
+  page.on("requestfailed", (r) => { if (!/favicon\.ico/.test(r.url())) page.__console.push(`requestfailed: ${r.url().slice(0, 120)}`) })
+  page.on("response", (r) => { if (r.status() >= 400 && !/favicon\.ico/.test(r.url())) page.__console.push(`http ${r.status()}: ${r.url().slice(0, 120)}`) })
   await page.setViewport({ width: Number(width), height: Number(height), deviceScaleFactor: 1 })
   if (opts.reducedMotion) await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }])
   return { b, page }
@@ -122,6 +136,16 @@ export function report(o, label) {
   note(`    h-scroll  doc=${o.docScrollW}`)
 }
 
+/** What the page said to the console during this walk, de-duplicated. */
+export function dumpConsole(page, label = "") {
+  const all = page.__console ?? []
+  const seen = new Map()
+  for (const line of all) seen.set(line, (seen.get(line) ?? 0) + 1)
+  note(`  [console${label ? " " + label : ""}] ${seen.size === 0 ? "nothing — no warning, no error, no failed request" : ""}`)
+  for (const [line, n] of seen) note(`    ${n > 1 ? `x${n} ` : ""}${line}`)
+  return seen
+}
+
 export function saveLog(path) {
   mkdirSync(path.replace(/\/[^/]+$/, ""), { recursive: true })
   writeFileSync(path, log.join("\n") + "\n")
@@ -131,7 +155,7 @@ export { base, appendFileSync }
 
 /* ============================================================== the chains, one function each */
 
-const DIR = process.env.OPD_SHOTS ?? "shots/chains/review2"
+const DIR = process.env.OPD_SHOTS ?? "shots/chains/review3"
 /** The pane, told apart from the shell's own <aside> sidebar by its aria-label. */
 export const PANE = 'aside[aria-label*=" beside "]' 
 
@@ -383,7 +407,7 @@ export async function chain1(w, h) {
   note(`    scroll    ${await page.evaluate(() => document.querySelector('[data-page-active="true"]')?.scrollTop)} (was ${scroll0})`)
   note(`    focus vis ${await focusInfo(page)}`)
   await shot("back")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 2 */
@@ -436,7 +460,7 @@ export async function chain2(w, h) {
   await wait(900)
   report(await observe(page), "7. back on the campaign")
   await shot("back-campaign")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 3 */
@@ -512,7 +536,7 @@ export async function chain3(w, h) {
   await wait(900)
   report(await observe(page), "6. back on the company")
   await shot("back")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 4 */
@@ -544,7 +568,7 @@ export async function chain4(w, h) {
   await wait(1000)
   report(await observe(page), "3. back on the sequence, at the row we left")
   await shot("back")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 5 */
@@ -598,7 +622,7 @@ export async function chain5(w, h) {
   note(`    notice    ${await page.evaluate(() => { const m = (document.body.innerText || "").replace(/\s+/g, " ").match(/[^.]{0,90}(moved|added to your sidebar|no longer in|now in your sidebar)[^.]{0,90}/i); return m ? m[0].trim() : "(no line saying what moved)" })}`)
   note(`    sidebar   ${await page.evaluate(() => Array.from(document.querySelectorAll('aside nav a, nav a')).map((a) => a.innerText.replace(/\s+/g, " ").trim()).filter(Boolean).join(" · ").slice(0, 220))}`)
   await shot("finished")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 6 */
@@ -694,7 +718,7 @@ export async function chain6(w, h) {
   const o7 = await observe(page)
   report(o7, "7. deal record › company — beside, or a whole page with no way back?")
   await shot("deal-company")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 7 */
@@ -806,7 +830,7 @@ export async function chain7(w, h) {
   await wait(1100)
   report(await observe(page), `11. back on Home by the crumb (${back})`)
   await shot("home-back")
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 8 */
@@ -837,10 +861,17 @@ export async function chain8(w, h) {
       const root = document.querySelector('[data-page-active="true"]')
       const row = Array.from(root.querySelectorAll("tbody tr, ul li, ol li")).find((e) => e.offsetParent !== null && (e.hasAttribute("data-row-key") || e.hasAttribute("data-item") || e.querySelector("[data-item]")))
       if (!row) return null
-      // The row's own name: the first link or button in the primary cell, never the checkbox, the
-      // row menu or an action button parked in a later column.
-      const primary = row.querySelector("td:nth-child(2)") ?? row.querySelector("[data-item]") ?? row
-      const el = Array.from(primary.querySelectorAll("a,button")).find((x) => (x.innerText || "").trim().length > 1)
+      // The row's own name: the first control with real text, cell by cell from the left, skipping
+      // the select checkbox and the row menu. Some tables put the name in the first cell and some
+      // in the second, behind a checkbox column.
+      const cells = [...row.querySelectorAll("td"), row.querySelector("[data-item]"), row].filter(Boolean)
+      let el = null
+      for (const cell of cells) {
+        el = Array.from(cell.querySelectorAll("a,button")).find((x) => (x.innerText || "").trim().length > 1
+          && !/^(select|actions)/i.test(x.getAttribute("aria-label") || "")
+          && !/^(open|resume|pause|add to sequence)$/i.test((x.innerText || "").trim()))
+        if (el) break
+      }
       if (el) { const t = (el.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40); el.click(); return `the name "${t}"` }
       // No link or button on the name: the row itself, which is what the table makes clickable.
       row.click()
@@ -862,7 +893,7 @@ export async function chain8(w, h) {
     note(`    back by   ${wentBack ?? "(nothing to go back with)"} → h1="${o2.h1}" lit=${o2.lit ? o2.lit.slice(0, 50) : "(NOTHING LIT)"} focus=${o2.focused.slice(0, 60)}`)
     await shot(`${name}-back`)
   }
-  await b.close()
+  dumpConsole(page); await b.close()
 }
 
 /* ------------------------------------------------------------------------------------ chain 9 */
@@ -941,7 +972,7 @@ export async function chain9(w, h) {
     const od = await observe(page)
     note(`  d. signed back in → trail=${od.trail ?? "(EMPTY — correct)"}`)
     await shot("d-signed-back-in")
-    await b.close()
+    dumpConsole(page); await b.close()
   }
 
   // e + f: a half-typed value, and the render counters, on the dev build
@@ -1006,7 +1037,7 @@ export async function chain9(w, h) {
     const afterBack = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
     note(`  f. render counters after the return: ${afterBack.join(" · ")}`)
     await shot("e-back")
-    await b.close()
+    dumpConsole(page); await b.close()
   }
 
   // h: prefers-reduced-motion
@@ -1034,7 +1065,7 @@ export async function chain9(w, h) {
       }
     })
     note(`  i. things that look like a door inside the pane: ${doors.doors} ${JSON.stringify(doors.detail)}`)
-    await b.close()
+    dumpConsole(page); await b.close()
   }
 }
 

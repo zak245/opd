@@ -1,0 +1,107 @@
+
+=== CHAIN 1 · sequence › enrolled person beside › next › previous › open the page › back (400) ===
+  1. the sequence, enrolled list in view
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content Q4 enterprise outbound · Sequences 1.84M · 4"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1*@1290
+    h-scroll  doc=400
+    scroll    1290
+  [shot] shots/chains/review3/01-sequence/01-sequence-400.png
+    rows      34 visible: Mateo Okonkwo Sales Enablement Lead / Orla Ivanova Head of Customer Success / Tomas Moreau Procurement Lead
+    keyboard  4 tabs from the section's search box to "Mateo Okonkwo Sales " → BUTTON "Mateo Okonkwo Sales Enablement Lead"
+  2. Enter on the first enrolled person — the pane
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Mateo Okonkwo" / "Sales Enablement Lead · Cedar Holdings" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Choose a sequence | Move to the chosen sequence | Draft an email | Create a call task | Add to Replied, no meeting yet | Previous [ | Next ]
+    walker    Previous [ 1 of 34 Next ]
+    body      Mateo Okonkwo Sales Enablement Lead · Cedar Holdings
+    focus     DIV "From Q4 enterprise outbound · row Mateo Okonkwo Mateo Okonkw"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Mateo Okonkwo Sales Enablement Lead Company: Cedar Holdings Status: Active
+    mounted   /ollopa/sequences/seq-1*@1290
+    h-scroll  doc=400
+    scroll    1290 (was 1290)
+  [shot] shots/chains/review3/01-sequence/02-pane-400.png
+  3. ] — next in the enrolled list
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Orla Ivanova" / "Head of Customer Success · Cedar Partners" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Choose a sequence | Move to the chosen sequence | Draft an email | Create a call task | Add to Replied, no meeting yet | Previous [ | Next ]
+    walker    Previous [ 2 of 34 Next ]
+    body      Orla Ivanova Head of Customer Success · Cedar Partners
+    focus     DIV "From Q4 enterprise outbound · row Orla Ivanova Orla Ivanova "  [inside the pane]
+    lit       (nothing lit)
+    row mark  Orla Ivanova Head of Customer Success Company: Cedar Partners Status: Active
+    mounted   /ollopa/sequences/seq-1*@1290
+    h-scroll  doc=400
+  [shot] shots/chains/review3/01-sequence/03-next-400.png
+  4. [ — previous, back to the first
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Mateo Okonkwo" / "Sales Enablement Lead · Cedar Holdings" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Choose a sequence | Move to the chosen sequence | Draft an email | Create a call task | Add to Replied, no meeting yet | Previous [ | Next ]
+    walker    Previous [ 1 of 34 Next ]
+    body      Mateo Okonkwo Sales Enablement Lead · Cedar Holdings
+    focus     DIV "From Q4 enterprise outbound · row Mateo Okonkwo Mateo Okonkw"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Mateo Okonkwo Sales Enablement Lead Company: Cedar Holdings Status: Active
+    mounted   /ollopa/sequences/seq-1*@1290
+    h-scroll  doc=400
+  [shot] shots/chains/review3/01-sequence/04-previous-400.png
+    picker    "Choose a sequence" → chose "Warm inbound follow-up"
+    acted     clicked "Move to Warm inbound follow-up"
+    row was   Mateo Okonkwo Sales Enablement Lead Company: Cedar Holdings Status: Active
+    row now   Mateo Okonkwo Sales Enablement Lead moved from Q4 enterprise outbound to Warm inbound follow-up · step 1 Undo Company: Cedar Holdings Status: Moved to Warm inbound follow-up
+    row moved yes
+    renders     →  
+    heading   People (34)
+  4b. after the pane's action
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Mateo Okonkwo" / "Sales Enablement Lead · Cedar Holdings" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Choose a sequence | Move to the chosen sequence | Draft an email | Create a call task | Add to Replied, no meeting yet | Undo | Previous [ | Next ]
+    walker    Previous [ 1 of 34 Next ]
+    body      Mateo Okonkwo Sales Enablement Lead · Cedar Holdings
+    focus     BUTTON[Sequence to move Mateo Okonkwo to] "Choose a sequence"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Mateo Okonkwo Sales Enablement Lead moved from Q4 enterprise outbound to Warm in
+    mounted   /ollopa/sequences/seq-1*@1290
+    h-scroll  doc=400
+  [shot] shots/chains/review3/01-sequence/05-acted-400.png
+    keyboard  focus was BUTTON "Choose a sequence" visible=true; "Open the page" is 1 Shift+Tab away
+  5. Open the page — the contact record with the trail
+    hash      #/ollopa/people/c-13
+    h1        Mateo Okonkwo
+    trail     Q4 enterprise outbound
+    pane      (none)
+    focus     H1 "Mateo Okonkwo"
+    lit       Mateo Okonkwo
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1 hidden inert@1290 , /ollopa/people/c-13*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review3/01-sequence/06-page-400.png
+    keyboard  arrived on H1 "Mateo Okonkwo" visible=true; crumb is 1 Shift+Tab away → BUTTON "Q4 enterprise outbound"
+  6. the crumb — back on the sequence
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Mateo Okonkwo"
+    lit       Mateo Okonkwo Sales Enablement Lead moved from Q4 enterprise outbound to Warm in
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1*@1290
+    h-scroll  doc=400
+    scroll    1290 (was 1290)
+    focus vis BUTTON "Mateo Okonkwo" visible=true
+  [shot] shots/chains/review3/01-sequence/07-back-400.png
+  [console] nothing — no warning, no error, no failed request
