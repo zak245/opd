@@ -13,7 +13,8 @@
 //   · nothing inside it opens a door, and it never opens a second pane — a related object opened
 //     from in here swaps the content and leaves one "‹ back", and past that the way on is the page.
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
-import { ChevronLeft, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { href as hashHref, useRoute } from "@/app/router"
@@ -361,9 +362,16 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
               <h2 className="truncate text-sm font-semibold">{head.name}</h2>
               {head.context && <p className="truncate text-xs text-muted-foreground">{head.context}</p>}
             </div>
-            <Button variant="ghost" size="icon" className="-mr-1 size-7 shrink-0" aria-label="Close (Esc)" onClick={closeBeside}>
-              <X className="size-4" aria-hidden="true" />
-            </Button>
+            {/* Icon-only is allowed for exactly three controls, and each carries a name and a
+                tooltip (DESIGN.md §4): this one, and previous and next below. */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-sm" className="ollopa-act -mr-1 shrink-0" aria-label="Close (Esc)" onClick={closeBeside}>
+                  <X className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Close · Esc</TooltipContent>
+            </Tooltip>
           </div>
           {/* A destination, not a state change, so it is a real link (DESIGN.md §1). Its click is
               still the product's, which is what keeps the trail. */}
@@ -389,24 +397,36 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
           </DoneSlot.Provider>
         </FlatProvider>
 
+        {/* Success is a text colour and never a button (DESIGN.md §4), and it arrives where the act
+            was caused, over 150 ms. */}
         {done && (
-          <div role="status" className="flex shrink-0 items-baseline gap-2 border-t bg-muted/60 px-4 py-2 text-xs">
-            <span className="min-w-0 flex-1">Done · {done.note}</span>
-            <button type="button" className="shrink-0 font-medium underline underline-offset-4" onClick={done.onUndo}>Undo</button>
+          <div role="status" className="ollopa-done flex shrink-0 items-baseline gap-2 border-t bg-muted/60 px-4 py-2 text-xs">
+            <span className="min-w-0 flex-1 text-success">Done · {done.note}</span>
+            <button type="button" className="ollopa-act shrink-0 font-medium underline underline-offset-4" onClick={done.onUndo}>Undo</button>
           </div>
         )}
 
         {list && (
-          <footer className="flex shrink-0 items-center gap-2 border-t px-4 py-2">
-            <Button size="sm" variant="ghost" disabled={!hasPrev} onClick={() => besideStep(-1)}>
-              Previous
-              <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">[</kbd>
-            </Button>
+          <footer className="flex shrink-0 items-center justify-between gap-2 border-t px-4 py-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost" className="ollopa-act" disabled={!hasPrev}
+                        aria-label={`Previous in the list · [`} onClick={() => besideStep(-1)}>
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Previous · [</TooltipContent>
+            </Tooltip>
             <span className="text-xs tabular-nums text-muted-foreground">{list.index + 1} of {list.ids.length}</span>
-            <Button size="sm" variant="ghost" className="ml-auto" disabled={!hasNext} onClick={() => besideStep(1)}>
-              Next
-              <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">]</kbd>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost" className="ollopa-act" disabled={!hasNext}
+                        aria-label={`Next in the list · ]`} onClick={() => besideStep(1)}>
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Next · ]</TooltipContent>
+            </Tooltip>
           </footer>
         )}
       </div>

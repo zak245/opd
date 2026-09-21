@@ -20,7 +20,12 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* The focus ring has a hue of its own because a grey one cannot reach 3:1 against both a white
+     page and a near-black fill (WCAG 1.4.11, DESIGN.md §4). Measured, not chosen by eye:
+     `node scripts/ring-contrast.mjs` prints every ratio and fails below 3. */
+  --ring: oklch(0.55 0.16 264);
+  /* Success is a text colour for "Done · Undo" and never a button (DESIGN.md §4). */
+  --success: oklch(0.52 0.13 152);
   --radius: 0.625rem;
 }
 
@@ -42,7 +47,8 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.58 0.16 264);
+  --success: oklch(0.76 0.14 155);
 }
 
 @theme inline {
@@ -64,6 +70,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -71,8 +78,43 @@
 }
 
 @layer base {
-  * { @apply border-border outline-ring/50; }
+  * { @apply border-border; }
   body { @apply bg-background text-foreground; }
+
+  /* One ring, the same on every control (DESIGN.md §4): 3 px, full strength, offset so it reads
+     against the control as well as the page. An outline rather than a shadow, so it is never
+     clipped by an overflow and so it survives Windows High Contrast. */
+  :where(button, a, input, select, textarea, summary, [role="button"], [role="option"], [role="menuitem"], [tabindex]):focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* A 44 px hit region on a phone, without changing the height anything is drawn at (Apple 44 pt,
+   Material 48 dp; WCAG 2.5.8's 24 px floor is too small for a lap). The act keeps its 32 or 36 px
+   box and grows only the area that answers a thumb. */
+@media (max-width: 639px) {
+  .ollopa-act { position: relative; }
+  .ollopa-act::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+}
+
+/* "Done · what happened · Undo" arrives where the act was caused, over 150 ms. */
+@keyframes ollopa-done-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ollopa-done { animation: ollopa-done-in 150ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ollopa-done { animation: none; }
 }
 
 /* The return cue. Coming back along the trail, the row, door or field you left is lit for three

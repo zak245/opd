@@ -58,7 +58,7 @@ The same act must look the same and sit in the same place everywhere, because th
 
 **Size, one per surface.** Page header and dialog: the default height (36 px). Pane, card, row, bulk bar, queue footer: the small height (32 px). The extra-small size is for chips and pagers, never for an act. Emphasis never comes from size. On a phone every act has a hit region of at least 44 px whatever its drawn height (Apple 44 pt, Material 48 dp; WCAG 2.5.8 sets a floor of 24 px, which is too small for a lap).
 
-**Shape.** One radius everywhere, the token's 10 px. No pills. The label sets the width; a label is never truncated. Full width only on a phone sheet (section 1).
+**Shape.** Two radii and no others: 8 px on controls (buttons, inputs, chips), 10 px on containers (cards, panes, dialogs). No pills. The label sets the width; a label is never truncated. Full width only on a phone sheet (section 1).
 
 **Labels.** Verb first, sentence case, no end punctuation, the object named when it is not obvious: "Add to list", "Mark won", "Set the next step". The same verb for the same act on every surface. A count travels in the label ("Approve 6 · 156 credits"); a sentence never does.
 

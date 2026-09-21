@@ -143,6 +143,36 @@ on reversibility, not on danger: a reversible act, however large, acts at once. 
 where it was caused — `recordEdit(kind, id, { note })` gives you "Done · … · Undo" on the row and in
 the pane's footer, which is the backstop confirmation never replaces.
 
+### The visual grammar (DESIGN.md §4)
+
+`Actions` applies all of this by surface, so a page never sets a size, a variant, a colour or a place.
+
+- **Size, one per surface.** Page header and dialog take the 36 px height; pane, card, row, bulk bar,
+  queue footer and Save bar take 32 px. The extra-small size is for chips and pagers, never an act.
+- **Hit region.** Under 640 px every act carries a 44 px hit region through `.ollopa-act`, which grows
+  the area that answers a thumb without changing the height anything is drawn at.
+- **Focus ring.** One ring, on every control, from `index.css`: 3 px of `--ring` with a 2 px offset.
+  The token has a hue of its own because a grey one cannot reach 3:1 against both a white page and a
+  near-black fill. `node scripts/ring-contrast.mjs` prints every ratio and exits non-zero below 3 —
+  change the token and run it.
+- **States.** Hover one step darker, pressed one step darker again, nothing moves. `loading: true`
+  keeps the label, puts a spinner in the leading padding so the width does not change, and takes no
+  second press. A disabled control never explains itself in a tooltip; `disabledBecause` draws the
+  reason beside it, and passing a `title` with it is warned.
+- **Icons.** No icon inside an act. Exactly three controls are icon-only — the "…" trigger, the pane's
+  close, and its previous and next — and each carries an accessible name and a tooltip.
+- **Placement.** The surface decides, and the map does not change by page or by seat: page header and
+  card and row, acts at the trailing edge, primary leftmost; pane, a stack under the fields; dialog,
+  the affirmative trailing; bulk bar, queue footer and Save bar, leading edge. A `layout` that
+  contradicts its surface is warned and the map wins.
+- **Colour.** Four meanings, one each: the neutral primary fill for the one primary act, the
+  destructive hue for destructive acts and their confirmations, `text-success` for a "Done · Undo"
+  line and never a button, warning for ribbons and the health strip. A `className` on `Actions` that
+  paints, or a `class`/`style` smuggled through `attrs`, is warned.
+- **Motion.** Colour moves over 100 ms on hover and press; the "Done · Undo" line fades in over
+  150 ms (`.ollopa-done`). Nothing slides, scales or bounces, and all of it stops under
+  `prefers-reduced-motion`.
+
 **What it cannot enforce.** Whether a seat may act at all. A seat that cannot act gets *no control*
 and one sentence naming who can (RULES.md rule 4), so the page leaves the item out of the list
 rather than passing it here with `disabledBecause`.

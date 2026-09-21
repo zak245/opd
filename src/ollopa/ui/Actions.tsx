@@ -26,7 +26,8 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
+import { Loader2, MoreHorizontal } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export type ActionKind = "primary" | "secondary" | "destructive" | "link"
 
@@ -46,6 +47,11 @@ export interface Action {
   disabledBecause?: string
   /** The shortcut this control answers to, printed on it. */
   keys?: string
+  /**
+   * The act is running. The label stays where it is, a spinner joins it at the leading edge without
+   * changing the width, and the control takes no second press (DESIGN.md §4).
+   */
+  loading?: boolean
   /** The usage-model id this control answers to, so a converted page keeps the ids it is pointed at by. */
   dataItem?: string
   dataItemLabel?: string
@@ -62,11 +68,35 @@ export interface Action {
   attrs?: Record<string, string>
 }
 
-export type Surface = "page" | "pane" | "dialog" | "card"
+export type Surface = "page" | "pane" | "dialog" | "card" | "row" | "bulk" | "queue" | "form"
 export type Layout = "row" | "stack" | "menu"
 
-/** One size per surface, so emphasis can only come from fill. DESIGN.md §1. */
-const SIZE: Record<Surface, "sm" | "default"> = { page: "default", pane: "sm", dialog: "default", card: "sm" }
+/**
+ * One size per surface, and never the extra-small one for an act (DESIGN.md §4). Emphasis can only
+ * come from fill, so the kind never touches this.
+ */
+const SIZE: Record<Surface, "sm" | "default"> = {
+  page: "default", dialog: "default",
+  pane: "sm", card: "sm", row: "sm", bulk: "sm", queue: "sm", form: "sm",
+}
+
+/**
+ * Where a surface's acts sit, and which way they run. One place per surface type, the same on every
+ * page and for every seat, because what the eye learns is position (DESIGN.md §4, memo 21).
+ */
+const PLACE: Record<Surface, { layout: Layout; align: "leading" | "trailing" }> = {
+  page: { layout: "row", align: "trailing" },      // beside the title, primary leftmost in the row
+  dialog: { layout: "row", align: "trailing" },    // the affirmative at the trailing edge
+  pane: { layout: "stack", align: "leading" },     // a stack under the fields
+  card: { layout: "row", align: "trailing" },
+  row: { layout: "row", align: "trailing" },
+  bulk: { layout: "row", align: "leading" },
+  queue: { layout: "row", align: "leading" },
+  form: { layout: "row", align: "leading" },       // the Save bar, Save at the leading edge
+}
+
+/** Any utility that paints. Colour has one meaning each, and a page may not borrow one. */
+const COLOURED = /(^|[\s:])(bg|text|border|ring|decoration|fill|stroke|from|via|to|outline)-(?!\[)(?!(inherit|current|transparent)\b)[a-z]/
 
 /** A pane carries the three acts the chain runs most, and nothing that cannot be undone. */
 const PANE_MAX = 3
@@ -182,9 +212,15 @@ function One({ action, surface, layout, onIrreversible }: {
 }) {
   const size = SIZE[surface]
   const line = lineFor(action)
-  const disabled = !!action.disabledBecause
+  const busy = !!action.loading
+  const disabled = !!action.disabledBecause || busy
   // Full width only on a phone: at every other width a control is as wide as its label.
   const width = layout === "stack" ? "max-sm:w-full justify-start" : ""
+  // The spinner sits in the padding, absolutely, so the label does not move and the control does
+  // not change width when the act starts running.
+  const spinner = busy ? (
+    <Loader2 className="absolute left-2 size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+  ) : null
 
   const control = action.kind === "link" && action.href ? (
     // A destination is a real link: it opens in a new tab, it copies, it reads as a link. The page's
@@ -200,7 +236,8 @@ function One({ action, surface, layout, onIrreversible }: {
       // Always underlined, not only on hover: this product's primary colour is its text colour, so
       // colour alone would leave a link indistinguishable from the words around it.
       className={cn(
-        "font-medium underline decoration-muted-foreground underline-offset-4 hover:decoration-current",
+        "ollopa-act relative inline-block font-medium underline decoration-muted-foreground underline-offset-4",
+        "transition-colors duration-100 hover:decoration-current motion-reduce:transition-none",
         size === "sm" ? "text-xs" : "text-sm",
       )}
     >
@@ -216,14 +253,20 @@ function One({ action, surface, layout, onIrreversible }: {
       {...action.attrs}
       size={size}
       variant={action.kind === "primary" ? "default" : action.kind === "destructive" ? "ghost" : "outline"}
-      className={cn(width, action.kind === "destructive" && "text-destructive hover:text-destructive")}
+      className={cn(
+        "ollopa-act relative",
+        width,
+        action.kind === "destructive" && "text-destructive hover:text-destructive",
+      )}
       disabled={disabled}
+      aria-busy={busy || undefined}
       onClick={() => {
         if (disabled) return
         if (action.irreversible) { onIrreversible(action); return }
         action.onClick?.()
       }}
     >
+      {spinner}
       {action.label}
       <Shortcut keys={action.keys} />
     </Button>
@@ -240,7 +283,7 @@ function One({ action, surface, layout, onIrreversible }: {
   )
 }
 
-export function Actions({ items, layout = "row", surface = "page", menuLabel, className }: {
+export function Actions({ items, layout, surface = "page", menuLabel, className }: {
   items: Action[]
   layout?: Layout
   surface?: Surface
@@ -253,6 +296,35 @@ export function Actions({ items, layout = "row", surface = "page", menuLabel, cl
   className?: string
 }) {
   const [confirming, setConfirming] = useState<Action | null>(null)
+  const place = PLACE[surface]
+
+  // The surface decides where its acts sit. A page that asks for something else is asking for a
+  // layout the eye has not learned on that surface, so it is said out loud and the map wins.
+  if (layout && layout !== "menu" && layout !== place.layout) {
+    warn(`layout:${surface}:${layout}`,
+      `A ${surface} lays its acts out as a ${place.layout}, not a ${layout} (DESIGN.md §4). The map does ` +
+      "not change by page or by seat; it is what the eye learns. Using the map.")
+  }
+  if (className && COLOURED.test(className)) {
+    warn(`colour:${className}`,
+      `Actions was passed "${className}". Colour has one meaning each (DESIGN.md §4): the primary fill ` +
+      "belongs to the one primary act, the destructive hue to destructive acts, success to a Done line, " +
+      "warning to ribbons. The kind paints the control; nothing else may.")
+  }
+  for (const a of items) {
+    if (a.attrs && (a.attrs.class || a.attrs.className || a.attrs.style)) {
+      warn(`attrclass:${a.label}`,
+        `"${a.label}" passes class or style through \`attrs\`. \`attrs\` is for attributes a control must ` +
+        "carry to be found again, never for how it looks.")
+    }
+    if (a.disabledBecause && a.attrs?.title) {
+      warn(`disabledtitle:${a.label}`,
+        `"${a.label}" is disabled and carries a tooltip. A disabled control never explains itself in a ` +
+        "tooltip (DESIGN.md §4); the reason sits beside it, which is what `disabledBecause` draws.")
+    }
+  }
+
+  const how: Layout = layout === "menu" ? "menu" : place.layout
   const list = readActions(items, surface)
   if (list.length === 0) return null
 
@@ -269,7 +341,7 @@ export function Actions({ items, layout = "row", surface = "page", menuLabel, cl
     />
   )
 
-  if (layout === "menu") {
+  if (how === "menu") {
     if (!menuLabel) {
       warn(`menuLabel:${list.map((a) => a.label).join(",")}`,
         'A menu needs `menuLabel`: the name of the thing it acts on, so its trigger reads "Actions for ' +
@@ -280,12 +352,19 @@ export function Actions({ items, layout = "row", surface = "page", menuLabel, cl
     return (
       <>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size={SIZE[surface] === "sm" ? "icon-sm" : "icon"}
-                    aria-label={menuLabel ? `Actions for ${menuLabel}` : "More actions"}>
-              <MoreHorizontal className="size-4" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
+          {/* One of the three controls allowed to be icon-only, and like the other two it carries
+              both an accessible name and a tooltip (DESIGN.md §4). */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size={SIZE[surface] === "sm" ? "icon-sm" : "icon"}
+                        aria-label={menuLabel ? `Actions for ${menuLabel}` : "More actions"}>
+                  <MoreHorizontal className="size-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>{menuLabel ? `Actions for ${menuLabel}` : "More actions"}</TooltipContent>
+          </Tooltip>
           <DropdownMenuContent align="end">
             {doing.map((a) => (
               <DropdownMenuItem key={a.label} disabled={!!a.disabledBecause}
@@ -317,15 +396,17 @@ export function Actions({ items, layout = "row", surface = "page", menuLabel, cl
   return (
     <>
       <div className={cn(
-        layout === "stack" ? "flex flex-col items-start gap-3" : "flex flex-wrap items-start gap-2",
+        how === "stack"
+          ? "flex flex-col items-start gap-3"
+          : cn("flex flex-wrap items-start gap-2", place.align === "trailing" ? "justify-end" : "justify-start"),
         className,
       )}>
-        {doing.map((a) => <One key={a.label} action={a} surface={surface} layout={layout} onIrreversible={irreversible} />)}
+        {doing.map((a) => <One key={a.label} action={a} surface={surface} layout={how} onIrreversible={irreversible} />)}
         {/* The gap. A destructive act is never next to a benign one (memo 26, part B). */}
         {ending.length > 0 && (
-          <div className={cn(layout === "stack" ? "mt-2 w-full border-t pt-3" : "ml-4 border-l pl-4")}>
-            <div className={cn(layout === "stack" ? "flex flex-col items-start gap-3" : "flex flex-wrap items-start gap-2")}>
-              {ending.map((a) => <One key={a.label} action={a} surface={surface} layout={layout} onIrreversible={irreversible} />)}
+          <div className={cn(how === "stack" ? "mt-2 w-full border-t pt-3" : "ml-4 border-l pl-4")}>
+            <div className={cn(how === "stack" ? "flex flex-col items-start gap-3" : "flex flex-wrap items-start gap-2")}>
+              {ending.map((a) => <One key={a.label} action={a} surface={surface} layout={how} onIrreversible={irreversible} />)}
             </div>
           </div>
         )}
