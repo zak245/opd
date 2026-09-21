@@ -351,8 +351,9 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           <Actions className="mt-2" surface="card" items={[{ label: "Add another person", kind: "secondary", onClick: () => setInvites([...invites, { email: "", seat: "sdr" }]) }]} />
         </section>
 
+        {/* The wizard's footer is a form bar: the primary at the leading edge, Skip after it. */}
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t pt-6">
-          <Actions surface="page" items={[
+          <Actions surface="form" items={[
             { label: trail.length > 0 ? "Save the answers" : "Start", kind: "primary",
               disabledBecause: answered ? undefined : "Answer all three questions",
               onClick: () => finish({ skipped: false }) },

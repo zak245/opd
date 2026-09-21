@@ -86,15 +86,16 @@ export function SaveBar() {
       data-print-hide
       className="sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-t bg-background/95 px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur sm:px-6"
     >
+      {/* A Save bar is a form: Save at the leading edge, Discard after it (DESIGN.md §4). It is the
+          page's one filled control — nothing else on Settings is a primary. */}
+      <Actions surface="form" items={[
+        { label: s.changes.length === 1 ? "Save the change" : `Save ${s.changes.length} changes`, kind: "primary", onClick: s.save },
+        { label: "Discard", kind: "secondary", onClick: s.discard },
+      ]} />
       <p className="min-w-0 flex-1 text-sm">
         <span className="font-medium">{s.changes.length === 1 ? "1 unsaved change" : `${s.changes.length} unsaved changes`}:</span>{" "}
         <span className="text-muted-foreground">{s.changes.map((c) => c.label).join(", ")}</span>
       </p>
-      {/* The page's one filled control. Nothing else on Settings is a primary. */}
-      <Actions surface="card" items={[
-        { label: s.changes.length === 1 ? "Save the change" : `Save ${s.changes.length} changes`, kind: "primary", onClick: s.save },
-        { label: "Discard", kind: "secondary", onClick: s.discard },
-      ]} />
     </div>
   )
 }
