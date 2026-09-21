@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { ChevronRight, Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -295,19 +296,17 @@ export function InlineGate({ feature, plan, pricePerMonth, what, seats, isAdmin,
           <Textarea id={`why-${feature}`} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1" placeholder="What you are trying to do" />
         </div>
       )}
-      <Button
-        size="sm"
-        className="mt-2"
-        disabled={asked}
-        onClick={() => {
+      <Actions className="mt-2" surface="card" items={[{
+        kind: "primary",
+        label: isAdmin ? `Upgrade to ${plan} · ${usd(pricePerMonth)} a month` : asked ? "Asked" : `Ask ${admin} to upgrade`,
+        disabledBecause: asked ? "Already asked" : undefined,
+        onClick: () => {
           if (isAdmin) { toast(`Upgrade to ${plan}: ${usd(pricePerMonth)} a month for ${seats} seats.`); return }
           setAsked(true)
           document.dispatchEvent(new CustomEvent("ollopa:upgrade-request", { detail: { feature, plan, pricePerMonth, reason } }))
           toast(`Asked ${admin} for ${feature} · ${plan} · ${usd(pricePerMonth)} a month`)
-        }}
-      >
-        {isAdmin ? `Upgrade to ${plan} · ${usd(pricePerMonth)} a month` : asked ? "Asked" : `Ask ${admin} to upgrade`}
-      </Button>
+        },
+      }]} />
     </div>
   )
 }

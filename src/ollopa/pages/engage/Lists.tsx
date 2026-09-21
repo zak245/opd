@@ -28,9 +28,10 @@ import { type Col, DataTable, Pill, RowOpen, day, focusSearch, h1Of, moveRow, n,
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
 const KINDS_OF_LIST = [
-  { id: "static", label: "Static list", what: "The members are frozen. Nothing is added unless you add it." },
-  { id: "segment", label: "Segment from filters", what: "Keeps matching. It refreshes on a schedule and can alert you when it gains people." },
-  { id: "csv", label: "Import CSV", what: "Opens the import wizard: file and columns, duplicates, enrichment with a ten-row trial, then the run." },
+  // The label is the whole of the choice: what each kind does is in its name, not under it.
+  { id: "static", label: "Static list · frozen members" },
+  { id: "segment", label: "Segment · keeps matching" },
+  { id: "csv", label: "Import CSV" },
 ]
 
 export function ListsPage({ session }: { session: Session }) {
@@ -208,9 +209,6 @@ export function ListsPage({ session }: { session: Session }) {
         <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
           <div>
             <h2 className="text-lg font-semibold">Lists</h2>
-            <p className="text-sm text-muted-foreground">
-              Saved groups of people and companies. A segment keeps matching; a static list holds who was put in it.
-            </p>
           </div>
           <Button onClick={() => setChooser((v) => !v)} aria-expanded={chooser}>New list</Button>
         </div>
@@ -231,7 +229,6 @@ export function ListsPage({ session }: { session: Session }) {
                   }}
                 >
                   <div className="text-sm font-medium">{k.label}</div>
-                  <p className="mt-1 text-xs text-muted-foreground">{k.what}</p>
                 </button>
               ))}
             </div>

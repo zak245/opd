@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
+import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
@@ -154,9 +155,7 @@ export function AccountsPage({ session }: { session: Session }) {
           <span className="block tabular-nums">{money(valueAtRisk, b.currency)} · {atRisk.length} account{atRisk.length === 1 ? "" : "s"}</span>
         </span>
         {session.role === "ae" && hasAe && (
-          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => toast("Pick a customer success manager; the account joins their queue.")}>
-            Send hand-off
-          </Button>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Send hand-off", onClick: () => toast("Pick a customer success manager; the account joins their queue.") }]} />
         )}
       </div>
 
@@ -171,10 +170,7 @@ export function AccountsPage({ session }: { session: Session }) {
                   <div className="text-sm font-medium">{v.account!.name}</div>
                   <div className="text-xs text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
                   <p className="pt-1 text-xs">Why they bought: {h.whyTheyBought}</p>
-                  <p className="pt-1 text-xs text-muted-foreground">
-                    You become the owner. The account joins your book, the health baseline is taken today, and {h.from} is told.
-                  </p>
-                  <Button size="sm" className="mt-2 h-7 text-xs" onClick={() => setPending({ kind: "accept", row: v })}>Accept</Button>
+                  <Actions className="mt-2" surface="card" items={[{ kind: "secondary", label: "Accept the hand-off", onClick: () => setPending({ kind: "accept", row: v }) }]} />
                 </li>
               )
             })}
@@ -434,9 +430,14 @@ export function AccountsPage({ session }: { session: Session }) {
                     {s.detail} · {s.source} · fired {day(s.fired)} · routed to {s.routedTo} · due {day(s.dueBy)}
                     {s.outcome ? ` · ${s.outcome}` : " · no outcome yet"}
                   </span>
-                  <span className="ml-auto flex gap-1">
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`); follow("/ollopa/deals", origin(v.company.id)) }}>Route it</Button>
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { applyChange(v.company.id, { dismissedSignals: [...(changeFor(v.company.id).dismissedSignals ?? []), s.id] }); toast(`“${s.kind}” dismissed`) }}>Dismiss</Button>
+                  <span className="ml-auto">
+                    <Actions
+                      surface="card"
+                      items={[
+                        { kind: "secondary", label: "Route it", onClick: () => { toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`); follow("/ollopa/deals", origin(v.company.id)) } },
+                        { kind: "destructive", label: "Dismiss", onClick: () => { applyChange(v.company.id, { dismissedSignals: [...(changeFor(v.company.id).dismissedSignals ?? []), s.id] }); toast(`“${s.kind}” dismissed`) } },
+                      ]}
+                    />
                   </span>
                 </li>
               ))}
@@ -482,9 +483,6 @@ export function AccountsPage({ session }: { session: Session }) {
         onRun={(summary) => { setNotice({ text: `Play run · ${summary}` }); setPlaying(null) }}
       />
 
-      <p className="px-5 pb-4 text-xs text-muted-foreground lg:px-6">
-        Renewal reminders land on <button type="button" className="underline" onClick={() => follow("/ollopa/tasks", origin())}>Tasks</button> at 120, 90, 60 and 30 days before the date.
-      </p>
     </>
   )
 }
@@ -531,7 +529,11 @@ function TouchPanel({ row, onClose, onLog }: { row: CompanyView | null; onClose:
   if (!row) return null
   return (
     <Panel id="log-touch" title={`Log a touch on ${row.account!.name}`} open onOpenChange={(o) => { if (!o) onClose() }}
-      footer={<Button className="w-full" disabled={!note.trim()} onClick={() => { onLog(row, kind, note); setNote(""); onClose() }}>Log the {kind.toLowerCase()}</Button>}>
+      footer={<Actions surface="dialog" layout="stack" items={[{
+        kind: "primary", label: `Log the ${kind.toLowerCase()}`,
+        disabledBecause: note.trim() ? undefined : "Say what happened, above",
+        onClick: () => { onLog(row, kind, note); setNote(""); onClose() },
+      }]} />}>
       <div className="space-y-3">
         <div>
           <Label htmlFor="touch-kind" className="text-xs">Kind</Label>
@@ -544,7 +546,6 @@ function TouchPanel({ row, onClose, onLog }: { row: CompanyView | null; onClose:
           <Label htmlFor="touch-note" className="text-xs">What happened</Label>
           <Textarea id="touch-note" rows={3} className="mt-1" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-        <p className="text-xs text-muted-foreground">Lands in the account's touches, sets last touch to today, and the health score follows it.</p>
       </div>
     </Panel>
   )
@@ -557,7 +558,11 @@ function RiskPanel({ row, owner, onClose, onAdd }: { row: CompanyView | null; ow
   if (!row) return null
   return (
     <Panel id="add-risk" title={`Add a risk on ${row.account!.name}`} open onOpenChange={(o) => { if (!o) onClose() }}
-      footer={<Button className="w-full" disabled={!note.trim()} onClick={() => { onAdd(row, type, note, who); setNote(""); onClose() }}>Add the risk</Button>}>
+      footer={<Actions surface="dialog" layout="stack" items={[{
+        kind: "primary", label: "Add the risk",
+        disabledBecause: note.trim() ? undefined : "Say what is happening, above",
+        onClick: () => { onAdd(row, type, note, who); setNote(""); onClose() },
+      }]} />}>
       <div className="space-y-3">
         <div>
           <Label htmlFor="risk-type" className="text-xs">Type</Label>
@@ -574,12 +579,6 @@ function RiskPanel({ row, owner, onClose, onAdd }: { row: CompanyView | null; ow
           <Label htmlFor="risk-owner" className="text-xs">Owner</Label>
           <Input id="risk-owner" className="mt-1" value={who} onChange={(e) => setWho(e.target.value)} />
         </div>
-        <p className="text-xs text-muted-foreground">
-          {type === "Churn notice"
-            ? "A churn notice takes 37 points off the health score and is written out on the row."
-            : "An open risk takes 12 points off the health score."}
-          {type === "Escalation" ? " Support tickets are outside this product; the escalation is recorded here in your words." : ""}
-        </p>
       </div>
     </Panel>
   )

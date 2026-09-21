@@ -12,10 +12,10 @@ import { useMemo, useState } from "react"
 import { Bot, CalendarClock, CheckSquare, Mail, MessageSquare, Phone, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
+import { Actions, type Action } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -211,16 +211,18 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
     label: f.label,
     value: f.label === "Stage"
       ? <Badge variant="secondary" className={STAGE_TONE[currentStage]}>{currentStage}</Badge>
-      : f.label === "Company" && company
-        ? <button type="button" className="underline-offset-4 hover:underline" onClick={(e) => openCompany(e.currentTarget)}>{p.company}</button>
       : f.label === "Phone" && p.phone && !p.phoneRevealed && !revealed
         ? (
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
-            setRevealed(true)
-            toast(`Phone revealed · ${CREDITS.revealPhone} credits · ${(balance - CREDITS.revealPhone).toLocaleString()} left`)
-          }}>
-            Reveal · {CREDITS.revealPhone} credits
-          </Button>
+          <Actions surface="card" items={[{
+            kind: "secondary",
+            label: "Reveal the phone",
+            cost: `${CREDITS.revealPhone} credits`,
+            consequence: "Charged once",
+            onClick: () => {
+              setRevealed(true)
+              toast(`Phone revealed · ${CREDITS.revealPhone} credits · ${(balance - CREDITS.revealPhone).toLocaleString()} left`)
+            },
+          }]} />
         )
         : f.value,
     editor: f.label === "Stage" ? "select" : "readonly",
@@ -255,7 +257,9 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
               ))}
             </tbody>
           </table>
-          <Button size="sm" onClick={() => setEnrich(true)}>Enrich again · {CREDITS.enrich} credits</Button>
+          <Actions surface="card" items={[
+            { kind: "primary", label: "Enrich again", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits` },
+          ]} />
         </div>
       ),
     },
@@ -314,77 +318,125 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
       ? {
         tone: "info" as const,
         text: `${p.name} started at ${company?.name ?? "a new employer"} · ${day(p.jobChange.firedOn)} · found by the ${p.jobChange.source}. Was ${p.jobChange.previousCompany}.`,
+        // Two comparable acts on one strip, so neither is filled (DESIGN.md §1).
         action: (
-          <span className="flex flex-wrap gap-1.5">
-            <Button size="sm" onClick={() => toast("Record updated. History, notes and owner kept; taken out of sequences aimed at the old employer.")}>Update this record</Button>
-            <Button size="sm" variant="outline" onClick={() => toast("A new contact was started at the new employer. This record stays as it was.")}>Create a new contact</Button>
-          </span>
+          <Actions surface="card" items={[
+            { kind: "secondary", label: "Update this record", onClick: () => toast("Record updated. History, notes and owner kept; taken out of sequences aimed at the old employer.") },
+            { kind: "secondary", label: "Create a new contact", onClick: () => toast("A new contact was started at the new employer. This record stays as it was.") },
+          ]} />
         ),
       }
       : undefined
 
-  /* ------------------------------------------------------------------------------------ render */
+  /* ------------------------------------------------------------------- the header's controls */
 
   const outreachBlocked = p.doNotContact
+
+  /**
+   * Every act in the header, each named by its usage item, and none of them drawn by hand: the
+   * kind decides (DESIGN.md §1) and `ui/Actions` draws it.
+   *
+   * Which one is filled is the model's answer, not a guess: the act this seat runs most at this
+   * business is the primary, so an SDR opens on the sequence and an AE on the call task. Everything
+   * else is secondary, because two comparable acts are both secondary. Removing the contact is the
+   * only irreversible act here, so it is the only one that asks first, in its own confirmation.
+   */
+  const acts: { item: string; action: Action }[] = canEdit && !outreachBlocked ? [
+    {
+      item: "people.row.sequence",
+      action: { kind: "secondary", label: p.inSequence ? "Move sequence" : "Add to sequence", onClick: () => toast(p.inSequence ? `${p.name} is in ${p.inSequence}. Choose where to move them.` : `${p.name} added to a sequence.`), keys: "S" },
+    },
+    {
+      item: "people.row.call",
+      action: { kind: "secondary", label: "Create a call task", onClick: () => toast(`Call task due today for ${p.name}.`), keys: "C" },
+    },
+    {
+      item: "people.row.email",
+      action: { kind: "secondary", label: "One-off email", onClick: () => toast(`Writing to ${p.email}.`), keys: "E" },
+    },
+    {
+      item: "people.row.enrich",
+      action: { kind: "secondary", label: "Enrich", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits` },
+    },
+    {
+      item: "people.row.research-agent",
+      action: {
+        kind: "secondary",
+        label: "Ask the research agent",
+        onClick: () => toast(`Research queued for ${p.name} · ${CREDITS.research} credits · ${(balance - CREDITS.research).toLocaleString()} left`),
+        cost: `${CREDITS.research} credits`,
+      },
+    },
+    { item: "people.row.list", action: { kind: "secondary", label: "Add to list", onClick: () => toast(`${p.name} added to a list.`) } },
+  ] : canEdit ? [
+    // Outreach is blocked, so the acts that reach out are not offered; the rest still are.
+    { item: "people.row.enrich", action: { kind: "secondary", label: "Enrich", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits` } },
+    { item: "people.row.list", action: { kind: "secondary", label: "Add to list", onClick: () => toast(`${p.name} added to a list.`) } },
+  ] : []
+
+  const mostUsed = acts.reduce<string | null>((best, a) => (best === null || d.weekly(a.item) > d.weekly(best) ? a.item : best), null)
+  const headerItems: Action[] = [
+    ...acts.map((a) => (a.item === mostUsed ? { ...a.action, kind: "primary" as const } : a.action)),
+    ...(canEdit ? [{
+      kind: "destructive" as const,
+      label: "Remove from the workspace",
+      // The one act here that cannot be undone, so it is the one that asks — and the whole of what
+      // it does sits above the affirmative, not on the page (DESIGN.md §2).
+      irreversible: {
+        title: `Remove ${p.name} from ${seed.workspace.name}?`,
+        consequence: `${p.name} and their ${items.length} activities leave this workspace. ${b.crm ? `The ${b.crm} record stays.` : "Nothing is deleted anywhere else."} Undo for 10 seconds.`,
+        confirmLabel: "Remove from the workspace",
+      },
+      onClick: () => { toast(`${p.name} removed. Undo is in the notification for 10 seconds.`); navigate("/ollopa/people") },
+    }] : []),
+  ]
 
   return (
     <>
       <RecordPage
         back={{ label: "People", href: href("/ollopa/people") }}
         title={{ value: p.name }}
+        // A destination is a real link — it copies and opens in a new tab — and a plain click on it
+        // opens the company beside this page instead of leaving (DESIGN.md §1, "links are links").
+        subtitle={company
+          ? { label: `${p.title} · ${p.company}`, href: href(`/ollopa/companies/${company.id}`), onOpen: (el) => openCompany(el) }
+          : undefined}
         chips={
           <span className="flex flex-wrap items-center gap-2">
-            {/* The title and company line the record has always carried. The company is a control,
-                not a link: it opens beside this page, so reading it never costs you the contact. */}
-            <span className="text-sm text-muted-foreground">
-              {p.title}
-              {company && <> · <button type="button" className="underline-offset-4 hover:underline" onClick={(e) => openCompany(e.currentTarget)}>{p.company}</button></>}
-              {!company && <> · {p.company}</>}
-            </span>
             {p.signals.map((s) => <Badge key={s.kind} variant="outline" title={s.detail}>{s.kind}</Badge>)}
-            {!canEdit && <span className="text-xs text-muted-foreground">{p.owner} owns this contact — you can read it</span>}
+            {/* A seat that cannot act gets no control and one sentence naming who can (DESIGN.md §1). */}
+            {!canEdit && (
+              <span className="text-xs text-muted-foreground">
+                {p.owner} owns this contact{admin ? `; only they or ${admin.user} can change or remove it` : ""}
+              </span>
+            )}
           </span>
         }
         ribbon={ribbon}
         fields={fields}
-        actions={{
-          primary: outreachBlocked ? [] : canEdit ? [
-            { label: p.inSequence ? "Move sequence" : "Add to sequence", onClick: () => toast(p.inSequence ? `${p.name} is in ${p.inSequence}. Choose where to move them.` : `${p.name} added to a sequence.`), shortcut: "S" },
-            { label: "Create a call task", onClick: () => toast(`Call task due today for ${p.name}.`), shortcut: "C" },
-          ] : [],
-          secondary: [
-            ...(outreachBlocked ? [] : [{ label: "One-off email", onClick: () => toast(`Writing to ${p.email}.`), shortcut: "E" }]),
-            { label: `Enrich · ${CREDITS.enrich} credits`, onClick: () => setEnrich(true) },
-            { label: `Ask the research agent · ${CREDITS.research} credits`, onClick: () => toast(`Research queued for ${p.name} · ${CREDITS.research} credits · ${(balance - CREDITS.research).toLocaleString()} left`) },
-            { label: "Add to list", onClick: () => toast(`${p.name} added to a list.`) },
-          ],
-          destructive: canEdit ? {
-            label: "Remove from the workspace",
-            consequence: `Removes ${p.name} and their ${items.length} activities. ${b.crm ? `The ${b.crm} record stays.` : "Nothing is deleted anywhere else."} Undo for 10 seconds.`,
-            // The one bare navigate on this page, and the right one: the record it came from no
-            // longer exists, so there is nothing to keep a path back to. The hash change empties
-            // the trail, which is what should happen when the thing you were reading is gone.
-            onConfirm: () => { toast(`${p.name} removed. Undo is in the notification for 10 seconds.`); navigate("/ollopa/people") },
-          } : undefined,
-        }}
+        // The header's controls are `ui/Actions` now: the page says what each one is, the primitive
+        // draws it. The template's own three buckets stay empty (DESIGN.md §1).
+        actions={{ primary: [], secondary: [] }}
+        headerActions={<Actions surface="page" items={headerItems} />}
         main={{
           kind: "timeline",
           label: "Activity",
           composer: canEdit ? (
             <div className="rounded-lg border p-3">
               <Textarea aria-label="Add a note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={`Anything the next person reading ${p.name.split(" ")[0]} should know`} />
-              <Button
-                size="sm"
-                className="mt-2"
-                disabled={!note.trim()}
-                onClick={() => {
-                  setWritten((w) => [...w, { id: `local-${w.length + 1}`, kind: "note", at: seed.workspace.declaredAt, by: session.user, summary: "Note", detail: note.trim() }])
-                  setNote("")
-                  toast("Note added.")
-                }}
-              >
-                Add a note
-              </Button>
+              <div className="mt-2">
+                <Actions surface="card" items={[{
+                  kind: "primary",
+                  label: "Add a note",
+                  disabledBecause: note.trim() ? undefined : "Write the note first",
+                  onClick: () => {
+                    if (!note.trim()) return
+                    setWritten((w) => [...w, { id: `local-${w.length + 1}`, kind: "note", at: seed.workspace.declaredAt, by: session.user, summary: "Note", detail: note.trim() }])
+                    setNote("")
+                    toast("Note added.")
+                  },
+                }]} />
+              </div>
             </div>
           ) : undefined,
           filters: FILTERS.map((f) => (
@@ -426,7 +478,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
           ),
           footer: visible.length > shown ? (
             <div className="flex justify-center pt-3">
-              <Button size="sm" variant="outline" onClick={() => setShown((n) => n + 12)}>Load older</Button>
+              <Actions surface="card" items={[{ kind: "secondary", label: "Load older", onClick: () => setShown((n) => n + 12) }]} />
             </div>
           ) : undefined,
         }}
@@ -437,7 +489,18 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             count: colleagues.length,
             // Leaving is only for acting on the whole set, and it carries the company and the trail.
             action: colleagues.length > shownColleagues.length
-              ? <Button size="sm" variant="ghost" data-item="people.at-company" data-item-label={`All ${colleagues.length} in People`} onClick={openAllAtCompany}>All {colleagues.length} in People</Button>
+              ? (
+                // The span carries the anchor a chain returns to; the link inside it is what the
+                // shell scrolls to, lights and focuses.
+                <span data-item="people.at-company" data-item-label={`All ${colleagues.length} in People`}>
+                  <Actions surface="card" items={[{
+                    kind: "link",
+                    label: `All ${colleagues.length} in People`,
+                    href: href(`/ollopa/people?company=${encodeURIComponent(p.company)}`),
+                    onClick: openAllAtCompany,
+                  }]} />
+                </span>
+              )
               : undefined,
             children: colleagues.length === 0
               ? <p className="text-sm text-muted-foreground">Nobody else here yet.</p>
@@ -518,11 +581,6 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
 
       <EnrichPanel open={enrich} onOpenChange={setEnrich} rows={[p]} session={session} seed={seed} onSpend={(s) => toast(s)} />
 
-      {!canEdit && admin && (
-        <p className="px-6 pb-6 text-xs text-muted-foreground">
-          Owner changes and removal: {admin.user} ({admin.title}).
-        </p>
-      )}
     </>
   )
 }

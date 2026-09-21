@@ -197,7 +197,6 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
             {running ? "Pause the timer" : "Start the timer"}
           </Button>
         )}
-        {manual && <span className="pb-2 text-xs text-muted-foreground">Seconds, typed by hand.</span>}
       </div>
 
       <label className="block text-xs text-muted-foreground">

@@ -5,7 +5,7 @@
 // happens leaves an undo line, and nothing reorders while you work.
 import { useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { toast } from "../../templates/TablePage"
@@ -64,7 +64,9 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
         </span>
       </span>
       <span className="ml-auto flex shrink-0 items-center gap-2">
-        <Button size="sm" variant="outline" className="h-7" onClick={() => onDone(t)}>Done</Button>
+        {/* The row's own act. A row is not the surface Home exists for, so nothing on it is
+            filled: Done is an outline, and the rest of the row's acts are in its menu. */}
+        <Actions surface="card" items={[{ kind: "secondary", label: "Done", keys: "d", onClick: () => onDone(t) }]} />
         <RowMenu
           name={t.contact}
           actions={[
@@ -155,7 +157,7 @@ export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order
                     <span className="text-muted-foreground"> · {t.company}{showSequence && t.sequence ? ` · ${t.sequence}` : ""}</span>
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">{day(t.due)}</span>
-                  <Button size="sm" variant="ghost" className="h-7 shrink-0" onClick={() => done(t)}>Done</Button>
+                  <Actions surface="card" className="shrink-0" items={[{ kind: "secondary", label: "Done", onClick: () => done(t) }]} />
                 </li>
               ))}
             </ul>

@@ -76,7 +76,7 @@ await shot("3-next")
 
 // 3 → 4. "Open the page": the trail takes the sequence and the row with it.
 await page.evaluate(() => {
-  const buttons = Array.from(document.querySelectorAll("aside button"))
+  const buttons = Array.from(document.querySelectorAll("aside button, aside a"))
   buttons.find((b) => b.textContent.trim() === "Open the page")?.click()
 })
 await wait(700)
@@ -114,7 +114,7 @@ await page.evaluate(() => {
   el?.click()
 })
 await wait(500)
-await page.evaluate(() => Array.from(document.querySelectorAll("[data-beside] button")).find((b) => b.textContent.trim() === "Open the page")?.click())
+await page.evaluate(() => Array.from(document.querySelectorAll("[data-beside] button, [data-beside] a")).find((b) => b.textContent.trim() === "Open the page")?.click())
 await wait(700)
 const where = () => page.evaluate(() => {
   const a = document.activeElement

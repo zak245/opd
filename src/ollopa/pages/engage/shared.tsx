@@ -338,13 +338,17 @@ function RowMenu<T>({ row, p }: { row: T; p: DataTableProps<T> }) {
           <MoreHorizontal className="size-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
+      {/* Related objects and ordinary acts first, the destructive one last after a rule — the
+          order DESIGN.md §1 fixes for a menu, so the page cannot put a delete in the middle. */}
       <DropdownMenuContent align="end" className="max-w-[18rem]">
         {actions.map((a, i) => <DropdownMenuItem key={`a${i}`} onSelect={() => a.onClick(row)}>{a.label(row)}</DropdownMenuItem>)}
         {actions.length > 0 && items.length > 0 && <DropdownMenuSeparator />}
-        {items.map((m, i) => (
-          <DropdownMenuItem key={`m${i}`} onSelect={m.onClick} className={cn("whitespace-normal", m.destructive && "text-destructive")}>
-            {m.label}
-          </DropdownMenuItem>
+        {items.filter((m) => !m.destructive).map((m, i) => (
+          <DropdownMenuItem key={`m${i}`} onSelect={m.onClick} className="whitespace-normal">{m.label}</DropdownMenuItem>
+        ))}
+        {items.some((m) => m.destructive) && <DropdownMenuSeparator />}
+        {items.filter((m) => m.destructive).map((m, i) => (
+          <DropdownMenuItem key={`d${i}`} onSelect={m.onClick} variant="destructive" className="whitespace-normal">{m.label}</DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

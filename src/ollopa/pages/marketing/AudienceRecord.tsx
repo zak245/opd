@@ -20,8 +20,9 @@ import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
+import { Actions } from "../../ui/Actions"
 import { RowNote, useTick } from "../engage/shared"
-import { ActedNote, undoable } from "./acted"
+import { ActedNote, actOn, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Panel } from "../../ui/Panel"
@@ -61,7 +62,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   if (!a) {
     return (
       <div className="p-10">
-        <EmptyState title="That audience is not here" body="It may have been deleted, or the link may be old." action={<Button size="sm" onClick={() => navigate("/ollopa/campaigns")}>Back to Campaigns</Button>} />
+        <EmptyState title="That audience is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Campaigns", onClick: () => navigate("/ollopa/campaigns") }]} />} />
       </div>
     )
   }
@@ -144,7 +145,6 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
       label: `Suppression rules: customers, open deals, closed-lost, in sequence · ${rulesApplied(a)} applied`,
       content: (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">Unsubscribed and bounced are always applied and cannot be turned off. These four are yours.</p>
           {counts.filter((s) => !s.always).map((s) => (
             <label key={s.key} className="flex items-center justify-between gap-3">
               <span className="text-sm">Remove {s.label} <span className="tabular-nums text-muted-foreground">({num(s.count)})</span></span>
@@ -159,7 +159,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
             </label>
           ))}
           <div className="border-t pt-2">
-            <Button size="sm" variant="outline" onClick={() => toast("Upload a CSV of addresses this audience never mails.")}>Upload a suppression list</Button>
+            <Actions surface="card" items={[{ kind: "secondary", label: "Upload a suppression list", onClick: () => toast("Upload a CSV of addresses this audience never mails.") }]} />
           </div>
         </div>
       ),
@@ -172,9 +172,14 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           <ul className="list-disc pl-4 text-muted-foreground">{a.rules.map((f, i) => <li key={i}>{f.field} {f.op} {f.value}</li>)}</ul>
           {a.mode === "live" && (
             <p className="text-xs text-muted-foreground">
-              Fed by {a.sources[0]} · new matches added automatically. The switch that turns the feed off lives on that list.{" "}
-              {/* Leaving for the list keeps this audience and this door on the trail. */}
-              <button type="button" className="underline" onClick={() => follow("/ollopa/lists", from("audience.sources"))}>Open Lists</button>
+              Fed by {a.sources[0]} · the switch that turns the feed off lives on that list.{" "}
+              {/* A destination, so a real link; leaving keeps this audience and this door on the trail. */}
+              <a
+                className="underline" href={href("/ollopa/lists")}
+                onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/lists", from("audience.sources")) } }}
+              >
+                Open Lists
+              </a>
             </p>
           )}
         </div>
@@ -188,7 +193,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
             <Label htmlFor="freq-cap" className="text-xs">Campaigns per person per week</Label>
             <Input id="freq-cap" type="number" min={1} className="mt-1 w-24" value={cap} onChange={(e) => setCap(e.target.value)} />
           </div>
-          <Button size="sm" variant="outline" onClick={() => toast(`Saved · at most ${cap} campaign${cap === "1" ? "" : "s"} per person per week from this audience.`)}>Save</Button>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Save", onClick: () => toast(`Saved · at most ${cap} campaign${cap === "1" ? "" : "s"} per person per week from this audience.`) }]} />
         </div>
       ),
     },
@@ -223,10 +228,19 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           ? <>Mode: live · refreshes daily 06:00 · new matches are added to {builtFor ?? "no campaign yet"}</>
           : <>Frozen at {num(a.size)} on {day(a.frozenAt)}</>}
       </p>
-      <Button size="sm" variant="outline" onClick={() => {
-        patch(a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY })
-        toast(a.mode === "live" ? `${a.name} frozen at ${num(a.size)}. No new matches are added.` : `${a.name} is live again and refreshes daily at 06:00.`)
-      }}>{a.mode === "live" ? "Freeze" : "Make live"}</Button>
+      <Actions surface="page" items={[{
+        kind: "secondary",
+        label: a.mode === "live" ? "Freeze" : "Make live",
+        onClick: () => {
+          actOn(
+            session.business, "audience", a.id,
+            a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY },
+            { mode: a.mode, frozenAt: a.frozenAt, refreshAt: a.refreshAt },
+            a.mode === "live" ? `frozen at ${num(a.size)} · no new match is added` : "live again · refreshes daily at 06:00",
+          )
+          toast(a.mode === "live" ? `${a.name} frozen at ${num(a.size)}. No new matches are added.` : `${a.name} is live again and refreshes daily at 06:00.`)
+        },
+      }]} />
     </div>
   )
 
@@ -235,7 +249,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {openCount
-            ? <>The {num(openCount.count)} {openCount.label} this audience takes out, by name — the first {num(pool.length)} of them.</>
+            ? <>The first {num(pool.length)} of {num(openCount.count)}.</>
             : <>The first {num(pool.length)} of {num(net)} after suppressions.</>}
         </p>
         <div className="flex items-center gap-2">
@@ -243,7 +257,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           {pool.length > 10 && (
             <Input aria-label="Find a person in this audience" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48" />
           )}
-          {openCount && <Button size="sm" variant="ghost" onClick={() => { setRecords(null); setQ("") }}>Show everybody</Button>}
+          {openCount && <Actions surface="card" items={[{ kind: "secondary", label: "Show everybody", onClick: () => { setRecords(null); setQ("") } }]} />}
         </div>
       </div>
       <ul className="text-sm">
@@ -330,17 +344,14 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
 
       {/* Hand to sales states the consequence before the click, and names the seat that takes it on. */}
       <Panel id="audience-hand" title="Hand to sales" open={handOff} onOpenChange={setHandOff}
-        footer={<Button className="w-full" onClick={() => { setHandOff(false); toast(`${num(net)} people added to “${listName}”, owned by ${sdr}. Nothing was sent.`) }}>Add {num(net)} people</Button>}
+        footer={<Actions surface="dialog" layout="stack" items={[{ kind: "primary", label: `Add ${num(net)} people`, onClick: () => { setHandOff(false); toast(`${num(net)} people added to “${listName}”, owned by ${sdr}. Nothing was sent.`) } }]} />}
       >
         <div className="space-y-3">
           <div>
             <Label htmlFor="hand-list" className="text-xs">List name</Label>
             <Input id="hand-list" className="mt-1" value={listName} onChange={(e) => setListName(e.target.value)} />
           </div>
-          <p className="text-sm">
-            Adds {num(net)} people to “{listName}”, owned by {sdr}. Nothing is sent. {sdr.split(" ")[0]} decides what happens next.
-          </p>
-          <p className="text-xs text-muted-foreground">Enrolling people in a sequence is the SDR's seat, not yours.</p>
+          <p className="text-sm">Adds {num(net)} people to “{listName}”, owned by {sdr}. Nothing is sent.</p>
         </div>
       </Panel>
     </>

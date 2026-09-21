@@ -3,7 +3,7 @@
 // It opens from any count, its title names the number it opened from, it shows that row week by week
 // first and then the records themselves, and closing it returns focus to the cell that opened it. It
 // is a sibling of `X-forecast` on the page, never a child of it: one panel at a time.
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import { toast } from "../../templates/TablePage"
 import { navigate } from "@/app/router"
@@ -53,18 +53,15 @@ export function RecordsPanel({ request, onOpenChange }: { request: RecordsReques
           <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             The records ({request.rows.length.toLocaleString("en-US")})
           </h3>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs"
-            onClick={() => toast(
+          <Actions surface="pane" items={[{
+            kind: "secondary",
+            label: request.exportLocked ? `Export these ${request.rows.length} rows · ${request.exportPlan}` : `Export these ${request.rows.length} rows`,
+            onClick: () => toast(
               request.exportLocked
-                ? `Exporting a report is on ${request.exportPlan}. Printing this panel costs nothing and is on every plan.`
+                ? `Exporting a report is on ${request.exportPlan}.`
                 : `Exported ${request.rows.length} rows as CSV. The header row names the range and the filters.`,
-            )}
-          >
-            {request.exportLocked ? `Export these ${request.rows.length} rows · ${request.exportPlan}` : `Export these ${request.rows.length} rows`}
-          </Button>
+            ),
+          }]} />
         </div>
 
         {/* The panel is narrow, so the columns wrap rather than scroll sideways: every column the

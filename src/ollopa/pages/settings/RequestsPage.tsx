@@ -10,7 +10,7 @@
 // removed rather than shown empty.
 import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { Door, DoorGroup } from "../../ui/Door"
@@ -159,15 +159,13 @@ export function RequestsPage({ session }: { session: Session }) {
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {captured.length > 0 && (
-              <span className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => { setInvestigated((v) => [...v, ...captured.map((r) => r.id)]); toast(`${captured.length} approved to investigate. Nothing changes for anybody yet.`) }}>
-                  Approve {captured.length} to investigate
-                </Button>
-                <span className="text-xs text-muted-foreground">Nothing changes for anybody yet.</span>
-              </span>
+              <Actions surface="card" items={[{
+                label: `Approve ${captured.length} to investigate`, kind: "secondary",
+                onClick: () => { setInvestigated((v) => [...v, ...captured.map((r) => r.id)]); toast(`${captured.length} approved to investigate. Nothing changes for anybody yet.`) },
+              }]} />
             )}
             <span className="flex-1" />
-            <Button size="sm" variant="ghost" onClick={() => toast(`Exported ${rows.length} requests as CSV.`)}>Export the queue</Button>
+            <Actions surface="card" items={[{ label: "Export the queue", kind: "secondary", onClick: () => toast(`Exported ${rows.length} requests as CSV.`) }]} />
           </div>
 
           <div className="mt-2">

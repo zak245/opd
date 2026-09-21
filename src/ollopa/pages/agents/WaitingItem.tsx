@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
+import { Actions, type Action } from "../../ui/Actions"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Door, useDoorState } from "../../ui/Door"
 import { TODAY, type AgentEvent, type Seed } from "../../data/seed"
@@ -114,7 +115,9 @@ export function WaitingItem(p: WaitingItemProps) {
           <DropdownMenuItem onSelect={() => { openDoor(true); setEditing(true) }}>Edit then approve<DropdownMenuShortcut>e</DropdownMenuShortcut></DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={() => setAsking("why")}>Tell the agent why</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setAsking("snooze")}>Decide tomorrow</DropdownMenuItem>
+        {/* Deciding tomorrow is reversible and free, so it acts at once. It asks first only where
+            waiting would decline it, which cannot be undone (DESIGN.md §2). */}
+        <DropdownMenuItem onSelect={() => { if (sendsBeforeTomorrow(e)) setAsking("snooze"); else { p.onSnooze(); setAsking(null) } }}>Decide tomorrow</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => setAsking("hand")}>Hand to a teammate</DropdownMenuItem>
         {e.contactId && <DropdownMenuItem asChild><a href={href(`/ollopa/people/${e.contactId}`)}>Open the contact<DropdownMenuShortcut>↵</DropdownMenuShortcut></a></DropdownMenuItem>}
         <DropdownMenuItem onSelect={() => { void navigator.clipboard?.writeText(`${location.origin}${location.pathname}#/ollopa/agents?event=${e.id}`); document.dispatchEvent(new CustomEvent("ollopa:toast", { detail: "Link copied." })) }}>
@@ -203,14 +206,11 @@ export function WaitingItem(p: WaitingItemProps) {
           )}
         </div>
 
+        {/* The one act this item exists for is filled; declining is the other act the person came
+            for, so it is outlined. A seat that may not give the second approval is not shown a grey
+            Approve: the item is left out of the list and the line above names who it waits for. */}
         <div className="flex w-full shrink-0 items-center gap-1.5 sm:w-auto">
-          {/* An approval already given is removed, never greyed: the line above says who it waits for. */}
-          {(e.status !== "waiting-second" || p.canApproveForOthers) && (
-            <Button data-item={`wait.approve.${e.id}`} data-item-label="Approve" size="sm" className="flex-1 sm:flex-none" onClick={() => approve()}>
-              {e.status === "waiting-second" ? "Approve as the second" : "Approve"}
-            </Button>
-          )}
-          <Button data-item={`wait.decline.${e.id}`} data-item-label="Decline" size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => p.onDecline()}>Decline</Button>
+          <Actions surface="card" items={decisionActions(p, approve)} />
           {menu}
         </div>
       </div>
@@ -219,48 +219,41 @@ export function WaitingItem(p: WaitingItemProps) {
 
       {asking === "why" && (
         <div className="border-t px-4 py-3">
-          <label className="text-xs text-muted-foreground" htmlFor={`why-${e.id}`}>Tell the agent why. Declining sends this and nothing else happens.</label>
+          <label className="text-xs text-muted-foreground" htmlFor={`why-${e.id}`}>Tell the agent why</label>
           <Textarea id={`why-${e.id}`} value={why} onChange={(ev) => setWhy(ev.target.value)} rows={2} className="mt-1" placeholder="Wrong person: she left in July." />
-          <div className="mt-2 flex gap-2">
-            <Button size="sm" onClick={() => { p.onDecline(why); setAsking(null) }}>Decline and tell the agent</Button>
-            <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Keep waiting</Button>
-          </div>
+          <Actions className="mt-2" surface="card" items={[
+            { kind: "primary", label: "Decline and tell the agent", onClick: () => { p.onDecline(why); setAsking(null) } },
+            { kind: "secondary", label: "Keep waiting", onClick: () => setAsking(null) },
+          ]} />
         </div>
       )}
 
       {asking === "hand" && (
         <div className="border-t px-4 py-3">
-          <label className="text-xs text-muted-foreground">Hand the decision to a teammate. It leaves your queue and they are told.</label>
+          <label className="text-xs text-muted-foreground">Hand the decision to a teammate</label>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Select value={mate} onValueChange={setMate}>
               <SelectTrigger className="h-8 w-56" aria-label="Teammate"><SelectValue placeholder="Choose a teammate" /></SelectTrigger>
               <SelectContent>{teammates.map((u) => <SelectItem key={u.id} value={u.name}>{u.name} · {u.title}</SelectItem>)}</SelectContent>
             </Select>
-            <Button size="sm" disabled={!mate} onClick={() => { p.onHand(mate); setAsking(null) }}>Hand it over</Button>
-            <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Keep it</Button>
+            {/* Disabled only for state this person can change — nobody chosen — with the reason beside it. */}
+            <Actions surface="card" items={[
+              { kind: "primary", label: "Hand it over", onClick: () => { p.onHand(mate); setAsking(null) }, disabledBecause: mate ? undefined : "Choose a teammate first" },
+              { kind: "secondary", label: "Keep it", onClick: () => setAsking(null) },
+            ]} />
           </div>
         </div>
       )}
 
+      {/* Only the case that cannot be undone asks: waiting on this one declines it. The benign case
+          acts from the menu at once, so there is no panel and no sentence to read (DESIGN.md §2). */}
       {asking === "snooze" && (
         <div className="border-t px-4 py-3 text-xs">
-          {sendsBeforeTomorrow(e) ? (
-            <>
-              <p>This sends before tomorrow 08:00, so deciding tomorrow declines it. Nothing would be sent.</p>
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => { p.onDecline("Not decided in time"); setAsking(null) }}>Decline it instead</Button>
-                <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Keep waiting</Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p>It moves to the bottom of the queue and comes back tomorrow at 08:00. Nothing is sent meanwhile.</p>
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" onClick={() => { p.onSnooze(); setAsking(null) }}>Decide tomorrow</Button>
-                <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Keep it here</Button>
-              </div>
-            </>
-          )}
+          <p>This sends before tomorrow 08:00, so deciding tomorrow declines it.</p>
+          <Actions className="mt-2" surface="card" items={[
+            { kind: "primary", label: "Decline it instead", onClick: () => { p.onDecline("Not decided in time"); setAsking(null) } },
+            { kind: "secondary", label: "Keep waiting", onClick: () => setAsking(null) },
+          ]} />
         </div>
       )}
 
@@ -275,13 +268,13 @@ export function WaitingItem(p: WaitingItemProps) {
           {editing ? (
             /* X-agent-edit: the read content is replaced, in place. */
             <div>
-              <label className="text-xs text-muted-foreground" htmlFor={`draft-${e.id}`}>Edit the draft, then send it.</label>
+              <label className="text-xs text-muted-foreground" htmlFor={`draft-${e.id}`}>Edit the draft</label>
               <Textarea id={`draft-${e.id}`} value={p.draft} onChange={(ev) => p.onDraft(ev.target.value)} rows={10} className="mt-1 font-mono text-xs" />
               <ConsequenceLine {...consequence} className="mt-2" />
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" onClick={() => { setEditing(false); approve({ edited: true }) }}>Send edited draft</Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Back to the draft</Button>
-              </div>
+              <Actions className="mt-2" surface="card" items={[
+                { kind: "primary", label: "Send edited draft", onClick: () => { setEditing(false); approve({ edited: true }) } },
+                { kind: "secondary", label: "Back to the draft", onClick: () => setEditing(false) },
+              ]} />
             </div>
           ) : e.ifApproved?.action === "stage" ? (
             <div className="grid gap-2">
@@ -313,15 +306,36 @@ export function WaitingItem(p: WaitingItemProps) {
                 ))}
               </p>
               <pre className="whitespace-pre-wrap font-sans text-[13px]">{p.draft}</pre>
-              <div>
-                <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Edit then approve</Button>
-              </div>
+              <Actions surface="card" items={[{ kind: "secondary", label: "Edit then approve", onClick: () => setEditing(true) }]} />
             </div>
           )}
         </Door>
       </div>
     </li>
   )
+}
+
+/** Approve is the one act the item exists for; Decline is the other act the person came for. */
+function decisionActions(p: WaitingItemProps, approve: () => void): Action[] {
+  const e = p.event
+  const items: Action[] = []
+  if (e.status !== "waiting-second" || p.canApproveForOthers) {
+    items.push({
+      kind: "primary",
+      label: e.status === "waiting-second" ? "Approve as the second" : "Approve",
+      onClick: approve,
+      dataItem: `wait.approve.${e.id}`,
+      dataItemLabel: "Approve",
+    })
+  }
+  items.push({
+    kind: "secondary",
+    label: "Decline",
+    onClick: () => p.onDecline(),
+    dataItem: `wait.decline.${e.id}`,
+    dataItemLabel: "Decline",
+  })
+  return items
 }
 
 function adminLine(p: WaitingItemProps): string {

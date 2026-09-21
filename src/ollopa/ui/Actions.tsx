@@ -46,6 +46,20 @@ export interface Action {
   disabledBecause?: string
   /** The shortcut this control answers to, printed on it. */
   keys?: string
+  /** The usage-model id this control answers to, so a converted page keeps the ids it is pointed at by. */
+  dataItem?: string
+  dataItemLabel?: string
+  /** The element's own id, where something else on the page has to point at it. */
+  id?: string
+  /** Where the label alone does not say what this control acts on. */
+  "aria-label"?: string
+  /**
+   * Anything else the control must carry to be found later — `data-row-focus` for the row a pane
+   * came from, a `data-testid`, a `data-print-hide`. `dataItem` and `dataItemLabel` are the two
+   * every page needs, spelled out; this is for the rest. It is why a row's hover strip, its menu
+   * and a bulk bar use `Actions` rather than drawing their own buttons.
+   */
+  attrs?: Record<string, string>
 }
 
 export type Surface = "page" | "pane" | "dialog" | "card"
@@ -177,6 +191,11 @@ function One({ action, surface, layout, onIrreversible }: {
     // own click handler still runs, which is how a link inside the product keeps the trail.
     <a
       href={action.href}
+      id={action.id}
+      aria-label={action["aria-label"]}
+      data-item={action.dataItem}
+      data-item-label={action.dataItemLabel}
+      {...action.attrs}
       onClick={action.onClick ? (e) => { if (!e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); action.onClick!() } } : undefined}
       // Always underlined, not only on hover: this product's primary colour is its text colour, so
       // colour alone would leave a link indistinguishable from the words around it.
@@ -190,11 +209,15 @@ function One({ action, surface, layout, onIrreversible }: {
     </a>
   ) : (
     <Button
+      id={action.id}
+      aria-label={action["aria-label"]}
+      data-item={action.dataItem}
+      data-item-label={action.dataItemLabel}
+      {...action.attrs}
       size={size}
       variant={action.kind === "primary" ? "default" : action.kind === "destructive" ? "ghost" : "outline"}
       className={cn(width, action.kind === "destructive" && "text-destructive hover:text-destructive")}
       disabled={disabled}
-      aria-describedby={undefined}
       onClick={() => {
         if (disabled) return
         if (action.irreversible) { onIrreversible(action); return }
@@ -217,10 +240,16 @@ function One({ action, surface, layout, onIrreversible }: {
   )
 }
 
-export function Actions({ items, layout = "row", surface = "page", className }: {
+export function Actions({ items, layout = "row", surface = "page", menuLabel, className }: {
   items: Action[]
   layout?: Layout
   surface?: Surface
+  /**
+   * What the menu acts on: the row's own name. Required by `layout="menu"`, because a screen reader
+   * meeting twenty "More actions" buttons on one table learns nothing (RULES.md rule 4). The
+   * trigger reads "Actions for Mateo Okonkwo".
+   */
+  menuLabel?: string
   className?: string
 }) {
   const [confirming, setConfirming] = useState<Action | null>(null)
@@ -241,19 +270,26 @@ export function Actions({ items, layout = "row", surface = "page", className }: 
   )
 
   if (layout === "menu") {
+    if (!menuLabel) {
+      warn(`menuLabel:${list.map((a) => a.label).join(",")}`,
+        'A menu needs `menuLabel`: the name of the thing it acts on, so its trigger reads "Actions for ' +
+        'Mateo Okonkwo" and not "More actions" twenty times down a table (RULES.md rule 4).')
+    }
     const doing = list.filter((a) => a.kind !== "destructive")
     const ending = list.filter((a) => a.kind === "destructive")
     return (
       <>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size={SIZE[surface] === "sm" ? "icon-sm" : "icon"} aria-label="More actions">
+            <Button variant="ghost" size={SIZE[surface] === "sm" ? "icon-sm" : "icon"}
+                    aria-label={menuLabel ? `Actions for ${menuLabel}` : "More actions"}>
               <MoreHorizontal className="size-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {doing.map((a) => (
               <DropdownMenuItem key={a.label} disabled={!!a.disabledBecause}
+                data-item={a.dataItem} data-item-label={a.dataItemLabel}
                 onSelect={() => (a.irreversible ? irreversible(a) : a.onClick?.())}>
                 {a.label}
                 {a.cost && <span className="ml-auto pl-4 text-xs text-muted-foreground">{a.cost}</span>}
@@ -261,7 +297,9 @@ export function Actions({ items, layout = "row", surface = "page", className }: 
             ))}
             {ending.length > 0 && doing.length > 0 && <DropdownMenuSeparator />}
             {ending.map((a) => (
-              <DropdownMenuItem key={a.label} variant="destructive" disabled={!!a.disabledBecause}
+              <DropdownMenuItem key={a.label} variant="destructive" id={a.id} aria-label={a["aria-label"]}
+                data-item={a.dataItem} data-item-label={a.dataItemLabel} {...a.attrs}
+                disabled={!!a.disabledBecause}
                 onSelect={() => (a.irreversible ? irreversible(a) : a.onClick?.())}>
                 {a.label}
               </DropdownMenuItem>

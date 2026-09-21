@@ -7,13 +7,13 @@
 //
 // A decision taken in here is written to the shared store (src/ollopa/edits.ts), which is where the
 // row behind reads it from: one source, so the pane and the section cannot disagree.
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { PageComponent } from "../../Product"
 import { closeBeside, openBeside, type BesideComponent } from "../../beside"
-import { declarePaneFields } from "../../ui/Beside"
-import { editOf, recordEdit } from "../../edits"
-import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
+import { clearEdit, editOf, recordEdit, useEdit } from "../../edits"
+import { consequenceText } from "../../ui/ConsequenceLine"
+import { Actions } from "../../ui/Actions"
+import { declarePaneFields, useBesideDone } from "../../ui/Beside"
 import { seedFor } from "../../data/seed"
 import { HomePage } from "./HomePage"
 import { consequenceOf, proposalOf, wordsOf } from "./data"
@@ -32,6 +32,7 @@ export const nodes: Record<string, PageComponent> = {
 const ApprovalBeside: BesideComponent = ({ session, id, target }) => {
   declarePaneFields("agents")   // the approval item is drawn at the agents page's level one
   const seed = seedFor(session.business)
+  declarePaneFields("home")
   const e = seed.agentEvents.find((x) => x.id === id)
   if (!e) return <p className="text-muted-foreground">This agent run is not in {seed.workspace.name}.</p>
 
@@ -58,10 +59,7 @@ const ApprovalBeside: BesideComponent = ({ session, id, target }) => {
 
   return (
     <div className="space-y-4">
-      <div>
-        <p className="font-medium">{proposalOf(e)}</p>
-        <ConsequenceLine {...consequence} className="mt-0.5" />
-      </div>
+      <p className="font-medium">{proposalOf(e)}</p>
 
       <dl className="space-y-2.5">
         <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
@@ -97,15 +95,19 @@ const ApprovalBeside: BesideComponent = ({ session, id, target }) => {
         {e.sourceQuote && <p className="pt-1 text-xs text-muted-foreground">{e.sourceQuote}</p>}
       </div>
 
-      <div className="space-y-3 border-t pt-3">
-        <div>
-          <Button size="sm" className="w-full justify-start" onClick={() => decide("approved")}>Approve</Button>
-          <ConsequenceLine {...consequence} className="mt-1" />
-        </div>
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => decide("declined")}>Decline</Button>
-          <ConsequenceLine className="mt-1" changes="Nothing is sent and nothing is spent; the run stays in this week's ledger" />
-        </div>
+      {/* Approve is the one act this pane exists for, so it is the filled control; Decline is the
+          other act the person came for. Both are reversible here — the decision is a record in the
+          shared store and the footer offers the way back — so only Approve carries a line, and only
+          because it spends (DESIGN.md §1 and §2). */}
+      <div className="border-t pt-3">
+        <Actions
+          surface="pane"
+          layout="stack"
+          items={[
+            { kind: "primary", label: "Approve", onClick: () => decide("approved"), cost: consequenceText(consequence) },
+            { kind: "secondary", label: "Decline", onClick: () => decide("declined") },
+          ]}
+        />
       </div>
     </div>
   )

@@ -86,8 +86,16 @@ console.log("list position:", await page.evaluate(() => document.querySelector("
 await shot("3-pane")
 
 // 3 → 4. Act in the pane. The row behind it says the same thing, at once, where it was caused.
+// The person pane asks where they are going before it will move them, so choose first.
+await page.evaluate(() => {
+  const picker = document.querySelector("aside [role='combobox'], aside button[aria-haspopup='listbox']")
+  picker?.click()
+})
+await wait(350)
+await page.evaluate(() => document.querySelector("[role='option']")?.click())
+await wait(350)
 const acted = await page.evaluate(() => {
-  const b = Array.from(document.querySelectorAll("aside button")).find((x) => /^Add to |^Move to /.test(x.textContent.trim()))
+  const b = Array.from(document.querySelectorAll("aside button, aside a")).find((x) => /^Add to |^Move to /.test(x.textContent.trim()))
   if (!b) return null
   b.focus()
   return b.textContent.trim()
@@ -100,7 +108,7 @@ await shot("4-acted")
 
 // 4 → 5. "Open the page": the trail takes the company and the row with it.
 await page.evaluate(() => {
-  const b = Array.from(document.querySelectorAll("aside button")).find((x) => x.textContent.trim() === "Open the page")
+  const b = Array.from(document.querySelectorAll("aside button, aside a")).find((x) => x.textContent.trim() === "Open the page")
   b?.focus()
 })
 await page.keyboard.press("Enter")

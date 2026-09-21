@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { useRoute } from "@/app/router"
+import { href, useRoute } from "@/app/router"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
+import { Actions } from "../../ui/Actions"
 import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -90,7 +91,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
         </div>
         <div className="flex flex-wrap items-center gap-3 px-6 py-3">
           <Locked feature="Workflows" plan={lock.plan} pricePerMonth={lock.pricePerMonth} what={lock.what}>
-            <Button>Create a workflow</Button>
+            <Actions surface="page" items={[{ kind: "primary", label: "Create a workflow" }]} />
           </Locked>
           <span className="text-sm tabular-nums text-muted-foreground">{num(rows.workflows.length)} workflows</span>
         </div>
@@ -142,22 +143,22 @@ export function WorkflowsPage({ session }: { session: Session }) {
       if (!w.sla) return <span className="text-muted-foreground">No clock on this one</span>
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
-        : <button type="button" className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}?at=sla`, w.id) }}>{num(n)} past {w.sla.windows.hot}</button>
+        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=sla`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=sla`, w.id) } }}>{num(n)} past {w.sla.windows.hot}</a>
     } },
     { key: "notRouted", header: "Could not route", sortBy: (w) => stats.get(w.id)?.notRouted ?? 0, cell: (w) => {
       const n = stats.get(w.id)?.notRouted ?? 0
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
-        : <button type="button" className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}?at=runs`, w.id) }}>{num(n)}</button>
+        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=runs`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=runs`, w.id) } }}>{num(n)}</a>
     } },
     { key: "ceiling", header: "Credit ceiling and spend today", sortBy: (w) => w.ceiling.spentToday, className: "min-w-[9rem]", cell: (w) => (
-      <button
-        type="button"
+      <a
+        href={href(`/ollopa/workflows/${w.id}?at=ceiling`)}
         className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium text-amber-700 dark:text-amber-400")}
-        onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}?at=ceiling`, w.id) }}
+        onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=ceiling`, w.id) } }}
       >
         {num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} a day
-      </button>
+      </a>
     ) },
     { key: "owner", header: "Owner", sortBy: (w) => w.owner, cell: (w) => w.owner },
     { key: "edited", header: "Last edited", sortBy: (w) => w.editedOn, cell: (w) => <span className="text-xs">{w.editedBy}<br />{day(w.editedOn)}</span> },
@@ -195,7 +196,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
           <h2 className="text-lg font-semibold">Workflows</h2>
           <p className="text-sm text-muted-foreground">Which rule is firing, on whom, and what it is about to cost.</p>
         </div>
-        <Button onClick={create}>Create a workflow</Button>
+        <Actions surface="page" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />
       </div>
 
       {rows.workflows.length === 0 ? (
@@ -203,7 +204,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
           <EmptyState
             title="No workflows"
             body="A workflow routes what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
-            action={<Button size="sm" onClick={create}>Create a workflow</Button>}
+            action={<Actions surface="card" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />}
           />
         </div>
       ) : (

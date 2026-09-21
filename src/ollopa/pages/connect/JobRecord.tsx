@@ -4,7 +4,7 @@
 // should never have to compute it. The fee statement is a section, always present, whatever its usage
 // number. One door, for the long list nobody reads alongside the report (spec 18 §3.3).
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { href, navigate } from "@/app/router"
 import { toast } from "../../templates/TablePage"
 import { RecordPage } from "../../templates/RecordPage"
@@ -12,7 +12,7 @@ import { businessById } from "../../data/businesses"
 import { CREDITS, TODAY, seedFor, type EnrichmentJob } from "../../data/seed"
 import type { Session } from "../../session"
 import { day } from "../deal/format"
-import { Confirm, Consequence, n, pct } from "./bits"
+import { Consequence, n, pct } from "./bits"
 import { useDraft } from "./drafts"
 
 const SOURCE_WORDS: Record<EnrichmentJob["source"], string> = {
@@ -23,7 +23,6 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
   const seed = seedFor(session.business)
   const b = businessById(session.business)
   const [dropped, setDropped] = useState(false)
-  const [confirm, setConfirm] = useState<null | { title: string; body: string; label: string; run: () => void }>(null)
 
   // The run this tab just finished is read from the import draft, so the wizard ends on a record and
   // not on a toast, even before the job list has caught up.
@@ -51,7 +50,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
       <div className="mx-auto max-w-lg p-10 text-center">
         <h2 className="text-lg font-semibold">No enrichment jobs yet</h2>
         <p className="mt-2 text-sm text-muted-foreground">A reveal or an import writes one, with what it cost and what it found.</p>
-        <Button className="mt-5" onClick={() => navigate("/ollopa/import?step=1")}>Import and enrich a file</Button>
+        <Actions className="mt-5 justify-center" surface="page" items={[{ kind: "primary", label: "Import and enrich a file", onClick: () => navigate("/ollopa/import?step=1") }]} />
       </div>
     )
   }
@@ -75,7 +74,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
         back={{ label: "People", href: href("/ollopa/people") }}
         title={{ value: job.sourceLabel }}
         subtitle={{ label: `${SOURCE_WORDS[job.source]} · ${job.status}`, href: href("/ollopa/import?step=1") }}
-        ribbon={job.status === "paused" ? { tone: "warning", text: `Stopped at row ${n(local ? imported.done : job.matched)}. ${n(job.credits)} credits spent and kept. Resume runs the rest.`, action: <Button size="sm" onClick={() => navigate("/ollopa/import?step=5")}>Resume the run</Button> } : undefined}
+        ribbon={job.status === "paused" ? { tone: "warning", text: `Stopped at row ${n(local ? imported.done : job.matched)}. ${n(job.credits)} credits spent and kept. Resume runs the rest.`, action: <Actions surface="card" items={[{ kind: "secondary", label: "Resume the run", onClick: () => navigate("/ollopa/import?step=5") }]} /> } : undefined}
         fields={[
           { key: "source", label: "Source", value: job.sourceLabel },
           { key: "by", label: "Started by", value: `${job.startedBy} · ${day(job.startedAt)}` },
@@ -143,14 +142,17 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                   title: "Unmatched rows",
                   count: unmatchedCount,
                   action: (
-                    <Button size="sm" variant="outline" disabled={dropped} onClick={() => setConfirm({
-                      title: `Drop these ${n(unmatchedCount)} from the list?`,
-                      body: `Removes ${n(unmatchedCount)} from "${seed.lists[0]?.name ?? "the list"}". The records stay in the workspace, and nothing is refunded.`,
-                      label: `Drop ${n(unmatchedCount)} from the list`,
-                      run: () => { setDropped(true); toast(`Dropped ${n(unmatchedCount)} rows from ${seed.lists[0]?.name ?? "the list"}`) },
-                    })}>
-                      {dropped ? "Dropped" : `Drop these ${n(unmatchedCount)} from the list`}
-                    </Button>
+                    <Actions surface="card" items={[{
+                      kind: "destructive",
+                      label: dropped ? "Dropped" : `Drop these ${n(unmatchedCount)} from the list`,
+                      onClick: () => { setDropped(true); toast(`Dropped ${n(unmatchedCount)} rows from ${seed.lists[0]?.name ?? "the list"}`) },
+                      disabledBecause: dropped ? "Already dropped" : undefined,
+                      irreversible: {
+                        title: `Drop these ${n(unmatchedCount)} from the list?`,
+                        consequence: `Removes ${n(unmatchedCount)} from "${seed.lists[0]?.name ?? "the list"}". The records stay in the workspace, and nothing is refunded.`,
+                        confirmLabel: `Drop ${n(unmatchedCount)} from the list`,
+                      },
+                    }]} />
                   ),
                   children: (
                     <div className="grid gap-3">
@@ -160,17 +162,17 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                         ))}
                         {unmatchedCount > unmatched.length && <li className="text-muted-foreground">and {n(unmatchedCount - unmatched.length)} more, in the door at the foot of this page</li>}
                       </ul>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setConfirm({
+                      <Actions surface="card" items={[{
+                        kind: "secondary", label: "Run the unmatched rows again",
+                        cost: `about ${n(rerunCost)} credits`,
+                        consequence: "Only rows that return are charged",
+                        onClick: () => toast(`Started a second job on ${n(unmatchedCount)} rows · linked to this one`),
+                        irreversible: {
                           title: "Run the unmatched rows again?",
-                          body: `${n(unmatchedCount)} rows, a different provider order: ${[...job.providers].reverse().join(" → ")}. About ${n(rerunCost)} credits, and only rows that return are charged.`,
-                          label: `Run ${n(unmatchedCount)} again · about ${n(rerunCost)} credits`,
-                          run: () => toast(`Started a second job on ${n(unmatchedCount)} rows · linked to this one`),
-                        })}>
-                          Run the unmatched rows again · about {n(rerunCost)} credits
-                        </Button>
-                        <span className="text-xs text-muted-foreground">With the order reversed: {[...job.providers].reverse().join(" → ")}.</span>
-                      </div>
+                          consequence: `${n(unmatchedCount)} rows, a different provider order: ${[...job.providers].reverse().join(" → ")}. About ${n(rerunCost)} credits, and only rows that return are charged.`,
+                          confirmLabel: `Run ${n(unmatchedCount)} again · about ${n(rerunCost)} credits`,
+                        },
+                      }]} />
                     </div>
                   ),
                 }]
@@ -195,36 +197,29 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                                 ? `${company.name} is already an account · owner ${account.owner} · ${open} open deal${open === 1 ? "" : "s"}`
                                 : `${company?.name ?? "The new employer"} is not in the workspace yet.`}
                             </p>
-                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                              <Button size="sm" variant="outline" className="h-auto justify-start whitespace-normal py-2 text-left" onClick={() => toast(`Updated ${m.name} · old employer kept in the history`)}>
-                                <span>
-                                  <span className="block font-medium">Update this record</span>
-                                  <span className="block text-xs text-muted-foreground">One timeline. The old employer stays in the history, and {m.jobChange?.previousEmail} is kept and marked bounced.</span>
-                                </span>
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-auto justify-start whitespace-normal py-2 text-left" onClick={() => toast(`Created a new contact for ${m.name} · linked to the old record`)}>
-                                <span>
-                                  <span className="block font-medium">Create a new contact</span>
-                                  <span className="block text-xs text-muted-foreground">The old record keeps its history and is linked to this one. You choose its stage.</span>
-                                </span>
-                              </Button>
-                            </div>
+                            {/* Two comparable acts, so neither is filled, and neither spends: the
+                                lines that explained them are gone (DESIGN.md §1 and §3). */}
+                            <Actions className="mt-2" surface="card" items={[
+                              { kind: "secondary", label: "Update this record", onClick: () => toast(`Updated ${m.name} · old employer kept in the history`) },
+                              { kind: "secondary", label: "Create a new contact", onClick: () => toast(`Created a new contact for ${m.name} · linked to the old record`) },
+                            ]} />
                             <p className="mt-2 text-xs text-muted-foreground">
                               The new address is not known yet · verifying one costs {CREDITS.revealEmail} credit{CREDITS.revealEmail === 1 ? "" : "s"}.
                             </p>
                           </div>
                         )
                       })}
-                      <div className="flex flex-wrap items-center gap-2 rounded-lg border p-3">
-                        <Button size="sm" onClick={() => setConfirm({
-                          title: `Enrol the ${n(movers.length)} movers in "${sequence}"?`,
-                          body: `${n(netNew)} of them work somewhere ollopA does not own yet. Verifying ${n(movers.length)} new addresses costs about ${n(movers.length * CREDITS.revealEmail)} credits, and the first step sends on the sequence's own schedule.`,
-                          label: `Enrol ${n(movers.length)} · about ${n(movers.length * CREDITS.revealEmail)} credits`,
-                          run: () => toast(`Enrolled ${n(movers.length)} movers in ${sequence}`),
-                        })}>
-                          Enrol the {n(movers.length)} movers in "{sequence}"
-                        </Button>
-                        <span className="text-xs text-muted-foreground">{n(netNew)} net new companies · about {n(movers.length * CREDITS.revealEmail)} credits.</span>
+                      <div className="rounded-lg border p-3">
+                        <Actions surface="card" items={[{
+                          kind: "secondary", label: `Enrol the ${n(movers.length)} movers in "${sequence}"`,
+                          cost: `about ${n(movers.length * CREDITS.revealEmail)} credits`,
+                          onClick: () => toast(`Enrolled ${n(movers.length)} movers in ${sequence}`),
+                          irreversible: {
+                            title: `Enrol the ${n(movers.length)} movers in "${sequence}"?`,
+                            consequence: `${n(netNew)} of them work somewhere ollopA does not own yet. Verifying ${n(movers.length)} new addresses costs about ${n(movers.length * CREDITS.revealEmail)} credits, and the first step sends on the sequence's own schedule.`,
+                            confirmLabel: `Enrol ${n(movers.length)} · about ${n(movers.length * CREDITS.revealEmail)} credits`,
+                          },
+                        }]} />
                       </div>
                     </div>
                   ),
@@ -277,14 +272,6 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
             </div>
           ),
         }]}
-      />
-      <Confirm
-        open={!!confirm}
-        title={confirm?.title ?? ""}
-        body={confirm?.body}
-        confirmLabel={confirm?.label ?? "Run it"}
-        onConfirm={() => { confirm?.run(); setConfirm(null) }}
-        onCancel={() => setConfirm(null)}
       />
     </>
   )

@@ -136,9 +136,6 @@ export function TemplatesPage({ session }: { session: Session }) {
       <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
         <div>
           <h2 className="text-lg font-semibold">Templates and snippets</h2>
-          <p className="text-sm text-muted-foreground">
-            Copy written once and used in many places. A step can link to a template or take a copy of it.
-          </p>
         </div>
         <Button onClick={() => toast("New template · name it, then write the subject and body")}>New template</Button>
       </div>
@@ -181,8 +178,8 @@ export function TemplatesPage({ session }: { session: Session }) {
             { label: "Move to folder", onClick: () => toast(`${r.name}: choose a folder`) },
             {
               label: r.usedBySteps.length
-                ? `Archive · ${n(r.usedBySteps.length)} steps keep the text they have today; nothing changes for anyone in a sequence`
-                : "Archive · nothing uses it today",
+                ? `Archive · used by ${n(r.usedBySteps.length)} steps`
+                : "Archive",
               destructive: true,
               onClick: () => toast(`${r.name} archived · ${n(r.usedBySteps.length)} steps keep the text they have today`),
             },

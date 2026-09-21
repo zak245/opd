@@ -8,7 +8,9 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { href } from "@/app/router"
 import { openBeside } from "../../beside"
+import { Actions, type Action } from "../../ui/Actions"
 import { clearEdit, useEdits } from "../../edits"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
@@ -124,18 +126,21 @@ function ApprovalRow({ e, canApprove, isAdmin, mine, adminName, adminTitle, seen
           {isAdmin && !mine && !second && <span className="mt-0.5 block text-xs text-muted-foreground">Owned by {e.ownerId}. You may approve for them.</span>}
         </span>
         {canApprove ? (
-          <span className="ml-auto flex shrink-0 items-center gap-2">
-            <Button size="sm" className="h-7" onClick={() => onDecide(e, "approved")}>Approve</Button>
-            <Button size="sm" variant="outline" className="h-7" onClick={() => onDecide(e, "declined")}>Decline</Button>
+          // Two comparable acts on a row, so neither is filled (DESIGN.md §1). What approving
+          // spends is already on the row's own consequence line above, where the proposal is.
+          <span className="ml-auto shrink-0">
+            <Actions
+              surface="card"
+              items={([
+                { kind: "secondary", label: "Approve", keys: "a", onClick: () => onDecide(e, "approved") },
+                { kind: "secondary", label: "Decline", keys: "x", onClick: () => onDecide(e, "declined") },
+              ]) as Action[]}
+            />
           </span>
         ) : (
-          <button
-            type="button"
-            className="shrink-0 text-xs text-muted-foreground underline underline-offset-4"
-            onClick={() => follow("/ollopa/agents", originHere(e.id))}
-          >
-            See it on Agents
-          </button>
+          <span className="shrink-0">
+            <Actions surface="card" items={[{ kind: "link", label: "See it on Agents", href: href("/ollopa/agents"), onClick: () => follow("/ollopa/agents", originHere(e.id)) }]} />
+          </span>
         )}
       </div>
       <ItemBody e={e} />
@@ -251,14 +256,14 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
 
       {reviewable.length >= 2 && (
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7"
-            onClick={() => setPanel({ title: "Everything waiting for you", items: reviewable })}
-          >
-            Review {reviewable.length} waiting · {review.sends ? `${plural(review.sends, "email")} · ` : ""}{count(review.credits)} credits
-          </Button>
+          <Actions
+            surface="card"
+            items={[{
+              kind: "secondary",
+              label: `Review ${reviewable.length} waiting · ${review.sends ? `${plural(review.sends, "email")} · ` : ""}${count(review.credits)} credits`,
+              onClick: () => setPanel({ title: "Everything waiting for you", items: reviewable }),
+            }]}
+          />
         </div>
       )}
 
@@ -274,15 +279,15 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
               <p className="min-w-0 text-xs text-muted-foreground">{batch.heading}</p>
               {approvable.length >= 2 && (
                 <span className="ml-auto flex flex-wrap items-center gap-2">
-                  {unread > 0 && <span className="text-xs text-muted-foreground">{unread} of {approvable.length} not read yet</span>}
-                  <Button
-                    size="sm"
-                    className="h-7"
-                    disabled={unread > 0}
-                    onClick={() => decide(approvable, "approved")}
-                  >
-                    Approve {approvable.length} · {t.sends ? `${plural(t.sends, "email")} · ` : ""}{count(t.credits)} credits
-                  </Button>
+                  <Actions
+                    surface="card"
+                    items={[{
+                      kind: "secondary",
+                      label: `Approve ${approvable.length} · ${t.sends ? `${plural(t.sends, "email")} · ` : ""}${count(t.credits)} credits`,
+                      onClick: () => decide(approvable, "approved"),
+                      disabledBecause: unread > 0 ? `${unread} of ${approvable.length} not read yet` : undefined,
+                    }]}
+                  />
                 </span>
               )}
             </div>

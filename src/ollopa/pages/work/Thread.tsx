@@ -11,14 +11,13 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useRoute } from "@/app/router"
+import { Actions } from "../../ui/Actions"
 import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import type { Disclosure } from "../../ui/useDisclosure"
@@ -225,14 +224,13 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 onChange={(e) => { setBody(e.target.value); setFromDraft(false) }}
                 placeholder={`Write back to ${reply.contact.split(" ")[0]}`}
               />
-              {fromDraft && <p className="pt-1 text-xs text-muted-foreground">Agent draft, not sent. Edit it or send it — sending is the approval.</p>}
             </div>
 
             {/* The drafting agent's reply sits beside the composer, never in a queue of its own. */}
             {draft && (
               <div className="pt-2">
                 <Door id="inbox.thread.agent-draft" label={`Agent draft · ${words(draft.body)} words`} defaultOpen={disclosure.level("inbox.agent-draft") === 1}>
-                  <p className="text-xs text-muted-foreground">Written by the {draft.by} · {draft.state}. Nothing is sent by the agent from this page.</p>
+                  <p className="text-xs text-muted-foreground">Written by the {draft.by} · {draft.state}</p>
                   <p className="whitespace-pre-line pt-1 text-sm">{draft.body}</p>
                   <Button size="sm" variant="outline" className="mt-2" onClick={() => {
                     setBody(draft.body)
@@ -247,13 +245,20 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
             )}
 
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              <Button size="sm" disabled={!body.trim()} onClick={() => {
-                say(`Reply sent to ${reply.contact} from ${mailbox}.`)
-                setBody("")
-                setFromDraft(false)
-              }}>
-                Send
-              </Button>
+              {/* Sending is the one act this half of the page exists for, and it cannot be taken
+                  back, so it is the filled control and the only one carrying a line: what it
+                  spends. Everything else here is free and reversible and says nothing. */}
+              <Actions
+                surface="card"
+                items={[{
+                  kind: "primary",
+                  label: "Send",
+                  onClick: () => { say(`Reply sent to ${reply.contact} from ${mailbox}.`); setBody(""); setFromDraft(false) },
+                  cost: "1 email",
+                  consequence: `to ${reply.contact} from ${mailbox}`,
+                  disabledBecause: body.trim() ? undefined : "Write something first",
+                }]}
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" aria-label="Send options: schedule, signature, Cc and Bcc, attach">Send ▾</Button>
@@ -286,17 +291,10 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 </DropdownMenu>
               )}
 
-              <Button size="sm" variant="ghost" className="ml-auto text-xs" onClick={onBook}>Book meeting</Button>
+              <span className="ml-auto">
+                <Actions surface="card" items={[{ kind: "secondary", label: "Book a meeting", onClick: onBook }]} />
+              </span>
             </div>
-            <div className="pt-1.5">
-              <ConsequenceLine sends={1} to={reply.contact} from={mailbox} changes={signature ? "Your signature is included" : "No signature"} />
-            </div>
-            {fromDraft && (
-              <p className="pt-1 text-xs text-muted-foreground">
-                <Badge variant="secondary" className="mr-1 px-1.5 py-0 text-[11px] font-normal">Agent draft</Badge>
-                The recipient and the whole text are on screen. Send is the approval, and the ledger records it.
-              </p>
-            )}
           </div>
         </div>
       </DoorGroup>

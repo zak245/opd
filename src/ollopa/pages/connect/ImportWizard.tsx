@@ -5,7 +5,7 @@
 // hit — the number the next run is designed from. There is no control that skips the trial: an
 // accelerator past a rule-7 item is a dark pattern with a keyboard shortcut (spec 18 §3.1, §6.4).
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Actions, type Action } from "../../ui/Actions"
 import { Input } from "@/components/ui/input"
 import { navigate, useRoute, href } from "@/app/router"
 import { toast } from "../../templates/TablePage"
@@ -188,20 +188,31 @@ export function ImportWizard({ session }: { session: Session }) {
     </div>
   ) : null
 
-  const primary = () => {
+  /** One primary per step — the step's own way on — and a line beside it only where it spends. */
+  const stepActions = (): Action[] => {
+    const acts: Action[] = []
     switch (current) {
-      case 1: return <Button disabled={!draft.file} onClick={() => { markDone(1); go(2) }}>Continue to duplicates</Button>
-      case 2: return <Button onClick={() => { markDone(2); go(3) }}>Continue to fields and providers</Button>
-      case 3: return <Button onClick={() => { markDone(3); go(4) }}>Continue to the trial</Button>
-      case 4: return draft.trialDone
-        ? <Button onClick={() => { markDone(4); go(5) }}>Run the other {n(remaining)}</Button>
-        : <Button onClick={() => { save({ trialDone: true, credits: trialCredits, done: trialRows }); toast(`Trial done · ${n(trialCredits)} credits on 10 rows`) }}>Run the ten-row trial · about {n(trialCredits)} credits</Button>
-      default: return running
-        ? <Button variant="outline" onClick={stopRun}>Stop the run</Button>
+      case 1: acts.push({ kind: "primary", label: "Continue to duplicates", onClick: () => { markDone(1); go(2) }, disabledBecause: draft.file ? undefined : "Choose a CSV file above" }); break
+      case 2: acts.push({ kind: "primary", label: "Continue to fields and providers", onClick: () => { markDone(2); go(3) } }); break
+      case 3: acts.push({ kind: "primary", label: "Continue to the trial", onClick: () => { markDone(3); go(4) } }); break
+      case 4: acts.push(draft.trialDone
+        ? { kind: "primary", label: `Run the other ${n(remaining)}`, onClick: () => { markDone(4); go(5) } }
+        : {
+          kind: "primary", label: "Run the ten-row trial", cost: `about ${n(trialCredits)} credits`,
+          onClick: () => { save({ trialDone: true, credits: trialCredits, done: trialRows }); toast(`Trial done · ${n(trialCredits)} credits on 10 rows`) },
+        }); break
+      default: acts.push(running
+        ? { kind: "secondary", label: "Stop the run", onClick: stopRun }
         : draft.done >= draft.rows && draft.rows > 0
-          ? <Button onClick={() => navigate("/ollopa/enrichment/local-import")}>Open the job report</Button>
-          : <Button onClick={startRun}>{draft.done > trialRows ? `Continue from row ${n(draft.done)}` : `Run the other ${n(remaining)} rows · about ${n(projected - trialCredits)} credits`}</Button>
+          ? { kind: "primary", label: "Open the job report", onClick: () => navigate("/ollopa/enrichment/local-import") }
+          : draft.done > trialRows
+            ? { kind: "primary", label: `Continue from row ${n(draft.done)}`, onClick: startRun, cost: `about ${n(projected - trialCredits)} credits` }
+            : { kind: "primary", label: `Run the other ${n(remaining)} rows`, onClick: startRun, cost: `about ${n(projected - trialCredits)} credits` })
     }
+    if (current > 1) acts.push({ kind: "link", label: `Back to ${STEPS[current - 2].toLowerCase()}`, href: `#/ollopa/import?step=${current - 1}`, onClick: () => go(current - 1) })
+    if (current === 4 && draft.trialDone) acts.push({ kind: "link", label: "Change the fields or the providers", href: "#/ollopa/import?step=3", onClick: () => go(3) })
+    if (draft.file) acts.push({ kind: "destructive", label: "Discard this import", onClick: () => setDiscarding(true) })
+    return acts
   }
 
   return (
@@ -210,16 +221,9 @@ export function ImportWizard({ session }: { session: Session }) {
         steps={steps}
         current={current}
         go={go}
-        constantLine="Nothing is charged until you press Run. The ten rows of the trial are charged, and the trial says so."
+        constantLine="The ten rows of the trial are charged."
         onSaveAndExit={() => { toast(`Saved · Import ${draft.stepsDone.length} of 5 steps done`); navigate("/ollopa/people") }}
-        footer={
-          <>
-            {primary()}
-            {current > 1 && <Button variant="ghost" onClick={() => go(current - 1)}>Back to {STEPS[current - 2].toLowerCase()}</Button>}
-            {current === 4 && draft.trialDone && <Button variant="ghost" onClick={() => go(3)}>Change the fields or the providers</Button>}
-            {draft.file && <Button variant="ghost" onClick={() => setDiscarding(true)}>Discard this import</Button>}
-          </>
-        }
+        footer={<Actions surface="page" items={stepActions()} />}
       >
         {/* ------------------------------------------------------------------ step 1 */}
         {current === 1 && (
@@ -263,7 +267,7 @@ export function ImportWizard({ session }: { session: Session }) {
                         toast(`Applied the saved mapping · ${m.name}`)
                       }}
                     />
-                    <Button size="sm" variant="outline" onClick={() => toast(`Saved this mapping for ${seed.importMappings[0].workspace}`)}>Save this mapping</Button>
+                    <Actions surface="card" items={[{ kind: "secondary", label: "Save this mapping", onClick: () => toast(`Saved this mapping for ${seed.importMappings[0].workspace}`) }]} />
                   </section>
                 )}
 
@@ -375,14 +379,12 @@ export function ImportWizard({ session }: { session: Session }) {
               <p className="mt-1 text-xs text-muted-foreground">
                 Workspace default: {seed.workspace.waterfall.order.join(" → ")} · <a className="underline" href={href("/ollopa/settings/pipeline")}>Settings › Pipeline and data › Enrichment provider order</a>. Change it for this run only.
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {draft.order.map((p, i) => (
-                  <Button key={p} size="sm" variant="outline" disabled={i === 0}
-                    onClick={() => { const next = [...draft.order]; const [x] = next.splice(i, 1); next.splice(i - 1, 0, x); save({ order: next }); toast("For this run only. The workspace default is unchanged.") }}>
-                    Move {p} up
-                  </Button>
-                ))}
-              </div>
+              <Actions className="mt-2" surface="card" items={draft.order.map((p, i) => ({
+                kind: "secondary" as const,
+                label: `Move ${p} up`,
+                onClick: () => { const next = [...draft.order]; const [x] = next.splice(i, 1); next.splice(i - 1, 0, x); save({ order: next }); toast("For this run only. The workspace default is unchanged.") },
+                disabledBecause: i === 0 ? "Already first" : undefined,
+              }))} />
             </section>
 
             <fieldset>

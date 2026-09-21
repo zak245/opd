@@ -19,10 +19,11 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { RowNote, useTick } from "../engage/shared"
-import { ActedNote, undoable } from "./acted"
+import { ActedNote, actOn, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
+import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -127,7 +128,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   if (!c) {
     return (
       <div className="p-10">
-        <EmptyState title="That campaign is not here" body="It may have been deleted, or the link may be old." action={<Button size="sm" onClick={() => navigate("/ollopa/campaigns")}>Back to Campaigns</Button>} />
+        <EmptyState title="That campaign is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Campaigns", onClick: () => navigate("/ollopa/campaigns") }]} />} />
       </div>
     )
   }
@@ -167,7 +168,12 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     openBeside({ kind: "person", id, list: { ids, index: index < 0 ? 0 : index }, opener: opener ?? (document.activeElement as HTMLElement | null) })
   }
 
-  const pause = () => { patch({ status: "Paused", pausedBy: session.user }); log("Paused"); toast(`${c.name} paused. The send time is kept.`) }
+  const pause = () => {
+    actOn(session.business, "campaign", c.id, { status: "Paused", pausedBy: session.user }, { status: c.status, pausedBy: c.pausedBy },
+      `paused by ${session.user} · the send time is kept`)
+    log("Paused")
+    toast(`${c.name} paused. The send time is kept.`)
+  }
   const resume = () => {
     const passed = c.sendAt !== null && c.sendAt < TODAY
     patch({ status: c.kind === "Lifecycle" ? "Running" : passed ? "Draft" : "Scheduled", pausedBy: null })
@@ -276,7 +282,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         <dt className="text-muted-foreground">Deals created</dt><dd className="tabular-nums">{num(c.dealsCreated)}</dd>
         <dt className="text-muted-foreground">Pipeline</dt><dd className="tabular-nums">{b.currency} {num(c.pipelineAmount)} created · {b.currency} {num(c.pipelineInfluenced)} influenced</dd>
         <dt className="text-muted-foreground">Attribution window</dt>
-        <dd>{c.attributionDays} days — a deal created within {c.attributionDays} days of a click counts here.</dd>
+        <dd>{c.attributionDays} days</dd>
       </dl>
     ),
   })
@@ -287,7 +293,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1">
         <dt className="text-muted-foreground">Tracking</dt><dd>{seed.domains[0]?.trackingSubdomain ?? "Not set up"}</dd>
         <dt className="text-muted-foreground">Reply-to</dt><dd>{c.fromMailbox}</dd>
-        <dt className="text-muted-foreground">Unsubscribe text</dt><dd>“Stop receiving these emails” — one text for the workspace. {admin} can change it.</dd>
+        <dt className="text-muted-foreground">Unsubscribe text</dt><dd>“Stop receiving these emails” · {admin} can change it</dd>
         <dt className="text-muted-foreground">Footer</dt><dd>{b.name}, with the postal address from Settings.</dd>
       </dl>
     ),
@@ -298,10 +304,11 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     doors.push({
       id: "campaign.resend", label: "Resend to people who did not open", count: nonOpeners,
       content: (
-        <div className="space-y-2">
-          <ConsequenceLine sends={nonOpeners} to={audience?.name ?? "this audience"} from={c.fromMailbox} changes="A new subject line, the same body" />
-          <Button size="sm" variant="outline" onClick={() => { log(`Resend to ${num(nonOpeners)} non-openers prepared`); toast(`A draft resend to ${num(nonOpeners)} people was created.`) }}>Prepare the resend</Button>
-        </div>
+        <Actions surface="card" items={[{
+          kind: "secondary",
+          label: "Prepare the resend",
+          onClick: () => { log(`Resend to ${num(nonOpeners)} non-openers prepared`); toast(`A draft resend to ${num(nonOpeners)} people was created.`) },
+        }]} />
       ),
     })
   }
@@ -316,7 +323,11 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     content: (
       <div className="space-y-2">
         <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why this campaign exists, and what it is for." aria-label="Note" />
-        <Button size="sm" disabled={!note.trim()} onClick={() => { log(`Note: ${note.trim()}`); setNote(""); toast("Saved · Notes") }}>Save the note</Button>
+        <Actions surface="card" items={[{
+          kind: "secondary", label: "Save the note",
+          onClick: () => { log(`Note: ${note.trim()}`); setNote(""); toast("Saved · Notes") },
+          disabledBecause: note.trim() ? undefined : "Write the note first",
+        }]} />
         <ul className="space-y-1 text-xs text-muted-foreground">
           {c.activity.filter((a) => a.what.startsWith("Note:") || a.what.startsWith("Retired")).map((a, i) => <li key={i}>{a.what} — {a.by}, {day(a.at)}</li>)}
         </ul>
@@ -339,9 +350,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   const recipientsBlock = (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          The first {num(recipientPool.length)} of {num(recipients)}, and what each has done.
-        </p>
+        <p className="text-sm text-muted-foreground">The first {num(recipientPool.length)} of {num(recipients)}.</p>
         {/* Search once the list is longer than a screenful of names (over ten). */}
         {recipientPool.length > 10 && (
           <Input
@@ -391,13 +400,13 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
               <li key={s.key}>
                 {/* The names behind a number are a level the pane must not open, so this is a
                     `follow`: the campaign and its audience row stay on the trail behind it. */}
-                <button
-                  type="button"
+                <a
+                  href={href(`/ollopa/audiences/${audience.id}?records=${s.key}`)}
                   className={cn("underline", s.on ? "" : "text-muted-foreground")}
-                  onClick={() => follow(`/ollopa/audiences/${audience.id}?records=${s.key}`, from(audience.id))}
+                  onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow(`/ollopa/audiences/${audience.id}?records=${s.key}`, from(audience.id)) } }}
                 >
                   <span className="tabular-nums">{num(s.count)}</span> {s.label}
-                </button>
+                </a>
                 <span className="text-xs text-muted-foreground">{s.always ? ", always applied" : s.on ? "" : ", off"}</span>
               </li>
             ))}
@@ -407,13 +416,24 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
               ? <>Mode: live · refreshes daily 06:00 · new matches are added to {audience.usedBy[0] ?? "no campaign yet"}</>
               : <>Frozen at {num(audience.size)} on {day(audience.frozenAt)}</>}
           </p>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => {
-              patchRow(session.business, "audiences", audience.id, audience.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY })
-              toast(audience.mode === "live" ? `${audience.name} frozen at ${num(audience.size)}. No new matches are added.` : `${audience.name} is live again and refreshes daily at 06:00.`)
-            }}>{audience.mode === "live" ? "Freeze" : "Make live"}</Button>
-            <Button size="sm" variant="ghost" onClick={(ev) => readAudience(ev.currentTarget)}>Read the audience beside this</Button>
-          </div>
+          <Actions surface="page" items={[
+            {
+              kind: "secondary",
+              label: audience.mode === "live" ? "Freeze" : "Make live",
+              onClick: () => {
+                const was = { mode: audience.mode, frozenAt: audience.frozenAt, refreshAt: audience.refreshAt }
+                actOn(
+                  session.business, "audience", audience.id,
+                  audience.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY },
+                  was,
+                  audience.mode === "live" ? `frozen at ${num(audience.size)} · no new match is added` : "live again · refreshes daily at 06:00",
+                )
+                toast(audience.mode === "live" ? `${audience.name} frozen at ${num(audience.size)}. No new matches are added.` : `${audience.name} is live again and refreshes daily at 06:00.`)
+              },
+            },
+            // A destination, not a state change, so it is a link and not a button (DESIGN.md §1).
+            { kind: "link", label: "Open the audience", href: href(`/ollopa/audiences/${audience.id}`), onClick: () => follow(`/ollopa/audiences/${audience.id}`, from(audience.id)) },
+          ]} />
           <ActedNote business={session.business} kind="audience" id={audience.id} edit={audienceEdits[audience.id]} />
         </>
       ) : (
@@ -443,28 +463,40 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       <div className="rounded-md border px-3 py-2">
         <p className="text-sm">
           <span className={failures.length ? "font-medium text-amber-700 dark:text-amber-400" : ""}>{line}</span>
-          {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}{c.qa.by === c.owner ? ", who built this campaign" : ""}</span>}
+          {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}</span>}
         </p>
-        <Button id="camp-run-checks" size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setQaOpen(true)}>Run the checks</Button>
+        <div id="camp-run-checks" className="mt-1">
+          <Actions surface="card" items={[{ kind: "secondary", label: "Run the checks", onClick: () => setQaOpen(true), keys: "Q" }]} />
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {c.status === "Sending" || c.status === "Running" ? (
-          // A send in flight is the one moment this page has a safety state: Pause is the same size
-          // as Schedule, and it is never one click further away.
-          <Button onClick={pause}>Pause</Button>
-        ) : c.status === "Paused" ? (
-          <Button onClick={resume}>Resume</Button>
-        ) : c.status === "Sent" ? (
-          <p className="text-sm text-muted-foreground">Sent {day(c.sendAt)}. A sent campaign is archived, never deleted, so the results stay.</p>
-        ) : (
-          <Button onClick={() => setScheduleOpen(true)}>{needsSecond ? "Request approval" : "Schedule"}</Button>
-        )}
-        <Button variant="outline" onClick={() => setTestOpen(true)}>Send test</Button>
-      </div>
+      {c.status === "Sent" ? (
+        <p className="text-sm text-muted-foreground">Sent {day(c.sendAt)}.</p>
+      ) : (
+        // One primary per surface: whichever of pause, resume or schedule this campaign is at.
+        // Resuming and scheduling both send, and a send cannot be undone, so each carries its
+        // confirmation with the verb in the affirmative and the consequence above it.
+        <Actions surface="page" items={[
+          ...(c.status === "Sending" || c.status === "Running"
+            ? [{ kind: "primary" as const, label: "Pause", onClick: pause, keys: "P" }]
+            : c.status === "Paused"
+              ? [{
+                kind: "primary" as const, label: "Resume", onClick: resume, keys: "P",
+                irreversible: {
+                  title: `Resume ${c.name}?`,
+                  consequence: `Sending starts again to ${num(recipients)} people from ${c.fromMailbox}. Emails already sent cannot be recalled.`,
+                  confirmLabel: "Resume sending",
+                },
+              }]
+              : [{ kind: "primary" as const, label: needsSecond ? "Request approval" : "Schedule", onClick: () => setScheduleOpen(true) }]),
+          { kind: "secondary" as const, label: "Send test", onClick: () => setTestOpen(true), keys: "T" },
+        ]} />
+      )}
+      {/* The seat cannot finish this alone above the workspace threshold, so the sentence names who
+          does (DESIGN.md §3, reason 2). */}
       {needsSecond && c.status !== "Sent" && (
         <p className="text-xs text-muted-foreground">
-          {num(recipients)} recipients is above this workspace's second-approval threshold of {num(SECOND_APPROVAL.recipients)} recipients or {num(SECOND_APPROVAL.credits)} credits in one action, so {admin} approves before it goes out.
+          Above {num(SECOND_APPROVAL.recipients)} recipients, {admin} approves before it goes out.
         </p>
       )}
     </div>
@@ -498,7 +530,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         chips={<span className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{c.kind}</Badge><StatusBadge c={c} /></span>}
         ribbon={
           c.status === "Sending"
-            ? { tone: "warning", text: `Sending: ${num(c.sent)} of ${num(recipients)} · bounced ${pct(c.bounced, c.sent)} against warn ${BOUNCE_GUARD.warnPercent}% and pause ${BOUNCE_GUARD.pausePercent}%`, action: <Button size="sm" onClick={pause}>Pause</Button> }
+            ? { tone: "warning", text: `Sending: ${num(c.sent)} of ${num(recipients)} · bounced ${pct(c.bounced, c.sent)} against warn ${BOUNCE_GUARD.warnPercent}% and pause ${BOUNCE_GUARD.pausePercent}%`, action: <Actions surface="card" items={[{ kind: "primary", label: "Pause", onClick: pause }]} /> }
             : c.pausedBy === "Bounce guard"
               ? {
                 tone: "error",
@@ -566,11 +598,14 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       {/* ------------------------------------------------- X-qa: eight checks, flat, failures in words */}
       <Panel id="campaign-qa" title="Pre-send checks" open={qaOpen} onOpenChange={setQaOpen}
         footer={
-          <Button className="w-full" onClick={() => {
-            patch({ qa: { by: session.user, on: TODAY, checklist: c.qa.checklist.map((k) => ({ ...k, done: true })), checks: c.qa.checks.map((k) => ({ ...k, state: "pass" as const })) } })
-            setQaOpen(false)
-            toast(`Checks run by ${session.user}.`)
-          }}>Run the checks now</Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "primary", label: "Run the checks now",
+            onClick: () => {
+              patch({ qa: { by: session.user, on: TODAY, checklist: c.qa.checklist.map((k) => ({ ...k, done: true })), checks: c.qa.checks.map((k) => ({ ...k, state: "pass" as const })) } })
+              setQaOpen(false)
+              toast(`Checks run by ${session.user}.`)
+            },
+          }]} />
         }
       >
         <ol className="space-y-3">
@@ -580,13 +615,20 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
                 <span className={cn("text-xs font-medium", k.state === "fail" ? "text-amber-700 dark:text-amber-400" : k.state === "pass" ? "text-green-700 dark:text-green-400" : "text-muted-foreground")}>{k.state}</span>
                 <span className="text-sm font-medium">{k.title}</span>
               </div>
-              <p className="text-xs text-muted-foreground">{k.words}</p>
-              {/* A fix inside this panel never leaves a bare link behind: somewhere on this page is
-                  an anchor, another page is a `follow`, and a related object closes the checks and
-                  opens beside the campaign, which stays exactly where it is. */}
+              {/* A check that passed says so in one word. Only a failure earns a sentence, because
+                  only a failure is about to go wrong to a few thousand people. */}
+              {k.state === "fail" && <p className="text-xs text-muted-foreground">{k.words}</p>}
+              {/* A fix is a destination, so it is a real link (DESIGN.md §1) — never a bare one:
+                  a page is a `follow`, and a related object opens beside the campaign, which stays
+                  exactly where it is. */}
               {k.fix?.hash && <a className="text-xs underline" href={k.fix.hash} onClick={() => setQaOpen(false)}>{k.fix.label}</a>}
               {k.fix?.to && (
-                <button type="button" className="text-xs underline" onClick={() => follow(k.fix!.to!, from("camp-run-checks"))}>{k.fix.label}</button>
+                <a
+                  className="text-xs underline" href={href(k.fix.to)}
+                  onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow(k.fix!.to!, from("camp-run-checks")) } }}
+                >
+                  {k.fix.label}
+                </a>
               )}
               {k.fix?.beside && (
                 <button
@@ -600,15 +642,17 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           ))}
         </ol>
         <p className="pt-4 text-xs text-muted-foreground">
-          {c.qa.on
-            ? `Run ${day(c.qa.on)} by ${c.qa.by}${c.qa.by === c.owner ? ", who built this campaign" : ""}.`
-            : "Not run yet. The result travels with a request for approval, so the approver sees it too."}
+          {c.qa.on ? `Run ${day(c.qa.on)} by ${c.qa.by}.` : "Not run yet."}
         </p>
       </Panel>
 
       {/* ---------------------------------------------------------------------- X-sendtest: a test */}
       <Panel id="campaign-test" title="Send a test" open={testOpen} onOpenChange={setTestOpen}
-        footer={<Button className="w-full" onClick={() => { setTestOpen(false); toast(`Test sent to ${testTo} from ${c.fromMailbox}.`) }}>Send the test</Button>}
+        footer={<Actions surface="dialog" layout="stack" items={[{
+          kind: "primary", label: "Send the test",
+          onClick: () => { setTestOpen(false); toast(`Test sent to ${testTo} from ${c.fromMailbox}.`) },
+          cost: "1 email", consequence: "It cannot be recalled",
+        }]} />}
       >
         <div className="space-y-3">
           <div>
@@ -632,16 +676,21 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           workspace's threshold. The threshold is read from Settings and never written here. */}
       <Panel id="campaign-schedule" title={needsSecond ? "Request approval" : "Schedule and send"} open={scheduleOpen} onOpenChange={setScheduleOpen}
         footer={
-          <Button className="w-full" onClick={() => {
-            if (needsSecond) {
-              patch({ activity: [{ at: TODAY, by: session.user, what: `Approval requested from ${admin}` }, ...c.activity] })
-              toast(`${admin} was asked to approve. ${sendConsequence}`)
-            } else {
-              patch({ status: "Scheduled", sendAt: sendDate, activity: [{ at: TODAY, by: session.user, what: `Scheduled for ${day(sendDate)} ${sendTime}` }, ...c.activity] })
-              toast(`Scheduled. ${sendConsequence}`)
-            }
-            setScheduleOpen(false)
-          }}>{needsSecond ? `Request approval from ${admin}` : "Schedule the send"}</Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "primary",
+            label: needsSecond ? `Request approval from ${admin}` : "Schedule the send",
+            onClick: () => {
+              if (needsSecond) {
+                patch({ activity: [{ at: TODAY, by: session.user, what: `Approval requested from ${admin}` }, ...c.activity] })
+                toast(`${admin} was asked to approve. ${sendConsequence}`)
+              } else {
+                patch({ status: "Scheduled", sendAt: sendDate, activity: [{ at: TODAY, by: session.user, what: `Scheduled for ${day(sendDate)} ${sendTime}` }, ...c.activity] })
+                toast(`Scheduled. ${sendConsequence}`)
+              }
+              setScheduleOpen(false)
+            },
+            ...(needsSecond ? {} : { cost: `${num(recipients)} emails`, consequence: "They cannot be recalled" }),
+          }]} />
         }
       >
         <div className="space-y-3">
@@ -681,11 +730,6 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             <p className="pt-1 text-xs text-muted-foreground">{line}{c.qa.on ? ` · run ${day(c.qa.on)} by ${c.qa.by}` : ""}</p>
           </div>
 
-          {needsSecond && (
-            <p className="text-xs text-muted-foreground">
-              Above {num(SECOND_APPROVAL.recipients)} recipients or {num(SECOND_APPROVAL.credits)} credits in one action, a second person approves. {admin} will see the audience and its suppressions, the mailbox, the time, the QA result and this line before deciding.
-            </p>
-          )}
         </div>
       </Panel>
     </>

@@ -5,7 +5,7 @@
 // buttons. Drawers are forms with one Save at the foot. Leaving with unsaved changes asks once.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -90,8 +90,11 @@ export function SaveBar() {
         <span className="font-medium">{s.changes.length === 1 ? "1 unsaved change" : `${s.changes.length} unsaved changes`}:</span>{" "}
         <span className="text-muted-foreground">{s.changes.map((c) => c.label).join(", ")}</span>
       </p>
-      <Button size="sm" variant="ghost" onClick={s.discard}>Discard</Button>
-      <Button size="sm" onClick={s.save}>Save</Button>
+      {/* The page's one filled control. Nothing else on Settings is a primary. */}
+      <Actions surface="card" items={[
+        { label: s.changes.length === 1 ? "Save the change" : `Save ${s.changes.length} changes`, kind: "primary", onClick: s.save },
+        { label: "Discard", kind: "secondary", onClick: s.discard },
+      ]} />
     </div>
   )
 }

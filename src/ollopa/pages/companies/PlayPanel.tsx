@@ -1,14 +1,15 @@
 // `X-play`: run a risk or expansion play. Opened from an Accounts row and from the company record.
 //
-// Flat, no doors. What it will create is written above the button, before the click, because a play
-// that quietly emails a customer is the thing that line exists to prevent (rule 7). Agent-drafted
-// content is logged where the CSM can see it and marked as a draft; the click sends nothing.
+// Flat, no doors. Running a play creates tasks and a note and cannot be taken back, so what it will
+// create is the consequence inside its own confirmation and the affirmative carries the verb
+// (DESIGN.md §2) — not a paragraph above the button. Agent-drafted content is logged where the CSM
+// can see it and marked as a draft; the click sends nothing.
 import { useMemo, useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import { TODAY } from "../../data/seed"
 import { day, money } from "./format"
@@ -72,15 +73,23 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
       open={open}
       onOpenChange={onOpenChange}
       footer={
-        <Button
-          className="w-full"
-          onClick={() => {
-            onRun(`${play.name} · ${play.tasks} tasks for ${owner}, a note on ${account.name}, recheck ${day(recheck)}`)
-            onOpenChange(false)
-          }}
-        >
-          Run the play · {play.tasks} tasks, 0 emails
-        </Button>
+        <Actions
+          surface="dialog"
+          layout="stack"
+          items={[{
+            kind: "primary",
+            label: `Run the play · ${play.tasks} tasks, 0 emails`,
+            onClick: () => {
+              onRun(`${play.name} · ${play.tasks} tasks for ${owner}, a note on ${account.name}, recheck ${day(recheck)}`)
+              onOpenChange(false)
+            },
+            irreversible: {
+              title: `Run ${play.name} on ${account.name}?`,
+              consequence: `${creates}${routing ? ` ${routing}` : ""}`,
+              confirmLabel: `Run the play · ${play.tasks} tasks, 0 emails`,
+            },
+          }]}
+        />
       }
     >
       <div className="space-y-4 text-sm">
@@ -90,11 +99,7 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
             <SelectTrigger id="play-name" className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>{choices.map((c) => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
-          <p className="pt-1 text-xs text-muted-foreground">{play.why}</p>
         </div>
-
-        {/* What it will do, in full, above the button. */}
-        <p className="rounded-md border px-3 py-2">{creates}{routing ? ` ${routing}` : ""}</p>
 
         <div>
           <Label htmlFor="play-owner" className="text-xs">Owner</Label>
@@ -104,7 +109,6 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
         <div>
           <Label htmlFor="play-recheck" className="text-xs">Recheck on</Label>
           <Input id="play-recheck" type="date" className="mt-1" value={recheck} onChange={(e) => setRecheck(e.target.value)} />
-          <p className="pt-1 text-xs text-muted-foreground">The play ends here: on this date it is checked and closed, or run again.</p>
         </div>
 
         <div className="rounded-md border bg-muted/40 p-2">
@@ -114,11 +118,16 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
               ? `${account.name} is at ${Math.round((account.seatsActive / account.seatsBought) * 100)}% seat utilisation. Suggest the next seat block at the ${account.plan} price before renewal on ${day(account.renewal)}.`
               : `${account.name} is in the ${account.band} band. Book a review with ${account.champion} and agree what changes before ${day(account.renewal)}.`}
           </p>
-          <Button size="sm" variant="ghost" className="mt-1 h-6 px-1 text-xs" onClick={() => setNote(
-            play.kind === "expansion"
-              ? `Seat utilisation at ${Math.round((account.seatsActive / account.seatsBought) * 100)}%. Propose the next block before ${day(account.renewal)}.`
-              : `${account.band} band. Review booked with ${account.champion}.`,
-          )}>Use this draft</Button>
+          <Actions
+            className="mt-1"
+            surface="card"
+            items={[{
+              kind: "secondary", label: "Use this draft",
+              onClick: () => setNote(play.kind === "expansion"
+                ? `Seat utilisation at ${Math.round((account.seatsActive / account.seatsBought) * 100)}%. Propose the next block before ${day(account.renewal)}.`
+                : `${account.band} band. Review booked with ${account.champion}.`),
+            }]}
+          />
         </div>
 
         <div>

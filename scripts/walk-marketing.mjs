@@ -78,7 +78,7 @@ console.log("row marked on the page:", await page.evaluate(() => !!document.quer
 await shot("2-pane")
 
 // 2 → 3. "Open the page": the trail takes the campaign and the audience row with it.
-await press("aside button", "Open the page")
+await press("aside button, aside a", "Open the page")
 await wait(700)
 console.log("trail:", await trail())
 await shot("3-audience")

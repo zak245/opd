@@ -777,7 +777,7 @@ export async function chain7(w, h) {
   note(`    deeper?   "${deeper}" → header "${await page.evaluate(() => (document.querySelector('aside[aria-label*=" beside "] header')?.innerText || "").replace(/\s+/g, " ").slice(0, 120))}"`)
   await shot("inbox-deeper")
 
-  await page.evaluate(() => { const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] header button')).find((x) => x.innerText.trim() && !/Open the page/.test(x.innerText)); el?.click() })
+  await page.evaluate(() => { const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] header button, aside[aria-label*=" beside "] header a')).find((x) => x.innerText.trim() && !/Open the page/.test(x.innerText)); el?.click() })
   await wait(700)
   report(await observe(page), "4. the one step back inside the pane")
   await shot("inbox-back")

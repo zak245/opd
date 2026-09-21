@@ -18,6 +18,7 @@ import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
 import { openBeside, openBesideNested } from "../../beside"
+import { Actions, type Action, type ActionKind } from "../../ui/Actions"
 import { follow } from "../../chain"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -223,6 +224,15 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
     reply: "Reply", book: "Book meeting", hand: "Hand to an AE", done: "Mark done", "not-interested": "Not interested",
     "follow-up": "Follow up on…", resume: "Resume", "confirm-unsub": "Confirm unsubscribe", "create-deal": "Create deal", "open-contact": "Open contact",
   }
+  /** What each row act is, so the row never picks a button variant by hand (DESIGN.md §1). */
+  const KIND: Record<string, ActionKind> = {
+    reply: "primary", book: "secondary", hand: "secondary", done: "secondary",
+    "not-interested": "secondary", "follow-up": "secondary", resume: "secondary",
+    "confirm-unsub": "secondary", "create-deal": "secondary", "open-contact": "secondary",
+    spam: "destructive", misread: "destructive",
+  }
+  const KEYS: Record<string, string> = { reply: "r", book: "b", done: "d", "not-interested": "n", hand: "h", "confirm-unsub": "u" }
+
   /** "Open the deal" only where there is one; otherwise the action makes it. */
   const labelFor = (k: string, r: InboxReply) =>
     k === "create-deal" ? (r.dealId ? "Open the deal" : "Create a deal from this reply") : LABEL[k]
@@ -291,7 +301,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
 
   const emptyBody =
     base.length === 0
-      ? <EmptyState title="No replies yet" body={`Replies to your ${seed.sequences.filter((s) => s.status === "Active").length} active sequences land here within about 30 minutes of reaching your mailbox.`} action={<Button size="sm" variant="outline" onClick={() => follow("/ollopa/sequences", originHere())}>Open Sequences</Button>} />
+      ? <EmptyState title="No replies yet" body={`Replies to your ${seed.sequences.filter((s) => s.status === "Active").length} active sequences land here within about 30 minutes of reaching your mailbox.`} action={<Actions surface="card" items={[{ kind: "secondary", label: "Open Sequences", onClick: () => follow("/ollopa/sequences", originHere()) }]} />} />
       : group === "Out of office"
         ? <EmptyState title="Nobody is out of office." body="Sequences pause and resume on the return date by themselves." />
         : group === "Interested"
@@ -366,9 +376,19 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
         </div>
 
         <div role="gridcell" className="flex flex-wrap items-center gap-1 pt-1.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
-          {actions.map((k) => (
-            <Button key={k} size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => doAction(k, r)}>{labelFor(k, r)}</Button>
-          ))}
+          {/* The row's own acts, drawn by what each one is: replying is the act a reply exists for,
+              so it is the filled control; everything else the person came for is an outline; the
+              menu behind them keeps spam and a misread report at the end, in the destructive
+              colour (DESIGN.md §1). */}
+          <Actions
+            surface="card"
+            items={actions.map((k) => ({
+              kind: KIND[k] ?? "secondary",
+              label: labelFor(k, r),
+              onClick: () => doAction(k, r),
+              keys: KEYS[k],
+            }))}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon-sm" variant="ghost" data-row-menu aria-label={`${r.contact}: the contact and the deal, reply, route, read as, record`}><MoreHorizontal className="size-4" /></Button>
@@ -420,7 +440,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
               {MEANINGS.filter((m) => m !== r.outcome).map((m) => (
                 <DropdownMenuItem key={m} onSelect={() => doAction("change-meaning", r, m)}>{m}</DropdownMenuItem>
               ))}
-              <DropdownMenuItem onSelect={() => doAction("misread", r)}>Report a misread reply</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onSelect={() => doAction("misread", r)}>Report a misread reply</DropdownMenuItem>
 
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Record</DropdownMenuLabel>
@@ -428,7 +448,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
               <DropdownMenuItem onSelect={() => doAction("add-to-list", r)}>Add to a list</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => doAction("unread", r)}>Mark unread</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => { setSelecting(true); setSelection([r.id]) }}>Select this reply<DropdownMenuShortcut>x</DropdownMenuShortcut></DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("spam", r)}>Mark as spam or a bot reply</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onSelect={() => doAction("spam", r)}>Mark as spam or a bot reply</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -554,15 +574,31 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
       {selection.length > 0 && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 text-sm sm:px-6">
           <span className="tabular-nums">{selection.length} selected</span>
-          <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => { const r = rows.find((x) => x.id === id); if (r) change(id, { handled: true }, `${selection.length} replies marked done.`) }); setSelection([]) }}>Mark done</Button>
-          <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} replies marked not interested.`)); setSelection([]) }}>Mark not interested</Button>
-          {aes.length > 0 && session.role === "sdr" && (
-            <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => change(id, { handled: true, handedTo: aes[0].user }, `${selection.length} replies handed to ${aes[0].user}.`)); setSelection([]) }}>Hand to {aes[0].user}</Button>
-          )}
-          {selection.every((id) => rows.find((r) => r.id === id)?.outcome === "Unsubscribe") && (
-            <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} unsubscribes confirmed. Those addresses are never emailed from any sequence again.`)); setSelection([]) }}>Confirm unsubscribes</Button>
-          )}
-          <Button size="sm" variant="ghost" className="h-7" onClick={() => say(`${selection.length} replies exported as CSV.`)}>Export CSV</Button>
+          {/* Comparable acts on a bar, so none of them is filled. Confirming an unsubscribe cannot
+              be undone, so it asks first and the affirmative carries the verb (DESIGN.md §2). */}
+          <Actions
+            surface="page"
+            items={([
+              { kind: "secondary", label: "Mark done", onClick: () => { selection.forEach((id) => { const r = rows.find((x) => x.id === id); if (r) change(id, { handled: true }, `${selection.length} replies marked done.`) }); setSelection([]) } },
+              { kind: "secondary", label: "Mark not interested", onClick: () => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} replies marked not interested.`)); setSelection([]) } },
+              ...(aes.length > 0 && session.role === "sdr"
+                ? [{ kind: "secondary" as const, label: `Hand to ${aes[0].user}`, onClick: () => { selection.forEach((id) => change(id, { handled: true, handedTo: aes[0].user }, `${selection.length} replies handed to ${aes[0].user}.`)); setSelection([]) } }]
+                : []),
+              ...(selection.every((id) => rows.find((r) => r.id === id)?.outcome === "Unsubscribe")
+                ? [{
+                  kind: "secondary" as const,
+                  label: "Confirm unsubscribes",
+                  onClick: () => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} unsubscribes confirmed.`)); setSelection([]) },
+                  irreversible: {
+                    title: `Confirm ${selection.length} ${selection.length === 1 ? "unsubscribe" : "unsubscribes"}?`,
+                    consequence: "Those addresses are never emailed from any sequence again. It cannot be undone.",
+                    confirmLabel: "Confirm unsubscribes",
+                  },
+                }]
+                : []),
+              { kind: "secondary", label: "Export CSV", onClick: () => say(`${selection.length} replies exported as CSV.`) },
+            ]) as Action[]}
+          />
           <Button size="sm" variant="ghost" className="h-7" onClick={() => { setSelection([]); setSelecting(false) }}>Clear</Button>
         </div>
       )}
@@ -574,7 +610,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           aria-label={`${group} replies`}
           className={cn("min-w-0 flex-1 overflow-y-auto", onPhoneThread && "hidden md:block")}
         >
-          {filtered.length === 0 ? <div className="p-6">{q || activeFilters.length ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Button size="sm" variant="outline" onClick={() => { setQ(""); setFilters({}) }}>Clear</Button>} /> : emptyBody}</div>
+          {filtered.length === 0 ? <div className="p-6">{q || activeFilters.length ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({}) } }]} />} /> : emptyBody}</div>
             : filtered.map((r) => <Row key={r.id} r={r} />)}
         </div>
 

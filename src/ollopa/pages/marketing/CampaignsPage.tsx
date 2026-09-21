@@ -14,10 +14,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { useRoute } from "@/app/router"
+import { href, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
+import { Actions } from "../../ui/Actions"
 import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -97,13 +98,13 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
       {domain
         ? <span>{domain.domain} {domain.spf && domain.dkim && domain.dmarc ? "healthy" : "needs SPF, DKIM or DMARC"}</span>
         : <span>No marketing domain — {admin} can add one in Settings › Email sending</span>}
-      {/* Into Settings at the row that owns the pair, with this page kept on the trail behind it. */}
-      <button
-        type="button" className="underline"
-        onClick={() => follow("/ollopa/settings/email-sending?row=mail.bounce-guard", from("campaigns-policy"))}
+      {/* A destination, so a real link; it keeps this page on the trail behind it. */}
+      <a
+        className="underline" href={href("/ollopa/settings/email-sending?row=mail.bounce-guard")}
+        onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/settings/email-sending?row=mail.bounce-guard", from("campaigns-policy")) } }}
       >
         Sending policy
-      </button>
+      </a>
     </p>
   )
 }
@@ -379,11 +380,11 @@ export function CampaignsPage({ session }: { session: Session }) {
           <h2 className="text-lg font-semibold">Campaigns</h2>
           <p className="text-sm text-muted-foreground">One send to an audience, or a lifecycle campaign that runs on a trigger.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {view === "audiences" && <Button variant="outline" onClick={() => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.")}>New audience</Button>}
-          {view === "forms" && <Button variant="outline" onClick={() => toast("New form: name it, add the fields, and choose where submissions go.")}>New form</Button>}
-          <Button onClick={() => setNewPanel(true)}>New campaign</Button>
-        </div>
+        <Actions surface="page" items={[
+          { kind: "primary", label: "New campaign", onClick: () => setNewPanel(true) },
+          ...(view === "audiences" ? [{ kind: "secondary" as const, label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") }] : []),
+          ...(view === "forms" ? [{ kind: "secondary" as const, label: "New form", onClick: () => toast("New form: name it, add the fields, and choose where submissions go.") }] : []),
+        ]} />
       </div>
 
       {/* The view switch is state, not a door: three objects on one table (IA-MAP 3, P-campaigns). */}
@@ -409,10 +410,10 @@ export function CampaignsPage({ session }: { session: Session }) {
               seed.sendPolicy.dailyCap === 0 ? ` This workspace has no marketing domain: ${admin} can add one in Settings › Email sending.` : ""
             }`}
             action={
-              <span className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.")}>New audience</Button>
-                <Button size="sm" onClick={() => setNewPanel(true)}>Create an email campaign</Button>
-              </span>
+              <Actions surface="card" items={[
+                { kind: "primary", label: "Create an email campaign", onClick: () => setNewPanel(true) },
+                { kind: "secondary", label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") },
+              ]} />
             }
           />
         </div>
@@ -526,9 +527,10 @@ export function CampaignsPage({ session }: { session: Session }) {
       {/* ------------------------------------------------------------------ new campaign: which kind */}
       <Panel id="campaign-new" title="New campaign" open={newPanel} onOpenChange={setNewPanel}>
         <div className="space-y-3">
-          <p className="text-muted-foreground">An email campaign sends once, now or at a time you choose. A lifecycle campaign runs: a trigger adds people and it mails them while it runs.</p>
-          {(["Email", "Lifecycle"] as const).map((k) => (
-            <Button key={k} variant="outline" className="w-full justify-start" onClick={() => {
+          <Actions surface="dialog" layout="stack" items={(["Email", "Lifecycle"] as const).map((k) => ({
+            kind: "secondary" as const,
+            label: k === "Email" ? "Email campaign — one send" : "Lifecycle campaign — runs on a trigger",
+            onClick: () => {
               const draft: Campaign = {
                 id: `camp-new-${Date.now().toString(36)}`, name: k === "Email" ? "Untitled email campaign" : "Untitled lifecycle campaign", kind: k,
                 status: "Draft", pausedBy: null, subject: "", previewText: "", fromName: session.user, fromMailbox: `marketing@${b.id === "meridian" ? "meridian.io" : `${b.id}.com`}`,
@@ -545,10 +547,8 @@ export function CampaignsPage({ session }: { session: Session }) {
               setNewPanel(false)
               toast(`${draft.name} created. Nothing sends until you schedule it.`)
               open(`/ollopa/campaigns/${draft.id}`, draft.id)
-            }}>
-              {k === "Email" ? "Email campaign — one send" : "Lifecycle campaign — runs on a trigger"}
-            </Button>
-          ))}
+            },
+          }))} />
         </div>
       </Panel>
 
@@ -556,19 +556,23 @@ export function CampaignsPage({ session }: { session: Session }) {
       <Panel
         id="campaign-archive" title={archiving ? `Archive ${archiving.name}` : "Archive"} open={!!archiving} onOpenChange={(o) => { if (!o) setArchiving(null) }}
         footer={
-          <Button className="w-full" disabled={!archiveReason.trim()} onClick={() => {
-            if (!archiving) return
-            patchRow(session.business, "campaigns", archiving.id, {
-              status: "Archived",
-              activity: [{ at: TODAY, by: session.user, what: `Retired — ${archiveReason.trim()}` }, ...archiving.activity],
-            })
-            toast(`${archiving.name} archived. The reason is on the campaign and on its row in Reports.`)
-            setArchiving(null)
-          }}>Archive</Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "primary", label: "Archive the campaign",
+            onClick: () => {
+              if (!archiving) return
+              patchRow(session.business, "campaigns", archiving.id, {
+                status: "Archived",
+                activity: [{ at: TODAY, by: session.user, what: `Retired — ${archiveReason.trim()}` }, ...archiving.activity],
+              })
+              toast(`${archiving.name} archived. The reason is on the campaign and on its row in Reports.`)
+              setArchiving(null)
+            },
+            disabledBecause: archiveReason.trim() ? undefined : "Say why it is being retired",
+          }]} />
         }
       >
         <div className="space-y-3">
-          <p className="text-muted-foreground">Results are kept. The line you write goes to this campaign's Notes and to its row in Reports, so the next person who asks why it stopped can read the answer.</p>
+          <p className="text-muted-foreground">Results are kept. The line you write goes to this campaign's Notes and to its row in Reports.</p>
           <div>
             <Label htmlFor="archive-reason" className="text-xs">Why it is being retired</Label>
             <Textarea id="archive-reason" rows={3} value={archiveReason} onChange={(e) => setArchiveReason(e.target.value)} placeholder="Audience overlapped with the trial nudge." className="mt-1" />
@@ -581,15 +585,18 @@ export function CampaignsPage({ session }: { session: Session }) {
       <Panel
         id="campaign-delete" title={deleting ? `Delete ${deleting.name}` : "Delete draft"} open={!!deleting} onOpenChange={(o) => { if (!o) setDeleting(null) }}
         footer={
-          <Button variant="destructive" className="w-full" onClick={() => {
-            if (!deleting) return
-            removeRow(session.business, deleting.id)
-            toast(`${deleting.name} deleted.`)
-            setDeleting(null)
-          }}>Delete the draft</Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "destructive", label: "Delete the draft",
+            onClick: () => {
+              if (!deleting) return
+              removeRow(session.business, deleting.id)
+              toast(`${deleting.name} deleted.`)
+              setDeleting(null)
+            },
+          }]} />
         }
       >
-        <p className="text-sm">Deletes the draft and its test sends. Sent campaigns are archived, never deleted.</p>
+        <p className="text-sm">Deletes the draft and its test sends.</p>
       </Panel>
     </div>
   )

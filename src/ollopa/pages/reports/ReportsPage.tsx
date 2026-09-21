@@ -11,7 +11,7 @@
 // hard-coded: an item whose weekly number is zero is not part of this seat's job here and is removed,
 // not greyed.
 import { useEffect, useMemo, useState } from "react"
-import { Lock, Printer } from "lucide-react"
+import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { businessById } from "../../data/businesses"
 import { seedFor, TODAY, type Deal } from "../../data/seed"
 import { Panel } from "../../ui/Panel"
+import { Actions } from "../../ui/Actions"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -467,13 +468,12 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
               </label>
             )}
 
-            <Button variant="outline" size="sm" className="h-8" onClick={openExport} aria-keyshortcuts="e">Export</Button>
-            <Button variant="outline" size="sm" className="h-8" onClick={() => { window.print(); toast("Sent to the printer with every door open and the filters as a caption.") }} aria-keyshortcuts="p">
-              <Printer aria-hidden="true" className="size-3.5" />Print
-            </Button>
-
-            {/* Decision-critical, on every plan, without a click. */}
-            <span className="text-xs text-muted-foreground">Exports and prints spend no credits</span>
+            {/* Two comparable acts, neither of which spends or changes anything: both outlined,
+                and neither carries a line (DESIGN.md §1 and §3). */}
+            <Actions surface="card" items={[
+              { kind: "secondary", label: "Export", onClick: openExport, keys: "e" },
+              { kind: "secondary", label: "Print", onClick: () => { window.print(); toast("Sent to the printer with every door open and the filters as a caption.") }, keys: "p" },
+            ]} />
             <span className="ml-auto text-xs text-muted-foreground">{DATA_AS_OF}</span>
           </div>
 
@@ -614,52 +614,40 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
         onSubmit={setMine}
       />
 
+      {/* The one act this panel exists for is the table as CSV; the rest are the other acts the
+          person came for. An export spends nothing and can be repeated, so not one of them carries
+          a sentence — the plan lines that remain are the gate's, where a seat cannot act. */}
       <Panel id="export" title="Export" open={exportOpen} onOpenChange={setExportOpen}>
-        <p className="text-xs text-muted-foreground">
-          Exports and prints spend no credits. The header row names the range, the team and the person you are looking at.
-        </p>
-        <ul className="mt-3 space-y-3">
-          <li>
-            {csv.locked ? (
-              <InlineGate feature={`This table (${rowsInView(report, { activity, pipeline, sequences, campaigns, forecast })} rows) as CSV`} plan={csv.plan} pricePerMonth={csv.pricePerMonth} what={csv.what} seats={b.plan.seats} isAdmin={isAdmin} admin={adminName} />
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => toast(`Downloaded ${rowsInView(report, { activity, pipeline, sequences, campaigns, forecast })} rows as CSV, with these filters.`)}>
-                This table ({rowsInView(report, { activity, pipeline, sequences, campaigns, forecast })} rows)
-              </Button>
-            )}
-          </li>
-          <li>
-            {csv.locked ? (
-              <InlineGate feature="The records behind this table as CSV" plan={csv.plan} pricePerMonth={csv.pricePerMonth} what={csv.what} seats={b.plan.seats} isAdmin={isAdmin} admin={adminName} />
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => toast("Downloaded the records behind this table as CSV.")}>Records behind this table</Button>
-            )}
-          </li>
-          <li>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const p = new URLSearchParams({ report, range: rangeKey, team, person, compare: compare ? "1" : "0" })
-                const link = `${location.origin}${location.pathname}#/ollopa/reports?${p.toString()}`
-                navigator.clipboard?.writeText(link).catch(() => { /* clipboard blocked: the link is in the toast */ })
-                toast(`Copied: ${link}`)
-              }}
-            >
-              Copy link with these filters
-            </Button>
-          </li>
-          <li>
-            {weekly.locked ? (
-              <InlineGate feature="Email me this report every Monday" plan={weekly.plan} pricePerMonth={weekly.pricePerMonth} what={weekly.what} seats={b.plan.seats} isAdmin={isAdmin} admin={adminName} />
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => toast("Scheduled. This report reaches you every Monday at 08:00 with these filters.")}>Email me this report every Monday</Button>
-            )}
-          </li>
-        </ul>
-        <p className="mt-4 text-xs text-muted-foreground">
-          Printing is on every plan. <a className="underline" href={href("/ollopa/settings/plan")}>Plan, billing and usage</a> has what each plan includes.
-        </p>
+        <div className="grid gap-3">
+          {csv.locked
+            ? <InlineGate feature={`This table (${rowsInView(report, { activity, pipeline, sequences, campaigns, forecast })} rows) as CSV`} plan={csv.plan} pricePerMonth={csv.pricePerMonth} what={csv.what} seats={b.plan.seats} isAdmin={isAdmin} admin={adminName} />
+            : <Actions surface="dialog" layout="stack" items={[{
+                kind: "primary",
+                label: `This table (${rowsInView(report, { activity, pipeline, sequences, campaigns, forecast })} rows)`,
+                onClick: () => toast(`Downloaded ${rowsInView(report, { activity, pipeline, sequences, campaigns, forecast })} rows as CSV, with these filters.`),
+              }]} />}
+          {csv.locked
+            ? <InlineGate feature="The records behind this table as CSV" plan={csv.plan} pricePerMonth={csv.pricePerMonth} what={csv.what} seats={b.plan.seats} isAdmin={isAdmin} admin={adminName} />
+            : <Actions surface="dialog" layout="stack" items={[{
+                kind: "secondary", label: "Records behind this table",
+                onClick: () => toast("Downloaded the records behind this table as CSV."),
+              }]} />}
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "secondary", label: "Copy link with these filters",
+            onClick: () => {
+              const p = new URLSearchParams({ report, range: rangeKey, team, person, compare: compare ? "1" : "0" })
+              const link = `${location.origin}${location.pathname}#/ollopa/reports?${p.toString()}`
+              navigator.clipboard?.writeText(link).catch(() => { /* clipboard blocked: the link is in the toast */ })
+              toast(`Copied: ${link}`)
+            },
+          }]} />
+          {weekly.locked
+            ? <InlineGate feature="Email me this report every Monday" plan={weekly.plan} pricePerMonth={weekly.pricePerMonth} what={weekly.what} seats={b.plan.seats} isAdmin={isAdmin} admin={adminName} />
+            : <Actions surface="dialog" layout="stack" items={[{
+                kind: "secondary", label: "Email me this report every Monday",
+                onClick: () => toast("Scheduled. This report reaches you every Monday at 08:00 with these filters."),
+              }]} />}
+        </div>
       </Panel>
     </div>
   )
@@ -709,7 +697,7 @@ function LockedReport({ label, tiles, rows, plan, price, what }: { label: string
       <div className="rounded-lg border px-3 py-2 text-sm text-muted-foreground">{rows} rows in the breakdown table</div>
       <div className="flex items-center gap-3">
         <Locked feature={`The ${label} report`} plan={plan} pricePerMonth={price} what={what}>
-          <Button size="sm"><Lock aria-hidden="true" className="size-3.5" />Open the {label} report</Button>
+          <Actions surface="card" items={[{ kind: "primary", label: `Open the ${label} report` }]} />
         </Locked>
       </div>
     </div>

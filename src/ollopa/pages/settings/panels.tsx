@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href } from "@/app/router"
 import { Panel } from "../../ui/Panel"
+import { Actions } from "../../ui/Actions"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
@@ -44,8 +45,8 @@ function Copy({ value, label }: { value: string; label: string }) {
   return (
     <span className="flex items-center gap-2">
       <code className="min-w-0 flex-1 truncate rounded bg-muted px-1.5 py-0.5 text-xs">{value}</code>
-      <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs"
-        onClick={() => { navigator.clipboard?.writeText(value); toast(`Copied · ${label}`) }}>Copy</Button>
+      <Actions surface="card" items={[{ label: "Copy", kind: "secondary",
+        onClick: () => { navigator.clipboard?.writeText(value); toast(`Copied · ${label}`) } }]} />
     </span>
   )
 }
@@ -60,7 +61,7 @@ export function MailboxPanel({ mailbox, session, ...p }: PanelShell & { mailbox:
   if (!mailbox) return null
   return (
     <Panel id="x-mailbox" title={mailbox.address} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Saved · ${mailbox.address}`) }}>Save</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · ${mailbox.address}`) } }]} />}>
       <Fields rows={[
         { label: "Owner", value: mailbox.owner },
         { label: "Provider", value: mailbox.provider },
@@ -76,9 +77,6 @@ export function MailboxPanel({ mailbox, session, ...p }: PanelShell & { mailbox:
       </div>
       <div className="mt-4 border-t pt-4">
         <p className="text-sm font-medium">Unlink this mailbox</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {plural(mailbox.sequences.length, "sequence")} send from it. In-flight steps stop at the next send and wait for another mailbox.
-        </p>
         <Select value={forwarding} onValueChange={setForwarding}>
           <SelectTrigger className="mt-2 h-8" aria-label="What happens to replies"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -87,10 +85,12 @@ export function MailboxPanel({ mailbox, session, ...p }: PanelShell & { mailbox:
             <SelectItem value="Stop receiving replies now">Stop receiving replies now</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" className="mt-2"
-          onClick={() => { p.onOpenChange(false); toast(`Unlinked ${mailbox.address}. ${forwarding}.`) }}>
-          Unlink {mailbox.address}
-        </Button>
+        <Actions className="mt-2" surface="card" items={[{
+          label: `Unlink ${mailbox.address}`, kind: "destructive",
+          onClick: () => { p.onOpenChange(false); toast(`Unlinked ${mailbox.address}. ${forwarding}.`) },
+          irreversible: { title: `Unlink ${mailbox.address}?`,
+            consequence: `Sending from it stops. ${forwarding}.`, confirmLabel: "Unlink the mailbox" },
+        }]} />
       </div>
       {session.role !== "admin" && (
         <p className="mt-4 text-xs text-muted-foreground">
@@ -111,7 +111,7 @@ export function DomainPanel({ domain, readOnly, admin, ...p }: PanelShell & { do
       <Fields rows={[
         { label: "SPF", value: record(domain.spf), note: "v=spf1 include:mail.ollopa.com ~all" },
         { label: "DKIM", value: record(domain.dkim), note: "ollopa._domainkey — a TXT record with the public key" },
-        { label: "DMARC", value: record(domain.dmarc), note: domain.dmarc ? "v=DMARC1; p=quarantine; rua=mailto:dmarc@" + domain.domain : "Not set. Mailboxes on this domain are more likely to land in spam." },
+        { label: "DMARC", value: record(domain.dmarc), note: domain.dmarc ? "v=DMARC1; p=quarantine; rua=mailto:dmarc@" + domain.domain : "Not set." },
         { label: "Bounce rate", value: `${domain.bounceRate7d}% over 7 days` },
         { label: "Mailboxes", value: plural(domain.mailboxes, "mailbox", "mailboxes") },
         { label: "Tracking subdomain", value: domain.trackingSubdomain },
@@ -153,12 +153,11 @@ export function UserPanel({ user, session, ...p }: PanelShell & { user: User | n
   return (
     <Panel id="x-user" title={user.name} open={p.open} onOpenChange={(o) => { p.onOpenChange(o); if (!o) setStep("fields") }}
       footer={step === "fields"
-        ? <div className="flex w-full items-center gap-2">
-            <Button variant="outline" onClick={() => setStep("offboard")}>Deactivate</Button>
-            <span className="flex-1" />
-            <Button onClick={() => { close(); toast(`Saved · ${user.name}`) }}>Save</Button>
-          </div>
-        : <Button variant="outline" onClick={() => setStep("fields")}>Back to this person's settings</Button>}>
+        ? <Actions surface="dialog" items={[
+            { label: "Save", kind: "primary", onClick: () => { close(); toast(`Saved · ${user.name}`) } },
+            { label: "Deactivate", kind: "secondary", onClick: () => setStep("offboard") },
+          ]} />
+        : <Actions surface="dialog" items={[{ label: "Back to this person's settings", kind: "secondary", onClick: () => setStep("fields") }]} />}>
       {step === "fields" ? (
         <>
           <p className="text-sm">
@@ -180,7 +179,6 @@ export function UserPanel({ user, session, ...p }: PanelShell & { user: User | n
                   <SelectTrigger id="u-profile" className="h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>{seed.permissionProfiles.map((pr) => <SelectItem key={pr.id} value={pr.name}>{pr.name}</SelectItem>)}</SelectContent>
                 </Select>
-                <p className="mt-1 text-xs text-muted-foreground">This replaces anything set on this person directly.</p>
               </div>
             </div>
             <div className="grid gap-1 sm:grid-cols-[9rem_1fr] sm:gap-3">
@@ -194,9 +192,8 @@ export function UserPanel({ user, session, ...p }: PanelShell & { user: User | n
                       <button className="text-muted-foreground hover:text-foreground" aria-label={`Remove ${g}`} onClick={() => toast(`Removed · ${g}`)}>×</button>
                     </span>
                   ))}
-                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => toast("Pick a grant to add")}>Add a grant</Button>
+                  <Actions surface="card" items={[{ label: "Add a grant", kind: "secondary", onClick: () => toast("Pick a grant to add") }]} />
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">Grants add to the profile. Prefer a grant to a new profile.</p>
               </div>
             </div>
             <div className="grid gap-1 sm:grid-cols-[9rem_1fr] sm:items-center sm:gap-3">
@@ -210,7 +207,7 @@ export function UserPanel({ user, session, ...p }: PanelShell & { user: User | n
               <span className="text-sm text-muted-foreground">Territory</span>
               <span className="text-sm">
                 {user.territory ?? "None"}
-                <Button variant="link" size="sm" className="h-auto px-1.5 text-xs" onClick={() => toast("Territories are defined in Prospecting rules and assigned here.")}>Change</Button>
+                <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Change", kind: "secondary", onClick: () => toast("Territories are defined in Prospecting rules and assigned here.") }]} />
               </span>
             </div>
           </div>
@@ -231,31 +228,26 @@ export function UserPanel({ user, session, ...p }: PanelShell & { user: User | n
               <SelectTrigger className="mt-1.5 h-8" aria-label="Reassign to"><SelectValue placeholder="Choose a person" /></SelectTrigger>
               <SelectContent>{seed.users.filter((u) => u.name !== user.name).slice(0, 12).map((u) => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}</SelectContent>
             </Select>
-            <p className="mt-1.5 text-xs text-muted-foreground">Paused and failed tasks do not move; they stay with this person and stop.</p>
             {records > 250 && <p className="text-xs text-muted-foreground">{records.toLocaleString()} records move 250 at a time: {passes} passes.</p>}
           </section>
 
           <section className="border-t pt-3">
             <h4 className="text-sm font-medium">2. Unlink {plural(mailboxes.length, "mailbox", "mailboxes")}</h4>
-            <p className="mt-1 text-xs text-muted-foreground">
-              In-flight sequence steps sending from {mailboxes.length === 1 ? "it" : "them"} stop at the next send and wait for another mailbox.
-            </p>
-            <Button size="sm" variant="outline" className="mt-1.5" disabled={done.mailboxes}
-              onClick={() => { setDone((d) => ({ ...d, mailboxes: true })); toast(`Unlinked ${plural(mailboxes.length, "mailbox", "mailboxes")}`) }}>
-              {done.mailboxes ? "Unlinked" : `Unlink ${plural(mailboxes.length, "mailbox", "mailboxes")}`}
-            </Button>
+            <Actions className="mt-1.5" surface="card" items={[{
+              label: done.mailboxes ? "Unlinked" : `Unlink ${plural(mailboxes.length, "mailbox", "mailboxes")}`,
+              kind: "secondary", disabledBecause: done.mailboxes ? "Already unlinked" : undefined,
+              onClick: () => { setDone((d) => ({ ...d, mailboxes: true })); toast(`Unlinked ${plural(mailboxes.length, "mailbox", "mailboxes")}`) },
+            }]} />
           </section>
 
           {crm && (
             <section className="border-t pt-3">
               <h4 className="text-sm font-medium">3. Unmap from {crm.split(" ")[0]}</h4>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Until this is done, this person's activity keeps syncing to {crm.split(" ")[0]}.
-              </p>
-              <Button size="sm" variant="outline" className="mt-1.5" disabled={done.crm}
-                onClick={() => { setDone((d) => ({ ...d, crm: true })); toast(`Unmapped from ${crm.split(" ")[0]}`) }}>
-                {done.crm ? "Unmapped" : `Unmap from ${crm.split(" ")[0]}`}
-              </Button>
+              <Actions className="mt-1.5" surface="card" items={[{
+                label: done.crm ? "Unmapped" : `Unmap from ${crm.split(" ")[0]}`,
+                kind: "secondary", disabledBecause: done.crm ? "Already unmapped" : undefined,
+                onClick: () => { setDone((d) => ({ ...d, crm: true })); toast(`Unmapped from ${crm.split(" ")[0]}`) },
+              }]} />
             </section>
           )}
 
@@ -264,19 +256,15 @@ export function UserPanel({ user, session, ...p }: PanelShell & { user: User | n
             <p className="mt-1 text-sm">
               Access ends now. The seat is free to reassign. <strong>Your bill does not change until renewal on {longDay(b.plan.renews)}.</strong>
             </p>
-            <a className="text-xs underline underline-offset-4" href={href("/ollopa/settings/plan")}>Reduce seats at renewal</a>
             <div className="mt-2">
-              <Button size="sm" variant={ready ? "destructive" : "outline"} onClick={() => {
-                if (!ready) { toast(`Still outstanding: ${[!done.reassign && "reassign their work", !done.mailboxes && "unlink their mailboxes", crm && !done.crm && `unmap from ${crm.split(" ")[0]}`].filter(Boolean).join(", ")}`); return }
-                close(); toast(`${user.name} deactivated. The seat is free.`)
-              }}>
-                {ready ? `Deactivate ${user.name}` : "Reassign first"}
-              </Button>
-              {!ready && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Outstanding: {[!done.reassign && "their work is not reassigned", !done.mailboxes && "their mailboxes are still linked", crm && !done.crm && `they are still mapped to ${crm.split(" ")[0]}`].filter(Boolean).join(", ")}.
-                </p>
-              )}
+              <Actions surface="card" items={[{
+                label: `Deactivate ${user.name}`, kind: "destructive",
+                disabledBecause: ready ? undefined : `Outstanding: ${[!done.reassign && "their work is not reassigned", !done.mailboxes && "their mailboxes are still linked", crm && !done.crm && `they are still mapped to ${crm.split(" ")[0]}`].filter(Boolean).join(", ")}.`,
+                onClick: () => { close(); toast(`${user.name} deactivated. The seat is free.`) },
+                irreversible: { title: `Deactivate ${user.name}?`,
+                  consequence: `Access ends now and the seat is free to reassign. Your bill does not change until renewal on ${longDay(b.plan.renews)}.`,
+                  confirmLabel: `Deactivate ${user.name}` },
+              }]} />
             </div>
           </section>
         </div>
@@ -294,16 +282,20 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
   const people = seed.contacts.filter((c) => c.doNotContact).slice(0, 8)
   return (
     <Panel id="x-removal" title="Removal list" {...p}
-      footer={<Button variant="outline" onClick={() => toast("Exported the removal list as CSV.")}>Export as CSV</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Export as CSV", kind: "secondary", onClick: () => toast("Exported the removal list as CSV.") }]} />}>
       <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
         <p className="text-sm font-medium">Delete everywhere</p>
         <p className="mt-1 text-sm">
           Deletes {removal.people} people here, unlinks them in {b.crm?.split(" ")[0] ?? "the CRM"}, removes them from {plural(removal.lists, "list")} and {plural(removal.sequences, "sequence")},
           and stops {plural(removal.jobs, "enrichment job")} from re-importing them. This cannot be undone.
         </p>
-        <Button size="sm" variant="destructive" className="mt-2" onClick={() => { p.onOpenChange(false); toast(`Deleted ${removal.people} people everywhere.`) }}>
-          Delete {removal.people} people everywhere
-        </Button>
+        <Actions className="mt-2" surface="card" items={[{
+          label: `Delete ${removal.people} people everywhere`, kind: "destructive",
+          onClick: () => { p.onOpenChange(false); toast(`Deleted ${removal.people} people everywhere.`) },
+          irreversible: { title: `Delete ${removal.people} people everywhere?`,
+            consequence: `Deletes ${removal.people} people here, unlinks them in ${b.crm?.split(" ")[0] ?? "the CRM"}, removes them from ${plural(removal.lists, "list")} and ${plural(removal.sequences, "sequence")}, and stops ${plural(removal.jobs, "enrichment job")} from re-importing them.`,
+            confirmLabel: `Delete ${removal.people} people` },
+        }]} />
       </div>
       <dl className="mt-4 grid gap-2 border-t pt-4 text-sm">
         {([
@@ -351,17 +343,19 @@ export function KeyPanel({ apiKey, session, ...p }: PanelShell & { apiKey: ApiKe
   const jobs = seed.enrichmentJobs.filter((j) => j.keyId === apiKey.id)
   return (
     <Panel id="x-key" title={apiKey.name} {...p}
-      footer={<div className="flex w-full gap-2">
-        <Button variant="outline" onClick={() => toast(`Rotated · ${apiKey.name}. The old secret stops working in 24 hours.`)}>Rotate</Button>
-        <Button variant="outline" className="text-destructive" onClick={() => { p.onOpenChange(false); toast(`Revoked · ${apiKey.name}. Calls with it fail now.`) }}>Revoke</Button>
-      </div>}>
+      footer={<Actions surface="dialog" items={[
+        { label: "Rotate", kind: "secondary", onClick: () => toast(`Rotated · ${apiKey.name}. The old secret stops working in 24 hours.`),
+          irreversible: { title: `Rotate ${apiKey.name}?`, consequence: "The old secret stops working in 24 hours.", confirmLabel: "Rotate the key" } },
+        { label: "Revoke", kind: "destructive", onClick: () => { p.onOpenChange(false); toast(`Revoked · ${apiKey.name}. Calls with it fail now.`) },
+          irreversible: { title: `Revoke ${apiKey.name}?`, consequence: "Calls made with it fail immediately and it cannot be brought back.", confirmLabel: "Revoke the key" } },
+      ]} />}>
       <Fields rows={[
         { label: "Scopes", value: apiKey.scopes.join(", ") },
         { label: "Created", value: `${day(apiKey.createdOn)} by ${apiKey.createdBy}` },
         { label: "Last used", value: apiKey.lastUsedAt ? day(apiKey.lastUsedAt) : "Never used" },
         { label: "Expires", value: apiKey.expiresOn ? day(apiKey.expiresOn) : "Does not expire" },
         { label: "Spend this cycle", value: `${credits(apiKey.creditsThisCycle)} against the workspace balance` },
-        { label: "Alert", value: `${apiKey.alertOwner} at ${apiKey.alertAt}% of the allocation`, note: "Delivered as a digest line and a bell row under credits low." },
+        { label: "Alert", value: `${apiKey.alertOwner} at ${apiKey.alertAt}% of the allocation` },
       ]} />
       <div className="mt-4 border-t pt-4">
         <p className="text-sm font-medium">Enrichment jobs this key paid for</p>
@@ -397,11 +391,11 @@ export function McpScopePanel({ token, session, ...p }: PanelShell & { token: Mc
   if (!token) return null
   return (
     <Panel id="x-mcpscope" title={`MCP · ${token.client}`} {...p}
-      footer={<div className="flex w-full items-center gap-2">
-        <Button variant="outline" onClick={() => { p.onOpenChange(false); toast(`Revoked · ${token.client}`) }}>Revoke</Button>
-        <span className="flex-1" />
-        <Button onClick={() => { p.onOpenChange(false); toast(`Saved · MCP scope for ${token.client}`) }}>Save</Button>
-      </div>}>
+      footer={<Actions surface="dialog" items={[
+        { label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · MCP scope for ${token.client}`) } },
+        { label: "Revoke", kind: "destructive", onClick: () => { p.onOpenChange(false); toast(`Revoked · ${token.client}`) },
+          irreversible: { title: `Revoke ${token.client}?`, consequence: `${token.client} loses its connection to this workspace at once.`, confirmLabel: "Revoke the connection" } },
+      ]} />}>
       <Fields rows={[
         { label: "Person", value: token.user },
         { label: "Client", value: token.client },
@@ -430,9 +424,6 @@ export function McpScopePanel({ token, session, ...p }: PanelShell & { token: Mc
             </div>
           )
         })}
-        <p className="text-xs text-muted-foreground">
-          The plan is stated here, at connection, and never at the moment a write fails.
-        </p>
       </div>
       <div className="mt-4 border-t pt-4">
         <p className="text-sm font-medium">Inside this scope, each action</p>
@@ -464,7 +455,7 @@ export function HookPanel({ hook, session, ...p }: PanelShell & { hook: Webhook 
   const deliveries = seed.webhookDeliveries.filter((d) => d.webhookId === hook.id).slice(0, 6)
   return (
     <Panel id="x-hook" title={hook.url} {...p}
-      footer={<Button variant="outline" onClick={() => toast("Reconciled. 0 events were missing.")}>Reconcile the last 24 hours</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Reconcile the last 24 hours", kind: "primary", onClick: () => toast("Reconciled. 0 events were missing.") }]} />}>
       <Fields rows={[
         { label: "Events", value: hook.events.join(", ") },
         { label: "State", value: hook.state === "failing" ? `Failing since ${day(hook.failingSince ?? "")}` : hook.state === "paused" ? "Paused" : "Delivering" },
@@ -504,13 +495,12 @@ export function CliPanel({ session, ...p }: PanelShell & { session: Session }) {
               <li key={d.id} className="grid gap-0.5 border-b pb-3 last:border-b-0">
                 <span className="text-sm font-medium">{d.label}</span>
                 <span className="text-xs text-muted-foreground">{d.user} · {d.workspace} · authorised {day(d.authorisedOn)} · last used {d.lastUsedAt ? day(d.lastUsedAt) : "never"}</span>
-                <Button size="sm" variant="outline" className="mt-1 w-fit" onClick={() => toast(`Revoked · ${d.label}`)}>Revoke</Button>
+                <Actions className="mt-1" surface="card" items={[{ label: "Revoke", kind: "destructive",
+                  onClick: () => toast(`Revoked · ${d.label}`),
+                  irreversible: { title: `Revoke ${d.label}?`, consequence: "That device has to authorise again before it can run a command.", confirmLabel: "Revoke the device" } }]} />
               </li>
             ))}
           </ul>}
-      <p className="mt-4 border-t pt-4 text-xs text-muted-foreground">
-        Every command takes a workspace and echoes its name in the confirmation. A destructive bulk write asks for the workspace name typed back.
-      </p>
     </Panel>
   )
 }
@@ -527,7 +517,7 @@ export function ScorePanel({ model, session, ...p }: PanelShell & { model: Score
   const share = Math.round((above / Math.max(1, seed.contacts.length)) * 100)
   return (
     <Panel id="x-score" title={model.name} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Threshold ${threshold}, published ${longDay("2026-09-13")} by ${session.user}`) }}>Publish</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Publish", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Threshold ${threshold}, published ${longDay("2026-09-13")} by ${session.user}`) } }]} />}>
       <Fields rows={[
         { label: "Kind", value: model.kind === "fit" ? "Fit" : model.kind === "engagement" ? "Engagement" : "Risk" },
         { label: "Version", value: `${model.version} · published ${day(model.published)} by ${model.publishedBy}` },
@@ -576,7 +566,7 @@ export function PersonaPanel({ persona, ...p }: PanelShell & { persona: Persona 
   if (!persona) return null
   return (
     <Panel id="x-persona" title={persona.name} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Saved · ${persona.name}`) }}>Save</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · ${persona.name}`) } }]} />}>
       <Fields rows={[
         { label: "Title", value: persona.title },
         { label: "Seniority", value: persona.seniority },
@@ -594,7 +584,7 @@ export function SignalPanel({ signal, ...p }: PanelShell & { signal: SignalDef |
   if (!signal) return null
   return (
     <Panel id="x-signal" title={signal.name} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Saved · ${signal.name}`) }}>Save</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · ${signal.name}`) } }]} />}>
       <Fields rows={[
         { label: "Definition", value: signal.definition },
         { label: "Source", value: signal.source },
@@ -612,15 +602,12 @@ export function TerritoryPanel({ territory, ...p }: PanelShell & { territory: Te
   if (!territory) return null
   return (
     <Panel id="x-territory" title={territory.name} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Saved · ${territory.name}`) }}>Save</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · ${territory.name}`) } }]} />}>
       <Fields rows={[
         { label: "Rule", value: territory.rule },
         { label: "Owner", value: territory.owner },
         { label: "Accounts", value: territory.accounts.toLocaleString() },
       ]} />
-      <p className="mt-4 text-xs text-muted-foreground">
-        Territories are defined here and assigned from a person's row in Team and access. Both open this panel.
-      </p>
     </Panel>
   )
 }
@@ -629,7 +616,7 @@ export function FieldPanel({ field, stages, ...p }: PanelShell & { field: FieldD
   if (!field) return null
   return (
     <Panel id="x-field" title={field.label} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Saved · ${field.label}`) }}>Save</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · ${field.label}`) } }]} />}>
       <Fields rows={[
         { label: "On", value: field.object === "person" ? "People" : field.object === "company" ? "Companies" : "Deals" },
         { label: "Type", value: field.kind },
@@ -646,9 +633,6 @@ export function FieldPanel({ field, stages, ...p }: PanelShell & { field: FieldD
             {stages.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
-        <p className="mt-1 text-xs text-muted-foreground">
-          The deal's stage stepper prints this gate before the click, naming the field and who set it.
-        </p>
       </div>
     </Panel>
   )
@@ -663,7 +647,7 @@ export function ListPanel({ title, rows, dependsOn, ...p }: PanelShell & {
   const [adding, setAdding] = useState("")
   return (
     <Panel id={`x-list-${title}`} title={title} {...p}
-      footer={<Button onClick={() => { p.onOpenChange(false); toast(`Saved · ${title}`) }}>Save</Button>}>
+      footer={<Actions surface="dialog" items={[{ label: "Save", kind: "primary", onClick: () => { p.onOpenChange(false); toast(`Saved · ${title}`) } }]} />}>
       <ul className="grid gap-2">
         {rows.map((r) => (
           <li key={r.id} className="flex items-baseline justify-between gap-3 border-b pb-2 last:border-b-0">
@@ -671,15 +655,17 @@ export function ListPanel({ title, rows, dependsOn, ...p }: PanelShell & {
               <span className="block text-sm">{r.name}</span>
               {r.detail && <span className="block text-xs text-muted-foreground">{r.detail}</span>}
             </span>
-            <Button size="sm" variant="ghost" className="h-7 shrink-0 px-2 text-xs text-destructive"
-              onClick={() => toast(dependsOn ? `${r.name}: ${dependsOn(r.id)}` : `Deleted · ${r.name}`)}>Delete</Button>
+            <Actions surface="card" items={[{ label: "Delete", kind: "destructive",
+              onClick: () => toast(dependsOn ? `${r.name}: ${dependsOn(r.id)}` : `Deleted · ${r.name}`),
+              irreversible: { title: `Delete ${r.name}?`, consequence: dependsOn ? dependsOn(r.id) : "It is removed from this list.", confirmLabel: `Delete ${r.name}` } }]} />
           </li>
         ))}
         {rows.length === 0 && <li className="text-sm text-muted-foreground">Nothing here yet.</li>}
       </ul>
       <div className="mt-4 flex gap-2 border-t pt-4">
         <Input className="h-8" aria-label={`Add to ${title}`} placeholder="Name" value={adding} onChange={(e) => setAdding(e.target.value)} />
-        <Button size="sm" variant="outline" disabled={!adding} onClick={() => { toast(`Added · ${adding}`); setAdding("") }}>Add</Button>
+        <Actions surface="card" items={[{ label: "Add", kind: "secondary", disabledBecause: adding ? undefined : "Type a name first",
+          onClick: () => { toast(`Added · ${adding}`); setAdding("") } }]} />
       </div>
     </Panel>
   )

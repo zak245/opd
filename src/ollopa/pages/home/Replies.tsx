@@ -5,7 +5,7 @@
 // because it cannot be undone from a toast.
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Actions, type Action } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
@@ -69,10 +69,17 @@ function ReplyRow({ r, canBook, confirming, ids, onNotInterested, onAsk, onUnsub
         />
       ) : (
         <span className="flex shrink-0 items-center gap-2">
-          <Button size="sm" variant="outline" className="h-7" onClick={open}>Reply</Button>
-          {canBook ? (
-            <Button size="sm" variant="ghost" className="hidden h-7 sm:inline-flex" onClick={book}>Book a meeting</Button>
-          ) : (
+          {/* The row's own acts. Nothing on a Home row is filled: the two acts a person runs from
+              here are outlines, and the row says nothing under them — both are free and neither is
+              final until the thread sends. */}
+          <Actions
+            surface="card"
+            items={([
+              { kind: "secondary", label: "Reply", keys: "r", onClick: open },
+              ...(canBook ? [{ kind: "secondary", label: "Book a meeting", keys: "b", onClick: book }] : []),
+            ]) as Action[]}
+          />
+          {!canBook && (
             <button
               type="button"
               className="hidden text-xs text-muted-foreground underline underline-offset-4 sm:inline"
@@ -157,15 +164,14 @@ export function Replies({ data, d, order }: { data: HomeData; d: Disclosure; ord
                       {r.returnsOn ? `Back on ${r.returnsOn}` : r.followUpOn ? `Asked for ${r.followUpOn}` : r.snippet}
                     </span>
                   </span>
-                  <Button size="sm" variant="ghost" className="h-7 shrink-0" onClick={() => notInterested(r)}>Mark not interested</Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 shrink-0"
-                    onClick={() => leave(r, "snoozed", `Snoozed · ${r.contact} comes back on ${r.returnsOn ?? r.followUpOn ?? "the date they gave"}.`)}
-                  >
-                    Snooze
-                  </Button>
+                  <Actions
+                    surface="card"
+                    className="shrink-0"
+                    items={([
+                      { kind: "secondary", label: "Mark not interested", onClick: () => notInterested(r) },
+                      { kind: "secondary", label: "Snooze", onClick: () => leave(r, "snoozed", `Snoozed · ${r.contact} comes back on ${r.returnsOn ?? r.followUpOn ?? "the date they gave"}.`) },
+                    ]) as Action[]}
+                  />
                 </li>
               ))}
             </ul>

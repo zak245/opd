@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronRight, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { useDoorState } from "../../ui/Door"
 import { toast } from "../../templates/TablePage"
 
@@ -157,8 +158,8 @@ export interface WizardProps {
   steps: StepState[]
   current: number
   go: (n: number) => void
-  /** The one line under the heading that never moves: what has not happened yet. */
-  constantLine: string
+  /** The one line under the heading, where the step spends or cannot be undone. Otherwise nothing. */
+  constantLine?: string
   /** Saved as it is made, so this only leaves the page; it never decides anything. */
   onSaveAndExit: () => void
   /** The descriptive primary button, the descriptive back link, and anything else the step needs. */
@@ -212,17 +213,17 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
         <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold focus-visible:outline-none">
           Step {current} of {steps.length}: {step.name}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{constantLine}</p>
+        {constantLine && <p className="mt-1 text-sm text-muted-foreground">{constantLine}</p>}
 
         <div className="mt-6 grid gap-6 [&>*]:min-w-0">{children}</div>
 
         <div data-container="connect.footer" data-container-label="the footer" className="mt-8 flex flex-wrap items-center gap-3 border-t pt-5">
           {footer}
-          <span data-item="wiz.save-exit" data-item-label="Save and exit" className="ml-auto">
-            <Button variant="ghost" onClick={onSaveAndExit}>Save and exit <span className="ml-2 text-xs text-muted-foreground">⌘S</span></Button>
-          </span>
+          <Actions className="ml-auto" surface="page" items={[{
+            kind: "secondary", label: "Save and exit", onClick: onSaveAndExit, keys: "⌘S",
+            dataItem: "wiz.save-exit", dataItemLabel: "Save and exit",
+          }]} />
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Every answer is saved as you make it. Leaving and coming back returns this page exactly as it is.</p>
       </div>
     </div>
   )

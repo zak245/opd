@@ -7,7 +7,7 @@
 // delivery contract and the ceiling are not doors, because each informs a decision made before a
 // surface is ever called (spec 17 §3.7, §6.1, §6.2).
 import { useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
 import { toast } from "../../templates/TablePage"
@@ -136,11 +136,12 @@ Interrupted, resume with the token printed.                                exit 
         </div>
 
         <nav aria-label="The surfaces" className="mt-4 flex flex-wrap gap-2">
-          {surfaces.map((s) => (
-            <Button key={s.id} size="sm" variant={here === s.id ? "default" : "outline"} onClick={() => navigate(`/ollopa/developer/${s.id === "webhooks" ? "webhooks" : s.id}`)}>
-              {s.label}
-            </Button>
-          ))}
+          <Actions surface="card" items={surfaces.map((s) => ({
+            kind: "link" as const,
+            label: s.label,
+            href: href(`/ollopa/developer/${s.id === "webhooks" ? "webhooks" : s.id}`),
+            onClick: () => navigate(`/ollopa/developer/${s.id === "webhooks" ? "webhooks" : s.id}`),
+          }))} />
         </nav>
 
         {/* Level one, above every surface: the facts that decide a design before a key exists. */}
@@ -192,7 +193,7 @@ Interrupted, resume with the token printed.                                exit 
           >
             {api.locked && (
               <Locked feature="The REST API" plan={api.plan} pricePerMonth={api.pricePerMonth} what={api.what}>
-                <Button variant="outline">The API is on {api.plan} · {money(api.pricePerMonth)} a month for {b.plan.seats} seats</Button>
+                <Actions surface="page" items={[{ kind: "secondary", label: `The API is on ${api.plan} · ${money(api.pricePerMonth)} a month for ${b.plan.seats} seats` }]} />
               </Locked>
             )}
             <div>
@@ -228,7 +229,7 @@ Interrupted, resume with the token printed.                                exit 
           >
             {hooks.locked && (
               <Locked feature="Webhooks" plan={hooks.plan} pricePerMonth={hooks.pricePerMonth} what={hooks.what}>
-                <Button variant="outline">Webhooks are on {hooks.plan} · {money(hooks.pricePerMonth)} a month for {b.plan.seats} seats</Button>
+                <Actions surface="page" items={[{ kind: "secondary", label: `Webhooks are on ${hooks.plan} · ${money(hooks.pricePerMonth)} a month for ${b.plan.seats} seats` }]} />
               </Locked>
             )}
             <div>
@@ -264,7 +265,7 @@ Interrupted, resume with the token printed.                                exit 
                   <div className="mt-2 rounded-md border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium">{failing[0].cause} · {failing.length}</p>
-                      <Button size="sm" variant="outline" onClick={() => toast(`Replaying ${failing.length} deliveries · the group leaves or comes back with a new cause`)}>Replay these {failing.length}</Button>
+                      <Actions surface="card" items={[{ kind: "secondary", label: `Replay these ${failing.length}`, onClick: () => toast(`Replaying ${failing.length} deliveries · the group leaves or comes back with a new cause`) }]} />
                     </div>
                     <div className="mt-2 border-t">
                       <Door id={`dev.hook.${hook.id}`} label={`${failing[0].cause} · the ${failing.length} deliveries`} count={failing.length}>
@@ -352,7 +353,15 @@ Interrupted, resume with the token printed.                                exit 
                   <li key={t.id} className="flex flex-wrap items-center gap-2 border-b py-1 last:border-b-0">
                     <span className="min-w-0 flex-1">{t.user} · {t.client} · authorised {day(t.authorisedOn)} · last used {t.lastUsedAt ? day(t.lastUsedAt) : "never"}</span>
                     <span className="text-xs">{t.tier === "read" ? "Read" : t.tier === "write_safe" ? "Safe writes" : "Destructive writes"}</span>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => toast(`${t.client} stops working at its next call · runs already approved finish`)}>Revoke</Button>
+                    <Actions surface="card" items={[{
+                      kind: "destructive", label: "Revoke",
+                      onClick: () => toast(`${t.client} stops working at its next call · runs already approved finish`),
+                      irreversible: {
+                        title: `Revoke ${t.client}?`,
+                        consequence: `${t.client} stops working at its next call. Runs already approved finish. ${t.user} has to authorise it again.`,
+                        confirmLabel: "Revoke it",
+                      },
+                    }]} />
                   </li>
                 ))}
               </ul>
@@ -403,13 +412,21 @@ Interrupted, resume with the token printed.                                exit 
             <div>
               <h3 className="text-sm font-medium">Device authorisations</h3>
               {devices.length === 0 ? (
-                <p className="mt-1 text-sm text-muted-foreground">No devices authorised. Signing in is a browser round trip, or a device flow where there is no browser.</p>
+                <p className="mt-1 text-sm text-muted-foreground">No devices authorised.</p>
               ) : (
                 <ul className="mt-1 grid gap-1 text-sm">
                   {devices.map((dv) => (
                     <li key={dv.id} className="flex flex-wrap items-center gap-2 border-b py-1 last:border-b-0">
                       <span className="min-w-0 flex-1">{dv.label} · {dv.user} · {dv.workspace} · authorised {day(dv.authorisedOn)} · last used {dv.lastUsedAt ? day(dv.lastUsedAt) : "never"}</span>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => toast(`${dv.label} stops working at its next command`)}>Revoke</Button>
+                      <Actions surface="card" items={[{
+                        kind: "destructive", label: "Revoke",
+                        onClick: () => toast(`${dv.label} stops working at its next command`),
+                        irreversible: {
+                          title: `Revoke ${dv.label}?`,
+                          consequence: `${dv.label} stops working at its next command. ${dv.user} has to authorise the device again.`,
+                          confirmLabel: "Revoke it",
+                        },
+                      }]} />
                     </li>
                   ))}
                 </ul>

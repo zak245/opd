@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { FlatProvider } from "../ui/Door"
+import { Actions } from "../ui/Actions"
 import { type ReactNode } from "react"
 
 export interface QuickLookField {
@@ -44,6 +45,12 @@ export interface QuickLookProps {
   /** "Open" goes to the record page: the drawer carries no deep link, the page does. */
   onOpen: () => void
   /**
+   * Where "Open" goes. A destination is a link and not a button (DESIGN.md §1), so given this the
+   * footer draws a real `<a>` — it opens in a new tab and it copies — while a plain click still runs
+   * `onOpen`, which is what keeps the trail. Without it the control stays a button.
+   */
+  openHref?: string
+  /**
    * When the drawer was opened from a list — a board column, a table's rows — where this record sits
    * in it, so `[` and `]` walk that list without closing. The same convention as the pane's footer,
    * because the two are the same move at two depths and should not need learning twice.
@@ -51,7 +58,7 @@ export interface QuickLookProps {
   list?: { index: number; total: number; onStep: (by: 1 | -1) => void }
 }
 
-export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen, list }: QuickLookProps) {
+export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen, openHref, list }: QuickLookProps) {
   const [draft, setDraft] = useState(editable?.value ?? "")
   const first = useRef<HTMLButtonElement>(null)
   useEffect(() => { setDraft(editable?.value ?? "") }, [editable?.value, open])
@@ -131,7 +138,9 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen,
               </Button>
             </div>
           )}
-          <Button ref={first} className="w-full" onClick={onOpen}>Open</Button>
+          {openHref
+            ? <Actions surface="dialog" items={[{ label: "Open", kind: "link", href: openHref, onClick: onOpen }]} />
+            : <Button ref={first} className="w-full" onClick={onOpen}>Open</Button>}
         </SheetFooter>
       </SheetContent>
     </Sheet>

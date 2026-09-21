@@ -5,7 +5,7 @@
 // before it opens. Everything the wizard asked can be changed here, in place — the wizard is for the
 // first connection and nothing else (spec 15 §3.2).
 import { useMemo, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Actions, type Action } from "../../ui/Actions"
 import { href, navigate, useRoute } from "@/app/router"
 import { toast } from "../../templates/TablePage"
 import type { RecordDoor } from "../../templates/RecordPage"
@@ -14,7 +14,7 @@ import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Integration, type IntegrationError } from "../../data/seed"
 import type { Session } from "../../session"
 import { ago, day } from "../deal/format"
-import { Confirm, ExpandDoors, Picker, n } from "./bits"
+import { ExpandDoors, Picker, n } from "./bits"
 import { useDraft } from "./drafts"
 import { MapStep, RulesStep, SyncStep } from "./ConnectWizard"
 import { KINDS, crmFieldsFor, draftKey, startingDraft, type ConnectDraft, type ObjectName } from "./connectData"
@@ -59,16 +59,13 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
   const [windowPick, setWindowPick] = useState(WINDOWS[0])
   const [objectPick, setObjectPick] = useState("Every object")
   const [retrying, setRetrying] = useState<string[]>([])
-  const [disconnecting, setDisconnecting] = useState(false)
-  const [confirm, setConfirm] = useState<null | { title: string; body: string; label: string; run: () => void }>(null)
 
   if (!live && draft.seededFrom === "nothing" && !draft.started) {
     return (
       <div className="mx-auto max-w-lg p-10 text-center">
         <a href={href("/ollopa/settings/integrations")} className="text-sm text-muted-foreground hover:underline">Settings › Integrations</a>
         <h2 className="mt-6 text-lg font-semibold">This integration is not connected</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Nothing has been set up under this address. Connect one and it gets its own page here.</p>
-        <Button className="mt-5" onClick={() => navigate("/ollopa/connect/new?step=1")}>Connect an integration</Button>
+        <Actions className="mt-5 justify-center" surface="page" items={[{ kind: "primary", label: "Connect an integration", onClick: () => navigate("/ollopa/connect/new?step=1") }]} />
       </div>
     )
   }
@@ -103,6 +100,25 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     return `${per("Contacts")} contact, ${per("Companies")} company, ${per("Deals")} deal fields · ${suggested} suggested · ${required} required ${kind} field${required === 1 ? "" : "s"} unmapped`
   })()
 
+  const pullNow: Action = {
+    kind: "secondary", label: "Pull now",
+    onClick: () => toast("Pull started · it appears in the sync history"),
+    irreversible: {
+      title: `Pull now from ${kind}?`,
+      consequence: `Reads about ${n(live?.remoteCounts.Contacts ?? b.counts.contacts)} contacts and ${n(live?.remoteCounts.Companies ?? b.counts.companies)} companies and updates what has changed.`,
+      confirmLabel: "Pull now",
+    },
+  }
+  const pushNow: Action = {
+    kind: "secondary", label: "Push now",
+    onClick: () => toast("Push started · it appears in the sync history"),
+    irreversible: {
+      title: `Push now to ${kind}?`,
+      consequence: `Writes ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies that match your push rule.`,
+      confirmLabel: "Push now",
+    },
+  }
+
   const doors: RecordDoor[] = []
   if (isCrm) {
     doors.push({
@@ -111,7 +127,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
       content: (
         <div className="grid gap-3">
           <SyncStep session={session} draft={draft} save={save} />
-          <div><Button size="sm" onClick={() => toast("Saved · What syncs. It takes effect on the next run.")}>Save what syncs</Button></div>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Save what syncs", onClick: () => toast("Saved · What syncs. It takes effect on the next run.") }]} />
         </div>
       ),
     })
@@ -121,22 +137,18 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
       content: (
         <div className="grid gap-3">
           <MapStep session={session} draft={draft} save={save} />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={() => toast("Saved · Field mapping. Applies to records created or changed from now on.")}>Save the mapping</Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setConfirm({
+          <Actions surface="card" items={[
+            { kind: "secondary", label: "Save the mapping", onClick: () => toast("Saved · Field mapping. Applies to records created or changed from now on.") },
+            {
+              kind: "secondary", label: "Apply mapping to existing records",
+              onClick: () => toast(`Applying the mapping to ${n(b.counts.contacts + b.counts.companies)} records · it will appear in the sync history`),
+              irreversible: {
                 title: "Apply the mapping to existing records?",
-                body: `Rewrites the mapped fields on ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies in ollopA and in ${kind}. It runs as one pass and appears in the sync history.`,
-                label: `Apply to ${n(b.counts.contacts + b.counts.companies)} records`,
-                run: () => toast(`Applying the mapping to ${n(b.counts.contacts + b.counts.companies)} records · it will appear in the sync history`),
-              })}
-            >
-              Apply mapping to existing records
-            </Button>
-            <span className="text-xs text-muted-foreground">Saved changes otherwise reach new and changed records only.</span>
-          </div>
+                consequence: `Rewrites the mapped fields on ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies in ollopA and in ${kind}. It runs as one pass and appears in the sync history.`,
+                confirmLabel: `Apply to ${n(b.counts.contacts + b.counts.companies)} records`,
+              },
+            },
+          ]} />
         </div>
       ),
     })
@@ -146,7 +158,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
       content: (
         <div className="grid gap-3">
           <RulesStep draft={draft} save={save} />
-          <div><Button size="sm" onClick={() => toast("Saved · Sync rules. They apply from the next run.")}>Save the sync rules</Button></div>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Save the sync rules", onClick: () => toast("Saved · Sync rules. They apply from the next run.") }]} />
         </div>
       ),
     })
@@ -159,10 +171,10 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
         <div>Sync user: {draft.authUser || live?.auth?.user || "—"}</div>
         {kind === "Salesforce" && <div>Environment: {draft.environment}</div>}
         <div>Token: {(live?.auth?.validUntil ?? draft.validUntil) ? `valid until ${day(live?.auth?.validUntil ?? draft.validUntil)}` : `valid until it is revoked in ${kind}`}</div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => toast(`Re-authorised ${kind} as ${draft.authUser || live?.auth?.user}`)}>Re-authorise</Button>
-          <Button size="sm" variant="outline" onClick={() => toast("Sign in as the new sync user to change it")}>Change sync user</Button>
-        </div>
+        <Actions surface="card" items={[
+          { kind: "secondary", label: "Re-authorise", onClick: () => toast(`Re-authorised ${kind} as ${draft.authUser || live?.auth?.user}`) },
+          { kind: "secondary", label: "Change sync user", onClick: () => toast("Sign in as the new sync user to change it") },
+        ]} />
       </div>
     ),
   })
@@ -172,10 +184,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     count: runs.length,
     content: (
       <div className="grid gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => setConfirm({ title: `Pull now from ${kind}?`, body: `Reads about ${n(live?.remoteCounts.Contacts ?? b.counts.contacts)} contacts and ${n(live?.remoteCounts.Companies ?? b.counts.companies)} companies and updates what has changed.`, label: "Pull now", run: () => toast("Pull started · it appears in the sync history") })}>Pull now</Button>
-          <Button size="sm" variant="outline" onClick={() => setConfirm({ title: `Push now to ${kind}?`, body: `Writes ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies that match your push rule.`, label: "Push now", run: () => toast("Push started · it appears in the sync history") })}>Push now</Button>
-        </div>
+        <Actions surface="card" items={[pullNow, pushNow]} />
         <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[34rem] border-collapse text-sm">
             <caption className="sr-only">The last {runs.length} sync runs, newest first.</caption>
@@ -202,13 +211,31 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
 
   const disconnectConsequence = `Stops syncing. Records already in ${kind} stay. Records pulled into ollopA stay and lose their link.`
 
+  /**
+   * The header's acts. Pausing is reversible, so it acts at once and is outlined like the rest.
+   * Disconnecting is the one act that cannot be taken back: text in the destructive colour, last,
+   * after a gap, with everything it does inside its own confirmation and the verb on the affirmative
+   * (DESIGN.md §1 and §2) — which is why no sentence sits beside it any more.
+   */
+  const headerActions: Action[] = [
+    { kind: "secondary", label: paused ? "Resume syncing" : "Pause syncing", onClick: () => { saveLocal({ paused: !paused, pausedBy: session.user, pausedOn: TODAY }); toast(paused ? `${kind} is syncing again` : `${kind} paused by ${session.user}`) } },
+    pullNow,
+    pushNow,
+    { kind: "link", label: "Re-run setup", href: href(`/ollopa/connect/${slug}?step=1`), onClick: () => navigate(`/ollopa/connect/${slug}?step=1`) },
+    {
+      kind: "destructive", label: `Disconnect ${kind}`,
+      onClick: () => { toast(`${kind} disconnected · ${disconnectConsequence}`); navigate("/ollopa/settings/integrations") },
+      irreversible: { title: `Disconnect ${kind}?`, consequence: disconnectConsequence, confirmLabel: `Disconnect ${kind}` },
+    },
+  ]
+
   const doorIds = doors.map((d) => d.id)
   const ribbon = justStarted
     ? justStarted === "paused"
-      ? `${kind} is connected and paused. Nothing syncs until you press Resume syncing.`
-      : `${kind} is syncing. First sync started ${live?.lastSync.slice(11) ?? "just now"}, usually done within 30 minutes.`
+      ? `${kind} is connected and paused`
+      : `${kind} is syncing · first sync started ${live?.lastSync.slice(11) ?? "just now"}`
     : paused
-      ? `Paused by ${local.pausedBy || session.user}${local.pausedOn ? ` on ${day(local.pausedOn)}` : ""}. Nothing syncs and nothing is lost; Resume picks up where it stopped.`
+      ? `Paused by ${local.pausedBy || session.user}${local.pausedOn ? ` on ${day(local.pausedOn)}` : ""}`
       : null
 
   return (
@@ -228,26 +255,9 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
               <h2 className="text-lg font-semibold">{live?.name ?? `${kind}${kind === "Salesforce" ? ` (${draft.environment})` : ""}`}</h2>
               <p className="text-sm text-muted-foreground">{kind}{live?.environment ? ` · ${live.environment}` : ""}</p>
             </div>
-            <div className="ml-auto flex flex-wrap items-center gap-2" data-print-hide>
-              <Button size="sm" onClick={() => { saveLocal({ paused: !paused, pausedBy: session.user, pausedOn: TODAY }); toast(paused ? `${kind} is syncing again` : `${kind} paused by ${session.user}`) }}>
-                {paused ? "Resume syncing" : "Pause syncing"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setConfirm({ title: `Pull now from ${kind}?`, body: `Reads about ${n(live?.remoteCounts.Contacts ?? b.counts.contacts)} contacts and ${n(live?.remoteCounts.Companies ?? b.counts.companies)} companies and updates what has changed.`, label: "Pull now", run: () => toast("Pull started · it appears in the sync history") })}>Pull now</Button>
-              <Button size="sm" variant="outline" onClick={() => setConfirm({ title: `Push now to ${kind}?`, body: `Writes ${n(b.counts.contacts)} contacts and ${n(b.counts.companies)} companies that match your push rule.`, label: "Push now", run: () => toast("Push started · it appears in the sync history") })}>Push now</Button>
-              <Button size="sm" variant="outline" onClick={() => navigate(`/ollopa/connect/${slug}?step=1`)}>Re-run setup</Button>
-              {disconnecting ? (
-                <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
-                  <span className="text-xs text-destructive">{disconnectConsequence}</span>
-                  <Button size="sm" variant="destructive" onClick={() => { toast(`${kind} disconnected · ${disconnectConsequence}`); navigate("/ollopa/settings/integrations") }}>Disconnect {kind}</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setDisconnecting(false)}>Keep it</Button>
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDisconnecting(true)}>Disconnect {kind}</Button>
-                  <span className="max-w-[22rem] text-xs text-muted-foreground">{disconnectConsequence}</span>
-                </span>
-              )}
-            </div>
+            {/* A seat that may not change this connection is shown no controls at all; the line
+                above the header names who does (RULES.md rule 4). */}
+            {!readOnly && <Actions className="ml-auto" surface="page" items={headerActions} />}
           </div>
 
           {ribbon && (
@@ -275,19 +285,21 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold">{groups.length ? `Errors, grouped by cause · ${filtered.length}` : "Errors"}</h3>
-                {groups.length > 0 && <Button size="sm" variant="outline" onClick={() => toast(`Exported ${filtered.length} error rows as CSV`)}>Export as CSV</Button>}
+                {groups.length > 0 && <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} />}
               </div>
               {groups.length === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">No errors held. When one happens it appears here, grouped by cause, with the fix printed in the row.</p>
+                <p className="mt-2 text-sm text-muted-foreground">No errors held.</p>
               ) : (
                 <div className="mt-3 grid gap-3">
                   <div className="grid gap-2 sm:grid-cols-[14rem_14rem_1fr]">
                     <Picker label="When" value={windowPick} options={WINDOWS} onChange={setWindowPick} />
                     <Picker label="Object" value={objectPick} options={objectNames} onChange={setObjectPick} />
                     <div className="flex items-end">
-                      <Button size="sm" variant="outline" onClick={() => groups.forEach(retryGroup)}>
-                        Retry all {filtered.length} · 100 at a time, {Math.max(1, Math.ceil(filtered.length / 100))} pass{Math.ceil(filtered.length / 100) === 1 ? "" : "es"}
-                      </Button>
+                      <Actions surface="card" items={[{
+                        kind: "secondary",
+                        label: `Retry all ${filtered.length} · 100 at a time, ${Math.max(1, Math.ceil(filtered.length / 100))} pass${Math.ceil(filtered.length / 100) === 1 ? "" : "es"}`,
+                        onClick: () => groups.forEach(retryGroup),
+                      }]} />
                     </div>
                   </div>
 
@@ -300,9 +312,12 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                             <p className="text-sm font-medium">{group.cause} · {group.rows.length}</p>
                             <p className="text-xs text-muted-foreground">Fix: {group.fix}</p>
                           </div>
-                          <Button size="sm" variant="outline" disabled={busy} onClick={() => retryGroup(group)}>
-                            {busy ? "Retrying…" : `Retry these ${group.rows.length} · 100 at a time, ${Math.max(1, Math.ceil(group.rows.length / 100))} pass${Math.ceil(group.rows.length / 100) === 1 ? "" : "es"}`}
-                          </Button>
+                          <Actions surface="card" items={[{
+                            kind: "secondary",
+                            label: busy ? "Retrying…" : `Retry these ${group.rows.length} · 100 at a time, ${Math.max(1, Math.ceil(group.rows.length / 100))} pass${Math.ceil(group.rows.length / 100) === 1 ? "" : "es"}`,
+                            onClick: () => retryGroup(group),
+                            disabledBecause: busy ? "Running now" : undefined,
+                          }]} />
                         </div>
                         <div className="mt-2 border-t">
                           <Door id={`int.error.${id}.${group.cause.slice(0, 24)}`} label={`The ${group.rows.length} records this happened to`} count={group.rows.length}>
@@ -354,14 +369,6 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
         </DoorGroup>
       </fieldset>
 
-      <Confirm
-        open={!!confirm}
-        title={confirm?.title ?? ""}
-        body={confirm?.body}
-        confirmLabel={confirm?.label ?? "Run it"}
-        onConfirm={() => { confirm?.run(); setConfirm(null) }}
-        onCancel={() => setConfirm(null)}
-      />
     </>
   )
 }

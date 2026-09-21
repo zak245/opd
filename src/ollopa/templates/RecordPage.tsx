@@ -166,11 +166,22 @@ export interface RecordPageProps {
   /** Object state only: closed, archived, a sync error, deactivated. A live region. */
   ribbon?: { tone: "info" | "warning" | "error" | "good"; text: string; action?: ReactNode }
   fields: RecordField[]
+  /**
+   * The header's controls, the old way: three named buckets this template draws itself.
+   * A page that has moved to `ui/Actions` passes `headerActions` instead and this may be empty —
+   * the two are the same row, drawn by whoever owns the kinds.
+   */
   actions: {
     primary: RecordAction[]
     secondary: RecordAction[]
     destructive?: { label: string; consequence: string; onConfirm: () => void }
   }
+  /**
+   * The header's controls as one `<Actions surface="page">` (DESIGN.md §1): the page says what each
+   * control is and the primitive decides how it is drawn, where it sits and whether it asks first.
+   * When this is given it replaces the row above, on the desktop header and on the phone bar alike.
+   */
+  headerActions?: ReactNode
   main: RecordTimeline | RecordSections
   side: RecordCard[]
   doors: RecordDoor[]
@@ -476,7 +487,7 @@ export function RecordPage(p: RecordPageProps) {
             </div>
 
             <div className="ml-auto hidden flex-wrap items-center gap-2 lg:flex" data-print-hide>
-              <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} />
+              {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} />}
             </div>
           </div>
 
@@ -505,7 +516,7 @@ export function RecordPage(p: RecordPageProps) {
 
         {/* --------------------------------------------- phone: the actions sit under the header */}
         <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 border-t bg-background/95 px-5 py-2 backdrop-blur lg:hidden" data-print-hide>
-          <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />
+          {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
         </div>
 
         {/* ------------------------------------------------------- body: main, side cards, doors */}

@@ -16,6 +16,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
+import { Actions } from "../../ui/Actions"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -49,7 +50,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
   if (!f) {
     return (
       <div className="p-10">
-        <EmptyState title="That form is not here" body="It may have been deleted, or the link may be old." action={<Button size="sm" onClick={() => navigate("/ollopa/campaigns")}>Back to Campaigns</Button>} />
+        <EmptyState title="That form is not here" body="It may have been deleted, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Campaigns", onClick: () => navigate("/ollopa/campaigns") }]} />} />
       </div>
     )
   }
@@ -99,9 +100,6 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
           <span className="text-xs text-muted-foreground">{x.kind === "asked" ? "asked" : `enriched · ${x.credits} credit${x.credits === 1 ? "" : "s"}`}</span>
         </div>
       ))}
-      <p className="pt-2 text-xs text-muted-foreground">
-        A field already known for a returning visitor is removed from the form, not pre-filled invisibly, and the form says so in one line: “We already have your company and role.”
-      </p>
     </div>
   )
 
@@ -118,19 +116,20 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
             </span>{" "}
             · <span className="tabular-nums">{num(f.matched)} of {num(f.submissions7d)} submissions matched</span>
           </p>
-          <p className="text-sm text-muted-foreground">
-            At the cap, enrichment stops. Submissions are still accepted and still routed, marked “not enriched — daily cap reached” on the person and on the row.
-          </p>
           <div className="flex flex-wrap items-end gap-2">
             <div>
               <Label htmlFor="new-cap" className="text-xs">Raise the cap to</Label>
               <Input id="new-cap" type="number" min={f.enrichCapDaily} className="mt-1 w-28" value={newCap} onChange={(e) => setNewCap(e.target.value)} placeholder={String(f.enrichCapDaily)} />
             </div>
-            <Button size="sm" disabled={!newCap || Number(newCap) <= f.enrichCapDaily} onClick={() => {
-              patch({ enrichCapDaily: Number(newCap) })
-              toast(`Cap raised to ${num(Number(newCap))} credits a day · ${num(f.enrichUsedToday)} used today.`)
-              setNewCap("")
-            }}>Raise the cap</Button>
+            <Actions surface="card" items={[{
+              kind: "secondary", label: "Raise the cap",
+              onClick: () => {
+                patch({ enrichCapDaily: Number(newCap) })
+                toast(`Cap raised to ${num(Number(newCap))} credits a day · ${num(f.enrichUsedToday)} used today.`)
+                setNewCap("")
+              },
+              disabledBecause: newCap && Number(newCap) > f.enrichCapDaily ? undefined : `A number above ${num(f.enrichCapDaily)}`,
+            }]} />
             <label className="flex items-center gap-2 text-sm">
               <Switch checked={f.enrichOnSubmit} aria-label="Enrich on submission" onCheckedChange={(v) => { patch({ enrichOnSubmit: v }); toast(v ? "Submissions are enriched as they arrive." : "Submissions are no longer enriched; they are still accepted and routed.") }} />
               Enrich as submissions arrive
@@ -160,9 +159,12 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
               ? <>{num(f.unrouted)} submission{f.unrouted === 1 ? "" : "s"} could not be routed and reached nobody.</>
               : <>Every submission reached somebody.</>}
             {/* The run history is a level the pane must not open, so this leaves — and the form and
-                the workflow row stay on the trail behind it. */}
+                the workflow row stay on the trail behind it. A destination, so a real link. */}
             {f.unrouted > 0 && workflow && (
-              <> <button type="button" className="underline" onClick={() => follow(`/ollopa/workflows/${workflow.id}?at=runs`, from(workflow.id))}>See why</button></>
+              <> <a
+                className="underline" href={href(`/ollopa/workflows/${workflow.id}?at=runs`)}
+                onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow(`/ollopa/workflows/${workflow.id}?at=runs`, from(workflow.id)) } }}
+              >See why</a></>
             )}
           </p>
         </div>
@@ -172,8 +174,13 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
       id: "reporting", title: "Reporting",
       children: (
         <p className="text-sm">
-          <span id="form-reports">Submissions count towards <strong>{f.reportsTo}</strong>'s campaign results, and appear on the campaign report.</span>{" "}
-          <button type="button" className="underline" onClick={() => follow("/ollopa/reports", from("form-reports"))}>Open Reports</button>
+          <span id="form-reports">Submissions count towards <strong>{f.reportsTo}</strong>'s campaign results.</span>{" "}
+          <a
+            className="underline" href={href("/ollopa/reports")}
+            onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/reports", from("form-reports")) } }}
+          >
+            Open Reports
+          </a>
         </p>
       ),
     },
@@ -229,7 +236,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
       ribbon={atCap ? { tone: "warning", text: `At the cap: ${num(f.enrichUsedToday)} of ${num(f.enrichCapDaily)} credits used today. Submissions are still accepted and still routed, marked “not enriched”.` } : undefined}
       fields={fields}
       actions={{
-        primary: [{ label: f.status === "Live" ? "Turn the form off" : "Turn the form on", onClick: () => { patch({ status: f.status === "Live" ? "Off" : "Live" }); toast(f.status === "Live" ? `${f.name} is off. Submissions stop; the ones you have are kept.` : `${f.name} is live. Submissions are accepted and routed to ${f.routesTo}.`) }, confirm: f.status === "Live" ? "Stops accepting submissions. The submissions you already have are kept." : `Starts accepting submissions and routing them to ${f.routesTo}.` }],
+        primary: [{ label: f.status === "Live" ? "Turn the form off" : "Turn the form on", onClick: () => { patch({ status: f.status === "Live" ? "Off" : "Live" }); toast(f.status === "Live" ? `${f.name} is off. Submissions stop; the ones you have are kept.` : `${f.name} is live. Submissions are accepted and routed to ${f.routesTo}.`) } }],
         secondary: [
           { label: "Copy the form link", onClick: () => toast(`Link to ${f.name} copied.`) },
           { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },

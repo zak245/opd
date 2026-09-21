@@ -14,8 +14,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { href } from "@/app/router"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
+import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
@@ -458,10 +460,13 @@ export function CompaniesPage({ session }: { session: Session }) {
           title: "No companies yet",
           body: "Find companies in the database, or bring a CSV.",
           action: (
-            <span className="flex gap-2">
-              <Button size="sm" onClick={() => setFindOpen(true)}>Find companies</Button>
-              <Button size="sm" variant="outline" onClick={() => follow("/ollopa/import", origin())}>Import CSV</Button>
-            </span>
+            <Actions
+              surface="card"
+              items={[
+                { kind: "primary", label: "Find companies", onClick: () => setFindOpen(true) },
+                { kind: "link", label: "Import a CSV", href: href("/ollopa/import"), onClick: () => follow("/ollopa/import", origin()) },
+              ]}
+            />
           ),
         }}
       />
@@ -478,16 +483,15 @@ export function CompaniesPage({ session }: { session: Session }) {
           you would buy. */}
       <Panel id="find-companies" title="Find companies" open={findOpen} onOpenChange={setFindOpen}
         footer={
-          <Button className="w-full" onClick={() => { setSaved((s) => [...s, ...findRows.slice(0, 25).map((v) => v.company.id)]); toast(`Saved ${Math.min(25, findRows.length)} companies`) }}>
-            Save {Math.min(25, findRows.length)} to the workspace
-          </Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "primary",
+            label: `Save ${Math.min(25, findRows.length)} to the workspace`,
+            disabledBecause: findRows.length ? undefined : "Nothing matches these filters",
+            onClick: () => { setSaved((s) => [...s, ...findRows.slice(0, 25).map((v) => v.company.id)]); toast(`Saved ${Math.min(25, findRows.length)} companies`) },
+          }]} />
         }
       >
         <div className="space-y-4">
-          <p className="rounded-md bg-muted/50 px-3 py-2 text-xs">
-            Saving a company is free. Finding people at it costs {CREDITS.revealEmail} credit per verified email. Balance {seed.credits.balance.toLocaleString()}.
-          </p>
-
           <div className="space-y-2">
             <label className="flex items-start gap-2 text-sm">
               <Checkbox className="mt-0.5" checked={state.exclusions.owned} onCheckedChange={(x) => setState({ exclusions: { ...state.exclusions, owned: Boolean(x) } })} />
@@ -530,11 +534,18 @@ export function CompaniesPage({ session }: { session: Session }) {
                   <div className="truncate text-sm font-medium">{v.company.name}</div>
                   <div className="text-xs text-muted-foreground">{v.company.industry} · {v.company.employees.toLocaleString()} people · {v.company.location.country}</div>
                 </div>
-                <Button size="sm" variant={saved.includes(v.company.id) ? "ghost" : "outline"} className="h-7 text-xs"
-                  onClick={() => { setSaved((s) => [...s, v.company.id]); toast(`Saved ${v.company.name}`) }}>
-                  {saved.includes(v.company.id) ? "Saved" : "Save"}
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => findPeople(v)}>Find people</Button>
+                <Actions
+                  surface="card"
+                  items={[
+                    {
+                      kind: "secondary",
+                      label: saved.includes(v.company.id) ? "Saved" : "Save",
+                      disabledBecause: saved.includes(v.company.id) ? "Already in the workspace" : undefined,
+                      onClick: () => { setSaved((s) => [...s, v.company.id]); toast(`Saved ${v.company.name}`) },
+                    },
+                    { kind: "link", label: "Find people", href: href(`/ollopa/people?company=${v.company.id}`), onClick: () => findPeople(v) },
+                  ]}
+                />
               </li>
             ))}
             {findRows.length === 0 && <li className="p-3 text-sm text-muted-foreground">Nothing matches. Turn an exclusion off, or clear a filter.</li>}
@@ -545,10 +556,17 @@ export function CompaniesPage({ session }: { session: Session }) {
       {editing && <EditPanel row={editing} onClose={() => setEditing(null)} onSaved={(text) => { setNotice({ text }); setEditing(null) }} />}
 
       <Panel id="merge-companies" title="Merge duplicates" open={Boolean(merging)} onOpenChange={(o) => { if (!o) setMerging(null) }}
-        footer={<Button className="w-full" onClick={() => { toast(`${merging?.company.name} merged. The other record's contacts came with it.`); setMerging(null) }}>Merge</Button>}>
+        footer={<Actions surface="dialog" layout="stack" items={[{
+          kind: "primary", label: "Merge the two records",
+          onClick: () => { toast(`${merging?.company.name} merged. The other record's contacts came with it.`); setMerging(null) },
+          irreversible: {
+            title: `Merge into ${merging?.company.name ?? "this company"}?`,
+            consequence: `The other record's contacts, deals and lists come across and that record is removed. A merge cannot be undone.`,
+            confirmLabel: "Merge the two records",
+          },
+        }]} />}>
         {merging && (
           <div className="space-y-3 text-sm">
-            <p>Keeping <span className="font-medium">{merging.company.name}</span>. Pick the record to merge into it; its contacts, deals and lists come with it and the other record is removed.</p>
             <Select defaultValue={rows.find((v) => v.company.id !== merging.company.id)?.company.id}>
               <SelectTrigger aria-label="The other record"><SelectValue /></SelectTrigger>
               <SelectContent>{rows.slice(0, 20).filter((v) => v.company.id !== merging.company.id).map((v) => <SelectItem key={v.company.id} value={v.company.id}>{v.company.name}</SelectItem>)}</SelectContent>
@@ -564,7 +582,10 @@ export function CompaniesPage({ session }: { session: Session }) {
       </Panel>
 
       <Panel id="flag-company" title="Flag data as wrong" open={Boolean(flagging)} onOpenChange={(o) => { if (!o) setFlagging(null) }}
-        footer={<Button className="w-full" onClick={() => { toast(`Flagged ${flagging?.company.name}. ${admin?.user ?? "Your admin"} sees it on Requests.`); setFlagging(null) }}>Send</Button>}>
+        footer={<Actions surface="dialog" layout="stack" items={[{
+          kind: "primary", label: "Send the flag",
+          onClick: () => { toast(`Flagged ${flagging?.company.name}. ${admin?.user ?? "Your admin"} sees it on Requests.`); setFlagging(null) },
+        }]} />}>
         {flagging && (
           <div className="space-y-3">
             <label className="block text-xs text-muted-foreground">

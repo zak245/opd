@@ -8,7 +8,6 @@
 // second dialog after it.
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { href } from "@/app/router"
 import { Panel } from "../../ui/Panel"
 import { CREDITS, type Seed } from "../../data/seed"
 import { businessById } from "../../data/businesses"
@@ -174,10 +173,6 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground">
-          The same panel opens from the Needs enrichment view and from{" "}
-          <a className="underline" href={href("/ollopa/import")}>Import CSV</a>, because it is the same decision in three places.
-        </p>
       </div>
     </Panel>
   )

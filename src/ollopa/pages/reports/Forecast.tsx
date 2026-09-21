@@ -8,11 +8,11 @@
 //
 // Seven things here are decision-critical and are on every plan, whatever the usage number says: each
 // category's definition printed as text under its label (never a tooltip), the predicted number beside
-// the submitted one, "No agent submits a forecast", the deadline, Submit with its consequence, and
+// the submitted one, the deadline, Submit as the one act the tab exists for, and
 // last cycle's call beside what actually happened. Only the team roll-up carries a lock, because teams
 // are a Growth feature and there is nothing to roll up without them.
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -62,7 +62,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
         <span className="text-muted-foreground">· {report.deadline}</span>
         <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{report.scopeLabel}</span>
         {drillTo && (
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => onDrill(null)}>Back to the team</Button>
+          <Actions surface="card" items={[{ kind: "link", label: "Back to the team", href: "#/ollopa/reports?report=forecast", onClick: () => onDrill(null) }]} />
         )}
       </div>
 
@@ -125,7 +125,6 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
             </button>
           )}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">No agent submits a forecast.</p>
       </div>
 
       {/* 5. Last submission, with the date and the delta since. */}
@@ -145,7 +144,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
       {isLeader && !drillTo && report.repRows.length > 0 && (
         teams.locked ? (
           <Locked feature="The team roll-up" plan={teams.plan} pricePerMonth={teams.pricePerMonth} what="Roll a forecast up from the people who report to you, and drill from the team number into one person's deals.">
-            <Button variant="outline" size="sm">Open the team roll-up</Button>
+            <Actions surface="card" items={[{ kind: "secondary", label: "Open the team roll-up" }]} />
           </Locked>
         ) : (
           <section className="rounded-lg border">
@@ -209,14 +208,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
       {/* 7. The deals, and the button. */}
       <ForecastDeals deals={report.deals} currency={cur} onRecords={() => onRecords("all")} />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={onSubmitPanel}>Submit your forecast</Button>
-        <p className="text-xs text-muted-foreground">
-          {mine
-            ? `Submitted ${money(mine.amount, cur)} on ${day(mine.submittedAt)}. You can resubmit until ${report.submissionWindow.day} ${report.submissionWindow.time}.`
-            : `Not submitted · the deadline is ${report.submissionWindow.day} ${report.submissionWindow.time}, and the window opened ${report.submissionWindow.opensOn}.`}
-        </p>
-      </div>
+      <Actions surface="page" items={[{ kind: "primary", label: "Submit your forecast", onClick: onSubmitPanel }]} />
     </div>
   )
 }
@@ -295,7 +287,6 @@ export function ForecastPanel({ open, onOpenChange, report, session, mine, onSub
   const audience = receivers.length === 0 ? "Your manager and the RevOps admin see it"
     : receivers.length <= 2 ? `${receivers.join(" and ")} see it`
       : `${receivers.slice(0, 2).join(", ")} and ${receivers.length - 2} others see it`
-  const consequence = `Submit ${money(total, cur)} for ${report.periodLabel} · ${audience} · you can resubmit until ${report.submissionWindow.day} ${report.submissionWindow.time}`
 
   // Only a submission for this period can have changed since: last quarter's number is a different
   // question, and it is answered by "Last cycle" at the top of the panel.
@@ -312,18 +303,15 @@ export function ForecastPanel({ open, onOpenChange, report, session, mine, onSub
       open={open}
       onOpenChange={onOpenChange}
       footer={
-        <div className="w-full">
-          <Button
-            className="h-auto w-full whitespace-normal py-2 text-left leading-snug"
-            onClick={() => {
-              onSubmit({ period: report.period, amount: total, split: { ...adjust }, note, submittedAt: `${TODAY} 16:00` })
-              onOpenChange(false)
-              toast(`Submitted ${money(total, cur)} for ${report.periodLabel}. ${audience}.`)
-            }}
-          >
-            {consequence}
-          </Button>
-        </div>
+        <Actions surface="dialog" layout="stack" className="w-full" items={[{
+          kind: "primary",
+          label: `Submit ${money(total, cur)} for ${report.periodLabel}`,
+          onClick: () => {
+            onSubmit({ period: report.period, amount: total, split: { ...adjust }, note, submittedAt: `${TODAY} 16:00` })
+            onOpenChange(false)
+            toast(`Submitted ${money(total, cur)} for ${report.periodLabel}. ${audience}.`)
+          },
+        }]} />
       }
     >
       {/* A forecast with no memory teaches nobody anything, so the panel opens with the last call. */}
@@ -389,9 +377,6 @@ export function ForecastPanel({ open, onOpenChange, report, session, mine, onSub
             ))}
           </tbody>
         </table>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Your number is yours. It never changes the roll-up underneath it, and both are shown afterwards.
-        </p>
       </section>
 
       <section className="mt-4">
@@ -411,7 +396,6 @@ export function ForecastPanel({ open, onOpenChange, report, session, mine, onSub
         )}
       </section>
 
-      <p className="mt-4 text-xs text-muted-foreground">No agent submits a forecast. This number is yours and it is kept.</p>
     </Panel>
   )
 }

@@ -2,7 +2,8 @@
 //
 // Three short lists rather than one long one, because they are three different decisions. Each row
 // carries the one number that decision turns on: the renewal date, the health drop, the signal.
-import { Button } from "@/components/ui/button"
+import { href } from "@/app/router"
+import { Actions } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import type { Company } from "../../data/seed"
 import { type Disclosure } from "../../ui"
@@ -25,7 +26,7 @@ function AccountRow({ c, figure, money, ids }: { c: Company; figure: string; mon
         <span className="block text-xs text-muted-foreground">{c.owner} · {c.arr ? `${money(c.arr)} a year` : "no contract value"}</span>
       </span>
       <span className="shrink-0 tabular-nums">{figure}</span>
-      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={(e) => open(e.currentTarget)}>Open</Button>
+      <Actions surface="card" className="shrink-0" items={[{ kind: "link", label: "Open", href: href(`/ollopa/companies/${c.id}`), onClick: () => open() }]} />
     </Row>
   )
 }

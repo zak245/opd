@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { closeBeside, openBeside } from "../../beside"
+import { Actions, type Action } from "../../ui/Actions"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -371,22 +372,27 @@ export function Tasks({ session }: { session: Session }) {
           {showOwnerColumn && <span className="w-32 shrink-0 truncate text-xs text-muted-foreground">{t.owner}</span>}
 
           <span className="flex w-full min-w-0 flex-wrap items-center gap-1 md:w-auto md:shrink-0 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-            {t.kind === "Call" ? (
-              outcoming === t.id ? (
-                <span className="flex flex-wrap items-center gap-1">
-                  {["Connected", "Voicemail", "No answer", "Wrong number"].map((o) => (
-                    <Button key={o} size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { setOutcoming(null); done(t, o) }}>{o}</Button>
-                  ))}
-                </span>
-              ) : (
-                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setOutcoming(t.id)}>Done</Button>
-              )
+            {/* Done is the act a task exists for, so it is the row's one filled control; the rest
+                are the other acts the person came for, and deleting sits in the menu at the end.
+                Four comparable call outcomes are all outlines, none of them filled. */}
+            {t.kind === "Call" && outcoming === t.id ? (
+              <Actions
+                surface="card"
+                items={["Connected", "Voicemail", "No answer", "Wrong number"].map((o) => ({
+                  kind: "secondary" as const, label: o, onClick: () => { setOutcoming(null); done(t, o) },
+                }))}
+              />
             ) : (
-              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => done(t)}>Done</Button>
+              <Actions
+                surface="card"
+                items={[
+                  { kind: "primary", label: "Done", keys: "d", onClick: () => (t.kind === "Call" ? setOutcoming(t.id) : done(t)) },
+                  { kind: "secondary", label: "Open the task beside", keys: "o", onClick: () => openTask(t) },
+                  { kind: "secondary", label: primary.label, onClick: primary.run },
+                  { kind: "secondary", label: "Snooze", keys: "s", onClick: () => snooze(t) },
+                ]}
+              />
             )}
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => openTask(t, e.currentTarget)}>Open the task beside</Button>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={primary.run}>{primary.label}</Button>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => snooze(t)}>{t.sequence ? "Snooze · the sequence waits" : "Snooze"}</Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="icon-sm" variant="ghost" aria-label={`The task and the contact beside, snooze until, note, edit${teamView ? ", reassign" : ""}, delete — for ${t.contact}`}><MoreHorizontal className="size-4" /></Button>
@@ -396,7 +402,7 @@ export function Tasks({ session }: { session: Session }) {
                 <DropdownMenuItem onSelect={primary.run}>{primary.label}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">{t.kind === "Call" ? "l" : t.kind === "Email" ? "e" : ""}</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => snooze(t)}>Snooze to tomorrow<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">s</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Snooze until…</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => skip(t)}>{t.sequence ? "Skip · contact moves to next step" : "Skip"}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => skip(t)}>Skip<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => say(`Note added to ${t.contact}'s task.`)}>Add note</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Edit the due date</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => openTask(t)}>Open the task beside the list<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">o</span></DropdownMenuItem>
@@ -492,8 +498,15 @@ export function Tasks({ session }: { session: Session }) {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setMode(mode === "queue" ? "list" : "queue")}>{switchLabel}</Button>
-            <Button size="sm" onClick={() => setNewTask(true)}>New task</Button>
+            {/* The page's own two controls: making a task is the act this page exists for, and the
+                switch is the other thing the person came for. */}
+            <Actions
+              surface="page"
+              items={([
+                { kind: "primary", label: "New task", keys: "n", onClick: () => setNewTask(true) },
+                { kind: "secondary", label: switchLabel, keys: "w", onClick: () => setMode(mode === "queue" ? "list" : "queue") },
+              ]) as Action[]}
+            />
           </div>
         </div>
       </div>
@@ -571,7 +584,7 @@ export function Tasks({ session }: { session: Session }) {
                       <Checkbox checked={showOwnerColumn} disabled={!teamView} onCheckedChange={() => setOwner((o) => (o === "Everyone" ? session.user : "Everyone"))} />
                       Owner column
                     </label>
-                    <Button size="sm" variant="outline" onClick={() => say(`${rows.length} tasks exported as CSV.`)}>Export CSV</Button>
+                    <Actions surface="card" items={[{ kind: "secondary", label: "Export CSV", onClick: () => say(`${rows.length} tasks exported as CSV.`) }]} />
                   </div>
                 </Door>
               </div>
@@ -581,9 +594,14 @@ export function Tasks({ session }: { session: Session }) {
           {selection.length > 0 && (
             <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 text-sm sm:px-6">
               <span className="tabular-nums">{selection.length} selected</span>
-              <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => { const t = all.find((x) => x.id === id); if (t) done(t) }); setSelection([]) }}>Done</Button>
-              <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => { const t = all.find((x) => x.id === id); if (t) snooze(t) }); setSelection([]) }}>Snooze</Button>
-              <Button size="sm" variant="outline" className="h-7" onClick={() => { selection.forEach((id) => { const t = all.find((x) => x.id === id); if (t) skip(t) }); setSelection([]) }}>Skip</Button>
+              <Actions
+                surface="card"
+                items={([
+                  { kind: "secondary", label: "Done", onClick: () => { selection.forEach((id) => { const t = all.find((x) => x.id === id); if (t) done(t) }); setSelection([]) } },
+                  { kind: "secondary", label: "Snooze", onClick: () => { selection.forEach((id) => { const t = all.find((x) => x.id === id); if (t) snooze(t) }); setSelection([]) } },
+                  { kind: "secondary", label: "Skip", onClick: () => { selection.forEach((id) => { const t = all.find((x) => x.id === id); if (t) skip(t) }); setSelection([]) } },
+                ]) as Action[]}
+              />
               {teamView && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button size="sm" variant="outline" className="h-7">Reassign</Button></DropdownMenuTrigger>
@@ -605,7 +623,7 @@ export function Tasks({ session }: { session: Session }) {
                   ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Button size="sm" variant="outline" onClick={() => { setQ(""); setFilters({ due: "All open" }) }}>Clear</Button>} />
                   : openRows.length === 0
                     ? <EmptyState title="Done for today." body={`${counts.tomorrow} due tomorrow.`} action={<Button size="sm" variant="outline" onClick={() => setFilters({ due: "This week" })}>See this week</Button>} />
-                    : <EmptyState title="Nothing due." body="Tasks arrive from sequences you own and from deals and accounts assigned to you." action={<Button size="sm" onClick={() => setNewTask(true)}>New task</Button>} />}
+                    : <EmptyState title="Nothing due." body="Tasks arrive from sequences you own and from deals and accounts assigned to you." action={<Actions surface="card" items={[{ kind: "secondary", label: "New task", onClick: () => setNewTask(true) }]} />} />}
               </div>
             ) : rows.map((t) => <Row key={t.id} t={t} />)}
           </div>
@@ -626,7 +644,7 @@ export function Tasks({ session }: { session: Session }) {
 
       <Panel
         id="x-task" title="New task" open={newTask} onOpenChange={setNewTask}
-        footer={<Button size="sm" onClick={() => { setNewTask(false); say("Task created, due today.") }}>Create the task</Button>}
+        footer={<Actions surface="dialog" items={[{ kind: "primary", label: "Create the task", onClick: () => { setNewTask(false); say("Task created, due today.") } }]} />}
       >
         <div className="space-y-3">
           <label className="block text-xs text-muted-foreground">Contact<Input className="mt-1 h-8" placeholder="Search people" aria-label="Contact" /></label>

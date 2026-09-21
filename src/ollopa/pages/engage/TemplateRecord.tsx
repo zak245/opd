@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href, navigate } from "@/app/router"
+import { Actions, type Action } from "../../ui/Actions"
 import { EmptyState } from "../../ui/EmptyState"
 import { SectionHeader } from "../../ui/SectionHeader"
 import { seedFor } from "../../data/seed"
@@ -129,7 +130,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                     return (
                       <li key={sid}>
                         <BesideLink className="underline" kind="template" id={s.id}>{s.name}</BesideLink>
-                        <span className="text-muted-foreground"> · owned by {s.owner} · edit it on its own page</span>
+                        <span className="text-muted-foreground"> · {s.owner}</span>
                       </li>
                     )
                   })}
@@ -145,16 +146,30 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                     {VARIABLES.map((v) => <DropdownMenuItem key={v} onSelect={() => insert(v)}>{v}</DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button size="sm" onClick={save}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => { setSubject(row.subject); setBody(row.body) }}>Cancel</Button>
-                {row.usedBySteps.length > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    Saving changes the copy in {n(row.usedBySteps.length)} linked {row.usedBySteps.length === 1 ? "step" : "steps"}.
-                  </span>
-                )}
+                <Actions
+                  surface="page"
+                  items={[
+                    // The count is on Save itself, because "Save" alone would mislead about how far
+                    // the edit reaches — reason three of DESIGN.md §3, and a label, not a sentence.
+                    { kind: "primary", label: row.usedBySteps.length ? `Save · ${n(row.usedBySteps.length)} linked ${row.usedBySteps.length === 1 ? "step" : "steps"}` : "Save", onClick: save },
+                    { kind: "secondary", label: "Cancel", onClick: () => { setSubject(row.subject); setBody(row.body) } },
+                    {
+                      kind: "destructive",
+                      label: "Archive",
+                      onClick: () => say(`${row.name} archived`),
+                      irreversible: {
+                        title: `Archive ${row.name}?`,
+                        consequence: row.usedBySteps.length
+                          ? `${n(row.usedBySteps.length)} linked ${row.usedBySteps.length === 1 ? "step keeps" : "steps keep"} the text they have today. Nothing changes for anyone in a sequence.`
+                          : "Nothing uses this today.",
+                        confirmLabel: "Archive the template",
+                      },
+                    },
+                  ] as Action[]}
+                />
               </div>
             )}
-            {!isOwner && <p className="text-xs text-muted-foreground">Owned by {row.owner}. You can read it and preview it; the owner and RevOps admins change it.</p>}
+            {!isOwner && <p className="text-xs text-muted-foreground">Owned by {row.owner}; only the owner and RevOps admins change it.</p>}
           </div>
 
           {/* A section, never a door: who else receives this edit. */}
@@ -169,7 +184,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                 : undefined}
             />
             {uses.length === 0
-              ? <p className="text-sm text-muted-foreground">Nothing uses this yet. Link it from a step or a campaign.</p>
+              ? <p className="text-sm text-muted-foreground">Nothing uses this yet.</p>
               : shownUses.length === 0
                 ? <p className="text-sm text-muted-foreground">Nothing that uses this matches "{usesQ}".</p>
                 : (
@@ -211,12 +226,16 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
 
           <section className="rounded-lg border p-3">
             <SectionHeader title="Send a test to me" />
-            <p className="text-xs text-muted-foreground">
-              It goes to {mailboxOf(session)} — your own address — and nobody else.
-            </p>
-            <Button size="sm" variant="outline" className="mt-2" onClick={() => say(`Test sent to ${mailboxOf(session)}`)}>
-              Send a test to {mailboxOf(session)}
-            </Button>
+            <Actions
+              surface="card"
+              items={[{
+                kind: "secondary",
+                label: "Send a test",
+                onClick: () => say(`Test sent to ${mailboxOf(session)}`),
+                cost: "1 email",
+                consequence: `To ${mailboxOf(session)}, nobody else`,
+              }]}
+            />
           </section>
         </div>
       </div>

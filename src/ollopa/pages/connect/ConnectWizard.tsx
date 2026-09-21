@@ -8,7 +8,6 @@
 import { useMemo, useState } from "react"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { navigate, useRoute, href } from "@/app/router"
@@ -22,7 +21,8 @@ import { DEAL_STAGES, TODAY, seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import { day } from "../deal/format"
 import { ruleOn, useLesson } from "../../../learn/context"
-import { Check, Code, Confirm, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
+import { Check, Code, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
+import { Actions, type Action } from "../../ui/Actions"
 import { CONNECT_RULES, ConnectLesson } from "./lesson"
 import { discardDraft, peekDraft, useDraft, writeDraft } from "./drafts"
 import {
@@ -95,8 +95,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
     <>
       {d.atLevelOne("wiz.template") && (
         <div data-item="wiz.template" data-item-label="start from a saved template" className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-3">
-          <Button size="sm" variant="outline" onClick={() => toast(`Loaded the saved template · steps 3 to 5 filled in`)}>Start from a saved template</Button>
-          <span className="text-xs text-muted-foreground">A template holds what syncs, the field pairs and the sync rules. Authorising is still yours to do.</span>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Start from a saved template", onClick: () => toast("Loaded the saved template · steps 3 to 5 filled in") }]} />
         </div>
       )}
 
@@ -203,10 +202,11 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
           <span className="text-xs text-muted-foreground">Provider key</span>
           <Input className="mt-1" value={draft.enrichKey} placeholder="nl_live_…" onChange={(e) => save({ enrichKey: e.target.value })} />
         </label>
-        <div>
-          <Button onClick={() => { save({ enrichKeyChecked: true, authorised: true, stepsDone: [...new Set([...draft.stepsDone, 1, 2])] }); toast("Key accepted by Northlight Data") }}>Check the key</Button>
-        </div>
-        {draft.enrichKeyChecked && <p className="text-sm">Key accepted. Northlight Data will answer enrichment for this workspace.</p>}
+        <Actions surface="page" items={[{
+          kind: "secondary", label: "Check the key",
+          onClick: () => { save({ enrichKeyChecked: true, authorised: true, stepsDone: [...new Set([...draft.stepsDone, 1, 2])] }); toast("Key accepted by Northlight Data") },
+        }]} />
+        {draft.enrichKeyChecked && <p className="text-sm">Key accepted.</p>}
       </section>
     )
   }
@@ -222,19 +222,15 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
           <span className="text-xs text-muted-foreground">Signing secret</span>
           <Input className="mt-1" value={draft.webhookSecret} placeholder="whsec_…" onChange={(e) => save({ webhookSecret: e.target.value })} />
         </label>
-        <div>
-          <Button
-            disabled={!draft.webhookUrl}
-            onClick={() => { save({ webhookTest: TODAY, authorised: true, stepsDone: [...new Set([...draft.stepsDone, 1, 2])] }); toast("Test event sent") }}
-          >
-            Send a test event
-          </Button>
-        </div>
+        <Actions surface="page" items={[{
+          kind: "secondary", label: "Send a test event",
+          onClick: () => { save({ webhookTest: TODAY, authorised: true, stepsDone: [...new Set([...draft.stepsDone, 1, 2])] }); toast("Test event sent") },
+          disabledBecause: draft.webhookUrl ? undefined : "Give the endpoint URL above",
+        }]} />
         {draft.webhookTest && (
           <div className="grid gap-2 rounded-md border p-3 text-sm">
             <div>Sent to {draft.webhookUrl || "your endpoint"} on {day(draft.webhookTest)}.</div>
             <Code block text={`POST ${draft.webhookUrl || "https://example.com/hooks/ollopa"}\nollopA-Event: connection.test\nollopA-Attempt: 1\nollopA-Signature: t=1789012345,v1=<HMAC-SHA256 of the body with your secret>`} label="Copy the request" />
-            <p className="text-xs text-muted-foreground">The answer your endpoint gives appears here and in the delivery log. Delivery is at-least-once and out of order.</p>
           </div>
         )}
       </section>
@@ -259,15 +255,11 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
           <p className="mt-1">
             The sync user needs create, read and edit on Accounts, Contacts, Leads, Opportunities and User Roles, and API Enabled under System Permissions. Salesforce Essentials cannot connect.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Read this before you sign in: the person who can grant it is often not the person at the keyboard.
-          </p>
         </div>
       )}
 
       <div data-item="wiz.authorise" data-item-label="authorising the CRM" className="flex flex-wrap items-center gap-3">
-        <Button onClick={signIn}>Sign in to {draft.kind}{isSalesforce ? " as the sync user" : ""}</Button>
-        {isSalesforce && <span className="text-xs text-muted-foreground">Use a shared account that stays active when a person leaves.</span>}
+        <Actions surface="page" items={[{ kind: "secondary", label: `Sign in to ${draft.kind}${isSalesforce ? " as the sync user" : ""}`, onClick: signIn }]} />
       </div>
 
       {draft.authorised && (
@@ -362,11 +354,10 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
             <h3 className="flex items-center gap-1 text-sm font-medium">Custom {draft.kind} objects {custom.locked && <Lock className="size-3.5 text-muted-foreground" aria-hidden="true" />}</h3>
             {custom.locked
               ? <Locked feature="Custom CRM objects" plan={custom.plan} pricePerMonth={custom.pricePerMonth} what={custom.what}>
-                  <Button size="sm" variant="outline">{custom.plan} · {money(custom.pricePerMonth)} a month</Button>
+                  <Actions surface="card" items={[{ kind: "secondary", label: `${custom.plan} · ${money(custom.pricePerMonth)} a month` }]} />
                 </Locked>
-              : <Button size="sm" variant="outline" onClick={() => toast("No custom objects were found in " + draft.kind)}>Read the custom objects</Button>}
+              : <Actions surface="card" items={[{ kind: "secondary", label: "Read the custom objects", onClick: () => toast("No custom objects were found in " + draft.kind) }]} />}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Here, before anything is mapped — never after you have built a mapping for an object you cannot sync.</p>
         </div>
       </section>
     </>
@@ -425,14 +416,10 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                   {c.requiredUnmapped.map((f) => (
                     <li key={f.name} className="flex flex-wrap items-center gap-2">
                       <span>Required · {f.name} ({f.kind})</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => save({ pairs: [...draft.pairs, { id: `${object}:${f.name}`, object, ollopa: ollopaFields(seed, object)[0], remote: f.name, direction: "push", writeRule: WRITE_RULES[0], state: "edited" }] })}
-                      >
-                        Map it
-                      </Button>
+                      <Actions surface="card" items={[{
+                        kind: "secondary", label: "Map it",
+                        onClick: () => save({ pairs: [...draft.pairs, { id: `${object}:${f.name}`, object, ollopa: ollopaFields(seed, object)[0], remote: f.name, direction: "push", writeRule: WRITE_RULES[0], state: "edited" }] }),
+                      }]} />
                     </li>
                   ))}
                 </ul>
@@ -478,15 +465,15 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                       <td className="py-2 text-xs">
                         <div className="flex flex-wrap items-center gap-2">
                           <span>{p.state === "suggested" ? "Suggested" : p.state === "edited" ? "Edited" : "Mapped"}</span>
-                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setRemoving(removing === p.id ? null : p.id)}>Remove</Button>
+                          <Actions surface="card" items={[{ kind: "destructive", label: "Remove", onClick: () => setRemoving(removing === p.id ? null : p.id) }]} />
                         </div>
                         {removing === p.id && (
                           <div className="mt-1 grid gap-1">
                             <Consequence>Removing this pair can stop {object} syncing until the next full pull.</Consequence>
-                            <div className="flex flex-wrap gap-2">
-                              <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { save({ pairs: draft.pairs.filter((x) => x.id !== p.id) }); setRemoving(null); toast(`Removed ${p.ollopa} → ${p.remote} · run a full pull to be sure`) }}>Remove the pair</Button>
-                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setRemoving(null)}>Keep it</Button>
-                            </div>
+                            <Actions surface="card" items={[
+                              { kind: "secondary", label: "Keep it", onClick: () => setRemoving(null) },
+                              { kind: "destructive", label: "Remove the pair", onClick: () => { save({ pairs: draft.pairs.filter((x) => x.id !== p.id) }); setRemoving(null); toast(`Removed ${p.ollopa} → ${p.remote} · run a full pull to be sure`) } },
+                            ]} />
                           </div>
                         )}
                       </td>
@@ -496,31 +483,23 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
               </table>
             </div>
 
-            <div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => save({ pairs: [...draft.pairs, { id: `${object}:new-${draft.pairs.length}`, object, ollopa: ollopaFields(seed, object)[0], remote: remoteFields[0]?.name ?? "", direction: "both", writeRule: WRITE_RULES[0], state: "edited" }] })}
-              >
-                Add a field pair
-              </Button>
-            </div>
+            <Actions surface="page" items={[{
+              kind: "secondary", label: "Add a field pair",
+              onClick: () => save({ pairs: [...draft.pairs, { id: `${object}:new-${draft.pairs.length}`, object, ollopa: ollopaFields(seed, object)[0], remote: remoteFields[0]?.name ?? "", direction: "both", writeRule: WRITE_RULES[0], state: "edited" }] }),
+            }]} />
 
             {object === "Deals" && (
               <section data-item="wiz.stage-mapping" data-item-label="stage mapping">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-medium">Stages, one to one</h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
+                  <Actions surface="card" items={[{
+                    kind: "secondary", label: "Match stages by name",
+                    onClick: () => {
                       const picks = remoteFields.find((f) => f.name === "Stage")?.values ?? []
                       save({ stageMap: DEAL_STAGES.map((s) => ({ ollopa: s, remote: picks.find((v) => v.toLowerCase() === s.toLowerCase()) ?? "" })) })
                       toast("Stages matched by name")
-                    }}
-                  >
-                    Match stages by name
-                  </Button>
+                    },
+                  }]} />
                 </div>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {draft.stageMap.map((s) => (
@@ -578,11 +557,11 @@ function ConditionBuilder({ rows, onChange, label }: {
             <span className="text-xs text-muted-foreground">Value</span>
             <Input className="mt-1 h-10" value={row.value} onChange={(e) => onChange(rows.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))} />
           </label>
-          <Button variant="ghost" className="self-end" onClick={() => onChange(rows.filter((_, j) => j !== i))}>Remove</Button>
+          <Actions className="self-end" surface="card" items={[{ kind: "secondary", label: "Remove", onClick: () => onChange(rows.filter((_, j) => j !== i)) }]} />
         </div>
       ))}
       <div aria-live="polite" className="text-xs text-muted-foreground">{rows.length} condition{rows.length === 1 ? "" : "s"}.</div>
-      <div><Button size="sm" variant="outline" onClick={() => onChange([...rows, { field: CONDITION_FIELDS[0], op: OPERATORS[0], value: "" }])}>Add a condition</Button></div>
+      <Actions surface="card" items={[{ kind: "secondary", label: "Add a condition", onClick: () => onChange([...rows, { field: CONDITION_FIELDS[0], op: OPERATORS[0], value: "" }]) }]} />
     </div>
   )
 }
@@ -620,7 +599,6 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
 
       <fieldset>
         <legend className="text-sm font-medium">Deletions and merges</legend>
-        <p className="mt-1 text-xs text-muted-foreground">The four questions that decide what this connection can destroy. They are read together, so they sit together.</p>
         <div className="mt-2 grid gap-3">
           <div data-item="wiz.deletion" data-item-label="deletion sync">
             <h4 className="text-sm">When a record is deleted in {draft.kind}</h4>
@@ -774,6 +752,32 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
   )
 }
 
+/**
+ * What starting the sync will do, in one paragraph: the counts each way, and what deletions and
+ * merges will do to both systems. It is the review step's own content and the text inside the
+ * confirmation on "Start syncing", so the two can never drift apart (DESIGN.md §2).
+ */
+export function firstSyncConsequence(session: Session, draft: ConnectDraft): string {
+  const seed = seedFor(session.business)
+  const b = businessById(session.business)
+  const live = seed.integrations.find((i) => i.kind === draft.kind)
+  const pushContacts = seed.contacts.filter((c) => (draft.pushAll ? true : c.emailStatus === "Verified")).length
+  const scale = b.counts.contacts / Math.max(1, seed.contacts.length)
+  const pushing = draft.objects.filter((o) => o.direction === "both" || o.direction === "push").map((o) => o.object)
+  const pulling = draft.objects.filter((o) => o.direction === "both" || o.direction === "pull").map((o) => o.object)
+  const pull = live
+    ? `ollopA will pull ${pulling.map((o) => `${about(live.remoteCounts[o] ?? 0)} ${o.toLowerCase()}`).join(" and ")} from ${draft.kind}`
+    : `ollopA will pull every ${draft.kind} record that matches your pull rule — ${draft.kind} has not been counted yet, and the first run reports what it found`
+  const push = `push ${pushing.map((o) => `${about((o === "Contacts" ? pushContacts * scale : o === "Companies" ? b.counts.companies : o === "Deals" ? b.counts.openDeals : Math.round(seed.tasks.length * scale)))} ${o.toLowerCase()}`).join(" and ")} to ${draft.kind}`
+  return [
+    `${pull} and ${push}.`,
+    `Deletions in ${draft.kind} will ${draft.onCrmDelete === "unlink" ? "unlink records in ollopA" : "delete records in ollopA"}.`,
+    `Deletions in ollopA will ${draft.onOllopaDelete === "nothing" ? `change nothing in ${draft.kind}` : `delete the record in ${draft.kind}`}.`,
+    `Merges in ${draft.kind} will be ${draft.onCrmMerge === "mirror" ? "mirrored" : "ignored"}.`,
+    `Merges in ollopA will be ${draft.onOllopaMerge === "mirror" ? `mirrored in ${draft.kind}` : "kept in ollopA only"}.`,
+  ].join(" ")
+}
+
 /* ----------------------------------------------------------------------------------- step six */
 
 function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDraft; go: (n: number) => void }) {
@@ -782,10 +786,6 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
   const d = useDisclosure("connect")
   const live = seed.integrations.find((i) => i.kind === draft.kind)
 
-  const pushContacts = seed.contacts.filter((c) => (draft.pushAll ? true : c.emailStatus === "Verified")).length
-  const scale = b.counts.contacts / Math.max(1, seed.contacts.length)
-  const pushing = draft.objects.filter((o) => o.direction === "both" || o.direction === "push").map((o) => o.object)
-  const pulling = draft.objects.filter((o) => o.direction === "both" || o.direction === "pull").map((o) => o.object)
 
   const blocks: { title: string; step: number; lines: string[] }[] = [
     { title: "What you are connecting", step: 1, lines: [`${draft.kind}${draft.kind === "Salesforce" ? ` (${draft.environment})` : ""}`] },
@@ -803,22 +803,12 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
     { title: "Source value and unverified emails", step: 5, lines: [`Source field written as "${draft.sourceValue}" · unverified emails ${draft.pushUnverified ? "are pushed" : "are not pushed"}`] },
   ]
 
-  const pullSentence = live
-    ? `ollopA will pull ${pulling.map((o) => `${about(live.remoteCounts[o] ?? 0)} ${o.toLowerCase()}`).join(" and ")} from ${draft.kind}`
-    : `ollopA will pull every ${draft.kind} record that matches your pull rule — ${draft.kind} has not been counted yet, and the first run reports what it found`
-  const pushSentence = `push ${pushing.map((o) => `${about((o === "Contacts" ? pushContacts * scale : o === "Companies" ? b.counts.companies : o === "Deals" ? b.counts.openDeals : Math.round(seed.tasks.length * scale)))} ${o.toLowerCase()}`).join(" and ")} to ${draft.kind}`
 
   return (
     <div className="grid gap-5">
       <section data-item="wiz.first-sync" data-item-label="what the first sync will do" className="rounded-lg border bg-muted/40 p-4">
         <h3 className="text-sm font-semibold">What the first sync will do</h3>
-        <p className="mt-2 text-sm">
-          {pullSentence} and {pushSentence}.{" "}
-          Deletions in {draft.kind} will {draft.onCrmDelete === "unlink" ? "unlink records in ollopA" : "delete records in ollopA"}.{" "}
-          Deletions in ollopA will {draft.onOllopaDelete === "nothing" ? `change nothing in ${draft.kind}` : `delete the record in ${draft.kind}`}.{" "}
-          Merges in {draft.kind} will be {draft.onCrmMerge === "mirror" ? "mirrored" : "ignored"}.{" "}
-          Merges in ollopA will be {draft.onOllopaMerge === "mirror" ? `mirrored in ${draft.kind}` : `kept in ollopA only`}.
-        </p>
+        <p className="mt-2 text-sm">{firstSyncConsequence(session, draft)}</p>
       </section>
 
       <div data-item="wiz.review" data-item-label="the review" className="grid gap-3 sm:grid-cols-2">
@@ -837,8 +827,7 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
 
       {d.atLevelOne("wiz.template") && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
-          <Button size="sm" variant="outline" onClick={() => toast("Saved these choices as a setup template")}>Save these choices as a setup template</Button>
-          <span className="text-xs text-muted-foreground">Holds steps 3 to 5. The next client workspace starts from it.</span>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Save these choices as a setup template", onClick: () => toast("Saved these choices as a setup template") }]} />
         </div>
       )}
     </div>
@@ -858,7 +847,6 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
   const isAdmin = session.role === "admin"
   const start = useMemo(() => startingDraft(session.business, slug || "new", session.user), [session.business, session.user, slug])
   const [draft, save, drop] = useDraft(draftKey(session.business, slug || "new") + (isAdmin ? "" : `.${session.user}`), start)
-  const [discarding, setDiscarding] = useState(false)
 
   // On a lesson stage, before every rule has landed, the page draws the layout that rule had not yet
   // changed: the same model, the same seed, one component, a layout per step (`src/learn/context.ts`).
@@ -877,9 +865,9 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
         <p className="mt-2 text-sm">{money(hooksGate.pricePerMonth)} a month for {businessById(session.business).plan.seats} seats, the whole bill at {hooksGate.plan}.</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Locked feature="Webhooks" plan={hooksGate.plan} pricePerMonth={hooksGate.pricePerMonth} what={hooksGate.what}>
-            <Button>See what changes on {hooksGate.plan}</Button>
+            <Actions surface="page" items={[{ kind: "primary", label: `See what changes on ${hooksGate.plan}` }]} />
           </Locked>
-          <Button variant="outline" onClick={() => navigate("/ollopa/connect/new?step=1")}>Back to what you can connect</Button>
+          <Actions surface="page" items={[{ kind: "link", label: "Back to what you can connect", href: href("/ollopa/connect/new?step=1"), onClick: () => navigate("/ollopa/connect/new?step=1") }]} />
         </div>
       </div>
     )
@@ -918,48 +906,70 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
     navigate(`/ollopa/integrations/${live ? live.id : `draft-${slug}`}?started=${state}`)
   }
 
-  const primary = () => {
+  /**
+   * One primary per step: the step's own way on. On the last step that way on is starting the sync,
+   * which reads and writes the other system for the first time and cannot be taken back — so it goes
+   * through its confirmation, and the whole first-sync consequence is in there, above an affirmative
+   * that carries the verb (DESIGN.md §1 and §2). Nothing else on a step carries a line: the steps
+   * before the last one save a draft and spend nothing.
+   */
+  const stepActions = (): Action[] => {
+    const acts: Action[] = []
+    const tag = { dataItem: "connect.primary", dataItemLabel: "the primary button" }
+
     if (current === 1) {
-      return slug
-        ? <Button onClick={() => { markDone(1); go(2) }}>Continue to authorising {kindDef?.kind}</Button>
-        : <Button disabled>Choose a card above to continue</Button>
-    }
-    if (current === 2) {
-      return <Button disabled={!draft.authorised} onClick={() => { markDone(2); go(3) }}>Continue to {kindDef?.crm ? "what syncs" : (THIRD_STEP[draft.kind] ?? "the last step").toLowerCase()}</Button>
-    }
-    if (kindDef?.crm) {
-      if (current === 3) return <Button onClick={() => { markDone(3); go(4) }}>Continue to field mapping</Button>
-      if (current === 4) return (
-        <Button onClick={() => {
+      acts.push(slug
+        ? { ...tag, kind: "primary", label: `Continue to authorising ${kindDef?.kind}`, onClick: () => { markDone(1); go(2) } }
+        : { ...tag, kind: "primary", label: "Continue to authorising", disabledBecause: "Choose a card above" })
+    } else if (current === 2) {
+      acts.push({
+        ...tag, kind: "primary",
+        label: `Continue to ${kindDef?.crm ? "what syncs" : (THIRD_STEP[draft.kind] ?? "the last step").toLowerCase()}`,
+        onClick: () => { markDone(2); go(3) },
+        disabledBecause: draft.authorised ? undefined : `Sign in to ${draft.kind} above`,
+      })
+    } else if (kindDef?.crm && current === 3) {
+      acts.push({ ...tag, kind: "primary", label: "Continue to field mapping", onClick: () => { markDone(3); go(4) } })
+    } else if (kindDef?.crm && current === 4) {
+      acts.push({
+        ...tag, kind: "primary", label: "Continue to sync rules",
+        onClick: () => {
           const confirmed = draft.pairs.filter((p) => p.state === "suggested").length
           save({ pairs: draft.pairs.map((p) => (p.state === "suggested" ? { ...p, state: "mapped" } : p)), stepsDone: [...new Set([...draft.stepsDone, 4])] })
           toast(`${confirmed} suggested pairs confirmed`)
           go(5)
-        }}>Continue to sync rules</Button>
-      )
-      if (current === 5) return <Button onClick={() => { markDone(5); go(6) }}>Continue to review</Button>
-      return (
-        <>
-          <Button onClick={() => startSync("syncing")}>Start syncing</Button>
-          <Button variant="outline" onClick={() => startSync("paused")}>Save without syncing</Button>
-        </>
-      )
+        },
+      })
+    } else if (kindDef?.crm && current === 5) {
+      acts.push({ ...tag, kind: "primary", label: "Continue to review", onClick: () => { markDone(5); go(6) } })
+    } else {
+      const verb = draft.kind === "Slack" ? "posting" : "syncing"
+      acts.push({
+        ...tag, kind: "primary",
+        label: draft.kind === "Webhook" ? "Save the subscription and open webhooks" : `Start ${verb}`,
+        onClick: () => startSync("syncing"),
+        irreversible: {
+          title: `Start ${verb} with ${draft.kind}?`,
+          consequence: firstSyncConsequence(session, draft),
+          confirmLabel: `Start ${verb}`,
+        },
+      })
+      acts.push({ kind: "secondary", label: `Save without ${verb}`, onClick: () => startSync("paused") })
     }
-    return (
-      <>
-        <Button onClick={() => startSync("syncing")}>{draft.kind === "Webhook" ? "Save the subscription and open webhooks" : `Start ${draft.kind === "Slack" ? "posting" : "syncing"}`}</Button>
-        <Button variant="outline" onClick={() => startSync("paused")}>Save without {draft.kind === "Slack" ? "posting" : "syncing"}</Button>
-      </>
-    )
+
+    if (current > 1) acts.push({ kind: "link", label: `Back to ${names[current - 2].toLowerCase()}`, href: `#/ollopa/connect/${slug || "new"}?step=${current - 1}`, onClick: () => go(current - 1) })
+    if (slug) {
+      acts.push({
+        kind: "destructive", label: "Discard this setup", onClick: () => { drop(); toast(`Discarded the ${draft.kind} setup`); navigate("/ollopa/settings/integrations") },
+        irreversible: {
+          title: `Discard the ${draft.kind} setup?`,
+          consequence: `${draft.stepsDone.length} of ${total} steps go, with the field pairs, the rules and the answers on them. ${draft.authorised ? `The token granted to ${draft.authUser} is revoked.` : "No token has been granted yet."}`,
+          confirmLabel: "Discard the setup",
+        },
+      })
+    }
+    return acts
   }
-
-  const backLink = current > 1
-    ? <Button variant="ghost" onClick={() => go(current - 1)}>Back to {names[current - 2].toLowerCase()}</Button>
-    : null
-
-  const constant = draft.started
-    ? `${draft.kind} is ${draft.started === "syncing" ? "syncing" : "connected and paused"}. Changes here take effect when you press the button on the last step.`
-    : `Nothing syncs until you press ${kindDef?.crm ? "Start syncing on the last step" : "the button on the last step"}.`
 
   return (
     <>
@@ -967,15 +977,9 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
         steps={steps}
         current={current}
         go={go}
-        constantLine={constant}
         onSaveAndExit={() => { toast(`Saved · ${draft.kind} setup, ${draft.stepsDone.length} of ${total} steps done`); navigate("/ollopa/settings/integrations") }}
-        footer={<><span data-item="connect.primary" data-item-label="the primary button">{primary()}</span>{backLink}{slug && <Button variant="ghost" onClick={() => setDiscarding(true)}>Discard this setup</Button>}</>}
+        footer={<Actions surface="page" items={stepActions()} />}
       >
-        {draft.seededFrom === "integration" && current === 1 && (
-          <p className="rounded-md border bg-muted/40 p-3 text-sm">
-            {draft.kind} is already connected. This re-runs its setup and changes nothing until you press the button on the last step. Editing one mapping, one rule or one token is on the {draft.kind} page, not here.
-          </p>
-        )}
         {current === 1 && <ChooseStep session={session} slug={slug} go={(s) => {
           const key = draftKey(session.business, s)
           writeDraft(key, { ...peekDraft(key, startingDraft(session.business, s, session.user)), stepsDone: [...new Set([...peekDraft(key, startingDraft(session.business, s, session.user)).stepsDone, 1])] })
@@ -988,19 +992,6 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
         {current === 6 && <ReviewStep session={session} draft={draft} go={go} />}
       </Wizard>
 
-      <Confirm
-        open={discarding}
-        title={`Discard the ${draft.kind} setup?`}
-        body={
-          <>
-            <p>{draft.stepsDone.length} of {total} steps go, with the field pairs, the rules and the answers on them.</p>
-            <p className="mt-2">{draft.authorised ? `The token granted to ${draft.authUser} is revoked.` : "No token has been granted yet."} Nothing that is already in ollopA changes.</p>
-          </>
-        }
-        confirmLabel="Discard the setup"
-        onConfirm={() => { drop(); setDiscarding(false); toast(`Discarded the ${draft.kind} setup`); navigate("/ollopa/settings/integrations") }}
-        onCancel={() => setDiscarding(false)}
-      />
     </>
   )
 }

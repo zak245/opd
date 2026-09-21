@@ -11,7 +11,6 @@
 // `/ollopa/accounts/:id` redirects here. There is no second record.
 import { useMemo, useRef, useState, type ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
+import { Actions } from "../../ui/Actions"
 import { follow, routeKey, useTrail } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { CardRow, RecordPage, type RecordCard, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
@@ -251,11 +251,13 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               </li>
             ))}
           </ul>
-          <p className="pt-2 text-xs text-muted-foreground">
-            Inputs and weights are set in <button type="button" className="underline" onClick={() => follow("/ollopa/settings/scoring", origin("health-drivers"))}>Settings › Signals, scoring and personas</button>
-            {admin ? ` by ${admin.user} (${admin.title})` : ""}.
-          </p>
-          <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => setFlagOpen(true)}>This flag was wrong</Button>
+          <Actions
+            className="pt-2"
+            items={[
+              { kind: "secondary", label: "This flag was wrong", onClick: () => setFlagOpen(true) },
+              { kind: "link", label: "Settings › Signals, scoring and personas", href: href("/ollopa/settings/scoring"), onClick: () => follow("/ollopa/settings/scoring", origin("health-drivers")) },
+            ]}
+          />
         </div>
       ),
     })
@@ -267,7 +269,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
 
     if (used("rec.renewal")) sections.push({
       id: "renewal", title: "Renewal terms",
-      action: <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { toast(`Renewal deal created on ${account.name} · ${money(account.value, b.currency)}`); follow("/ollopa/deals", origin("renewal")) }}>Create renewal deal</Button>,
+      action: <Actions surface="card" items={[{ kind: "secondary", label: "Create renewal deal", onClick: () => { toast(`Renewal deal created on ${account.name} · ${money(account.value, b.currency)}`); follow("/ollopa/deals", origin("renewal")) } }]} />,
       children: (
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
           {[
@@ -373,20 +375,21 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       sections.push({
         id: "handoff", title: "The hand-off brief",
         action: h.accepted ? undefined : (
-          <Button size="sm" className="h-7 text-xs" onClick={() => { applyChange(merged.id, { owner: session.user }); toast(`${account.name} is yours. The baseline is taken today and ${h.from} is told.`) }}>
-            Accept
-          </Button>
+          <Actions surface="card" items={[{
+            kind: "secondary", label: "Accept the hand-off",
+            onClick: () => { applyChange(merged.id, { owner: session.user }); toast(`${account.name} is yours. The baseline is taken today and ${h.from} is told.`) },
+            irreversible: {
+              title: `Accept ${account.name} from ${h.from}?`,
+              consequence: `You become the owner. The account joins your book, the health baseline is taken today, and ${h.from} is told.`,
+              confirmLabel: "Accept the hand-off",
+            },
+          }]} />
         ),
         children: (
           <div className="space-y-2 text-sm">
             <p className="text-xs text-muted-foreground">
               From {h.from} · sent {day(h.sent)} · {h.accepted ? `accepted ${day(h.accepted)}` : "not accepted yet"}
             </p>
-            {!h.accepted && (
-              <p className="rounded-md border px-3 py-2 text-xs">
-                You become the owner. The account joins your book, the health baseline is taken today, and {h.from} is told.
-              </p>
-            )}
             {parts.map(([label, value]) => (
               <div key={label} className="border-t pt-2">
                 <div className="text-xs font-medium">{label}
@@ -428,10 +431,10 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   if (used("rec.contacts")) sections.push({
     id: "contacts", title: "Contacts at this company", count: v.contacts.length,
     action: v.contacts.length > 0
-      ? <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={openPeopleAtCompany}>Open in People</Button>
+      ? <Actions surface="card" items={[{ kind: "link", label: "Open in People", href: href(`/ollopa/people?company=${company.id}`), onClick: openPeopleAtCompany }]} />
       : undefined,
     children: v.contacts.length === 0
-      ? <EmptyState title="No contacts here yet" body="Find people at this company and they appear on this list." action={<Button size="sm" onClick={openPeopleAtCompany}>Find people</Button>} />
+      ? <EmptyState title="No contacts here yet" body="Find people at this company and they appear on this list." action={<Actions surface="card" items={[{ kind: "link", label: "Find people in People", href: href(`/ollopa/people?company=${company.id}`), onClick: openPeopleAtCompany }]} />} />
       : (
         <CompanyContacts
           companyId={company.id}
@@ -439,7 +442,6 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           companyName={merged.name}
           sequenceName={seed.sequences[0]?.name ?? "Outbound"}
           pageRenders={renders.current}
-          onOpenInPeople={openPeopleAtCompany}
         />
       ),
   })
@@ -480,11 +482,19 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           <div className="pt-2">
             <Label htmlFor="company-note" className="text-xs text-muted-foreground">Add a note</Label>
             <Textarea id="company-note" rows={2} className="mt-1" value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Anything the next person reading this company should know" />
-            <Button size="sm" className="mt-2 h-7 text-xs" disabled={!noteText.trim()} onClick={() => {
-              applyChange(merged.id, { notes: [{ by: session.user, on: TODAY, text: noteText }, ...(change.notes ?? [])] })
-              setNoteText("")
-              toast("Note added")
-            }}>Add note</Button>
+            <Actions
+              className="mt-2"
+              surface="card"
+              items={[{
+                kind: "secondary", label: "Add the note",
+                disabledBecause: noteText.trim() ? undefined : "Type the note above",
+                onClick: () => {
+                  applyChange(merged.id, { notes: [{ by: session.user, on: TODAY, text: noteText }, ...(change.notes ?? [])] })
+                  setNoteText("")
+                  toast("Note added")
+                },
+              }]}
+            />
           </div>
         )}
       </div>
@@ -494,7 +504,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   if (used("rec.tasks")) sections.push({
     id: "tasks", title: "Open tasks here", count: v.openTasks.length,
     children: v.openTasks.length === 0
-      ? <EmptyState title="No open tasks" body="Create one and it appears on Tasks too." action={<Button size="sm" onClick={() => toast(`Task created on ${merged.name}, assigned to ${merged.owner}`)}>Create a task</Button>} />
+      ? <EmptyState title="No open tasks" body="Create one and it appears on Tasks too." action={<Actions surface="card" items={[{ kind: "secondary", label: "Create a task", onClick: () => toast(`Task created on ${merged.name}, assigned to ${merged.owner}`) }]} />} />
       : <div>{v.openTasks.slice(0, 8).map((t) => (
           <CardRow key={t.id} title={`${t.kind}: ${t.contact}`} meta={`due ${day(t.due)} · ${t.owner}`}
             actions={[{ label: "Mark done", onClick: () => toast(`${t.kind} for ${t.contact} done`) }]} />
@@ -521,10 +531,14 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         <div className="space-y-2 text-sm">
           <div className="font-medium">{account.champion}</div>
           <div className="text-xs text-muted-foreground">Last touch {ago(localTouches[0]?.at ?? account.lastTouch)}</div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => toast(`Composer open to ${account.champion}`)}>Email</Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => toast(`Calendar open with ${account.champion} prefilled`)}>Book a review</Button>
-          </div>
+          {/* Two comparable acts on this card, so neither is filled. */}
+          <Actions
+            surface="card"
+            items={[
+              { kind: "secondary", label: `Email ${account.champion.split(" ")[0]}`, onClick: () => toast(`Composer open to ${account.champion}`) },
+              { kind: "secondary", label: "Book a review", onClick: () => toast(`Calendar open with ${account.champion} prefilled`) },
+            ]}
+          />
         </div>
       ),
     })
@@ -554,7 +568,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       ? (
         <div className="space-y-2">
           <p className="text-muted-foreground">No agent has researched {merged.name} yet.</p>
-          <Button size="sm" onClick={() => runResearch()}>Research · {CREDITS.research} credits</Button>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Research", onClick: () => runResearch(), cost: `${CREDITS.research} credits`, consequence: "Charged once" }]} />
         </div>
       )
       : (
@@ -564,10 +578,14 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               {/* Provenance in words, not an icon: which agent, when, how many sources, how much. */}
               <div className="text-xs text-muted-foreground">{run.agent} · {day(run.at)} · {run.sources} sources · {run.credits} credits</div>
               {i === 0 && briefHref && (
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => follow(briefHref, origin("company.research"))}>Open the brief</Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => runResearch()}>Research again · {CREDITS.research} credits</Button>
-                </div>
+                <Actions
+                  className="pt-1"
+                  surface="card"
+                  items={[
+                    { kind: "secondary", label: "Research again", onClick: () => runResearch(), cost: `${CREDITS.research} credits`, consequence: "Charged once" },
+                    { kind: "link", label: "Open the brief", href: href(briefHref), onClick: () => follow(briefHref, origin("company.research")) },
+                  ]}
+                />
               )}
             </li>
           ))}
@@ -600,9 +618,15 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         <div className="space-y-2">
           <p>{crmName} · {merged.crm?.synced ? "in sync" : "not in sync"}{synced ? ` · last ${day(synced)}` : ""}</p>
           {merged.crm?.lastError && <p className="text-destructive">{merged.crm.lastError}</p>}
-          <Button size="sm" variant="outline" onClick={() => { applyChange(merged.id, { pushedToCrmAt: TODAY }); toast(`${merged.name} pushed to ${crmName} · 3 fields updated, nothing deleted`) }}>
-            Push to {crmName} · updates 3 fields, never deletes
-          </Button>
+          <Actions surface="card" items={[{
+            kind: "secondary", label: `Push to ${crmName}`,
+            onClick: () => { applyChange(merged.id, { pushedToCrmAt: TODAY }); toast(`${merged.name} pushed to ${crmName} · 3 fields updated, nothing deleted`) },
+            irreversible: {
+              title: `Push ${merged.name} to ${crmName}?`,
+              consequence: `Three fields are overwritten in ${crmName} and nothing is deleted. The push cannot be undone from here.`,
+              confirmLabel: `Push to ${crmName}`,
+            },
+          }]} />
           <ul className="space-y-1 text-xs">
             {seed.syncRuns.slice(0, 5).map((s) => (
               <li key={s.id} className="flex justify-between gap-2 text-muted-foreground">
@@ -672,7 +696,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         <div>
           <div className="pb-1 text-xs font-medium">Files</div>
           <p className="text-muted-foreground">No files yet.</p>
-          <Button size="sm" variant="outline" className="mt-1 h-7 text-xs" onClick={() => toast("Files stay with the company and are visible to everyone who can open it.")}>Upload a file</Button>
+          <Actions className="mt-1" surface="card" items={[{ kind: "secondary", label: "Upload a file", onClick: () => toast("Files stay with the company and are visible to everyone who can open it.") }]} />
         </div>
       </div>
     ),
@@ -703,9 +727,11 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             ))}
           </tbody>
         </table>
-        <Button size="sm" onClick={() => toast(`Re-enriching ${merged.name} · about ${CREDITS.enrich} credits`)}>
-          Re-enrich this company · about {CREDITS.enrich} credits
-        </Button>
+        <Actions surface="card" items={[{
+          kind: "secondary", label: "Re-enrich this company",
+          onClick: () => toast(`Re-enriching ${merged.name} · about ${CREDITS.enrich} credits`),
+          cost: `about ${CREDITS.enrich} credits`, consequence: "Charged once",
+        }]} />
       </div>
     ),
   })
@@ -726,15 +752,29 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   const removeConsequence =
     `Removes ${merged.name}: it leaves ${merged.lists.length} list${merged.lists.length === 1 ? "" : "s"}, stops sequences for ${v.inSequence.length} contact${v.inSequence.length === 1 ? "" : "s"}, and keeps the ${v.contacts.length} contacts on People.`
 
+  // One filled control on this header (DESIGN.md §1): the act the page exists for, which spends and
+  // therefore prices itself in its own label. Finding the people at this company is a destination,
+  // not a state change, so it is the link in the contacts section — where the people are — and the
+  // F shortcut still runs it from anywhere on the page.
   const primary = [
-    { label: "Find people", onClick: openPeopleAtCompany, shortcut: "F" },
     { label: `Research · ${CREDITS.research} credits`, onClick: runResearch, shortcut: "R", confirm: `Run the research agent on ${merged.name} for ${CREDITS.research} credits? Balance ${seed.credits.balance.toLocaleString()}.` },
   ]
 
   const secondary = [
     { label: "Add to list", onClick: () => setListOpen(true), shortcut: "L" },
     ...(customer && holdsAccounts ? [{ label: "Run a play", onClick: () => setPlayOpen(true), shortcut: "P" }] : []),
-    ...(briefHref && d.level("rec.brief") === 1 ? [{ label: "Open the brief", onClick: () => follow(briefHref, origin()), shortcut: "B" }] : []),
+    // Stopping every sequence at a company is not a thing to do by accident, and nothing puts the
+    // people back where they were, so it asks once with what it stops (DESIGN.md §2). Turning it
+    // back on is reversible and acts at once.
+    ...(canEdit
+      ? [merged.stage === "Do not prospect"
+          ? { label: "Allow prospecting again", onClick: () => changeStage("Cold") }
+          : {
+              label: "Mark do not prospect",
+              onClick: () => changeStage("Do not prospect"),
+              confirm: `Stops sequences for the ${v.inSequence.length} contact${v.inSequence.length === 1 ? "" : "s"} at ${merged.name}. The ${v.contacts.length} people stay on People.`,
+            }]
+      : []),
   ]
 
   /* -------------------------------------------------------------------------------- the ribbon */
@@ -744,7 +784,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     churnNotice ? { tone: "error" as const, text: `Churn notice · opened ${day(churnNotice.opened)} by ${churnNotice.owner}. ${churnNotice.note}` }
     : merged.stage === "Churned" ? { tone: "warning" as const, text: `Churned. The account is out of the default Accounts view and sequences exclude it.` }
     : merged.stage === "Do not prospect" ? { tone: "warning" as const, text: `Do not prospect. Sequences are stopped for the ${v.inSequence.length} contacts here.` }
-    : merged.crm?.lastError ? { tone: "error" as const, text: `Not synced to ${crmName}: ${merged.crm.lastError}`, action: <Button size="sm" variant="outline" onClick={() => openCrmDoor(true)}>Open CRM sync</Button> }
+    : merged.crm?.lastError ? { tone: "error" as const, text: `Not synced to ${crmName}: ${merged.crm.lastError}`, action: <Actions surface="card" items={[{ kind: "secondary", label: "Open CRM sync", onClick: () => openCrmDoor(true) }]} /> }
     : undefined
 
   /* --------------------------------------------------------------------------------- render */
@@ -810,9 +850,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       />
 
       <Panel id="flag-the-score" title="This flag was wrong" open={flagOpen} onOpenChange={setFlagOpen}
-        footer={<Button className="w-full" onClick={() => { setFlagOpen(false); toast(`Request sent. ${admin?.user ?? "Your admin"} sees it on Requests with the account, the input and your reason.`) }}>Send the request</Button>}>
+        footer={<Actions surface="dialog" layout="stack" items={[{ kind: "primary", label: "Send the request", onClick: () => { setFlagOpen(false); toast(`Request sent. ${admin?.user ?? "Your admin"} sees it on Requests with the account, the input and your reason.`) } }]} />}>
         <div className="space-y-3">
-          <p className="text-sm">The score is {account?.health ?? "—"} on {merged.name}. Say which input is wrong and why; {admin?.user ?? "your admin"} owns the weights.</p>
           <div>
             <Label htmlFor="flag-input" className="text-xs">The input</Label>
             <Select defaultValue={account?.drivers[1]?.label ?? "Base"}>
@@ -829,11 +868,16 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
 
       <Panel id="company-add-list" title={`Add ${merged.name} to a list`} open={listOpen} onOpenChange={setListOpen}
         footer={
-          <Button className="w-full" disabled={!listName} onClick={() => {
-            applyChange(merged.id, { lists: [...(change.lists ?? merged.lists), listName] })
-            setListOpen(false)
-            toast(`Added to ${listName}`)
-          }}>Add to {listName || "a list"}</Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            kind: "primary",
+            label: `Add to ${listName || "a list"}`,
+            disabledBecause: listName ? undefined : "Pick a list or type a name",
+            onClick: () => {
+              applyChange(merged.id, { lists: [...(change.lists ?? merged.lists), listName] })
+              setListOpen(false)
+              toast(`Added to ${listName}`)
+            },
+          }]} />
         }>
         <div className="space-y-3">
           <div>

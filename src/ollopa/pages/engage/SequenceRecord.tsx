@@ -34,6 +34,7 @@ import { engage, useEngage } from "./store"
 import { AddToSequencePanel } from "./AddToSequence"
 import { statusOf, totalPeople } from "./Sequences"
 import { useEdits } from "../../edits"
+import { Actions, type Action } from "../../ui/Actions"
 import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, Pill, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
@@ -180,48 +181,57 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               </p>
             </div>
 
+            {/* One filled control: the act this page exists for. Pausing sits beside it as a
+                comparable act, and the rest group into a menu with the end of the sequence last
+                (DESIGN.md §1). Nothing is written under Pause: it is free and it can be undone. */}
             <div className="ml-auto flex flex-wrap items-center gap-2" data-print-hide>
-              <Button size="sm" onClick={() => setAddingPeople(true)}>Add people</Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline">Duplicate, export, archive</Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="max-w-[20rem]">
-                  <DropdownMenuItem onSelect={() => say(`Copied ${seq.name}: steps and settings, nobody in it`)}>Duplicate · steps and settings, nobody in it</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => say(`Exported ${n(enrollments.length)} people from ${seq.name}`)}>Export people (CSV)</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="whitespace-normal text-destructive"
-                    onSelect={() => {
-                      engage.patchSequence(session.business, seq.id, { archivedAt: TODAY, status: "Paused" })
-                      engage.logChange(session.business, seq.id, session.user, "Archived the sequence")
-                      say(`${seq.name} archived · ${n(seq.active + seq.paused)} people marked finished, their scheduled emails deleted`)
-                    }}
-                  >
-                    Archive · marks {n(seq.active + seq.paused)} people finished and deletes their scheduled emails
-                  </DropdownMenuItem>
-                  {seq.status === "Draft" && total === 0 && (
-                    <DropdownMenuItem className="whitespace-normal text-destructive" onSelect={() => { engage.patchSequence(session.business, seq.id, { archivedAt: TODAY }); navigate("/ollopa/sequences") }}>
-                      Delete draft · nothing has been sent from it
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Actions
+                surface="page"
+                items={[
+                  { kind: "primary", label: "Add people", onClick: () => setAddingPeople(true) },
+                  {
+                    kind: "secondary",
+                    label: seq.guardState === "auto-paused" ? "Review and resume" : seq.status === "Active" ? "Pause" : "Resume",
+                    onClick: pauseResume,
+                    disabledBecause: resumeBlocked ? "Remove the bounced people or fix the data first" : undefined,
+                  },
+                ]}
+              />
+              {canEdit && (
+                <Actions
+                  surface="page"
+                  layout="menu"
+                  items={[
+                    { kind: "secondary", label: "Duplicate", onClick: () => say(`Copied ${seq.name}: steps and settings, nobody in it`) },
+                    { kind: "secondary", label: "Export people (CSV)", onClick: () => say(`Exported ${n(enrollments.length)} people from ${seq.name}`) },
+                    ...(seq.archivedAt ? [] : [{
+                      kind: "destructive" as const,
+                      label: "Archive",
+                      onClick: () => {
+                        engage.patchSequence(session.business, seq.id, { archivedAt: TODAY, status: "Paused" })
+                        engage.logChange(session.business, seq.id, session.user, "Archived the sequence")
+                        say(`${seq.name} archived`)
+                      },
+                      irreversible: {
+                        title: `Archive ${seq.name}?`,
+                        consequence: `${n(seq.active + seq.paused)} people are marked finished and their scheduled emails are deleted. Their replies and activity stay on their records.`,
+                        confirmLabel: "Archive the sequence",
+                      },
+                    }]),
+                    ...(seq.status === "Draft" && total === 0 ? [{
+                      kind: "destructive" as const,
+                      label: "Delete draft",
+                      onClick: () => { engage.patchSequence(session.business, seq.id, { archivedAt: TODAY }); navigate("/ollopa/sequences") },
+                      irreversible: {
+                        title: `Delete ${seq.name}?`,
+                        consequence: "The draft and its steps go. Nothing has been sent from it, so nobody is affected.",
+                        confirmLabel: "Delete the draft",
+                      },
+                    }] : []),
+                  ] as Action[]}
+                />
+              )}
             </div>
-          </div>
-
-          {/* Sending state and the one button that changes it, with what it will do beside it. */}
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button
-              size="sm"
-              variant={seq.status === "Active" ? "outline" : "default"}
-              aria-describedby="seq-consequence"
-              disabled={resumeBlocked}
-              onClick={pauseResume}
-            >
-              {seq.guardState === "auto-paused" ? "Review and resume" : seq.status === "Active" ? "Pause" : "Resume"}
-            </Button>
-            <span id="seq-consequence" className="text-xs text-muted-foreground">{consequence}</span>
           </div>
 
           {/* The health line: the rate, both thresholds, and what to do before it pauses. */}
@@ -235,13 +245,16 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             )}
           >
             Bounce rate {seq.bounceRate7d}% over 7 days · Bounce guard warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%.
-            {seq.guardState === "warning" && " Remove bounced people or fix emails before it pauses."}
             {seq.guardState === "auto-paused" && (
               <>
-                {" "}Auto-paused by bounce guard. Resuming needs one of these first.
                 <span className="mt-2 flex flex-wrap items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => { setFixed(true); say(`Removed ${n(seq.bounced)} bounced people from ${seq.name}`) }}>Remove {n(seq.bounced)} bounced people</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setFixed(true); setPeopleFilter("Not sent"); say(`Retrying ${n(seq.notSent)} not-sent people`) }}>Retry {n(seq.notSent)} not-sent people</Button>
+                  <Actions
+                    surface="card"
+                    items={[
+                      { kind: "secondary", label: `Remove ${n(seq.bounced)} bounced people`, onClick: () => { setFixed(true); say(`Removed ${n(seq.bounced)} bounced people from ${seq.name}`) } },
+                      { kind: "secondary", label: `Retry ${n(seq.notSent)} not-sent people`, onClick: () => { setFixed(true); setPeopleFilter("Not sent"); say(`Retrying ${n(seq.notSent)} not-sent people`) } },
+                    ]}
+                  />
                   <label className="flex items-center gap-2 text-xs">
                     <Checkbox checked={fixed} onCheckedChange={(v) => setFixed(v === true)} />
                     I have fixed the data
@@ -255,12 +268,12 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               to="/ollopa/settings/email-sending?row=mail.bounce-guard"
               route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.bounce-guard"
             >Bounce guard thresholds (Settings)</FollowLink>
-            <span className="text-xs"> · RevOps admins change them</span>
+            {session.role !== "admin" && <span className="text-xs"> · RevOps admins change them</span>}
           </div>
 
           {!canEdit && (
             <p className="mt-2 text-sm text-muted-foreground">
-              Owned by {seq.owner}. Only the owner and RevOps admins change steps and settings; you can add people and pause them.
+              Owned by {seq.owner}; only the owner and RevOps admins change the steps and the settings.
             </p>
           )}
 
@@ -317,7 +330,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-semibold">Steps ({steps.length})</h3>
             <div className="flex items-center gap-2" data-print-hide>
-              {canEdit && <Button size="sm" variant="outline" onClick={() => setAdding((v) => !v)} aria-expanded={adding}>Add a step</Button>}
+              {canEdit && <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} />}
             </div>
           </div>
 
@@ -674,7 +687,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
                 <Label htmlFor={`due-${step.id}`} className="text-xs">Due within</Label>
                 <Input id={`due-${step.id}`} type="number" min={1} className="mt-1 h-8 w-24" defaultValue={2} />
               </div>
-              <span className="pb-2 text-xs text-muted-foreground">days. The task lands in Tasks for the owner of the person.</span>
+              <span className="pb-2 text-xs text-muted-foreground">days</span>
             </div>
           </div>
         ) : (
@@ -762,8 +775,13 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
                     onSaid(`Variant ${String.fromCharCode(65 + step.variants.length)} added, stacked under ${step.variants[step.variants.length - 1].label}`)
                   }}
                 >Add variant</Button>
-                <Button size="sm" onClick={save}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => { setSubject(step.subject); setBody(step.variants[0]?.body ?? step.body) }}>Cancel</Button>
+                <Actions
+                  surface="card"
+                  items={[
+                    { kind: "primary", label: "Save", onClick: save },
+                    { kind: "secondary", label: "Cancel", onClick: () => { setSubject(step.subject); setBody(step.variants[0]?.body ?? step.body) } },
+                  ]}
+                />
               </div>
             )}
 
@@ -925,7 +943,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
               onChange={(e) => setDraft({ ...draft, dailyCap: Number(e.target.value) })}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              0 is no cap. The mailbox it shares is capped at {n(box?.dailyLimit ?? 0)} a day.
+{n(box?.dailyLimit ?? 0)} a day from this mailbox, shared
             </p>
           </div>
 
@@ -984,7 +1002,6 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
                 <SelectItem value="Low">Low</SelectItem>
               </SelectContent>
             </Select>
-            <p className="mt-1 text-xs text-muted-foreground">When a mailbox hits its limit, High sends first.</p>
           </div>
 
           <div>
@@ -999,14 +1016,18 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
                 Clicks
               </label>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Workspace default: on.</p>
           </div>
         </div>
 
         {canEdit && (
           <div className="flex gap-2 pt-2" data-print-hide>
-            <Button size="sm" onClick={save}>Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => setDraft({ mailbox: seq.mailbox, rotation: seq.mailboxRotation, dailyCap: seq.dailyCap, schedule: seq.schedule, ruleset: seq.ruleset, priority: seq.priority, tracking: seq.tracking })}>Cancel</Button>
+            <Actions
+              surface="card"
+              items={[
+                { kind: "primary", label: "Save", onClick: save },
+                { kind: "secondary", label: "Cancel", onClick: () => setDraft({ mailbox: seq.mailbox, rotation: seq.mailboxRotation, dailyCap: seq.dailyCap, schedule: seq.schedule, ruleset: seq.ruleset, priority: seq.priority, tracking: seq.tracking }) },
+              ]}
+            />
           </div>
         )}
       </Door>
@@ -1166,7 +1187,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
               {["Active", "Paused", "Finished", "Replied", "Bounced", "Not sent"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button size="sm" onClick={onAdd}>Add people</Button>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Add people", onClick: onAdd }]} />
         </div>
       </div>
 
@@ -1196,10 +1217,10 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
           ...(e.status === "Replied"
             ? [{ label: "Open the reply in Inbox", onClick: () => follow("/ollopa/inbox", { route: `/ollopa/sequences/${seq.id}`, title: h1Of("sequences", seq.name), anchor: e.contactId }) }]
             : []),
-          { label: "Mark finished · no more steps for them", onClick: () => { engage.patchEnrollment(session.business, e.id, { status: "Finished", nextAt: null }); onSaid(`${nameOf(e)} marked finished`) } },
+          { label: "Mark finished", onClick: () => { engage.patchEnrollment(session.business, e.id, { status: "Finished", nextAt: null }); onSaid(`${nameOf(e)} marked finished`) } },
           ...steps.slice(0, 6).map((s) => ({ label: `Move to step ${s.order}: ${s.kind}`, onClick: () => { engage.patchEnrollment(session.business, e.id, { stepOrder: s.order }); onSaid(`${nameOf(e)} moved to step ${s.order}`) } })),
           {
-            label: `Remove · deletes their scheduled emails; their replies and activity stay on their record`,
+            label: "Remove from this sequence",
             destructive: true,
             onClick: () => { engage.removeEnrollment(session.business, e.id); onSaid(`${nameOf(e)} removed from ${seq.name}`) },
           },
@@ -1210,13 +1231,25 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
           selected, onChange: setSelected,
           bar: (ids) => (
             <>
-              <Button size="sm" variant="outline" onClick={() => { ids.forEach((i) => engage.patchEnrollment(session.business, i, { status: "Paused" })); setSelected([]); onSaid(`Paused ${n(ids.length)} people`) }}>Pause</Button>
-              <Button size="sm" variant="outline" onClick={() => { ids.forEach((i) => engage.patchEnrollment(session.business, i, { status: "Active" })); setSelected([]); onSaid(`Resumed ${n(ids.length)} people`) }}>Resume</Button>
-              <Button size="sm" variant="outline" onClick={() => { ids.forEach((i) => engage.patchEnrollment(session.business, i, { status: "Finished", nextAt: null })); setSelected([]); onSaid(`${n(ids.length)} marked finished`) }}>Mark finished</Button>
-              <Button size="sm" variant="outline" onClick={() => onSaid(`Exported ${n(ids.length)} people`)}>Export CSV</Button>
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { ids.forEach((i) => engage.removeEnrollment(session.business, i)); setSelected([]); onSaid(`Removed ${n(ids.length)} people · their replies and activity stay on their records`) }}>
-                Remove {n(ids.length)} · their scheduled emails are deleted
-              </Button>
+              <Actions
+                surface="card"
+                items={[
+                  { kind: "secondary", label: "Pause", onClick: () => { ids.forEach((i) => engage.patchEnrollment(session.business, i, { status: "Paused" })); setSelected([]); onSaid(`Paused ${n(ids.length)} people`) } },
+                  { kind: "secondary", label: "Resume", onClick: () => { ids.forEach((i) => engage.patchEnrollment(session.business, i, { status: "Active" })); setSelected([]); onSaid(`Resumed ${n(ids.length)} people`) } },
+                  { kind: "secondary", label: "Mark finished", onClick: () => { ids.forEach((i) => engage.patchEnrollment(session.business, i, { status: "Finished", nextAt: null })); setSelected([]); onSaid(`${n(ids.length)} marked finished`) } },
+                  { kind: "secondary", label: "Export CSV", onClick: () => onSaid(`Exported ${n(ids.length)} people`) },
+                  {
+                    kind: "destructive",
+                    label: `Remove ${n(ids.length)}`,
+                    onClick: () => { ids.forEach((i) => engage.removeEnrollment(session.business, i)); setSelected([]); onSaid(`Removed ${n(ids.length)} people`) },
+                    irreversible: {
+                      title: `Remove ${n(ids.length)} people from ${seq.name}?`,
+                      consequence: "Their scheduled emails are deleted. Their replies and activity stay on their records.",
+                      confirmLabel: `Remove ${n(ids.length)}`,
+                    },
+                  },
+                ]}
+              />
             </>
           ),
         }}

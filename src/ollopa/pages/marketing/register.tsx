@@ -3,31 +3,33 @@
 //
 // A pane body is the record's own first level. Not a fixed list of fields: the same question the
 // record page asks, `useDisclosure`, decides which of the record's fields the pane carries, for this
-// seat at this business, and they stay in the record's own order. So a Ridgeline marketer and a
-// Meridian admin open the same campaign beside the same page and read different first levels, which
-// is the whole point of the disclosure model — a pane that hard-codes its fields is a second, silent
-// answer to a question the product already answers in one place.
+// seat at this business, and they stay in the record's own order.
 //
-// Under the fields are the actions the chain needs, each a real button with what it will do written
-// under it, and one line saying what the last action did with Undo beside it. Nothing in a pane
-// opens a door, a panel or a further level: past these the way on is "Open the page" above.
-import { declarePaneFields } from "../../ui/Beside"
-import type { ReactNode } from "react"
-import { Button } from "@/components/ui/button"
+// Under them are the acts a chain runs here — at most three, gated by the same model, all secondary
+// because they are comparable (DESIGN.md §1) — and nothing that cannot be undone. Sending, resuming
+// a send, turning a routing workflow on or off and deleting anything are all irreversible, so they
+// stay on the record page with their confirmation, and the pane's way to them is "Open the page".
+// That leaves these panes with one act each, and the workflow pane with none, which is the honest
+// answer: reading a workflow beside a form is reading, not operating it.
+//
+// Nothing is written under a control that is free and can be undone (DESIGN.md §3). What an act did
+// is said afterwards, where it was caused: the frame's footer line and the row behind both read the
+// one shared edits record, and Undo there puts the row back.
+import { type ReactNode } from "react"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { Actions, type Action } from "../../ui/Actions"
+import { declarePaneFields, useBesideDone } from "../../ui/Beside"
 import { useDisclosure, type Disclosure } from "../../ui/useDisclosure"
 import { toast } from "../../templates/TablePage"
-import { businessById } from "../../data/businesses"
-import { TODAY, seedFor } from "../../data/seed"
+import { TODAY } from "../../data/seed"
 import { CampaignsPage } from "./CampaignsPage"
 import { CampaignRecord } from "./CampaignRecord"
 import { AudienceRecord } from "./AudienceRecord"
 import { FormRecord } from "./FormRecord"
 import { WorkflowsPage } from "./WorkflowsPage"
 import { WorkflowRecord } from "./WorkflowRecord"
-import { ActedNote, actOn, noteOn, useActed } from "./acted"
+import { actOn, undoAct, useActed } from "./acted"
 import { netSize, suppressedTotal } from "./derive"
 import { ago, day, num } from "./format"
 import { marketingRows, useMarketing } from "./store"
@@ -54,14 +56,9 @@ interface PaneField {
   under?: ReactNode
 }
 
-/** What the usage model puts at level one for this seat, in the record's own order. */
-function levelOne(d: Disclosure, fields: PaneField[]) {
-  return fields.filter((f) => d.level(f.item) === 1)
-}
-
 /** The record's header grid, in the pane's one column. Same labels, same order, no links. */
 function Fields({ d, fields }: { d: Disclosure; fields: PaneField[] }) {
-  const shown = levelOne(d, fields)
+  const shown = fields.filter((f) => d.level(f.item) === 1)
   if (shown.length === 0) return null
   return (
     <dl className="space-y-2.5">
@@ -78,14 +75,13 @@ function Fields({ d, fields }: { d: Disclosure; fields: PaneField[] }) {
   )
 }
 
-/** One action: the control, and the sentence saying what it will do, directly under it (rule 7). */
-function Action({ label, disabled, onClick, children }: { label: string; disabled?: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <div>
-      <Button size="sm" variant="outline" className="w-full justify-start" disabled={disabled} onClick={onClick}>{label}</Button>
-      {children}
-    </div>
-  )
+/** The acts this seat runs most, ranked by the model, three at most (DESIGN.md §1). */
+function acts(d: Disclosure, candidates: { item: string; action: Action }[]): Action[] {
+  return candidates
+    .filter((c) => d.level(c.item) === 1)
+    .sort((a, b) => d.weekly(b.item) - d.weekly(a.item))
+    .slice(0, 3)
+    .map((c) => c.action)
 }
 
 function Missing({ what }: { what: string }) {
@@ -99,8 +95,13 @@ const AudienceBeside: BesideComponent = ({ session, id }) => {
   const d = useDisclosure("campaigns")
   declarePaneFields("campaigns")
   // What an action took on this audience this session. The rows behind read the same record, so the
-  // pane and the page can never say two different things about it.
+  // pane and the page can never say two different things about it — and Undo here is a real undo:
+  // the record carries the values the act replaced.
   const acted = useActed("audience", id)
+  useBesideDone(typeof acted?.note === "string"
+    ? { note: acted.note, onUndo: () => undoAct(session.business, "audience", id, acted) }
+    : null)
+
   const a = rows.audiences.find((x) => x.id === id)
   if (!a) return <Missing what="audience" />
 
@@ -117,33 +118,40 @@ const AudienceBeside: BesideComponent = ({ session, id }) => {
         { item: "aud.used-by", label: "Built for", value: a.usedBy[0] ?? "No campaign yet" },
       ]} />
 
-      <ActedNote business={session.business} kind="audience" id={a.id} edit={acted} />
-
-      <div className="space-y-3 border-t pt-3">
-        <Action label="Rebuild now" onClick={() => {
-          actOn(session.business, "audience", a.id, { lastRebuilt: TODAY }, { lastRebuilt: a.lastRebuilt },
-            `rebuilt today · ${num(net)} after suppressions`)
-          toast(`${a.name} rebuilt · ${num(net)} after suppressions.`)
-        }}>
-          <ConsequenceLine className="mt-1" changes={`Runs the rules again now; the total and the ${num(net)} after suppressions may both change`} />
-        </Action>
-
-        <Action label={live ? "Freeze" : "Make live"} onClick={() => {
-          actOn(
-            session.business, "audience", a.id,
-            live ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY },
-            { mode: a.mode, frozenAt: a.frozenAt, refreshAt: a.refreshAt },
-            live ? `frozen at ${num(a.size)} · no new match is added` : "live again · refreshes daily at 06:00",
-          )
-          toast(live ? `${a.name} frozen at ${num(a.size)}. No new matches are added.` : `${a.name} is live again and refreshes daily at 06:00.`)
-        }}>
-          <ConsequenceLine
-            className="mt-1"
-            changes={live
-              ? `Holds ${a.name} at ${num(a.size)}; no new match is added to ${a.usedBy[0] ?? "any campaign"} again`
-              : `Refreshes ${a.name} daily at 06:00 and adds new matches to ${a.usedBy[0] ?? "the campaigns using it"}`}
-          />
-        </Action>
+      {/* Freezing and making live are the one act this chain runs from here, and the model keeps it
+          at level one for every seat because a live audience is a commitment the send makes. Both
+          directions are reversible and free, so nothing is written under the control. */}
+      <div className="border-t pt-3">
+        <Actions surface="pane" layout="stack" items={acts(d, [
+          {
+            item: "aud.mode",
+            action: {
+              kind: "secondary",
+              label: live ? "Freeze" : "Make live",
+              onClick: () => {
+                actOn(
+                  session.business, "audience", a.id,
+                  live ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY },
+                  { mode: a.mode, frozenAt: a.frozenAt, refreshAt: a.refreshAt },
+                  live ? `frozen at ${num(a.size)} · no new match is added` : "live again · refreshes daily at 06:00",
+                )
+                toast(live ? `${a.name} frozen at ${num(a.size)}. No new matches are added.` : `${a.name} is live again and refreshes daily at 06:00.`)
+              },
+            },
+          },
+          {
+            item: "aud.rebuild",
+            action: {
+              kind: "secondary",
+              label: "Rebuild now",
+              onClick: () => {
+                actOn(session.business, "audience", a.id, { lastRebuilt: TODAY }, { lastRebuilt: a.lastRebuilt },
+                  `rebuilt today · ${num(net)} after suppressions`)
+                toast(`${a.name} rebuilt · ${num(net)} after suppressions.`)
+              },
+            },
+          },
+        ])} />
       </div>
     </div>
   )
@@ -165,15 +173,18 @@ const CampaignBeside: BesideComponent = ({ session, id }) => {
   const rows = useMarketing(session.business)
   const d = useDisclosure("campaigns")
   declarePaneFields("campaigns")
-  const b = businessById(session.business)
   const acted = useActed("campaign", id)
+  useBesideDone(typeof acted?.note === "string"
+    ? { note: acted.note, onUndo: () => undoAct(session.business, "campaign", id, acted) }
+    : null)
+
   const c = rows.campaigns.find((x) => x.id === id)
   if (!c) return <Missing what="campaign" />
 
   const audience = rows.audiences.find((x) => x.id === c.audienceId)
   const recipients = audience ? netSize(audience) : c.audienceSize
-  const testTo = `${session.user.split(" ")[0].toLowerCase()}@${b.id === "meridian" ? "meridian.io" : `${b.id}.com`}`
   const sending = c.status === "Sending" || c.status === "Running"
+  const mine = c.owner === session.user || session.role === "admin"
 
   return (
     <div className="space-y-4">
@@ -193,48 +204,30 @@ const CampaignBeside: BesideComponent = ({ session, id }) => {
         { item: "camp.list.from", label: "From", value: `${c.fromName} · ${c.fromMailbox}` },
       ]} />
 
-      <ActedNote business={session.business} kind="campaign" id={c.id} edit={acted} />
-
-      <div className="space-y-3 border-t pt-3">
-        {/* A send in flight is the one thing a person reading this beside another page may have to
-            stop, so pause is the first control and it is never further away than one click. */}
-        {sending || c.status === "Paused" ? (
-          <Action
-            label={c.status === "Paused" ? "Resume" : "Pause"}
-            onClick={() => {
-              if (c.status === "Paused") {
-                const passed = c.sendAt !== null && c.sendAt < TODAY
-                const next = c.kind === "Lifecycle" ? "Running" : passed ? "Draft" : "Scheduled"
-                actOn(session.business, "campaign", c.id, { status: next, pausedBy: null }, { status: c.status, pausedBy: c.pausedBy },
-                  passed ? "resumed as a draft · the kept send time has passed" : `resumed · ${next.toLowerCase()}`)
-                toast(passed ? `${c.name} resumed as a draft: the kept time has passed.` : `${c.name} resumed.`)
-              } else {
-                actOn(session.business, "campaign", c.id, { status: "Paused", pausedBy: session.user }, { status: c.status, pausedBy: c.pausedBy },
-                  `paused by ${session.user} · the send time is kept`)
-                toast(`${c.name} paused. The send time is kept.`)
-              }
-            }}
-          >
-            <ConsequenceLine
-              className="mt-1"
-              changes={c.status === "Paused"
-                ? "Starts sending again from where it stopped; the kept send time is used, or asked for again when it has passed"
-                : `Stops the send now. The ${num(c.sent)} already sent stay sent; the send time is kept.`}
-            />
-          </Action>
-        ) : null}
-
-        <Action label={`Send a test to ${testTo}`} onClick={() => {
-          noteOn("campaign", c.id, `test sent to ${testTo}`)
-          toast(`Test sent to ${testTo} from ${c.fromMailbox}.`)
-        }}>
-          <ConsequenceLine
-            className="mt-1"
-            sends={1} to={testTo} from={c.fromMailbox}
-            changes="The test carries a working unsubscribe link that unsubscribes nobody"
-          />
-        </Action>
-      </div>
+      {/* Stopping a send is the one act that may never be further away than starting it, so it is
+          here; starting again is a send, and a send cannot be undone, so Resume and Schedule stay on
+          the record page with their confirmations. A seat that does not own this campaign gets the
+          sentence naming who does, not a control it cannot press (RULES.md rule 4). */}
+      {sending && (
+        <div className="border-t pt-3">
+          {mine ? (
+            <Actions surface="pane" layout="stack" items={acts(d, [{
+              item: "camp.act.pause",
+              action: {
+                kind: "secondary",
+                label: "Pause",
+                onClick: () => {
+                  actOn(session.business, "campaign", c.id, { status: "Paused", pausedBy: session.user }, { status: c.status, pausedBy: c.pausedBy },
+                    `paused by ${session.user} · the send time is kept`)
+                  toast(`${c.name} paused. The send time is kept.`)
+                },
+              },
+            }])} />
+          ) : (
+            <p className="text-xs text-muted-foreground">Owned by {c.owner}; the owner or an admin can pause this send.</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -258,6 +251,10 @@ const FormBeside: BesideComponent = ({ session, id }) => {
   const d = useDisclosure("campaigns")
   declarePaneFields("campaigns")
   const acted = useActed("form", id)
+  useBesideDone(typeof acted?.note === "string"
+    ? { note: acted.note, onUndo: () => undoAct(session.business, "form", id, acted) }
+    : null)
+
   const f = rows.forms.find((x) => x.id === id)
   if (!f) return <Missing what="form" />
 
@@ -273,11 +270,11 @@ const FormBeside: BesideComponent = ({ session, id }) => {
         { item: "form.row", label: "Reports to", value: f.reportsTo },
         { item: "form.row", label: "Last submission", value: day(f.lastSubmission) },
         // Spend against a cap and a person who reached nobody are both decision-critical, so the
-        // usage model keeps them at level one for every seat, and so does this pane.
+        // model keeps them at level one for every seat, and so does this pane.
         {
           item: "form.cap", label: "Enrichment today",
           value: <span className={atCap ? "font-medium tabular-nums text-amber-700 dark:text-amber-400" : "tabular-nums"}>{num(f.enrichUsedToday)} of {num(f.enrichCapDaily)} credits</span>,
-          under: `${num(f.matched)} of ${num(f.submissions7d)} matched${atCap ? " · at the cap, submissions are still accepted and routed" : ""}`,
+          under: `${num(f.matched)} of ${num(f.submissions7d)} matched`,
         },
         {
           item: "form.unrouted", label: "Could not route",
@@ -287,28 +284,19 @@ const FormBeside: BesideComponent = ({ session, id }) => {
         },
       ]} />
 
-      <ActedNote business={session.business} kind="form" id={f.id} edit={acted} />
-
-      <div className="space-y-3 border-t pt-3">
-        <Action label={live ? "Turn the form off" : "Turn the form on"} onClick={() => {
-          actOn(session.business, "form", f.id, { status: live ? "Off" : "Live" }, { status: f.status },
-            live ? "turned off · submissions stop, the ones you have are kept" : `turned on · routing to ${f.routesTo}`)
-          toast(live ? `${f.name} is off. Submissions stop; the ones you have are kept.` : `${f.name} is live. Submissions are accepted and routed to ${f.routesTo}.`)
-        }}>
-          <ConsequenceLine
-            className="mt-1"
-            changes={live
-              ? `Stops accepting submissions now. The ${num(f.submissions.length)} you already have are kept.`
-              : `Starts accepting submissions and routing them to ${f.routesTo}`}
-          />
-        </Action>
-
-        <Action label="Copy the form link" onClick={() => {
-          noteOn("form", f.id, "link copied")
-          toast(`Link to ${f.name} copied.`)
-        }}>
-          <ConsequenceLine className="mt-1" changes="Copies the public link to your clipboard; nothing about the form changes" />
-        </Action>
+      <div className="border-t pt-3">
+        <Actions surface="pane" layout="stack" items={acts(d, [{
+          item: "form.row",
+          action: {
+            kind: "secondary",
+            label: live ? "Turn the form off" : "Turn the form on",
+            onClick: () => {
+              actOn(session.business, "form", f.id, { status: live ? "Off" : "Live" }, { status: f.status },
+                live ? "turned off · submissions stop, the ones you have are kept" : `turned on · routing to ${f.routesTo}`)
+              toast(live ? `${f.name} is off. Submissions stop; the ones you have are kept.` : `${f.name} is live. Submissions are accepted and routed to ${f.routesTo}.`)
+            },
+          },
+        }])} />
       </div>
     </div>
   )
@@ -326,33 +314,37 @@ FormBeside.head = ({ session, id }) => {
 
 /* --------------------------------------------------------------------------- workflow (R-workflow) */
 
+/**
+ * The workflow pane carries no act at all, and that is the rule working rather than an omission.
+ * Turning a routing workflow off loses every lead it would have routed while it was off; turning it
+ * on enrols people and spends credits. Neither can be undone, so both stay on the record page with
+ * their confirmation, and the way to them from here is "Open the page" in the header above.
+ */
 const WorkflowBeside: BesideComponent = ({ session, id }) => {
   const rows = useMarketing(session.business)
   const d = useDisclosure("workflows")
   declarePaneFields("workflows")
-  const seed = seedFor(session.business)
   const acted = useActed("workflow", id)
+  useBesideDone(typeof acted?.note === "string"
+    ? { note: acted.note, onUndo: () => undoAct(session.business, "workflow", id, acted) }
+    : null)
+
   const w = rows.workflows.find((x) => x.id === id)
   if (!w) return <Missing what="workflow" />
 
   const on = w.status === "on"
   const atCeiling = w.ceiling.spentToday >= w.ceiling.perDay
-  const matchNow = seed.contacts.filter((c) => w.enrolment.length === 0 || w.enrolment.every((f) => {
-    if (f.field === "country") return f.value.split(",").map((v) => v.trim()).includes(c.location.country)
-    if (f.field === "emailStatus") return c.emailStatus === f.value
-    return true
-  })).length
 
   return (
     <div className="space-y-4">
       <Fields d={d} fields={[
         { item: "wf.trigger", label: "Trigger", value: `When ${w.trigger}` },
         { item: "wf.status", label: "Status", value: on ? "On" : "Off", under: `${w.statusChangedBy}, ${ago(w.statusChangedOn)}` },
-        { item: "wf.table", label: "Owner", value: w.owner, under: `Told when it errors: ${w.owner}` },
+        { item: "wf.table", label: "Owner", value: w.owner },
         {
           item: "wf.ceiling", label: "Credit ceiling",
           value: <span className={atCeiling ? "font-medium tabular-nums text-amber-700 dark:text-amber-400" : "tabular-nums"}>{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} today</span>,
-          under: atCeiling ? `Reached · at most ${num(w.ceiling.perRun)} a run` : `${num(w.ceiling.perRun)} a run at most`,
+          under: `${num(w.ceiling.perRun)} a run at most`,
         },
         { item: "wf.history", label: "Last edited", value: `${w.editedBy}, ${day(w.editedOn)}` },
         ...(w.sla
@@ -362,29 +354,6 @@ const WorkflowBeside: BesideComponent = ({ session, id }) => {
           ]
           : []),
       ]} />
-
-      <ActedNote business={session.business} kind="workflow" id={w.id} edit={acted} />
-
-      <div className="space-y-3 border-t pt-3">
-        <Action label={on ? "Turn off" : "Turn on"} onClick={() => {
-          actOn(
-            session.business, "workflow", w.id,
-            { status: on ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY },
-            { status: w.status, statusChangedBy: w.statusChangedBy, statusChangedOn: w.statusChangedOn },
-            on ? `turned off · the ${num(w.sla?.running ?? 0)} already running finish` : `turned on · ${num(matchNow)} match the filter today`,
-          )
-          toast(on
-            ? `${w.name} stops enrolling. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`
-            : `${w.name} is on. ${num(matchNow)} people match the filter today.`)
-        }}>
-          <ConsequenceLine
-            className="mt-1"
-            changes={on
-              ? `Stops enrolling. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`
-              : `Turns on now. ${num(matchNow)} people match the filter today; the daily limit is ${num(w.limits.perDay)}, so the rest wait.`}
-          />
-        </Action>
-      </div>
     </div>
   )
 }

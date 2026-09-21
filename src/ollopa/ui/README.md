@@ -61,7 +61,7 @@ focus returns. A panel may open a page; it never opens another panel, and it nev
 
 ## `Actions`
 
-`{ items: Action[]; layout?: "row" | "stack" | "menu"; surface?: "page" | "pane" | "dialog" | "card" }`
+`{ items: Action[]; layout?: "row" | "stack" | "menu"; surface?: "page" | "pane" | "dialog" | "card"; menuLabel?: string }`
 
 Every control on a surface, drawn by its kind. A page never picks a `Button` variant by hand: it says
 what each control *is* and this decides how it looks, where it sits and whether it asks first. The
@@ -78,7 +78,23 @@ type Action = {
   irreversible?: { title: string; consequence: string; confirmLabel: string }
   disabledBecause?: string // object state the person can change; never a seat or a permission
   keys?: string            // the shortcut, printed on the control
+  dataItem?: string        // and dataItemLabel: the usage-model id the lesson stage and the cue look for
+  id?: string
+  "aria-label"?: string
+  attrs?: Record<string, string>   // anything else the control must carry: data-row-focus, data-print-hide
 }
+```
+
+`attrs` is why a row's hover strip, its "…" menu and a bulk bar use `Actions` instead of drawing
+their own buttons: whatever a row needs to be found again later goes on the control here.
+
+```tsx
+<Actions surface="card" layout="menu" menuLabel={person.name} items={rowActions} />
+```
+
+`layout="menu"` requires `menuLabel` — the name of the thing the menu acts on — because a screen
+reader meeting twenty "More actions" buttons down one table learns nothing (RULES.md rule 4). The
+trigger reads "Actions for Mateo Okonkwo". Without it you get "More actions" and a warning.
 ```
 
 | Kind | Drawn as | Where it sits |

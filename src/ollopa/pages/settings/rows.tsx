@@ -10,6 +10,7 @@
 import { useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { href } from "@/app/router"
@@ -93,31 +94,18 @@ function Rows<T>({ items, render, keyOf, empty }: { items: T[]; render: (t: T) =
         {items.slice(0, limit).map((t) => <li key={keyOf(t)}>{render(t)}</li>)}
       </ul>
       {items.length > limit && (
-        <Button size="sm" variant="outline" className="mt-2 h-7 px-2 text-xs" onClick={() => setLimit((l) => l + 10)}>
-          Show 10 more ({items.length - limit} left)
-        </Button>
+        <Actions surface="card" items={[{ label: `Show 10 more (${items.length - limit} left)`, kind: "secondary", onClick: () => setLimit((l) => l + 10) }]} />
       )}
     </>
   )
 }
 
-/** Row actions: visible on hover and on focus-within, and repeated in the row's "…" menu. */
+/** What one item in a list of them can have done to it: the shared "…" menu, drawn by kind. */
 function RowActions({ actions }: { actions: { label: string; onClick: () => void }[] }) {
   return (
     <span className="flex shrink-0 items-center gap-1">
-      {actions.map((a) => (
-        <Button key={a.label} size="sm" variant="ghost"
-          className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-          onClick={a.onClick}>{a.label}</Button>
-      ))}
-      <details className="relative">
-        <summary className="cursor-pointer list-none rounded px-1.5 py-0.5 text-sm text-muted-foreground hover:bg-muted" aria-label="More actions">…</summary>
-        <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border bg-background p-1 shadow-md">
-          {actions.map((a) => (
-            <button key={a.label} className="block w-full rounded px-2 py-1 text-left text-sm hover:bg-muted" onClick={a.onClick}>{a.label}</button>
-          ))}
-        </div>
-      </details>
+      <Actions surface="card" layout="menu"
+        items={actions.map((a) => ({ label: a.label, kind: "secondary" as const, onClick: a.onClick }))} />
     </span>
   )
 }
@@ -193,13 +181,18 @@ export function personalRows(ctx: RowCtx): SettingRow[] {
 
 function PasswordRow() {
   const [open, setOpen] = useState(false)
-  if (!open) return <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setOpen(true)}>Change password</Button>
+  if (!open) {
+    return <Actions surface="card" items={[{ label: "Change password", kind: "secondary", onClick: () => setOpen(true) }]} />
+  }
+  // Two comparable acts, so neither is filled: the page's one filled control is the Save bar.
   return (
     <span className="flex flex-wrap items-center gap-2">
       <Input className="h-8 w-44" type="password" aria-label="Current password" placeholder="Current" />
       <Input className="h-8 w-44" type="password" aria-label="New password" placeholder="New" />
-      <Button size="sm" onClick={() => { setOpen(false); toast("Saved · Password") }}>Save</Button>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+      <Actions surface="card" items={[
+        { label: "Save the new password", kind: "secondary", onClick: () => { setOpen(false); toast("Saved · Password") } },
+        { label: "Cancel", kind: "secondary", onClick: () => setOpen(false) },
+      ]} />
     </span>
   )
 }
@@ -239,7 +232,6 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <Text id="me.quiet" change="Quiet hours" label="Quiet hours" value={st.you.quietHours} width="w-40" />
       </span>
     ),
-    note: "What you are told about stays on the thing that tells you: Agents, Inbox, the sync error log.",
   })
 
   add({
@@ -251,8 +243,10 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
           {myToken ? `${myToken.client} · authorised ${day(myToken.authorisedOn)}` : "No client connected"}
           {seed.cliDevices.some((d) => d.user === ctx.user) ? ` · ${plural(seed.cliDevices.filter((d) => d.user === ctx.user).length, "CLI device")}` : ""}
         </span>
-        {myToken && <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "mcp", token: myToken })}>Scope</Button>}
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "cli" })}>CLI devices</Button>
+        <Actions surface="card" items={[
+          ...(myToken ? [{ label: "Scope", kind: "secondary" as const, onClick: () => open({ kind: "mcp", token: myToken }) }] : []),
+          { label: "CLI devices", kind: "secondary" as const, onClick: () => open({ kind: "cli" }) },
+        ]} />
       </span>
     ),
   })
@@ -263,12 +257,11 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
   add({ id: "ws.logo", area: "Workspace", label: "Logo", short: "Logo", value: (
     <span className="flex items-center gap-2">
       <span className="inline-flex size-8 items-center justify-center rounded bg-foreground text-xs font-medium text-background">{ws.logoInitials}</span>
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => toast("Choose an image for the workspace logo.")}>Replace</Button>
+      <Actions surface="card" items={[{ label: "Replace", kind: "secondary", onClick: () => toast("Choose an image for the workspace logo.") }]} />
     </span>
   ) })
   add({ id: "ws.timezone", area: "Workspace", label: "Timezone", short: "Timezone",
-    value: <Pick id="ws.timezone" change="Timezone" label="Timezone" value={ws.timezone} options={["Europe/Berlin", "Europe/London", "America/New_York", "America/Los_Angeles", "Asia/Singapore"]} />,
-    note: "Sending schedules and report periods are read in this timezone." })
+    value: <Pick id="ws.timezone" change="Timezone" label="Timezone" value={ws.timezone} options={["Europe/Berlin", "Europe/London", "America/New_York", "America/Los_Angeles", "Asia/Singapore"]} />})
   add({ id: "ws.currency", area: "Workspace", label: "Default currency", short: "Currency",
     value: <Pick id="ws.currency" change="Default currency" label="Default currency" value={ws.currency} options={["EUR", "USD", "GBP"]} width="w-28" /> })
   add({ id: "ws.language", area: "Workspace", label: "Language", short: "Language",
@@ -285,7 +278,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
           {/* What the workspace is shaped like now, not what the seed shipped with: the answers
               change this row, so the row has to change with them. */}
           <span className="text-sm">{PROFILE_LABEL[session.profile]}</span>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => leaveSettings("/ollopa/setup", "work.profile")}>Change the answers</Button>
+          <Actions surface="card" items={[{ label: "Change the answers", kind: "secondary", onClick: () => leaveSettings("/ollopa/setup", "work.profile") }]} />
         </span>
         {/* Back from the answers: what the change moved, where the change was caused. */}
         {ctx.moved && (
@@ -293,9 +286,6 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         )}
       </span>
     ),
-    note: changedAnswers
-      ? `Answered here: ${answerWords(changedAnswers)}. ${ws.declaredBy} declared it on ${longDay(ws.declaredAt)}. Changing it redraws the sidebar and says what moved.`
-      : `Declared by ${ws.declaredBy} on ${longDay(ws.declaredAt)}: "${ws.firstJob}", ${ws.people}, ${plural(ws.seats.length, "seat")}. Changing it redraws the sidebar and says what moved.`,
   })
   add({
     id: "work.seats", area: "How your team works", label: "Which seats exist here", short: "Seats",
@@ -336,11 +326,12 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     value: ws.exposure && ws.exposure.state === "showing" ? (
       <span className="flex flex-wrap items-center gap-2 text-sm">
         <span className="capitalize">{ws.exposure.page}</span> is in the sidebar until {longDay(ws.exposure.ends)}.
-        <Button size="sm" className="h-7 px-2 text-xs" onClick={() => toast(`${ws.exposure!.page} kept. The answer holds until a new signal.`)}>Keep it</Button>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => toast(`${ws.exposure!.page} removed from the sidebar.`)}>Remove it</Button>
+        <Actions surface="card" items={[
+          { label: "Keep it", kind: "secondary", onClick: () => toast(`${ws.exposure!.page} kept. The answer holds until a new signal.`) },
+          { label: "Remove it", kind: "secondary", onClick: () => toast(`${ws.exposure!.page} removed from the sidebar.`) },
+        ]} />
       </span>
     ) : <span className="text-sm text-muted-foreground">Nothing is showing temporarily.</span>,
-    note: "One page at a time, for two weeks, and the answer is final until a new signal.",
   })
 
   /* ------------------------------------------------------------------------- Team and access */
@@ -352,9 +343,9 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       <>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            {seed.users.length} of {b.plan.seats} seats used. Credit limit, availability and status change in the row.
+            {seed.users.length} of {b.plan.seats} seats used.
           </p>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => toast("Invite by email, with a permission profile and a credit limit.")}>Invite people</Button>
+          <Actions surface="card" items={[{ label: "Invite people", kind: "secondary", onClick: () => toast("Invite by email, with a permission profile and a credit limit.") }]} />
         </div>
         <Rows
           items={seed.users} keyOf={(u) => u.id} empty="Nobody here yet."
@@ -383,25 +374,18 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
   add({
     id: "team.teams", area: "Team and access", label: "Teams", short: "Teams", feature: "teams",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Teams", rows: seed.teams.map((t) => ({ id: t.id, name: t.name, detail: `${t.lead} · ${plural(t.members, "person", "people")}` })), dependsOn: () => "People on this team move to no team." })}>
-        {seed.teams.length === 0 ? "No teams" : plural(seed.teams.length, "team")}
-      </Button>
+      <Actions surface="card" items={[{ label: seed.teams.length === 0 ? "No teams" : plural(seed.teams.length, "team"), kind: "secondary", onClick: () => open({ kind: "list", title: "Teams", rows: seed.teams.map((t) => ({ id: t.id, name: t.name, detail: `${t.lead} · ${plural(t.members, "person", "people")}` })), dependsOn: () => "People on this team move to no team." }) }]} />
     ),
   })
   add({
     id: "team.profiles", area: "Team and access", label: "Permission profiles", short: "Permission profiles", feature: "profiles",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Permission profiles", rows: seed.permissionProfiles.map((p) => ({ id: p.id, name: p.name, detail: `${plural(p.users, "person", "people")} · ${p.canSee.length} areas` })), dependsOn: (id) => `${seed.permissionProfiles.find((p) => p.id === id)?.users ?? 0} people would move to the default profile.` })}>
-        {seed.permissionProfiles.length === 0 ? "No profiles" : plural(seed.permissionProfiles.length, "profile")}
-      </Button>
+      <Actions surface="card" items={[{ label: seed.permissionProfiles.length === 0 ? "No profiles" : plural(seed.permissionProfiles.length, "profile"), kind: "secondary", onClick: () => open({ kind: "list", title: "Permission profiles", rows: seed.permissionProfiles.map((p) => ({ id: p.id, name: p.name, detail: `${plural(p.users, "person", "people")} · ${p.canSee.length} areas` })), dependsOn: (id) => `${seed.permissionProfiles.find((p) => p.id === id)?.users ?? 0} people would move to the default profile.` }) }]} />
     ),
   })
   add({
     id: "team.grants", area: "Team and access", label: "Additional grants", short: "Grants on top of the profile", feature: "profiles",
     value: <span className="text-sm">{plural(seed.users.filter((u) => u.grants.length > 0).length, "person has", "people have")} a grant on top of their profile</span>,
-    note: "Grants add to the profile. Prefer a grant to a new profile.",
   })
   add({
     id: "team.availability", area: "Team and access", label: "Your availability", short: "Available, or away until a date",
@@ -410,27 +394,19 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <Pick id="team.availability.me" change="Your availability" label="Your availability" value="Available" options={["Available", "Away until a date"]} width="w-48" />
       </span>
     ),
-    note: "Every routing rule reads this: a lead handed to somebody on holiday is the slow reply the rule exists to prevent.",
   })
   add({
     id: "team.viewas", area: "Team and access", label: "View as a teammate", short: "View as a teammate", feature: "view-as",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => { const u = seed.users.find((x) => x.name !== ctx.user) ?? seed.users[0]; if (u) ctx.viewAs(u) }}>
-        View as a teammate
-      </Button>
+      <Actions surface="card" items={[{ label: "View as a teammate", kind: "secondary", onClick: () => { const u = seed.users.find((x) => x.name !== ctx.user) ?? seed.users[0]; if (u) ctx.viewAs(u) } }]} />
     ),
-    note: "The page is replaced by their view under a banner until you leave it.",
   })
   add({
     id: "team.offboarding", area: "Team and access", label: "Deactivate somebody", short: "Deactivate: reassign, unlink, unmap, deactivate",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => { const u = seed.users.find((x) => x.name !== ctx.user) ?? seed.users[0]; if (u) open({ kind: "user", user: u }) }}>
-        Start on a person
-      </Button>
+      <Actions surface="card" items={[{ label: "Start on a person", kind: "secondary", onClick: () => { const u = seed.users.find((x) => x.name !== ctx.user) ?? seed.users[0]; if (u) open({ kind: "user", user: u }) } }]} />
     ),
-    note: `Four steps in order: reassign their work, unlink their mailboxes${b.crm ? `, unmap them from ${b.crm.split(" ")[0]}` : ""}, then deactivate. The bill does not change until renewal on ${longDay(b.plan.renews)}.`,
+    note: `The bill does not change until renewal on ${longDay(b.plan.renews)}.`,
   })
   add({ id: "sec.mfa", area: "Team and access", label: "Multi-factor authentication", short: "Multi-factor authentication",
     keywords: ["MFA", "2FA", "two-factor"],
@@ -456,7 +432,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       <>
       <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5">
         <p className="text-xs text-muted-foreground">
-          {plural(mailboxes.length, "mailbox", "mailboxes")} · warm-up and both limits change in the row.
+          {plural(mailboxes.length, "mailbox", "mailboxes")}
         </p>
         <LinkMailbox business={ctx.business} />
       </div>
@@ -490,8 +466,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     ),
   })
   add({ id: "mail.warmup", area: "Email sending", label: "Warm-up", short: "Warm-up",
-    value: <span className="text-sm">{plural(mailboxes.filter((m) => m.warmup.on).length, "mailbox", "mailboxes")} warming, {mailboxes.filter((m) => !m.warmup.on).length} warmed</span>,
-    note: "A warming mailbox sends a rising number a day and is not asked to carry a campaign." })
+    value: <span className="text-sm">{plural(mailboxes.filter((m) => m.warmup.on).length, "mailbox", "mailboxes")} warming, {mailboxes.filter((m) => !m.warmup.on).length} warmed</span>})
   add({ id: "mail.limits", area: "Email sending", label: "Daily, hourly and minimum delay between sends", short: "Sending limits",
     value: isAdmin ? (
       <span className="flex flex-wrap items-center gap-2">
@@ -500,8 +475,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <Num id="mail.limit.delay" change="Minimum delay between sends" label="Minimum delay" value={90} width="w-16" suffix="seconds apart" />
       </span>
     ) : <SetBy admin={admin} item="Daily, hourly and minimum delay between sends" search={ctx.search} value="120 a day · 20 an hour · 90 seconds apart" />,
-    readOnly: !isAdmin,
-    note: isAdmin ? "Users may not change their own limits." : undefined })
+    readOnly: !isAdmin})
   add({ id: "mail.signature", area: "Email sending", label: "Your email signature", short: "Signature",
     value: <Text id="mail.signature" change="Email signature" label="Email signature" value={`${ctx.user} · ${b.name}`} width="w-72" /> })
   add({
@@ -552,13 +526,11 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     note: "Auto-pause stops every mailbox on the domain until you resume it.",
   })
   add({ id: "mail.catch-all", area: "Email sending", label: "Block catch-all domains", short: "Catch-all blocking",
-    value: <Toggle id="mail.catch-all" change="Catch-all blocking" label="Block catch-all domains" on={st.sending.catchAll} onLabel="Blocked" offLabel="Allowed" />,
-    note: "A catch-all address accepts everything and tells you nothing, so a bounce arrives days later." })
+    value: <Toggle id="mail.catch-all" change="Catch-all blocking" label="Block catch-all domains" on={st.sending.catchAll} onLabel="Blocked" offLabel="Allowed" />})
   add({ id: "mail.unsubscribe-text", area: "Email sending", label: "Unsubscribe text", short: "Unsubscribe text",
     value: <Text id="mail.unsubscribe-text" change="Unsubscribe text" label="Unsubscribe text" value={st.sending.unsubscribeText} width="w-80" /> })
   add({ id: "mail.unsubscribe-permission", area: "Email sending", label: "Users may disable the unsubscribe text", short: "Users may disable it",
-    value: <Toggle id="mail.unsubscribe-permission" change="Users may disable the unsubscribe text" label="Users may disable the unsubscribe text" on={st.sending.usersMayDisable} onLabel="They may" offLabel="They may not" />,
-    note: "Read and set beside the text it governs." })
+    value: <Toggle id="mail.unsubscribe-permission" change="Users may disable the unsubscribe text" label="Users may disable the unsubscribe text" on={st.sending.usersMayDisable} onLabel="They may" offLabel="They may not" />})
   add({ id: "mail.tracking", area: "Email sending", label: "Open and click tracking", short: "Open and click tracking",
     value: (
       <span className="flex items-center gap-3">
@@ -582,25 +554,24 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
           Synchronised {longDay(dnc.synchronisedOn)} · next due {longDay(dnc.nextDueOn)}
         </span>
         {dncOverdue && <Chip tone="error">Overdue — calls made now are outside safe harbour</Chip>}
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-          onClick={() => toast(`Synchronised ${seed.contacts.length.toLocaleString()} people against ${plural(st.prospecting.dncCountries.length, "register")}. Written to the log.`)}>
-          Synchronise now
-        </Button>
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => open({ kind: "list", title: "Do-not-call review log", rows: dnc.log.map((l, i) => ({ id: String(i), name: `${longDay(l.at)} · ${l.by}`, detail: `${l.what} · ${l.count.toLocaleString()} people` })) })}>
-          Review log
-        </Button>
+        <Actions surface="card" items={[
+          { label: "Synchronise now", kind: "secondary",
+            onClick: () => toast(`Synchronised ${seed.contacts.length.toLocaleString()} people against ${plural(st.prospecting.dncCountries.length, "register")}. Written to the log.`) },
+          { label: "Review log", kind: "secondary",
+            onClick: () => open({ kind: "list", title: "Do-not-call review log", rows: dnc.log.map((l, i) => ({ id: String(i), name: `${longDay(l.at)} · ${l.by}`, detail: `${l.what} · ${l.count.toLocaleString()} people` })) }) },
+        ]} />
       </span>
     ),
-    note: `Screened against ${st.prospecting.dncCountries.join(", ")}. The register has to be read again at least every 31 days, and the log is kept for 24 months.`,
+    note: `Read again at least every 31 days, or calls are outside safe harbour.`,
   })
   add({ id: "pros.gdpr", area: "Prospecting rules", label: "GDPR restrictions by region", short: "GDPR by region",
     value: <Pick id="pros.gdpr" change="GDPR restrictions" label="GDPR restrictions" value={st.prospecting.gdprRegions} options={["EU restricted", "EU and UK restricted", "No regional restriction"]} width="w-56" />,
-    note: "A restricted person stays in every table and every count; the action is replaced by the rule that restricts it." })
+    note: "A restricted person stays in every table and every count." })
   add({ id: "pros.removal-list", area: "Prospecting rules", label: "Removal list", short: "Removal list",
     value: (
       <span className="flex items-center gap-2">
         <span className="text-sm">{plural(st.prospecting.removal.people, "person", "people")} · {st.prospecting.removal.addedThisMonth} added this month</span>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "removal" })}>Review, export, delete everywhere</Button>
+        <Actions surface="card" items={[{ label: "Review, export, delete everywhere", kind: "secondary", onClick: () => open({ kind: "removal" }) }]} />
       </span>
     ) })
   add({ id: "pros.primary-email", area: "Prospecting rules", label: "Primary email type", short: "Primary email type",
@@ -622,21 +593,14 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     readOnly: !isAdmin })
   add({ id: "pros.territories", area: "Prospecting rules", label: "Territories", short: "Territories", feature: "territories",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => seed.territories[0] ? open({ kind: "territory", territory: seed.territories[0] }) : toast("No territories: everyone can prospect everywhere.")}>
-        {seed.territories.length === 0 ? "No territories: everyone can prospect everywhere" : plural(seed.territories.length, "territory", "territories")}
-      </Button>
-    ),
-    note: "Defined here and assigned from a person's row in Team and access. One object, two openings." })
+      <Actions surface="card" items={[{ label: seed.territories.length === 0 ? "No territories: everyone can prospect everywhere" : plural(seed.territories.length, "territory", "territories"), kind: "secondary", onClick: () => seed.territories[0] ? open({ kind: "territory", territory: seed.territories[0] }) : toast("No territories: everyone can prospect everywhere.") }]} />
+    )})
 
   /* ------------------------------------------------------------------------- Pipeline and data */
 
   add({ id: "pipe.stages", area: "Pipeline and data", label: "Pipelines and stages", short: "Pipelines and stages",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Pipelines and stages", rows: seed.pipelines.map((p) => ({ id: p.id, name: p.name, detail: p.stages.map((s) => `${s.name} ${s.probability}%`).join(" · ") })), dependsOn: () => "Deals on this pipeline move to the default one." })}>
-        {plural(seed.pipelines.length, "pipeline")} · {stages.join(" → ")}
-      </Button>
+      <Actions surface="card" items={[{ label: `${plural(seed.pipelines.length, "pipeline")} · ${stages.join(" → ")}`, kind: "secondary", onClick: () => open({ kind: "list", title: "Pipelines and stages", rows: seed.pipelines.map((p) => ({ id: p.id, name: p.name, detail: p.stages.map((s) => `${s.name} ${s.probability}%`).join(" · ") })), dependsOn: () => "Deals on this pipeline move to the default one." }) }]} />
     ) })
   add({ id: "pipe.contact-stages", area: "Pipeline and data", label: "Contact and account stages", short: "Contact and account stages",
     value: <span className="text-sm">{STAGES.length} contact stages · {ACCOUNT_STAGES.length} account stages: {ACCOUNT_STAGES.join(", ")}</span> })
@@ -668,7 +632,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       ? <span className="text-sm">{ws.waterfall.order.join(" → ")} · stops at the first verified answer · ceiling {ws.waterfall.ceilingPerRow} credits a row</span>
       : <SetBy admin={admin} item="Enrichment provider order" search={ctx.search} value={ws.waterfall.order.join(" → ")} />,
     readOnly: !isAdmin,
-    note: "The order decides what a row costs: the first provider that answers is the one you pay." })
+    note: "The first provider that answers is the one you pay." })
   add({ id: "pipe.required-at-stage", area: "Pipeline and data", label: "Required to enter a stage", short: "Required to enter a stage",
     value: (
       <span className="text-sm">
@@ -677,8 +641,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
           return req.length ? `${s}: ${req.join(", ")}` : null
         }).filter(Boolean).join(" · ") || "Nothing is required to move a deal"}
       </span>
-    ),
-    note: "The deal's stage stepper prints this before the click, naming the fields and who set them." })
+    )})
   add({ id: "pipe.deal-warnings", area: "Pipeline and data", label: "Deal warnings", short: "Deal warnings",
     block: (
       <ul className="grid gap-1.5">
@@ -708,48 +671,36 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
           </li>
         ))}
       </ul>
-    ),
-    note: "Reports prints these words under each label." })
+    )})
   add({ id: "pipe.goal", area: "Pipeline and data", label: "Targets per period", short: "Targets",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Targets", rows: seed.goals.map((g) => ({ id: g.id, name: `${g.user ?? g.team} · ${g.period}`, detail: money(g.amount, ws.currency) })) })}>
-        {plural(seed.goals.length, "target")} set for {seed.goals[0]?.period ?? "this period"}
-      </Button>
+      <Actions surface="card" items={[{ label: `${plural(seed.goals.length, "target")} set for ${seed.goals[0]?.period ?? "this period"}`, kind: "secondary", onClick: () => open({ kind: "list", title: "Targets", rows: seed.goals.map((g) => ({ id: g.id, name: `${g.user ?? g.team} · ${g.period}`, detail: money(g.amount, ws.currency) })) }) }]} />
     ) })
   add({ id: "pipe.submission-window", area: "Pipeline and data", label: "Forecast submission window", short: "Submission window",
     value: <span className="text-sm">Opens {st.pipeline.submissionWindow.opensOn}, due {st.pipeline.submissionWindow.day} at {st.pipeline.submissionWindow.time}</span>,
     readOnly: !isAdmin })
   add({ id: "pipe.renewal-reminders", area: "Pipeline and data", label: "Renewal reminders", short: "Renewal reminders",
     value: <span className="text-sm">{st.pipeline.renewalReminders.join(", ")} days before the renewal date</span>,
-    note: "Each one creates a task for the account owner.",
     readOnly: !isAdmin })
 
   /* --------------------------------------------------------------------------------- Sequences */
 
   add({ id: "seq.schedules", area: "Sequences", label: "Sending schedules", short: "Sending schedules",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Sending schedules", rows: seed.schedules.map((s) => ({ id: s.id, name: s.name, detail: `${s.days.join(", ")} · ${s.hours} · ${s.timezone}` })), dependsOn: (id) => `${seed.sequences.filter((q) => q.schedule === seed.schedules.find((s) => s.id === id)?.name).length} sequences use this schedule.` })}>
-        {plural(seed.schedules.length, "schedule")}
-      </Button>
+      <Actions surface="card" items={[{ label: plural(seed.schedules.length, "schedule"), kind: "secondary", onClick: () => open({ kind: "list", title: "Sending schedules", rows: seed.schedules.map((s) => ({ id: s.id, name: s.name, detail: `${s.days.join(", ")} · ${s.hours} · ${s.timezone}` })), dependsOn: (id) => `${seed.sequences.filter((q) => q.schedule === seed.schedules.find((s) => s.id === id)?.name).length} sequences use this schedule.` }) }]} />
     ) })
   // Reusable rulesets are a Growth capability (spec 05 §3.5): the lock sits on the row, priced, and
   // the per-sequence rules underneath keep saving on every plan.
   const rulesetGate = gate("rulesets", ctx.business)
   const rulesetButton = (
-    <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-      onClick={() => open({ kind: "list", title: "Sequence rulesets", rows: seed.rulesets.map((r) => ({ id: r.id, name: r.name, detail: `${r.stopOnReply ? "stops on reply" : "runs on"} · ${r.maxEmailsPerPersonPerDay} a person a day` })), dependsOn: (id) => `${seed.sequences.filter((q) => q.ruleset === seed.rulesets.find((r) => r.id === id)?.name).length} sequences use this ruleset.` })}>
-      {plural(seed.rulesets.length, "ruleset")}
-    </Button>
+    <Actions surface="card" items={[{ label: plural(seed.rulesets.length, "ruleset"), kind: "secondary", onClick: () => open({ kind: "list", title: "Sequence rulesets", rows: seed.rulesets.map((r) => ({ id: r.id, name: r.name, detail: `${r.stopOnReply ? "stops on reply" : "runs on"} · ${r.maxEmailsPerPersonPerDay} a person a day` })), dependsOn: (id) => `${seed.sequences.filter((q) => q.ruleset === seed.rulesets.find((r) => r.id === id)?.name).length} sequences use this ruleset.` }) }]} />
   )
   add({ id: "seq.rulesets", area: "Sequences", label: "Sequence rulesets", short: "Rulesets",
     value: rulesetGate.locked
       ? <Locked feature="Reusable rulesets" plan={rulesetGate.plan} pricePerMonth={rulesetGate.pricePerMonth} what={rulesetGate.what}>{rulesetButton}</Locked>
       : rulesetButton })
   add({ id: "seq.priority", area: "Sequences", label: "Sequence priority", short: "Sequence priority",
-    value: <span className="text-sm">{seed.sequences.filter((s) => s.priority === "High").length} high, {seed.sequences.filter((s) => s.priority === "Normal").length} normal, {seed.sequences.filter((s) => s.priority === "Low").length} low</span>,
-    note: "When a person is due a step in two sequences, the higher priority sends and the other waits." })
+    value: <span className="text-sm">{seed.sequences.filter((s) => s.priority === "High").length} high, {seed.sequences.filter((s) => s.priority === "Normal").length} normal, {seed.sequences.filter((s) => s.priority === "Low").length} low</span>})
 
   /* --------------------------------------------------------- Signals, scoring and personas */
 
@@ -761,10 +712,9 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <span className="text-sm">{primary.name} · threshold {primary.threshold}</span>
         <Chip tone={primary.shareAbove > 80 ? "warning" : undefined}>{primary.shareAbove}% of people score above it</Chip>
         <span className="text-xs text-muted-foreground">published {day(primary.published)} by {primary.publishedBy}</span>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "score", model: primary })}>Open</Button>
+        <Actions surface="card" items={[{ label: "Open", kind: "secondary", onClick: () => open({ kind: "score", model: primary }) }]} />
       </span>
     ) : <span className="text-sm text-muted-foreground">No score model yet.</span>,
-    note: "A threshold that routes people to a rep decides whose week they land in.",
   })
   add({ id: "score.models", area: "Signals, scoring and personas", label: "Score models", short: "Score models",
     block: (
@@ -786,12 +736,10 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     value: primary ? <span className="text-sm">{primary.shareAbove}% of people score above {primary.threshold}. Above 80% the threshold is not doing work.</span> : undefined })
   add({ id: "score.publish", area: "Signals, scoring and personas", label: "Publish a threshold", short: "Publish a threshold",
     value: primary ? (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "score", model: primary })}>Change and publish</Button>
-    ) : undefined,
-    note: "Publishing states the old and the new threshold, how many are above each today, and what happens to people already routed." })
+      <Actions surface="card" items={[{ label: "Change and publish", kind: "secondary", onClick: () => open({ kind: "score", model: primary }) }]} />
+    ) : undefined})
   add({ id: "score.stamp", area: "Signals, scoring and personas", label: "What the Score filter says", short: "The published stamp",
-    value: primary ? <span className="text-sm">Threshold {primary.threshold}, published {longDay(primary.published)} by {primary.publishedBy}</span> : undefined,
-    note: "The same line sits beside the Score filter on People." })
+    value: primary ? <span className="text-sm">Threshold {primary.threshold}, published {longDay(primary.published)} by {primary.publishedBy}</span> : undefined})
   add({ id: "score.personas", area: "Signals, scoring and personas", label: "Personas", short: "Personas",
     block: (
       <Rows
@@ -807,7 +755,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       />
     ) })
   add({ id: "score.persona-def", area: "Signals, scoring and personas", label: "One persona", short: "A persona's definition",
-    value: personas[0] ? <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "persona", persona: personas[0] })}>Title, seniority, department, industry, size, geography</Button> : undefined })
+    value: personas[0] ? <Actions surface="card" items={[{ label: "Title, seniority, department, industry, size, geography", kind: "secondary", onClick: () => open({ kind: "persona", persona: personas[0] }) }]} /> : undefined })
   add({ id: "score.signals", area: "Signals, scoring and personas", label: "Signals", short: "Signals and their freshness",
     block: (
       <Rows
@@ -824,7 +772,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       />
     ) })
   add({ id: "score.signal-def", area: "Signals, scoring and personas", label: "One signal", short: "A signal's definition",
-    value: signals[0] ? <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "signal", signal: signals[0] })}>Definition, source, freshness, talking tips</Button> : undefined })
+    value: signals[0] ? <Actions surface="card" items={[{ label: "Definition, source, freshness, talking tips", kind: "secondary", onClick: () => open({ kind: "signal", signal: signals[0] }) }]} /> : undefined })
   add({ id: "score.expansion-routing", area: "Signals, scoring and personas", label: "Expansion routing", short: "Expansion routing",
     value: isAdmin ? (
       <span className="flex flex-wrap items-center gap-2">
@@ -833,8 +781,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       </span>
     ) : <SetBy admin={admin} item="Expansion routing" search={ctx.search}
       value={`under ${money(st.scoring.expansionRouting.toOwnerUnder, ws.currency)} to the account owner, ${money(st.scoring.expansionRouting.toAeAtOrOver, ws.currency)} and above to the account executive of record`} />,
-    readOnly: !isAdmin,
-    note: "This decides whose number an expansion lands on." })
+    readOnly: !isAdmin})
   add({ id: "score.first-value", area: "Signals, scoring and personas", label: "No first-value milestone in 90 days", short: "The first-value signal",
     value: <span className="text-sm">Raises Onboarding stalled on an account after {st.scoring.firstValue.noMilestoneDays} days with no first-value milestone</span>,
     readOnly: !isAdmin })
@@ -844,8 +791,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
   /* ---------------------------------------------------------------------------- Agents and AI */
 
   add({ id: "ai.context", area: "Agents and AI", label: "Company context", short: "Company context",
-    value: <span className="text-sm text-muted-foreground">{st.agents.context}</span>,
-    note: "Every agent reads this before it writes anything." })
+    value: <span className="text-sm text-muted-foreground">{st.agents.context}</span>})
   add({ id: "ai.agents", area: "Agents and AI", label: "Agents on or off", short: "Which agents are on",
     block: (
       <ul className="grid gap-1.5">
@@ -905,12 +851,9 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     readOnly: !isAdmin,
     note: "Above either number the owner's approval is not enough and an admin has to approve it too." })
   add({ id: "ai.no-overwrite", area: "Agents and AI", label: "Agents never overwrite a field a person set", short: "The no-overwrite rule",
-    value: <span className="text-sm">Agents never overwrite a field a person set or confirmed; they propose instead.</span>,
-    note: "It is what the suggested, edited and validated marks on an agent-writable field mean." })
+    value: <span className="text-sm">Agents never overwrite a field a person set or confirmed; they propose instead.</span>})
   add({ id: "ai.own-key", area: "Agents and AI", label: "Bring your own model key", short: "Your own model key", feature: "agents.own-model-key",
-    value: <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => toast("Paste a provider key. Agent runs are billed to your provider instead of your credits.")}>
-      {st.agents.ownKeySet ? "Key set" : "Add a key"}
-    </Button> })
+    value: <Actions surface="card" items={[{ label: st.agents.ownKeySet ? "Key set" : "Add a key", kind: "secondary", onClick: () => toast("Paste a provider key. Agent runs are billed to your provider instead of your credits.") }]} /> })
 
   /* ------------------------------------------------------------------------------ Integrations */
 
@@ -921,13 +864,13 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <span className="text-sm">{crm.name}</span>
         <Chip tone={crm.errorsToday > 0 ? "error" : "good"}>{crm.errorsToday === 0 ? "No errors today" : `${crm.errorsToday} errors today`}</Chip>
         <span className="text-xs text-muted-foreground">synced {crm.lastSync} · {crm.objects.map((o) => `${o.object} ${o.direction}`).join(", ")}</span>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => leaveSettings(`/ollopa/integrations/${crm.id}`, "int.crm")}>Open</Button>
+        <Actions surface="card" items={[{ label: "Open", kind: "secondary", onClick: () => leaveSettings(`/ollopa/integrations/${crm.id}`, "int.crm") }]} />
         <CustomObjects business={ctx.business} />
       </span>
     ) : (
       <span className="text-sm">
         <strong>ollopA is your CRM.</strong> It is holding your contacts, companies and deals. Connect Salesforce or HubSpot if that changes.
-        <Button size="sm" variant="outline" className="ml-2 h-7 px-2 text-xs" onClick={() => leaveSettings("/ollopa/connect/salesforce", "int.crm")}>Connect a CRM</Button>
+        <Actions className="mt-1" surface="card" items={[{ label: "Connect a CRM", kind: "secondary", onClick: () => leaveSettings("/ollopa/connect/salesforce", "int.crm") }]} />
       </span>
     ),
   })
@@ -935,15 +878,12 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     value: crm ? (
       <span className="flex flex-wrap items-center gap-2">
         <span className="text-sm">{plural(crm.mappings.length, "field")} mapped</span>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "list", title: "CRM field mapping", rows: crm.mappings.map((m, i) => ({ id: String(i), name: `${m.ollopa} → ${m.remote}`, detail: `${m.direction} · ${m.writeRule}` })) })}>Open the mapping</Button>
+        <Actions surface="card" items={[{ label: "Open the mapping", kind: "secondary", onClick: () => open({ kind: "list", title: "CRM field mapping", rows: crm.mappings.map((m, i) => ({ id: String(i), name: `${m.ollopa} → ${m.remote}`, detail: `${m.direction} · ${m.writeRule}` })) }) }]} />
       </span>
     ) : <span className="text-sm text-muted-foreground">Nothing to map: no CRM is connected.</span> })
   add({ id: "int.error-log", area: "Integrations", label: "Sync error log", short: "Sync error log",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Sync errors grouped by cause", rows: seed.syncErrors.map((e) => ({ id: e.id, name: `${e.integration} · ${e.count} records`, detail: e.message })) })}>
-        {seed.syncErrors.length === 0 ? "No errors" : `${seed.syncErrors.reduce((n, e) => n + e.count, 0)} records did not sync`}
-      </Button>
+      <Actions surface="card" items={[{ label: seed.syncErrors.length === 0 ? "No errors" : `${seed.syncErrors.reduce((n, e) => n + e.count, 0)} records did not sync`, kind: "secondary", onClick: () => open({ kind: "list", title: "Sync errors grouped by cause", rows: seed.syncErrors.map((e) => ({ id: e.id, name: `${e.integration} · ${e.count} records`, detail: e.message })) }) }]} />
     ) })
   add({ id: "int.calendar", area: "Integrations", label: "Calendar", short: "Calendar",
     value: <span className="text-sm">{seed.integrations.find((i) => /Calendar/.test(i.kind))?.calendars.join(", ") ?? "Not connected"}</span> })
@@ -995,8 +935,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     </span>,
     note: "Keys spend the same balance the app does. There is no separate API allowance." })
   add({ id: "dev.alert-80", area: "API, webhooks, MCP and CLI", label: "Alert the key's owner at 80%", short: "The 80% alert",
-    value: <Toggle id="dev.alert-80" change="80% alert" label="Alert at 80% of the allocation" on={true} onLabel="On" offLabel="Off" />,
-    note: "Delivered as a digest line and a bell row under credits low. No new kind of notification." })
+    value: <Toggle id="dev.alert-80" change="80% alert" label="Alert at 80% of the allocation" on={true} onLabel="On" offLabel="Off" />})
   add({ id: "dev.webhooks", area: "API, webhooks, MCP and CLI", label: "Webhooks", short: "Webhooks", feature: "webhooks",
     block: (
       <Rows
@@ -1026,15 +965,12 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     value: (
       <span className="flex flex-wrap items-center gap-2">
         <span className="text-sm">{plural(seed.mcpTokens.length, "connection")} · read is on every plan</span>
-        {myToken && <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "mcp", token: myToken })}>Read, safe writes, destructive writes</Button>}
+        {myToken && <Actions surface="card" items={[{ label: "Read, safe writes, destructive writes", kind: "secondary", onClick: () => open({ kind: "mcp", token: myToken }) }]} />}
       </span>
-    ),
-    note: "The plan is stated by the endpoint at connection, never at the moment a write fails." })
+    )})
   add({ id: "dev.cli", area: "API, webhooks, MCP and CLI", label: "CLI device authorisations", short: "CLI devices", feature: "api",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => open({ kind: "cli" })}>
-        {seed.cliDevices.length === 0 ? "No device authorised" : plural(seed.cliDevices.length, "device")}
-      </Button>
+      <Actions surface="card" items={[{ label: seed.cliDevices.length === 0 ? "No device authorised" : plural(seed.cliDevices.length, "device"), kind: "secondary", onClick: () => open({ kind: "cli" }) }]} />
     ) })
 
   /* ------------------------------------------------------------------- Plan, billing and usage */
@@ -1089,10 +1025,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     ) })
   add({ id: "plan.invoices", area: "Plan, billing and usage", label: "Invoices", short: "Invoices",
     value: (
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs"
-        onClick={() => open({ kind: "list", title: "Invoices", rows: seed.invoices.map((i) => ({ id: i.id, name: `${i.number} · ${money(i.amount, i.currency)}`, detail: `${i.period} · ${i.status === "paid" ? `paid ${day(i.paidOn ?? "")}` : "due"}` })) })}>
-        {plural(seed.invoices.length, "invoice")}
-      </Button>
+      <Actions surface="card" items={[{ label: plural(seed.invoices.length, "invoice"), kind: "secondary", onClick: () => open({ kind: "list", title: "Invoices", rows: seed.invoices.map((i) => ({ id: i.id, name: `${i.number} · ${money(i.amount, i.currency)}`, detail: `${i.period} · ${i.status === "paid" ? `paid ${day(i.paidOn ?? "")}` : "due"}` })) }) }]} />
     ) })
   add({ id: "plan.tax-id", area: "Plan, billing and usage", label: "Tax ID", short: "Tax ID",
     value: <Text id="plan.tax-id" change="Tax ID" label="Tax ID" value={ws.taxId ?? ""} width="w-48" /> })
@@ -1112,19 +1045,26 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
 /** The lock is on adding a second mailbox, not on reading the table people check every morning. */
 function LinkMailbox({ business }: { business: Business }) {
   const g = gate("mailboxes.extra", business)
-  const button = <Button size="sm" variant="outline" className="h-7 px-2 text-xs">Link a mailbox</Button>
+  // Locked draws the lock on the control it wraps, so that branch keeps the plain button.
   return g.locked
-    ? <Locked feature="A second mailbox per person" plan={g.plan} pricePerMonth={g.pricePerMonth} what={g.what}>{button}</Locked>
-    : <span onClick={() => toast("Link a mailbox: choose a provider and authorise it.")}>{button}</span>
+    ? (
+      <Locked feature="A second mailbox per person" plan={g.plan} pricePerMonth={g.pricePerMonth} what={g.what}>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">Link a mailbox</Button>
+      </Locked>
+    )
+    : <Actions surface="card" items={[{ label: "Link a mailbox", kind: "secondary", onClick: () => toast("Link a mailbox: choose a provider and authorise it.") }]} />
 }
 
 /** Custom objects in the CRM sync: the row is the CRM's, the lock is on the one thing the plan buys. */
 function CustomObjects({ business }: { business: Business }) {
   const g = gate("crm.custom-objects", business)
-  const button = <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">Custom objects</Button>
   return g.locked
-    ? <Locked feature="Custom objects in the CRM sync" plan={g.plan} pricePerMonth={g.pricePerMonth} what={g.what}>{button}</Locked>
-    : <span onClick={() => toast("Custom objects sync alongside the standard ones.")}>{button}</span>
+    ? (
+      <Locked feature="Custom objects in the CRM sync" plan={g.plan} pricePerMonth={g.pricePerMonth} what={g.what}>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">Custom objects</Button>
+      </Locked>
+    )
+    : <Actions surface="card" items={[{ label: "Custom objects", kind: "secondary", onClick: () => toast("Custom objects sync alongside the standard ones.") }]} />
 }
 
 /* ------------------------------------------------------------------- the two end-of-page actions */
@@ -1135,34 +1075,40 @@ function ExportAll({ business }: { business: Business }) {
   return (
     <span className="flex flex-wrap items-center gap-2 text-sm">
       {state === "idle" && (
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
-          setState("running")
-          window.setTimeout(() => { setState("done"); toast("Your export is ready. We have emailed the link too.") }, 900)
-        }}>Export all data</Button>
+        <Actions surface="card" items={[{
+          label: "Export all data", kind: "secondary",
+          onClick: () => {
+            setState("running")
+            window.setTimeout(() => { setState("done"); toast("Your export is ready. We have emailed the link too.") }, 900)
+          },
+        }]} />
       )}
       {state === "running" && <span className="text-muted-foreground">Packing {rows.toLocaleString()} records…</span>}
-      {state === "done" && <a className="underline underline-offset-4" href="#" onClick={(e) => { e.preventDefault(); toast("Download started. The link is good for seven days.") }}>Download the export ({rows.toLocaleString()} records)</a>}
-      <span className="text-xs text-muted-foreground">Every table this seat can read, as CSV. On every plan.</span>
+      {state === "done" && (
+        <Actions surface="card" items={[{
+          label: `Download the export (${rows.toLocaleString()} records)`, kind: "link", href: "#",
+          onClick: () => toast("Download started. The link is good for seven days."),
+        }]} />
+      )}
     </span>
   )
 }
 
+/**
+ * The end of the workspace. One destructive control, and the whole consequence inside its own
+ * confirmation with the verb on the affirmative — never under the button on the page (DESIGN.md §2).
+ */
 function DeleteWorkspace({ name, seed }: { name: string; seed: Seed }) {
-  const [typed, setTyped] = useState("")
-  const [open, setOpen] = useState(false)
-  if (!open) return <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-destructive" onClick={() => setOpen(true)}>Delete workspace</Button>
   return (
-    <span className="grid gap-2">
-      <span className="text-sm">
-        Deletes {seed.contacts.length.toLocaleString()} contacts, {seed.companies.length.toLocaleString()} companies, {plural(seed.sequences.length, "sequence")} and {plural(seed.users.length, "person", "people")}'s data.
-        Fourteen days to change your mind. <a className="underline underline-offset-4" href="#plan.export" onClick={(e) => { e.preventDefault(); document.getElementById("row-plan.export")?.scrollIntoView({ block: "center" }) }}>Export first</a>.
-      </span>
-      <span className="flex flex-wrap items-center gap-2">
-        <Input className="h-8 w-64" aria-label={`Type ${name} to confirm`} placeholder={`Type ${name}`} value={typed} onChange={(e) => setTyped(e.target.value)} />
-        <Button size="sm" variant="destructive" disabled={typed !== name} onClick={() => { setOpen(false); setTyped(""); toast(`${name} is scheduled for deletion. You have 14 days.`) }}>Delete workspace</Button>
-        <Button size="sm" variant="ghost" onClick={() => { setOpen(false); setTyped("") }}>Keep it</Button>
-      </span>
-    </span>
+    <Actions surface="card" items={[{
+      label: "Delete workspace", kind: "destructive",
+      onClick: () => toast(`${name} is scheduled for deletion. You have 14 days.`),
+      irreversible: {
+        title: `Delete ${name}?`,
+        consequence: `Deletes ${seed.contacts.length.toLocaleString()} contacts, ${seed.companies.length.toLocaleString()} companies, ${plural(seed.sequences.length, "sequence")} and ${plural(seed.users.length, "person", "people")}'s data. Fourteen days to change your mind, then it is gone. Export first.`,
+        confirmLabel: "Delete workspace",
+      },
+    }]} />
   )
 }
 

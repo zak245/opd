@@ -14,8 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { follow } from "../../chain"
+import { Actions, type Action } from "../../ui/Actions"
 import { EmptyState } from "../../ui/EmptyState"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import type { Task } from "../../data/seed"
 import type { Session } from "../../session"
 import { day, dueLabel, localTime } from "./format"
@@ -73,7 +73,7 @@ export function Queue(p: QueueProps) {
         <EmptyState
           title="Done for today."
           body={p.dueTomorrow > 0 ? `${p.dueTomorrow} due tomorrow.` : "Nothing is due tomorrow either."}
-          action={<Button size="sm" variant="outline" onClick={p.onSeeList}>See the list</Button>}
+          action={<Actions surface="card" items={[{ kind: "secondary", label: "See the list", onClick: p.onSeeList }]} />}
         />
       </div>
     )
@@ -121,7 +121,7 @@ export function Queue(p: QueueProps) {
             {p.sort === "score" && <span className="text-muted-foreground">Ranked by the scoring agent · <button type="button" className="underline underline-offset-4" onClick={() => follow("/ollopa/settings/scoring?row=score.weights", originHere(task.contactId))}>how it was built</button></span>}
           </span>
         ) : (
-          <span className="text-muted-foreground">Overdue first, then oldest due. Nothing is reordered on its own.</span>
+          <span className="text-muted-foreground">Overdue first, then oldest due</span>
         )}
         {p.tasks.some((t) => t.kind === "LinkedIn") && <InviteCounter session={p.session} onSnoozeRest={p.onSnoozeRest} />}
       </div>
@@ -203,8 +203,7 @@ export function Queue(p: QueueProps) {
           )}
           {task.kind === "Meeting" && (
             <div>
-              <Button size="sm" variant="outline" onClick={() => setMeetingOpen(true)}>Open the meeting</Button>
-              <p className="pt-1 text-xs text-muted-foreground">State, times, attendees, the prep brief, the summary and the hand-off.</p>
+              <Actions surface="card" items={[{ kind: "secondary", label: "Open the meeting", onClick: () => setMeetingOpen(true) }]} />
             </div>
           )}
           {(task.kind === "Email" || task.kind === "Follow-up") && (
@@ -212,8 +211,17 @@ export function Queue(p: QueueProps) {
               <label className="text-xs text-muted-foreground" htmlFor="queue-email">Write to {task.contact.split(" ")[0]}</label>
               <Textarea id="queue-email" rows={5} className="mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Button size="sm" disabled={!email.trim()} onClick={() => { p.say(`Email sent to ${task.contact} from ${mailbox}. Task done.`); p.onDone(task); advance() }}>Send and mark done</Button>
-                <ConsequenceLine sends={1} to={task.contact} from={mailbox} />
+                <Actions
+                  surface="card"
+                  items={[{
+                    kind: "primary",
+                    label: "Send and mark done",
+                    onClick: () => { p.say(`Email sent to ${task.contact} from ${mailbox}. Task done.`); p.onDone(task); advance() },
+                    cost: "1 email",
+                    consequence: `to ${task.contact} from ${mailbox}`,
+                    disabledBecause: email.trim() ? undefined : "Write something first",
+                  }]}
+                />
               </div>
             </div>
           )}
@@ -235,23 +243,31 @@ export function Queue(p: QueueProps) {
 
       {/* --------------------------------------------------------------------------- the footer */}
       <div className="shrink-0 border-t px-4 py-3 sm:px-6">
+        {/* Done is the act the queue exists for, so it is the one filled control here; snoozing and
+            skipping are the other two the person came for. A call has four comparable outcomes
+            instead, and four comparable acts are never one filled and three outlined. */}
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
           {task.kind === "Call" ? (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Done:</span>
-              {CALL_OUTCOMES.map((o) => (
-                <Button key={o} size="sm" variant="outline" className="h-8" onClick={() => { p.onDone(task, o); advance() }}>{o}</Button>
-              ))}
+              <Actions
+                surface="card"
+                items={CALL_OUTCOMES.map((o) => ({ kind: "secondary" as const, label: o, onClick: () => { p.onDone(task, o); advance() } }))}
+              />
             </div>
           ) : (
-            <Button size="sm" onClick={() => { p.onDone(task); advance() }}>Done</Button>
+            <Actions
+              surface="card"
+              items={([{ kind: "primary", label: "Done", onClick: () => { p.onDone(task); advance() } }]) as Action[]}
+            />
           )}
-          <Button size="sm" variant="outline" onClick={() => { p.onSnooze(task); advance() }}>
-            {task.sequence ? "Snooze · the sequence waits" : "Snooze to tomorrow"}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => { p.onSkip(task); advance() }}>
-            {task.sequence ? "Skip · contact moves to next step" : "Skip"}
-          </Button>
+          <Actions
+            surface="card"
+            items={([
+              { kind: "secondary", label: "Snooze to tomorrow", onClick: () => { p.onSnooze(task); advance() } },
+              { kind: "secondary", label: "Skip", onClick: () => { p.onSkip(task); advance() } },
+            ]) as Action[]}
+          />
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Panel } from "../../ui/Panel"
+import { Actions } from "../../ui/Actions"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor, TODAY, type Contact, type Enrollment, type Sequence } from "../../data/seed"
 import type { Business } from "../../usage/model"
@@ -87,10 +88,17 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
       open={p.open}
       onOpenChange={p.onOpenChange}
       footer={
-        <Button className="w-full" disabled={!seq || split.adding.length === 0} onClick={add}>
-          Add {n(split.adding.length)} {split.adding.length === 1 ? "person" : "people"}
-          {credits > 0 ? ` · ${n(credits)} credits` : ""}
-        </Button>
+        <Actions
+          surface="dialog"
+          layout="stack"
+          items={[{
+            kind: "primary",
+            label: `Add ${n(split.adding.length)} ${split.adding.length === 1 ? "person" : "people"}`,
+            onClick: add,
+            cost: credits > 0 ? `${n(credits)} credits` : undefined,
+            disabledBecause: !seq ? "Choose a sequence" : split.adding.length === 0 ? "Nobody here can be added" : undefined,
+          }]}
+        />
       }
     >
       {/* The consequences of the click, above everything, whatever the panel is set to. */}
@@ -107,7 +115,7 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
         </p>
         {doubled > 0 && (
           <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400" role="status">
-            {n(doubled)} already in another sequence. Adding them doubles their outreach.
+            {n(doubled)} already in another sequence
           </p>
         )}
       </div>
@@ -160,9 +168,6 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
             </li>
           ))}
         </ul>
-        <p className="mt-1 text-xs text-muted-foreground">
-          A change here applies to this batch only. The sequence keeps its own setting.
-        </p>
       </div>
 
       {/* 3 — the day-one volume: added and sent are not the same number */}

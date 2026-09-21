@@ -233,7 +233,7 @@ const cAfter = await renders()
 console.log("C after the pane: ", cAfter, cBefore === cAfter ? "· the page did not re-render" : "· THE PAGE RE-RENDERED")
 await shot("c2-reply-beside")
 
-console.log("C open the page:", await clickReal("aside button", "Open the page"))
+console.log("C open the page:", await clickReal("aside button, aside a", "Open the page"))
 await wait(800)
 console.log("C trail:", await trail())
 console.log("C lit on arrival:", await page.evaluate(() => document.querySelector(".ollopa-returned")?.textContent?.replace(/\s+/g, " ").slice(0, 40) ?? "(nothing lit)"))
@@ -306,9 +306,9 @@ await shot("e1-task-beside-the-list")
 await page.keyboard.press("]")
 await wait(500)
 console.log("E after ]:", await pane())
-// The one step in: the contact, from inside the task pane.
+// The one step in: the contact, which is the record's own Contact line made a destination.
 console.log("E the one step in:", await page.evaluate(() => {
-  const el = Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim().endsWith("›"))
+  const el = document.querySelector("aside dd a")
   if (!el) return false
   el.click()
   return el.textContent.trim()

@@ -22,6 +22,7 @@ import { back as goBack, follow, useTrail } from "../../chain"
 import { openBeside } from "../../beside"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
+import { Actions } from "../../ui/Actions"
 import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { Door, useDoorState } from "../../ui/Door"
@@ -221,8 +222,9 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
           {tab === "email" ? `Send from ${mailbox}` : tab === "comment" ? `Comment for ${mate}` : `Log ${tab}`}
         </Button>
         {/* What it will do, before the click, never after. */}
-        {tab === "email" && <ConsequenceLine sends={1} to={to || "a contact"} from={mailbox} credits={CREDITS.draft} changes="Replies land in your Inbox" />}
-        {tab === "comment" && <p className="text-xs text-muted-foreground">Lands on the timeline carrying “For {mate}”, and stays marked unanswered until they reply on it. It is not a notification.</p>}
+        {/* Sending spends, so it earns its one line. Logging a call, a meeting, a note or a comment
+            spends nothing and can be undone, so nothing is written under those (DESIGN.md §3). */}
+        {tab === "email" && <ConsequenceLine sends={1} to={to || "a contact"} from={mailbox} credits={CREDITS.draft} />}
       </div>
     </div>
   )
@@ -418,12 +420,14 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const wonConsequence = [
     "Stage becomes Closed won.",
     "Forecast category becomes Closed.",
-    `${openTasks.length} open task${openTasks.length === 1 ? "" : "s"} close.`,
+    // A count earns its place only where it would otherwise mislead (DESIGN.md §3): "0 open tasks
+    // close" tells a person nothing they did not already see.
+    openTasks.length > 0 ? `${openTasks.length} open task${openTasks.length === 1 ? "" : "s"} close.` : null,
     crm ? `${crm.name} is updated.` : null,
     csSeat ? `${deal.company} moves to customer success, and the hand-off arrives in ${csSeat.user}'s queue.` : null,
   ].filter(Boolean).join(" ")
 
-  const lostConsequence = `Archived as lost. The deal leaves the board and the forecast, its ${openTasks.length} open task${openTasks.length === 1 ? "" : "s"} close, and it stays on ${deal.company} and in Reports.`
+  const lostConsequence = `Archived as lost. The deal leaves the board and the forecast${openTasks.length > 0 ? `, its ${openTasks.length} open task${openTasks.length === 1 ? "" : "s"} close` : ""}, and it stays on ${deal.company} and in Reports.`
 
   /* --------------------------------------------------------------------------------- the stage */
 
@@ -1397,7 +1401,6 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           <span className="flex flex-wrap items-center gap-2">
             {gear}{bell}{overflow}
             {showType && <Badge variant="secondary">{deal.dealType}</Badge>}
-            {!isOwner && <span className="text-xs text-muted-foreground">{deal.owner} owns this deal — you can read it and comment</span>}
             {handoff && (
               <span className="text-xs text-muted-foreground">
                 Handed over by {handoff.author} · <a className="underline" href="#handoff" onClick={(e) => { e.preventDefault(); toast(handoff.body) }}>handoff brief</a>
@@ -1407,20 +1410,41 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         }
         ribbon={ribbon}
         fields={fields}
-        actions={{
-          primary: canEdit ? [
-            { label: "Log activity", onClick: () => composer.current?.querySelector("textarea")?.focus(), shortcut: "C" },
-            { label: "Mark won", onClick: () => { moveStage("Closed won"); toast("Deal won.") }, confirm: r7 ? wonConsequence : undefined, shortcut: "W" },
-          ] : [],
-          secondary: canEdit ? [
-            { label: "Mark lost and archive", onClick: () => setLostPanel(true), shortcut: "Shift+W" },
-          ] : [],
-          destructive: canEdit && r7 ? {
-            label: "Delete deal",
-            consequence: `Removes this deal and its ${activities.length} activities. Contacts, the company and files stay on ${deal.company}.`,
-            onConfirm: () => { toast("Deal deleted. Undo is in the notification for 10 seconds."); navigate("/ollopa/deals") },
-          } : undefined,
-        }}
+        actions={{ primary: [], secondary: [] }}
+        /* The header, by kind (DESIGN.md §1). Logging is the one act this page exists for, so it is
+           the only filled control. Winning, losing and deleting cannot be undone, so each asks once,
+           with what it will do inside the question and the verb on the button that does it — and
+           nothing is written on the page beside them. A seat that cannot act gets no control and one
+           sentence naming who can. */
+        headerActions={canEdit ? (
+          <Actions
+            surface="page"
+            items={[
+              { label: "Log activity", kind: "primary", keys: "C", onClick: () => composer.current?.querySelector("textarea")?.focus() },
+              {
+                label: "Mark won", kind: "secondary", keys: "W",
+                onClick: () => { moveStage("Closed won"); toast("Deal won.") },
+                irreversible: { title: `Close ${deal.name} as won?`, consequence: wonConsequence, confirmLabel: "Mark won" },
+              },
+              // The reason is required and a confirmation cannot collect one, so the panel that asks
+              // for it is this act's confirmation: it carries the same sentence above the same verb.
+              { label: "Mark lost and archive", kind: "secondary", keys: "Shift+W", onClick: () => setLostPanel(true) },
+              ...(r7 ? [{
+                label: "Delete deal", kind: "destructive" as const,
+                onClick: () => { toast("Deal deleted. Undo is in the notification for 10 seconds."); navigate("/ollopa/deals") },
+                irreversible: {
+                  title: `Delete ${deal.name}?`,
+                  consequence: `Removes this deal and its ${activities.length} activities. Contacts, the company and files stay on ${deal.company}.`,
+                  confirmLabel: "Delete the deal",
+                },
+              }] : []),
+            ]}
+          />
+        ) : (
+          <span className="text-xs text-muted-foreground">
+            Owned by {deal.owner}; only the owner or an admin can act on this deal.
+          </span>
+        )}
         main={{
           kind: "timeline",
           composer: composerBlock,
@@ -1446,10 +1470,14 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
       {/* A reason is required, and the consequence is written before it is confirmed. */}
       <Panel id="deal-lost" title="Mark lost and archive" open={lostPanel} onOpenChange={setLostPanel}
+        /* This panel is the act's confirmation: the reason it needs, the sentence saying what
+           archiving does, and the verb on the button that does it (DESIGN.md §2). */
         footer={
-          <Button className="w-full" disabled={!lostReason} onClick={() => { setLost(true); setLostPanel(false); toast(lostConsequence) }}>
-            Archive as lost
-          </Button>
+          <Actions surface="dialog" layout="stack" items={[{
+            label: "Archive as lost", kind: "primary",
+            onClick: () => { setLost(true); setLostPanel(false); toast(lostConsequence) },
+            disabledBecause: lostReason ? undefined : "Choose a reason above",
+          }]} />
         }
       >
         <div className="space-y-3">

@@ -16,6 +16,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
+import { Actions } from "../../ui/Actions"
 import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
@@ -90,7 +91,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   if (!w) {
     return (
       <div className="p-10">
-        <EmptyState title="That workflow is not here" body="It may have been archived, or the link may be old." action={<Button size="sm" onClick={() => navigate("/ollopa/workflows")}>Back to Workflows</Button>} />
+        <EmptyState title="That workflow is not here" body="It may have been archived, or the link may be old." action={<Actions surface="card" items={[{ kind: "primary", label: "Back to Workflows", onClick: () => navigate("/ollopa/workflows") }]} />} />
       </div>
     )
   }
@@ -167,7 +168,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           {/* A two-hour clock running at 23:00 is a breach nobody could have prevented, so the hours
               the clock runs in are read here and not in Settings (rule 5). */}
           <p className="pt-1 text-sm text-muted-foreground">
-            Business hours {w.hours.from}–{w.hours.to}, {w.hours.days.join(", ")}, {b.timezone}. The clock {w.hours.clockPauses ? "pauses outside them" : "keeps running outside them"}; a {hours}-hour window that starts at 17:30 finishes {w.hours.clockPauses ? "the next morning" : "overnight"}.
+            Business hours {w.hours.from}–{w.hours.to}, {w.hours.days.join(", ")}, {b.timezone} · the clock {w.hours.clockPauses ? "pauses outside them" : "keeps running outside them"}.
           </p>
         </div>
       ),
@@ -219,20 +220,18 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         {territory && (
           <p className="text-sm text-muted-foreground">
             Named accounts route to their owner — {num(territory.accounts)} accounts, set by {territory.owner} in Settings › Team and access › Territories.
-            {session.role !== "admin" && " Territories are the admin's area; the rule is stated here so you do not have to open it."}
           </p>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => {
+        <Actions surface="page" items={[{
+          kind: "secondary",
+          label: w.routing?.skipAway ? "Keep people who are away in the rotation" : "Skip people who are away",
+          onClick: () => {
             patch({ routing: w.routing ? { ...w.routing, skipAway: !w.routing.skipAway } : null, editedBy: session.user, editedOn: TODAY })
-            const text = `${session.user} changed the routing on ${w.name}: anyone away is now ${w.routing?.skipAway ? "kept in" : "skipped in"} the rotation.`
-            setAnnouncement(text)
+            setAnnouncement(`${session.user} changed the routing on ${w.name}: anyone away is now ${w.routing?.skipAway ? "kept in" : "skipped in"} the rotation.`)
             toast(`Saved · routing. ${w.routing?.pool.length ?? 0} people were told.`)
-          }}>
-            {w.routing?.skipAway ? "Keep people who are away in the rotation" : "Skip people who are away"}
-          </Button>
-        </div>
+          },
+        }]} />
         {announcement && <Announcement text={`${announcement} Told today; the line expires in seven days.`} href={href("/ollopa")} />}
       </div>
     ),
@@ -246,18 +245,22 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           {num(w.ceiling.perDay)} a day · {num(w.ceiling.spentToday)} used{atCeiling ? " · reached" : ""} · at most {num(w.ceiling.perRun)} a run
         </p>
         <p className="text-sm text-muted-foreground">
-          At the ceiling, enrichment stops. People are still enrolled and still routed, marked “not enriched — daily ceiling reached”. No silent spend and no silent loss.
+          At the ceiling, enrichment stops. People are still enrolled and still routed, marked “not enriched — daily ceiling reached”.
         </p>
         <div className="flex flex-wrap items-end gap-2">
           <div>
             <Label htmlFor="wf-ceiling" className="text-xs">Raise the ceiling to</Label>
             <Input id="wf-ceiling" type="number" min={w.ceiling.perDay} className="mt-1 w-28" value={newCeiling} onChange={(e) => setNewCeiling(e.target.value)} placeholder={String(w.ceiling.perDay)} />
           </div>
-          <Button size="sm" disabled={!newCeiling || Number(newCeiling) <= w.ceiling.perDay} onClick={() => {
-            patch({ ceiling: { ...w.ceiling, perDay: Number(newCeiling) }, editedBy: session.user, editedOn: TODAY })
-            toast(`Ceiling raised to ${num(Number(newCeiling))} credits a day · ${num(w.ceiling.spentToday)} used today.`)
-            setNewCeiling("")
-          }}>Raise the ceiling</Button>
+          <Actions surface="card" items={[{
+            kind: "secondary", label: "Raise the ceiling",
+            onClick: () => {
+              patch({ ceiling: { ...w.ceiling, perDay: Number(newCeiling) }, editedBy: session.user, editedOn: TODAY })
+              toast(`Ceiling raised to ${num(Number(newCeiling))} credits a day · ${num(w.ceiling.spentToday)} used today.`)
+              setNewCeiling("")
+            },
+            disabledBecause: newCeiling && Number(newCeiling) > w.ceiling.perDay ? undefined : `A number above ${num(w.ceiling.perDay)}`,
+          }]} />
         </div>
       </div>
     ),
@@ -271,23 +274,32 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   sections.push({
     id: "turn-on", title: "Test and turn on",
     children: (
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">“Test on one record” runs the rules against a person and prints what it would do. It spends nothing, writes nothing and sends nothing.</p>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => { setTested(false); setTestOpen(true) }}>Test on one record</Button>
-          <Button size="sm" onClick={() => {
+      <Actions surface="page" items={[
+        {
+          kind: "primary",
+          label: w.status === "on" ? "Turn off" : "Turn on",
+          onClick: () => {
             patch({ status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
             toast(w.status === "on"
               ? `${w.name} stops enrolling. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`
-              : `${w.name} is on. ${num(matchNow)} people match the filter today; the daily limit is ${num(w.limits.perDay)}, so the rest wait.`)
-          }}>{w.status === "on" ? "Turn off" : "Turn on"}</Button>
-        </div>
-        <p className="text-sm">
-          {w.status === "on"
-            ? <>Turning off stops enrolling. The {num(w.sla?.running ?? 0)} people already running finish their steps.</>
-            : <>Turns on now. {num(matchNow)} people match the filter today; the daily limit is {num(w.limits.perDay)}, so the rest wait.</>}
-        </p>
-      </div>
+              : `${w.name} is on. ${num(matchNow)} people match the filter today.`)
+          },
+          // Neither direction can be undone: what was not routed while it was off was not routed,
+          // and what it enrols while it is on is enrolled. So both carry the confirmation.
+          irreversible: w.status === "on"
+            ? {
+              title: `Turn ${w.name} off?`,
+              consequence: `Nothing new is enrolled or routed until it is on again; anything that arrives meanwhile reaches nobody. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`,
+              confirmLabel: "Turn it off",
+            }
+            : {
+              title: `Turn ${w.name} on?`,
+              consequence: `${num(matchNow)} people match the filter today and start being enrolled and routed, spending up to ${num(w.ceiling.perDay)} credits a day. The daily limit is ${num(w.limits.perDay)}, so the rest wait.`,
+              confirmLabel: "Turn it on",
+            },
+        },
+        { kind: "secondary", label: "Test on one record", onClick: () => { setTested(false); setTestOpen(true) }, keys: "T" },
+      ]} />
     ),
   })
 
@@ -334,7 +346,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           {runs.length > 10 && (
             <Input aria-label="Find a person in the run history" placeholder="Find a person" value={runQ} onChange={(e) => setRunQ(e.target.value)} className="h-7 w-40 text-xs" />
           )}
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => toast(`${num(runs.length)} run rows exported as CSV.`)}>Export the run history</Button>
+          <Actions surface="card" items={[{ kind: "secondary", label: "Export the run history", onClick: () => toast(`${num(runs.length)} run rows exported as CSV.`) }]} />
         </div>
 
         <section>
@@ -351,7 +363,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                 <span className={r.outcome === "errored" ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}>
                   {r.outcome === "errored"
                     ? <>errored — {r.reason}</>
-                    : <>created a task for {r.assignedTo} · <button type="button" className="underline" onClick={() => follow("/ollopa/tasks", from(r.personId))}>open the task</button> · {r.credits} credits</>}
+                    : <>created a task for {r.assignedTo} · <a className="underline" href={href("/ollopa/tasks")} onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/tasks", from(r.personId)) } }}>open the task</a> · {r.credits} credits</>}
                 </span>
               </li>
             ))}
@@ -381,9 +393,18 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
             {shownExceptions.length === 0 && <li className="py-3 text-xs text-muted-foreground">Nothing could not be routed.</li>}
           </ul>
           {shownExceptions.length > 0 && (
-            <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => toast(`Retry ${num(shownExceptions.length)} · they are re-evaluated against the rules as they are now · about 0 credits`)}>
-              Retry {num(shownExceptions.length)} · re-evaluated against the rules as they are now · about 0 credits
-            </Button>
+            <div className="mt-2">
+              <Actions surface="card" items={[{
+                kind: "secondary",
+                label: `Retry ${num(shownExceptions.length)}`,
+                onClick: () => toast(`Retry ${num(shownExceptions.length)} · re-evaluated against the rules as they are now · about 0 credits`),
+                irreversible: {
+                  title: `Retry ${num(shownExceptions.length)} records?`,
+                  consequence: "They are re-evaluated against the rules as they are now, and whatever routes creates a task on the rep it lands on. About 0 credits.",
+                  confirmLabel: `Retry ${num(shownExceptions.length)}`,
+                },
+              }]} />
+            </div>
           )}
         </section>
       </div>
@@ -410,8 +431,8 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
               toast(w.status === "on" ? `${w.name} stops enrolling.` : `${w.name} is on.`)
             },
             confirm: w.status === "on"
-              ? `Stops enrolling. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`
-              : `Turns on now. ${num(matchNow)} people match the filter today; the daily limit is ${num(w.limits.perDay)}, so the rest wait.`,
+              ? `Nothing new is enrolled or routed until it is on again. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`
+              : `${num(matchNow)} people match the filter today and start being enrolled and routed. The daily limit is ${num(w.limits.perDay)}, so the rest wait.`,
           }],
           secondary: [{ label: "Test on one record", onClick: () => { setTested(false); setTestOpen(true) } }],
         }}
@@ -434,8 +455,8 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
               ? <p className="text-sm text-muted-foreground">Everything reached somebody.</p>
               : (
                 <div className="space-y-2">
-                  <p className="text-sm">{num(exceptions.length)} records reached nobody. The reason is on every row.</p>
-                  <Button size="sm" variant="outline" onClick={showRuns}>Open the run history</Button>
+                  <p className="text-sm">{num(exceptions.length)} records reached nobody.</p>
+                  <Actions surface="card" items={[{ kind: "secondary", label: "Open the run history", onClick: showRuns, keys: "E" }]} />
                 </div>
               ),
           },
@@ -459,7 +480,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
       {/* A test that really is a test: it prints what it would do and does none of it. */}
       <Panel id="workflow-test" title="Test on one record" open={testOpen} onOpenChange={setTestOpen}
-        footer={<Button className="w-full" onClick={() => { setTested(true); toast("Tested. Nothing was written, nothing was sent, no credits were spent.") }}>Run the test</Button>}
+        footer={<Actions surface="dialog" layout="stack" items={[{ kind: "primary", label: "Run the test", onClick: () => { setTested(true); toast("Tested. Nothing was written, nothing was sent, no credits were spent.") } }]} />}
       >
         <div className="space-y-3">
           <div>
@@ -469,7 +490,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
               <SelectContent>{seed.contacts.slice(0, 20).map((c) => <SelectItem key={c.id} value={c.id}>{c.name} · {c.company}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <p className="text-xs text-muted-foreground">Spends nothing, writes nothing, sends nothing.</p>
           {tested && person && (
             <ol className="space-y-2 border-t pt-3 text-sm">
               <li>
@@ -487,7 +507,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                   </p>
                 </li>
               ))}
-              <li className="text-xs text-muted-foreground">Nothing above happened. No credits were spent.</li>
             </ol>
           )}
         </div>

@@ -4,11 +4,11 @@
 // what it never does without a person, and what it has actually done for the person reading it.
 // There is no confidence badge here or anywhere else on the page: no threshold behind one has been
 // calibrated against outcomes, and an uncalibrated number is read as a guarantee.
-import { Bot, Lock, Pause, Play } from "lucide-react"
+import { Bot, Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { href } from "@/app/router"
+import { Actions } from "../../ui/Actions"
 import { Locked } from "../../ui/Locked"
 import { gate, money as dollars } from "../../ui/gate"
 import type { Disclosure } from "../../ui/useDisclosure"
@@ -92,15 +92,23 @@ export function Briefing(p: BriefingProps) {
               className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="w-full min-w-0 sm:flex-1">{x.text}</span>
               {/* Rule 5: the control sits on the line it belongs to, not in a row under the block. */}
-              {x.resume && rules.r5 && <Button data-item={i === pauseLine ? "exc.resume" : `exc.resume.${x.id}`} data-item-label="Resume or keep paused" size="sm" variant="outline" className="h-7" onClick={() => p.onResume(x.id)}>Resume</Button>}
-              {x.resume && rules.r5 && <Button size="sm" variant="ghost" className="h-7" onClick={() => document.dispatchEvent(new CustomEvent("ollopa:toast", { detail: "Kept paused. Nothing is sent." }))}>Keep paused</Button>}
+              {/* Two comparable acts, so neither is filled (DESIGN.md §1). */}
+              {x.resume && rules.r5 && (
+                <Actions surface="card" items={[
+                  { kind: "secondary", label: "Resume", onClick: () => p.onResume(x.id), dataItem: i === pauseLine ? "exc.resume" : `exc.resume.${x.id}`, dataItemLabel: "Resume or keep paused" },
+                  { kind: "secondary", label: "Keep paused", onClick: () => document.dispatchEvent(new CustomEvent("ollopa:toast", { detail: "Kept paused. Nothing is sent." })) },
+                ]} />
+              )}
               {x.href && <a className="underline underline-offset-4" href={href(x.href)}>{x.hrefLabel}</a>}
             </div>
           ))}
           {!rules.r5 && p.exceptions.some((x) => x.resume) && (
             <div className="pt-1">
-              <Button data-item="exc.resume" data-item-label="Resume or keep paused" size="sm" variant="outline" className="h-7"
-                onClick={() => p.onResume(p.exceptions.find((x) => x.resume)!.id)}>Resume paused items</Button>
+              <Actions surface="card" items={[{
+                kind: "secondary", label: "Resume paused items",
+                onClick: () => p.onResume(p.exceptions.find((x) => x.resume)!.id),
+                dataItem: "exc.resume", dataItemLabel: "Resume or keep paused",
+              }]} />
             </div>
           )}
         </div>
@@ -136,11 +144,10 @@ export function Briefing(p: BriefingProps) {
                 {p.runsToday(a)} runs today · {a.spentToday.toLocaleString()} of {a.capPerDay.toLocaleString()} credits today
               </p>
 
+              {/* What it can do is education and lives on the library site. What it may never do
+                  alone is an approval limit, which is decision-critical and stays (BUILD-BRIEF). */}
               {d.atLevelOne("brief.status") && (
-                <>
-                  <p className="mt-2 text-xs">It can: {a.can.join(", ").toLowerCase()}.</p>
-                  <p className="mt-0.5 text-xs">It never does this without a person: {a.needsApprovalFor.join(", ").toLowerCase()}.</p>
-                </>
+                <p className="mt-2 text-xs">Never without a person: {a.needsApprovalFor.join(", ").toLowerCase()}</p>
               )}
 
               {d.atLevelOne("brief.track-record") && track.proposed > 0 && (
@@ -171,13 +178,15 @@ export function Briefing(p: BriefingProps) {
                 </p>
               )}
 
+              {/* A seat that may not pause an agent sees no control at all, not a grey one. */}
               {p.canPause && (
-                <div className="mt-3">
-                  <Button data-item={`set.pause-agent.${a.id}`} data-item-label={`Pause ${a.name} now`}
-                    size="sm" variant="outline" className="h-7" onClick={() => p.onPause(a, !paused)}>
-                    {paused ? <><Play className="size-3.5" aria-hidden="true" />Resume</> : <><Pause className="size-3.5" aria-hidden="true" />Pause</>}
-                  </Button>
-                </div>
+                <Actions className="mt-3" surface="card" items={[{
+                  kind: "secondary",
+                  label: paused ? "Resume" : "Pause",
+                  onClick: () => p.onPause(a, !paused),
+                  dataItem: `set.pause-agent.${a.id}`,
+                  dataItemLabel: `Pause ${a.name} now`,
+                }]} />
               )}
             </li>
           )
@@ -190,12 +199,11 @@ export function Briefing(p: BriefingProps) {
               <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <span className="min-w-0 flex-1 text-sm font-medium">Scoring agent</span>
             </div>
-            <p className="mt-2 text-xs">It can: score a person or company, explain the score from its inputs.</p>
-            <p className="mt-0.5 text-xs">It never does this without a person: changing the primary score model.</p>
+            <p className="mt-2 text-xs">Never without a person: changing the primary score model</p>
             {third.locked ? (
               <div className="mt-3">
                 <Locked feature="A third agent" plan={third.plan} pricePerMonth={third.pricePerMonth} what={third.what}>
-                  <Button size="sm" variant="outline" className="h-7">Turn the scoring agent on</Button>
+                  <Actions surface="card" items={[{ kind: "secondary", label: "Turn the scoring agent on" }]} />
                 </Locked>
                 <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">{third.plan} · {dollars(third.pricePerMonth)} a month for this workspace.</p>
               </div>

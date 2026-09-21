@@ -3,7 +3,8 @@
 // Needs attention comes first and is a count only: the six warnings and their thresholds belong to the
 // deal record and the board, so Home counts them and states nothing of its own. An AE who has direct
 // reports gets the team roll-up above her own, because that is the number her week is measured in.
-import { Button } from "@/components/ui/button"
+import { href } from "@/app/router"
+import { Actions } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
@@ -55,7 +56,9 @@ function DealRow({ deal, note, money, ids }: { deal: Deal; note: string; money: 
         <span className="block text-xs text-muted-foreground">{deal.stage} · {note}</span>
       </span>
       <span className="shrink-0 tabular-nums">{money(deal.amount)}</span>
-      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={(e) => open(e.currentTarget)}>Open</Button>
+      {/* A destination, not a state change: a real link, so it copies and opens in a new tab,
+          and the click keeps it beside the page (DESIGN.md §1). */}
+      <Actions surface="card" className="shrink-0" items={[{ kind: "link", label: "Open", href: href(`/ollopa/deals/${deal.id}`), onClick: () => open() }]} />
     </Row>
   )
 }

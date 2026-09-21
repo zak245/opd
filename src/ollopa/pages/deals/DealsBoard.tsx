@@ -21,9 +21,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useRoute } from "@/app/router"
+import { href, useRoute } from "@/app/router"
 import { follow } from "../../chain"
 import { openBeside } from "../../beside"
+import { Actions } from "../../ui/Actions"
 import { useEdits } from "../../edits"
 import { TablePage, toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
@@ -230,7 +231,6 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const [wonFor, setWonFor] = useState<string | null>(null)
   const [lostFor, setLostFor] = useState<string | null>(null)
   const [importOpen, setImportOpen] = useState(false)
-  const [bulkDelete, setBulkDelete] = useState(false)
   const undoRef = useRef<{ said: string; run: () => void } | null>(null)
   const search = useRef<HTMLInputElement>(null)
 
@@ -786,7 +786,10 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
                 </PopoverContent>
               </Popover>
 
-              {view === "board" && <Button size="sm" className="h-8" onClick={() => setNewPanel(true)}>New deal</Button>}
+              {/* The one act this page exists for, so the one filled control on it (DESIGN.md §1). */}
+              {view === "board" && (
+                <Actions surface="card" items={[{ label: "New deal", kind: "primary", onClick: () => setNewPanel(true) }]} />
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -922,10 +925,10 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               title="No deals yet"
               body="A deal is an opportunity with an amount, a close date and a next step. Create one, or bring the pipeline you already have."
               action={
-                <span className="flex gap-2">
-                  <Button size="sm" onClick={() => setNewPanel(true)}>New deal</Button>
-                  <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>Import CSV</Button>
-                </span>
+                <Actions surface="card" items={[
+                  { label: "New deal", kind: "primary", onClick: () => setNewPanel(true) },
+                  { label: "Import CSV", kind: "secondary", onClick: () => setImportOpen(true) },
+                ]} />
               }
             />
           </div>
@@ -987,8 +990,23 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               <Input type="date" className="h-8 w-36" aria-label="New close date"
                 onChange={(e) => { const v = e.target.value; selected.forEach((id) => patch(id, { closeDate: v }, `${selected.length} close dates moved to ${day(v)}`)); }} />
             </label>
-            <Button size="sm" variant="outline" className="h-8" onClick={() => exportCsv(sorted.filter((r) => selected.includes(r.id)), visibleColumns, currency)}>Export</Button>
-            <Button size="sm" variant="ghost" className="h-8 text-destructive" onClick={() => setBulkDelete(true)}>Delete</Button>
+            {/* Two acts on the selection. Deleting cannot be undone, so it asks once, with what goes
+                with the deals inside the question and the count on the button that does it. */}
+            <Actions
+              surface="card"
+              items={[
+                { label: "Export", kind: "secondary", onClick: () => exportCsv(sorted.filter((r) => selected.includes(r.id)), visibleColumns, currency) },
+                {
+                  label: "Delete", kind: "destructive",
+                  onClick: () => { const n = selected.length; setSelected([]); toast(`${n} deals deleted. Undo is in the notification for 10 seconds.`) },
+                  irreversible: {
+                    title: `Delete ${selected.length} deal${selected.length === 1 ? "" : "s"}?`,
+                    consequence: `Their activities, notes and files go with them. The companies and contacts stay, and the ${crm?.name ?? "CRM"} opportunit${selected.length === 1 ? "y is" : "ies are"} not deleted.`,
+                    confirmLabel: `Delete ${selected.length} deal${selected.length === 1 ? "" : "s"}`,
+                  },
+                },
+              ]}
+            />
             <Button size="sm" variant="ghost" className="ml-auto h-8" onClick={() => setSelected([])}>Clear the selection</Button>
           </div>
         )}
@@ -1008,7 +1026,9 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
             onStep: (by) => { const to = glanceColumn[glanceAtIndex + by]; if (to) setGlance(to) },
           }}
           // The card the drawer was opened from is the anchor, so the crumb comes back to the board
-          // with that card lit and focused rather than to the top of the column.
+          // with that card lit and focused rather than to the top of the column. It is a link: the
+          // record is a destination, not a change to this deal (DESIGN.md §1).
+          openHref={href(`/ollopa/deals/${glanced.id}`)}
           onOpen={() => { const id = glanced.id; setGlance(null); leaveFor(`/ollopa/deals/${id}`, id) }}
         />
       )}
@@ -1026,8 +1046,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         onLog={(id, kind, body) => { const deal = all.find((x) => x.id === id); toast(`${kind} logged on ${deal?.name}: “${body.slice(0, 40)}${body.length > 40 ? "…" : ""}”`); setLogFor(null) }}
       />
 
-      <Panel id="deals-new" title="New deal" open={newPanel} onOpenChange={setNewPanel}
-        footer={<span className="text-xs text-muted-foreground">The deal appears in its stage column and counts in the forecast straight away.</span>}>
+      <Panel id="deals-new" title="New deal" open={newPanel} onOpenChange={setNewPanel}>
         <NewDealForm
           owners={owners}
           defaultOwner={session.user}
@@ -1043,28 +1062,19 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       </Panel>
 
       <Panel id="deals-import" title="Import deals from CSV" open={importOpen} onOpenChange={setImportOpen}
-        footer={<Button className="w-full" onClick={() => { setImportOpen(false); toast("Nothing was imported: this demo reads the seed, not your file.") }}>Start the import</Button>}>
+        footer={<Actions surface="dialog" layout="stack" items={[
+          { label: "Start the import", kind: "primary", onClick: () => { setImportOpen(false); toast("Nothing was imported: this demo reads the seed, not your file.") } },
+        ]} />}>
         <div className="space-y-3">
           <Input type="file" accept=".csv" aria-label="CSV file" />
+          {/* Not a note about the control: the columns are what the person has to produce, and the
+              file cannot be built without them. The rest of what used to sit here was education. */}
           <p className="text-xs text-muted-foreground">
-            One row per deal: name, company, amount, close date, stage, owner, next step and its date. Rows that name a
-            company nobody owns are skipped and listed at the end. Importing spends no credits.
+            Columns: name, company, amount, close date, stage, owner, next step, next step date.
           </p>
         </div>
       </Panel>
 
-      <Panel id="deals-bulk-delete" title={`Delete ${selected.length} deals?`} open={bulkDelete} onOpenChange={setBulkDelete}
-        footer={
-          <Button variant="destructive" className="w-full"
-            onClick={() => { const n = selected.length; setSelected([]); setBulkDelete(false); toast(`${n} deals deleted. Undo is in the notification for 10 seconds.`) }}>
-            Delete {selected.length} deals
-          </Button>
-        }>
-        <p className="text-sm">
-          Their activities, notes and files go with them. The companies and contacts stay, and the
-          {crm ? ` ${crm.name} opportunities are` : " CRM opportunity is"} not deleted.
-        </p>
-      </Panel>
     </DoorGroup>
   )
 }
@@ -1093,7 +1103,7 @@ function exportCsv(rows: Deal[], columns: { key: string; header: string }[], cur
   a.download = "deals.csv"
   a.click()
   URL.revokeObjectURL(url)
-  toast(`${rows.length} deals exported as CSV, in ${currency}. Exports spend no credits.`)
+  toast(`${rows.length} deals exported as CSV, in ${currency}.`)
 }
 
 /** Close won, mark lost and log: each states what happens before the button that does it. */
@@ -1118,12 +1128,18 @@ function Sheets({ all, wonFor, setWonFor, lostFor, setLostFor, logFor, setLogFor
   return (
     <>
       <Panel id="deals-won" title={won ? `Close ${won.name} as won?` : "Close won"} open={Boolean(won)} onOpenChange={(o) => { if (!o) setWonFor(null) }}
-        footer={won ? <Button className="w-full" onClick={() => onWin(won.id, won.name)}>Close won</Button> : null}>
+        footer={won ? <Actions surface="dialog" layout="stack" items={[
+          { label: "Close won", kind: "primary", onClick: () => onWin(won.id, won.name) },
+        ]} /> : null}>
         {won && <p className="text-sm">{wonConsequence(won)}</p>}
       </Panel>
 
       <Panel id="deals-lost" title={lost ? `Mark ${lost.name} lost?` : "Mark lost"} open={Boolean(lost)} onOpenChange={(o) => { if (!o) { setLostFor(null); setReason("") } }}
-        footer={lost ? <Button className="w-full" disabled={!reason} onClick={() => { onLose(lost.id, reason, lost.name); setReason("") }}>Archive as lost</Button> : null}>
+        footer={lost ? <Actions surface="dialog" layout="stack" items={[{
+          label: "Archive as lost", kind: "primary",
+          onClick: () => { onLose(lost.id, reason, lost.name); setReason("") },
+          disabledBecause: reason ? undefined : "Choose a reason above",
+        }]} /> : null}>
         {lost && (
           <div className="space-y-3">
             <div>
@@ -1139,7 +1155,11 @@ function Sheets({ all, wonFor, setWonFor, lostFor, setLostFor, logFor, setLogFor
       </Panel>
 
       <Panel id="deals-log" title={log ? `Log on ${log.name}` : "Log"} open={Boolean(log)} onOpenChange={(o) => { if (!o) { setLogFor(null); setBody("") } }}
-        footer={log ? <Button className="w-full" disabled={!body.trim()} onClick={() => { onLog(log.id, kind, body); setBody("") }}>Log {kind.toLowerCase()}</Button> : null}>
+        footer={log ? <Actions surface="dialog" layout="stack" items={[{
+          label: `Log ${kind.toLowerCase()}`, kind: "primary",
+          onClick: () => { onLog(log.id, kind, body); setBody("") },
+          disabledBecause: body.trim() ? undefined : "Say what happened above",
+        }]} /> : null}>
         <div className="space-y-3">
           <div role="radiogroup" aria-label="What to log" className="flex gap-1">
             {["Call", "Note"].map((k) => (
@@ -1149,7 +1169,6 @@ function Sheets({ all, wonFor, setWonFor, lostFor, setLostFor, logFor, setLogFor
           </div>
           <Textarea rows={4} aria-label="What happened" value={body} onChange={(e) => setBody(e.target.value)}
             placeholder="What was said, and what happens next" />
-          <p className="text-xs text-muted-foreground">Saved to this deal's activity and visible to everyone who can read the deal.</p>
         </div>
       </Panel>
     </>
@@ -1223,17 +1242,15 @@ function NewDealForm({ owners, defaultOwner, pipelines, companies, currency, onC
           <Input className="mt-1" type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Next step date" />
         </label>
       </div>
-      <Button
-        className="w-full"
-        disabled={!ok}
-        onClick={() => company && onCreate(newDeal({
+      <Actions surface="dialog" layout="stack" items={[{
+        label: "Create the deal", kind: "primary",
+        disabledBecause: ok ? undefined : "A name, a company and an amount",
+        onClick: () => company && onCreate(newDeal({
           id: `new-${Date.now()}`, name: name.trim(), company: company.name, companyId: company.id,
           amount: Number(amount), stage, closeDate, owner, pipeline, currency,
           nextStep: nextStep.trim() || null, nextStepDue: nextStep.trim() ? due : null,
-        }))}
-      >
-        Create the deal
-      </Button>
+        })),
+      }]} />
     </div>
   )
 }

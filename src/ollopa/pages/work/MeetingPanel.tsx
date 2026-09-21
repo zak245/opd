@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { follow } from "../../chain"
 import { Panel } from "../../ui/Panel"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { Actions } from "../../ui/Actions"
 import { seedFor, QUAL_ELEMENTS, TODAY, type Meeting } from "../../data/seed"
 import type { Session } from "../../session"
 import { originHere } from "./acts"
@@ -144,7 +144,6 @@ export function MeetingPanel(p: MeetingPanelProps) {
               <Button key={o.key} size="sm" variant={state === o.key ? "default" : "outline"} onClick={() => mark(o.key)}>{o.label}</Button>
             ))}
           </div>
-          <p className="pt-1.5 text-xs text-muted-foreground">A person marks the outcome. ollopA never reads it from the calendar's silence.</p>
         </section>
 
         {/* -------------------------------------------------------------------------- the times */}
@@ -165,7 +164,6 @@ export function MeetingPanel(p: MeetingPanelProps) {
               <Button size="sm" variant="ghost" className="mt-2 px-2 text-xs" onClick={() => p.say(`Your calendar link sent to ${p.contactName} from ${mailbox}. The booking happens in ${calendar.name}.`)}>
                 Send the calendar link instead
               </Button>
-              <p className="pt-1 text-xs text-muted-foreground">Times come from {calendar.name}. The booking page is the calendar's, not ollopA's.</p>
             </>
           ) : (
             <p className="pt-1 text-sm">
@@ -264,8 +262,17 @@ export function MeetingPanel(p: MeetingPanelProps) {
               </label>
               <Textarea id="mtg-follow" rows={3} value={followUp} onChange={(e) => { setFollowUp(e.target.value); setFollowUpEdited(true) }} className="mt-1" />
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Button size="sm" disabled={!followUp.trim()} onClick={() => p.say(`Follow-up sent to ${p.contactName} from ${mailbox}.`)}>Send the follow-up</Button>
-                <ConsequenceLine sends={1} to={p.contactName} from={mailbox} />
+                <Actions
+                  surface="card"
+                  items={[{
+                    kind: "primary",
+                    label: "Send the follow-up",
+                    onClick: () => p.say(`Follow-up sent to ${p.contactName} from ${mailbox}.`),
+                    cost: "1 email",
+                    consequence: `to ${p.contactName} from ${mailbox}`,
+                    disabledBecause: followUp.trim() ? undefined : "Write something first",
+                  }]}
+                />
               </div>
             </div>
             {hasTranscripts(p.session.business) && (
@@ -333,20 +340,20 @@ export function MeetingPanel(p: MeetingPanelProps) {
               </label>
             )}
             <div>
-              <Button size="sm" onClick={() => {
-                p.say(`Deal created at Qualified for ${aes.length ? assignTo : p.session.user}.`)
-                p.onOpenChange(false)
-                // The deal is a page, and the panel just closed: the trail keeps the reply or the
-                // task this was booked from, so the crumb comes back to that row.
-                follow(`/ollopa/deals/${deal?.id ?? seed.deals[0].id}`, originHere(p.contactId))
-              }}>
-                {aes.length ? "Create the deal and assign" : "Create the deal"}
-              </Button>
-              <p className="pt-1 text-xs text-muted-foreground">
-                {aes.length
-                  ? `Creates a deal at Qualified for ${assignTo} — territory ${seed.territories[0]?.name ?? "unassigned"} · change`
-                  : `Creates a deal at Qualified, owned by you.`}
-              </p>
+              <Actions
+                surface="card"
+                items={[{
+                  kind: "primary",
+                  label: aes.length ? `Create the deal and assign to ${assignTo}` : "Create the deal",
+                  onClick: () => {
+                    p.say(`Deal created at Qualified for ${aes.length ? assignTo : p.session.user}.`)
+                    p.onOpenChange(false)
+                    // The deal is a page, and the panel just closed: the trail keeps the reply or
+                    // the task this was booked from, so the crumb comes back to that row.
+                    follow(`/ollopa/deals/${deal?.id ?? seed.deals[0].id}`, originHere(p.contactId))
+                  },
+                }]}
+              />
             </div>
             {/* What the SDR is paid on. Never behind a door. */}
             {p.session.role === "sdr" && aes.length > 0 && (

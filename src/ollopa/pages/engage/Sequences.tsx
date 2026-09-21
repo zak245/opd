@@ -153,9 +153,9 @@ export function SequencesPage({ session }: { session: Session }) {
 
   const menu = (s: Sequence) => [
     { label: "Open", onClick: () => open(s) },
-    { label: "Duplicate · steps and settings, nobody in it", onClick: () => duplicate(s) },
+    { label: "Duplicate", onClick: () => duplicate(s) },
     {
-      label: `Archive · marks ${n(s.active + s.paused)} people finished and deletes their scheduled emails`,
+      label: `Archive · ${n(s.active + s.paused)} people`,
       destructive: true,
       onClick: () => {
         engage.patchSequence(session.business, s.id, { archivedAt: TODAY, status: "Paused" })
@@ -183,11 +183,6 @@ export function SequencesPage({ session }: { session: Session }) {
         <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
           <div>
             <h2 className="text-lg font-semibold">Sequences</h2>
-            <p className="text-sm text-muted-foreground">
-              {session.business === "ridgeline"
-                ? "Ridgeline runs lifecycle outreach; cold outbound is off by workspace rule."
-                : "Multi-step outreach. Replies land in Inbox; calls and LinkedIn steps land in Tasks."}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {duplicateIsVisible && rows[0] && <Button variant="outline" onClick={() => duplicate(rows[0])}>Duplicate “{rows[0].name}”</Button>}

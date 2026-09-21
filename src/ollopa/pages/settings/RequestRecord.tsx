@@ -6,7 +6,7 @@
 // count and the rollback path have been written.
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
@@ -171,12 +171,12 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
           {declining && (
             <div className="rounded-md border p-3">
               <label htmlFor="decline-reason" className="text-sm font-medium">Why are you declining?</label>
-              <p className="text-xs text-muted-foreground">{request.requester.user} reads this where they asked: at the control, on Home, and in their next digest.</p>
               <Textarea id="decline-reason" rows={3} className="mt-2" value={reason} onChange={(e) => setReason(e.target.value)} />
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" disabled={!reason.trim()} onClick={() => { setDeclining(false); setState("declined"); toast(`Declined. ${request.requester.user} reads the reason where they asked.`) }}>Decline</Button>
-                <Button size="sm" variant="ghost" onClick={() => setDeclining(false)}>Keep it open</Button>
-              </div>
+              <Actions className="mt-2" surface="card" items={[
+                { label: "Decline", kind: "secondary", disabledBecause: reason.trim() ? undefined : "Write the reason first",
+                  onClick: () => { setDeclining(false); setState("declined"); toast(`Declined. ${request.requester.user} reads the reason where they asked.`) } },
+                { label: "Keep it open", kind: "secondary", onClick: () => setDeclining(false) },
+              ]} />
             </div>
           )}
         </div>
@@ -264,9 +264,8 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
                   : "Nothing to verify until it ships."}
             </p>
             {request.state === "verified" && (
-              <Button size="sm" variant="outline" className="w-fit" onClick={() => { setState("investigating"); toast("Reopened. The history keeps both passes.") }}>
-                Reopen: the change did not hold
-              </Button>
+              <Actions surface="card" items={[{ label: "Reopen: the change did not hold", kind: "secondary",
+                onClick: () => { setState("investigating"); toast("Reopened. The history keeps both passes.") } }]} />
             )}
           </div>
         ),

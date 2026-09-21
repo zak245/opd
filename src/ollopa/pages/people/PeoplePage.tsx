@@ -23,6 +23,7 @@ import {
 import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
+import { Actions } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -607,19 +608,23 @@ export function PeoplePage({ session }: { session: Session }) {
   const total = allRows.length
   const scoreModel = seed.scoreModels.find((m) => m.primary) ?? seed.scoreModels[0]
 
+  /**
+   * The one act this page exists for after reading it, filled, and the two rare ways of doing the
+   * same thing behind a "…" — they are 4% and 1% of an SDR's week, so they are not level one.
+   * Importing is a page of its own, so it is a link and goes through the trail.
+   */
   const addPeople = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="sm">Add people <ChevronDown aria-hidden="true" className="size-3.5" /></Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => toast("Find people searches the database beside this table. It is a later case.")}>
-          Search the database
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => leaveFor("/ollopa/import", "people.add")}>Import CSV</DropdownMenuItem>
-        {b.crm && <DropdownMenuItem onSelect={() => toast(`Pulling changes from ${b.crm}.`)}>Sync from {b.crm} now</DropdownMenuItem>}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <span className="flex items-center gap-1">
+      <Actions surface="page" items={[{
+        kind: "primary",
+        label: "Add people",
+        onClick: () => toast("Find people searches the database beside this table. It is a later case."),
+      }]} />
+      <Actions surface="page" layout="menu" items={[
+        { kind: "link", label: "Import CSV", href: href("/ollopa/import"), onClick: () => leaveFor("/ollopa/import", "people.add") },
+        ...(b.crm ? [{ kind: "secondary" as const, label: `Sync from ${b.crm} now`, onClick: () => toast(`Pulling changes from ${b.crm}.`) }] : []),
+      ]} />
+    </span>
   )
 
   /**
@@ -967,7 +972,6 @@ export function PeoplePage({ session }: { session: Session }) {
         <div className="min-w-0 flex-1 overflow-auto border-t" data-container="people.table.columns" data-container-label="the table header">
           {/* Phone: the same items as cards, no level change. */}
           <ul className="divide-y md:hidden">
-            {selectMode && <li className="px-4 py-2 text-xs text-muted-foreground">Tap a row to select it.</li>}
             {page.map((p, i) => (
               <li key={p.id} className="px-4 py-3" data-item={p.id} data-item-label={p.name}>
                 <div className="flex items-start gap-2">
@@ -1307,16 +1311,12 @@ function JobChange({ p, seed, onDone }: { p: PersonRow; seed: ReturnType<typeof 
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 text-sm" onClick={(e) => e.stopPropagation()}>
         <p className="pb-2">{line}</p>
-        <div className="space-y-2">
-          <Button size="sm" className="w-full justify-start" onClick={() => { setOpen(false); onDone(`${p.name} updated to ${co?.name ?? "the new employer"}. History, notes and owner kept; taken out of any sequence aimed at ${p.jobChange!.previousCompany}.`) }}>
-            Update this record
-          </Button>
-          <p className="text-xs text-muted-foreground">Keeps the history, the notes and the owner; changes company, title and email, and takes them out of any sequence aimed at {p.jobChange.previousCompany}.</p>
-          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { setOpen(false); onDone(`New contact started for ${p.name} at ${co?.name ?? "the new employer"}. This record stays at ${p.jobChange!.previousCompany}.`) }}>
-            Create a new contact
-          </Button>
-          <p className="text-xs text-muted-foreground">Leaves this record as it was, at {p.jobChange.previousCompany}, and starts a new one.</p>
-        </div>
+        {/* Two comparable acts, so neither is filled; both can be undone, so neither carries a
+            sentence and neither asks first (DESIGN.md §1 and §3). What each does is its label. */}
+        <Actions surface="card" layout="stack" items={[
+          { kind: "secondary", label: "Update this record", onClick: () => { setOpen(false); onDone(`${p.name} updated to ${co?.name ?? "the new employer"}. History, notes and owner kept; taken out of any sequence aimed at ${p.jobChange!.previousCompany}.`) } },
+          { kind: "secondary", label: "Create a new contact", onClick: () => { setOpen(false); onDone(`New contact started for ${p.name} at ${co?.name ?? "the new employer"}. This record stays at ${p.jobChange!.previousCompany}.`) } },
+        ]} />
       </PopoverContent>
     </Popover>
   )

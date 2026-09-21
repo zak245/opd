@@ -9,10 +9,10 @@
 // What sits where is asked of the usage model for this seat at this business (`useDisclosure("agents")`),
 // never from a list written here.
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { href, navigate, useRoute } from "@/app/router"
 import { useLesson } from "@/learn/context"
+import { Actions } from "../../ui/Actions"
 import { ApproveBar } from "../../ui/ApproveBar"
 import { DoorGroup, useDoorState } from "../../ui/Door"
 import { SectionHeader } from "../../ui/SectionHeader"
@@ -229,7 +229,9 @@ export function AgentsPage({ session }: { session: Session }) {
             body={session.role === "admin"
               ? "Turn an agent on in Settings › Agents and AI, and what it does will be listed here with what it cost."
               : `${admin ? `${admin.user}, ${admin.title},` : "Your admin"} can turn agents on.`}
-            action={session.role === "admin" ? <Button size="sm" asChild><a href={href("/ollopa/settings/agents")}>Agent settings</a></Button> : undefined}
+            action={session.role === "admin"
+              ? <Actions surface="card" items={[{ kind: "link", label: "Agent settings", href: href("/ollopa/settings/agents") }]} />
+              : undefined}
           />
         </div>
       </div>
@@ -279,7 +281,7 @@ export function AgentsPage({ session }: { session: Session }) {
           count={queue.length}
           action={
             queue.length > 0 && !bulkAtLevelOne && rules.r8
-              ? <Button data-item="wait.review-all" size="sm" variant="outline" onClick={() => setBatchOpen(true)}>Review all {queue.length}</Button>
+              ? <Actions surface="card" items={[{ kind: "secondary", label: `Review all ${queue.length}`, onClick: () => setBatchOpen(true), dataItem: "wait.review-all", dataItemLabel: "Review all" }]} />
               : undefined
           }
         />

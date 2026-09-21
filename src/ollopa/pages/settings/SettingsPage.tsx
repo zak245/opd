@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { href, useRoute } from "@/app/router"
 import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
+import { Actions } from "../../ui/Actions"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -26,7 +27,7 @@ import { levelOf, weeklyUse, type Role, type UsageItem } from "../../usage/model
 import type { Session } from "../../session"
 import { CreditsPanel } from "../../shell/Credits"
 import { settingsFor } from "./derived"
-import { JUMP_EVENT, leaveOnClick } from "./leave"
+import { JUMP_EVENT, leaveSettings } from "./leave"
 import { useSidebarMove } from "../setup/moved"
 import { credits, longDay, money, plural } from "./format"
 import { Row, personalRows, rowsFor, type PanelRequest, type SettingRow } from "./rows"
@@ -120,33 +121,28 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   const spiked = c.spikeAlert.todayMultiple >= c.spikeAlert.multiple
   const paused = seed.mailboxes.filter((m) => m.paused).length
 
-  const [cancelling, setCancelling] = useState(false)
-
   return (
     <section aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="border-b bg-muted/30 px-4 py-3 sm:px-6">
       {isAdmin ? (
         <>
           <StripLine item="plan.price" label="Plan and price">
             {b.plan.name} · {b.plan.seats} seats · {money(ws.plan.monthlyTotal)} a month, billed {ws.plan.billing === "annual" ? "annually" : "monthly"} · renews {longDay(ws.plan.renews)}
-            <Button variant="link" size="sm" className="h-auto px-2 text-sm" onClick={() => toast("Change plan: seats, plan cards and the total, with Due today on screen.")}>Change plan</Button>
-            <Button variant="link" size="sm" data-item="plan.cancel" data-item-label="Cancel plan" className="h-auto px-0 text-sm" onClick={() => setCancelling(true)}>Cancel plan</Button>
+            <Actions surface="card" className="ml-2 inline-flex align-middle" items={[
+              { label: "Change plan", kind: "secondary",
+                onClick: () => toast("Change plan: seats, plan cards and the total, with Due today on screen.") },
+              { label: "Cancel plan", kind: "destructive",
+                onClick: () => toast(`${b.name} ends on ${longDay(ws.plan.renews)}.`),
+                irreversible: {
+                  title: `Cancel ${b.name}?`,
+                  consequence: `${b.name} ends on ${longDay(ws.plan.renews)} and sending stops that day. Your ${seed.contacts.length.toLocaleString()} contacts, ${plural(seed.sequences.length, "sequence")} and every report stay readable for 30 days, then they are deleted.`,
+                  confirmLabel: "Cancel plan",
+                } },
+            ]} />
           </StripLine>
-          {cancelling && (
-            <div role="dialog" aria-label="Cancel plan" className="my-2 rounded-md border p-3">
-              <p className="text-sm">
-                Cancelling ends {b.name} on {longDay(ws.plan.renews)}. Sending stops that day. Your {seed.contacts.length.toLocaleString()} contacts,
-                {" "}{plural(seed.sequences.length, "sequence")} and every report stay readable for 30 days, then they are deleted.
-              </p>
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" variant="destructive" onClick={() => { setCancelling(false); toast(`${b.name} ends on ${longDay(ws.plan.renews)}.`) }}>Cancel plan</Button>
-                <Button size="sm" variant="outline" onClick={() => setCancelling(false)}>Keep plan</Button>
-              </div>
-            </div>
-          )}
           <StripLine item="plan.credits" label="Credits" tone={runsOutFirst ? "warning" : undefined}>
             {credits(c.balance)} of {credits(c.monthlyCap)} left this month · {credits(c.burnPerWeek)} a week ·{" "}
             {runsOutFirst ? `runs out about ${longDay(c.runsOutOn)}, before the cycle ends on ${longDay(c.cycleEnds)}` : `lasts to about ${longDay(c.runsOutOn)}`}
-            <Button variant="link" size="sm" className="h-auto px-2 text-sm" onClick={onCredits}>Where it went</Button>
+            <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />
           </StripLine>
           <StripLine item="mail.bounce-guard" label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
             {guard.state === "ok" ? "On" : guard.state === "warning" ? "Warning" : "Paused"} · {guard.observedPercent}% of {guard.volume7d.toLocaleString()} in 7 days ·
@@ -156,8 +152,10 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
             {plural(seed.agents.filter((a) => a.on).length, "agent")} on · send, add-to-sequence, stage changes and spend over a cap need the owner's approval ·
             {" "}<span data-item="ai.second-approval" data-item-label="Second approval">a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits</span> ·
             {" "}<span data-item="ai.credit-caps" data-item-label="Agent credit caps">caps {seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month</span>
-            {waiting > 0 && <> · <a className="underline underline-offset-4" href={href("/ollopa/agents")}
-              onClick={leaveOnClick("/ollopa/agents", "ai.approvals")}>{waiting} waiting for approval</a></>}
+            {waiting > 0 && <> · <Actions surface="card" className="inline-flex align-middle" items={[{
+              label: `${waiting} waiting for approval`, kind: "link", href: href("/ollopa/agents"),
+              onClick: () => leaveSettings("/ollopa/agents", "ai.approvals"),
+            }]} /></>}
           </StripLine>
           <StripLine item="plan.spike-alert" label="Credit spike" tone={spiked ? "warning" : undefined}>
             Alert at {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}× · {spiked ? "alerted" : "nothing alerted"}
@@ -190,8 +188,10 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
           {upgrades.length > 0 && (
             <StripLine item="plan.upgrade-requests" label="Upgrade requests">
               {plural(upgrades.length, "upgrade request")} · {upgrades[0].requester.user} wants {upgrades[0].upgrade!.feature} ({upgrades[0].upgrade!.plan}, {money(upgrades[0].upgrade!.monthlyTotal)} a month for {b.plan.seats} seats)
-              {" "}<a className="underline underline-offset-4" href={href("/ollopa/requests")}
-                     onClick={leaveOnClick("/ollopa/requests", "plan.upgrade-requests")}>Review</a>
+              {" "}<Actions surface="card" className="inline-flex align-middle" items={[{
+                label: "Review", kind: "link", href: href("/ollopa/requests"),
+                onClick: () => leaveSettings("/ollopa/requests", "plan.upgrade-requests"),
+              }]} />
             </StripLine>
           )}
         </>
@@ -199,7 +199,7 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
         <>
           <StripLine item="plan.credits" label="Your credits">
             {mine ? `${credits(mine.used)} used this month${mine.limit ? ` · your limit is ${credits(mine.limit)}` : ""}` : `${credits(c.balance)} left in the workspace`}
-            <Button variant="link" size="sm" className="h-auto px-2 text-sm" onClick={onCredits}>Where it went</Button>
+            <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />
           </StripLine>
           <StripLine item="mail.bounce-guard" label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
             {guard.state === "ok" ? "On" : guard.state === "warning" ? "Warning" : "Paused"} · warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% ·
@@ -632,7 +632,7 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
           <span>
             Viewing as {viewing.name} ({viewing.title}{viewing.team ? `, ${viewing.team}` : ""}). This is their Settings page, not yours.
           </span>
-          <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => setViewing(null)}>Exit</Button>
+          <Actions surface="card" items={[{ label: "Stop viewing as them", kind: "secondary", onClick: () => setViewing(null) }]} />
         </div>
       )}
 

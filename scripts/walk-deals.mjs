@@ -92,7 +92,7 @@ await wait(400)
 console.log("after [ in the drawer:", await drawer())
 
 // The drawer opens with the one editable field focused, so Tab down to "Open" and press it.
-await press(`Array.from(document.querySelectorAll('[role="dialog"] button')).find((b) => b.textContent.trim() === "Open")`)
+await press(`Array.from(document.querySelectorAll('[role="dialog"] button, [role="dialog"] a')).find((b) => b.textContent.trim() === "Open")`)
 await wait(900)
 console.log("chain 1 trail:", await trail())
 await shot("3-record")
@@ -110,7 +110,7 @@ await shot("4-back")
 await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).focus(), card.id)
 await page.keyboard.press("Enter")
 await wait(600)
-await press(`Array.from(document.querySelectorAll('[role="dialog"] button')).find((b) => b.textContent.trim() === "Open")`)
+await press(`Array.from(document.querySelectorAll('[role="dialog"] button, [role="dialog"] a')).find((b) => b.textContent.trim() === "Open")`)
 await wait(900)
 const dealRoute = await page.evaluate(() => location.hash)
 console.log("the deal:", dealRoute)
@@ -154,7 +154,7 @@ console.log("chain 2 the deal's scroll:", scrollBefore, "→", scrollAfter, scro
 await shot("6-contact-next")
 
 // "Open the page": the contact record, with the deal and the row it came from on the trail.
-await press(`Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Open the page")`)
+await press(`Array.from(document.querySelectorAll("aside button, aside a")).find((b) => b.textContent.trim() === "Open the page")`)
 await wait(900)
 console.log("chain 2 trail:", await trail())
 await shot("7-contact-record")
@@ -233,40 +233,56 @@ for (let i = 0; i < 25 && !acted; i++) {
   await wait(220)
   acted = await page.evaluate(() => {
     const name = document.querySelector("aside h2")?.textContent?.trim()
-    const closeWon = Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Close won")
-    if (!name || !closeWon || closeWon.disabled) return null
+    // The one act the pane carries: winning and losing cannot be undone, so they stayed on the page.
+    const set = Array.from(document.querySelectorAll("aside button, aside a")).find((b) => b.textContent.trim() === "Set the next step")
+    if (!name || !set) return null
     // The card on the board behind: the mounted page that is not the one on screen.
     const link = Array.from(document.querySelectorAll("a[data-item][data-item-label]"))
       .find((a) => a.dataset.itemLabel === name && !a.closest('[data-page-active="true"]'))
     if (!link) return null
     const card = link.closest("li")
-    const board = card.closest('[data-page-route], [data-page-key], body')
-    const rail = Array.from(document.querySelectorAll("button")).find((b) => b.textContent.trim().startsWith("Closed won ·") && !b.closest('[data-page-active="true"]'))
-    const where = card.closest("section")?.querySelector("h3")?.textContent ?? "the closed-won rail"
-    return { name, id: link.dataset.item, column: where, rail: rail?.textContent.trim() ?? "(no rail)", board: !!board }
+    return { name, id: link.dataset.item, before: card.textContent.replace(/\s+/g, " ").slice(0, 80) }
   })
 }
 if (!acted) throw new Error("the pane never reached a deal with a card on the board behind")
 console.log("the pane is on:", acted.name)
-console.log("the board behind, before:", `${acted.name} is in ${acted.column} · rail reads "${acted.rail}"`)
-await press(`Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Close won")`)
+console.log("the card behind, before:", acted.before)
+
+// Type the next step in the pane and set it. The card on the board behind is mounted on the trail
+// and reads the same store, so it says the new step without the page being touched.
+await page.evaluate(() => document.querySelector("aside input")?.focus())
+await page.keyboard.type("Security review with the CISO")
+await press(`Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Set the next step")`)
 await wait(700)
-console.log("the board behind, after: ", await page.evaluate((id) => {
+console.log("the card behind, after: ", await page.evaluate((id) => {
   const link = Array.from(document.querySelectorAll(`a[data-item="${id}"]`)).find((a) => !a.closest('[data-page-active="true"]'))
-  const column = link ? (link.closest("li").closest("section")?.querySelector("h3")?.textContent ?? "?") : "no open column"
-  const rail = Array.from(document.querySelectorAll("button")).find((b) => b.textContent.trim().startsWith("Closed won ·") && !b.closest('[data-page-active="true"]'))
-  return `the card is in ${column} · rail reads "${rail?.textContent.trim() ?? "(no rail)"}"`
+  return link ? link.closest("li").textContent.replace(/\s+/g, " ").slice(0, 80) : "(the card has left the board)"
 }, acted.id))
 await shot("13-pane-acted")
-await press(`Array.from(document.querySelectorAll('nav[aria-label="Your path"] button')).filter((b) => b.offsetParent !== null).pop()`)
-await wait(1000)
-console.log("back on the board itself:", await page.evaluate((id) => {
-  const link = document.querySelector(`[data-page-active="true"] a[data-item="${id}"]`)
-  const column = link ? (link.closest("li").closest("section")?.querySelector("h3")?.textContent ?? "?") : "no open column"
-  const rail = Array.from(document.querySelectorAll('[data-page-active="true"] button')).find((b) => b.textContent.trim().startsWith("Closed won ·"))
-  return `the card is in ${column} · rail reads "${rail?.textContent.trim() ?? "(no rail)"}"`
-}, acted.id))
-await shot("14-board-after")
+
+/* ------------------------------------- Mark won on the page, through the question it has to ask */
+
+// The pane closes and the record it was beside is the surface again: winning is the page's act.
+await page.keyboard.press("Escape")
+await wait(500)
+console.log("on the record:", await page.evaluate(() => document.title.split(" · ")[0]))
+await press(`Array.from(document.querySelectorAll('[data-page-active="true"] button')).find((b) => b.textContent.trim().startsWith("Mark won"))`)
+await wait(600)
+console.log("it asks:", await page.evaluate(() => {
+  const d = document.querySelector('[role="dialog"]')
+  if (!d) return "(nothing was asked)"
+  const affirmative = Array.from(d.querySelectorAll("button")).map((b) => b.textContent.trim()).filter(Boolean)
+  return `"${d.querySelector("h2")?.textContent?.trim()}" · ${d.querySelector("p")?.textContent?.trim().slice(0, 110)} · buttons: ${affirmative.join(", ")}`
+}))
+await shot("16-mark-won-asks")
+await press(`Array.from(document.querySelectorAll('[role="dialog"] button')).find((b) => b.textContent.trim() === "Mark won")`)
+await wait(800)
+console.log("after it:", await page.evaluate(() => {
+  const stage = Array.from(document.querySelectorAll('[data-page-active="true"] [role="radiogroup"] button')).find((b) => b.getAttribute("aria-checked") === "true" || b.dataset.state === "on")
+  const ribbon = document.querySelector('[data-page-active="true"] [role="status"], [data-page-active="true"] [aria-live]')?.textContent?.trim().slice(0, 80)
+  return `stage now ${stage?.textContent?.trim() ?? "?"} · ${ribbon ?? "(no ribbon)"}`
+}))
+await shot("17-mark-won-done")
 
 /* --------------------------- the pane's fields are the model's answer, not a list anyone typed out */
 

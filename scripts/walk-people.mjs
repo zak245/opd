@@ -127,9 +127,10 @@ const scroll = () => page.evaluate(() => document.querySelector('[data-page-acti
 const draft = () => page.evaluate(() => document.querySelector('[data-page-active="true"] textarea[aria-label="Add a note"]')?.value ?? "(no composer)")
 const before = await scroll()
 await page.evaluate(() => {
-  const chips = document.querySelector('[data-page-active="true"] h2')?.parentElement
-  const b = chips?.querySelector("button:not([aria-label])")
-  b?.click()
+  // The company is the record's subtitle: a real link whose plain click opens it beside.
+  const head = document.querySelector('[data-page-active="true"] h2')?.closest("div")?.parentElement
+  const a = head?.querySelector('a[href*="/ollopa/companies/"]')
+  a?.click()
 })
 await wait(600)
 console.log("pane:", await paneTitle(), "· page scroll unchanged:", (await scroll()) === before)
@@ -160,8 +161,8 @@ await shot("8-next")
 
 // Act in the pane. The destination is chosen, never guessed: the picker first, then the button.
 console.log("before choosing, the button reads:", await page.evaluate(() =>
-  (Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.outerHTML.match(/disabled/) ? "disabled · " : "enabled · ")
-  + (Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.textContent.trim() ?? "(none)")))
+  (Array.from(document.querySelectorAll("aside button, aside a")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.outerHTML.match(/disabled/) ? "disabled · " : "enabled · ")
+  + (Array.from(document.querySelectorAll("aside button, aside a")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.textContent.trim() ?? "(none)")))
 await page.click('aside [role="combobox"]')
 await wait(400)
 const chose = await page.evaluate(() => {
@@ -172,7 +173,7 @@ const chose = await page.evaluate(() => {
 })
 await wait(400)
 const acted = await page.evaluate(() => {
-  const b = Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))
+  const b = Array.from(document.querySelectorAll("aside button, aside a")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))
   const label = b?.textContent.trim()
   b?.click()
   return label
@@ -185,12 +186,12 @@ await shot("9-acted")
 
 // A second click must not move them again by surprise: the picker is empty and the button is off.
 console.log("after acting, the button reads:", await page.evaluate(() => {
-  const b = Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))
+  const b = Array.from(document.querySelectorAll("aside button, aside a")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))
   return (b?.disabled ? "disabled · " : "ENABLED · ") + (b?.textContent.trim() ?? "(none)")
 }))
 
 // Undo puts it back, in the pane and on the row behind, at once.
-await page.evaluate(() => Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Undo")?.click())
+await page.evaluate(() => Array.from(document.querySelectorAll("aside button, aside a")).find((b) => b.textContent.trim() === "Undo")?.click())
 await wait(500)
 console.log("after Undo — row behind:", await besideMarked(), "· result line:", await page.evaluate(() => (document.querySelector('aside [role="status"]')?.innerText ?? "").replace(/\s+/g, " ") ?? "(none)"))
 await shot("9b-undone")
@@ -200,10 +201,10 @@ await page.click('aside [role="combobox"]')
 await wait(400)
 await page.evaluate(() => document.querySelector('[role="option"]')?.click())
 await wait(300)
-await page.evaluate(() => Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.click())
+await page.evaluate(() => Array.from(document.querySelectorAll("aside button, aside a")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.click())
 await wait(500)
 
-await page.evaluate(() => Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Open the page")?.click())
+await page.evaluate(() => Array.from(document.querySelectorAll("aside button, aside a")).find((b) => b.textContent.trim() === "Open the page")?.click())
 await wait(800)
 console.log("trail:", await trail())
 await shot("10-openpage")
@@ -225,7 +226,7 @@ await page.evaluate(() => {
   const card = Array.from(document.querySelectorAll('[data-page-active="true"] [data-record-card]'))
     .find((c) => /People at/.test(c.textContent))
   card?.scrollIntoView({ block: "center" })
-  Array.from(card?.querySelectorAll("button") ?? []).find((b) => /in People$/.test(b.textContent.trim()))?.click()
+  Array.from(card?.querySelectorAll("a, button") ?? []).find((b) => /in People$/.test(b.textContent.trim()))?.click()
 })
 await wait(800)
 console.log("route:", await page.evaluate(() => location.hash))

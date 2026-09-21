@@ -6,10 +6,9 @@
 // `/ollopa/accounts/:id` redirects to `/ollopa/companies/:id`: a company and an account are one
 // object with a customer state, and there is one record, not two (PLAN.md, 15 September 2026).
 import { declarePaneFields } from "../../ui/Beside"
-import { Button } from "@/components/ui/button"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { Actions } from "../../ui/Actions"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { CompaniesPage } from "./CompaniesPage"
 import { AccountsPage } from "./AccountsPage"
@@ -82,9 +81,12 @@ function mergedCompany(business: Business, id: string) {
  *
  * The body is the record's first level in the record's own order: the same fields, the same labels,
  * built from `quickLookFields`, so the pane, the drawer and the top of the page cannot drift apart.
- * Then the two or three things a chain that arrives here actually wants to do, each a real button
- * with what it will do written under it. Nothing in here opens a door, a panel or a second pane:
- * past these fields the way on is "Open the page" in the frame above.
+ * Then the acts a chain that arrives here runs, drawn by their kind. There are two of them and
+ * neither is filled, because they are comparable (DESIGN.md §1). Marking a company do not prospect
+ * is not here: it stops the sequences of everybody at the company, which is not something a look
+ * beside another page should be able to do in one click, so it lives on the record with its
+ * confirmation and the pane's way to it is "Open the page". Nothing is written under a free,
+ * reversible act; researching spends, so it carries its one line.
  */
 const CompanyBeside: BesideComponent = ({ session, id }) => {
   // What has already been changed on this company in this session, so an action taken in here shows
@@ -103,7 +105,7 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
   const customer = isCustomer(company) && Boolean(v.account)
   const business = seed.workspace
   const runs = (change.researchRuns ?? []).length + v.research.length
-  const blocked = company.stage === "Do not prospect"
+  const canEdit = company.owner === session.user || session.role === "admin" || session.role === "cs"
 
   const research = () => {
     const before = change.researchRuns ?? []
@@ -111,16 +113,9 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
     say(`Research agent ran on ${company.name} · ${CREDITS.research} credits. The brief is in the company's research door.`)
   }
 
-  const setStage = (to: "Do not prospect" | "Cold") => {
-    applyChange(company.id, { stage: to })
-    say(to === "Do not prospect"
-      ? `${company.name} · Do not prospect. Sequences stopped for ${v.inSequence.length} contacts here.`
-      : `${company.name} · Cold. Sequences can include the ${v.contacts.length} contacts here again.`)
-  }
-
   const logTouch = () => {
     const before = change.touches ?? []
-    applyChange(company.id, { touches: [{ kind: "Touch", at: TODAY, note: `Logged from beside ${business.name}`, by: session.user }, ...before] })
+    applyChange(company.id, { touches: [{ kind: "Touch", at: TODAY, note: `Logged beside ${business.name}`, by: session.user }, ...before] })
     say(`Touch logged on ${company.name}. Last touch is today and the health score follows it.`)
   }
 
@@ -135,32 +130,29 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
         ))}
       </dl>
 
-      {/* The actions the chain needs: a real control each, with its consequence under it. */}
+      {/* A seat that cannot change this company gets the sentence naming who can, not a control it
+          may not use (RULES.md rule 4). Researching spends credits and anybody may do it. */}
       <div className="space-y-3 border-t pt-3">
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start" onClick={research}>
-            {runs === 0 ? `Research · ${CREDITS.research} credits` : `Research again · ${CREDITS.research} credits`}
-          </Button>
-          <ConsequenceLine className="mt-1" credits={CREDITS.research}
-            changes={`Reads about ${company.name} from 14 sources and writes a brief on the company`} />
-        </div>
-
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start"
-                  onClick={() => setStage(blocked ? "Cold" : "Do not prospect")}>
-            {blocked ? "Allow prospecting again" : "Mark do not prospect"}
-          </Button>
-          <ConsequenceLine className="mt-1"
-            changes={blocked
-              ? `Sequences can include the ${v.contacts.length} contacts at ${company.name} again`
-              : `Stops sequences for the ${v.inSequence.length} contact${v.inSequence.length === 1 ? "" : "s"} here; the ${v.contacts.length} people stay on People`} />
-        </div>
-
-        {customer && (
-          <div>
-            <Button size="sm" variant="outline" className="w-full justify-start" onClick={logTouch}>Log a touch today</Button>
-            <ConsequenceLine className="mt-1" changes={`Last touch on ${company.name} becomes today, and the health score follows it`} />
-          </div>
+        <Actions
+          surface="pane"
+          layout="stack"
+          items={[
+            {
+              kind: "secondary",
+              label: runs === 0 ? "Research" : "Research again",
+              onClick: research,
+              cost: `${CREDITS.research} credits`,
+              consequence: "Charged once",
+            },
+            ...(customer && canEdit
+              ? [{ kind: "secondary" as const, label: "Log a touch today", onClick: logTouch }]
+              : []),
+          ]}
+        />
+        {!canEdit && (
+          <p className="text-xs text-muted-foreground">
+            {company.owner} owns {company.name}; only the owner, customer success or an admin can change it.
+          </p>
         )}
       </div>
     </div>

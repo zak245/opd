@@ -6,13 +6,13 @@
 // focus-within, and the same actions repeat in the row's "…" menu, whose accessible name is the list
 // of what is in it — no menu in this product is called "More actions".
 import { useMemo, useRef, type ReactNode } from "react"
-import { ArrowDown, ArrowUp, ChevronsUpDown, MoreHorizontal } from "lucide-react"
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Actions, type Action } from "../../ui/Actions"
 import { usePref } from "./prefs"
 
 export interface GridColumn<T> {
@@ -85,26 +85,25 @@ export function Grid<T>(p: GridProps<T>) {
     }
   }
 
+  /**
+   * Every control on a row is drawn by its kind, not by this file: the row's own acts and the ones
+   * behind the "…" are one list, and `Actions` puts the destructive one last, after a separator,
+   * and never next to a benign one (DESIGN.md §1).
+   */
+  const rowItems = (row: T): Action[] => [
+    ...(p.actions?.(row) ?? []).map((a): Action => ({ kind: "secondary", label: a.label, onClick: () => a.onClick(row) })),
+    ...(p.menu?.(row) ?? []).map((m): Action => ({ kind: m.destructive ? "destructive" : "secondary", label: m.label, onClick: () => m.onClick(row) })),
+  ]
+
   const rowMenu = (row: T) => {
-    const items = p.menu?.(row) ?? []
-    const acts = p.actions?.(row) ?? []
-    if (items.length === 0 && acts.length === 0) return null
+    const items = rowItems(row)
+    if (items.length === 0) return null
+    // `Actions` names its own trigger, so the list of what is behind it — which is this product's
+    // rule for a menu's accessible name — is carried by the group around it.
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon" variant="ghost" className="size-7" aria-label={p.menuName}><MoreHorizontal className="size-4" /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {acts.map((a) => <DropdownMenuItem key={a.label} onSelect={() => a.onClick(row)}>{a.label}</DropdownMenuItem>)}
-          {acts.length > 0 && items.length > 0 && <DropdownMenuSeparator />}
-          {items.map((m) => (
-            <div key={m.label} className="contents">
-              {m.separatorBefore && <DropdownMenuSeparator />}
-              <DropdownMenuItem onSelect={() => m.onClick(row)} className={m.destructive ? "text-destructive" : undefined}>{m.label}</DropdownMenuItem>
-            </div>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div role="group" aria-label={p.menuName}>
+        <Actions surface="card" layout="menu" items={items} />
+      </div>
     )
   }
 
@@ -186,17 +185,16 @@ export function Grid<T>(p: GridProps<T>) {
                 {shown.map((c) => <TableCell key={c.key} className={cn("py-2", c.className)}>{c.cell(row)}</TableCell>)}
                 <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
-                    {(p.actions?.(row) ?? []).map((a) => (
-                      <Button
-                        key={a.label}
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-                        onClick={() => a.onClick(row)}
-                      >
-                        {a.label}
-                      </Button>
-                    ))}
+                    {/* The row's own acts, repeated in the menu beside them: nothing is hover-only,
+                        so they appear on hover and on focus and are reachable either way. */}
+                    {(p.actions?.(row) ?? []).length > 0 && (
+                      <div className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100">
+                        <Actions
+                          surface="card"
+                          items={(p.actions?.(row) ?? []).map((a): Action => ({ kind: "secondary", label: a.label, onClick: () => a.onClick(row) }))}
+                        />
+                      </div>
+                    )}
                     {rowMenu(row)}
                   </div>
                 </TableCell>

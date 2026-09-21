@@ -27,6 +27,7 @@ import { AddToSequencePanel } from "./AddToSequence"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
+import { Actions, type Action } from "../../ui/Actions"
 import { type Col, BesideLink, DataTable, FollowLink, Pill, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
@@ -52,7 +53,6 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   const [adding, setAdding] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
-  const [confirming, setConfirming] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   // The members are found inside the list, whatever the count: over ten rows the search appears, and
   // it never becomes a reason to leave for People (rule 4).
@@ -233,31 +233,36 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
               </p>
             </div>
 
+            {/* One filled control: the act this list exists for. Everything else is a comparable
+                act, and deleting the list is last with its own confirmation (DESIGN.md §1). */}
             <div className="ml-auto flex flex-wrap items-center gap-2" data-print-hide>
-              {list.kind === "people"
-                ? <Button size="sm" onClick={() => setEnrolling(true)}>Add to sequence</Button>
-                : <Button
-                    size="sm" data-item="list.find-people"
-                    onClick={() => follow(`/ollopa/people?companies=${list.id}`, { ...origin, anchor: "list.find-people" })}
-                  >Find people at these companies</Button>}
-              {hasCampaigns && <Button size="sm" variant="outline" onClick={() => say(`${list.name}: pick a campaign`)}>Add to campaign</Button>}
-              {list.mode === "static" && isOwner && <Button size="sm" variant="outline" onClick={() => setAdding(true)}>{list.kind === "people" ? "Add people" : "Add companies"}</Button>}
-              {list.mode === "segment" && (
-                <Button size="sm" variant="outline" onClick={() => { engage.patchList(session.business, list.id, { lastRefreshed: TODAY }); say(`${list.name} refreshed · ${n(count)} match now`) }}>Refresh now</Button>
-              )}
-              <Button size="sm" variant="outline" onClick={() => say(`Exported ${list.name} · ${n(count)} rows, in the order shown`)}>Export CSV</Button>
-              <Button size="sm" variant="ghost" onClick={() => say("Link to this list copied")}>Copy link</Button>
-              {isOwner && (confirming ? (
-                <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
-                  <span className="max-w-[26rem] text-xs text-destructive">
-                    The {n(count)} {list.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
-                  </span>
-                  <Button size="sm" variant="destructive" onClick={() => { engage.deleteList(session.business, list.id); navigate("/ollopa/lists") }}>Delete list</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Keep it</Button>
-                </span>
-              ) : (
-                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirming(true)}>Delete list</Button>
-              ))}
+              <Actions
+                surface="page"
+                items={[
+                  list.kind === "people"
+                    ? { kind: "primary", label: "Add to sequence", onClick: () => setEnrolling(true) }
+                    : { kind: "primary", label: "Find people at these companies", onClick: () => follow(`/ollopa/people?companies=${list.id}`, { ...origin, anchor: "list.find-people" }) },
+                  ...(hasCampaigns ? [{ kind: "secondary" as const, label: "Add to campaign", onClick: () => say(`${list.name}: pick a campaign`) }] : []),
+                  ...(list.mode === "static" && isOwner
+                    ? [{ kind: "secondary" as const, label: list.kind === "people" ? "Add people" : "Add companies", onClick: () => setAdding(true) }]
+                    : []),
+                  ...(list.mode === "segment"
+                    ? [{ kind: "secondary" as const, label: "Refresh now", onClick: () => { engage.patchList(session.business, list.id, { lastRefreshed: TODAY }); say(`${list.name} refreshed · ${n(count)} match now`) } }]
+                    : []),
+                  { kind: "secondary", label: "Export CSV", onClick: () => say(`Exported ${list.name} · ${n(count)} rows, in the order shown`) },
+                  { kind: "secondary", label: "Copy link", onClick: () => say("Link to this list copied") },
+                  ...(isOwner ? [{
+                    kind: "destructive" as const,
+                    label: "Delete list",
+                    onClick: () => { engage.deleteList(session.business, list.id); navigate("/ollopa/lists") },
+                    irreversible: {
+                      title: `Delete ${list.name}?`,
+                      consequence: `The ${n(count)} ${list.kind === "people" ? "people stay in People" : "companies stay in Companies"} and running sequences keep their contacts. The list itself goes.`,
+                      confirmLabel: "Delete the list",
+                    },
+                  }] : []),
+                ] as Action[]}
+              />
             </div>
           </div>
 
@@ -274,22 +279,30 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
             {list.feeds.filter((f) => f.auto).map((f) => (
               <p key={f.name} className="flex flex-wrap items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                 New matches added to {f.name} automatically
-                <Button
-                  size="sm" variant="outline" className="h-6 px-2 text-xs"
-                  onClick={() => {
-                    engage.patchList(session.business, list.id, { feeds: list.feeds.map((x) => (x.name === f.name ? { ...x, auto: false } : x)) })
-                    say(`New matches are no longer added to ${f.name}`)
-                  }}
-                >Turn off</Button>
+                <Actions
+                  surface="card"
+                  items={[{
+                    kind: "secondary",
+                    label: "Turn off",
+                    onClick: () => {
+                      engage.patchList(session.business, list.id, { feeds: list.feeds.map((x) => (x.name === f.name ? { ...x, auto: false } : x)) })
+                      say(`New matches are no longer added to ${f.name}`)
+                    },
+                  }]}
+                />
               </p>
             ))}
             {watch && (
               <p className="flex flex-wrap items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                 {watch.agent} researches new matches · about {watch.creditsEach} credits each · about {n(watch.perWeek)} credits a week
-                <Button
-                  size="sm" variant="outline" className="h-6 px-2 text-xs"
-                  onClick={() => { engage.patchList(session.business, list.id, { source: "manual" }); say(`${watch.agent} no longer watches ${list.name}`) }}
-                >Turn off</Button>
+                <Actions
+                  surface="card"
+                  items={[{
+                    kind: "secondary",
+                    label: "Turn off",
+                    onClick: () => { engage.patchList(session.business, list.id, { source: "manual" }); say(`${watch.agent} no longer watches ${list.name}`) },
+                  }]}
+                />
               </p>
             )}
           </div>
@@ -316,8 +329,13 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                   </div>
                   <p className="mt-2 text-sm tabular-nums">{n(count)} match right now</p>
                   <div className="mt-2 flex gap-2">
-                    <Button size="sm" onClick={() => { setEditingFilters(false); say(`Filters saved · ${n(count)} match`) }}>Save filters</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditingFilters(false)}>Cancel</Button>
+                    <Actions
+                      surface="card"
+                      items={[
+                        { kind: "primary", label: "Save filters", onClick: () => { setEditingFilters(false); say(`Filters saved · ${n(count)} match`) } },
+                        { kind: "secondary", label: "Cancel", onClick: () => setEditingFilters(false) },
+                      ]}
+                    />
                   </div>
                 </div>
               ) : (
@@ -399,23 +417,32 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                 selected, onChange: setSelected,
                 bar: (ids) => (
                   <>
-                    <Button size="sm" variant="outline" onClick={() => setEnrolling(true)}>Add to sequence</Button>
-                    <Button size="sm" variant="outline" onClick={() => say(`Exported ${n(ids.length)} rows`)}>Export CSV</Button>
-                    <Button size="sm" variant="outline" onClick={() => say(`Enriched ${n(ids.length)} people · ${n(enrichCredits(ids.length))} credits`)}>
-                      Enrich {n(ids.length)} · {n(enrichCredits(ids.length))} credits
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => say(`Stage set for ${n(ids.length)} people`)}>Set stage</Button>
-                    <Button size="sm" variant="outline" onClick={() => say(`Owner assigned for ${n(ids.length)} people`)}>Assign owner</Button>
-                    <Button size="sm" variant="outline" onClick={() => say(`${n(ids.length)} call tasks created`)}>Create call tasks</Button>
-                    <Button size="sm" variant="outline" onClick={() => say(`Custom field set for ${n(ids.length)} people`)}>Set a custom field</Button>
-                    <Button size="sm" variant="outline" onClick={() => say("No duplicates found in this list")}>Merge duplicates</Button>
-                    <Button
-                      size="sm" variant="ghost" className="text-destructive"
-                      onClick={() => {
-                        engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => !ids.includes(m)) })
-                        setSelected([]); say(`${n(ids.length)} removed from ${list.name} · they stay in People`)
-                      }}
-                    >Remove {n(ids.length)} · they stay in People</Button>
+                    <Actions
+                      surface="card"
+                      items={[
+                        { kind: "secondary", label: "Add to sequence", onClick: () => setEnrolling(true) },
+                        { kind: "secondary", label: "Export CSV", onClick: () => say(`Exported ${n(ids.length)} rows`) },
+                        { kind: "secondary", label: `Enrich ${n(ids.length)}`, cost: `${n(enrichCredits(ids.length))} credits`, onClick: () => say(`Enriched ${n(ids.length)} people · ${n(enrichCredits(ids.length))} credits`) },
+                        { kind: "secondary", label: "Set stage", onClick: () => say(`Stage set for ${n(ids.length)} people`) },
+                        { kind: "secondary", label: "Assign owner", onClick: () => say(`Owner assigned for ${n(ids.length)} people`) },
+                        { kind: "secondary", label: "Create call tasks", onClick: () => say(`${n(ids.length)} call tasks created`) },
+                        { kind: "secondary", label: "Set a custom field", onClick: () => say(`Custom field set for ${n(ids.length)} people`) },
+                        { kind: "secondary", label: "Merge duplicates", onClick: () => say("No duplicates found in this list") },
+                        {
+                          kind: "destructive",
+                          label: `Remove ${n(ids.length)}`,
+                          onClick: () => {
+                            engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => !ids.includes(m)) })
+                            setSelected([]); say(`${n(ids.length)} removed from ${list.name}`)
+                          },
+                          irreversible: {
+                            title: `Remove ${n(ids.length)} from ${list.name}?`,
+                            consequence: "They stay in People and in any sequence they are running. Only this list changes.",
+                            confirmLabel: `Remove ${n(ids.length)}`,
+                          },
+                        },
+                      ]}
+                    />
                   </>
                 ),
               }}
@@ -447,11 +474,25 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                 selected, onChange: setSelected,
                 bar: (ids) => (
                   <>
-                    <Button size="sm" variant="outline" onClick={() => say(`Exported ${n(ids.length)} rows`)}>Export CSV</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
-                      engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => !ids.includes(m)) })
-                      setSelected([]); say(`${n(ids.length)} removed from ${list.name} · they stay in Companies`)
-                    }}>Remove {n(ids.length)} · they stay in Companies</Button>
+                    <Actions
+                      surface="card"
+                      items={[
+                        { kind: "secondary", label: "Export CSV", onClick: () => say(`Exported ${n(ids.length)} rows`) },
+                        {
+                          kind: "destructive",
+                          label: `Remove ${n(ids.length)}`,
+                          onClick: () => {
+                            engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => !ids.includes(m)) })
+                            setSelected([]); say(`${n(ids.length)} removed from ${list.name}`)
+                          },
+                          irreversible: {
+                            title: `Remove ${n(ids.length)} from ${list.name}?`,
+                            consequence: "They stay in Companies. Only this list changes.",
+                            confirmLabel: `Remove ${n(ids.length)}`,
+                          },
+                        },
+                      ]}
+                    />
                   </>
                 ),
               }}
@@ -475,9 +516,6 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
             </Door>
           </div>
 
-          <p className="mt-4 border-t py-4 text-xs text-muted-foreground" data-print-hide>
-            Deleting this list keeps the {n(count)} {list.kind === "people" ? "people in People" : "companies in Companies"}. Running sequences keep their contacts.
-          </p>
         </div>
 
         {/* ---------------------------------------------------------------------- the two panels */}

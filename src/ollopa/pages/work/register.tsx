@@ -11,21 +11,21 @@
 // and `X-meeting` are opened from a row, from the queue body, and — by the contact, company and deal
 // records — from theirs. `D-thread-agent` and `X-reply` live inside the thread, where sending the
 // agent's draft is the approval.
-import { declarePaneFields } from "../../ui/Beside"
 import type { ReactNode } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { href } from "@/app/router"
 import type { PageComponent } from "../../Product"
 import { closeBeside, openBeside, openBesideNested, type BesideComponent } from "../../beside"
 import { follow } from "../../chain"
-import { editOf, recordEdit } from "../../edits"
-import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { clearEdit, editOf, recordEdit, useEdit } from "../../edits"
+import { Actions, type Action } from "../../ui/Actions"
+import { declarePaneFields, useBesideDone } from "../../ui/Beside"
 import { useDisclosure, type Disclosure } from "../../ui/useDisclosure"
 import { seedFor } from "../../data/seed"
 import { Inbox, ThreadRoute } from "./Inbox"
 import { Tasks } from "./Tasks"
 import { originHere } from "./acts"
-import { calendarOf, contactIndex, dealFor, repliesFor, tasksFor } from "./data"
+import { aeSeats, calendarOf, contactIndex, dealFor, repliesFor, tasksFor } from "./data"
+import { Badge } from "@/components/ui/badge"
 import { day, dueLabel, localTime, tomorrow, waiting } from "./format"
 
 export const nodes: Record<string, PageComponent> = {
@@ -82,6 +82,8 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
   const d = useDisclosure("inbox")
   declarePaneFields("inbox")
   const seed = seedFor(session.business)
+  const edit = useEdit("reply", id)
+  useBesideDone(typeof edit?.note === "string" ? { note: edit.note, onUndo: () => clearEdit("reply", id) } : null)
   const r = repliesFor(session).find((x) => x.id === id)
   if (!r) return <p className="text-muted-foreground">This reply is not in {seed.workspace.name}.</p>
 
@@ -89,8 +91,42 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
   const deal = dealFor(session.business, r.dealId)
   const calendar = calendarOf(session.business)
   const thread = `/ollopa/inbox/${r.id}`
-  const first = r.contact.split(" ")[0]
   const sent = r.messages.filter((m) => m.from === "us").length
+  const ae = aeSeats(session.business)[0]
+
+  /**
+   * An act here writes one record to the shared store; the Inbox row and Home's Replies row read
+   * the same record and change in place, and the frame's footer offers the one way back. Nothing
+   * here spends and nothing here is final, which is why no line sits under any of them.
+   */
+  const handle = (note: string, patch: Record<string, unknown> = {}) => {
+    recordEdit("reply", r.id, { handled: true, note, ...patch })
+    say(note)
+  }
+
+  /**
+   * Every act this pane could carry, each named by its usage item. The model says which of them
+   * this seat touches in a week; the pane takes the three it touches most and leaves the rest to
+   * the thread, which "Open the page" leads to. Going to the thread is a destination, so those two
+   * are links and not acts (DESIGN.md §1).
+   */
+  const candidates: { item: string; action: Action }[] = [
+    { item: "inbox.act.reply", action: { kind: "link", label: "Reply in the thread", href: href(thread), onClick: () => follow(thread, originHere(r.id)) } },
+    ...(calendar
+      ? [{ item: "inbox.act.book-meeting", action: { kind: "link" as const, label: "Book a meeting", href: href(`${thread}?meeting=new`), onClick: () => follow(`${thread}?meeting=new`, originHere(r.id)) } }]
+      : []),
+    ...(ae
+      ? [{ item: "inbox.act.hand-to-ae", action: { kind: "secondary" as const, label: `Hand to ${ae.user}`, onClick: () => handle(`handed to ${ae.user} · a task “Reply to ${r.contact.split(" ")[0]}” is on their list`, { handedTo: ae.user }) } }]
+      : []),
+    { item: "inbox.act.done", action: { kind: "secondary", label: "Mark done", onClick: () => handle("marked done") } },
+    { item: "inbox.act.not-interested", action: { kind: "secondary", label: "Mark not interested", onClick: () => handle(`marked not interested · “${r.sequence}” is finished for them`) } },
+  ]
+
+  const acts = candidates
+    .filter((c) => d.level(c.item) === 1)
+    .sort((a, b) => d.weekly(b.item) - d.weekly(a.item))
+    .slice(0, 3)
+    .map((c) => c.action)
 
   // The thread's own order, each line named by the item that decides whether this seat sees it.
   const fields = levelOneFields(d, [
@@ -139,36 +175,27 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
       </article>
       )}
 
-      <div className="space-y-3 border-t pt-3">
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start"
-                  onClick={() => follow(thread, originHere(r.id))}>
-            Reply to {first}
-          </Button>
-          <ConsequenceLine className="mt-1" changes={`Opens the thread in Inbox, where the composer is. Nothing is sent until you press Send there`} />
-        </div>
+      {/* The contact, one step in — the record's own Contact line made a destination, because
+          navigation in a pane is a link and not an act (DESIGN.md §1). */}
+      <p className="border-t pt-3">
+        <a
+          href={href(`/ollopa/people/${r.contactId}`)}
+          onClick={(e) => { if (!e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); openBesideNested({ kind: "person", id: r.contactId }) } }}
+          className="text-xs font-medium underline decoration-muted-foreground underline-offset-4 hover:decoration-current"
+        >
+          {r.contact}
+        </a>
+      </p>
 
-        {calendar ? (
-          <div>
-            <Button size="sm" variant="outline" className="w-full justify-start"
-                    onClick={() => follow(`${thread}?meeting=new`, originHere(r.id))}>
-              Book a meeting
-            </Button>
-            <ConsequenceLine className="mt-1" changes={`Opens the thread with the times ${calendar.name} has free; the invite goes out when you confirm it`} />
-          </div>
-        ) : (
-          <ConsequenceLine changes="No calendar is connected, so nothing can be booked from here" />
-        )}
-
-        {/* One step in, never two: from the contact the way on is "Open the page". */}
-        <div>
-          <Button size="sm" variant="ghost" className="w-full justify-start"
-                  onClick={() => openBesideNested({ kind: "person", id: r.contactId })}>
-            {r.contact} ›
-          </Button>
-          <ConsequenceLine className="mt-1" changes={`Reads ${first}'s record here, with this reply one step behind`} />
-        </div>
-      </div>
+      {/* The three acts this seat runs most on a reply, and no more. Each candidate names its usage
+          item and the model ranks them, the way the contact pane does; the two that go to the thread
+          are links, because they are destinations. Nothing here spends and nothing here is final, so
+          nothing carries a line (DESIGN.md §2 and §3). */}
+      {calendar || acts.length > 0 ? (
+        <Actions surface="pane" layout="stack" items={acts} />
+      ) : (
+        <p className="text-xs text-muted-foreground">No calendar is connected, so nothing can be booked from here.</p>
+      )}
     </div>
   )
 }
@@ -191,6 +218,9 @@ const TaskBeside: BesideComponent = ({ session, id, target }) => {
   const d = useDisclosure("tasks")
   declarePaneFields("tasks")
   const seed = seedFor(session.business)
+  // What the last act did and the way out of it, from the same record the row behind is reading.
+  const edit = useEdit("task", id)
+  useBesideDone(typeof edit?.note === "string" ? { note: edit.note, onUndo: () => clearEdit("task", id) } : null)
   const t = tasksFor(session).find((x) => x.id === id)
   if (!t) return <p className="text-muted-foreground">This task is not in {seed.workspace.name}.</p>
 
@@ -199,20 +229,41 @@ const TaskBeside: BesideComponent = ({ session, id, target }) => {
   const from = t.createdBy === "sequence" ? `“${t.sequence}”` : t.createdBy === "agent" ? t.creator : `${t.creator}, by hand`
 
   /**
-   * Done and Snooze both take this task off the list. The record goes to the shared store, which is
-   * where the row behind reads it from, and then the pane moves with the list rather than sitting on
-   * a task that is no longer there: the one that took its place, counted against the list as it is
-   * now. When nothing is left the pane closes, because there is nothing beside the page to read.
+   * Every act this pane could carry, named by its usage item. Done is the one act a task exists for
+   * and is the pane's single filled control; snooze and skip are the other two the person came for.
+   * The model decides which of the three this seat actually holds.
    */
-  const act = (what: "done" | "snoozed") => {
-    const note = what === "done"
-      ? `${t.kind} with ${t.contact} marked done.${t.sequence ? ` ${first} moves to the next step of “${t.sequence}”.` : ""}`
-      : `${t.contact}'s ${t.kind.toLowerCase()} snoozed to ${day(tomorrow())}.${t.sequence ? " The sequence waits." : ""}`
-    recordEdit("task", t.id, what === "done" ? { done: true, note } : { snoozed: true, until: tomorrow(), note })
+  const candidates: { item: string; action: Action }[] = [
+    { item: "tasks.done", action: { kind: "primary", label: "Done", onClick: () => act("done") } },
+    { item: "tasks.snooze", action: { kind: "secondary", label: "Snooze to tomorrow", onClick: () => act("snoozed") } },
+    { item: "tasks.skip", action: { kind: "secondary", label: "Skip", onClick: () => act("skipped") } },
+  ]
+
+  const acts = candidates
+    .filter((c) => d.level(c.item) === 1)
+    .sort((a, b) => d.weekly(b.item) - d.weekly(a.item))
+    .slice(0, 3)
+    .map((c) => c.action)
+
+  const act = (what: "done" | "snoozed" | "skipped") => {
+    const note =
+      what === "done" ? `${t.kind} with ${t.contact} marked done.${t.sequence ? ` ${first} moves to the next step of “${t.sequence}”.` : ""}`
+        : what === "skipped" ? `${t.kind} with ${t.contact} skipped.${t.sequence ? ` ${first} moves to the next step of “${t.sequence}”.` : ""}`
+          : `${t.contact}'s ${t.kind.toLowerCase()} snoozed to ${day(tomorrow())}.${t.sequence ? " The sequence waits." : ""}`
+    recordEdit("task", t.id,
+      what === "done" ? { done: true, note }
+        : what === "skipped" ? { skipped: true, note }
+          : { snoozed: true, until: tomorrow(), note })
     say(note)
 
     const was = target.list?.ids ?? [t.id]
-    const gone = (x: string) => x === t.id || !!editOf("task", x)?.done || !!editOf("task", x)?.snoozed
+    // Each of the three takes this task off the list, so the pane moves with the list rather than
+    // sitting on a task that is no longer there: the one that took its place, counted against the
+    // list as it is now. When nothing is left it closes, because there is nothing left to read.
+    const gone = (x: string) => {
+      const e = editOf("task", x)
+      return x === t.id || !!e?.done || !!e?.snoozed || !!e?.skipped
+    }
     const rest = was.filter((x) => !gone(x))
     if (rest.length === 0) { closeBeside(); return }
     const index = Math.min(Math.max(0, was.indexOf(t.id)), rest.length - 1)
@@ -228,7 +279,24 @@ const TaskBeside: BesideComponent = ({ session, id, target }) => {
     },
     { item: "tasks.local-time", label: "Their time", value: contact?.tz ? localTime(contact.tz) : null },
     { item: "tasks.rows", label: "Type", value: <Badge variant="outline" className="text-xs">{t.kind}</Badge> },
-    { item: "tasks.rows", label: "Contact", value: `${t.contact} · ${contact?.title ?? "—"}` },
+    {
+      item: "tasks.rows",
+      label: "Contact",
+      // The one step in. Navigation in a pane is a link, so the record's own Contact line is the
+      // destination rather than a fourth control under the acts (DESIGN.md §1).
+      value: (
+        <>
+          <a
+            href={href(`/ollopa/people/${t.contactId}`)}
+            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); openBesideNested({ kind: "person", id: t.contactId }) } }}
+            className="font-medium underline decoration-muted-foreground underline-offset-4 hover:decoration-current"
+          >
+            {t.contact}
+          </a>
+          <span className="text-muted-foreground"> · {contact?.title ?? "—"}</span>
+        </>
+      ),
+    },
     {
       item: "tasks.dnc-badge",
       label: "Phone",
@@ -266,36 +334,11 @@ const TaskBeside: BesideComponent = ({ session, id, target }) => {
         <p className="text-xs text-destructive">The sequence waits at this step.</p>
       )}
 
-      <div className="space-y-3 border-t pt-3">
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => act("done")}>
-            Done
-          </Button>
-          <ConsequenceLine
-            className="mt-1"
-            changes={t.sequence
-              ? `Takes it off the list and moves ${first} to the next step of “${t.sequence}”; this pane moves to the task that takes its place`
-              : "Takes it off the list; this pane moves to the task that takes its place"}
-          />
-        </div>
-
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => act("snoozed")}>
-            Snooze to tomorrow
-          </Button>
-          <ConsequenceLine
-            className="mt-1"
-            changes={t.sequence ? `Comes back on ${day(tomorrow())}; the sequence waits until then` : `Comes back on ${day(tomorrow())}`}
-          />
-        </div>
-
-        <div>
-          <Button size="sm" variant="ghost" className="w-full justify-start"
-                  onClick={() => openBesideNested({ kind: "person", id: t.contactId })}>
-            {t.contact} ›
-          </Button>
-          <ConsequenceLine className="mt-1" changes={`Reads ${first}'s record here, with this task one step behind`} />
-        </div>
+      {/* The three acts a task exists for, in the order the queue runs them: Done is the one act
+          this surface is for, so it is the filled control; snoozing and skipping are the other two
+          the person came for. Each is reversible and free, so none carries a line (DESIGN.md §2). */}
+      <div className="border-t pt-3">
+        <Actions surface="pane" layout="stack" items={acts} />
       </div>
     </div>
   )

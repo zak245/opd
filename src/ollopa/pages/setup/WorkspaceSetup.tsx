@@ -12,7 +12,7 @@
 import { useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Actions } from "../../ui/Actions"
 import { Input } from "@/components/ui/input"
 import { navigate } from "@/app/router"
 import { back, useTrail } from "../../chain"
@@ -186,7 +186,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
         <p className="mt-3 text-sm text-muted-foreground">
           {declared.user} set it up on {longDate(declared.on)}. They can change how your team works in Settings › How your team works.
         </p>
-        <Button className="mt-6" variant="outline" onClick={() => navigate("/ollopa")}>Back to Home</Button>
+        <Actions className="mt-6" surface="page" items={[{ label: "Back to Home", kind: "secondary", onClick: () => navigate("/ollopa") }]} />
       </div>
     )
   }
@@ -222,9 +222,6 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
 
       <div className="mx-auto max-w-3xl px-6 py-10">
         <h1 className="text-2xl font-semibold">How your team works</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Three questions decide what each seat sees first. {declared.user} answered them on {longDate(declared.on)}; changing an answer changes every sidebar, and Settings changes them again at any time.
-        </p>
 
         <section className="mt-8 grid gap-3 sm:grid-cols-3">
           <label className="text-sm">
@@ -292,7 +289,6 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
               We all do everything
             </label>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">Running the workspace is not on the list: the seat you are signed in with holds it. A job nobody does here produces no screens and costs nothing.</p>
         </fieldset>
 
         <section aria-live="polite" className="mt-8 rounded-lg border bg-background p-4">
@@ -305,10 +301,6 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
               <ProfileBlock profile={profile} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} />
             </div>
           )}
-          <p className="mt-4 text-sm text-muted-foreground">
-            A page left out still opens, by ⌘K or by link, and its header offers “Add to sidebar”; an added page goes to the end of its group and stays.
-            When a strong signal arrives, a left-out page appears in the sidebar by itself for two weeks and then asks whether to keep it. All of it changes later in Settings › How your team works.
-          </p>
 
           <div className="mt-4 border-t pt-3">
             <h3>
@@ -356,20 +348,17 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
               </div>
             ))}
           </div>
-          <Button variant="outline" size="sm" className="mt-2" onClick={() => setInvites([...invites, { email: "", seat: "sdr" }])}>Add another person</Button>
-          <p className="mt-2 text-sm text-muted-foreground">Sent when you press Start. Skipping this is normal; Settings invites later.</p>
+          <Actions className="mt-2" surface="card" items={[{ label: "Add another person", kind: "secondary", onClick: () => setInvites([...invites, { email: "", seat: "sdr" }]) }]} />
         </section>
 
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t pt-6">
-          <Button disabled={!answered} onClick={() => finish({ skipped: false })}>{trail.length > 0 ? "Save the answers" : "Start"}</Button>
-          <Button variant="outline" onClick={() => finish({ skipped: true })}>Skip</Button>
-          <span className="text-sm text-muted-foreground">
-            {answered
-              ? `Every seat gets ${PROFILE_LABEL[profile]}. Skipping gives every page to every seat instead — more, never less.`
-              : "Answer all three to start, or skip and get every page for every seat."}
-          </span>
+          <Actions surface="page" items={[
+            { label: trail.length > 0 ? "Save the answers" : "Start", kind: "primary",
+              disabledBecause: answered ? undefined : "Answer all three questions",
+              onClick: () => finish({ skipped: false }) },
+            { label: "Skip", kind: "secondary", onClick: () => finish({ skipped: true }) },
+          ]} />
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">Answers are saved as you make them. Leaving and coming back returns this page exactly as it is.</p>
       </div>
     </div>
   )

@@ -4,7 +4,7 @@
 // disabled until every item has been expanded or scrolled past once. Rule 7's corollary: disclosure
 // that exceeds review capacity is the same as hiding. Shown 48 people a problematic agent action step
 // by step, 88.5% saw it and 23.9% stopped it; the bar budgets the reviewer's attention, not the pixel.
-import { Button } from "@/components/ui/button"
+import { Actions } from "./Actions"
 import { consequenceText, type ConsequenceProps } from "./ConsequenceLine"
 
 export interface ApproveItem {
@@ -36,13 +36,24 @@ export function ApproveBar({ items, onApproveAll, onDeclineAll }: ApproveBarProp
     <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur">
       <div className="min-w-0 text-xs text-muted-foreground">
         {unread > 0
-          ? `${unread} of ${items.length} not read yet. Open or scroll past each one to approve them together.`
+          ? null
           : items.map((i) => consequenceText(i.consequence)).slice(0, 1).join("") + (items.length > 1 ? ` and ${items.length - 1} more` : "")}
       </div>
-      <div className="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onDeclineAll}>Decline {items.length}</Button>
-        <Button size="sm" disabled={unread > 0} onClick={onApproveAll}>{approveAllLabel(items)}</Button>
-      </div>
+      {/* The total is in the primary's own label, and the reason it is off — items nobody has read
+          yet, which this person can change — sits beside it (DESIGN.md §1 and §3). */}
+      <Actions
+        className="ml-auto"
+        surface="card"
+        items={[
+          {
+            kind: "primary",
+            label: approveAllLabel(items),
+            onClick: onApproveAll,
+            disabledBecause: unread > 0 ? `${unread} of ${items.length} not read yet` : undefined,
+          },
+          { kind: "secondary", label: `Decline ${items.length}`, onClick: onDeclineAll },
+        ]}
+      />
     </div>
   )
 }

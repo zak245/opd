@@ -121,7 +121,6 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
         <Button size="sm" className="h-7 px-2 text-xs" disabled={!ok} onClick={() => onSave(text.trim(), due)}>Save</Button>
         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onCancel}>Cancel</Button>
       </div>
-      <p className="text-[11px] text-muted-foreground">The step and its date are saved together.</p>
     </div>
   )
 }
@@ -330,9 +329,6 @@ export function DealCard(p: DealCardProps) {
         <div className="rounded-md border border-dashed p-2 text-xs" onClick={(e) => e.stopPropagation()}>
           <div className="text-[11px] font-medium text-muted-foreground">Proposed by the research agent</div>
           <p className="pt-0.5">{deal.agentProposal}</p>
-          <p className="pt-1 text-[11px] text-muted-foreground">
-            Sets the next step on this deal, due in seven days. Nothing is sent and the ledger records it either way.
-          </p>
           <div className="flex gap-1.5 pt-1.5">
             <Button size="sm" className="h-7 flex-1 px-2 text-xs" disabled={!p.canEdit} onClick={p.onUseProposal}>Use this next step</Button>
             <Button size="sm" variant="outline" className="h-7 flex-1 px-2 text-xs" onClick={p.onDismissProposal}>Dismiss</Button>

@@ -5,14 +5,15 @@
 // it. There is no "Show all" jump and no separate People tab — the count is not a reason to send
 // somebody somewhere else.
 //
-// The one way out is "Open in People", and it exists for one job: acting on the whole set at once.
-// It carries this company as the filter and puts the record on the trail, so the way back is one
-// crumb and lands on the row that was left.
+// The one way out is the "Open in People" link in the section's heading, and it exists for one job:
+// acting on the whole set at once. It carries this company as the filter and puts the record on the
+// trail, so the way back is one crumb and lands on the row that was left.
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { openBeside, useBeside } from "../../beside"
+import { Actions } from "../../ui/Actions"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { EmptyState } from "../../ui/EmptyState"
 import { toast } from "../../templates/TablePage"
@@ -96,7 +97,7 @@ const EMPTY: ListView = { q: "", stage: "all", inSeq: "all", title: "all", page:
  */
 const views = new Map<string, ListView>()
 
-export function CompanyContacts({ companyId, contacts, companyName, sequenceName, pageRenders, onOpenInPeople }: {
+export function CompanyContacts({ companyId, contacts, companyName, sequenceName, pageRenders }: {
   /** Which company's list this is: what the remembered search and page are keyed by. */
   companyId: string
   contacts: Contact[]
@@ -105,8 +106,6 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
   sequenceName: string
   /** Development only: the record's render count, shown here where the rows are, for the same check. */
   pageRenders: number
-  /** Acting on the whole set: `follow` to People with this company as the filter. */
-  onOpenInPeople: () => void
 }) {
   const [view, setView] = useState<ListView>(() => views.get(companyId) ?? EMPTY)
   const { q, stage, inSeq, title, page } = view
@@ -227,15 +226,17 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
         <EmptyState
           title="Nobody here matches"
           body={`${contacts.length} people are held at ${companyName}. Clear the search and the filters to see them all.`}
-          action={<Button size="sm" variant="outline" onClick={reset}>Clear the search and filters</Button>}
+          action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear the search and filters", onClick: reset }]} />}
         />
       ) : (
         <div>
           {shown.map((c) => {
             const seq = sequenceOf(c)
             const edit = edits[c.id]
-            const note = typeof edit?.note === "string" ? edit.note : null
-            const canUndo = typeof edit?.at === "number" && Date.now() - edit.at < UNDO_MS
+            const fresh = typeof edit?.at === "number" && Date.now() - edit.at < UNDO_MS
+            // "Done · what happened · Undo", for ten seconds, where the act was caused — and then
+            // nothing: a row carries values, never a standing note about them (DESIGN.md §2, §3).
+            const note = fresh && typeof edit?.note === "string" ? edit.note : null
             return (
               <div key={c.id} data-item={c.id} data-item-label={c.name} className="border-t py-2 first:border-t-0 first:pt-0">
                 {/* The name and the row's actions share the top line and wrap on their own; the
@@ -249,48 +250,32 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                   >
                     {c.name}
                   </button>
-                  <div className="flex flex-wrap gap-1">
-                  {seq ? (
-                    <Button
-                      size="sm" variant="ghost" className="h-7 text-xs text-destructive"
-                      onClick={() => { recordEdit("person", c.id, { sequence: "", note: `Taken out of ${seq} · nothing further is sent` }); toast(`${c.name} taken out of ${seq}. Nothing further is sent to them.`) }}
-                    >
-                      Stop the sequence
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm" variant="ghost" className="h-7 text-xs"
-                      onClick={() => { recordEdit("person", c.id, { sequence: sequenceName, note: `Added to ${sequenceName} · step 1` }); toast(`${c.name} starts at step 1 of ${sequenceName} in the next sending window.`) }}
-                    >
-                      Add to {sequenceName}
-                    </Button>
-                  )}
-                  <Button
-                    size="sm" variant="ghost" className="h-7 text-xs"
-                    onClick={() => { recordEdit("person", c.id, { note: "Call task created · due today" }); toast(`Call task created for ${c.name}, due today.`) }}
-                  >
-                    Create a call task
-                  </Button>
-                  </div>
+                  {/* Two comparable acts and, when they are in one, the act that takes them out of
+                      it — drawn by kind, never by a variant picked here. Both can be undone, so
+                      neither carries a line: what happened is said afterwards, on the row. */}
+                  <Actions
+                    surface="card"
+                    items={[
+                      { kind: "secondary", label: "Create a call task", onClick: () => { recordEdit("person", c.id, { note: "Call task created · due today" }); toast(`Call task created for ${c.name}, due today.`) } },
+                      seq
+                        ? { kind: "destructive" as const, label: "Stop the sequence", onClick: () => { recordEdit("person", c.id, { sequence: "", note: `Taken out of ${seq}` }); toast(`${c.name} taken out of ${seq}. Nothing further is sent to them.`) } }
+                        : { kind: "secondary" as const, label: `Add to ${sequenceName}`, onClick: () => { recordEdit("person", c.id, { sequence: sequenceName, note: `Added to ${sequenceName} · step 1` }); toast(`${c.name} starts at step 1 of ${sequenceName} in the next sending window.`) } },
+                    ]}
+                  />
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {c.title} · {c.stage} · {seq ? `in ${seq}` : "not in a sequence"} · {ago(c.lastActivity)}
                 </div>
-                {/* What the last action did to this person, under the name that caused it —
-                    whether it was done from this row or from the pane reading them beside it —
-                    with ten seconds to take it back, in the same place. */}
                 {note && (
                   <div role="status" className="flex flex-wrap items-center gap-2 text-xs">
-                    <span>{note}</span>
-                    {canUndo && (
-                      <button
-                        type="button"
-                        className="underline hover:no-underline"
-                        onClick={() => { clearEdit("person", c.id); toast(`Undone · ${c.name} is back as they were`) }}
-                      >
-                        Undo
-                      </button>
-                    )}
+                    <span>Done · {note}</span>
+                    <button
+                      type="button"
+                      className="underline underline-offset-4 hover:no-underline"
+                      onClick={() => { clearEdit("person", c.id); toast(`Undone · ${c.name} is back as they were`) }}
+                    >
+                      Undo
+                    </button>
                   </div>
                 )}
               </div>
@@ -307,13 +292,6 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
           </div>
         </div>
       )}
-
-      {/* The only reason to leave the company, said in words, with the filter it carries. */}
-      <p className="pt-2 text-xs text-muted-foreground">
-        Reading and acting on one person happens here.{" "}
-        <button type="button" className="underline hover:no-underline" onClick={onOpenInPeople}>Open in People</button>{" "}
-        to act on all {matching.length}{filtered ? " that match" : ""} at once; it carries {companyName} as the filter.
-      </p>
     </div>
   )
 }
