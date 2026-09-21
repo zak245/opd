@@ -48,6 +48,8 @@ export interface GridProps<T> {
   empty?: ReactNode
   /** Extra controls that sit in the header row beside the column chooser. */
   headerExtra?: ReactNode
+  /** What a row is called, for the crumb and for the return cue that lights it on the way back. */
+  rowLabel?: (row: T) => string
 }
 
 export function Grid<T>(p: GridProps<T>) {
@@ -170,6 +172,10 @@ export function Grid<T>(p: GridProps<T>) {
             {rows.map((row) => (
               <TableRow
                 key={p.rowKey(row)}
+                // The row is tagged with its own id, so a page the trail is holding can scroll back
+                // to it, light it and focus it, and so the pane can mark the row it is reading.
+                data-item={p.rowKey(row)}
+                data-item-label={p.rowLabel?.(row)}
                 className="group cursor-pointer align-top"
                 tabIndex={0}
                 onClick={(e) => { (e.currentTarget as HTMLElement).focus(); p.onOpen?.(row) }}
@@ -206,7 +212,7 @@ export function Grid<T>(p: GridProps<T>) {
       {/* -------------------------- the phone: cards carrying every column the desktop row carries */}
       <ul className="space-y-2 border-t px-4 py-3 md:hidden">
         {rows.map((row) => (
-          <li key={p.rowKey(row)} className="rounded-lg border p-3">
+          <li key={p.rowKey(row)} data-item={p.rowKey(row)} data-item-label={p.rowLabel?.(row)} className="rounded-lg border p-3">
             <div className="flex items-start gap-2">
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>
               {rowMenu(row)}

@@ -4,7 +4,9 @@
 // deal record and the board, so Home counts them and states nothing of its own. An AE who has direct
 // reports gets the team roll-up above her own, because that is the number her week is measured in.
 import { Button } from "@/components/ui/button"
-import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
+import { originHere } from "../work/register"
 import { Door, type Disclosure } from "../../ui"
 import type { Deal } from "../../data/seed"
 import type { HomeData } from "./data"
@@ -19,21 +21,41 @@ function Stat({ label, value, sub, to }: { label: string; value: string; sub?: s
       {sub && <span className="block text-xs text-muted-foreground">{sub}</span>}
     </>
   )
+  // Leaving Home for the board is for acting on the whole set, and it carries the filter and the
+  // trail: the crumb comes back to Pipeline with this number still under the cursor.
   return to
-    ? <a className="rounded-md border px-3 py-2 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" href={href(to)}>{body}</a>
+    ? (
+      <button
+        type="button"
+        className="rounded-md border px-3 py-2 text-left hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        onClick={() => follow(to, originHere("home-pipeline"))}
+      >
+        {body}
+      </button>
+    )
     : <div className="rounded-md border px-3 py-2">{body}</div>
 }
 
-function DealRow({ deal, note, money }: { deal: Deal; note: string; money: (n: number) => string }) {
-  const open = () => navigate(`/ollopa/deals/${deal.id}`)
+/**
+ * The row names a deal, so it opens the deal — beside Home, with the rest of the pipeline still on
+ * screen and the stage, the amount and the next step all readable without leaving. The way to the
+ * record is "Open the page" in the pane, which keeps Home and this row on the trail.
+ */
+function DealRow({ deal, note, money, ids }: { deal: Deal; note: string; money: (n: number) => string; ids: string[] }) {
+  const open = (opener?: HTMLElement | null) => openBeside({
+    kind: "deal",
+    id: deal.id,
+    list: { ids, index: Math.max(0, ids.indexOf(deal.id)) },
+    opener: opener ?? document.querySelector<HTMLElement>(`[data-item="${deal.id}"]`),
+  })
   return (
-    <Row onEnter={open}>
+    <Row itemId={deal.id} itemLabel={deal.name} onEnter={() => open()}>
       <span className="min-w-0 flex-1">
         <span className="font-medium">{deal.name}</span>
         <span className="block text-xs text-muted-foreground">{deal.stage} · {note}</span>
       </span>
       <span className="shrink-0 tabular-nums">{money(deal.amount)}</span>
-      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={open}>Open</Button>
+      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={(e) => open(e.currentTarget)}>Open</Button>
     </Row>
   )
 }
@@ -58,14 +80,15 @@ export function Pipeline({ data, d, order, hasReports }: { data: HomeData; d: Di
   return (
     <Section id="home-pipeline" title="Pipeline" order={order} link={{ label: "Deals", to: "/ollopa/deals" }}>
       {warnings && (
-        <a
-          className="mb-2 flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          href={href("/ollopa/deals?filter=warnings")}
+        <button
+          type="button"
+          className="mb-2 flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          onClick={() => follow("/ollopa/deals?filter=warnings", originHere("home-pipeline"))}
         >
           <span className="font-medium">Needs attention</span>
           <span className="tabular-nums">{p.needsAttention.length}</span>
           <span className="ml-auto text-xs text-muted-foreground">Open them on the board</span>
-        </a>
+        </button>
       )}
 
       <div className="grid gap-2 sm:grid-cols-2">
@@ -99,7 +122,9 @@ export function Pipeline({ data, d, order, hasReports }: { data: HomeData; d: Di
         <div className="pt-2">
           {p.closing.length > 0 ? (
             <RowList label="Deals closing in the next 30 days">
-              {p.closing.slice(0, 5).map((deal) => <DealRow key={deal.id} deal={deal} money={m} note={`closes ${day(deal.closeDate)}`} />)}
+              {p.closing.slice(0, 5).map((deal) => (
+                <DealRow key={deal.id} deal={deal} money={m} ids={p.closing.slice(0, 5).map((x) => x.id)} note={`closes ${day(deal.closeDate)}`} />
+              ))}
             </RowList>
           ) : (
             <Nothing text="Nothing closes in the next 30 days." link={{ label: "Deals", to: "/ollopa/deals" }} />

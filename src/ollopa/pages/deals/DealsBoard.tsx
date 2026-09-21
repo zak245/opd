@@ -21,7 +21,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { navigate } from "@/app/router"
+import { useRoute } from "@/app/router"
+import { follow } from "../../chain"
+import { openBeside } from "../../beside"
 import { TablePage, toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
@@ -33,11 +35,13 @@ import type { Session } from "../../session"
 import { STAGE_FORECAST, STAGE_PROBABILITY, TODAY, seedFor, type Deal, type DealStage } from "../../data/seed"
 import { ago, day, daysBetween, money } from "../deal/format"
 import { DealCard, chipText, type CardFlags } from "./DealCard"
+import { useDealEdits } from "./edits"
 import { coverageFor } from "../reports/coverage"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
-  WON_STAGE, forecastFigures, goalFor, inPeriod, isOpen, moneyShort, moneySpoken, newDeal,
-  observedCoverage, scopeNames, sumOf, warningCounts, warningsOf, weightedOf,
+  WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText,
+  moneyShort, moneySpoken, newDeal, observedCoverage, scopeNames, sumOf, warningCounts, warningsOf,
+  weightedOf, wonConsequenceText,
   type PeriodKey, type Scope, type WarningKind,
 } from "./pipeline"
 
@@ -170,8 +174,19 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   const currency = seed.workspace.currency
   const owners = b.roles.map((r) => r.user)
-  const csSeat = b.roles.find((r) => r.role === "cs")
   const crm = seed.integrations.find((i) => /crm|salesforce|hubspot/i.test(`${i.kind} ${i.name}`))
+  const route = useRoute()
+  // What a pane elsewhere did to a deal in this session, so the board and a deal read beside some
+  // other page can never say two different things about the same deal. The page's own edits win.
+  const shared = useDealEdits()
+
+  /**
+   * Leaving the board for a record, remembering the card. `anchor` is the deal's id, which the card
+   * carries as `data-item`: clicking the crumb comes back to this board, mounted and untouched,
+   * with that card scrolled into view, lit for three seconds and focused.
+   */
+  const leaveFor = (to: string, anchor: string) =>
+    follow(to, { route: route.raw, title: "Deals", anchor })
   const pipelines = seed.pipelines
   const customDefs = seed.fields.filter((f) => f.object === "deal" && !f.retired)
 
@@ -218,8 +233,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   /* ------------------------------------------------------------------- what is on the board */
 
   const all = useMemo(
-    () => [...addedDeals, ...seed.deals].map((x) => (edits[x.id] ? { ...x, ...edits[x.id] } : x)),
-    [seed.deals, addedDeals, edits],
+    () => [...addedDeals, ...seed.deals].map((x) => (edits[x.id] || shared[x.id] ? { ...x, ...shared[x.id], ...edits[x.id] } : x)),
+    [seed.deals, addedDeals, edits, shared],
   )
 
   const names = scopeNames(scope, session.user, seed, b)
@@ -329,16 +344,9 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     setSay(`${deal.name} moved to ${to}.`)
   }
 
-  /** Owned by spec 09 §3.2 and rendered here word for word, so the board and the record agree. */
-  const wonConsequence = (deal: Deal) => [
-    "Stage becomes Closed won.",
-    "Forecast category becomes Closed.",
-    crm ? `${crm.name} is updated.` : null,
-    csSeat ? `${deal.company} moves to customer success, and the hand-off arrives in ${csSeat.user}'s queue.` : null,
-  ].filter(Boolean).join(" ")
-
-  const lostConsequence = (deal: Deal) =>
-    `Archived as lost. The deal leaves the board and the forecast, it stays on ${deal.company} and in Reports, and the ${crm?.name ?? "CRM"} opportunity is not deleted.`
+  /** Spec 09 §3.2, written once in pipeline.ts, so the board, the record and the pane agree. */
+  const wonConsequence = (deal: Deal) => wonConsequenceText(deal, seed, b)
+  const lostConsequence = (deal: Deal) => lostConsequenceText(deal, seed, b)
 
   const undo = () => {
     const u = undoRef.current
@@ -506,14 +514,14 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       onEditingNextStep={(open) => setEditingNext(open ? deal.id : null)}
       onSelect={(on) => setSelected((s) => (on ? [...s, deal.id] : s.filter((x) => x !== deal.id)))}
       onGlance={() => setGlance(deal.id)}
-      onOpen={() => navigate(`/ollopa/deals/${deal.id}`)}
+      onOpen={() => leaveFor(`/ollopa/deals/${deal.id}`, deal.id)}
       onMove={(s) => move(deal.id, s)}
       onPatch={(change, said) => patch(deal.id, change, said)}
       onCloseWon={() => setWonFor(deal.id)}
       onMarkLost={() => setLostFor(deal.id)}
       onReopen={() => patch(deal.id, { stage: "Negotiation", archivedAt: null, lostReason: null, forecast: "Commit", probability: STAGE_PROBABILITY.Negotiation }, `${deal.name} reopened in Negotiation`)}
       onLog={() => setLogFor(deal.id)}
-      onOpenCompany={() => navigate(`/ollopa/companies/${deal.companyId}`)}
+      onOpenCompany={(opener) => openBeside({ kind: "company", id: deal.companyId, opener })}
       onUseProposal={() => patch(deal.id, { nextStep: deal.agentProposal, nextStepDue: shiftDays(7), agentProposal: null }, `Next step set from the proposal on ${deal.name}`)}
       onDismissProposal={() => patch(deal.id, { agentProposal: null }, `Proposal dismissed on ${deal.name}`)}
       onFocus={() => setFocusId(deal.id)}
@@ -635,19 +643,19 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
             : c.cell(r, { currency }),
       }))}
       moreActions={[
-        { label: "Open the deal record", onClick: (r) => navigate(`/ollopa/deals/${r.id}`) },
+        { label: "Open the deal record", onClick: (r) => leaveFor(`/ollopa/deals/${r.id}`, r.id) },
         { label: "Log a call or note", onClick: (r) => setLogFor(r.id) },
         { label: "Close won…", onClick: (r) => setWonFor(r.id) },
         { label: "Mark lost and archive…", onClick: (r) => setLostFor(r.id) },
       ]}
       quickLook={{
         title: (r) => r.name,
-        fields: (r) => quickLookFields(r, currency),
+        fields: (r) => dealGlanceFields(r, currency),
         editable: (r) =>
           r.owner === session.user
             ? { label: "Stage", value: r.stage, options: ALL_STAGES, onChange: (v) => move(r.id, v as DealStage) }
             : { label: `Comment for ${r.owner}`, value: "", multiline: true, onChange: (v) => toast(`Comment for ${r.owner} on ${r.name}: “${v.slice(0, 40)}”.`) },
-        onOpen: (r) => navigate(`/ollopa/deals/${r.id}`),
+        onOpen: (r) => leaveFor(`/ollopa/deals/${r.id}`, r.id),
       }}
     />
   )
@@ -771,14 +779,16 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8" aria-label="Import, export, print and stages"><MoreHorizontal className="size-4" /></Button>
+                  <Button variant="ghost" size="icon" className="size-8" data-item="deals.more" data-item-label="Import, export, print and stages" aria-label="Import, export, print and stages"><MoreHorizontal className="size-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => exportCsv(sorted, visibleColumns, currency)}>Export this view as CSV</DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setImportOpen(true)}>Import deals from CSV</DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => window.print()}>Print the board</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => navigate("/ollopa/settings/pipeline")}>Edit stages in Settings</DropdownMenuItem>
+                  {/* Settings is a page, so this is a `follow`: the crumb comes back to this board
+                      with the menu button lit, not to whatever the sidebar would have shown. */}
+                  <DropdownMenuItem onSelect={() => leaveFor("/ollopa/settings/pipeline", "deals.more")}>Edit stages in Settings</DropdownMenuItem>
                   {/* The shell owns the list and opens it on "?"; this is the same panel, not a copy. */}
                   <DropdownMenuItem onSelect={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }))}>
                     Keyboard shortcuts
@@ -979,9 +989,11 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           open
           onOpenChange={(o) => { if (!o) setGlance(null) }}
           title={glanced.name}
-          fields={quickLookFields(glanced, currency)}
+          fields={dealGlanceFields(glanced, currency)}
           editable={glanceEditable}
-          onOpen={() => { const id = glanced.id; setGlance(null); navigate(`/ollopa/deals/${id}`) }}
+          // The card the drawer was opened from is the anchor, so the crumb comes back to the board
+          // with that card lit and focused rather than to the top of the column.
+          onOpen={() => { const id = glanced.id; setGlance(null); leaveFor(`/ollopa/deals/${id}`, id) }}
         />
       )}
 
@@ -1045,18 +1057,6 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
 function shiftDays(n: number): string {
   return new Date(Date.parse(TODAY) + n * 86_400_000).toISOString().slice(0, 10)
-}
-
-/** The same six fields, in the record's order, with the record's labels (spec 09 §6.8). */
-function quickLookFields(deal: Deal, currency: string) {
-  return [
-    { label: "Stage", value: deal.stage },
-    { label: "Amount", value: money(deal.amount, deal.currency || currency) },
-    { label: "Close date", value: day(deal.closeDate) },
-    { label: "Next step", value: deal.nextStep ? `${deal.nextStep} · ${day(deal.nextStepDue)}` : "No next step" },
-    { label: "Owner", value: deal.owner },
-    { label: "Last activity", value: `${day(deal.lastActivity)} · ${ago(deal.lastActivity)}` },
-  ]
 }
 
 function exportCsv(rows: Deal[], columns: { key: string; header: string }[], currency: string) {

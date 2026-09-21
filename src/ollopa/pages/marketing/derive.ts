@@ -31,7 +31,19 @@ export const rulesApplied = (a: Audience) => suppressionCounts(a).filter((s) => 
 /* ----------------------------------------------------------------------- the eight pre-send checks */
 
 export type CheckState = "pass" | "fail" | "not run"
-export interface Check { n: number; title: string; state: CheckState; words: string; fix?: { label: string; href: string } }
+
+/**
+ * Where a failed check is fixed. Never a bare href to another object: `hash` is somewhere on this
+ * same page and is not a move at all, `to` is a page the campaign follows to and stays on the trail
+ * behind, and `beside` is a related object read in the pane without leaving the campaign at all.
+ */
+export interface Fix {
+  label: string
+  hash?: string
+  to?: string
+  beside?: { kind: string; id: string }
+}
+export interface Check { n: number; title: string; state: CheckState; words: string; fix?: Fix }
 
 /**
  * Eight checks, flat, each pass, fail or not run, each failure stated in words with a Fix link that
@@ -56,14 +68,14 @@ export function preSendChecks(c: Campaign, audience: Audience | undefined, seed:
       words: noFirstName === 0
         ? "Every recipient has a first name, so nobody reads “Hi ,”."
         : `${num(noFirstName)} of ${num(audience?.size ?? c.audienceSize)} recipients have no first name; they will read “Hi ,”.`,
-      fix: failed(1) ? { label: "Fix: open the people without a first name", href: "#/ollopa/people" } : undefined,
+      fix: failed(1) ? { label: "Fix: open the people without a first name", to: "/ollopa/people" } : undefined,
     },
     {
       n: 2, title: "Every link works and is tracked", state: stateOf(2),
       words: domain?.trackingSubdomain
         ? `Links are rewritten through ${domain.trackingSubdomain}.`
         : "No tracking subdomain is set up, so clicks will not be counted.",
-      fix: failed(2) ? { label: "Fix: open email sending", href: "#/ollopa/settings" } : undefined,
+      fix: failed(2) ? { label: "Fix: open the sending domain in Settings", to: "/ollopa/settings/email-sending?row=mail.domains" } : undefined,
     },
     {
       n: 3, title: "The unsubscribe link is present and points at the workspace footer", state: stateOf(3),
@@ -74,35 +86,35 @@ export function preSendChecks(c: Campaign, audience: Audience | undefined, seed:
       words: c.previewText.length > 0
         ? "A plain-text version is generated from the body and the preview text."
         : "There is no preview text, so the plain-text version is empty.",
-      fix: failed(4) ? { label: "Fix: write the preview text", href: "#content" } : undefined,
+      fix: failed(4) ? { label: "Fix: write the preview text", hash: "#content" } : undefined,
     },
     {
       n: 5, title: "The from mailbox is warmed and under its daily cap", state: stateOf(5),
       words: guardTripped
         ? `${c.fromMailbox} bounced ${bounceRate.toFixed(1)}% on the last send, past the ${BOUNCE_GUARD.pausePercent}% pause threshold, so the guard holds it.`
         : `${c.fromMailbox} is warmed · ${num(sends.usedToday)} of ${num(sends.dailyCap)} sends used today.`,
-      fix: failed(5) ? { label: "Fix: open the bounce guard", href: "#/ollopa/settings" } : undefined,
+      fix: failed(5) ? { label: "Fix: open the bounce guard in Settings", to: "/ollopa/settings/email-sending?row=mail.bounce-guard" } : undefined,
     },
     {
       n: 6, title: "The subject renders under 60 characters on a phone", state: stateOf(6),
       words: subjectLength < 60
         ? `“${c.subject}” is ${subjectLength} characters.`
         : `“${c.subject}” is ${subjectLength} characters and will be cut on a phone.`,
-      fix: failed(6) ? { label: "Fix: shorten the subject", href: "#content" } : undefined,
+      fix: failed(6) ? { label: "Fix: shorten the subject", hash: "#content" } : undefined,
     },
     {
       n: 7, title: "The audience's suppressions are applied and its mode is what the sender expects", state: stateOf(7),
       words: audience
         ? `${audience.name}: ${num(suppressedTotal(audience))} suppressed, ${rulesApplied(audience)} of the 4 optional rules on, mode ${audience.mode}.`
         : "The audience was removed; the size at send time is kept on the campaign.",
-      fix: failed(7) ? { label: "Fix: open the audience", href: audience ? `#/ollopa/audiences/${audience.id}` : "#/ollopa/campaigns" } : undefined,
+      fix: failed(7) ? (audience ? { label: "Fix: read the audience beside this", beside: { kind: "audience", id: audience.id } } : { label: "Fix: open Campaigns", to: "/ollopa/campaigns" }) : undefined,
     },
     {
       n: 8, title: "No recipient has had another campaign in the frequency-cap window", state: stateOf(8),
       words: alsoMailed
         ? `${alsoMailed.name} sent to the same audience and reached ${num(alsoMailed.sent)} of these people.`
         : "Nobody in this audience has had another campaign this week.",
-      fix: failed(8) && alsoMailed ? { label: `Fix: open ${alsoMailed.name}`, href: `#/ollopa/campaigns/${alsoMailed.id}` } : undefined,
+      fix: failed(8) && alsoMailed ? { label: `Fix: read ${alsoMailed.name} beside this`, beside: { kind: "campaign", id: alsoMailed.id } } : undefined,
     },
   ]
 }

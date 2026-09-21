@@ -20,9 +20,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { href, navigate } from "@/app/router"
+import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -33,6 +35,7 @@ import { SEATS, itemById, weeklyUse } from "../../usage"
 import type { Session } from "../../session"
 import { columnsFor, STAGE_TONE, type ColumnDef } from "./columns"
 import { applyFilters, chipLabel, filtersFor, type Active, type FilterContext, type FilterDef } from "./filters"
+import { usePersonEdits } from "./edits"
 import { day, glanceFields, rowsFor, type PersonRow } from "./person"
 import { needsEnrichment, viewsFor, type PeopleView } from "./views"
 import { FilterChip, FiltersPanelBody, FiltersPanelFrame } from "./parts"
@@ -135,6 +138,14 @@ export function PeoplePage({ session }: { session: Session }) {
 
   const defaultView = views.find((v) => v.defaultFor.includes(session.role)) ?? null
 
+  /**
+   * A chain that left a company for "everybody at it" arrives with the company in the route. The
+   * filter it carried is set here, as an ordinary filter chip a person can see and drop — never a
+   * hidden narrowing, and never a mode.
+   */
+  const route = useRoute()
+  const arrivedWith = route.query.get("company")
+
   /* ------------------------------------------------------------------------------------- state */
 
   const [typed, setTyped] = useState("")
@@ -147,7 +158,9 @@ export function PeoplePage({ session }: { session: Session }) {
    * why". In the product it is an ordinary filter a person either set or did not.
    */
   const [active, setActive] = useState<Active>(
-    onStage ? { "people.f.phone": ["A phone number on file"] } : defaultView?.filters ?? {},
+    onStage ? { "people.f.phone": ["A phone number on file"] }
+      : arrivedWith ? { "people.f.company": [arrivedWith] }
+      : defaultView?.filters ?? {},
   )
   const keep = !onStage
   const [viewId, setViewId] = usePersisted<string | null>(session.user, "view", onStage ? null : defaultView?.id ?? null, keep)
@@ -187,6 +200,16 @@ export function PeoplePage({ session }: { session: Session }) {
   const [pending, setPending] = useState<{ text: string; run: () => void } | null>(null)
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([])
   const searchRef = useRef<HTMLInputElement>(null)
+  // What a pane's actions did to somebody in this session, so a row that was acted on from beside
+  // another page reads the same here as it did there.
+  const edits = usePersonEdits()
+
+  /**
+   * Leaving this table for a record: the row is the anchor, so the crumb back lands on it, lit and
+   * focused, with the search, the filters, the scroll and the selection exactly as they were.
+   */
+  const leaveFor = (to: string, anchor: string) =>
+    follow(to, { route: route.raw, title: "People", anchor })
 
   const view = views.find((v) => v.id === viewId) ?? null
   const seatColumns = [...defaultColumns, ...(view?.extraColumns ?? []).filter((c) => !defaultColumns.includes(c))]
@@ -262,8 +285,19 @@ export function PeoplePage({ session }: { session: Session }) {
   }, [onStage, page.length])
 
   const stageOf = (p: PersonRow) => localStage[p.id] ?? p.stage
-  const seqOf = (p: PersonRow) => localSeq[p.id] ?? p.inSequence
-  const isRevealed = (p: PersonRow) => p.phoneRevealed || revealed.includes(p.id)
+  const seqOf = (p: PersonRow) => localSeq[p.id] ?? edits[p.id]?.sequence ?? p.inSequence
+  const isRevealed = (p: PersonRow) => p.phoneRevealed || revealed.includes(p.id) || edits[p.id]?.phoneRevealed === true
+
+  /**
+   * A chain that arrives with a company sets that filter here, and it has to work on a People page
+   * that is already mounted behind the trail as well as on a fresh one: the route is the same page,
+   * so nothing remounts. It is set once per company arrived with, and it is an ordinary chip the
+   * person can see in the bar and drop — never a hidden narrowing.
+   */
+  useEffect(() => {
+    if (!arrivedWith || onStage) return
+    setActive((a) => (a["people.f.company"]?.[0] === arrivedWith ? a : { "people.f.company": [arrivedWith] }))
+  }, [arrivedWith, onStage])
 
   /** A value's count is what clicking it now would give, with every other active filter applied. */
   const counts = useMemo(() => {
@@ -395,10 +429,12 @@ export function PeoplePage({ session }: { session: Session }) {
     { id: "people.row.enrich", icon: Sparkles, shortcut: "e", label: () => `Enrich${price(CREDITS.enrich)}`, run: (p) => spend(CREDITS.enrich, `${p.name} enriched`) },
     { id: "people.row.research-agent", shortcut: "r", label: () => `Research${price(CREDITS.research)}`, run: (p) => spend(CREDITS.research, `Research queued for ${p.name}`) },
     { id: "people.row.email", label: () => "One-off email", run: (p) => toast(`Writing to ${p.email}.`) },
-    { id: "people.row.view-company", label: () => "Open the company", run: (p) => navigate(`/ollopa/companies/${p.companyId}`) },
+    // The company is a look, not a place to go: it opens beside the table with the table untouched.
+    { id: "people.row.view-company", label: () => "Open the company beside", run: (p) => openBeside({ kind: "company", id: p.companyId, opener: document.activeElement as HTMLElement | null }) },
     { id: "people.row.copy-email", label: () => "Copy email", run: (p) => { navigator.clipboard?.writeText(p.email); toast(`${p.email} copied.`) } },
-    { id: "people.row.edit", label: () => "Edit fields", run: (p) => navigate(`/ollopa/people/${p.id}`) },
-    { id: "people.row.note", label: () => "Add a note", run: (p) => navigate(`/ollopa/people/${p.id}`) },
+    // Both of these are done on the record, so they are a move with a way back, not a jump.
+    { id: "people.row.edit", label: () => "Edit fields", run: (p) => leaveFor(`/ollopa/people/${p.id}`, p.id) },
+    { id: "people.row.note", label: () => "Add a note", run: (p) => leaveFor(`/ollopa/people/${p.id}`, p.id) },
     { id: "people.row.add-to-deal", label: () => "Add to a deal", run: (p) => toast(`Choose a deal at ${p.company}.`) },
     { id: "people.row.assign-owner", label: () => "Assign owner", run: (p) => toast(`Owner of ${p.name} changed.`) },
     { id: "people.row.push-crm", label: () => `Push to ${b.crm ?? "CRM"} now`, run: (p) => toast(`${p.name} pushed to ${b.crm}.`) },
@@ -463,6 +499,8 @@ export function PeoplePage({ session }: { session: Session }) {
   const parodyOnlyBulk: BulkAct[] = [
     { id: "people.bulk.save", plain: "Save", label: () => "Save", run: () => setCreditsDialog(true) },
     { id: "people.bulk.workflows", plain: "Workflows", label: () => "Workflows", run: () => toast("Choose a workflow to run on the selection.") },
+    // The common version's jump, kept bare on purpose: it throws the selection and the filters away
+    // and leaves nothing to come back to. That is the thing being shown, so it stays a `navigate`.
     { id: "people.bulk.view-companies", plain: "View companies", label: () => "View companies", run: () => navigate("/ollopa/companies") },
     { id: "people.bulk.assign-account", plain: "Assign account", label: () => "Assign account", run: () => toast("Choose the account these people belong to.") },
   ]
@@ -527,7 +565,7 @@ export function PeoplePage({ session }: { session: Session }) {
     if (k === "ArrowDown" || k === "j") { e.preventDefault(); focusRow(i + 1); return }
     if (k === "ArrowUp" || k === "k") { e.preventDefault(); focusRow(i - 1); return }
     if (k === "Enter" || k === " ") { e.preventDefault(); setGlancing(p); return }
-    if (k === "o") { e.preventDefault(); navigate(`/ollopa/people/${p.id}`); return }
+    if (k === "o") { e.preventDefault(); leaveFor(`/ollopa/people/${p.id}`, p.id); return }
     if (k === "x") { e.preventDefault(); toggleRow(p, i, e.shiftKey); return }
     if (k === "t") {
       e.preventDefault()
@@ -577,7 +615,7 @@ export function PeoplePage({ session }: { session: Session }) {
         <DropdownMenuItem onSelect={() => toast("Find people searches the database beside this table. It is a later case.")}>
           Search the database
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate("/ollopa/import")}>Import CSV</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => leaveFor("/ollopa/import", "people.add")}>Import CSV</DropdownMenuItem>
         {b.crm && <DropdownMenuItem onSelect={() => toast(`Pulling changes from ${b.crm}.`)}>Sync from {b.crm} now</DropdownMenuItem>}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -930,7 +968,7 @@ export function PeoplePage({ session }: { session: Session }) {
           <ul className="divide-y md:hidden">
             {selectMode && <li className="px-4 py-2 text-xs text-muted-foreground">Tap a row to select it.</li>}
             {page.map((p, i) => (
-              <li key={p.id} className="px-4 py-3">
+              <li key={p.id} className="px-4 py-3" data-item={p.id} data-item-label={p.name}>
                 <div className="flex items-start gap-2">
                   {selectMode && (
                     <input
@@ -942,7 +980,15 @@ export function PeoplePage({ session }: { session: Session }) {
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <a className="font-medium underline-offset-4 hover:underline" href={href(`/ollopa/people/${p.id}`)}>{p.name}</a>
+                    <a
+                      className="font-medium underline-offset-4 hover:underline"
+                      href={href(`/ollopa/people/${p.id}`)}
+                      onClick={(e) => {
+                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+                        e.preventDefault()
+                        leaveFor(`/ollopa/people/${p.id}`, p.id)
+                      }}
+                    >{p.name}</a>
                     <div className="text-xs text-muted-foreground">{p.title} · {p.company}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                       <Badge variant="secondary" className={STAGE_TONE[stageOf(p)]}>{stageOf(p)}</Badge>
@@ -955,7 +1001,7 @@ export function PeoplePage({ session }: { session: Session }) {
                       )}
                     </div>
                   </div>
-                  <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} />
+                  <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
                 </div>
               </li>
             ))}
@@ -993,6 +1039,10 @@ export function PeoplePage({ session }: { session: Session }) {
                   key={p.id}
                   ref={(el) => { rowRefs.current[i] = el }}
                   data-row={i}
+                  /* The anchor a chain returns to: `follow` hands this id to the trail and the
+                     shell scrolls to it, lights it for three seconds and puts focus back on it. */
+                  data-item={p.id}
+                  data-item-label={p.name}
                   tabIndex={i === focused ? 0 : -1}
                   aria-label={density === "Compact" ? `${p.name}, ${p.title}, ${p.company}` : undefined}
                   onFocus={() => setFocused(i)}
@@ -1014,7 +1064,18 @@ export function PeoplePage({ session }: { session: Session }) {
                       <div className={c.width}>
                       {c.key === "name" ? (
                         <span className="flex min-w-0 items-center gap-2">
-                          <a className="min-w-0 underline-offset-4 hover:underline" href={href(`/ollopa/people/${p.id}`)} onClick={(e) => e.stopPropagation()}>
+                          <a
+                            className="min-w-0 underline-offset-4 hover:underline"
+                            href={href(`/ollopa/people/${p.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // A real href, so copy-link and open-in-a-new-tab still work; a plain
+                              // click is a step in a chain, so it goes through the trail instead.
+                              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+                              e.preventDefault()
+                              leaveFor(`/ollopa/people/${p.id}`, p.id)
+                            }}
+                          >
                             {c.cell(p)}
                           </a>
                           {p.jobChange && d.weekly("people.job-change-update") > 0 && <JobChange p={p} onDone={(m) => offerUndo(m, () => toast("Put back as it was."))} seed={seed} />}
@@ -1049,7 +1110,7 @@ export function PeoplePage({ session }: { session: Session }) {
                           </Button>
                         ))}
                       </div>
-                      <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} />
+                      <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
                     </div>
                   </td>
                 </tr>
@@ -1104,7 +1165,9 @@ export function PeoplePage({ session }: { session: Session }) {
           title={glancing.name}
           fields={glanceFields(glancing, seed).map((f) => ({ label: f.label, value: f.label === "Stage" ? stageOf(glancing) : f.value }))}
           editable={{ label: "Stage", value: stageOf(glancing), options: [...STAGES], onChange: (v) => moveStage(glancing, v as ContactStage) }}
-          onOpen={() => { const id = glancing.id; setGlancing(null); navigate(`/ollopa/people/${id}`) }}
+          /* "Open" leaves for the record and hands the trail this row, so the crumb back lands on
+             it, lit and focused, with the drawer closed and everything else as it was. */
+          onOpen={() => { const id = glancing.id; setGlancing(null); leaveFor(`/ollopa/people/${id}`, id) }}
         />
       )}
 
@@ -1151,7 +1214,7 @@ function capPerCompany(rows: PersonRow[], limit: number | null): PersonRow[] {
 }
 
 /** Every row action, with its shortcut printed, named for the person it acts on. */
-function RowMenu({ p, acts, named = true, shortcuts = true, onGlance }: {
+function RowMenu({ p, acts, named = true, shortcuts = true, onGlance, onOpen }: {
   p: PersonRow
   acts: { id: string; label: (p: PersonRow) => string; shortcut?: string; run: (p: PersonRow) => void; destructive?: boolean }[]
   /** Rule 4: the menu is named for the person it acts on, not "More". */
@@ -1159,6 +1222,8 @@ function RowMenu({ p, acts, named = true, shortcuts = true, onGlance }: {
   /** Rule 8: every item prints the key that does it. */
   shortcuts?: boolean
   onGlance: () => void
+  /** Leaves for the record through the trail, with this row as the anchor to come back to. */
+  onOpen: () => void
 }) {
   return (
     <DropdownMenu>
@@ -1169,7 +1234,7 @@ function RowMenu({ p, acts, named = true, shortcuts = true, onGlance }: {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64" data-container="people.row.menu" data-container-label={named ? `Actions for ${p.name}` : "the row menu"}>
         <DropdownMenuItem data-item="people.row.quick-look" data-item-label="Quick look" onSelect={onGlance}>Quick look{shortcuts && <span className="ml-auto font-mono text-xs text-muted-foreground">Enter</span>}</DropdownMenuItem>
-        <DropdownMenuItem data-item="people.row.open" data-item-label="Open the full record" onSelect={() => navigate(`/ollopa/people/${p.id}`)}>Open the full record{shortcuts && <span className="ml-auto font-mono text-xs text-muted-foreground">o</span>}</DropdownMenuItem>
+        <DropdownMenuItem data-item="people.row.open" data-item-label="Open the full record" onSelect={onOpen}>Open the full record{shortcuts && <span className="ml-auto font-mono text-xs text-muted-foreground">o</span>}</DropdownMenuItem>
         <DropdownMenuSeparator />
         {acts.filter((a) => !a.destructive).map((a) => (
           <DropdownMenuItem key={a.id} data-item={a.id} data-item-label={a.label(p)} onSelect={() => a.run(p)}>

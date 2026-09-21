@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow, type Origin } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
 import { Announcement } from "../../ui/Announcement"
@@ -55,6 +57,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   const [filterRep, setFilterRep] = useState("all")
   const [filterReason, setFilterReason] = useState("all")
   const [filterDate, setFilterDate] = useState("all")
+  const [runQ, setRunQ] = useState("")
 
   const at = route.query.get("at")
 
@@ -88,12 +91,28 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   const enrolled = enrolledRuns(runs)
   const exceptions = notRoutedRuns(runs)
   const breached = breachedRows(w, runs)
+  const breachedIds = breached.map((r) => r.run.personId)
   const away = seed.users.filter((u) => typeof u.availability === "object" && (w.routing?.pool ?? []).includes(u.name))
   const territory = seed.territories[0]
   const matchNow = seed.contacts.filter((c) => w.enrolment.every((f) => matches(c, f))).length
   const atCeiling = w.ceiling.spentToday >= w.ceiling.perDay
 
   const patch = (p: Partial<Workflow>) => patchRow(session.business, "workflows", w.id, p)
+
+  /* ------------------------------------------------------------------- the two ways off this page */
+
+  /** Where this page is and the row being left, for the crumb and for the return cue. */
+  const from = (anchor?: string): Origin => ({ route: route.raw, title: `${w.name} · Workflows`, anchor })
+
+  /** A person on one of these lists, read beside the workflow, walking the list as it is shown. */
+  const readPerson = (personId: string, ids: string[], opener?: HTMLElement | null) => {
+    const index = ids.indexOf(personId)
+    openBeside({
+      kind: "person", id: personId,
+      list: { ids, index: index < 0 ? 0 : index },
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
+  }
 
   /* -------------------------------------------------------------------------------- the header */
 
@@ -126,8 +145,8 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           {breached.length > 0 && (
             <ul className="text-sm">
               {breached.map(({ run, over }) => (
-                <li key={run.id} className="flex flex-wrap justify-between gap-2 border-t py-1.5">
-                  <a className="underline" href={href(`/ollopa/people/${run.personId}`)}>{run.person}</a>
+                <li key={run.id} data-item={run.personId} data-item-label={run.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5">
+                  <button type="button" className="underline" onClick={(ev) => readPerson(run.personId, breachedIds, ev.currentTarget)}>{run.person}</button>
                   <span className="text-xs">
                     enrolled {clockOf(run.at)} · window {w.sla!.windows.hot} · <span className="font-medium text-amber-700 dark:text-amber-400">{over}</span> · {run.assignedTo ?? "nobody"}
                   </span>
@@ -266,15 +285,19 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
   const reasons = [...new Set(exceptions.map((r) => r.reason ?? ""))].filter(Boolean)
   const reps = [...new Set(enrolled.map((r) => r.assignedTo ?? "").filter(Boolean))]
-  const keep = (r: { ruleId: string | null; assignedTo: string | null; reason: string | null; at: string }) => {
+  const runNeedle = runQ.trim().toLowerCase()
+  const keep = (r: { ruleId: string | null; assignedTo: string | null; reason: string | null; at: string; person: string }) => {
     if (filterRule !== "all" && r.ruleId !== filterRule) return false
     if (filterRep !== "all" && r.assignedTo !== filterRep) return false
     if (filterReason !== "all" && r.reason !== filterReason) return false
     if (filterDate !== "all" && r.at.slice(0, 10) !== filterDate) return false
+    if (runNeedle && !r.person.toLowerCase().includes(runNeedle)) return false
     return true
   }
-  const shownEnrolled = enrolled.filter(keep)
+  const shownEnrolled = enrolled.filter(keep).slice(0, 40)
   const shownExceptions = exceptions.filter(keep)
+  const enrolledIds = shownEnrolled.map((r) => r.personId)
+  const exceptionIds = shownExceptions.map((r) => r.personId)
 
   const doors: RecordDoor[] = [{
     id: RUNS_DOOR,
@@ -297,23 +320,27 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
               </SelectContent>
             </Select>
           ))}
+          {/* Over ten rows, so this list carries a search of its own as well as its four filters. */}
+          {runs.length > 10 && (
+            <Input aria-label="Find a person in the run history" placeholder="Find a person" value={runQ} onChange={(e) => setRunQ(e.target.value)} className="h-7 w-40 text-xs" />
+          )}
           <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => toast(`${num(runs.length)} run rows exported as CSV.`)}>Export the run history</Button>
         </div>
 
         <section>
           <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Enrolled ({num(shownEnrolled.length)})</h4>
           <ul>
-            {shownEnrolled.slice(0, 40).map((r) => (
-              <li key={r.id} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
+            {shownEnrolled.map((r) => (
+              <li key={r.id} data-item={r.personId} data-item-label={r.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
                 <span>
-                  <a className="underline" href={href(`/ollopa/people/${r.personId}`)}>{r.person}</a>
+                  <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, enrolledIds, ev.currentTarget)}>{r.person}</button>
                   {" · "}{day(r.at.slice(0, 10))} {clockOf(r.at)}
                   {r.ruleId && <> · <a className="underline" href={`#${r.ruleId}`}>rule {w.rules.findIndex((x) => x.id === r.ruleId) + 1}</a></>}
                 </span>
                 <span className={r.outcome === "errored" ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}>
                   {r.outcome === "errored"
                     ? <>errored — {r.reason}</>
-                    : <>created a task for {r.assignedTo} · <a className="underline" href={href("/ollopa/tasks")}>open the task</a> · {r.credits} credits</>}
+                    : <>created a task for {r.assignedTo} · <button type="button" className="underline" onClick={() => follow("/ollopa/tasks", from(r.personId))}>open the task</button> · {r.credits} credits</>}
                 </span>
               </li>
             ))}
@@ -327,9 +354,9 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
             {shownExceptions.map((r) => {
               const rule = ruleForReason(w, r.reason)
               return (
-                <li key={r.id} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
+                <li key={r.id} data-item={r.personId} data-item-label={r.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
                   <span>
-                    <a className="underline" href={href(`/ollopa/people/${r.personId}`)}>{r.person}</a>
+                    <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, exceptionIds, ev.currentTarget)}>{r.person}</button>
                     {" · "}{day(r.at.slice(0, 10))} {clockOf(r.at)}
                   </span>
                   <span>

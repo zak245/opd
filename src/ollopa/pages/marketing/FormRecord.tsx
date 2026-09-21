@@ -12,7 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
-import { href, navigate } from "@/app/router"
+import { href, navigate, useRoute } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow, type Origin } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
 import { EmptyState } from "../../ui/EmptyState"
@@ -28,10 +30,12 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
   const seed = seedFor(session.business)
   const rows = useMarketing(session.business)
   const d = useDisclosure("campaigns")
+  const route = useRoute()
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
 
   const f = rows.forms.find((x) => x.id === id)
   const [newCap, setNewCap] = useState("")
+  const [q, setQ] = useState("")
 
   if (!f) {
     return (
@@ -47,6 +51,28 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
   const askedFields = f.fields.filter((x) => x.kind === "asked")
   const workflow = rows.workflows.find((w) => w.trigger.includes("form")) ?? rows.workflows[0]
   const fieldsAtLevelOne = d.level("form.fields") === 1
+
+  /* ------------------------------------------------------------------- the two ways off this page */
+
+  /** Where this page is and the row being left, for the crumb and for the return cue. */
+  const from = (anchor?: string): Origin => ({ route: route.raw, title: `${f.name} · Campaigns`, anchor })
+
+  /** The submissions, filtered by the search, in the order they are shown. */
+  const needle = q.trim().toLowerCase()
+  const submissions = needle
+    ? f.submissions.filter((s) => `${s.name} ${s.email}`.toLowerCase().includes(needle))
+    : f.submissions
+  const submissionIds = submissions.map((s) => s.contactId)
+
+  /** A person who filled this in, read beside the form; the form stays where it is. */
+  const readPerson = (contactId: string, opener?: HTMLElement | null) => {
+    const index = submissionIds.indexOf(contactId)
+    openBeside({
+      kind: "person", id: contactId,
+      list: { ids: submissionIds, index: index < 0 ? 0 : index },
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
+  }
 
   const fields: RecordField[] = [
     { key: "status", label: "Status", value: <Badge variant="secondary">{f.status}</Badge> },
@@ -110,13 +136,24 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
         <div className="space-y-2 text-sm">
           <p>Every submission goes to <strong>{f.routesTo}</strong>.</p>
           <p className="text-muted-foreground">
-            The rule that decides: {workflow ? <a className="underline" href={href(`/ollopa/workflows/${workflow.id}`)}>{workflow.name}</a> : "no workflow yet"} — round-robin across the pool, skipping anyone away.
+            The rule that decides:{" "}
+            {workflow
+              ? (
+                <span data-item={workflow.id} data-item-label={workflow.name}>
+                  <button type="button" className="underline" onClick={(ev) => openBeside({ kind: "workflow", id: workflow.id, opener: ev.currentTarget })}>{workflow.name}</button>
+                </span>
+              )
+              : "no workflow yet"} — round-robin across the pool, skipping anyone away.
           </p>
           <p className={f.unrouted > 0 ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground"}>
             {f.unrouted > 0
               ? <>{num(f.unrouted)} submission{f.unrouted === 1 ? "" : "s"} could not be routed and reached nobody.</>
               : <>Every submission reached somebody.</>}
-            {f.unrouted > 0 && workflow && <> <a className="underline" href={href(`/ollopa/workflows/${workflow.id}?at=runs`)}>See why</a></>}
+            {/* The run history is a level the pane must not open, so this leaves — and the form and
+                the workflow row stay on the trail behind it. */}
+            {f.unrouted > 0 && workflow && (
+              <> <button type="button" className="underline" onClick={() => follow(`/ollopa/workflows/${workflow.id}?at=runs`, from(workflow.id))}>See why</button></>
+            )}
           </p>
         </div>
       ),
@@ -125,38 +162,47 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
       id: "reporting", title: "Reporting",
       children: (
         <p className="text-sm">
-          Submissions count towards <strong>{f.reportsTo}</strong>'s campaign results, and appear on the campaign report.{" "}
-          <a className="underline" href={href("/ollopa/reports")}>Open Reports</a>
+          <span id="form-reports">Submissions count towards <strong>{f.reportsTo}</strong>'s campaign results, and appear on the campaign report.</span>{" "}
+          <button type="button" className="underline" onClick={() => follow("/ollopa/reports", from("form-reports"))}>Open Reports</button>
         </p>
       ),
     },
     ...(fieldsAtLevelOne ? [{ id: "fields", title: fieldsLabel, children: fieldList }] : []),
     {
+      // Who filled it in lives inside the form, whatever the count, and a row opens that person
+      // beside the form rather than replacing it.
       id: "submissions", title: "Submissions", count: f.submissions.length,
       children: f.submissions.length === 0
         ? <EmptyState title="No submissions yet" body="When somebody fills this in, the answers become a note on their contact record." />
         : (
-          <ul className="text-sm">
-            {f.submissions.map((s) => {
-              const contact = seed.contacts.find((c) => c.id === s.contactId)
-              return (
-                <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-2 first:border-t-0">
-                  <span className="min-w-0">
-                    <a className="underline" href={href(`/ollopa/people/${s.contactId}`)}>{s.name}</a>
-                    <span className="text-xs text-muted-foreground"> · {s.email} · {contact?.company}</span>
-                    <span className="block text-xs text-muted-foreground">Form: {f.name}, {day(s.at.slice(0, 10))} — the answers are a note on the contact</span>
-                  </span>
-                  <span className="text-xs">
-                    {s.enriched
-                      ? <span className="text-muted-foreground">enriched</span>
-                      : <span className="text-amber-700 dark:text-amber-400">not enriched — daily cap reached {s.at.slice(11, 16)}</span>}
-                    {" · "}
-                    {s.routedTo ?? <span className="text-amber-700 dark:text-amber-400">could not be routed</span>}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
+          <div className="space-y-2">
+            {/* Search once the list is longer than a screenful of names (over ten). */}
+            {f.submissions.length > 10 && (
+              <Input aria-label="Find a submission by name or address" placeholder="Find a submission" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+            )}
+            <ul className="text-sm">
+              {submissions.map((s) => {
+                const contact = seed.contacts.find((c) => c.id === s.contactId)
+                return (
+                  <li key={s.id} data-item={s.contactId} data-item-label={s.name} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-2 first:border-t-0">
+                    <span className="min-w-0">
+                      <button type="button" className="underline" onClick={(ev) => readPerson(s.contactId, ev.currentTarget)}>{s.name}</button>
+                      <span className="text-xs text-muted-foreground"> · {s.email} · {contact?.company}</span>
+                      <span className="block text-xs text-muted-foreground">Form: {f.name}, {day(s.at.slice(0, 10))} — the answers are a note on the contact</span>
+                    </span>
+                    <span className="text-xs">
+                      {s.enriched
+                        ? <span className="text-muted-foreground">enriched</span>
+                        : <span className="text-amber-700 dark:text-amber-400">not enriched — daily cap reached {s.at.slice(11, 16)}</span>}
+                      {" · "}
+                      {s.routedTo ?? <span className="text-amber-700 dark:text-amber-400">could not be routed</span>}
+                    </span>
+                  </li>
+                )
+              })}
+              {submissions.length === 0 && <li className="py-4 text-muted-foreground">Nothing here matches “{q}”.</li>}
+            </ul>
+          </div>
         ),
     },
   ]

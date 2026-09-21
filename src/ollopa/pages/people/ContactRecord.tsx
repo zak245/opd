@@ -14,8 +14,10 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { href, navigate } from "@/app/router"
+import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -26,6 +28,7 @@ import { STAGE_TONE } from "./columns"
 import { ago, day, glanceFields, rowsFor, type PersonRow } from "./person"
 import { CallLog } from "./CallLog"
 import { EnrichPanel } from "./EnrichPanel"
+import { usePersonEdits } from "./edits"
 
 type Kind = "email" | "call" | "meeting" | "note" | "sequence" | "agent" | "task"
 
@@ -56,6 +59,10 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
   const seed = seedFor(session.business)
   const b = businessById(session.business)
   const d = useDisclosure("people")
+  const route = useRoute()
+  // What the pane's actions did to a colleague in this session. The card behind the pane reads it,
+  // so acting in the pane shows its effect on the row that opened it, at once.
+  const edits = usePersonEdits()
 
   const rows = useMemo(() => rowsFor(seed), [seed])
   const person: PersonRow | undefined = useMemo(
@@ -98,6 +105,38 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
   const enrolment = seed.enrollments.find((e) => e.contactId === p.id)
   const job = seed.enrichmentJobs.find((j) => j.unmatchedIds.includes(p.id)) ?? seed.enrichmentJobs[0]
   const balance = seed.credits.balance
+  /** The colleagues the card actually shows, which is the list `[` and `]` walk in the pane. */
+  const shownColleagues = colleagues.slice(0, 5)
+  const colleagueIds = shownColleagues.map((c) => c.id)
+  const dealIds = deals.slice(0, 4).map((dl) => dl.id)
+
+  /* ------------------------------------------------- the three ways out, none of which leave */
+
+  /** Where this page is, for the trail, exactly as the header reads it. */
+  const origin = (anchor: string) => ({ route: route.raw, title: `${p.name} · People`, anchor })
+
+  /** The company beside this record: the contact stays on screen, scrolled and open as it was. */
+  const openCompany = (opener: HTMLElement | null) => {
+    if (!company) return
+    openBeside({ kind: "company", id: company.id, opener })
+  }
+
+  /** A colleague beside this record, with the card's own order so `[` and `]` walk it. */
+  const openColleague = (contactId: string, opener: HTMLElement | null) => {
+    const index = colleagueIds.indexOf(contactId)
+    openBeside({ kind: "person", id: contactId, list: index >= 0 ? { ids: colleagueIds, index } : undefined, opener })
+  }
+
+  /** A deal at this company beside this record. */
+  const openDeal = (dealId: string, opener: HTMLElement | null) => {
+    const index = dealIds.indexOf(dealId)
+    openBeside({ kind: "deal", id: dealId, list: index >= 0 ? { ids: dealIds, index } : undefined, opener })
+  }
+
+  /** The one reason to leave: every person at this company, as a page, with the filter and the trail. */
+  const openAllAtCompany = () => {
+    follow(`/ollopa/people?company=${encodeURIComponent(p.company)}`, origin("people.at-company"))
+  }
 
   /* ------------------------------------------------------------------------------ the timeline */
 
@@ -165,6 +204,8 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
     label: f.label,
     value: f.label === "Stage"
       ? <Badge variant="secondary" className={STAGE_TONE[currentStage]}>{currentStage}</Badge>
+      : f.label === "Company" && company
+        ? <button type="button" className="underline-offset-4 hover:underline" onClick={(e) => openCompany(e.currentTarget)}>{p.company}</button>
       : f.label === "Phone" && p.phone && !p.phoneRevealed && !revealed
         ? (
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
@@ -273,9 +314,15 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
       <RecordPage
         back={{ label: "People", href: href("/ollopa/people") }}
         title={{ value: p.name }}
-        subtitle={company ? { label: `${p.title} · ${p.company}`, href: href(`/ollopa/companies/${company.id}`) } : undefined}
         chips={
           <span className="flex flex-wrap items-center gap-2">
+            {/* The title and company line the record has always carried. The company is a control,
+                not a link: it opens beside this page, so reading it never costs you the contact. */}
+            <span className="text-sm text-muted-foreground">
+              {p.title}
+              {company && <> · <button type="button" className="underline-offset-4 hover:underline" onClick={(e) => openCompany(e.currentTarget)}>{p.company}</button></>}
+              {!company && <> · {p.company}</>}
+            </span>
             {p.signals.map((s) => <Badge key={s.kind} variant="outline" title={s.detail}>{s.kind}</Badge>)}
             {!canEdit && <span className="text-xs text-muted-foreground">{p.owner} owns this contact — you can read it</span>}
           </span>
@@ -296,6 +343,9 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
           destructive: canEdit ? {
             label: "Remove from the workspace",
             consequence: `Removes ${p.name} and their ${items.length} activities. ${b.crm ? `The ${b.crm} record stays.` : "Nothing is deleted anywhere else."} Undo for 10 seconds.`,
+            // The one bare navigate on this page, and the right one: the record it came from no
+            // longer exists, so there is nothing to keep a path back to. The hash change empties
+            // the trail, which is what should happen when the thing you were reading is gone.
             onConfirm: () => { toast(`${p.name} removed. Undo is in the notification for 10 seconds.`); navigate("/ollopa/people") },
           } : undefined,
         }}
@@ -367,16 +417,31 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             id: "colleagues",
             title: `People at ${p.company}`,
             count: colleagues.length,
+            // Leaving is only for acting on the whole set, and it carries the company and the trail.
+            action: colleagues.length > shownColleagues.length
+              ? <Button size="sm" variant="ghost" data-item="people.at-company" data-item-label={`All ${colleagues.length} in People`} onClick={openAllAtCompany}>All {colleagues.length} in People</Button>
+              : undefined,
             children: colleagues.length === 0
               ? <p className="text-sm text-muted-foreground">Nobody else here yet.</p>
-              : <>{colleagues.slice(0, 5).map((c) => (
-                  <CardRow
-                    key={c.id}
-                    title={<a className="underline-offset-4 hover:underline" href={href(`/ollopa/people/${c.id}`)}>{c.name}</a>}
-                    meta={`${c.title} · ${c.stage}`}
-                    actions={[{ label: "Open", onClick: () => navigate(`/ollopa/people/${c.id}`) }]}
-                  />
-                ))}</>,
+              : <>{shownColleagues.map((c) => {
+                  const done = edits[c.id]
+                  return (
+                    <div key={c.id} data-item={c.id} data-item-label={c.name}>
+                      <CardRow
+                        title={
+                          <button type="button" className="text-left underline-offset-4 hover:underline" onClick={(e) => openColleague(c.id, e.currentTarget)}>
+                            {c.name}
+                          </button>
+                        }
+                        meta={`${c.title} · ${done?.sequence ?? c.inSequence ?? c.stage}`}
+                        actions={[{ label: "Open beside", onClick: () => openColleague(c.id, document.activeElement as HTMLElement | null) }]}
+                      >
+                        {/* What an action in the pane did to this person, on the row that opened it. */}
+                        {done?.note && <p role="status" className="pt-0.5 text-xs text-muted-foreground">{done.note}</p>}
+                      </CardRow>
+                    </div>
+                  )
+                })}</>,
           },
           {
             id: "deals",
@@ -385,12 +450,17 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             children: deals.length === 0
               ? <p className="text-sm text-muted-foreground">No open deals at {p.company}.</p>
               : <>{deals.slice(0, 4).map((dl) => (
-                  <CardRow
-                    key={dl.id}
-                    title={<a className="underline-offset-4 hover:underline" href={href(`/ollopa/deals/${dl.id}`)}>{dl.name}</a>}
-                    meta={`${dl.stage} · ${dl.owner}`}
-                    actions={[{ label: "Open", onClick: () => navigate(`/ollopa/deals/${dl.id}`) }]}
-                  />
+                  <div key={dl.id} data-item={dl.id} data-item-label={dl.name}>
+                    <CardRow
+                      title={
+                        <button type="button" className="text-left underline-offset-4 hover:underline" onClick={(e) => openDeal(dl.id, e.currentTarget)}>
+                          {dl.name}
+                        </button>
+                      }
+                      meta={`${dl.stage} · ${dl.owner}`}
+                      actions={[{ label: "Open beside", onClick: () => openDeal(dl.id, document.activeElement as HTMLElement | null) }]}
+                    />
+                  </div>
                 ))}</>,
           },
           {

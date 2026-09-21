@@ -7,6 +7,8 @@
 // mailbox-level and belongs to no single sequence.
 import { useState } from "react"
 import { href } from "@/app/router"
+import { follow } from "../../chain"
+import { originHere } from "../work/register"
 import { toast } from "../../templates/TablePage"
 import { Button } from "@/components/ui/button"
 import { Door, type Disclosure, type HealthLine } from "../../ui"
@@ -109,9 +111,14 @@ export function SetupDoor({ rows }: { rows: SetupRow[] }) {
       <Door id="home.health.setup" label={`Not set up yet: ${nouns}`} count={live.length}>
         <ul className="divide-y">
           {live.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-2 py-1.5 text-xs">
+            <li key={r.id} data-item={r.id} data-item-label={r.noun} className="flex flex-wrap items-center gap-2 py-1.5 text-xs">
               <span className="min-w-0 flex-1">{r.text}</span>
-              <a className="shrink-0 underline underline-offset-4" href={href(r.href)}>Open</a>
+              {/* A set-up step is a page in Settings: the trail keeps Home and this row, so
+                  finishing it comes back to the door still open and the row lit. */}
+              <button type="button" className="shrink-0 underline underline-offset-4"
+                      onClick={() => follow(r.href, originHere(r.id))}>
+                Open
+              </button>
               {r.declare && (
                 <Button
                   size="sm"

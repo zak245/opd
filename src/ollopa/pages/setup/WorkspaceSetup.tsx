@@ -1,15 +1,22 @@
-// Workspace set-up: the only page a person sees once.
+// Workspace set-up: the only page a person sees once — and the one page an admin comes back to.
 //
 // Three questions on one screen, because the sidebar cannot be decided without them and because the
 // three are interdependent — how many people, and which jobs exist, are answered together. The result
 // block updates as the answers change, so the cause and the effect are on the same screen. One door.
 // What the answers change, and that Settings changes them again, is beside the button, never behind it.
-import { useMemo, useState } from "react"
+//
+// It runs in two places. A fresh workspace has no sidebar yet, so it fills the window with no shell
+// around it. An admin who reached it from Settings › Workspace profile is in the middle of something:
+// the trail is not empty, so it runs inside the shell with the crumb back to Settings above it, and
+// Start and Skip return along that crumb to the row instead of dropping the person on Home.
+import { useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { navigate } from "@/app/router"
+import { back, useTrail } from "../../chain"
+import { movedLine, noteSidebarMove } from "./moved"
 import { seedFor } from "../../data/seed"
 import { NAV } from "../../nav"
 import { PROFILE_LEAVES_OUT } from "../../map"
@@ -18,6 +25,7 @@ import {
   declaredBy,
   PROFILE_LABEL,
   profileFrom,
+  profileOf,
   saveSetupAnswers,
   setupAnswersFor,
   type Profile,
@@ -89,6 +97,16 @@ function declaredAnswers(profile: Profile, seats: Role[]): SetupAnswers {
   }
 }
 
+/** The three answers in the words the page put on them, for a row that reports what is set now. */
+export function answerWords(a: SetupAnswers): string {
+  const job = JOBS.find((j) => j.id === a.firstJob)?.label
+  const size = SIZES.find((s) => s.id === a.people)?.label
+  const kinds = new Set(a.seats).size
+  const jobs = a.everything ? "everyone does everything" : `${kinds || "no"} of the four jobs`
+  return [job ? `"${job.toLowerCase()}"` : null, size ? `${size.toLowerCase()} people` : null, jobs]
+    .filter(Boolean).join(", ")
+}
+
 /** "2026-04-21" reads as a date, not a key. */
 function longDate(iso: string): string {
   const d = new Date(iso.slice(0, 10) + "T00:00:00")
@@ -124,8 +142,12 @@ function ProfileBlock({ profile, seats }: { profile: Profile; seats: Role[] }) {
   )
 }
 
-export function WorkspaceSetup({ session }: { session: Session }) {
+export function WorkspaceSetup({ session, inShell = false }: { session: Session; inShell?: boolean }) {
   const declared = declaredBy(session.business)
+  const trail = useTrail()
+  // The shape the workspace was in when this page opened. Answers save as they are made, so this is
+  // the only honest "before" for the line that says what moved.
+  const shapeOnArrival = useRef(profileOf(session.business)).current
   const workspace = seedFor(session.business).workspace
   const start = setupAnswersFor(session.business) ?? declaredAnswers(session.profile, workspace.seats)
 
@@ -158,13 +180,32 @@ export function WorkspaceSetup({ session }: { session: Session }) {
 
   const save = (next: Partial<SetupAnswers>) => saveSetupAnswers(session.business, { ...answers, ...next })
 
+  /**
+   * Finishing, either way. The answers are written, then the sidebars either side of the write are
+   * compared so the line the person reads on the way back says what actually moved rather than what
+   * probably moved. Reached from Settings, the way out is the crumb back to the row that sent you;
+   * reached fresh, it is Home, because there is nothing behind this page.
+   */
+  const finish = (next: Partial<SetupAnswers>) => {
+    save(next)
+    const after = profileOf(session.business)
+    if (trail.length > 0) {
+      noteSidebarMove(movedLine(session.business, session.role, shapeOnArrival, after))
+      back(trail.length - 1)
+      return
+    }
+    navigate("/ollopa")
+  }
+
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
-        <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
-        <span className="text-sm font-semibold">{workspace.name}</span>
-        <span className="text-sm text-muted-foreground">· {session.user}</span>
-      </header>
+    <div className={cn(!inShell && "min-h-screen bg-muted/30")}>
+      {!inShell && (
+        <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
+          <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
+          <span className="text-sm font-semibold">{workspace.name}</span>
+          <span className="text-sm text-muted-foreground">· {session.user}</span>
+        </header>
+      )}
 
       <div className="mx-auto max-w-3xl px-6 py-10">
         <h1 className="text-2xl font-semibold">How your team works</h1>
@@ -307,8 +348,8 @@ export function WorkspaceSetup({ session }: { session: Session }) {
         </section>
 
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t pt-6">
-          <Button disabled={!answered} onClick={() => { save({}); navigate("/ollopa") }}>Start</Button>
-          <Button variant="outline" onClick={() => { saveSetupAnswers(session.business, { ...answers, skipped: true }); navigate("/ollopa") }}>Skip</Button>
+          <Button disabled={!answered} onClick={() => finish({ skipped: false })}>{trail.length > 0 ? "Save the answers" : "Start"}</Button>
+          <Button variant="outline" onClick={() => finish({ skipped: true })}>Skip</Button>
           <span className="text-sm text-muted-foreground">
             {answered
               ? `Every seat gets ${PROFILE_LABEL[profile]}. Skipping gives every page to every seat instead — more, never less.`

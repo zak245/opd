@@ -12,7 +12,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
   DropdownMenuShortcut, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { href } from "@/app/router"
+import { follow } from "../../chain"
+import { originHere } from "../work/register"
 import { SectionHeader } from "../../ui"
 
 /* ------------------------------------------------------------------------------------- section */
@@ -32,15 +33,23 @@ const ORDER = ["", "order-1", "order-2", "order-3", "order-4", "order-5", "order
 
 export function Section({ id, title, count, link, order = 0, children }: SectionProps) {
   return (
-    <section aria-label={title} data-section={id} className={cn("min-w-0", ORDER[order] ?? "")}>
+    // The id is the anchor a chain that left from inside this section comes back to, when what it
+    // left was the section itself rather than one row.
+    <section id={id} aria-label={title} data-section={id} className={cn("min-w-0", ORDER[order] ?? "")}>
       <SectionHeader
         title={title}
         count={count}
         className="sticky top-0 z-[1] bg-background pt-1"
         action={link && (
-          <a className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href={href(link.to)}>
+          // The whole page this section is a window on. It is a move, not a jump: the trail keeps
+          // Home and the section, so the crumb comes back to it.
+          <button
+            type="button"
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            onClick={() => follow(link.to, originHere(id))}
+          >
             {link.label}
-          </a>
+          </button>
         )}
       />
       {children}
@@ -52,7 +61,10 @@ export function Section({ id, title, count, link, order = 0, children }: Section
 export function Nothing({ text, link }: { text: string; link?: { label: string; to: string } }) {
   return (
     <p className="rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground">
-      {text}{link && <> <a className="text-foreground underline underline-offset-4" href={href(link.to)}>{link.label}</a></>}
+      {text}{link && (
+        <> <button type="button" className="text-foreground underline underline-offset-4"
+                   onClick={() => follow(link.to, originHere())}>{link.label}</button></>
+      )}
     </p>
   )
 }
@@ -98,14 +110,23 @@ export interface RowProps {
   className?: string
   /** Marks the row read once it has been on screen: the batch button waits for this. */
   seen?: (el: HTMLElement | null) => void
+  /**
+   * The id of the thing this row names — a task, a reply, an agent run, a deal, a company. The pane
+   * marks the row it is reading from it, and a trail that left from this row comes back and lights
+   * it. `data-item-id` stays for the approval queue's own read-once observer.
+   */
   itemId?: string
+  /** What the row is called, for the pane and the crumb. */
+  itemLabel?: string
 }
 
-export function Row({ keys = {}, onEnter, children, className, seen, itemId }: RowProps) {
+export function Row({ keys = {}, onEnter, children, className, seen, itemId, itemLabel }: RowProps) {
   return (
     <li
       data-row
       data-item-id={itemId}
+      data-item={itemId}
+      data-item-label={itemLabel}
       tabIndex={0}
       ref={seen}
       className={cn(

@@ -2,16 +2,23 @@
 //
 // Level one, above everything else: the total, the net size after suppressions, and the six counts on
 // one line — the two that are always applied marked as such, the four the marketer chooses each saying
-// whether it is on. Every count is a link that opens the names behind it, because "42 customers" that
-// cannot be read as forty-two names is a number nobody checks before a send. The door beside them
+// whether it is on. Every count is a control that shows the names behind it, because "42 customers"
+// that cannot be read as forty-two names is a number nobody checks before a send. The door beside them
 // holds the rules, not the counts.
+//
+// The people are found inside the audience, whatever the count: one list with search, and the six
+// counts filter it in place, directly above it, so a count and the names it stands for are never in
+// two different places. A row opens the person beside this page; the page stays where it is.
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow, type Origin } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Panel } from "../../ui/Panel"
@@ -23,6 +30,9 @@ import { netSize, suppressedTotal, suppressionCounts, rulesApplied } from "./der
 import { ago, day, num } from "./format"
 import { patchRow, removeRow, useMarketing } from "./store"
 
+/** How many of a big audience's people the workspace's own rows can actually name. */
+const SHOWN = 40
+
 export function AudienceRecord({ session, id }: { session: Session; id?: string }) {
   const b = businessById(session.business)
   const seed = seedFor(session.business)
@@ -33,6 +43,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
 
   const a = rows.audiences.find((x) => x.id === id)
   const [records, setRecords] = useState<string | null>(route.query.get("records"))
+  const [q, setQ] = useState("")
   const [handOff, setHandOff] = useState(false)
   const [listName, setListName] = useState("Marketing-qualified, September")
   const [cap, setCap] = useState("1")
@@ -51,24 +62,70 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   const builtFor = a.usedBy[0]
   const campaign = rows.campaigns.find((c) => c.name === builtFor)
 
-  /** The names behind one count, from the workspace's own rows. */
-  const namesFor = (key: string) => {
-    const pool = key === "inSequence" ? seed.contacts.filter((c) => c.inSequence)
-      : key === "unsubscribed" ? seed.contacts.filter((c) => c.stage === "Not interested")
-        : key === "bounced" ? seed.contacts.filter((c) => c.emailStatus === "Bounced")
-          : key === "customers" ? seed.contacts.filter((c) => c.stage === "Meeting booked")
-            : seed.contacts
-    return pool.slice(0, 40)
+  /* ------------------------------------------------------------------- the two ways off this page */
+
+  /** Where this page is and the row being left, for the crumb and for the return cue. */
+  const from = (anchor?: string): Origin => ({ route: route.raw, title: `${a.name} · Campaigns`, anchor })
+
+  /** A campaign read beside the audience: the audience stays where it is and does not re-render. */
+  const readCampaign = (campaignId: string, ids: string[], opener?: HTMLElement | null) => {
+    const index = ids.indexOf(campaignId)
+    openBeside({
+      kind: "campaign", id: campaignId,
+      list: ids.length > 1 ? { ids, index: index < 0 ? 0 : index } : undefined,
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
   }
-  const openCount = counts.find((s) => s.key === records)
+
+  /** A person in this audience, read beside it, walking the list in the order it is shown. */
+  const readPerson = (personId: string, ids: string[], opener?: HTMLElement | null) => {
+    const index = ids.indexOf(personId)
+    openBeside({
+      kind: "person", id: personId,
+      list: { ids, index: index < 0 ? 0 : index },
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
+  }
+
+  /* ---------------------------------------------------------------------- the people, and the six */
+
+  /** The workspace's own rows behind one count, or the audience's own people when nothing is picked. */
+  const namesFor = (key: string | null) => {
+    if (key === "inSequence") return seed.contacts.filter((c) => c.inSequence)
+    if (key === "unsubscribed") return seed.contacts.filter((c) => c.stage === "Not interested")
+    if (key === "bounced") return seed.contacts.filter((c) => c.emailStatus === "Bounced")
+    if (key === "customers") return seed.contacts.filter((c) => c.stage === "Meeting booked")
+    return seed.contacts
+  }
+
+  const openCount = counts.find((s) => s.key === records) ?? null
+  const pool = namesFor(openCount ? openCount.key : null).slice(0, SHOWN)
+  const needle = q.trim().toLowerCase()
+  const people = needle ? pool.filter((p) => `${p.name} ${p.company}`.toLowerCase().includes(needle)) : pool
+  const peopleIds = people.map((p) => p.id)
+
+  /* -------------------------------------------------------------------------------- the header */
+
+  const usedByIds = a.usedBy.map((name) => rows.campaigns.find((x) => x.name === name)?.id ?? "").filter(Boolean)
 
   const fields: RecordField[] = [
     { key: "type", label: "Type", value: a.type },
     { key: "size", label: "Total size", value: <span className="tabular-nums">{num(a.size)}</span> },
     { key: "net", label: "After suppressions", value: <span className="font-medium tabular-nums">{num(net)}</span>, under: `${num(suppressedTotal(a))} suppressed` },
     { key: "rebuilt", label: "Last rebuilt", value: `${day(a.lastRebuilt)} · ${ago(a.lastRebuilt)}` },
-    { key: "builtFor", label: "Built for", value: builtFor ? <a className="underline" href={href(`/ollopa/campaigns/${campaign?.id ?? ""}`)}>{builtFor}</a> : "No campaign yet" },
+    {
+      key: "builtFor", label: "Built for",
+      value: builtFor && campaign
+        ? (
+          <span data-item={campaign.id} data-item-label={campaign.name}>
+            <button type="button" className="underline" onClick={(ev) => readCampaign(campaign.id, usedByIds, ev.currentTarget)}>{builtFor}</button>
+          </span>
+        )
+        : builtFor ?? "No campaign yet",
+    },
   ]
+
+  /* --------------------------------------------------------------------------------- the doors */
 
   const doors: RecordDoor[] = [
     {
@@ -104,7 +161,9 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           <ul className="list-disc pl-4 text-muted-foreground">{a.rules.map((f, i) => <li key={i}>{f.field} {f.op} {f.value}</li>)}</ul>
           {a.mode === "live" && (
             <p className="text-xs text-muted-foreground">
-              Fed by {a.sources[0]} · new matches added automatically. The switch that turns the feed off lives on that list. <a className="underline" href={href("/ollopa/lists")}>Open Lists</a>
+              Fed by {a.sources[0]} · new matches added automatically. The switch that turns the feed off lives on that list.{" "}
+              {/* Leaving for the list keeps this audience and this door on the trail. */}
+              <button type="button" className="underline" onClick={() => follow("/ollopa/lists", from("audience.sources"))}>Open Lists</button>
             </p>
           )}
         </div>
@@ -123,6 +182,72 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
       ),
     },
   ]
+
+  /* ------------------------------------------------------------------------------- the sections */
+
+  const sizeBlock = (
+    <div className="space-y-2">
+      <p className="text-sm">
+        <span className="tabular-nums">{num(a.size)} total</span> · <span className="font-medium tabular-nums">{num(net)} after suppressions</span>
+      </p>
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        {counts.map((s) => (
+          <li key={s.key}>
+            {/* A count is a filter over the list below, so the number and the names it stands for
+                are the same thing in the same place: the effect shows where it was caused. */}
+            <button
+              type="button"
+              aria-pressed={records === s.key}
+              className={cn("underline", s.on ? "" : "text-muted-foreground", records === s.key && "font-medium")}
+              onClick={() => { setRecords(records === s.key ? null : s.key); setQ("") }}
+            >
+              <span className="tabular-nums">{num(s.count)}</span> {s.label}
+            </button>
+            <span className="text-xs text-muted-foreground">{s.always ? ", always applied" : s.on ? "" : ", off"}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-sm">
+        {a.mode === "live"
+          ? <>Mode: live · refreshes daily 06:00 · new matches are added to {builtFor ?? "no campaign yet"}</>
+          : <>Frozen at {num(a.size)} on {day(a.frozenAt)}</>}
+      </p>
+      <Button size="sm" variant="outline" onClick={() => {
+        patch(a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY })
+        toast(a.mode === "live" ? `${a.name} frozen at ${num(a.size)}. No new matches are added.` : `${a.name} is live again and refreshes daily at 06:00.`)
+      }}>{a.mode === "live" ? "Freeze" : "Make live"}</Button>
+    </div>
+  )
+
+  const peopleBlock = (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          {openCount
+            ? <>The {num(openCount.count)} {openCount.label} this audience takes out, by name — the first {num(pool.length)} of them.</>
+            : <>The first {num(pool.length)} of {num(net)} after suppressions.</>}
+        </p>
+        <div className="flex items-center gap-2">
+          {/* Search once the list is longer than a screenful of names (over ten). */}
+          {pool.length > 10 && (
+            <Input aria-label="Find a person in this audience" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48" />
+          )}
+          {openCount && <Button size="sm" variant="ghost" onClick={() => { setRecords(null); setQ("") }}>Show everybody</Button>}
+        </div>
+      </div>
+      <ul className="text-sm">
+        {people.map((p) => (
+          <li key={p.id} data-item={p.id} data-item-label={p.name} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-1.5 first:border-t-0">
+            <button type="button" className="underline" onClick={(ev) => readPerson(p.id, peopleIds, ev.currentTarget)}>{p.name}</button>
+            <span className="text-xs text-muted-foreground">{p.title} · {p.company}</span>
+          </li>
+        ))}
+        {people.length === 0 && (
+          <li className="py-4 text-sm text-muted-foreground">{needle ? <>Nobody here matches “{q}”.</> : <>Nobody is in this set.</>}</li>
+        )}
+      </ul>
+    </div>
+  )
 
   return (
     <>
@@ -151,34 +276,12 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           kind: "sections",
           label: "Audience",
           sections: [
+            { id: "size", title: "Size and who is suppressed", children: sizeBlock },
             {
-              id: "size", title: "Size and who is suppressed",
-              children: (
-                <div className="space-y-2">
-                  <p className="text-sm">
-                    <span className="tabular-nums">{num(a.size)} total</span> · <span className="font-medium tabular-nums">{num(net)} after suppressions</span>
-                  </p>
-                  <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                    {counts.map((s) => (
-                      <li key={s.key}>
-                        <button className={s.on ? "underline" : "text-muted-foreground underline"} onClick={() => setRecords(s.key)}>
-                          <span className="tabular-nums">{num(s.count)}</span> {s.label}
-                        </button>
-                        <span className="text-xs text-muted-foreground">{s.always ? ", always applied" : s.on ? "" : ", off"}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-sm">
-                    {a.mode === "live"
-                      ? <>Mode: live · refreshes daily 06:00 · new matches are added to {builtFor ?? "no campaign yet"}</>
-                      : <>Frozen at {num(a.size)} on {day(a.frozenAt)}</>}
-                  </p>
-                  <Button size="sm" variant="outline" onClick={() => {
-                    patch(a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY })
-                    toast(a.mode === "live" ? `${a.name} frozen at ${num(a.size)}. No new matches are added.` : `${a.name} is live again and refreshes daily at 06:00.`)
-                  }}>{a.mode === "live" ? "Freeze" : "Make live"}</Button>
-                </div>
-              ),
+              id: "people",
+              title: openCount ? `${num(openCount.count)} ${openCount.label}` : "People in this audience",
+              count: people.length,
+              children: peopleBlock,
             },
           ],
         }}
@@ -189,26 +292,20 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
             : (
               <ul className="space-y-1 text-sm">
                 {a.usedBy.map((name) => {
-                  const c = rows.campaigns.find((x) => x.name === name)
-                  return <li key={name}><a className="underline" href={href(`/ollopa/campaigns/${c?.id ?? ""}`)}>{name}</a> <span className="text-muted-foreground">· {c?.status}</span></li>
+                  const cc = rows.campaigns.find((x) => x.name === name)
+                  if (!cc) return <li key={name}>{name}</li>
+                  return (
+                    <li key={name} data-item={cc.id} data-item-label={cc.name}>
+                      <button type="button" className="underline" onClick={(ev) => readCampaign(cc.id, usedByIds, ev.currentTarget)}>{name}</button>
+                      <span className="text-muted-foreground"> · {cc.status}</span>
+                    </li>
+                  )
                 })}
               </ul>
             ),
         }]}
         doors={doors}
       />
-
-      {/* X-report-records: the names behind one number, titled by that number. */}
-      <Panel id="audience-records" title={openCount ? `${num(openCount.count)} ${openCount.label}` : "Records"} open={!!openCount} onOpenChange={(o) => { if (!o) setRecords(null) }}>
-        <ul className="space-y-1 text-sm">
-          {namesFor(records ?? "").map((p) => (
-            <li key={p.id} className="flex justify-between gap-2 border-t py-1 first:border-t-0">
-              <a className="underline" href={href(`/ollopa/people/${p.id}`)}>{p.name}</a>
-              <span className="text-xs text-muted-foreground">{p.company}</span>
-            </li>
-          ))}
-        </ul>
-      </Panel>
 
       {/* Hand to sales states the consequence before the click, and names the seat that takes it on. */}
       <Panel id="audience-hand" title="Hand to sales" open={handOff} onOpenChange={setHandOff}

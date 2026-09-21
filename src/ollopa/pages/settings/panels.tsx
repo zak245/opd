@@ -19,6 +19,7 @@ import { seedFor, type ApiKey, type FieldDef, type Mailbox, type MailDomain, typ
 import type { Session } from "../../session"
 import { credits, day, longDay, plural } from "./format"
 import { settingsFor } from "./derived"
+import { jumpToSetting, leaveOnClick } from "./leave"
 import { toast } from "./state"
 
 /* ------------------------------------------------------------------------------ small pieces */
@@ -305,15 +306,25 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
         </Button>
       </div>
       <dl className="mt-4 grid gap-2 border-t pt-4 text-sm">
-        {[
+        {([
           { label: "Sequences that still hold them", n: removal.sequences, to: "/ollopa/sequences" },
-          { label: "Enrichment jobs that could re-import them", n: removal.jobs, to: "/ollopa/settings/prospecting" },
-          { label: "API keys with prospecting scope", n: removal.keys, to: "/ollopa/settings/developer" },
+          { label: "Enrichment jobs that could re-import them", n: removal.jobs, row: "pipe.enrichment-order" },
+          { label: "API keys with prospecting scope", n: removal.keys, row: "dev.api-keys" },
           { label: "Agents that read this list", n: removal.agents, to: "/ollopa/agents" },
-        ].map((row) => (
+        ] as { label: string; n: number; to?: string; row?: string }[]).map((row) => (
           <div key={row.label} className="flex items-baseline justify-between gap-3">
             <dt className="text-muted-foreground">{row.label}</dt>
-            <dd><a className="tabular-nums underline underline-offset-4" href={href(row.to)}>{row.n}</a></dd>
+            <dd>
+              {/* Another page: `follow`, and the trail comes back to the removal list's own row.
+                  Another row on this same page: no move at all, just the row, lit where it stands. */}
+              {row.to ? (
+                <a className="tabular-nums underline underline-offset-4" href={href(row.to)}
+                   onClick={leaveOnClick(row.to, "pros.removal-list")}>{row.n}</a>
+              ) : (
+                <button className="tabular-nums underline underline-offset-4"
+                        onClick={() => { p.onOpenChange(false); jumpToSetting(row.row!) }}>{row.n}</button>
+              )}
+            </dd>
           </div>
         ))}
       </dl>
@@ -359,7 +370,8 @@ export function KeyPanel({ apiKey, session, ...p }: PanelShell & { apiKey: ApiKe
           : <ul className="mt-1 grid gap-1 text-sm">
               {jobs.slice(0, 5).map((j) => (
                 <li key={j.id} className="flex items-baseline justify-between gap-3">
-                  <a className="min-w-0 truncate underline underline-offset-4" href={href(`/ollopa/enrichment/${j.id}`)}>{j.sourceLabel}</a>
+                  <a className="min-w-0 truncate underline underline-offset-4" href={href(`/ollopa/enrichment/${j.id}`)}
+                     onClick={leaveOnClick(`/ollopa/enrichment/${j.id}`, "dev.api-keys")}>{j.sourceLabel}</a>
                   <span className="shrink-0 tabular-nums text-muted-foreground">{credits(j.credits)}</span>
                 </li>
               ))}

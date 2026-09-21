@@ -8,6 +8,7 @@ import {
   type QualElementName, type Seed,
 } from "../../data/seed"
 import type { BusinessDef } from "../../data/businesses"
+import { ago, day, money } from "../deal/format"
 
 /** Five stages. There is no Closed lost: a lost deal is archived with a reason and leaves the board. */
 export const OPEN_STAGES: DealStage[] = ["Qualified", "Discovery", "Proposal", "Negotiation"]
@@ -194,4 +195,50 @@ export function newDeal(input: {
     qualification,
     scoreAtFirstContact: { score: 0, modelVersion: "Fit score v3", stampedOn: TODAY },
   }
+}
+
+/* ----------------------------------------------------------- level one, and what closing it does */
+
+/**
+ * The deal's first level: the six fields the record opens with, in the record's order and with the
+ * record's labels (spec 09 §6.8). The quick look, the table's quick look and the deal pane all read
+ * this one list, so a deal read in three places is read the same way.
+ */
+export function dealGlanceFields(deal: Deal, currency: string): { label: string; value: string }[] {
+  return [
+    { label: "Stage", value: deal.stage },
+    { label: "Amount", value: money(deal.amount, deal.currency || currency) },
+    { label: "Close date", value: day(deal.closeDate) },
+    { label: "Next step", value: deal.nextStep ? `${deal.nextStep} · ${day(deal.nextStepDue)}` : "No next step" },
+    { label: "Owner", value: deal.owner },
+    { label: "Last activity", value: `${day(deal.lastActivity)} · ${ago(deal.lastActivity)}` },
+  ]
+}
+
+/**
+ * What closing the deal won will do, word for word (spec 09 §3.2). The board, the record and the
+ * pane all print this, so the sentence a person reads before the click never depends on where they
+ * were standing. `openTasks` is the count where the caller knows it; the board does not.
+ */
+export function wonConsequenceText(deal: Deal, seed: Seed, b: BusinessDef, openTasks?: number): string {
+  const crm = crmOf(seed)
+  const csSeat = b.roles.find((r) => r.role === "cs")
+  return [
+    "Stage becomes Closed won.",
+    "Forecast category becomes Closed.",
+    openTasks === undefined ? null : `${openTasks} open task${openTasks === 1 ? "" : "s"} close.`,
+    crm ? `${crm.name} is updated.` : null,
+    csSeat ? `${deal.company} moves to customer success, and the hand-off arrives in ${csSeat.user}'s queue.` : null,
+  ].filter(Boolean).join(" ")
+}
+
+/** The same for marking it lost: what leaves, what closes and what stays. */
+export function lostConsequenceText(deal: Deal, seed: Seed, _b: BusinessDef, openTasks?: number): string {
+  const crm = crmOf(seed)
+  const tasks = openTasks === undefined ? "" : ` its ${openTasks} open task${openTasks === 1 ? "" : "s"} close,`
+  return `Archived as lost. The deal leaves the board and the forecast,${tasks} it stays on ${deal.company} and in Reports, and the ${crm?.name ?? "CRM"} opportunity is not deleted.`
+}
+
+function crmOf(seed: Seed) {
+  return seed.integrations.find((i) => /crm|salesforce|hubspot/i.test(`${i.kind} ${i.name}`))
 }

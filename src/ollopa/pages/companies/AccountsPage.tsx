@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { href, navigate } from "@/app/router"
+
+import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -104,6 +105,14 @@ export function AccountsPage({ session }: { session: Session }) {
 
   const owners = Array.from(new Set(all.map((v) => v.account!.owner))).sort()
 
+  /* ------------------------------------------------------------------------------- leaving */
+
+  /** This table, and the row being left: every move off this page carries both. */
+  const origin = (anchor?: string) => ({ route: "/ollopa/accounts", title: "Accounts", anchor })
+
+  /** The account's record, with this table and this row kept on the trail. */
+  const openAccount = (v: CompanyView) => follow(`/ollopa/companies/${v.company.id}`, origin(v.company.id))
+
   /* -------------------------------------------------------------------- the counters and strip */
 
   const windowCount = (days: number) => {
@@ -183,8 +192,8 @@ export function AccountsPage({ session }: { session: Session }) {
             const v = pending.row
             applyChange(v.company.id, { owner: session.user })
             setNotice({ text: `${v.account!.name} is yours. The record opens at the hand-off checklist.` })
-            navigate(`/ollopa/companies/${v.company.id}`)
             setPending(null)
+            follow(`/ollopa/companies/${v.company.id}`, origin(v.company.id))
           }}
           onCancel={() => setPending(null)}
         />
@@ -226,11 +235,13 @@ export function AccountsPage({ session }: { session: Session }) {
     {
       id: "acct.name", header: "Account", always: true, phone: true, sortValue: (v) => v.account!.name.toLowerCase(),
       cell: (v) => (
-        <div className="min-w-0">
+        /* The row's own id on the name, so a return from the record lands on the name and the
+           keyboard carries on from there rather than from the row's checkbox. */
+        <div className="min-w-0" data-item={v.company.id} data-item-label={v.account!.name}>
           <button
             type="button"
             className="min-w-0 truncate font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            onClick={(e) => { e.stopPropagation(); navigate(`/ollopa/companies/${v.company.id}`) }}
+            onClick={(e) => { e.stopPropagation(); openAccount(v) }}
           >
             {v.account!.name}
           </button>
@@ -330,7 +341,7 @@ export function AccountsPage({ session }: { session: Session }) {
   const rowActionDefs: (RowAction<CompanyView> & { usage: string; always?: boolean })[] = [
     { id: "touch", usage: "work.log-touch", label: () => "Log touch", onClick: (v) => setTouching(v) },
     { id: "risk", usage: "risk.add", label: () => "Add risk", onClick: (v) => setRisking(v) },
-    { id: "open", usage: "acct.name", label: () => "Open", onClick: (v) => navigate(`/ollopa/companies/${v.company.id}`) },
+    { id: "open", usage: "acct.name", label: () => "Open", onClick: openAccount },
     // Ridgeline's CS lead feeds the lifecycle campaigns, so the control is on the row there (specs/11 §3).
     ...(session.business === "ridgeline" && session.role === "cs" && hasCampaigns
       ? [{
@@ -350,8 +361,8 @@ export function AccountsPage({ session }: { session: Session }) {
 
   const menuActions: MenuAction<CompanyView>[] = [
     ...rowActionDefs.filter((a) => !visibleIds.includes(a.id)).map((a) => ({ id: a.id, label: a.label, onClick: a.onClick })),
-    { id: "renewal", label: () => "Create renewal deal", onClick: (v) => { navigate("/ollopa/deals"); toast(`Renewal deal created on ${v.account!.name} · ${money(v.account!.value, b.currency)}`) } },
-    { id: "expansion", label: () => "Create expansion deal", onClick: (v) => { navigate("/ollopa/deals"); toast(`Expansion deal created on ${v.account!.name}`) } },
+    { id: "renewal", label: () => "Create renewal deal", onClick: (v) => { toast(`Renewal deal created on ${v.account!.name} · ${money(v.account!.value, b.currency)}`); follow("/ollopa/deals", origin(v.company.id)) } },
+    { id: "expansion", label: () => "Create expansion deal", onClick: (v) => { toast(`Expansion deal created on ${v.account!.name}`); follow("/ollopa/deals", origin(v.company.id)) } },
     { id: "play", label: () => "Run a play", onClick: (v) => setPlaying(v) },
     { id: "email", label: (v) => `Email ${v.account!.champion}`, onClick: (v) => toast(`Composer open to ${v.account!.champion}`) },
     { id: "review", label: () => "Book a review meeting", onClick: (v) => toast(`Calendar open with the champion prefilled`) },
@@ -403,8 +414,8 @@ export function AccountsPage({ session }: { session: Session }) {
             { label: state.mine ? "Show every account" : "Show only my accounts", onClick: () => setState({ mine: !state.mine }) },
             { label: "Group by owner", onClick: () => setState({ sort: { id: "acct.owner", dir: "asc" } }) },
             { label: "Export CSV", onClick: () => toast(`Exported ${rows.length} accounts · ${columns.length} visible columns`) },
-            { label: "Health score model (Settings)", onClick: () => navigate("/ollopa/settings/scoring") },
-            { label: "Which signals fire (Settings)", onClick: () => navigate("/ollopa/settings/scoring") },
+            { label: "Health score model (Settings)", onClick: () => follow("/ollopa/settings/scoring", origin()) },
+            { label: "Which signals fire (Settings)", onClick: () => follow("/ollopa/settings/scoring", origin()) },
           ],
         }}
         rowActions={visible}
@@ -424,7 +435,7 @@ export function AccountsPage({ session }: { session: Session }) {
                     {s.outcome ? ` · ${s.outcome}` : " · no outcome yet"}
                   </span>
                   <span className="ml-auto flex gap-1">
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { navigate("/ollopa/deals"); toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`) }}>Route it</Button>
+                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`); follow("/ollopa/deals", origin(v.company.id)) }}>Route it</Button>
                     <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => { applyChange(v.company.id, { dismissedSignals: [...(changeFor(v.company.id).dismissedSignals ?? []), s.id] }); toast(`“${s.kind}” dismissed`) }}>Dismiss</Button>
                   </span>
                 </li>
@@ -440,13 +451,13 @@ export function AccountsPage({ session }: { session: Session }) {
             value: v.account!.nextStep.text,
             onChange: (text) => { applyChange(v.company.id, { nextStep: { text, due: v.account!.nextStep.due } }); toast(`Next step on ${v.account!.name} · ${text}`) },
           }),
-          onOpen: (v) => navigate(`/ollopa/companies/${v.company.id}`),
+          onOpen: openAccount,
         }}
         rowKeys={{
           l: (v) => setTouching(v),
           r: (v) => setRisking(v),
           n: (v) => setTouching(v),
-          o: (v) => navigate(`/ollopa/companies/${v.company.id}`),
+          o: openAccount,
           "1": () => toggleWindow(30),
           "2": () => toggleWindow(60),
           "3": () => toggleWindow(90),
@@ -472,7 +483,7 @@ export function AccountsPage({ session }: { session: Session }) {
       />
 
       <p className="px-5 pb-4 text-xs text-muted-foreground lg:px-6">
-        Renewal reminders land on <a className="underline" href={href("/ollopa/tasks")}>Tasks</a> at 120, 90, 60 and 30 days before the date.
+        Renewal reminders land on <button type="button" className="underline" onClick={() => follow("/ollopa/tasks", origin())}>Tasks</button> at 120, 90, 60 and 30 days before the date.
       </p>
     </>
   )

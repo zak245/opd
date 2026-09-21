@@ -24,7 +24,12 @@ import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { agentWatch, alreadyInASequence, companyMembersOf, enrolCredits, enrichCredits, membersOf, splitForEnrol, touchEstimate } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
-import { type Col, DataTable, Pill, ago, day, n, toast, usePersisted } from "./shared"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
+import { type Col, BesideLink, DataTable, FollowLink, Pill, ago, day, n, toast, usePersisted } from "./shared"
+
+/** A related list stops needing a jump to find something once it has a search in it (rule 4). */
+const SEARCH_OVER = 10
 
 /** The seed stores a filter field as its column name; a person reads it in words. */
 const FIELD_LABEL: Record<string, string> = {
@@ -48,6 +53,9 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   const [selected, setSelected] = useState<string[]>([])
   const [confirming, setConfirming] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+  // The members are found inside the list, whatever the count: over ten rows the search appears, and
+  // it never becomes a reason to leave for People (rule 4).
+  const [memberQ, setMemberQ] = useState("")
   const [sort, setSort] = usePersisted<{ key: string; dir: "asc" | "desc" }>(
     `ollopa.list.members.sort.${session.user}`, { key: "added", dir: "desc" },
   )
@@ -63,6 +71,15 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   const people = membersOf(list, session.business)
   const companies = companyMembersOf(list, session.business)
   const count = list.memberIds.length
+  const needle = memberQ.trim().toLowerCase()
+  const shownPeople = needle
+    ? people.filter((c) => `${c.name} ${c.company} ${c.title} ${c.email}`.toLowerCase().includes(needle))
+    : people
+  const shownCompanies = needle
+    ? companies.filter((c) => `${c.name} ${c.industry}`.toLowerCase().includes(needle))
+    : companies
+  /** Where the page and the crumb agree about what this page is called. */
+  const origin = { route: `/ollopa/lists/${list.id}`, title: list.name }
   // The same split the enrol panel will run, so the line on the page and the line in the panel agree.
   const enrolable = splitForEnrol(people).adding
   const credits = enrolCredits(enrolable)
@@ -80,7 +97,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
       key: "name", header: "Name", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
       cell: (c) => (
         <div className="min-w-0">
-          <a className="font-medium hover:underline" href={href(`/ollopa/people/${c.id}`)} onClick={(e) => e.stopPropagation()}>{c.name}</a>
+          <BesideLink className="font-medium hover:underline" kind="person" id={c.id} list={walkPeople(c.id)}>{c.name}</BesideLink>
           <div className="text-xs text-muted-foreground">{c.title}</div>
         </div>
       ),
@@ -105,7 +122,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   ]
 
   const companyColumns: Col<Company>[] = [
-    { key: "name", header: "Company", primary: true, sort: (a, c) => a.name.localeCompare(c.name), cell: (c) => <a className="font-medium hover:underline" href={href(`/ollopa/companies/${c.id}`)} onClick={(e) => e.stopPropagation()}>{c.name}</a> },
+    { key: "name", header: "Company", primary: true, sort: (a, c) => a.name.localeCompare(c.name), cell: (c) => <BesideLink className="font-medium hover:underline" kind="company" id={c.id} list={walkCompanies(c.id)}>{c.name}</BesideLink> },
     { key: "industry", header: "Industry", phone: true, cell: (c) => c.industry },
     { key: "employees", header: "Employees", className: "tabular-nums", sort: (a, c) => a.employees - c.employees, cell: (c) => n(c.employees) },
     { key: "contacts", header: "Contacts", className: "tabular-nums", phone: true, sort: (a, c) => a.contacts - c.contacts, cell: (c) => n(c.contacts) },
@@ -113,13 +130,41 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
     { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => day(c.addedOn) },
   ]
 
+  // The order on screen, not the order in the data: `[` and `]` in the pane walk what the person is
+  // looking at. `DataTable` sorts with the same comparator, so this changes no row's position.
+  const inOrder = <T,>(rows: T[], columns: Col<T>[]) => {
+    const by = columns.find((c) => c.key === sort.key)?.sort
+    if (!by) return rows
+    const out = [...rows].sort(by)
+    return sort.dir === "desc" ? out.reverse() : out
+  }
+  const walkPeople = (id: string) => {
+    const ids = inOrder(shownPeople, peopleColumns).map((c) => c.id)
+    return { ids, index: Math.max(0, ids.indexOf(id)) }
+  }
+  const walkCompanies = (id: string) => {
+    const ids = inOrder(shownCompanies, companyColumns).map((c) => c.id)
+    return { ids, index: Math.max(0, ids.indexOf(id)) }
+  }
+
+  /** A look, beside the list. The list stays where it is. */
+  const openPerson = (c: Contact, opener?: HTMLElement | null) =>
+    openBeside({ kind: "person", id: c.id, list: walkPeople(c.id), opener: opener ?? (document.activeElement as HTMLElement | null) })
+  const openCompany = (c: Company, opener?: HTMLElement | null) =>
+    openBeside({ kind: "company", id: c.id, list: walkCompanies(c.id), opener: opener ?? (document.activeElement as HTMLElement | null) })
+
+  /** The whole record, with this list and this row kept on the trail. */
+  const openPersonPage = (c: Contact) => follow(`/ollopa/people/${c.id}`, { ...origin, anchor: c.id })
+  const openCompanyPage = (c: Company) => follow(`/ollopa/companies/${c.id}`, { ...origin, anchor: c.id })
+
   const removeMember = (memberId: string, label: string) => {
     engage.patchList(session.business, list.id, { memberIds: list.memberIds.filter((m) => m !== memberId) })
     say(`${label} removed from ${list.name}`)
   }
 
   const memberMenu = (c: Contact) => [
-    { label: "View", onClick: () => navigate(`/ollopa/people/${c.id}`) },
+    { label: "Open beside this list", onClick: () => openPerson(c) },
+    { label: "Open the person's page", onClick: () => openPersonPage(c) },
     { label: "Add to a sequence", onClick: () => setEnrolling(true) },
     { label: "Call", onClick: () => say(`Call task created for ${c.name}`) },
     { label: `Enrich · ${CREDITS.enrich} credits`, onClick: () => say(`Enriched ${c.name} · ${CREDITS.enrich} credits`) },
@@ -178,7 +223,10 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
             <div className="ml-auto flex flex-wrap items-center gap-2" data-print-hide>
               {list.kind === "people"
                 ? <Button size="sm" onClick={() => setEnrolling(true)}>Add to sequence</Button>
-                : <Button size="sm" onClick={() => { say(`People at the ${n(count)} companies in ${list.name}`); navigate("/ollopa/people") }}>Find people at these companies</Button>}
+                : <Button
+                    size="sm" data-item="list.find-people"
+                    onClick={() => follow(`/ollopa/people?companies=${list.id}`, { ...origin, anchor: "list.find-people" })}
+                  >Find people at these companies</Button>}
               {hasCampaigns && <Button size="sm" variant="outline" onClick={() => say(`${list.name}: pick a campaign`)}>Add to campaign</Button>}
               {list.mode === "static" && isOwner && <Button size="sm" variant="outline" onClick={() => setAdding(true)}>{list.kind === "people" ? "Add people" : "Add companies"}</Button>}
               {list.mode === "segment" && (
@@ -301,14 +349,30 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
 
         {/* --------------------------------------------------------------------------- members */}
         <div className="min-h-0 flex-1 px-4 pt-4 sm:px-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <SectionHeader title={list.kind === "people" ? "People in this list" : "Companies in this list"} count={count} />
-            <ExpandAll />
+            <div className="flex items-center gap-2">
+              {count > SEARCH_OVER && (
+                <Input
+                  data-page-search
+                  aria-label={list.kind === "people" ? "Find a person in this list" : "Find a company in this list"}
+                  placeholder={list.kind === "people" ? "Find a person" : "Find a company"}
+                  className="h-9 w-48"
+                  value={memberQ} onChange={(e) => setMemberQ(e.target.value)}
+                />
+              )}
+              <ExpandAll />
+            </div>
           </div>
+          {needle && (
+            <p className="pt-1 text-xs tabular-nums text-muted-foreground" role="status">
+              {n(list.kind === "people" ? shownPeople.length : shownCompanies.length)} of {n(count)} shown
+            </p>
+          )}
 
           {list.kind === "people" ? (
             <DataTable<Contact>
-              rows={people}
+              rows={shownPeople}
               rowKey={(c) => c.id}
               columns={peopleColumns}
               sortKey={sort.key}
@@ -317,7 +381,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
               rowActions={[{ label: () => "Add to sequence", onClick: () => setEnrolling(true) }]}
               menu={memberMenu}
               menuLabel={(c) => c.name}
-              onOpen={(c) => navigate(`/ollopa/people/${c.id}`)}
+              onOpen={(c) => openPerson(c)}
               selection={{
                 selected, onChange: setSelected,
                 bar: (ids) => (
@@ -343,27 +407,29 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                 ),
               }}
               empty={
-                list.mode === "segment"
+                needle
+                  ? <EmptyState title={`Nobody in this list matches "${memberQ}"`} body="Clear the search to see everyone in the list again." action={<Button size="sm" variant="outline" onClick={() => setMemberQ("")}>Clear the search</Button>} />
+                : list.mode === "segment"
                   ? <EmptyState title="No one matches these filters right now" body="Widen a filter or wait for the next refresh." action={<Button size="sm" onClick={() => setEditingFilters(true)}>Edit filters</Button>} />
                   : <EmptyState title="Nobody in this list yet" body="Add people from People, from a search, or from a CSV." action={<Button size="sm" onClick={() => setAdding(true)}>Add people</Button>} />
               }
             />
           ) : (
             <DataTable<Company>
-              rows={companies}
+              rows={shownCompanies}
               rowKey={(c) => c.id}
               columns={companyColumns}
               sortKey={sort.key}
               sortDir={sort.dir}
               onSort={(k, dir) => setSort({ key: k, dir })}
-              rowActions={[{ label: () => "Find people here", onClick: (c) => { say(`People at ${c.name}`); navigate("/ollopa/people") } }]}
+              rowActions={[{ label: () => "Find people here", onClick: (c) => openCompany(c) }]}
               menu={(c) => [
-                { label: "Open the company", onClick: () => navigate(`/ollopa/companies/${c.id}`) },
-                { label: "Find people at this company", onClick: () => navigate("/ollopa/people") },
+                { label: "Open the company beside this list", onClick: () => openCompany(c) },
+                { label: "Open the company page", onClick: () => openCompanyPage(c) },
                 { label: `Remove from ${list.name} · ${c.name} stays in Companies`, destructive: true, onClick: () => removeMember(c.id, c.name) },
               ]}
               menuLabel={(c) => c.name}
-              onOpen={(c) => navigate(`/ollopa/companies/${c.id}`)}
+              onOpen={(c) => openCompany(c)}
               selection={{
                 selected, onChange: setSelected,
                 bar: (ids) => (
@@ -376,7 +442,9 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                   </>
                 ),
               }}
-              empty={<EmptyState title="No companies in this list yet" body="Add them from Companies or from a search." />}
+              empty={needle
+                ? <EmptyState title={`No company in this list matches "${memberQ}"`} body="Clear the search to see every company in the list again." action={<Button size="sm" variant="outline" onClick={() => setMemberQ("")}>Clear the search</Button>} />
+                : <EmptyState title="No companies in this list yet" body="Add them from Companies or from a search." />}
             />
           )}
 

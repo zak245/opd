@@ -9,7 +9,7 @@
 // back, all of it goes again.
 //
 // `/ollopa/accounts/:id` redirects here. There is no second record.
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useRef, useState, type ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { CardRow, RecordPage, type RecordCard, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
 import { EmptyState } from "../../ui/EmptyState"
@@ -32,8 +34,12 @@ import { customerFields, healthLine, prospectFields, riskLine } from "./quickLoo
 import { ago, day, daysLeft, delta, money, renewalText } from "./format"
 import { applyChange, changeFor, useChanges } from "./changes"
 import { PlayPanel } from "./PlayPanel"
+import { CompanyContacts } from "./CompanyContacts"
 
 export function CompanyRecord({ session, id }: { session: Session; id?: string }) {
+  // Development only: counted so the "the page behind the pane does not re-render" claim is checked.
+  const renders = useRef(0)
+  renders.current += 1
   const seed = seedFor(session.business)
   const b = businessById(session.business)
   const d = useDisclosure("companies")
@@ -98,11 +104,28 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   const localRuns = change.researchRuns ?? []
   const runs = [
     ...localRuns,
-    ...v.research.map((e) => ({ id: e.id, agent: e.agent, at: e.at, sources: e.sources.length || 14, credits: e.credits })),
+    ...v.research.map((e) => ({ id: e.id, agent: e.agent, at: e.when, sources: e.sources.length || 14, credits: e.credits })),
   ]
   const brief = seed.briefs.find((n) => n.about.kind === "company" && n.about.id === merged.id)
   const briefHref = runs[0] ? `/ollopa/briefs/${brief?.id ?? runs[0].id}` : null
   const holdsAccounts = ["cs", "ae", "admin"].includes(session.role)
+
+  /* -------------------------------------------------------- leaving, and looking beside */
+
+  // Where a move that leaves this page says it came from: the route, the h1 as it reads at the
+  // moment of leaving, and the thing that was left. Every jump out of this record uses it, so the
+  // crumb always lands back on the row, the section or the door the person was in.
+  const origin = (anchor?: string) => ({ route: `/ollopa/companies/${company.id}`, title: merged.name, anchor })
+
+  /** People filtered to this company: the one jump out of the contacts list, for the whole set. */
+  const openPeopleAtCompany = () => {
+    follow(`/ollopa/people?company=${company.id}`, origin("contacts"))
+    toast(`People · at ${merged.name}`)
+  }
+
+  /** A deal or another company here, read beside this record rather than instead of it. */
+  const lookBeside = (kind: string, id: string, ids: string[], opener?: HTMLElement | null) =>
+    openBeside({ kind, id, list: ids.length > 1 ? { ids, index: Math.max(0, ids.indexOf(id)) } : undefined, opener: opener ?? null })
 
   /* ------------------------------------------------------------------------------- the fields */
 
@@ -243,7 +266,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             ))}
           </ul>
           <p className="pt-2 text-xs text-muted-foreground">
-            Inputs and weights are set in <a className="underline" href={href("/ollopa/settings/scoring")}>Settings › Signals, scoring and personas</a>
+            Inputs and weights are set in <button type="button" className="underline" onClick={() => follow("/ollopa/settings/scoring", origin("health-drivers"))}>Settings › Signals, scoring and personas</button>
             {admin ? ` by ${admin.user} (${admin.title})` : ""}.
           </p>
           <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => setFlagOpen(true)}>This flag was wrong</Button>
@@ -258,7 +281,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
 
     if (used("rec.renewal")) sections.push({
       id: "renewal", title: "Renewal terms",
-      action: <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { navigate("/ollopa/deals"); toast(`Renewal deal created on ${account.name} · ${money(account.value, b.currency)}`) }}>Create renewal deal</Button>,
+      action: <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { toast(`Renewal deal created on ${account.name} · ${money(account.value, b.currency)}`); follow("/ollopa/deals", origin("renewal")) }}>Create renewal deal</Button>,
       children: (
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
           {[
@@ -338,7 +361,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
                 title={s.kind}
                 meta={`${s.source} · fired ${day(s.fired)} · routed to ${s.routedTo} · due ${day(s.dueBy)}${s.outcome ? ` · ${s.outcome}` : " · no outcome yet"}`}
                 actions={[
-                  { label: "Route it", onClick: () => { navigate("/ollopa/deals"); toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`) } },
+                  { label: "Route it", onClick: () => { toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`); follow("/ollopa/deals", origin("expansion")) } },
                   { label: "Dismiss", onClick: () => { applyChange(merged.id, { dismissedSignals: [...(change.dismissedSignals ?? []), s.id] }); toast(`“${s.kind}” dismissed`) } },
                 ]}
               >
@@ -412,28 +435,26 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   }
 
   // The related lists every company record carries, read side by side rather than behind tabs.
-  const bigPeopleList = v.contacts.length > 40
-  if (used("rec.contacts") && !bigPeopleList) sections.push({
+  //
+  // The contacts are a real list in here whatever the count: search, filters, paging and rows that
+  // open beside. There is no "Show all" jump and no People tab, because a big number is not a
+  // reason to make somebody leave the company to read one person at it.
+  if (used("rec.contacts")) sections.push({
     id: "contacts", title: "Contacts at this company", count: v.contacts.length,
-    action: v.contacts.length > 10
-      ? <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/ollopa/people?company=${merged.id}`)}>Show all {v.contacts.length}</Button>
+    action: v.contacts.length > 0
+      ? <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={openPeopleAtCompany}>Open in People</Button>
       : undefined,
     children: v.contacts.length === 0
-      ? <EmptyState title="No contacts here yet" body="Find people at this company and they appear on this list." action={<Button size="sm" onClick={() => navigate(`/ollopa/people?company=${merged.id}`)}>Find people</Button>} />
+      ? <EmptyState title="No contacts here yet" body="Find people at this company and they appear on this list." action={<Button size="sm" onClick={openPeopleAtCompany}>Find people</Button>} />
       : (
-        <div>
-          {v.contacts.slice(0, 10).map((c) => (
-            <CardRow
-              key={c.id}
-              title={<a className="hover:underline" href={href(`/ollopa/people/${c.id}`)}>{c.name}</a>}
-              meta={<>{c.title} · {c.stage} · {c.inSequence ? `in ${c.inSequence}` : "not in a sequence"} · {ago(c.lastActivity)}</>}
-              actions={[
-                { label: "Sequence", onClick: () => toast(`${c.name} added to a sequence`) },
-                { label: "Call", onClick: () => toast(`Call task created for ${c.name}`) },
-              ]}
-            />
-          ))}
-        </div>
+        <CompanyContacts
+          companyId={company.id}
+          contacts={v.contacts}
+          companyName={merged.name}
+          sequenceName={seed.sequences[0]?.name ?? "Outbound"}
+          pageRenders={renders.current}
+          onOpenInPeople={openPeopleAtCompany}
+        />
       ),
   })
 
@@ -442,9 +463,16 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     children: v.openDeals.length === 0
       ? <EmptyState title="No open deals" body="A deal here appears as soon as one is created." />
       : <div>{v.openDeals.map((deal) => (
-          <CardRow key={deal.id}
-            title={<a className="hover:underline" href={href(`/ollopa/deals/${deal.id}`)}>{deal.name}</a>}
-            meta={`${money(deal.amount, deal.currency)} · ${deal.stage} · closes ${day(deal.closeDate)} · ${deal.owner}`} />
+          <div key={deal.id} data-item={deal.id} data-item-label={deal.name}>
+            <CardRow
+              title={
+                <button type="button" className="font-medium hover:underline"
+                        onClick={(e) => lookBeside("deal", deal.id, v.openDeals.map((x) => x.id), e.currentTarget)}>
+                  {deal.name}
+                </button>
+              }
+              meta={`${money(deal.amount, deal.currency)} · ${deal.stage} · closes ${day(deal.closeDate)} · ${deal.owner}`} />
+          </div>
         ))}</div>,
   })
 
@@ -551,7 +579,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               <div className="text-xs text-muted-foreground">{run.agent} · {day(run.at)} · {run.sources} sources · {run.credits} credits</div>
               {i === 0 && briefHref && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(briefHref)}>Open the brief</Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => follow(briefHref, origin("company.research"))}>Open the brief</Button>
                   <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => runResearch()}>Research again · {CREDITS.research} credits</Button>
                 </div>
               )}
@@ -611,7 +639,10 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         <ul className="space-y-1">
           {merged.parent && <li>Parent · {merged.parent}</li>}
           {children.map((c) => (
-            <li key={c.id}>Subsidiary · <a className="underline" href={href(`/ollopa/companies/${c.id}`)}>{c.name}</a></li>
+            <li key={c.id} data-item={c.id} data-item-label={c.name}>
+              Subsidiary · <button type="button" className="underline"
+                onClick={(e) => lookBeside("company", c.id, children.map((x) => x.id), e.currentTarget)}>{c.name}</button>
+            </li>
           ))}
         </ul>
       ),
@@ -710,14 +741,14 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     `Removes ${merged.name}: it leaves ${merged.lists.length} list${merged.lists.length === 1 ? "" : "s"}, stops sequences for ${v.inSequence.length} contact${v.inSequence.length === 1 ? "" : "s"}, and keeps the ${v.contacts.length} contacts on People.`
 
   const primary = [
-    { label: "Find people", onClick: () => { navigate(`/ollopa/people?company=${merged.id}`); toast(`People · at ${merged.name}`) }, shortcut: "F" },
+    { label: "Find people", onClick: openPeopleAtCompany, shortcut: "F" },
     { label: `Research · ${CREDITS.research} credits`, onClick: runResearch, shortcut: "R", confirm: `Run the research agent on ${merged.name} for ${CREDITS.research} credits? Balance ${seed.credits.balance.toLocaleString()}.` },
   ]
 
   const secondary = [
     { label: "Add to list", onClick: () => setListOpen(true), shortcut: "L" },
     ...(customer && holdsAccounts ? [{ label: "Run a play", onClick: () => setPlayOpen(true), shortcut: "P" }] : []),
-    ...(briefHref && d.level("rec.brief") === 1 ? [{ label: "Open the brief", onClick: () => navigate(briefHref), shortcut: "B" }] : []),
+    ...(briefHref && d.level("rec.brief") === 1 ? [{ label: "Open the brief", onClick: () => follow(briefHref, origin()), shortcut: "B" }] : []),
   ]
 
   /* -------------------------------------------------------------------------------- the ribbon */
@@ -764,22 +795,6 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         main={{ kind: "sections", label: "Overview", sections }}
         side={cards}
         doors={doors}
-        tab={bigPeopleList ? {
-          label: "People", count: v.contacts.length,
-          content: (
-            <div>
-              {v.contacts.map((c) => (
-                <CardRow key={c.id}
-                  title={<a className="hover:underline" href={href(`/ollopa/people/${c.id}`)}>{c.name}</a>}
-                  meta={<>{c.title} · {c.stage} · {c.inSequence ? `in ${c.inSequence}` : "not in a sequence"} · {ago(c.lastActivity)}</>}
-                  actions={[
-                    { label: "Sequence", onClick: () => toast(`${c.name} added to a sequence`) },
-                    { label: "Call", onClick: () => toast(`Call task created for ${c.name}`) },
-                  ]} />
-              ))}
-            </div>
-          ),
-        } : undefined}
         quickLook={{
           fields: customer && account ? customerFields(v, b.currency) : prospectFields(v),
           editable: customer && account
@@ -787,11 +802,11 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             : { label: "Stage", value: merged.stage, options: [...ACCOUNT_STAGES], onChange: (to) => changeStage(to as AccountStage) },
         }}
         shortcuts={[
-          { keys: "F", label: "Find people at this company", run: () => { navigate(`/ollopa/people?company=${merged.id}`); toast(`People · at ${merged.name}`) } },
+          { keys: "F", label: "Find people at this company", run: openPeopleAtCompany },
           { keys: "L", label: "Add to a list", run: () => setListOpen(true) },
           { keys: "R", label: `Research · ${CREDITS.research} credits`, run: runResearch },
           ...(customer && holdsAccounts ? [{ keys: "P", label: "Run a play", run: () => setPlayOpen(true) }] : []),
-          ...(briefHref ? [{ keys: "B", label: "Open the brief", run: () => navigate(briefHref) }] : []),
+          ...(briefHref ? [{ keys: "B", label: "Open the brief", run: () => follow(briefHref, origin()) }] : []),
         ]}
         noAccess={seat ? undefined : { message: "Companies is not part of your seat.", who: ["SDR", "Account executive", "Customer success", "RevOps admin"] }}
       />

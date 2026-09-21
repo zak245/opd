@@ -17,10 +17,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { href, navigate } from "@/app/router"
+import { href, navigate, useRoute } from "@/app/router"
+import { back as goBack, follow, useTrail } from "../../chain"
+import { openBeside } from "../../beside"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
-import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
+import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { Door, useDoorState } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -262,7 +264,6 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const [lostPanel, setLostPanel] = useState(false)
   const [lostReason, setLostReason] = useState("")
   const [proposalOpen, setProposalOpen] = useState(true)
-  const [glance, setGlance] = useState<{ name: string; fields: QuickLookField[]; id: string } | null>(null)
   const [extra, setExtra] = useState<DealActivity[]>([])
   const composer = useRef<HTMLDivElement>(null)
   const [, setEvidenceDoor] = useDoorState("deal.evidence")
@@ -291,23 +292,42 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   // The accelerators that are not single keys: G then H for history, [ and ] to walk the board, Esc back.
   const [chord, setChord] = useState(false)
   const [, setHistoryDoor] = useDoorState("deal.history")
+  // The trail as it stands, read through a ref so Escape uses the latest one without the handler
+  // being torn down and rebuilt on every crumb.
+  const route = useRoute()
+  const trail = useTrail()
+  const trailRef = useRef(trail)
+  trailRef.current = trail
   useEffect(() => {
     if (!r8) return
     const onKey = (e: KeyboardEvent) => {
+      // The pane took this key first and said so. It owns Escape and [ and ] while it is open, so
+      // pressing ] with a contact beside the record walks the contacts and does not also move the
+      // page out from under them.
+      if (e.defaultPrevented) return
       const t = e.target as HTMLElement | null
       if (e.metaKey || e.ctrlKey || t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return
       if (e.key.toLowerCase() === "g") { setChord(true); return }
       if (chord && e.key.toLowerCase() === "h") { setChord(false); setHistoryDoor(true); return }
       setChord(false)
-      if (e.key === "Escape" && !document.querySelector("[role=dialog]")) navigate("/ollopa/deals")
+      if (e.key === "Escape" && !document.querySelector("[role=dialog]")) {
+        // Escape goes back the way the person came when they came through a chain, landing on the
+        // card or row they left; from a deep link there is no path, so it goes to the board.
+        const path = trailRef.current
+        if (path.length > 0) goBack(path.length - 1)
+        else navigate("/ollopa/deals")
+      }
       const forward = e.key === "]"
-      const back = e.key === "["
-      if (forward || back) {
+      const previous = e.key === "["
+      if (forward || previous) {
+        // The next deal opens beside this one rather than replacing it: the record keeps its scroll,
+        // its open doors and its half-written note, and [ and ] carry on walking inside the pane.
         const list = seedFor(session.business).deals
-        const at = list.findIndex((d) => d.id === (dealId ?? list[0]?.id))
-        const to = forward ? Math.min(at + 1, list.length - 1) : Math.max(at - 1, 0)
-        const next = list[to]
-        if (next) navigate(`/ollopa/deals/${next.id}`)
+        const ids = list.map((d) => d.id)
+        const at = ids.indexOf(dealId ?? ids[0])
+        const to = forward ? at + 1 : at - 1
+        if (to < 0 || to >= ids.length) return
+        openBeside({ kind: "deal", id: ids[to], list: { ids, index: to }, opener: document.activeElement as HTMLElement | null })
       }
     }
     window.addEventListener("keydown", onKey)
@@ -327,6 +347,9 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
   const isOwner = deal.owner === session.user
   const canEdit = isOwner || session.role === "admin"
+  // Where this page is and what its h1 says, for the origins it hands to `follow`. The title is the
+  // heading as it reads right now, renames included, so a crumb never shows a name the page dropped.
+  const pageTitle = `${name} · Deals`
   const company = seed.companies.find((c) => c.id === deal.companyId || c.name === deal.company)
   const account = seed.accounts.find((a) => a.companyId === (company?.id ?? "") )
   const contacts = seed.dealContacts.filter((c) => c.dealId === deal.id)
@@ -452,7 +475,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <p key={s.name} id="stage-gate" className="text-xs text-amber-700 dark:text-amber-400">
           <Thing id="qual.gate" label="The stage gate">
             {s.name} needs {missingFor(s.name).join(" and ")}. Set by {admin?.user ?? "your admin"} in{" "}
-            <a className="underline" href={href("/ollopa/settings")}>Settings › Pipeline and data</a>.
+            {/* A step in the chain, not a jump: Settings opens with this deal remembered, and the
+                crumb comes back to the gate sentence, lit. */}
+            <a className="underline" href={href("/ollopa/settings/pipeline")}
+               onClick={(e) => { e.preventDefault(); follow("/ollopa/settings/pipeline", { route: route.raw, title: pageTitle, anchor: "stage-gate" }) }}>
+              Settings › Pipeline and data
+            </a>.
           </Thing>
         </p>
       ))}
@@ -785,32 +813,35 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
       ? <EmptyState title="No contacts on this deal yet" body="Add the people you are talking to, and say what each of them is." />
       : (
         <ThingPlace id="contacts.list" label="Contacts on the deal" place="card.contacts" placeLabel="the Contacts card">
-          {contacts.map((c) => {
-            const person = seed.contacts.find((p) => p.id === c.contactId)
-            return (
-              <CardRow
-                key={c.contactId}
-                title={<button className="text-left hover:underline" onClick={(e) => { e.currentTarget.focus(); setGlance({
-                  id: c.contactId, name: c.name,
-                  // Same labels, same order as the top of the contact record (spec 09 §6.8).
-                  fields: [
-                    { label: "Name", value: c.name },
-                    { label: "Title", value: c.title },
-                    { label: "Company", value: deal.company },
-                    { label: "Email", value: person ? <span className="font-mono text-xs">{person.email} · {person.emailStatus}</span> : "—" },
-                    { label: "Phone", value: person?.phone ? "On file" : "—" },
-                    { label: "Role on this deal", value: c.role },
-                  ],
-                }) }}>{c.name}</button>}
-                meta={<>{c.title} · {c.role} · {c.engaged ? "has replied" : "never replied"}</>}
-                actions={canEdit ? [
-                  { label: "Email", onClick: () => toast(`Email ${c.name} from the composer.`) },
-                  { label: "Set role", onClick: () => toast(`Role for ${c.name}: Champion, Economic buyer, Technical, User, Blocker, Other.`) },
-                  { label: "Remove from deal", destructive: true, onClick: () => toast(`${c.name} removed from the deal. The contact record stays.`) },
-                ] : undefined}
-              />
-            )
-          })}
+          {contacts.map((c, index) => (
+            /* A contact opens beside the record: the deal stays where it is, with its scroll, its
+               open doors and anything half-written in the composer, and [ and ] walk the rest of
+               the contacts on this deal without closing. Escape brings focus back to this name. */
+            <CardRow
+              key={c.contactId}
+              title={
+                <button
+                  data-item={c.contactId}
+                  data-item-label={c.name}
+                  className="text-left hover:underline"
+                  onClick={(e) => openBeside({
+                    kind: "person",
+                    id: c.contactId,
+                    list: { ids: contacts.map((x) => x.contactId), index },
+                    opener: e.currentTarget,
+                  })}
+                >
+                  {c.name}
+                </button>
+              }
+              meta={<>{c.title} · {c.role} · {c.engaged ? "has replied" : "never replied"}</>}
+              actions={canEdit ? [
+                { label: "Email", onClick: () => toast(`Email ${c.name} from the composer.`) },
+                { label: "Set role", onClick: () => toast(`Role for ${c.name}: Champion, Economic buyer, Technical, User, Blocker, Other.`) },
+                { label: "Remove from deal", destructive: true, onClick: () => toast(`${c.name} removed from the deal. The contact record stays.`) },
+              ] : undefined}
+            />
+          ))}
         </ThingPlace>
       ),
   })
@@ -828,7 +859,10 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
   if (r1) cards.push({
     id: "company", title: "Company",
-    action: <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/ollopa/companies/${company?.id ?? ""}`)}>Open</Button>,
+    // The company opens beside the deal, not instead of it: the account is read with the deal still
+    // on screen, and "Open the page" in the pane is the one way on to the whole company record.
+    action: <Button size="sm" variant="ghost" className="h-7 text-xs" data-item="company.open" data-item-label="Open the company"
+                    onClick={(e) => openBeside({ kind: "company", id: company?.id ?? "", opener: e.currentTarget })}>Open</Button>,
     children: (
       <dl data-item="company.card" data-item-label="Company summary" className="space-y-1 text-sm">
         <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Industry</dt><dd>{company?.industry ?? "—"}</dd></div>
@@ -839,7 +873,14 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           <div data-item="company.related-deals" data-item-label="Other deals at this company" className="border-t pt-1">
             <dt className="text-muted-foreground">Other deals here</dt>
             {otherDeals.map((d) => (
-              <dd key={d.id}><a className="hover:underline" href={href(`/ollopa/deals/${d.id}`)}>{d.name} · {money(d.amount, d.currency)} · {d.stage}</a></dd>
+              <dd key={d.id}>
+                {/* Still a real link, for a new tab and for copying, but a plain click is a step in
+                    a chain: it remembers this deal and this row, so the crumb comes back lit. */}
+                <a className="hover:underline" data-item={d.id} data-item-label={d.name} href={href(`/ollopa/deals/${d.id}`)}
+                   onClick={(e) => { e.preventDefault(); follow(`/ollopa/deals/${d.id}`, { route: route.raw, title: pageTitle, anchor: d.id }) }}>
+                  {d.name} · {money(d.amount, d.currency)} · {d.stage}
+                </a>
+              </dd>
             ))}
           </div>
         )}
@@ -856,7 +897,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-semibold tabular-nums">{account.health}</span>
             <Badge variant="secondary">{account.band}</Badge>
-            <a className="ml-auto text-xs underline" href={href(`/ollopa/accounts/${account.id}`)}>Open the account</a>
+            {/* One object: the account and the company are the same record, and it opens beside the
+                deal so the health number and the deal stay on screen together. */}
+            <button type="button" className="ml-auto text-xs underline" data-item="company.account-open" data-item-label="Open the account"
+                    onClick={(e) => openBeside({ kind: "company", id: company?.id ?? account.companyId, opener: e.currentTarget })}>
+              Open the account
+            </button>
           </div>
           {/* The band, the number and the drivers that sum to it never sit across a door from each other. */}
           <ul className="text-xs text-muted-foreground">
@@ -1335,7 +1381,11 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
       <RecordPage
         back={{ label: "Deals", href: href("/ollopa/deals") }}
         title={{ value: name, onRename: canEdit ? (v) => { setName(v); log("field", `Name · ${v}`) } : undefined }}
-        subtitle={company ? { label: deal.company, href: href(`/ollopa/companies/${company.id}`) } : undefined}
+        subtitle={company ? {
+          label: deal.company,
+          href: href(`/ollopa/companies/${company.id}`),
+          onOpen: (opener) => openBeside({ kind: "company", id: company.id, opener }),
+        } : undefined}
         chips={
           <span className="flex flex-wrap items-center gap-2">
             {gear}{bell}{overflow}
@@ -1407,16 +1457,6 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         </div>
       </Panel>
 
-      {/* The contact quick look from a related row: the top of the contact record, cut short and flat. */}
-      {glance && (
-        <QuickLook
-          open
-          onOpenChange={(o) => { if (!o) setGlance(null) }}
-          title={glance.name}
-          fields={glance.fields}
-          onOpen={() => { const id = glance.id; setGlance(null); navigate(`/ollopa/people/${id}`) }}
-        />
-      )}
     </>
   )
 }

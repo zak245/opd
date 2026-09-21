@@ -20,17 +20,18 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { seedFor, TODAY, type Task } from "../../data/seed"
 import type { Session } from "../../session"
-import { day, dueLabel, isOverdue, isToday, localTime } from "./format"
+import { day, dueLabel, isOverdue, isToday, localTime, tomorrow } from "./format"
 import {
   adminSeat, contactIndex, queueOrder, scoreOrder, seatsOf, seesEveryone, tasksFor,
 } from "./data"
+import { onTaskAct, useRenderCount } from "./acts"
 import { Queue } from "./Queue"
 import { CallLogPanel } from "./CallLog"
 import { LinkedInPanel } from "./LinkedIn"
@@ -48,9 +49,6 @@ const store = (s: Session, k: string) => `ollopa.tasks.${s.business}.${s.role}.$
 function remember(s: Session, k: string, v: string) { try { localStorage.setItem(store(s, k), v) } catch { /* private mode */ } }
 function recall(s: Session, k: string, fallback: string) { try { return localStorage.getItem(store(s, k)) ?? fallback } catch { return fallback } }
 
-function tomorrow(): string {
-  return new Date(Date.parse(TODAY + "T00:00:00Z") + 86_400_000).toISOString().slice(0, 10)
-}
 function nextMonday(): string {
   const d = new Date(TODAY + "T00:00:00Z")
   const ahead = (8 - d.getUTCDay()) % 7 || 7
@@ -58,6 +56,7 @@ function nextMonday(): string {
 }
 
 export function Tasks({ session }: { session: Session }) {
+  const renders = useRenderCount()
   const d = useDisclosure("tasks")
   const seed = seedFor(session.business)
   const contactOf = contactIndex(session.business)
@@ -156,6 +155,48 @@ export function Tasks({ session }: { session: Session }) {
   const reassign = useCallback((t: Task, to: string) => apply(t.id, { owner: to }, `${t.contact}'s ${t.kind.toLowerCase()} reassigned to ${to}.`), [apply])
   const remove = useCallback((t: Task) => apply(t.id, { gone: true }, `Task “${t.title}” deleted.`), [apply])
 
+  /**
+   * The contact or the deal a task points at, read beside the page. The list is the one on screen in
+   * the order it is on screen, so ] walks the queue rather than jumping somewhere else, and the page
+   * behind — the queue's note, the row's open door, the search — is untouched.
+   */
+  const onScreen = mode === "queue" ? queueRows : rows
+  const openContact = useCallback((t: Task, opener?: HTMLElement | null) => {
+    const ids = onScreen.map((x) => x.contactId)
+    openBeside({
+      kind: "person",
+      id: t.contactId,
+      list: { ids, index: Math.max(0, onScreen.findIndex((x) => x.id === t.id)) },
+      opener: opener ?? document.querySelector<HTMLElement>(`[data-task-row="${t.id}"] [data-row-focus]`),
+    })
+  }, [onScreen])
+
+  const openDeal = useCallback((t: Task, opener?: HTMLElement | null) => {
+    if (!t.dealId) return
+    const ids = onScreen.filter((x) => x.dealId).map((x) => x.dealId!)
+    openBeside({
+      kind: "deal",
+      id: t.dealId,
+      list: { ids, index: Math.max(0, ids.indexOf(t.dealId)) },
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
+  }, [onScreen])
+
+  // A task marked done or snoozed from a pane somewhere else — Home's task pane — changes its row
+  // here too, so the two never say different things about the same task. No second toast: the pane
+  // that caused it already said what happened.
+  useEffect(() => onTaskAct((id, what) => {
+    setChanges((c) => ({
+      ...c,
+      [id]: {
+        ...(c[id] ?? {}),
+        ...(what === "done"
+          ? { status: "Done" as const }
+          : { status: "Snoozed" as const, due: tomorrow(), snoozedUntil: tomorrow() }),
+      },
+    }))
+  }), [])
+
   const openPanel = useCallback((t: Task) => {
     if (t.kind === "Call") setCalling(t)
     else if (t.kind === "LinkedIn") setLinking(t)
@@ -238,7 +279,7 @@ export function Tasks({ session }: { session: Session }) {
             : { label: "Write", run: () => setMode("queue") }
 
     return (
-      <div role="listitem" data-task-row={t.id} className="group border-b px-3 py-2 sm:px-4">
+      <div role="listitem" data-task-row={t.id} data-item={t.contactId} data-item-label={t.contact} className="group border-b px-3 py-2 sm:px-4">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-1 md:flex-nowrap">
           <span className="pt-1">
             <Checkbox aria-label={`Select the ${t.kind.toLowerCase()} for ${t.contact}`} checked={selected} onCheckedChange={(v) => setSelection((s) => (v === true ? [...s, t.id] : s.filter((x) => x !== t.id)))} />
@@ -252,7 +293,14 @@ export function Tasks({ session }: { session: Session }) {
           <span className="w-24 shrink-0 pt-0.5"><Badge variant="outline" className="text-xs">{t.kind}</Badge></span>
 
           <span className="min-w-[12rem] flex-1 basis-48">
-            <a data-row-focus className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none" href={href(`/ollopa/people/${t.contactId}`)}>{t.contact}</a>
+            <button
+              type="button"
+              data-row-focus
+              className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+              onClick={(e) => openContact(t, e.currentTarget)}
+            >
+              {t.contact}
+            </button>
             <span className="block truncate text-xs text-muted-foreground">{c?.title} · {t.company}</span>
             {showPhone && t.kind === "Call" && (
               <span className="flex flex-wrap items-center gap-x-2 pt-0.5 text-xs">
@@ -304,7 +352,7 @@ export function Tasks({ session }: { session: Session }) {
                 <DropdownMenuItem onSelect={() => skip(t)}>{t.sequence ? "Skip · contact moves to next step" : "Skip"}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => say(`Note added to ${t.contact}'s task.`)}>Add note</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Edit the due date</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => navigate(`/ollopa/people/${t.contactId}`)}>Open contact</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openContact(t)}>Open contact beside the list</DropdownMenuItem>
                 {teamView && seatsOf(session.business).filter((s) => s.user !== t.owner && s.role !== "marketer").map((s) => (
                   <DropdownMenuItem key={s.user} onSelect={() => reassign(t, s.user)}>Reassign to {s.user}</DropdownMenuItem>
                 ))}
@@ -373,7 +421,14 @@ export function Tasks({ session }: { session: Session }) {
       <div className="shrink-0 px-4 pt-4 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Tasks</h2>
+            <h2 className="text-lg font-semibold">
+              Tasks
+              {import.meta.env.DEV && (
+                <span data-renders="tasks" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
+                  tasks renders: {renders}
+                </span>
+              )}
+            </h2>
             <p className="text-sm tabular-nums">
               <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Today" })) }}>{counts.today} due today</button>
               {" · "}
@@ -407,6 +462,8 @@ export function Tasks({ session }: { session: Session }) {
             onDone={done}
             onSnooze={(t) => snooze(t)}
             onSkip={skip}
+            onOpenContact={openContact}
+            onOpenDeal={openDeal}
             onSnoozeRest={() => {
               const rest = rows.filter((t) => t.kind === "LinkedIn")
               rest.forEach((t) => apply(t.id, { status: "Snoozed", due: nextMonday(), snoozedUntil: nextMonday() }, `${rest.length} LinkedIn ${rest.length === 1 ? "task" : "tasks"} snoozed to Monday.`))

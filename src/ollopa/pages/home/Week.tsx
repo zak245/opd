@@ -2,7 +2,8 @@
 //
 // Under it, the coaching note a manager saved on one of your calls. It waits here rather than ringing
 // a bell: it is not safety state, and a note about how you sounded is not an interruption.
-import { href } from "@/app/router"
+import { follow } from "../../chain"
+import { originHere } from "../work/register"
 import { type Disclosure } from "../../ui"
 import type { HomeData } from "./data"
 import { count, plural } from "./format"
@@ -25,18 +26,20 @@ export function Week({ data, d, order, hasReports }: { data: HomeData; d: Disclo
 
       {coaching && (
         <p className="mt-2 text-sm">
-          <a className="underline underline-offset-4" href={href(`/ollopa/tasks?call=${w.coaching[0].id}`)}>
+          <button type="button" className="underline underline-offset-4"
+                  onClick={() => follow(`/ollopa/tasks?call=${w.coaching[0].id}`, originHere("home-week"))}>
             Feedback on your calls ({w.coaching.length})
-          </a>
+          </button>
           <span className="text-muted-foreground"> · saved by {w.coaching[0].coachingNote?.author}</span>
         </p>
       )}
 
       {hasReports && (
         <p className="mt-2 text-sm">
-          <a className="underline underline-offset-4" href={href("/ollopa/reports?report=activity")}>
+          <button type="button" className="underline underline-offset-4"
+                  onClick={() => follow("/ollopa/reports?report=activity", originHere("home-week"))}>
             Coaching you saved this week ({w.coachedByMe.length})
-          </a>
+          </button>
           <span className="text-muted-foreground"> · {w.repsCoached} of {plural(data.reports.length, "seller")} coached</span>
         </p>
       )}

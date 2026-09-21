@@ -63,7 +63,8 @@ export interface DealCardProps {
   onMarkLost: () => void
   onReopen: () => void
   onLog: () => void
-  onOpenCompany: () => void
+  /** The company beside the board. The button is handed over so focus comes back to it. */
+  onOpenCompany: (opener: HTMLElement) => void
   onUseProposal: () => void
   onDismissProposal: () => void
   onFocus: () => void
@@ -161,16 +162,22 @@ export function DealCard(p: DealCardProps) {
           <Checkbox checked={p.selected} aria-label={`Select ${deal.name}`} onCheckedChange={(v) => p.onSelect(Boolean(v))} />
         </span>
         <div className="min-w-0 flex-1">
+          {/* The card is the thing a person leaves when they open the deal, so it is what the trail
+              returns to: the shell finds this `data-item`, lights the whole card for three seconds
+              and puts focus back on it, so the keyboard carries on from the card. */}
           <a
+            data-item={deal.id}
+            data-item-label={deal.name}
             href={href(`/ollopa/deals/${deal.id}`)}
             onClick={(e) => { e.stopPropagation(); e.preventDefault(); p.onOpen() }}
             className="font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             {deal.name}
           </a>
-          {/* The company opens its own record, which is where the rest of the account lives. */}
+          {/* The company opens beside the board: the board keeps its columns, its scroll and its
+              selection, and Escape brings focus back to this button. */}
           <button type="button" className="block max-w-full truncate text-left text-xs text-muted-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            onClick={(e) => { e.stopPropagation(); p.onOpenCompany() }}>
+            onClick={(e) => { e.stopPropagation(); p.onOpenCompany(e.currentTarget) }}>
             {deal.company}
           </button>
         </div>

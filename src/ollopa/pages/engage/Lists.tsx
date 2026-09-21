@@ -23,6 +23,7 @@ import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
+import { follow } from "../../chain"
 import { type Col, DataTable, Pill, day, focusSearch, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
@@ -89,7 +90,9 @@ export function ListsPage({ session }: { session: Session }) {
   const run = (id: string, l: List) => {
     switch (id) {
       case "lists.row.add-to-sequence":
-        if (l.kind === "companies") { toast(`People at the ${n(l.memberIds.length)} companies in ${l.name}`); navigate("/ollopa/people") }
+        // Acting on the whole set is the one reason to leave a list, and the jump carries the
+        // filter and the trail, so the crumb comes back to this row (rule 4).
+        if (l.kind === "companies") follow(`/ollopa/people?companies=${l.id}`, { route: "/ollopa/lists", title: "Lists", anchor: l.id })
         else setEnrolling(l)
         return
       case "lists.row.add-to-campaign": return toast(`${l.name}: pick a campaign · ${n(l.memberIds.length)} records`)

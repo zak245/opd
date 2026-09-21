@@ -10,6 +10,7 @@
 import { useMemo } from "react"
 import { Announcement, DoorGroup, ExpandAll, HealthStrip, useDisclosure } from "../../ui"
 import type { Session } from "../../session"
+import { useRenderCount } from "../work/register"
 import { homeData, type SectionKey } from "./data"
 import { firstName, greeting, headerDate } from "./format"
 import { Accounts } from "./Accounts"
@@ -22,6 +23,7 @@ import { Today } from "./Today"
 import { Week } from "./Week"
 
 export function HomePage({ session }: { session: Session }) {
+  const renders = useRenderCount()
   const d = useDisclosure("home")
   const data = useMemo(() => homeData(session), [session])
 
@@ -81,7 +83,14 @@ export function HomePage({ session }: { session: Session }) {
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
         <header className="flex flex-wrap items-end gap-x-4 gap-y-1 pb-4">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold">{greeting()}, {firstName(session.user)}</h2>
+            <h2 className="text-xl font-semibold">
+              {greeting()}, {firstName(session.user)}
+              {import.meta.env.DEV && (
+                <span data-renders="home" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
+                  home renders: {renders}
+                </span>
+              )}
+            </h2>
             <p className="text-sm text-muted-foreground">{headerDate()} · {data.business.name}</p>
           </div>
           <div className="ml-auto" data-print-hide><ExpandAll /></div>

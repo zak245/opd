@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { href, navigate } from "@/app/router"
+import { useRoute } from "@/app/router"
+import { follow, type Origin } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -70,7 +71,7 @@ export function DeliveryCell({ c }: { c: Campaign }) {
 
 /* ------------------------------------------------------------------------------- the policy line */
 
-function PolicyLine({ business, admin }: { business: Business; admin: string }) {
+function PolicyLine({ business, admin, from }: { business: Business; admin: string; from: (anchor?: string) => Origin }) {
   const seed = seedFor(business)
   const policy = seed.sendPolicy
   const guard = seed.bounceGuard
@@ -78,7 +79,7 @@ function PolicyLine({ business, admin }: { business: Business; admin: string }) 
   // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
   const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
   return (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b bg-muted/40 px-6 py-2 text-xs">
+    <p id="campaigns-policy" className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b bg-muted/40 px-6 py-2 text-xs">
       <span>Bounce guard: warn {guard.warnPercent}%, pause {guard.pausePercent}%</span>
       <span aria-hidden="true">·</span>
       <span className={guard.observedPercent >= guard.warnPercent ? "font-medium text-amber-700 dark:text-amber-400" : ""}>
@@ -92,7 +93,13 @@ function PolicyLine({ business, admin }: { business: Business; admin: string }) 
       {domain
         ? <span>{domain.domain} {domain.spf && domain.dkim && domain.dmarc ? "healthy" : "needs SPF, DKIM or DMARC"}</span>
         : <span>No marketing domain — {admin} can add one in Settings › Email sending</span>}
-      <a className="underline" href={href("/ollopa/settings")}>Sending policy</a>
+      {/* Into Settings at the row that owns the pair, with this page kept on the trail behind it. */}
+      <button
+        type="button" className="underline"
+        onClick={() => follow("/ollopa/settings/email-sending?row=mail.bounce-guard", from("campaigns-policy"))}
+      >
+        Sending policy
+      </button>
     </p>
   )
 }
@@ -120,8 +127,16 @@ export function CampaignsPage({ session }: { session: Session }) {
   const [archiving, setArchiving] = useState<Campaign | null>(null)
   const [archiveReason, setArchiveReason] = useState("")
   const [deleting, setDeleting] = useState<Campaign | null>(null)
+  const route = useRoute()
 
   const at = (id: string) => d.level(id) === 1
+
+  /**
+   * The one way off this page. Opening a row is a step in a chain, not a jump: the trail keeps
+   * "Campaigns" and the row that was left, so the crumb back lands on it, lit and focused.
+   */
+  const from = (anchor?: string): Origin => ({ route: route.raw, title: "Campaigns", anchor })
+  const open = (to: string, anchor: string) => follow(to, from(anchor))
 
   /* ------------------------------------------------------------------- filters, level one and two */
 
@@ -188,8 +203,8 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   const rowActions = (c: Campaign) => {
     switch (c.status) {
-      case "Draft": return [{ label: "Edit", onClick: () => navigate(`/ollopa/campaigns/${c.id}`) }, { label: "Send test", onClick: () => navigate(`/ollopa/campaigns/${c.id}?open=test`) }]
-      case "Scheduled": return [{ label: "Pause", onClick: () => pause(c) }, { label: "Send test", onClick: () => navigate(`/ollopa/campaigns/${c.id}?open=test`) }]
+      case "Draft": return [{ label: "Edit", onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) }, { label: "Send test", onClick: () => open(`/ollopa/campaigns/${c.id}?open=test`, c.id) }]
+      case "Scheduled": return [{ label: "Pause", onClick: () => pause(c) }, { label: "Send test", onClick: () => open(`/ollopa/campaigns/${c.id}?open=test`, c.id) }]
       case "Sending": case "Running": return [{ label: "Pause", onClick: () => pause(c) }]
       case "Paused": return [{ label: "Resume", onClick: () => resume(c) }]
       default: return [{ label: "Duplicate", onClick: () => duplicate(c) }]
@@ -197,7 +212,7 @@ export function CampaignsPage({ session }: { session: Session }) {
   }
 
   const rowMenu = (c: Campaign) => [
-    { label: "Open", onClick: () => navigate(`/ollopa/campaigns/${c.id}`) },
+    { label: "Open", onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) },
     { label: "Duplicate", onClick: () => duplicate(c) },
     { label: "Compare with…", onClick: () => toast(`Pick a second campaign to compare with ${c.name}.`) },
     { label: "Export results", onClick: () => toast(`${c.name}: results exported as CSV, with the filters you are looking at.`) },
@@ -321,7 +336,7 @@ export function CampaignsPage({ session }: { session: Session }) {
   return (
     <div className="flex h-full flex-col">
       {/* Decision-critical, above everything, on every plan: the guard, the observed rate, the cap. */}
-      <PolicyLine business={session.business} admin={admin} />
+      <PolicyLine business={session.business} admin={admin} from={from} />
 
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-4">
         <div>
@@ -417,7 +432,8 @@ export function CampaignsPage({ session }: { session: Session }) {
               hidden={hiddenColumns}
               onHidden={setHiddenColumns}
               menuName="Open, duplicate, compare, export results, archive, delete draft"
-              onOpen={(c) => navigate(`/ollopa/campaigns/${c.id}`)}
+              onOpen={(c) => open(`/ollopa/campaigns/${c.id}`, c.id)}
+              rowLabel={(c) => c.name}
               cardTitle={(c) => <span className="font-medium">{c.name} · {c.kind}</span>}
             />
           )}
@@ -430,13 +446,14 @@ export function CampaignsPage({ session }: { session: Session }) {
               defaultSort={{ key: "name", dir: "asc" }}
               actions={(a) => [{ label: "Rebuild now", onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } }]}
               menu={(a) => [
-                { label: "Open", onClick: () => navigate(`/ollopa/audiences/${a.id}`) },
-                { label: "Hand to sales", onClick: () => navigate(`/ollopa/audiences/${a.id}`) },
+                { label: "Open", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
+                { label: "Hand to sales", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
                 { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
                 { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
               ]}
               menuName="Open, hand to sales, freeze, delete audience"
-              onOpen={(a) => navigate(`/ollopa/audiences/${a.id}`)}
+              onOpen={(a) => open(`/ollopa/audiences/${a.id}`, a.id)}
+              rowLabel={(a) => a.name}
               cardTitle={(a) => <span className="font-medium">{a.name}</span>}
             />
           )}
@@ -449,12 +466,13 @@ export function CampaignsPage({ session }: { session: Session }) {
               defaultSort={{ key: "submissions", dir: "desc" }}
               actions={(f) => [{ label: f.status === "Live" ? "Turn off" : "Turn on", onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } }]}
               menu={(f) => [
-                { label: "Open", onClick: () => navigate(`/ollopa/forms/${f.id}`) },
+                { label: "Open", onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
                 { label: "Copy the form link", onClick: () => toast(`Link to ${f.name} copied.`) },
                 { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
               ]}
               menuName="Open, copy the form link, export submissions"
-              onOpen={(f) => navigate(`/ollopa/forms/${f.id}`)}
+              onOpen={(f) => open(`/ollopa/forms/${f.id}`, f.id)}
+              rowLabel={(f) => f.name}
               cardTitle={(f) => <span className="font-medium">{f.name}</span>}
             />
           )}
@@ -488,7 +506,7 @@ export function CampaignsPage({ session }: { session: Session }) {
               addRow(session.business, "campaigns", draft)
               setNewPanel(false)
               toast(`${draft.name} created. Nothing sends until you schedule it.`)
-              navigate(`/ollopa/campaigns/${draft.id}`)
+              open(`/ollopa/campaigns/${draft.id}`, draft.id)
             }}>
               {k === "Email" ? "Email campaign — one send" : "Lifecycle campaign — runs on a trigger"}
             </Button>

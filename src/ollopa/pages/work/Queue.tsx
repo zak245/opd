@@ -14,11 +14,13 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { href } from "@/app/router"
+import { follow } from "../../chain"
 import { EmptyState } from "../../ui/EmptyState"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import type { Task } from "../../data/seed"
 import type { Session } from "../../session"
 import { day, dueLabel, localTime } from "./format"
+import { originHere } from "./acts"
 import { contactIndex, mailboxOf, meetingForTask } from "./data"
 import { CallLogBody } from "./CallLog"
 import { InviteCounter, LinkedInBody } from "./LinkedIn"
@@ -39,6 +41,10 @@ export interface QueueProps {
   onSnooze: (t: Task) => void
   onSkip: (t: Task) => void
   onSnoozeRest: () => void
+  /** The contact this task points at, beside the queue, with the queue as the list ] walks. */
+  onOpenContact: (t: Task, opener?: HTMLElement | null) => void
+  /** The deal this task points at, where it has one. Same list, same page underneath. */
+  onOpenDeal: (t: Task, opener?: HTMLElement | null) => void
   say: (message: string, undo?: () => void) => void
 }
 
@@ -95,7 +101,7 @@ export function Queue(p: QueueProps) {
             <button className={p.sort === "due" ? "font-medium underline underline-offset-4" : "underline underline-offset-4 opacity-70"} onClick={() => p.onSort("due")}>due</button>
             ·
             <button className={p.sort === "score" ? "font-medium underline underline-offset-4" : "underline underline-offset-4 opacity-70"} onClick={() => p.onSort("score")}>call score</button>
-            {p.sort === "score" && <span className="text-muted-foreground">Ranked by the scoring agent · <a className="underline underline-offset-4" href={href("/ollopa/settings/scoring")}>how it was built</a></span>}
+            {p.sort === "score" && <span className="text-muted-foreground">Ranked by the scoring agent · <button type="button" className="underline underline-offset-4" onClick={() => follow("/ollopa/settings/scoring", originHere(task.contactId))}>how it was built</button></span>}
           </span>
         ) : (
           <span className="text-muted-foreground">Overdue first, then oldest due. Nothing is reordered on its own.</span>
@@ -119,9 +125,24 @@ export function Queue(p: QueueProps) {
 
           {/* The contact, already open: the queue never asks for a door to see who this is. */}
           <div className="rounded-lg border p-3">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <a className="font-medium underline underline-offset-4" href={href(`/ollopa/people/${task.contactId}`)}>{task.contact}</a>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1" data-item={task.contactId} data-item-label={task.contact}>
+              <button
+                type="button"
+                className="font-medium underline underline-offset-4"
+                onClick={(e) => p.onOpenContact(task, e.currentTarget)}
+              >
+                {task.contact}
+              </button>
               <span className="text-sm text-muted-foreground">{contact?.title} · {task.company}</span>
+              {task.dealId && (
+                <button
+                  type="button"
+                  className="text-sm underline underline-offset-4"
+                  onClick={(e) => p.onOpenDeal(task, e.currentTarget)}
+                >
+                  The deal
+                </button>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm">
               {contact?.phoneNumber && <span className="font-mono">{contact.phoneNumber}</span>}

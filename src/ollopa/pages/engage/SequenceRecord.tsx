@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
 import { Locked } from "../../ui/Locked"
@@ -31,14 +33,36 @@ import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { AddToSequencePanel } from "./AddToSequence"
 import { statusOf, totalPeople } from "./Sequences"
-import { type Col, CountButton, CountRate, DataTable, Pill, ago, day, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, Pill, ago, day, n, rate, toast, useKeys, usePersisted } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
 const VARIABLES = ["{{first_name}}", "{{company}}", "{{title}}", "{{signal}}", "{{owner}}"]
 /** An A/B test says how far it has got before it says anything about which variant is winning. */
 const ENOUGH_TO_CALL = 200
 
+
+/**
+ * Development only, and never in a build a person sees: how many times this component has rendered.
+ * It exists so "the origin page does not re-render when the pane opens" can be checked rather than
+ * claimed — open a person beside this page and these two numbers must not move.
+ */
+function useRenderCount() {
+  const count = useRef(0)
+  count.current += 1
+  return count.current
+}
+
+function RenderCount({ label, count }: { label: string; count: number }) {
+  if (!import.meta.env.DEV) return null
+  return (
+    <span data-renders={label} className="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+      {label} renders: {count}
+    </span>
+  )
+}
+
 export function SequenceRecord({ session, id }: { session: Session; id?: string }) {
+  const renders = useRenderCount()
   const d = useDisclosure("sequences")
   const b = businessById(session.business)
   const seed = seedFor(session.business)
@@ -110,9 +134,12 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
       <div className="flex min-h-full flex-col">
         {/* ------------------------------------------------------------------------- the header */}
         <header className="border-b px-4 pt-4 sm:px-6">
-          <a href={href("/ollopa/sequences")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
-            <ArrowLeft className="size-3" aria-hidden="true" />Sequences
-          </a>
+          <div className="flex items-center gap-2">
+            <a href={href("/ollopa/sequences")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
+              <ArrowLeft className="size-3" aria-hidden="true" />Sequences
+            </a>
+            <RenderCount label="page" count={renders} />
+          </div>
 
           <div className="mt-2 flex flex-wrap items-start gap-x-3 gap-y-2">
             <div className="min-w-0">
@@ -212,7 +239,11 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               </>
             )}
             {" "}
-            <a className="underline" href={href("/ollopa/settings")}>Bounce guard thresholds (Settings)</a>
+            <FollowLink
+              className="underline"
+              to="/ollopa/settings/email-sending?row=mail.bounce-guard"
+              route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.bounce-guard"
+            >Bounce guard thresholds (Settings)</FollowLink>
             <span className="text-xs"> · RevOps admins change them</span>
           </div>
 
@@ -235,7 +266,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
 
           {feeder && (
             <p className="mt-2 text-sm">
-              Fed by <a className="underline" href={href(`/ollopa/lists/${feeder.id}`)}>{feeder.name}</a>
+              Fed by <BesideLink className="underline" kind="list" id={feeder.id}>{feeder.name}</BesideLink>
               {feeder.feeds.some((f) => f.auto && f.name === seq.name) && " · new matches added automatically"}
             </p>
           )}
@@ -350,6 +381,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         <SequencePeople
           session={session} seq={seq} steps={steps} enrollments={enrollments}
           filter={peopleFilter} onFilter={setPeopleFilter} onAdd={() => setAddingPeople(true)} onSaid={say}
+          pageRenders={renders}
         />
 
         {/* ------------------------------------------------------- results and history, in place */}
@@ -673,7 +705,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
             {step.templateId && (
               <p className="text-xs text-muted-foreground">
                 Linked to template{" "}
-                <a className="underline" href={href(`/ollopa/templates/${step.templateId}`)}>{templateName(session, step.templateId)}</a>
+                <BesideLink className="underline" kind="template" id={step.templateId}>{templateName(session, step.templateId)}</BesideLink>
                 {" · "}{n(templateUses(session, step.templateId))} steps use it ·{" "}
                 <button type="button" className="underline" onClick={() => { engage.patchStep(session.business, step.id, { templateId: null }); onSaid("Unlinked. This step keeps its own text.") }}>Unlink</button>
               </p>
@@ -867,7 +899,11 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
             </Select>
             <p className="mt-1 text-xs text-muted-foreground">
               {box ? `Daily limit ${n(box.dailyLimit)}, ${n(box.sentToday)} sent today, ${n(Math.max(0, box.sequences.length - 1))} other sequences share this mailbox.` : "No mailbox linked yet."}
-              {" "}<a className="underline" href={href("/ollopa/settings")}>Mailboxes and limits (Settings)</a>
+              {" "}<FollowLink
+                className="underline"
+                to="/ollopa/settings/email-sending?row=mail.mailboxes"
+                route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.mailboxes"
+              >Mailboxes and limits (Settings)</FollowLink>
             </p>
           </div>
 
@@ -891,7 +927,11 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
             <p className="mt-1 text-xs text-muted-foreground">
               {schedule ? `${schedule.days.join(", ")} · ${schedule.hours} · ${schedule.timezone}` : ""}
               {session.role === "admin"
-                ? <> · <a className="underline" href={href("/ollopa/settings")}>New schedule (Settings)</a></>
+                ? <> · <FollowLink
+                    className="underline"
+                    to="/ollopa/settings/sequences?row=seq.schedules"
+                    route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.schedules"
+                  >New schedule (Settings)</FollowLink></>
                 : " · RevOps admins add schedules."}
             </p>
           </div>
@@ -913,6 +953,13 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
             </Select>
             <p className="mt-1 text-xs text-muted-foreground">
               {ruleset ? `${ruleset.stopOnReply ? "Stops on reply" : "Keeps sending after a reply"} · Skips ${ruleset.excludeStages.join(", ")} · ${ruleset.maxEmailsPerPersonPerDay} email per person per day` : ""}
+              {session.role === "admin"
+                ? <> · <FollowLink
+                    className="underline"
+                    to="/ollopa/settings/sequences?row=seq.rulesets"
+                    route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.rulesets"
+                  >Sending rules for every sequence (Settings)</FollowLink></>
+                : " · RevOps admins change the shared rulesets."}
             </p>
           </div>
 
@@ -958,7 +1005,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
 
 /* -------------------------------------------------------------------------------- the people */
 
-function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, onAdd, onSaid }: {
+function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, onAdd, onSaid, pageRenders }: {
   session: Session
   seq: Sequence
   steps: SequenceStep[]
@@ -967,8 +1014,11 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
   onFilter: (v: string) => void
   onAdd: () => void
   onSaid: (msg: string) => void
+  /** Development only: the page's render count, shown here where the rows are, for the same check. */
+  pageRenders: number
 }) {
   const d = useDisclosure("sequences")
+  const rowRenders = useRenderCount()
   const seed = seedFor(session.business)
   const [q, setQ] = useState("")
   const [selected, setSelected] = useState<string[]>([])
@@ -995,8 +1045,14 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
       cell: (e) => {
         const c = byId.get(e.contactId)
         return (
-          <div className="min-w-0">
-            <a className="font-medium hover:underline" href={href(`/ollopa/people/${e.contactId}`)} onClick={(ev) => ev.stopPropagation()}>{c?.name ?? e.contactId}</a>
+          <div className="min-w-0" data-item={e.contactId} data-item-label={c?.name ?? e.contactId}>
+            <button
+              type="button"
+              className="font-medium hover:underline"
+              onClick={(ev) => { ev.stopPropagation(); openPerson(e, ev.currentTarget) }}
+            >
+              {c?.name ?? e.contactId}
+            </button>
             <div className="text-xs text-muted-foreground">{c?.title}</div>
           </div>
         )
@@ -1022,12 +1078,50 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
     ...(showMailbox ? [{ key: "mailbox", header: "Mailbox", cell: (e: Enrollment) => e.mailbox } as Col<Enrollment>] : []),
   ]
 
+
+  // The order on screen, not the order in the data: next and previous in the pane walk what the
+  // person is looking at. `DataTable` sorts with the same comparator, so sorting here first and
+  // handing the result over leaves every row exactly where it was.
+  const shown = useMemo(() => {
+    const by = columns.find((c) => c.key === sort.key)?.sort
+    if (!by) return rows
+    const out = [...rows].sort(by)
+    return sort.dir === "desc" ? out.reverse() : out
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, sort.key, sort.dir])
+
+  const ids = shown.map((e) => e.contactId)
+
+  /** A row opens beside the sequence: the sequence stays where it is, and does not re-render. */
+  const openPerson = (e: Enrollment, opener?: HTMLElement | null) => {
+    const index = ids.indexOf(e.contactId)
+    openBeside({
+      kind: "person",
+      id: e.contactId,
+      list: { ids, index: index < 0 ? 0 : index },
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
+  }
+
+  /** The full record, with this sequence and this row kept on the trail. */
+  const openPersonPage = (e: Enrollment) => {
+    follow(`/ollopa/people/${e.contactId}`, {
+      route: `/ollopa/sequences/${seq.id}`,
+      title: seq.name,
+      anchor: e.contactId,
+    })
+  }
+
   const nameOf = (e: Enrollment) => byId.get(e.contactId)?.name ?? e.contactId
 
   return (
     <section id="seq-people" className="px-4 pt-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">People ({n(rows.length)})</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">People ({n(rows.length)})</h3>
+          <RenderCount label="page" count={pageRenders} />
+          <RenderCount label="rows" count={rowRenders} />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Input aria-label="Find a person in this sequence" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-48" />
           <Select value={filter} onValueChange={onFilter}>
@@ -1042,7 +1136,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
       </div>
 
       <DataTable<Enrollment>
-        rows={rows}
+        rows={shown}
         rowKey={(e) => e.id}
         columns={columns}
         sortKey={sort.key}
@@ -1062,8 +1156,11 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
             : []),
         ]}
         menu={(e) => [
-          { label: "Open the person", onClick: () => navigate(`/ollopa/people/${e.contactId}`) },
-          ...(e.status === "Replied" ? [{ label: "Open the reply in Inbox", onClick: () => navigate("/ollopa/inbox") }] : []),
+          { label: "Open the person beside this", onClick: () => openPerson(e) },
+          { label: "Open the person's page", onClick: () => openPersonPage(e) },
+          ...(e.status === "Replied"
+            ? [{ label: "Open the reply in Inbox", onClick: () => follow("/ollopa/inbox", { route: `/ollopa/sequences/${seq.id}`, title: seq.name, anchor: e.contactId }) }]
+            : []),
           { label: "Mark finished · no more steps for them", onClick: () => { engage.patchEnrollment(session.business, e.id, { status: "Finished", nextAt: null }); onSaid(`${nameOf(e)} marked finished`) } },
           ...steps.slice(0, 6).map((s) => ({ label: `Move to step ${s.order}: ${s.kind}`, onClick: () => { engage.patchEnrollment(session.business, e.id, { stepOrder: s.order }); onSaid(`${nameOf(e)} moved to step ${s.order}`) } })),
           {
@@ -1073,7 +1170,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
           },
         ]}
         menuLabel={nameOf}
-        onOpen={(e) => navigate(`/ollopa/people/${e.contactId}`)}
+        onOpen={(e) => openPerson(e)}
         selection={{
           selected, onChange: setSelected,
           bar: (ids) => (

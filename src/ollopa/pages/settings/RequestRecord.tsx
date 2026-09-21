@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { Announcement } from "../../ui/Announcement"
 import { useDoorState } from "../../ui/Door"
 import { RecordPage, type RecordField } from "../../templates/RecordPage"
@@ -20,13 +22,24 @@ import { businessDaysBetween, day, longDay, money, plural } from "./format"
 import { STATE_LABEL, waitingOf } from "./RequestsPage"
 import { toast } from "./state"
 
+/**
+ * What a request touches, and where that thing lives.
+ *
+ * A setting is a row, and a row read while deciding a request is a look, not a trip: it opens in the
+ * pane beside the request, with its own control and the page's Save bar, and the request stays on
+ * screen behind it. A workflow or a report is a page of its own, so that one is a `follow` and the
+ * crumb comes back to this record.
+ */
+const TOUCH_ROW: Record<string, string> = {
+  field: "pipe.fields",
+  stage: "pipe.stages",
+  profile: "team.profiles",
+  "plan feature": "plan.price",
+}
+
 const TOUCH_ROUTE: Record<string, string> = {
-  field: "/ollopa/settings/pipeline",
-  stage: "/ollopa/settings/pipeline",
   workflow: "/ollopa/workflows",
-  profile: "/ollopa/settings/team",
   report: "/ollopa/reports",
-  "plan feature": "/ollopa/settings/plan",
 }
 
 export function RequestRecord({ session, id }: { session: Session; id?: string }) {
@@ -194,7 +207,24 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
               {request.touches.map((t, i) => (
                 <span key={t.id}>
                   {i > 0 && ", "}
-                  <a className="underline underline-offset-4" href={href(TOUCH_ROUTE[t.kind] ?? "/ollopa/settings")}>{t.name}</a>
+                  {TOUCH_ROW[t.kind] ? (
+                    <button
+                      data-item={TOUCH_ROW[t.kind]}
+                      className="underline underline-offset-4"
+                      onClick={(e) => openBeside({ kind: "setting", id: TOUCH_ROW[t.kind], opener: e.currentTarget })}
+                    >{t.name}</button>
+                  ) : (
+                    <a className="underline underline-offset-4" href={href(TOUCH_ROUTE[t.kind] ?? "/ollopa/settings")}
+                       onClick={(e) => {
+                         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+                         e.preventDefault()
+                         follow(TOUCH_ROUTE[t.kind] ?? "/ollopa/settings", {
+                           route: `/ollopa/requests/${request.id}`,
+                           title: `${request.outcome} · Requests`,
+                           anchor: t.id,
+                         })
+                       }}>{t.name}</a>
+                  )}
                   <span className="text-muted-foreground"> ({t.kind})</span>
                 </span>
               ))}

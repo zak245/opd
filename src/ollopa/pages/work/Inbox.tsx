@@ -7,7 +7,7 @@
 // Which groups get a tab, which filters sit beside search and which row actions are visible is asked
 // of the usage model, never hard-coded: `useDisclosure("inbox")` answers for this seat at this
 // business, so one page serves four workspaces and three seats with no mode switch.
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -16,14 +16,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { href, navigate } from "@/app/router"
+import { useRoute } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { seedFor, type Reply } from "../../data/seed"
 import type { Session } from "../../session"
 import { day, daysBetween, overdueWait, waiting } from "./format"
-import { adminSeat, aeSeats, calendarOf, contactIndex, sdrSeats, visibleReplies, type InboxReply } from "./data"
+import { adminSeat, aeSeats, calendarOf, contactIndex, repliesFor, sdrSeats, visibleReplies, type InboxReply } from "./data"
+import { originHere, useRenderCount } from "./acts"
 import { Thread } from "./Thread"
 import { MeetingPanel } from "./MeetingPanel"
 import { useUndo } from "./undo"
@@ -56,7 +59,8 @@ function recall(session: Session, key: string, fallback: string): string {
   try { return localStorage.getItem(store(session, key)) ?? fallback } catch { return fallback }
 }
 
-export function Inbox({ session, thread }: { session: Session; thread?: string }) {
+export function Inbox({ session, thread, book }: { session: Session; thread?: string; book?: boolean }) {
+  const renders = useRenderCount()
   const d = useDisclosure("inbox")
   const seed = seedFor(session.business)
   const contactOf = contactIndex(session.business)
@@ -65,7 +69,17 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
   const admin = adminSeat(session.business)
   const { say, bar } = useUndo()
 
-  const base = useMemo(() => visibleReplies(session), [session])
+  // What this seat sees, plus the one reply a link named. At Meridian the Inbox is filtered to your
+  // own mailbox, but Home lists replies from the people you own — so a reply can be shown there and
+  // filtered out here, and "Open the page" would land on the wrong thread. A thread the person was
+  // sent to by their own move is shown; the thread header says which mailbox it landed in, so
+  // nothing is hidden and nothing is misreported.
+  const base = useMemo(() => {
+    const seen = visibleReplies(session)
+    if (!thread || seen.some((r) => r.id === thread)) return seen
+    const named = repliesFor(session).find((r) => r.id === thread)
+    return named ? [named, ...seen] : seen
+  }, [session, thread])
   const [changes, setChanges] = useState<Record<string, Change>>({})
   const rows: InboxReply[] = useMemo(
     () => base.map((r) => {
@@ -91,6 +105,15 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
   const [width, setWidth] = useState(() => Number(recall(session, "width", "420")))
 
   useEffect(() => { remember(session, "group", group) }, [session, group])
+
+  // Arriving from somewhere that said "book a meeting" — the reply pane on Home — opens the panel
+  // once, on the thread that was named. Pressing Escape closes it and it does not come back.
+  const booked = useRef(false)
+  useEffect(() => {
+    if (!book || booked.current || !linked) return
+    booked.current = true
+    setBooking(linked)
+  }, [book, linked])
   useEffect(() => { remember(session, "width", String(width)) }, [session, width])
 
   const inGroup = useCallback((r: InboxReply, g: GroupKey) => (g === "Handled" ? r.handled : !r.handled && r.outcome === g), [])
@@ -129,6 +152,9 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
     })
   }, [say])
 
+  /** The element focus returns to when a pane closes: the row, which is focusable and stays put. */
+  const rowEl = (r: InboxReply) => document.getElementById(`reply-${r.id}`)
+
   const doAction = useCallback((key: string, r: InboxReply, arg?: string) => {
     const first = r.contact.split(" ")[0]
     switch (key) {
@@ -140,8 +166,24 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
       case "follow-up": change(r.id, { handled: true, followUpOn: arg ?? r.followUpOn }, `Follow-up task created for ${day(arg ?? r.followUpOn)}. ${r.contact} moves to Handled.`); break
       case "resume": change(r.id, { handled: true }, arg === "now" ? `“${r.sequence}” resumed for ${r.contact} now.` : `“${r.sequence}” resumes for ${r.contact} on ${day(r.returnsOn)}.`); break
       case "confirm-unsub": change(r.id, { handled: true }, `ollopA will not email ${contactOf(r.contactId)?.email ?? r.contact} again from any sequence.`); break
-      case "create-deal": navigate(`/ollopa/deals/${r.dealId ?? seed.deals[0].id}`); break
-      case "open-contact": navigate(`/ollopa/people/${r.contactId}`); break
+      // The deal behind the reply and the person who sent it open beside the thread, never instead
+      // of it: the half-written reply, the scroll and the open doors are all still there when the
+      // pane closes. The list is the group as it is on screen, so [ and ] walk the same replies.
+      case "create-deal": {
+        const ids = filtered.filter((x) => x.dealId).map((x) => x.dealId!)
+        if (r.dealId) {
+          openBeside({ kind: "deal", id: r.dealId, list: { ids, index: Math.max(0, ids.indexOf(r.dealId)) }, opener: rowEl(r) })
+        } else {
+          // Nothing to look at yet: making one is a page, and the trail keeps this reply.
+          follow(`/ollopa/deals/${seed.deals[0].id}`, originHere(r.contactId))
+        }
+        break
+      }
+      case "open-contact": {
+        const ids = filtered.map((x) => x.contactId)
+        openBeside({ kind: "person", id: r.contactId, list: { ids, index: Math.max(0, ids.indexOf(r.contactId)) }, opener: rowEl(r) })
+        break
+      }
       case "change-meaning": change(r.id, { outcome: arg as Outcome, meantBy: "you" }, `Read as ${arg}, by you. The correction is logged for the classifier.`); break
       case "remove-from-sequence": change(r.id, { handled: true }, `${r.contact} removed from “${r.sequence}”. The history is kept.`); break
       case "note": say(`Note added to ${r.contact}.`); break
@@ -154,7 +196,7 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
       case "misread": say(`Misread reported for ${r.contact}. It goes to the classifier with the reply.`); break
       default: break
     }
-  }, [aes, change, contactOf, say, seed])
+  }, [aes, change, contactOf, filtered, say, seed])
 
   /* -------------------------------------------------------- which two actions the row shows */
 
@@ -173,6 +215,10 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
     reply: "Reply", book: "Book meeting", hand: "Hand to an AE", done: "Mark done", "not-interested": "Not interested",
     "follow-up": "Follow up on…", resume: "Resume", "confirm-unsub": "Confirm unsubscribe", "create-deal": "Create deal", "open-contact": "Open contact",
   }
+  /** "Open the deal" only where there is one; otherwise the action makes it. */
+  const labelFor = (k: string, r: InboxReply) =>
+    k === "create-deal" ? (r.dealId ? "Open the deal" : "Create a deal from this reply") : LABEL[k]
+
   const CANDIDATES: Record<GroupKey, string[]> = {
     Interested: ["reply", "book", "hand", "create-deal", "done"],
     Question: ["reply", "book", "hand", "create-deal", "done"],
@@ -237,7 +283,7 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
 
   const emptyBody =
     base.length === 0
-      ? <EmptyState title="No replies yet" body={`Replies to your ${seed.sequences.filter((s) => s.status === "Active").length} active sequences land here within about 30 minutes of reaching your mailbox.`} action={<Button size="sm" variant="outline" onClick={() => navigate("/ollopa/sequences")}>Open Sequences</Button>} />
+      ? <EmptyState title="No replies yet" body={`Replies to your ${seed.sequences.filter((s) => s.status === "Active").length} active sequences land here within about 30 minutes of reaching your mailbox.`} action={<Button size="sm" variant="outline" onClick={() => follow("/ollopa/sequences", originHere())}>Open Sequences</Button>} />
       : group === "Out of office"
         ? <EmptyState title="Nobody is out of office." body="Sequences pause and resume on the return date by themselves." />
         : group === "Interested"
@@ -252,6 +298,8 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
     return (
       <div
         id={`reply-${r.id}`}
+        data-item={r.contactId}
+        data-item-label={r.contact}
         role="row"
         tabIndex={0}
         aria-selected={r.id === openId}
@@ -311,7 +359,7 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
 
         <div role="gridcell" className="flex flex-wrap items-center gap-1 pt-1.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
           {actions.map((k) => (
-            <Button key={k} size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => doAction(k, r)}>{LABEL[k]}</Button>
+            <Button key={k} size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => doAction(k, r)}>{labelFor(k, r)}</Button>
           ))}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -320,7 +368,7 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
             <DropdownMenuContent align="start" className="max-h-96 overflow-y-auto">
               {CANDIDATES[group].filter((k) => available(k)).map((k) => (
                 <DropdownMenuItem key={k} onSelect={() => doAction(k, r)}>
-                  {LABEL[k]}
+                  {labelFor(k, r)}
                   <span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">{{ reply: "r", book: "b", done: "d", "not-interested": "n", hand: "h", "confirm-unsub": "u" }[k] ?? ""}</span>
                 </DropdownMenuItem>
               ))}
@@ -330,7 +378,7 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
               ))}
               <DropdownMenuItem onSelect={() => doAction("done", r)}>Mark done<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">d</span></DropdownMenuItem>
               <DropdownMenuItem onSelect={() => doAction("not-interested", r)}>Mark not interested · ends the sequence</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("create-deal", r)}>Create deal from this reply</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("create-deal", r)}>{labelFor("create-deal", r)}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => doAction("open-contact", r)}>Open contact</DropdownMenuItem>
               {MEANINGS.filter((m) => m !== r.outcome).map((m) => (
                 <DropdownMenuItem key={m} onSelect={() => doAction("change-meaning", r, m)}>Change what they meant: {m}</DropdownMenuItem>
@@ -359,7 +407,14 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
     <div className="flex h-full min-h-0 flex-col">
       {/* --------------------------------------------------------------------------- the header */}
       <div className={cn("shrink-0 px-4 pt-4 sm:px-6", onPhoneThread && "hidden md:block")}>
-        <h2 className="text-lg font-semibold">Inbox</h2>
+        <h2 className="text-lg font-semibold">
+          Inbox
+          {import.meta.env.DEV && (
+            <span data-renders="inbox" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
+              inbox renders: {renders}
+            </span>
+          )}
+        </h2>
         <p className="text-sm text-muted-foreground">Replies from your sequences, grouped by what the person meant.</p>
         <p className="pt-0.5 text-sm tabular-nums">
           {waitingCount} waiting{longest > 0 && <> · longest {longest} d</>}
@@ -371,7 +426,11 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
         )}
         {!calendar && (
           <p className="pt-0.5 text-xs text-muted-foreground">
-            No calendar is connected. <a className="underline underline-offset-4" href={href("/ollopa/settings/integrations")}>Connect a calendar to book from here</a>.
+            No calendar is connected.{" "}
+            <button type="button" className="underline underline-offset-4"
+                    onClick={() => follow("/ollopa/settings/integrations", originHere(open?.contactId))}>
+              Connect a calendar to book from here
+            </button>.
           </p>
         )}
 
@@ -550,5 +609,8 @@ export function Inbox({ session, thread }: { session: Session; thread?: string }
  * `/ollopa/inbox/<id>` renders the same page with that thread selected and the list still in view.
  */
 export function ThreadRoute({ session, id }: { session: Session; id?: string }) {
-  return <Inbox session={session} thread={id} />
+  // "?meeting=new" is the one thing the query says here, and it is a real instruction rather than a
+  // decoration: the page opens the meeting panel on that thread so the link does what it says.
+  const route = useRoute()
+  return <Inbox session={session} thread={id} book={route.query.get("meeting") === "new"} />
 }

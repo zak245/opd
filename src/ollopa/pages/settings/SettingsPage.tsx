@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { href } from "@/app/router"
+import { href, useRoute } from "@/app/router"
+import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
@@ -25,6 +26,8 @@ import { levelOf, weeklyUse, type Role, type UsageItem } from "../../usage/model
 import type { Session } from "../../session"
 import { CreditsPanel } from "../../shell/Credits"
 import { settingsFor } from "./derived"
+import { JUMP_EVENT, leaveOnClick } from "./leave"
+import { useSidebarMove } from "../setup/moved"
 import { credits, longDay, money, plural } from "./format"
 import { Row, personalRows, rowsFor, type PanelRequest, type SettingRow } from "./rows"
 import { SaveBar, SettingsState, toast, useSettingsState } from "./state"
@@ -153,7 +156,8 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
             {plural(seed.agents.filter((a) => a.on).length, "agent")} on · send, add-to-sequence, stage changes and spend over a cap need the owner's approval ·
             {" "}<span data-item="ai.second-approval" data-item-label="Second approval">a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits</span> ·
             {" "}<span data-item="ai.credit-caps" data-item-label="Agent credit caps">caps {seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month</span>
-            {waiting > 0 && <> · <a className="underline underline-offset-4" href={href("/ollopa/agents")}>{waiting} waiting for approval</a></>}
+            {waiting > 0 && <> · <a className="underline underline-offset-4" href={href("/ollopa/agents")}
+              onClick={leaveOnClick("/ollopa/agents", "ai.approvals")}>{waiting} waiting for approval</a></>}
           </StripLine>
           <StripLine item="plan.spike-alert" label="Credit spike" tone={spiked ? "warning" : undefined}>
             Alert at {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}× · {spiked ? "alerted" : "nothing alerted"}
@@ -186,7 +190,8 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
           {upgrades.length > 0 && (
             <StripLine item="plan.upgrade-requests" label="Upgrade requests">
               {plural(upgrades.length, "upgrade request")} · {upgrades[0].requester.user} wants {upgrades[0].upgrade!.feature} ({upgrades[0].upgrade!.plan}, {money(upgrades[0].upgrade!.monthlyTotal)} a month for {b.plan.seats} seats)
-              {" "}<a className="underline underline-offset-4" href={href("/ollopa/requests")}>Review</a>
+              {" "}<a className="underline underline-offset-4" href={href("/ollopa/requests")}
+                     onClick={leaveOnClick("/ollopa/requests", "plan.upgrade-requests")}>Review</a>
             </StripLine>
           )}
         </>
@@ -441,6 +446,10 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
   const adminTitle = b.roles.find((r) => r.role === "admin")?.title ?? "RevOps admin"
 
+  const route = useRoute()
+  // What the set-up answers moved, when this page is what sent the person to change them.
+  const moved = useSidebarMove()
+
   const [viewing, setViewing] = useState<User | null>(null)
   const [panel, setPanel] = useState<PanelRequest | null>(null)
   const [creditsOpen, setCreditsOpen] = useState(false)
@@ -458,22 +467,43 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
     setViewing(user)
   }, [session.business])
 
-  const jump = useCallback((id: string, area: string) => {
+  /**
+   * Land on one row: open the door it is behind, bring it into view, light it and put the keyboard
+   * on its control. The settings search has always done this. Arriving from another page does the
+   * same thing and adds the shell's own return cue, so a row reached by following a link from a
+   * sequence looks exactly like a row reached by clicking a crumb — one cue, learned once.
+   */
+  const jump = useCallback((id: string, area: string, returning = false) => {
     openers.current[area]?.(true)
-    state.light(id)
+    // One cue at a time: arriving from elsewhere uses the shell's return cue, and the search's own
+    // light is for a jump that never left the page.
+    if (!returning) state.light(id)
     window.setTimeout(() => {
-      const el = document.getElementById(`row-${id}`)
-      el?.scrollIntoView({ block: "center", behavior: "smooth" })
-      el?.querySelector<HTMLElement>("input, button, [role=combobox], a")?.focus()
+      // Only this page's copy of the row: a setting open in a pane beside another page carries the
+      // same `data-row`, and is not the thing being returned to.
+      const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
+      const el = root.querySelector<HTMLElement>(`[data-row="${CSS.escape(id)}"]`)
+      if (!el) return
+      el.scrollIntoView({
+        block: "center",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      })
+      if (returning) {
+        el.classList.remove("ollopa-returned")
+        void el.offsetWidth
+        el.classList.add("ollopa-returned")
+        window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
+      }
+      el.querySelector<HTMLElement>("input, button, [role=combobox], a")?.focus()
     }, 60)
   }, [state])
 
   const ctx = useMemo(() => ({
-    session, user: effectiveUser, role, business: session.business, seed, b, st, admin, isAdmin,
+    session, user: effectiveUser, role, business: session.business, seed, b, st, admin, isAdmin, moved,
     open: (p: PanelRequest) => setPanel(p),
     viewAs,
     search: (query: string) => { search.current?.focus(); search.current!.value = query; toast(`Search: ${query}`) },
-  }), [session, effectiveUser, role, seed, b, st, admin, isAdmin, viewAs])
+  }), [session, effectiveUser, role, seed, b, st, admin, isAdmin, viewAs, moved])
 
   const rows = rowsFor(ctx)
   const personal = personalRows(ctx)
@@ -518,13 +548,52 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
     return () => document.removeEventListener("keydown", onKey)
   }, [])
 
-  // A deep link to an area opens on that area.
+  // Where each row is standing right now, so an arrival knows which door to open. Rebuilt on every
+  // render and read through a ref, because the levels move as the seat and View as change.
+  const whereIs = useRef(new Map<string, { area: string; behindDoor: boolean }>())
+  whereIs.current = new Map<string, { area: string; behindDoor: boolean }>(
+    areas.flatMap((a) => [
+      ...a.one.map((r): [string, { area: string; behindDoor: boolean }] => [r.id, { area: a.area, behindDoor: false }]),
+      ...a.two.map((r): [string, { area: string; behindDoor: boolean }] => [r.id, { area: a.area, behindDoor: true }]),
+    ]),
+  )
+
+  /**
+   * `?row=<usage item id>` — a page that linked here naming the setting it linked to. The row is the
+   * thing the person asked for, so the page opens the door it is behind, scrolls it into view, lights
+   * it with the shell's own return cue and puts the keyboard on its control. Once per arrival: the
+   * route and the row together are the arrival, and re-renders do not repeat it.
+   */
+  const arrived = useRef<string | null>(null)
+  useEffect(() => {
+    const row = route.query.get("row")
+    if (!row) { arrived.current = null; return }
+    const key = `${route.raw}|${row}`
+    if (arrived.current === key) return
+    const at = whereIs.current.get(row)
+    if (!at) return                       // not a row this seat holds: the area deep link still lands
+    arrived.current = key
+    jump(row, at.behindDoor ? at.area : "", true)
+  }, [route.raw, route.query, areas.length, jump])
+
+  // A panel on this page naming another row on this page: the row, lit where it stands, no move.
+  useEffect(() => {
+    const on = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail
+      const at = whereIs.current.get(id)
+      if (at) jump(id, at.behindDoor ? at.area : "", true)
+    }
+    document.addEventListener(JUMP_EVENT, on)
+    return () => document.removeEventListener(JUMP_EVENT, on)
+  }, [jump])
+
+  // A deep link to an area opens on that area — unless it named a row, which is more exact.
   useEffect(() => {
     const area = node ? AREA_BY_NODE[node] : undefined
-    if (!area) return
+    if (!area || route.query.get("row")) return
     const el = document.getElementById(`area-${slug(area)}`)
     el?.scrollIntoView({ block: "start" })
-  }, [node, areas.length])
+  }, [node, areas.length, route.query])
 
   const register = useCallback((area: string, open: (o: boolean) => void) => { openers.current[area] = open }, [])
 

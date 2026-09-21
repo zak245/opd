@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { navigate } from "@/app/router"
+import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Panel } from "../../ui/Panel"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -115,12 +115,14 @@ export function CompaniesPage({ session }: { session: Session }) {
     {
       id: "co.col.company", header: "Company", always: true, phone: true, sortValue: (v) => v.company.name.toLowerCase(),
       cell: (v) => (
-        <div className="min-w-0">
+        /* The row's own id on the name, so a return from the record lands on the name and the
+           keyboard carries on from there rather than from the row's checkbox. */
+        <div className="min-w-0" data-item={v.company.id} data-item-label={v.company.name}>
           <div className="flex min-w-0 items-center gap-1.5">
             <button
               type="button"
               className="min-w-0 truncate font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              onClick={(e) => { e.stopPropagation(); navigate(`/ollopa/companies/${v.company.id}`) }}
+              onClick={(e) => { e.stopPropagation(); openCompany(v) }}
             >
               {v.company.name}
             </button>
@@ -183,9 +185,15 @@ export function CompaniesPage({ session }: { session: Session }) {
 
   /* ------------------------------------------------------------------------------- the actions */
 
+  /** This table, and the row being left: every move off this page carries both. */
+  const origin = (anchor?: string) => ({ route: "/ollopa/companies", title: "Companies", anchor })
+
+  /** The company record, with this table and this row kept on the trail. */
+  const openCompany = (v: CompanyView) => follow(`/ollopa/companies/${v.company.id}`, origin(v.company.id))
+
   const findPeople = (v: CompanyView) => {
-    navigate(`/ollopa/people?company=${v.company.id}`)
     toast(`People · at ${v.company.name}`)
+    follow(`/ollopa/people?company=${v.company.id}`, origin(v.company.id))
   }
 
   const addToList = (v: CompanyView, name: string) => {
@@ -205,7 +213,7 @@ export function CompaniesPage({ session }: { session: Session }) {
 
   const rowActionDefs: (RowAction<CompanyView> & { usage: string })[] = [
     { id: "find", usage: "co.act.find-people", label: () => "Find people", onClick: findPeople },
-    { id: "open", usage: "co.act.open", label: () => "Open", onClick: (v) => navigate(`/ollopa/companies/${v.company.id}`) },
+    { id: "open", usage: "co.act.open", label: () => "Open", onClick: openCompany },
     { id: "list", usage: "co.act.add-list", label: () => "Add to list", onClick: (v) => { setListName(""); setPending({ kind: "list", row: v }) } },
     { id: "research", usage: "co.act.research", label: () => `Research · ${CREDITS.research} credits`, onClick: (v) => setPending({ kind: "research", row: v }) },
     { id: "stage", usage: "co.act.stage", label: () => "Change stage", onClick: (v) => setPending({ kind: "stage", row: v, to: v.company.stage }) },
@@ -240,7 +248,7 @@ export function CompaniesPage({ session }: { session: Session }) {
 
   const pageMenuItems = [
     ...(findIsPrimary ? [] : [{ label: "Find companies", onClick: () => setFindOpen(true) }]),
-    { label: "Import CSV", onClick: () => navigate("/ollopa/import") },
+    { label: "Import CSV", onClick: () => follow("/ollopa/import", origin()) },
     { label: "Export all", onClick: () => toast(`Exported ${rows.length.toLocaleString()} companies · ${columns.length} visible columns`) },
     { label: "Merge duplicates", onClick: () => setMerging(rows[0] ?? null) },
     { label: "Alert me when a view gains companies", onClick: () => toast(`Daily digest on for “${state.view}”`) },
@@ -425,11 +433,11 @@ export function CompaniesPage({ session }: { session: Session }) {
           f: findPeople,
           l: (v) => { setListName(""); setPending({ kind: "list", row: v }) },
           r: (v) => setPending({ kind: "research", row: v }),
-          o: (v) => navigate(`/ollopa/companies/${v.company.id}`),
+          o: openCompany,
         }}
         bulk={[
           { label: "Add to list", onClick: (vs) => { const name = seed.lists.find((l) => l.kind === "companies")?.name ?? "New list"; vs.forEach((v) => addToList(v, name)) } },
-          { label: "Find people", onClick: (vs) => { navigate("/ollopa/people"); toast(`People · at ${vs.length} companies`) } },
+          { label: "Find people", onClick: (vs) => { toast(`People · at ${vs.length} companies`); follow("/ollopa/people", origin()) } },
           { label: "Export", onClick: (vs) => toast(`Exported ${vs.length} companies · ${columns.length} visible columns`) },
           ...(canPushCrm ? [{ label: `Push to ${crmName}`, onClick: (vs: CompanyView[]) => setPending({ kind: "bulk-push" as const, rows: vs }) }] : []),
           { label: "Remove", destructive: true, onClick: (vs) => setPending({ kind: "bulk-remove", rows: vs }) },
@@ -443,7 +451,7 @@ export function CompaniesPage({ session }: { session: Session }) {
             options: [...ACCOUNT_STAGES],
             onChange: (to) => { applyChange(v.company.id, { stage: to as AccountStage }); toast(`${v.company.name} · stage ${to}`) },
           }),
-          onOpen: (v) => navigate(`/ollopa/companies/${v.company.id}`),
+          onOpen: openCompany,
         }}
         phoneSummary={(v) => `${v.contacts.length} contacts · ${v.inSequence.length} in a sequence`}
         empty={{
@@ -452,7 +460,7 @@ export function CompaniesPage({ session }: { session: Session }) {
           action: (
             <span className="flex gap-2">
               <Button size="sm" onClick={() => setFindOpen(true)}>Find companies</Button>
-              <Button size="sm" variant="outline" onClick={() => navigate("/ollopa/import")}>Import CSV</Button>
+              <Button size="sm" variant="outline" onClick={() => follow("/ollopa/import", origin())}>Import CSV</Button>
             </span>
           ),
         }}

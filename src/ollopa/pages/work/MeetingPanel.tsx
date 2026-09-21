@@ -13,11 +13,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { href, navigate } from "@/app/router"
+import { follow } from "../../chain"
 import { Panel } from "../../ui/Panel"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor, QUAL_ELEMENTS, TODAY, type Meeting } from "../../data/seed"
 import type { Session } from "../../session"
+import { originHere } from "./acts"
 import { day } from "./format"
 import {
   aeSeats, briefById, calendarOf, contactIndex, dealFor, handoffRecord, hasTranscripts,
@@ -168,7 +169,10 @@ export function MeetingPanel(p: MeetingPanelProps) {
             </>
           ) : (
             <p className="pt-1 text-sm">
-              <a className="underline underline-offset-4" href={href("/ollopa/settings/integrations")}>Connect a calendar to book from here</a>
+              <button type="button" className="underline underline-offset-4"
+                      onClick={() => follow("/ollopa/settings/integrations", originHere(p.contactId))}>
+                Connect a calendar to book from here
+              </button>
             </p>
           )}
         </section>
@@ -216,7 +220,10 @@ export function MeetingPanel(p: MeetingPanelProps) {
           <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Before the call</h3>
           {brief ? (
             <p className="pt-1">
-              <a className="underline underline-offset-4" href={href(`/ollopa/briefs/${brief.id}`)}>The prep brief</a>
+              <button type="button" className="underline underline-offset-4"
+                      onClick={() => follow(`/ollopa/briefs/${brief.id}`, originHere(p.contactId))}>
+                The prep brief
+              </button>
               {deal && <span className="text-muted-foreground"> · Qualification · {qualificationGaps(p.session.business, deal.id)} to answer</span>}
             </p>
           ) : (
@@ -329,7 +336,9 @@ export function MeetingPanel(p: MeetingPanelProps) {
               <Button size="sm" onClick={() => {
                 p.say(`Deal created at Qualified for ${aes.length ? assignTo : p.session.user}.`)
                 p.onOpenChange(false)
-                navigate(`/ollopa/deals/${deal?.id ?? seed.deals[0].id}`)
+                // The deal is a page, and the panel just closed: the trail keeps the reply or the
+                // task this was booked from, so the crumb comes back to that row.
+                follow(`/ollopa/deals/${deal?.id ?? seed.deals[0].id}`, originHere(p.contactId))
               }}>
                 {aes.length ? "Create the deal and assign" : "Create the deal"}
               </Button>

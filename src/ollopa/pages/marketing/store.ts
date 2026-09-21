@@ -107,3 +107,11 @@ export function removeRow(business: Business, id: string) {
   const c = changes(business)
   save(business, { ...c, removed: [...c.removed, id] })
 }
+
+/**
+ * The same rows, for code that is not a component. A pane's `head` runs inside the frame's render
+ * and cannot call a hook, so it reads the store through this instead.
+ */
+export function marketingRows(business: Business) {
+  return snapshot(business)
+}

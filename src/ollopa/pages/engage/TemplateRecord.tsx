@@ -19,7 +19,10 @@ import { seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import { copyRows, usedByLine } from "./Templates"
 import { engage } from "./store"
-import { Pill, ago, day, n, toast } from "./shared"
+import { BesideLink, FollowLink, Pill, ago, day, n, toast } from "./shared"
+
+/** A related list stops needing a jump to find something once it has a search in it (rule 4). */
+const SEARCH_OVER = 10
 
 const VARIABLES = ["{{first_name}}", "{{company}}", "{{title}}", "{{signal}}", "{{owner}}"]
 
@@ -32,6 +35,8 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
   const [body, setBody] = useState(row?.body ?? "")
   const [who, setWho] = useState(seed.contacts[0]?.id ?? "")
   const [live, setLive] = useState<string | null>(null)
+  // What else this copy reaches stays inside the template, with a search once it is a long list.
+  const [usesQ, setUsesQ] = useState("")
   const bodyRef = useRef<HTMLTextAreaElement>(null)
 
   if (!row) {
@@ -67,11 +72,13 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
     say(`Saved · ${row.name}${row.usedBySteps.length ? ` · ${n(row.usedBySteps.length)} steps get this text` : ""}`)
   }
 
-  const uses = [
-    ...row.usedBySteps.map((s) => ({ key: s.id, label: `${s.sequenceName} · step ${s.order}`, to: `/ollopa/sequences/${s.sequenceId}` })),
-    ...row.usedByCampaigns.map((c) => ({ key: c.id, label: `${c.name} · campaign`, to: `/ollopa/campaigns` })),
-    ...row.usedByTemplates.map((t) => ({ key: t.id, label: `${t.name} · template`, to: `/ollopa/templates/${t.id}` })),
+  const uses: { key: string; label: string; kind: "sequence" | "template" | "campaign"; id: string; to: string }[] = [
+    ...row.usedBySteps.map((s) => ({ key: s.id, label: `${s.sequenceName} · step ${s.order}`, kind: "sequence" as const, id: s.sequenceId, to: `/ollopa/sequences/${s.sequenceId}` })),
+    ...row.usedByCampaigns.map((c) => ({ key: c.id, label: `${c.name} · campaign`, kind: "campaign" as const, id: c.id, to: "/ollopa/campaigns" })),
+    ...row.usedByTemplates.map((t) => ({ key: t.id, label: `${t.name} · template`, kind: "template" as const, id: t.id, to: `/ollopa/templates/${t.id}` })),
   ]
+  const usesNeedle = usesQ.trim().toLowerCase()
+  const shownUses = usesNeedle ? uses.filter((u) => u.label.toLowerCase().includes(usesNeedle)) : uses
 
   return (
     <div className="flex min-h-full flex-col">
@@ -121,7 +128,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                     if (!s) return null
                     return (
                       <li key={sid}>
-                        <a className="underline" href={href(`/ollopa/templates/${s.id}`)}>{s.name}</a>
+                        <BesideLink className="underline" kind="template" id={s.id}>{s.name}</BesideLink>
                         <span className="text-muted-foreground"> · owned by {s.owner} · edit it on its own page</span>
                       </li>
                     )
@@ -152,18 +159,32 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
 
           {/* A section, never a door: who else receives this edit. */}
           <section>
-            <SectionHeader title={`Used by ${usedByLine(row)}`} />
+            <SectionHeader
+              title={`Used by ${usedByLine(row)}`}
+              action={uses.length > SEARCH_OVER
+                ? <Input
+                    data-page-search aria-label="Find something that uses this" placeholder="Find one of these"
+                    className="h-8 w-48" value={usesQ} onChange={(e) => setUsesQ(e.target.value)}
+                  />
+                : undefined}
+            />
             {uses.length === 0
               ? <p className="text-sm text-muted-foreground">Nothing uses this yet. Link it from a step or a campaign.</p>
-              : (
-                <ul className="divide-y border-t text-sm">
-                  {uses.map((u) => (
-                    <li key={u.key} className="py-2">
-                      <a className="hover:underline" href={href(u.to)}>{u.label}</a>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              : shownUses.length === 0
+                ? <p className="text-sm text-muted-foreground">Nothing that uses this matches "{usesQ}".</p>
+                : (
+                  <ul className="divide-y border-t text-sm">
+                    {shownUses.map((u) => (
+                      <li key={u.key} className="py-2">
+                        {/* A look beside, so the copy being edited stays on screen. A campaign has no
+                            pane of its own, so that one is a page move that keeps the trail. */}
+                        {u.kind === "campaign"
+                          ? <FollowLink className="hover:underline" to={u.to} route={`/ollopa/templates/${row.id}`} title={row.name} anchor={u.key}>{u.label}</FollowLink>
+                          : <BesideLink className="hover:underline" kind={u.kind} id={u.id}>{u.label}</BesideLink>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
           </section>
         </div>
 

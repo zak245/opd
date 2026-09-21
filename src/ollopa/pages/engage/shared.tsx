@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { href } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
 import { TODAY } from "../../data/seed"
 
 export { toast } from "../../templates/TablePage"
@@ -379,4 +382,67 @@ export function usePersisted<T>(key: string, initial: T): [T, (v: T) => void] {
     setValue(next)
     try { localStorage.setItem(key, JSON.stringify(next)) } catch { /* this visit only */ }
   }]
+}
+
+/* --------------------------------------------------------- the two ways out of an Engage page */
+
+/**
+ * A related object opened beside the page. The page stays where it is and does not re-render.
+ *
+ * The id goes on the element as `data-item` as well as into the pane, so the pane frame can mark
+ * the row it is reading and a return from the trail can find it again.
+ */
+export function BesideLink({ kind, id, list, className, children }: {
+  kind: string
+  id: string
+  /** The ids in the order they are on screen, so `[` and `]` walk what the person is looking at. */
+  list?: { ids: string[]; index: number }
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      data-item={id}
+      className={className}
+      onClick={(e) => { e.stopPropagation(); openBeside({ kind, id, list, opener: e.currentTarget }) }}
+    >
+      {children}
+    </button>
+  )
+}
+
+/**
+ * A link that leaves for a whole page and remembers where it was, so the crumb comes back to this
+ * exact element. Never a bare `navigate()` to a related object (BUILD-CHAINS, rules for builders).
+ *
+ * It stays a real `<a href>`, so ⌘-click still opens a new tab — and a new tab is a fresh start
+ * with an empty trail, which is what the store does with any hash change it did not ask for.
+ */
+export function FollowLink({ to, route, title, anchor, className, children }: {
+  to: string
+  /** Where we are now: the route the crumb returns to. */
+  route: string
+  /** The page's h1 as it reads right now, so the crumb reads the way the page did. */
+  title: string
+  /** This element's own id, lit and focused on the way back. */
+  anchor: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <a
+      href={href(to)}
+      data-item={anchor}
+      className={className}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+        e.preventDefault()
+        e.stopPropagation()
+        follow(to, { route, title, anchor })
+      }}
+    >
+      {children}
+    </a>
+  )
 }

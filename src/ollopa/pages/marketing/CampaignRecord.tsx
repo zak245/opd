@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow, type Origin } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
@@ -111,6 +113,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   const [sendTime, setSendTime] = useState("09:00")
   const [timezone, setTimezone] = useState(b.timezone)
   const [speed, setSpeed] = useState("As fast as the mailbox allows")
+  const [recipientQ, setRecipientQ] = useState("")
 
   if (!c) {
     return (
@@ -134,6 +137,27 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   const patch = (p: Partial<Campaign>) => patchRow(session.business, "campaigns", c.id, p)
   const log = (what: string) => patch({ activity: [{ at: TODAY, by: session.user, what }, ...c.activity] })
 
+  /* ------------------------------------------------------------------- the two ways off this page */
+
+  /** Where this page is and the row being left, for the crumb and for the return cue. */
+  const from = (anchor?: string): Origin => ({ route: route.raw, title: `${c.name} · Campaigns`, anchor })
+
+  /**
+   * The audience read beside the campaign. The campaign stays mounted and untouched behind it, and
+   * "Open the page" in the pane's header pushes the trail with the audience row as the anchor — so
+   * the crumb back lands on the row in the header grid, lit.
+   */
+  const readAudience = (opener?: HTMLElement | null) => {
+    if (!audience) return
+    openBeside({ kind: "audience", id: audience.id, opener: opener ?? (document.activeElement as HTMLElement | null) })
+  }
+
+  /** A person on the recipients list, read beside the campaign, walking the list as it is shown. */
+  const readPerson = (id: string, ids: string[], opener?: HTMLElement | null) => {
+    const index = ids.indexOf(id)
+    openBeside({ kind: "person", id, list: { ids, index: index < 0 ? 0 : index }, opener: opener ?? (document.activeElement as HTMLElement | null) })
+  }
+
   const pause = () => { patch({ status: "Paused", pausedBy: session.user }); log("Paused"); toast(`${c.name} paused. The send time is kept.`) }
   const resume = () => {
     const passed = c.sendAt !== null && c.sendAt < TODAY
@@ -154,7 +178,19 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     { key: "kind", label: "Kind", value: c.kind },
     { key: "status", label: "Status", value: <StatusBadge c={c} /> },
     { key: "owner", label: "Owner", value: c.owner, under: session.role === "admin" ? undefined : `${admin} can change the owner` },
-    { key: "audience", label: "Audience", value: audience ? <a className="underline" href={href(`/ollopa/audiences/${audience.id}`)}>{audience.name}</a> : `Audience removed; ${num(c.audienceSize)} people at send time`, under: `${num(recipients)} after suppressions` },
+    {
+      key: "audience", label: "Audience",
+      // The audience row: tagged so the pane marks it while it is being read, and so the crumb back
+      // from the audience page lands on it, lit and focused.
+      value: audience
+        ? (
+          <span data-item={audience.id} data-item-label={audience.name}>
+            <button type="button" className="underline" onClick={(ev) => readAudience(ev.currentTarget)}>{audience.name}</button>
+          </span>
+        )
+        : `Audience removed; ${num(c.audienceSize)} people at send time`,
+      under: `${num(recipients)} after suppressions`,
+    },
     { key: "goal", label: "Goal", value: c.goal },
     c.kind === "Lifecycle"
       ? { key: "trigger", label: "Trigger", value: c.trigger ?? "—", under: "Measured on enrolment over the period", level: at("camp.detail.trigger") ? 1 : 2 }
@@ -180,31 +216,6 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             </li>
           ))}
         </ol>
-      ),
-    })
-  }
-
-  // The recipients table is wider than the record column, so it opens as a drawer, and the drawer
-  // holds no doors of its own (the quick look and the record pattern).
-  const recipientSample = seed.contacts.slice(0, Math.min(25, Math.max(0, recipients)))
-  if (recipients > 0) {
-    doors.push({
-      id: "campaign.recipients", label: `Recipients · ${num(recipients)}`, container: "drawer",
-      content: (
-        <table className="w-full text-xs">
-          <caption className="pb-2 text-left text-muted-foreground">The first {recipientSample.length} of {num(recipients)}, and what each has done.</caption>
-          <thead><tr className="text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
-          <tbody>
-            {recipientSample.map((p) => (
-              <tr key={p.id} className="border-t">
-                <td className="py-1"><a className="underline" href={href(`/ollopa/people/${p.id}`)}>{p.name}</a></td>
-                <td>{p.company}</td>
-                <td className="tabular-nums">{p.opens}</td>
-                <td className="tabular-nums">{p.replies}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       ),
     })
   }
@@ -305,6 +316,54 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
 
   /* ------------------------------------------------------------------------------- the sections */
 
+  // Who it went to is found inside the campaign, whatever the count: a real list with search, and
+  // rows that open beside the campaign rather than replacing it. It was a drawer, which is a place
+  // you leave the campaign to stand in; a related list belongs in the object it belongs to.
+  const recipientPool = seed.contacts.slice(0, Math.min(40, Math.max(0, recipients)))
+  const recipientNeedle = recipientQ.trim().toLowerCase()
+  const recipientRows = recipientNeedle
+    ? recipientPool.filter((p) => `${p.name} ${p.company}`.toLowerCase().includes(recipientNeedle))
+    : recipientPool
+  const recipientIds = recipientRows.map((p) => p.id)
+
+  const recipientsBlock = (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          The first {num(recipientPool.length)} of {num(recipients)}, and what each has done.
+        </p>
+        {/* Search once the list is longer than a screenful of names (over ten). */}
+        {recipientPool.length > 10 && (
+          <Input
+            aria-label="Find a recipient of this campaign"
+            placeholder="Find a person"
+            value={recipientQ}
+            onChange={(e) => setRecipientQ(e.target.value)}
+            className="h-8 w-48"
+          />
+        )}
+      </div>
+      <table className="w-full text-xs">
+        <thead><tr className="text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
+        <tbody>
+          {recipientRows.map((p) => (
+            <tr key={p.id} className="border-t" data-item={p.id} data-item-label={p.name}>
+              <td className="py-1">
+                <button type="button" className="underline" onClick={(ev) => readPerson(p.id, recipientIds, ev.currentTarget)}>{p.name}</button>
+              </td>
+              <td>{p.company}</td>
+              <td className="tabular-nums">{p.opens}</td>
+              <td className="tabular-nums">{p.replies}</td>
+            </tr>
+          ))}
+          {recipientRows.length === 0 && (
+            <tr><td colSpan={4} className="py-4 text-center text-muted-foreground">Nobody here matches “{recipientQ}”.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+
   const audienceBlock = (
     <div className="space-y-2">
       {audience ? (
@@ -318,9 +377,15 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
             {suppressionCounts(audience).map((s) => (
               <li key={s.key}>
-                <a className={cn("underline", s.on ? "" : "text-muted-foreground")} href={href(`/ollopa/audiences/${audience.id}?records=${s.key}`)}>
+                {/* The names behind a number are a level the pane must not open, so this is a
+                    `follow`: the campaign and its audience row stay on the trail behind it. */}
+                <button
+                  type="button"
+                  className={cn("underline", s.on ? "" : "text-muted-foreground")}
+                  onClick={() => follow(`/ollopa/audiences/${audience.id}?records=${s.key}`, from(audience.id))}
+                >
                   <span className="tabular-nums">{num(s.count)}</span> {s.label}
-                </a>
+                </button>
                 <span className="text-xs text-muted-foreground">{s.always ? ", always applied" : s.on ? "" : ", off"}</span>
               </li>
             ))}
@@ -335,7 +400,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
               patchRow(session.business, "audiences", audience.id, audience.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY })
               toast(audience.mode === "live" ? `${audience.name} frozen at ${num(audience.size)}. No new matches are added.` : `${audience.name} is live again and refreshes daily at 06:00.`)
             }}>{audience.mode === "live" ? "Freeze" : "Make live"}</Button>
-            <Button size="sm" variant="ghost" onClick={() => navigate(`/ollopa/audiences/${audience.id}`)}>Open audience</Button>
+            <Button size="sm" variant="ghost" onClick={(ev) => readAudience(ev.currentTarget)}>Read the audience beside this</Button>
           </div>
         </>
       ) : (
@@ -367,7 +432,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           <span className={failures.length ? "font-medium text-amber-700 dark:text-amber-400" : ""}>{line}</span>
           {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}{c.qa.by === c.owner ? ", who built this campaign" : ""}</span>}
         </p>
-        <Button size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setQaOpen(true)}>Run the checks</Button>
+        <Button id="camp-run-checks" size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setQaOpen(true)}>Run the checks</Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -422,7 +487,19 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           c.status === "Sending"
             ? { tone: "warning", text: `Sending: ${num(c.sent)} of ${num(recipients)} · bounced ${pct(c.bounced, c.sent)} against warn ${BOUNCE_GUARD.warnPercent}% and pause ${BOUNCE_GUARD.pausePercent}%`, action: <Button size="sm" onClick={pause}>Pause</Button> }
             : c.pausedBy === "Bounce guard"
-              ? { tone: "error", text: `Paused by the bounce guard at ${pct(c.bounced, c.sent)}, past the ${BOUNCE_GUARD.pausePercent}% pause threshold.`, action: <a className="text-sm underline" href={href("/ollopa/settings")}>Bounce guard</a> }
+              ? {
+                tone: "error",
+                text: `Paused by the bounce guard at ${pct(c.bounced, c.sent)}, past the ${BOUNCE_GUARD.pausePercent}% pause threshold.`,
+                // Into Settings at the row that holds the pair, with this campaign kept behind it.
+                action: (
+                  <button
+                    type="button" id="camp-bounce-guard" className="text-sm underline"
+                    onClick={() => follow("/ollopa/settings/email-sending?row=mail.bounce-guard", from("camp-bounce-guard"))}
+                  >
+                    Bounce guard
+                  </button>
+                ),
+              }
               : awaiting
                 ? { tone: "info", text: `Awaiting approval: ${admin}. ${sendConsequence}` }
                 : undefined
@@ -446,6 +523,8 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           sections: [
             { id: "results", title: "Results", children: <><Funnel c={c} />{buildAudienceFrom}</> },
             { id: "audience", title: "Audience", children: audienceBlock },
+            // The count in the heading is what the section holds; the line under it says of how many.
+            ...(recipients > 0 ? [{ id: "recipients", title: "Recipients", count: recipientPool.length, children: recipientsBlock }] : []),
             { id: "content", title: "Content", children: <Previews c={c} /> },
             { id: "schedule", title: c.kind === "Lifecycle" ? "Trigger" : "Schedule", children: scheduleSection },
           ],
@@ -489,7 +568,21 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
                 <span className="text-sm font-medium">{k.title}</span>
               </div>
               <p className="text-xs text-muted-foreground">{k.words}</p>
-              {k.fix && <a className="text-xs underline" href={k.fix.href}>{k.fix.label}</a>}
+              {/* A fix inside this panel never leaves a bare link behind: somewhere on this page is
+                  an anchor, another page is a `follow`, and a related object closes the checks and
+                  opens beside the campaign, which stays exactly where it is. */}
+              {k.fix?.hash && <a className="text-xs underline" href={k.fix.hash} onClick={() => setQaOpen(false)}>{k.fix.label}</a>}
+              {k.fix?.to && (
+                <button type="button" className="text-xs underline" onClick={() => follow(k.fix!.to!, from("camp-run-checks"))}>{k.fix.label}</button>
+              )}
+              {k.fix?.beside && (
+                <button
+                  type="button" className="text-xs underline"
+                  onClick={() => { setQaOpen(false); openBeside({ kind: k.fix!.beside!.kind, id: k.fix!.beside!.id }) }}
+                >
+                  {k.fix.label}
+                </button>
+              )}
             </li>
           ))}
         </ol>

@@ -3,23 +3,29 @@
 // Three short lists rather than one long one, because they are three different decisions. Each row
 // carries the one number that decision turns on: the renewal date, the health drop, the signal.
 import { Button } from "@/components/ui/button"
-import { navigate } from "@/app/router"
+import { openBeside } from "../../beside"
 import type { Company } from "../../data/seed"
 import { type Disclosure } from "../../ui"
 import type { HomeData } from "./data"
 import { day } from "./format"
 import { Nothing, Row, RowList, Section } from "./rows"
 
-function AccountRow({ c, figure, money }: { c: Company; figure: string; money: (n: number) => string }) {
-  const open = () => navigate(`/ollopa/companies/${c.id}`)
+/** The row names an account, so it opens the account beside Home rather than replacing it. */
+function AccountRow({ c, figure, money, ids }: { c: Company; figure: string; money: (n: number) => string; ids: string[] }) {
+  const open = (opener?: HTMLElement | null) => openBeside({
+    kind: "company",
+    id: c.id,
+    list: { ids, index: Math.max(0, ids.indexOf(c.id)) },
+    opener: opener ?? document.querySelector<HTMLElement>(`[data-item="${c.id}"]`),
+  })
   return (
-    <Row onEnter={open}>
+    <Row itemId={c.id} itemLabel={c.name} onEnter={() => open()}>
       <span className="min-w-0 flex-1">
         <span className="font-medium">{c.name}</span>
         <span className="block text-xs text-muted-foreground">{c.owner} · {c.arr ? `${money(c.arr)} a year` : "no contract value"}</span>
       </span>
       <span className="shrink-0 tabular-nums">{figure}</span>
-      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={open}>Open</Button>
+      <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={(e) => open(e.currentTarget)}>Open</Button>
     </Row>
   )
 }
@@ -35,7 +41,7 @@ function List({ title, rows, figure, money, empty }: {
     <div className="pb-3">
       <h4 className="pb-1 text-xs font-medium text-muted-foreground">{title} ({rows.length})</h4>
       {rows.length > 0
-        ? <RowList label={title}>{rows.slice(0, 4).map((c) => <AccountRow key={c.id} c={c} figure={figure(c)} money={money} />)}</RowList>
+        ? <RowList label={title}>{rows.slice(0, 4).map((c) => <AccountRow key={c.id} c={c} figure={figure(c)} money={money} ids={rows.slice(0, 4).map((x) => x.id)} />)}</RowList>
         : <Nothing text={empty} />}
     </div>
   )

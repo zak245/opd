@@ -63,3 +63,8 @@ export function weekStart(): string {
   const back = (d.getUTCDay() + 6) % 7
   return new Date(d.getTime() - back * 86_400_000).toISOString().slice(0, 10)
 }
+
+/** The day after the product's today: where "Snooze" puts a task, on both pages and in the pane. */
+export function tomorrow(): string {
+  return new Date(Date.parse(TODAY + "T00:00:00Z") + 86_400_000).toISOString().slice(0, 10)
+}

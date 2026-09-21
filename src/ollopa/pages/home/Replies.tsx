@@ -6,7 +6,9 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
+import { originHere } from "../work/register"
 import { toast } from "../../templates/TablePage"
 import { Door, type Disclosure } from "../../ui"
 import type { Reply } from "../../data/seed"
@@ -18,18 +20,35 @@ interface ReplyRowProps {
   r: Reply
   canBook: boolean
   confirming: boolean
+  /** The replies on screen, in the order they are on screen, so [ and ] walk them in the pane. */
+  ids: string[]
   onNotInterested: (r: Reply) => void
   onAsk: (id: string | null) => void
   onUnsubscribe: (r: Reply) => void
 }
 
-function ReplyRow({ r, canBook, confirming, onNotInterested, onAsk, onUnsubscribe }: ReplyRowProps) {
-  const open = () => navigate(`/ollopa/inbox/${r.id}`)
-  const book = () => navigate(`/ollopa/inbox/${r.id}?meeting=new`)
+/**
+ * The row names a reply. Enter reads it beside Home — who, what they meant and the message itself,
+ * with Home still on screen. Reply and Book a meeting are page moves, because the composer and the
+ * calendar live in the thread and there is one of each in the product: both go with the trail
+ * holding Home and this row, so the crumb comes back to it lit.
+ */
+function ReplyRow({ r, canBook, confirming, ids, onNotInterested, onAsk, onUnsubscribe }: ReplyRowProps) {
+  const here = () => document.querySelector<HTMLElement>(`[data-item="${r.id}"]`)
+  const beside = () => openBeside({
+    kind: "reply",
+    id: r.id,
+    list: { ids, index: Math.max(0, ids.indexOf(r.id)) },
+    opener: here(),
+  })
+  const open = () => follow(`/ollopa/inbox/${r.id}`, originHere(r.id))
+  const book = () => follow(`/ollopa/inbox/${r.id}?meeting=new`, originHere(r.id))
   return (
     <Row
+      itemId={r.id}
+      itemLabel={r.contact}
       keys={{ r: open, b: () => { if (canBook) book() }, n: () => onNotInterested(r) }}
-      onEnter={open}
+      onEnter={beside}
       className="flex-col items-stretch sm:flex-row sm:items-start"
     >
       <span className="min-w-0 flex-1">
@@ -54,17 +73,22 @@ function ReplyRow({ r, canBook, confirming, onNotInterested, onAsk, onUnsubscrib
           {canBook ? (
             <Button size="sm" variant="ghost" className="hidden h-7 sm:inline-flex" onClick={book}>Book a meeting</Button>
           ) : (
-            <a className="hidden text-xs text-muted-foreground underline underline-offset-4 sm:inline" href={href("/ollopa/connect/calendar")}>
+            <button
+              type="button"
+              className="hidden text-xs text-muted-foreground underline underline-offset-4 sm:inline"
+              onClick={() => follow("/ollopa/connect/calendar", originHere(r.id))}
+            >
               Connect a calendar to book from here
-            </a>
+            </button>
           )}
           <RowMenu
             name={r.contact}
             actions={[
+              { label: "Read it beside this", shortcut: "Enter", onSelect: beside },
               { label: "Reply in Inbox", shortcut: "R", onSelect: open },
               canBook
                 ? { label: "Book a meeting", shortcut: "B", onSelect: book }
-                : { label: "Connect a calendar to book from here", onSelect: () => navigate("/ollopa/connect/calendar") },
+                : { label: "Connect a calendar to book from here", onSelect: () => follow("/ollopa/connect/calendar", originHere(r.id)) },
               { label: "Mark not interested", shortcut: "N", onSelect: () => onNotInterested(r) },
               { label: `Unsubscribe ${r.contact} · never emailed from this workspace again`, destructive: true, onSelect: () => onAsk(r.id) },
             ]}
@@ -107,6 +131,7 @@ export function Replies({ data, d, order }: { data: HomeData; d: Disclosure; ord
             <ReplyRow
               key={r.id}
               r={r}
+              ids={hot.map((x) => x.id)}
               canBook={canBook}
               confirming={confirming === r.id}
               onNotInterested={notInterested}

@@ -13,11 +13,12 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { href } from "@/app/router"
+import { follow } from "../../chain"
 import { Panel } from "../../ui/Panel"
 import { CALL_PURPOSES, DISPOSITIONS, seedFor, TODAY, type Call, type Disposition, type Task } from "../../data/seed"
 import type { Session } from "../../session"
 import { day, duration, localTime } from "./format"
+import { originHere } from "./acts"
 import { callsForTask, contactIndex, hasTranscripts } from "./data"
 
 /** The two answers that end the sequence. Everything else lets it continue. */
@@ -230,7 +231,15 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
             {stops ? `Ends “${task.sequence ?? "the sequence"}” for ${first}` : `${first} stays in “${task.sequence ?? "the sequence"}”`} · logs the call on {task.contact}
           </span>
         )}
-        <a className="ml-auto text-xs underline underline-offset-4" href={href(`/ollopa/people/${task.contactId}`)}>Open contact</a>
+        {/* A panel may open a page; it never opens a pane beside itself. The trail keeps this
+            call and the row it was logged from, so the crumb comes back to both. */}
+        <button
+          type="button"
+          className="ml-auto text-xs underline underline-offset-4"
+          onClick={() => follow(`/ollopa/people/${task.contactId}`, originHere(task.contactId))}
+        >
+          Open contact
+        </button>
       </div>
       <p className="text-xs text-muted-foreground">ollopA does not dial. You dial, and this is where what happened is kept — {day(TODAY)}.</p>
     </div>

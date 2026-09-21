@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { href, navigate } from "@/app/router"
+import { useRoute } from "@/app/router"
+import { follow, type Origin } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -34,6 +35,14 @@ export function WorkflowsPage({ session }: { session: Session }) {
   const rows = useMarketing(session.business)
   const lock = gate("workflows", session.business)
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
+  const route = useRoute()
+
+  /**
+   * The one way off this page. Opening a row is a step in a chain, not a jump: the trail keeps
+   * "Workflows" and the row that was left, so the crumb back lands on it, lit and focused.
+   */
+  const from = (anchor?: string): Origin => ({ route: route.raw, title: "Workflows", anchor })
+  const open = (to: string, anchor: string) => follow(to, from(anchor))
 
   const [q, setQ] = useState("")
   const [status, setStatus] = useState("all")
@@ -122,18 +131,22 @@ export function WorkflowsPage({ session }: { session: Session }) {
       if (!w.sla) return <span className="text-muted-foreground">No clock on this one</span>
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
-        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=sla`)}>{num(n)} past {w.sla.windows.hot}</a>
+        : <button type="button" className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}?at=sla`, w.id) }}>{num(n)} past {w.sla.windows.hot}</button>
     } },
     { key: "notRouted", header: "Could not route", sortBy: (w) => stats.get(w.id)?.notRouted ?? 0, cell: (w) => {
       const n = stats.get(w.id)?.notRouted ?? 0
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
-        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=runs`)}>{num(n)}</a>
+        : <button type="button" className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}?at=runs`, w.id) }}>{num(n)}</button>
     } },
     { key: "ceiling", header: "Credit ceiling and spend today", sortBy: (w) => w.ceiling.spentToday, className: "min-w-[9rem]", cell: (w) => (
-      <a className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium text-amber-700 dark:text-amber-400")} href={href(`/ollopa/workflows/${w.id}?at=ceiling`)}>
+      <button
+        type="button"
+        className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium text-amber-700 dark:text-amber-400")}
+        onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}?at=ceiling`, w.id) }}
+      >
         {num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} a day
-      </a>
+      </button>
     ) },
     { key: "owner", header: "Owner", sortBy: (w) => w.owner, cell: (w) => w.owner },
     { key: "edited", header: "Last edited", sortBy: (w) => w.editedOn, cell: (w) => <span className="text-xs">{w.editedBy}<br />{day(w.editedOn)}</span> },
@@ -161,7 +174,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
     }
     addRow(session.business, "workflows", w)
     toast("Workflow created, off. Nothing runs until you turn it on.")
-    navigate(`/ollopa/workflows/${w.id}`)
+    open(`/ollopa/workflows/${w.id}`, w.id)
   }
 
   return (
@@ -236,8 +249,8 @@ export function WorkflowsPage({ session }: { session: Session }) {
               },
             }]}
             menu={(w) => [
-              { label: "Open", onClick: () => navigate(`/ollopa/workflows/${w.id}`) },
-              { label: "Test on one record", onClick: () => navigate(`/ollopa/workflows/${w.id}?open=test`) },
+              { label: "Open", onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
+              { label: "Test on one record", onClick: () => open(`/ollopa/workflows/${w.id}?open=test`, w.id) },
               { label: "Duplicate", onClick: () => {
                 const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
                 addRow(session.business, "workflows", copy)
@@ -246,7 +259,8 @@ export function WorkflowsPage({ session }: { session: Session }) {
               { label: "Archive", destructive: true, separatorBefore: true, onClick: () => toast(`${w.name} archived. It stops enrolling for good; the run history is kept and the rule stays readable.`) },
             ]}
             menuName="Open, test on one record, duplicate, archive"
-            onOpen={(w) => navigate(`/ollopa/workflows/${w.id}`)}
+            onOpen={(w) => open(`/ollopa/workflows/${w.id}`, w.id)}
+            rowLabel={(w) => w.name}
             cardTitle={(w) => <span className="font-medium">{w.name}</span>}
           />
         </div>

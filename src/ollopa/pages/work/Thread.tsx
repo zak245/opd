@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { href } from "@/app/router"
+import { openBeside, openBesideNested } from "../../beside"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor } from "../../data/seed"
@@ -90,7 +90,17 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
               </p>
               {deal && (
                 <p className="pt-0.5 text-xs">
-                  <a className="underline underline-offset-4" href={href(`/ollopa/deals/${deal.id}`)}>{deal.name}</a>
+                  {/* The deal behind this reply. Read while the contact is already open beside the
+                      thread it is the next step of the same look, so the pane swaps and keeps one
+                      "‹ back" to them; with nothing open it is simply the deal. Either way the
+                      thread, its scroll and the half-typed reply are untouched. */}
+                  <button
+                    type="button"
+                    className="underline underline-offset-4"
+                    onClick={(e) => openBesideNested({ kind: "deal", id: deal.id, opener: e.currentTarget })}
+                  >
+                    {deal.name}
+                  </button>
                   <span className="text-muted-foreground"> · {deal.stage}</span>
                 </p>
               )}
@@ -147,7 +157,13 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 {seed.workspace.crm && (<><dt className="text-muted-foreground">{seed.workspace.crm}</dt><dd>{contact?.crmSyncedAt ? `Synced ${day(contact.crmSyncedAt)}` : "Not synced"}</dd></>)}
               </dl>
               <p className="pt-2">
-                <a className="text-sm underline underline-offset-4" href={href(`/ollopa/people/${reply.contactId}`)}>Open contact</a>
+                <button
+                  type="button"
+                  className="text-sm underline underline-offset-4"
+                  onClick={(e) => openBeside({ kind: "person", id: reply.contactId, opener: e.currentTarget })}
+                >
+                  Open {reply.contact} beside this
+                </button>
               </p>
             </Door>
           </div>

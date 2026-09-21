@@ -23,7 +23,10 @@ import {
 } from "../../data/seed"
 import type { Business, Role } from "../../usage/model"
 import type { Session } from "../../session"
+import { PROFILE_LABEL, setupAnswersFor } from "../../session"
+import { answerWords } from "../setup/WorkspaceSetup"
 import { settingsFor, type DerivedSettings } from "./derived"
+import { leaveOnClick, leaveSettings } from "./leave"
 import { credits, day, longDay, money, plural } from "./format"
 import { Num, Pick, Text, Toggle, toast, useSettingsState } from "./state"
 
@@ -59,6 +62,8 @@ export interface RowCtx {
   open: (p: PanelRequest) => void
   viewAs: (user: User) => void
   search: (query: string) => void
+  /** What the set-up answers just moved in the sidebar, for the row that sent the person there. */
+  moved?: string | null
 }
 
 export interface SettingRow {
@@ -202,6 +207,8 @@ function PasswordRow() {
 export function rowsFor(ctx: RowCtx): SettingRow[] {
   const { seed, b, st, admin, isAdmin, open, session } = ctx
   const ws = seed.workspace
+  // The answers this workspace has given since, if it has: the row reports those, not the seed's.
+  const changedAnswers = setupAnswersFor(ctx.business)
   const guard = seed.bounceGuard
   const mine = seed.mailboxes.filter((m) => m.owner === ctx.user)
   const myCredits = seed.credits.byUser.find((u) => u.user === ctx.user)
@@ -273,12 +280,22 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     id: "work.profile", area: "How your team works", label: "Workspace profile", short: "Workspace profile",
     keywords: ["sidebar", "set-up answers", "three questions"],
     value: (
-      <span className="flex flex-wrap items-center gap-2">
-        <span className="text-sm">{ws.profile}</span>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { location.hash = "#/ollopa/setup" }}>Change the answers</Button>
+      <span className="block">
+        <span className="flex flex-wrap items-center gap-2">
+          {/* What the workspace is shaped like now, not what the seed shipped with: the answers
+              change this row, so the row has to change with them. */}
+          <span className="text-sm">{PROFILE_LABEL[session.profile]}</span>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => leaveSettings("/ollopa/setup", "work.profile")}>Change the answers</Button>
+        </span>
+        {/* Back from the answers: what the change moved, where the change was caused. */}
+        {ctx.moved && (
+          <span role="status" className="mt-1.5 block rounded-md bg-muted px-2.5 py-1.5 text-xs">{ctx.moved}</span>
+        )}
       </span>
     ),
-    note: `Declared by ${ws.declaredBy} on ${longDay(ws.declaredAt)}: "${ws.firstJob}", ${ws.people}, ${plural(ws.seats.length, "seat")}. Changing it redraws the sidebar and says what moved.`,
+    note: changedAnswers
+      ? `Answered here: ${answerWords(changedAnswers)}. ${ws.declaredBy} declared it on ${longDay(ws.declaredAt)}. Changing it redraws the sidebar and says what moved.`
+      : `Declared by ${ws.declaredBy} on ${longDay(ws.declaredAt)}: "${ws.firstJob}", ${ws.people}, ${plural(ws.seats.length, "seat")}. Changing it redraws the sidebar and says what moved.`,
   })
   add({
     id: "work.seats", area: "How your team works", label: "Which seats exist here", short: "Seats",
@@ -904,13 +921,13 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <span className="text-sm">{crm.name}</span>
         <Chip tone={crm.errorsToday > 0 ? "error" : "good"}>{crm.errorsToday === 0 ? "No errors today" : `${crm.errorsToday} errors today`}</Chip>
         <span className="text-xs text-muted-foreground">synced {crm.lastSync} · {crm.objects.map((o) => `${o.object} ${o.direction}`).join(", ")}</span>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { location.hash = `#/ollopa/integrations/${crm.id}` }}>Open</Button>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => leaveSettings(`/ollopa/integrations/${crm.id}`, "int.crm")}>Open</Button>
         <CustomObjects business={ctx.business} />
       </span>
     ) : (
       <span className="text-sm">
         <strong>ollopA is your CRM.</strong> It is holding your contacts, companies and deals. Connect Salesforce or HubSpot if that changes.
-        <Button size="sm" variant="outline" className="ml-2 h-7 px-2 text-xs" onClick={() => { location.hash = "#/ollopa/connect/salesforce" }}>Connect a CRM</Button>
+        <Button size="sm" variant="outline" className="ml-2 h-7 px-2 text-xs" onClick={() => leaveSettings("/ollopa/connect/salesforce", "int.crm")}>Connect a CRM</Button>
       </span>
     ),
   })
@@ -1041,7 +1058,8 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
       : (
         <span className="flex flex-wrap items-center gap-2 text-sm">
           <span>{plural(openUpgrades.length, "upgrade request")} · {openUpgrades[0].requester.user} wants {openUpgrades[0].upgrade!.feature} ({openUpgrades[0].upgrade!.plan}, {money(openUpgrades[0].upgrade!.monthlyTotal)} a month for {b.plan.seats} seats)</span>
-          <a className="underline underline-offset-4" href={href("/ollopa/requests")}>Review</a>
+          <a className="underline underline-offset-4" href={href("/ollopa/requests")}
+             onClick={leaveOnClick("/ollopa/requests", "plan.upgrade-requests")}>Review</a>
         </span>
       ) })
   add({ id: "plan.credit-breakdown", area: "Plan, billing and usage", label: "Where the credits went", short: "Credit spend by feature, person and surface",
@@ -1159,7 +1177,15 @@ function DeleteWorkspace({ name, seed }: { name: string; seed: Seed }) {
  * has not given you access". When it is on, the same control is a real button that opens a panel
  * naming the plan and the price.
  */
-export function Row({ row, admin, honest = true }: { row: SettingRow; admin: string; honest?: boolean }) {
+export function Row({ row, admin, honest = true, idPrefix = "row-", stacked = false }: {
+  row: SettingRow
+  admin: string
+  honest?: boolean
+  /** The same row read beside another page carries the same `data-row`, but never the same DOM id. */
+  idPrefix?: string
+  /** In a 28rem pane the label and the control cannot sit side by side: the label goes above. */
+  stacked?: boolean
+}) {
   const s = useSettingsState()
   const lit = s.lit === row.id
   const g = row.feature ? gate(row.feature) : null
@@ -1178,7 +1204,7 @@ export function Row({ row, admin, honest = true }: { row: SettingRow; admin: str
 
   return (
     <div
-      id={`row-${row.id}`}
+      id={`${idPrefix}${row.id}`}
       data-row={row.id}
       data-item={row.id}
       data-item-label={row.label}
@@ -1203,7 +1229,7 @@ export function Row({ row, admin, honest = true }: { row: SettingRow; admin: str
           {note && <p className="pt-1.5 text-xs text-muted-foreground">{note}</p>}
         </>
       ) : (
-        <div className="grid gap-1 sm:grid-cols-[minmax(11rem,16rem)_1fr] sm:items-baseline sm:gap-4">
+        <div className={cn("grid gap-1", !stacked && "sm:grid-cols-[minmax(11rem,16rem)_1fr] sm:items-baseline sm:gap-4")}>
           <div className="text-sm">{row.label}</div>
           <div className="min-w-0">
             {wrapped}

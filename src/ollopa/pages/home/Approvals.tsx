@@ -8,11 +8,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { href, navigate } from "@/app/router"
+import { openBeside } from "../../beside"
+import { follow } from "../../chain"
+import { originHere } from "../work/register"
 import { toast } from "../../templates/TablePage"
 import { ApproveBar, ConsequenceLine, Door, Panel, consequenceText, useDoorState, type Disclosure } from "../../ui"
 import type { AgentEvent } from "../../data/seed"
 import type { Session } from "../../session"
+import { onApprovalDecision } from "./acts"
 import { consequenceOf, proposalOf, wordsOf, type Batch, type HomeData } from "./data"
 import { count, plural, when } from "./format"
 import { Nothing, Row, RowList, Section, UndoLine, useUndo } from "./rows"
@@ -72,24 +75,38 @@ interface RowProps {
   adminName: string
   adminTitle: string
   seen: (el: HTMLElement | null) => void
+  /** The proposals on screen, in the order they are on screen, for [ and ] in the pane. */
+  ids: string[]
   onDecide: (e: AgentEvent, decision: Decision) => void
   onRead: (id: string) => void
 }
 
-function ApprovalRow({ e, canApprove, isAdmin, mine, adminName, adminTitle, seen, onDecide, onRead }: RowProps) {
+function ApprovalRow({ e, canApprove, isAdmin, mine, adminName, adminTitle, seen, ids, onDecide, onRead }: RowProps) {
   const [, openDoor] = useDoorState(`home.agents.detail.${e.id}`)
   const second = e.needsSecondApproval
   const recipients = e.ifApproved?.recipients ?? 0
+  // The row names an agent run: Enter reads the whole proposal beside Home, with Approve and
+  // Decline in the pane and this row still on screen behind it.
+  const beside = () => {
+    onRead(e.id)
+    openBeside({
+      kind: "agent-run",
+      id: e.id,
+      list: { ids, index: Math.max(0, ids.indexOf(e.id)) },
+      opener: document.querySelector<HTMLElement>(`[data-item="${e.id}"]`),
+    })
+  }
   return (
     <Row
       itemId={e.id}
+      itemLabel={proposalOf(e)}
       seen={seen}
       keys={{
         a: () => { if (canApprove) onDecide(e, "approved") },
         x: () => { if (canApprove) onDecide(e, "declined") },
         e: () => { openDoor(true); onRead(e.id) },
       }}
-      onEnter={() => navigate("/ollopa/agents")}
+      onEnter={beside}
       className="flex-col items-stretch"
     >
       <div className="flex w-full flex-wrap items-start gap-x-3 gap-y-1">
@@ -112,7 +129,13 @@ function ApprovalRow({ e, canApprove, isAdmin, mine, adminName, adminTitle, seen
             <Button size="sm" variant="outline" className="h-7" onClick={() => onDecide(e, "declined")}>Decline</Button>
           </span>
         ) : (
-          <a className="shrink-0 text-xs text-muted-foreground underline underline-offset-4" href={href("/ollopa/agents")}>See it on Agents</a>
+          <button
+            type="button"
+            className="shrink-0 text-xs text-muted-foreground underline underline-offset-4"
+            onClick={() => follow("/ollopa/agents", originHere(e.id))}
+          >
+            See it on Agents
+          </button>
         )}
       </div>
       <ItemBody e={e} />
@@ -155,6 +178,13 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
     setPanel(null)
   }
 
+  // Approve or Decline pressed inside the pane: the row decides here, keeps its undo line and
+  // writes the same ledger sentence, so the pane and the page can never disagree.
+  useEffect(() => onApprovalDecision((id, decision) => {
+    const e = data.approvals.waiting.find((x) => x.id === id)
+    if (e) decide([e], decision)
+  }))
+
   const research = data.approvals.researchRun
   const showResearch = research && d.atLevelOne("home.agents.brief-digest")
   const logged = data.approvals.loggedThisWeek
@@ -186,9 +216,21 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
             <>
               <span className="text-muted-foreground"> · {data.approvals.strongest.length} strongest: </span>
               {data.approvals.strongest.map((c, i) => (
-                <span key={c.id}>
+                <span key={c.id} data-item={c.id} data-item-label={c.name}>
                   {i > 0 && ", "}
-                  <a className="underline underline-offset-2" href={href(`/ollopa/companies/${c.id}`)}>{c.name}</a>
+                  {/* The research agent named these companies: each one reads beside Home. */}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2"
+                    onClick={(ev) => openBeside({
+                      kind: "company",
+                      id: c.id,
+                      list: { ids: data.approvals.strongest.map((x) => x.id), index: i },
+                      opener: ev.currentTarget,
+                    })}
+                  >
+                    {c.name}
+                  </button>
                 </span>
               ))}
             </>
@@ -245,6 +287,7 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
                   adminName={adminName}
                   adminTitle={adminTitle}
                   seen={seen}
+                  ids={batch.items.map((x) => x.id)}
                   onDecide={(item, decision) => decide([item], decision)}
                   onRead={(id) => setRead((r) => (r[id] ? r : { ...r, [id]: true }))}
                 />
@@ -284,7 +327,10 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
           ))}
         </ul>
         <p className="pt-2 text-xs text-muted-foreground">
-          <a className="underline underline-offset-4" href={href("/ollopa/agents")}>The full ledger is on Agents</a>
+          <button type="button" className="underline underline-offset-4"
+                  onClick={() => follow("/ollopa/agents", originHere("home-approvals"))}>
+            The full ledger is on Agents
+          </button>
         </p>
       </Door>
 
