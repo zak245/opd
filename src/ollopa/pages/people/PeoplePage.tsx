@@ -25,6 +25,7 @@ import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
+import { useEdits } from "../../edits"
 import { toast } from "../../templates/TablePage"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -35,8 +36,8 @@ import { SEATS, itemById, weeklyUse } from "../../usage"
 import type { Session } from "../../session"
 import { columnsFor, STAGE_TONE, type ColumnDef } from "./columns"
 import { applyFilters, chipLabel, filtersFor, type Active, type FilterContext, type FilterDef } from "./filters"
-import { usePersonEdits } from "./edits"
 import { day, glanceFields, rowsFor, type PersonRow } from "./person"
+import type { PersonEdit } from "./edits"
 import { needsEnrichment, viewsFor, type PeopleView } from "./views"
 import { FilterChip, FiltersPanelBody, FiltersPanelFrame } from "./parts"
 import { EnrichPanel } from "./EnrichPanel"
@@ -200,9 +201,9 @@ export function PeoplePage({ session }: { session: Session }) {
   const [pending, setPending] = useState<{ text: string; run: () => void } | null>(null)
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([])
   const searchRef = useRef<HTMLInputElement>(null)
-  // What a pane's actions did to somebody in this session, so a row that was acted on from beside
-  // another page reads the same here as it did there.
-  const edits = usePersonEdits()
+  // What a pane's actions did to somebody in this session, from the one store every page reads, so
+  // a row acted on from a pane beside any page reads the same here as it did there.
+  const edits = useEdits("person") as Record<string, PersonEdit>
 
   /**
    * Leaving this table for a record: the row is the anchor, so the crumb back lands on it, lit and

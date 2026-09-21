@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { openBeside, openBesideNested } from "../../beside"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor } from "../../data/seed"
@@ -36,13 +35,20 @@ export interface ThreadProps {
   onBack?: () => void
   /** Set when the row's Reply action asked for the composer. */
   focusComposer: number
+  /**
+   * The contact and the deal behind this reply, opened beside the page by the Inbox itself — the
+   * same call the row's menu makes, so both routes to one pane carry the same list and walk the
+   * same replies. The thread never opens a pane of its own.
+   */
+  onOpenContact: (opener?: HTMLElement | null) => void
+  onOpenDeal: (opener?: HTMLElement | null) => void
 }
 
 function words(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
 
-export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBack, focusComposer }: ThreadProps) {
+export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBack, focusComposer, onOpenContact, onOpenDeal }: ThreadProps) {
   const seed = seedFor(session.business)
   const contact = contactIndex(session.business)(reply.contactId)
   const deal = dealFor(session.business, reply.dealId)
@@ -97,7 +103,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                   <button
                     type="button"
                     className="underline underline-offset-4"
-                    onClick={(e) => openBesideNested({ kind: "deal", id: deal.id, opener: e.currentTarget })}
+                    onClick={(e) => onOpenDeal(e.currentTarget)}
                   >
                     {deal.name}
                   </button>
@@ -160,7 +166,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 <button
                   type="button"
                   className="text-sm underline underline-offset-4"
-                  onClick={(e) => openBeside({ kind: "person", id: reply.contactId, opener: e.currentTarget })}
+                  onClick={(e) => onOpenContact(e.currentTarget)}
                 >
                   Open {reply.contact} beside this
                 </button>

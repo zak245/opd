@@ -37,7 +37,7 @@ const go = async (route) => {
   await page.reload({ waitUntil: "networkidle0" })
   await wait(500)
 }
-const pane = () => page.evaluate(() => {
+const paneRaw = () => page.evaluate(() => {
   const el = document.querySelector("aside[aria-label*='beside']")
   if (!el) return null
   return {
@@ -65,6 +65,11 @@ const clickText = (selector, text) => page.evaluate((s, t) => {
 /** The dev-only render counters, so "the page did not re-render" is read rather than assumed. */
 const renders = () => page.evaluate(() =>
   Array.from(document.querySelectorAll("[data-renders]")).map((el) => el.textContent.trim()).join(" · ") || "(no counter: production build)")
+/** The pane in one line: name, the one step back, and what its walker says. */
+const pane = async () => {
+  const p = await paneRaw()
+  return p ? `${p.name}${p.stepBack ? ` (‹ ${p.stepBack})` : ""}${p.count ? ` · ${p.count}` : " · no walker"}` : "(no pane)"
+}
 const trail = () => page.evaluate(() => document.querySelector('nav[aria-label="Your path"]')?.innerText.replace(/\n/g, " ") ?? "(none)")
 
 await page.goto(base + "/#/", { waitUntil: "networkidle0" })
@@ -98,9 +103,10 @@ if (phone) {
   await wait(300)
   console.log("A contact opened:", await clickReal('[data-page-active="true"] button', "Open "))
 } else {
-  await page.click('[data-page-active="true"] [role="row"] button[aria-label^="More actions"]')
+  await page.click('[data-page-active="true"] [role="row"] button[data-row-menu]')
   await wait(400)
-  console.log("A menu opened:", await clickReal('[role="menuitem"]', "Open contact"))
+  console.log("A menu items:", await page.evaluate(() => Array.from(document.querySelectorAll('[role="menuitem"],[role="menu"] [data-slot="dropdown-menu-label"]')).map((el) => el.textContent.trim()).join(" | ")))
+console.log("A opened the contact:", await clickReal('[role="menuitem"]', "Open "))
 }
 await wait(700)
 console.log("A contact pane:", await pane())
@@ -131,8 +137,21 @@ await wait(400)
 console.log("A after ‹ back:", await pane())
 await shot("a4-back-to-contact")
 
+// Defect 7: the same pane opened from the thread's own "Contact details" must carry the same list.
 await page.keyboard.press("Escape")
 await wait(400)
+await clickReal('[data-page-active="true"] button', "Contact details")
+await wait(300)
+await clickReal('[data-page-active="true"] button', "Open ")
+await wait(600)
+console.log("A the same pane from the thread:", await pane())
+await page.keyboard.press("]")
+await wait(400)
+console.log("A after ] from that route:      ", await pane())
+await page.keyboard.press("Escape")
+await wait(300)
+
+await wait(200)
 const draftClosed = await page.evaluate(() => document.querySelector('[data-page-active="true"] textarea[aria-label^="Reply to"]')?.value ?? "")
 console.log("A draft after the pane closed:", JSON.stringify(draftClosed), draftClosed === draftBefore ? "· unchanged" : "· LOST")
 if (!phone) { await page.keyboard.press("j"); await wait(400) }
@@ -163,7 +182,7 @@ await shot("b2-contact-beside")
 console.log("B Done pressed:", await clickReal('[data-page-active="true"] button', "Done"))
 await wait(700)
 console.log("B task after Done:", await page.evaluate(() => document.querySelector('[data-page-active="true"] h3')?.textContent ?? ""))
-console.log("B pane still open:", await pane())
+console.log("B pane after Done:", await pane(), "· the pane and the page must name the same person, and the count must be one shorter")
 await shot("b3-done")
 
 await page.keyboard.press("BracketRight")
@@ -221,6 +240,7 @@ await shot("d1-task-beside")
 
 console.log("D Done in the pane:", await clickReal("aside button", "Done"))
 await wait(700)
+console.log("D pane moved to:", await pane())
 console.log("D Home says:", await page.evaluate(() =>
   document.querySelector('[data-page-active="true"] [data-section="home-today"] [role="status"]')?.textContent ?? "(no line)"))
 await shot("d2-done-on-the-row")
@@ -237,6 +257,7 @@ await shot("d3-approval-beside")
 
 console.log("D Decline in the pane:", await clickReal("aside button", "Decline"))
 await wait(700)
+console.log("D pane moved to:", await pane())
 console.log("D Home says:", await page.evaluate(() =>
   document.querySelector('[data-page-active="true"] [data-section="home-approvals"] [role="status"]')?.textContent ?? "(no line)"))
 await shot("d4-declined-on-the-row")

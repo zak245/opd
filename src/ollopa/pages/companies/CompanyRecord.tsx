@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
-import { follow } from "../../chain"
+import { follow, routeKey, useTrail } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { CardRow, RecordPage, type RecordCard, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
 import { EmptyState } from "../../ui/EmptyState"
@@ -44,6 +44,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   const b = businessById(session.business)
   const d = useDisclosure("companies")
   const changes = useChanges()
+  const trail = useTrail()
 
   // A link may name the company or the account; both are the same object, so both resolve here.
   const company = useMemo(() => {
@@ -109,6 +110,15 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   const brief = seed.briefs.find((n) => n.about.kind === "company" && n.about.id === merged.id)
   const briefHref = runs[0] ? `/ollopa/briefs/${brief?.id ?? runs[0].id}` : null
   const holdsAccounts = ["cs", "ae", "admin"].includes(session.role)
+
+  // This record is a Company — that is what the h1 says and what the sidebar highlights. The back
+  // link is not a second opinion about that: it is the index the person actually came from, which
+  // the trail knows, and Companies when they came from nowhere. An account and a company are one
+  // object, and the page says so once.
+  const from = [...trail].reverse().find((o) => ["/ollopa/accounts", "/ollopa/companies"].includes(routeKey(o.route)))
+  const backTo = from && routeKey(from.route) === "/ollopa/accounts"
+    ? { label: "Accounts", href: href("/ollopa/accounts") }
+    : { label: "Companies", href: href("/ollopa/companies") }
 
   /* -------------------------------------------------------- leaving, and looking beside */
 
@@ -766,7 +776,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   return (
     <>
       <RecordPage
-        back={customer && holdsAccounts ? { label: "Accounts", href: href("/ollopa/accounts") } : { label: "Companies", href: href("/ollopa/companies") }}
+        back={backTo}
         title={{ value: merged.name, onRename: canEdit ? (value) => { applyChange(merged.id, { name: value }); toast(`Saved · ${value}`) } : undefined }}
         subtitle={{ label: merged.domain, href: `https://${merged.domain}` }}
         chips={

@@ -16,7 +16,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
-import { type Col, DataTable, Pill, ago, day, focusSearch, moveRow, n, toast, useKeys, usePersisted } from "./shared"
+import { type Col, DataTable, Pill, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */
 export interface CopyRow {
@@ -104,7 +104,7 @@ export function TemplatesPage({ session }: { session: Session }) {
   // A row opens its record along the trail, with the row as the anchor: the record's
   // "← Templates" and the crumb both come back to this row, lit.
   const open = (r: CopyRow) =>
-    follow(`/ollopa/templates/${r.id}`, { route: "/ollopa/templates", title: "Templates and snippets", anchor: r.id })
+    follow(`/ollopa/templates/${r.id}`, { route: "/ollopa/templates", title: h1Of("templates"), anchor: r.id })
 
   const columns: Col<CopyRow>[] = [
     {
@@ -112,7 +112,7 @@ export function TemplatesPage({ session }: { session: Session }) {
       cell: (r) => (
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-medium">{r.name}</span>
+            <RowOpen onOpen={() => open(r)}>{r.name}</RowOpen>
             <Pill tone="muted">{r.kind}</Pill>
           </div>
           <div className="text-xs text-muted-foreground">{r.folder}</div>

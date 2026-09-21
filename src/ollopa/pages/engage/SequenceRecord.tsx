@@ -33,7 +33,8 @@ import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { AddToSequencePanel } from "./AddToSequence"
 import { statusOf, totalPeople } from "./Sequences"
-import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, Pill, ago, day, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { useEdits } from "../../edits"
+import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, Pill, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
 const VARIABLES = ["{{first_name}}", "{{company}}", "{{title}}", "{{signal}}", "{{owner}}"]
@@ -252,7 +253,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             <FollowLink
               className="underline"
               to="/ollopa/settings/email-sending?row=mail.bounce-guard"
-              route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.bounce-guard"
+              route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.bounce-guard"
             >Bounce guard thresholds (Settings)</FollowLink>
             <span className="text-xs"> · RevOps admins change them</span>
           </div>
@@ -912,7 +913,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
               {" "}<FollowLink
                 className="underline"
                 to="/ollopa/settings/email-sending?row=mail.mailboxes"
-                route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.mailboxes"
+                route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.mailboxes"
               >Mailboxes and limits (Settings)</FollowLink>
             </p>
           </div>
@@ -940,7 +941,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
                 ? <> · <FollowLink
                     className="underline"
                     to="/ollopa/settings/sequences?row=seq.schedules"
-                    route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.schedules"
+                    route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.schedules"
                   >New schedule (Settings)</FollowLink></>
                 : " · RevOps admins add schedules."}
             </p>
@@ -967,7 +968,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
                 ? <> · <FollowLink
                     className="underline"
                     to="/ollopa/settings/sequences?row=seq.rulesets"
-                    route={`/ollopa/sequences/${seq.id}`} title={seq.name} anchor="seq.link.rulesets"
+                    route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.rulesets"
                   >Sending rules for every sequence (Settings)</FollowLink></>
                 : " · RevOps admins change the shared rulesets."}
             </p>
@@ -1030,6 +1031,12 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
   const d = useDisclosure("sequences")
   const rowRenders = useRenderCount()
   const seed = seedFor(session.business)
+  // What actions took on these people this session — the pane's "Move to …" among them. Opening a
+  // pane writes nothing here, so it still does not re-render the page; acting writes one record and
+  // the row it was caused on redraws at once (chain rule 8).
+  const personEdits = useEdits("person")
+  // Keep the ten-second Undo honest while one is on screen.
+  useTick(Object.values(personEdits).some(undoable))
   const [q, setQ] = useState("")
   const [selected, setSelected] = useState<string[]>([])
   const [sort, setSort] = usePersisted<{ key: string; dir: "asc" | "desc" }>(`ollopa.seq.people.sort.${session.user}`, { key: "next", dir: "asc" })
@@ -1048,12 +1055,24 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
 
   const stepTitle = (order: number) => steps.find((s) => s.order === order)?.kind ?? "—"
 
+  /**
+   * Where an action this session put this person, when it took them out of this sequence: the name
+   * of the sequence they are in now, "" when an action took them out of every one, and null when
+   * nothing moved them. The row stops claiming a step and a send date the moment that happens.
+   */
+  const movedOut = (contactId: string): string | null => {
+    const next = personEdits[contactId]?.sequence
+    if (next === undefined || next === seq.name) return null
+    return String(next)
+  }
+
   const columns: Col<Enrollment>[] = [
     {
       key: "name", header: "Name", primary: true,
       sort: (a, b) => (byId.get(a.contactId)?.name ?? "").localeCompare(byId.get(b.contactId)?.name ?? ""),
       cell: (e) => {
         const c = byId.get(e.contactId)
+        const edit = personEdits[e.contactId]
         return (
           <div className="min-w-0" data-item={e.contactId} data-item-label={c?.name ?? e.contactId}>
             <button
@@ -1064,6 +1083,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
               {c?.name ?? e.contactId}
             </button>
             <div className="text-xs text-muted-foreground">{c?.title}</div>
+            {edit?.note && <RowNote kind="person" id={e.contactId} note={String(edit.note)} at={edit.at} />}
           </div>
         )
       },
@@ -1071,17 +1091,22 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
     { key: "company", header: "Company", phone: true, cell: (e) => byId.get(e.contactId)?.company ?? "—" },
     {
       key: "status", header: "Status", phone: true,
-      cell: (e) => (
-        <div className="min-w-0">
-          <Pill tone={e.status === "Bounced" || e.status === "Not sent" ? "error" : e.status === "Paused" ? "warning" : e.status === "Replied" ? "good" : "muted"}>{e.status}</Pill>
-          {e.notSentReason && <div className="text-xs text-muted-foreground">Not sent · {e.notSentReason.toLowerCase()}</div>}
-        </div>
-      ),
+      cell: (e) => {
+        const moved = movedOut(e.contactId)
+        if (moved !== null) return <Pill tone="muted">{moved ? `Moved to ${moved}` : "Taken out of every sequence"}</Pill>
+        return (
+          <div className="min-w-0">
+            <Pill tone={e.status === "Bounced" || e.status === "Not sent" ? "error" : e.status === "Paused" ? "warning" : e.status === "Replied" ? "good" : "muted"}>{e.status}</Pill>
+            {e.notSentReason && <div className="text-xs text-muted-foreground">Not sent · {e.notSentReason.toLowerCase()}</div>}
+          </div>
+        )
+      },
     },
-    { key: "step", header: "Step", className: "tabular-nums", sort: (a, b) => a.stepOrder - b.stepOrder, cell: (e) => `${e.stepOrder}. ${stepTitle(e.stepOrder)}` },
+    { key: "step", header: "Step", className: "tabular-nums", sort: (a, b) => a.stepOrder - b.stepOrder, cell: (e) => movedOut(e.contactId) !== null ? "—" : `${e.stepOrder}. ${stepTitle(e.stepOrder)}` },
     {
       key: "next", header: "Next", className: "tabular-nums", sort: (a, b) => (a.nextAt ?? "9").localeCompare(b.nextAt ?? "9"),
-      cell: (e) => e.nextAt ? day(e.nextAt) : e.status === "Replied" ? "Waiting for reply" : e.status === "Paused" ? `Paused by ${seq.owner}` : "—",
+      cell: (e) => movedOut(e.contactId) !== null ? "—"
+        : e.nextAt ? day(e.nextAt) : e.status === "Replied" ? "Waiting for reply" : e.status === "Paused" ? `Paused by ${seq.owner}` : "—",
     },
     { key: "added", header: "Added", className: "tabular-nums", sort: (a, b) => a.addedAt.localeCompare(b.addedAt), cell: (e) => <div><div>{day(e.addedAt)}</div><div className="text-xs text-muted-foreground">by {e.addedBy}</div></div> },
     { key: "activity", header: "Last activity", className: "tabular-nums", cell: (e) => ago(byId.get(e.contactId)?.lastActivity) },
@@ -1117,7 +1142,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
   const openPersonPage = (e: Enrollment) => {
     follow(`/ollopa/people/${e.contactId}`, {
       route: `/ollopa/sequences/${seq.id}`,
-      title: seq.name,
+      title: h1Of("sequences", seq.name),
       anchor: e.contactId,
     })
   }
@@ -1169,7 +1194,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
           { label: "Open the person beside this", onClick: () => openPerson(e) },
           { label: "Open the person's page", onClick: () => openPersonPage(e) },
           ...(e.status === "Replied"
-            ? [{ label: "Open the reply in Inbox", onClick: () => follow("/ollopa/inbox", { route: `/ollopa/sequences/${seq.id}`, title: seq.name, anchor: e.contactId }) }]
+            ? [{ label: "Open the reply in Inbox", onClick: () => follow("/ollopa/inbox", { route: `/ollopa/sequences/${seq.id}`, title: h1Of("sequences", seq.name), anchor: e.contactId }) }]
             : []),
           { label: "Mark finished · no more steps for them", onClick: () => { engage.patchEnrollment(session.business, e.id, { status: "Finished", nextAt: null }); onSaid(`${nameOf(e)} marked finished`) } },
           ...steps.slice(0, 6).map((s) => ({ label: `Move to step ${s.order}: ${s.kind}`, onClick: () => { engage.patchEnrollment(session.business, e.id, { stepOrder: s.order }); onSaid(`${nameOf(e)} moved to step ${s.order}`) } })),

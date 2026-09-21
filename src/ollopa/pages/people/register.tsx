@@ -4,14 +4,17 @@
 // `Q-person` has no route of its own — a drawer carries no deep link, which is the reason the record
 // page exists — so the node resolves to the table that opens it, and the drawer opens from a row, from
 // Enter on a focused row and from "Quick look" in the row's menu.
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { useBesideDone } from "../../ui/Beside"
 import { CREDITS, seedFor } from "../../data/seed"
 import { PeoplePage } from "./PeoplePage"
 import { ContactRecord } from "./ContactRecord"
-import { editPerson, usePersonEdits } from "./edits"
+import { clearPersonEdit, editPerson, usePersonEdit } from "./edits"
 import { glanceFields, rowsFor } from "./person"
 
 export const nodes: Record<string, PageComponent> = {
@@ -35,10 +38,27 @@ function say(text: string) {
  */
 const PersonBeside: BesideComponent = ({ session, id }) => {
   const seed = seedFor(session.business)
-  // What earlier actions in this session did to this person. Read here as well as in the list
-  // behind, so the pane and the row can never say two different things about the same contact.
-  const edit = usePersonEdits()[id]
+  // What earlier actions in this session did to this person, from the one store every page reads.
+  // The row behind this pane — on a sequence, a company, a task queue or People — reads the same
+  // record under `useEdits("person")`, so the pane and the page can never say different things.
+  const edit = usePersonEdit(id)
+  // The destination the person chose, kept against the id it was chosen for: `]` walks the pane to
+  // another contact without unmounting it, and a choice made about one person is not about the next.
+  const [picked, setPicked] = useState<{ id: string; dest: string } | null>(null)
+
   const found = rowsFor(seed).find((r) => r.id === id)
+
+  /**
+   * Putting it back has to do more than drop the record — the picker goes back to empty and the
+   * person is told in words — so the frame's footer line takes this undo instead of its default.
+   */
+  const undo = () => {
+    clearPersonEdit(id)
+    setPicked({ id, dest: "" })
+    if (found) say(`Put back as it was: ${found.name} is ${found.inSequence ? `in ${found.inSequence}` : "not in a sequence"} again.`)
+  }
+  useBesideDone(typeof edit?.note === "string" ? { note: edit.note, onUndo: undo } : null)
+
   if (!found) return <p className="text-muted-foreground">This person is not in {seed.workspace.name}.</p>
 
   const p = {
@@ -50,32 +70,40 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
   const from = seed.mailboxes.find((m) => m.owner === session.user)?.address
   const blocked = p.doNotContact
   const canCall = p.phoneRevealed && !!p.phoneNumber
-  // Where "Add to a sequence" puts them, and where "Move" moves them to: the workspace's own first
-  // sequence, or the next one along when they are already in it.
-  const sequences = seed.sequences.map((s) => s.name)
-  const target = sequences.find((n) => n !== p.inSequence) ?? "Outbound"
 
-  const addToSequence = () => {
+  /* ------------------------------------------------------------- the move, chosen not guessed */
+
+  // Where they could go: this workspace's sequences, minus the one they are in now.
+  const options = seed.sequences.map((sq) => sq.name).filter((n) => n !== p.inSequence)
+  // Nothing is chosen until the person chooses it, so the button never picks a destination for
+  // them and never changes its own mind between two clicks.
+  const dest = picked?.id === id ? picked.dest : ""
+  const verb = p.inSequence ? "Move" : "Add"
+
+  const move = () => {
+    if (!dest) return
     const was = p.inSequence
     editPerson(p.id, {
-      sequence: target,
-      note: was ? `Moved from ${was} to ${target} · step 1` : `Added to ${target} · step 1`,
+      sequence: dest,
+      note: was ? `moved from ${was} to ${dest} · step 1` : `added to ${dest} · step 1`,
     })
-    say(was ? `${p.name} moved from ${was} to ${target}. They start again at step 1.` : `${p.name} added to ${target} at step 1.`)
+    // The picker goes back to empty: the action is finished, and the next one is a fresh choice.
+    setPicked({ id, dest: "" })
+    say(was ? `${p.name} moved from ${was} to ${dest}. They start again at step 1.` : `${p.name} added to ${dest} at step 1.`)
   }
 
   const draftEmail = () => {
-    editPerson(p.id, { note: `Draft written · ${CREDITS.draft} credits · waiting for you to send` })
+    editPerson(p.id, { note: `draft written · ${CREDITS.draft} credits · waiting for you to send` })
     say(`Draft ready for ${p.name} · ${CREDITS.draft} credits. It is in your drafts.`)
   }
 
   const callOrReveal = () => {
     if (canCall) {
-      editPerson(p.id, { note: `Called ${p.phoneNumber} · logged on the record` })
+      editPerson(p.id, { note: `called ${p.phoneNumber} · logged on the record` })
       say(`Calling ${p.name} · ${p.phoneNumber}. The call is logged on their record.`)
       return
     }
-    editPerson(p.id, { phoneRevealed: true, note: `Phone revealed · ${CREDITS.revealPhone} credits` })
+    editPerson(p.id, { phoneRevealed: true, note: `phone revealed · ${CREDITS.revealPhone} credits` })
     say(`Phone revealed for ${p.name} · ${CREDITS.revealPhone} credits. The number stays on the record.`)
   }
 
@@ -90,22 +118,28 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
         ))}
       </dl>
 
-      {/* What the last action did, where it was caused. The row behind says the same sentence. */}
-      {edit?.note && (
-        <p role="status" aria-live="polite" className="rounded-md bg-muted px-2.5 py-1.5 text-xs">{edit.note}</p>
-      )}
-
       {/* The actions the chain needs: a real control each, with what it will do written under it. */}
       <div className="space-y-3 border-t pt-3">
         <div>
-          <Button size="sm" variant="outline" className="w-full justify-start" onClick={addToSequence}>
-            {p.inSequence ? `Move to ${target}` : `Add to ${target}`}
+          {/* A picker, in place — not a door and not a guess. Flat, so the pane stays one level. */}
+          <Select value={dest} onValueChange={(v) => setPicked({ id, dest: v })}>
+            <SelectTrigger className="h-8 w-full text-xs" aria-label={`Sequence to ${verb.toLowerCase()} ${p.name} to`}>
+              <SelectValue placeholder="Choose a sequence" />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" className="mt-1.5 w-full justify-start" disabled={!dest} onClick={move}>
+            {dest ? `${verb} to ${dest}` : `${verb} to the chosen sequence`}
           </Button>
           <ConsequenceLine
             className="mt-1"
-            changes={p.inSequence
-              ? `Takes ${p.name} out of ${p.inSequence} and starts them at step 1 of ${target}`
-              : `Starts ${p.name} at step 1; the first email goes in ${target}'s next sending window`}
+            changes={!dest
+              ? `Choose where ${p.name} goes${p.inSequence ? `; they are in ${p.inSequence} now` : ""}`
+              : p.inSequence
+                ? `Takes ${p.name} out of ${p.inSequence} and starts them at step 1 of ${dest}`
+                : `Starts ${p.name} at step 1 of ${dest}; the first email goes in its next sending window`}
           />
         </div>
 
@@ -135,6 +169,9 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
           />
         </div>
       </div>
+
+      {/* What the last action did and the way out of it are the frame's footer line, from the same
+          record the row behind is reading — so the pane and the row cannot say different things. */}
     </div>
   )
 }

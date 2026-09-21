@@ -170,7 +170,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
           ) : (
             <p className="pt-1 text-sm">
               <button type="button" className="underline underline-offset-4"
-                      onClick={() => follow("/ollopa/settings/integrations", originHere(p.contactId))}>
+                      onClick={() => follow("/ollopa/settings/integrations?row=int.calendar", originHere(p.contactId))}>
                 Connect a calendar to book from here
               </button>
             </p>

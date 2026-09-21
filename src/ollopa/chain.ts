@@ -10,6 +10,7 @@
 import { useSyncExternalStore } from "react"
 import { navigate } from "@/app/router"
 import { closeBeside } from "./beside"
+import { clearAllEdits } from "./edits"
 
 export interface Origin {
   /** "/ollopa/sequences/seq-3" — the hash route without the "#". */
@@ -33,6 +34,8 @@ export const RETURN_HIGHLIGHT_MS = 3000
 let trail: Origin[] = []
 /** route → anchor, set by `back`, read once by the page when it arrives. */
 let cues: Record<string, string> = {}
+/** Routes arrived at by `follow`, read once, so the shell knows to put focus on the new page's h1. */
+let arrivals: Record<string, true> = {}
 /** The storage key for the signed-in seat, or null when nobody is signed in. */
 let key: string | null = null
 /** The route `follow` or `back` asked for, so the hash listener can tell a move from a fresh start. */
@@ -65,6 +68,14 @@ export function routeKey(route: string): string {
 }
 
 /**
+ * A crumb is the record's name, not the page's whole h1: "Q4 enterprise outbound · Sequences" is how
+ * the header names the page, and "Q4 enterprise outbound" is what the person went there for.
+ */
+export function crumbName(title: string): string {
+  return title.split(" · ")[0]
+}
+
+/**
  * Point the store at a seat. The shell calls this on every render with the signed-in business and
  * user, and with nulls when nobody is signed in — which is what clears the trail on sign-out.
  * Cheap and idempotent: it does nothing while the seat is the same.
@@ -76,6 +87,10 @@ export function bindChain(business: string | null, user: string | null) {
   key = next
   trail = next ? read(next) : []
   cues = {}
+  arrivals = {}
+  // What happened while the last person was working goes with them: a sign-out, a switch of
+  // account and a change of seat all start clean.
+  clearAllEdits()
 }
 
 /**
@@ -123,6 +138,10 @@ export function follow(to: string, origin: Origin) {
   trail = next.length > TRAIL_MAX ? next.slice(next.length - TRAIL_MAX) : next
   write()
   expecting = routeKey(to)
+  // Arriving by a move the person made is not arriving from nowhere: the shell puts focus on the
+  // new page's own title, so the crumb back is one Shift+Tab away rather than a walk through the
+  // whole sidebar.
+  arrivals[routeKey(to)] = true
   if (!go(to)) announce()
 }
 
@@ -146,9 +165,31 @@ export function clearTrail() {
   if (trail.length === 0 && Object.keys(cues).length === 0 && pending === null) return
   trail = []
   cues = {}
+  arrivals = {}
   pending = null
   write()
   announce()
+}
+
+/**
+ * A page that lights something of its own on arrival — a settings row named by `?row=` — says so,
+ * and the shell leaves focus where the page put it rather than pulling it to the page's title.
+ * Page effects run before the shell's, so saying it in the page's own arrival effect is enough.
+ */
+let arrivalHandled = false
+export function arrivalHandledHere() { arrivalHandled = true }
+export function takeArrivalHandled(): boolean {
+  const was = arrivalHandled
+  arrivalHandled = false
+  return was
+}
+
+/** Did the person arrive here by following a link from another page? Consumed once. */
+export function takeArrival(route: string): boolean {
+  const k = routeKey(route)
+  if (!arrivals[k]) return false
+  delete arrivals[k]
+  return true
 }
 
 /** The anchor a page should scroll to and light on arrival. Consumed once. */

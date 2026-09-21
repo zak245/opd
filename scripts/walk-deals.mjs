@@ -67,9 +67,12 @@ const card = await page.evaluate(() => {
 if (!card) throw new Error("no card on the board")
 console.log("the card:", card.name, card.id)
 
-// The card click is the quick look: the board stays behind it.
-await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).click(), card.id)
-await wait(600)
+// Enter on the focused card is the quick look, the same key the People table uses. No mouse.
+await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).focus(), card.id)
+await page.keyboard.press("Enter")
+await wait(700)
+console.log("Enter on the card:", await page.evaluate(() => `hash=${location.hash} drawer=${!!document.querySelector('[role="dialog"]')}`))
+console.log("the card says:", await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).getAttribute("aria-label"), card.id))
 await shot("2-quicklook")
 
 // The drawer opens with the one editable field focused, so Tab down to "Open" and press it.
@@ -88,7 +91,8 @@ await shot("4-back")
 /* ------------------------------------------------------- chain 2: deal › contact beside › back */
 
 // Into the deal record again, by the same move, and down to the Contacts card.
-await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).click(), card.id)
+await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).focus(), card.id)
+await page.keyboard.press("Enter")
 await wait(600)
 await press(`Array.from(document.querySelectorAll('[role="dialog"] button')).find((b) => b.textContent.trim() === "Open")`)
 await wait(900)
@@ -169,5 +173,83 @@ await wait(700)
 console.log("the deal beside:", await paneName())
 console.log("the record is still here:", await page.evaluate(() => location.hash))
 await shot("11-deal-pane")
+
+/* ------------------------------------ the side trip: the stage gate into Settings, at its own row */
+
+await page.keyboard.press("Escape")
+await wait(400)
+await page.evaluate(() => document.querySelector('[data-page-active="true"] #stage-gate')?.scrollIntoView({ block: "center" }))
+await wait(300)
+await press(`document.querySelector('[data-page-active="true"] #stage-gate a')`)
+await wait(1200)
+console.log("settings route:", await page.evaluate(() => location.hash))
+console.log("settings trail:", await trail())
+console.log("settings lit:  ", await page.evaluate(() => Array.from(document.querySelectorAll(".ollopa-returned")).map((el) => el.innerText.replace(/\n/g, " ").slice(0, 48)).join(" | ") || "(nothing lit)"))
+console.log("settings focused:", await focused())
+await shot("12-settings-row")
+
+/* ----------------- acting in the pane, with the board it came from still mounted behind the record */
+
+// The admin, whose board shows every deal at any close date, so the deal the pane walks to is one
+// the board behind is also showing. The board stays mounted on the trail while the record is open,
+// so "the card behind updates at once" can be read off the page rather than argued.
+await page.evaluate(() => {
+  localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: "admin" }))
+  localStorage.setItem("ollopa.deals.meridian.admin.scope", JSON.stringify("all"))
+  localStorage.setItem("ollopa.deals.meridian.admin.period", JSON.stringify("any"))
+})
+await page.goto(`${base}/#/ollopa/deals`, { waitUntil: "networkidle0" })
+await page.reload({ waitUntil: "networkidle0" })
+await wait(800)
+
+const adminCard = await page.evaluate(() => {
+  const el = Array.from(document.querySelectorAll('[data-page-active="true"] li[data-card-id]')).find((x) => x.offsetParent !== null)
+  el?.focus()
+  return el?.dataset.cardId ?? null
+})
+if (!adminCard) throw new Error("no card on the admin board")
+await page.keyboard.press("o")          // the record, with the board remembered
+await wait(900)
+
+let acted = null
+for (let i = 0; i < 25 && !acted; i++) {
+  await page.keyboard.press("BracketRight")
+  await wait(220)
+  acted = await page.evaluate(() => {
+    const name = document.querySelector("aside h2")?.textContent?.trim()
+    const closeWon = Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Close won")
+    if (!name || !closeWon || closeWon.disabled) return null
+    // The card on the board behind: the mounted page that is not the one on screen.
+    const link = Array.from(document.querySelectorAll("a[data-item][data-item-label]"))
+      .find((a) => a.dataset.itemLabel === name && !a.closest('[data-page-active="true"]'))
+    if (!link) return null
+    const card = link.closest("li")
+    const board = card.closest('[data-page-route], [data-page-key], body')
+    const rail = Array.from(document.querySelectorAll("button")).find((b) => b.textContent.trim().startsWith("Closed won ·") && !b.closest('[data-page-active="true"]'))
+    const where = card.closest("section")?.querySelector("h3")?.textContent ?? "the closed-won rail"
+    return { name, id: link.dataset.item, column: where, rail: rail?.textContent.trim() ?? "(no rail)", board: !!board }
+  })
+}
+if (!acted) throw new Error("the pane never reached a deal with a card on the board behind")
+console.log("the pane is on:", acted.name)
+console.log("the board behind, before:", `${acted.name} is in ${acted.column} · rail reads "${acted.rail}"`)
+await press(`Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Close won")`)
+await wait(700)
+console.log("the board behind, after: ", await page.evaluate((id) => {
+  const link = Array.from(document.querySelectorAll(`a[data-item="${id}"]`)).find((a) => !a.closest('[data-page-active="true"]'))
+  const column = link ? (link.closest("li").closest("section")?.querySelector("h3")?.textContent ?? "?") : "no open column"
+  const rail = Array.from(document.querySelectorAll("button")).find((b) => b.textContent.trim().startsWith("Closed won ·") && !b.closest('[data-page-active="true"]'))
+  return `the card is in ${column} · rail reads "${rail?.textContent.trim() ?? "(no rail)"}"`
+}, acted.id))
+await shot("13-pane-acted")
+await press(`Array.from(document.querySelectorAll('nav[aria-label="Your path"] button')).filter((b) => b.offsetParent !== null).pop()`)
+await wait(1000)
+console.log("back on the board itself:", await page.evaluate((id) => {
+  const link = document.querySelector(`[data-page-active="true"] a[data-item="${id}"]`)
+  const column = link ? (link.closest("li").closest("section")?.querySelector("h3")?.textContent ?? "?") : "no open column"
+  const rail = Array.from(document.querySelectorAll('[data-page-active="true"] button')).find((b) => b.textContent.trim().startsWith("Closed won ·"))
+  return `the card is in ${column} · rail reads "${rail?.textContent.trim() ?? "(no rail)"}"`
+}, acted.id))
+await shot("14-board-after")
 
 await browser.close()

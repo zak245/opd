@@ -3,7 +3,7 @@
 // The sidebar is declared, never inferred: the seat decides what may be opened, the workspace profile
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight, Grid3x3, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ import { Palette } from "./Palette"
 import { Shortcuts } from "./Shortcuts"
 import { Panel } from "../ui/Panel"
 import { Beside } from "../ui/Beside"
-import { back, clearTrail, showReturn, takeReturnCue, useTrail, type Origin } from "../chain"
+import { back, clearTrail, crumbName, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, RETURN_HIGHLIGHT_MS, type Origin } from "../chain"
 import { notificationsFor, TODAY } from "./notifications"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
@@ -69,14 +69,6 @@ function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry;
   )
 }
 
-
-/**
- * A crumb is the record's name, not the page's whole h1: "Q4 enterprise outbound · Sequences" is
- * how the header names the page, and "Q4 enterprise outbound" is what the person went there for.
- */
-function crumbName(title: string): string {
-  return title.split(" · ")[0]
-}
 
 /**
  * The trail in the header: the person's own path, `Q4 enterprise outbound › Amara Nakamura`.
@@ -136,6 +128,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const refresh = () => setTick((t) => t + 1)
   const trail = useTrail()
   const route = useRoute()
+  const heading = useRef<HTMLHeadingElement>(null)
 
   const entries = sidebarFor(session, TODAY)
   const notes = useMemo(() => notificationsFor(session), [session])
@@ -154,8 +147,34 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   // this waits only for the browser to lay the now-visible copy out.
   useEffect(() => {
     const anchor = takeReturnCue(route.raw)
-    if (!anchor) return
-    const t = window.setTimeout(() => showReturn(anchor), 60)
+    if (anchor) {
+      const t = window.setTimeout(() => showReturn(anchor), 60)
+      return () => window.clearTimeout(t)
+    }
+    // Arriving by following a link. Focus lands on the page's own title, so the first Shift+Tab is
+    // the crumb back and not a walk through the sidebar, and the title is lit for the same three
+    // seconds a return is, so the eye knows where it landed.
+    //
+    // This is the fallback, never the winner. A page that lights something of its own on arrival —
+    // a settings row named by `?row=`, or any page that calls `arrivalHandledHere()` — keeps focus
+    // where it put it: the row is a better place to land than the heading above it.
+    const arrived = takeArrival(route.raw)
+    const handled = takeArrivalHandled()
+    if (!arrived || handled) return
+    const t = window.setTimeout(() => {
+      const h1 = heading.current
+      if (!h1) return
+      // A page that put focus into itself while we waited — a settings row named by `?row=` — has
+      // already answered, and the row is a better place to land than the heading above it.
+      const main = document.querySelector('[data-page-active="true"]')
+      if (main?.contains(document.activeElement) || h1.contains(document.activeElement)) return
+      h1.focus({ preventScroll: true })
+      // One mark at a time: a page that lit something of its own keeps the only light on screen,
+      // and the title takes the focus without a second flash competing with it.
+      if (main?.querySelector(".ollopa-returned")) return
+      h1.classList.add("ollopa-returned")
+      window.setTimeout(() => h1.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
+    }, 60)
     return () => window.clearTimeout(t)
   }, [route.raw])
 
@@ -276,8 +295,8 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         <header className={cn("flex shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
           <Crumbs trail={trail} />
           {/* The last crumb is the page you are on, and it never truncates: the earlier ones do. */}
-          <h1 className={cn(
-            "text-sm font-semibold",
+          <h1 ref={heading} tabIndex={-1} className={cn(
+            "rounded text-sm font-semibold outline-none",
             (canAdd || added) && "mr-auto md:mr-0",
             trail.length > 0 ? "shrink-0 whitespace-nowrap max-sm:sr-only" : "truncate",
           )}>{trail.length > 0 ? crumbName(title) : title}</h1>

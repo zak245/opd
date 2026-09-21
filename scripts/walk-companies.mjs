@@ -140,4 +140,38 @@ await page.keyboard.press("Escape")
 await wait(400)
 console.log("after Escape, focus is on:", await page.evaluate(() => document.activeElement?.innerText?.replace(/\n/g, " ").slice(0, 40) ?? "(none)"))
 
+// 7 → 8. Clear the search and walk the whole list: twenty-four presses of "]" from the first row.
+await page.evaluate(() => {
+  const input = document.querySelector('[data-page-active="true"] #contacts input')
+  input?.focus()
+})
+for (let i = 0; i < 8; i++) await page.keyboard.press("Backspace")
+await wait(400)
+await page.evaluate(() => {
+  const first = document.querySelector('[data-page-active="true"] #contacts [data-item] button')
+  first?.focus()
+})
+await page.keyboard.press("Enter")
+await wait(500)
+const seen = []
+const at = () => page.evaluate(() => ({
+  who: document.querySelector("aside h2")?.textContent ?? "(none)",
+  count: document.querySelector("aside footer span")?.textContent ?? "(none)",
+  pager: document.querySelector('[data-page-active="true"] #contacts')?.innerText.match(/\d+–\d+ of \d+/)?.[0] ?? "(none)",
+  onPage: !!document.querySelector(`[data-page-active="true"] #contacts .ollopa-beside-open`),
+}))
+seen.push(await at())
+for (let i = 0; i < 24; i++) {
+  await page.keyboard.press("BracketRight")
+  await wait(120)
+  seen.push(await at())
+}
+for (const [i, s] of seen.entries()) {
+  if (i === 0 || i === 9 || i === 10 || i === 19 || i === 20 || i >= 22) {
+    console.log(`] x${i}:`, s.count, "·", s.who, "· page", s.pager, "· row on screen:", s.onPage)
+  }
+}
+console.log("reached:", seen[seen.length - 1].count, "— walked", new Set(seen.map((s) => s.who)).size, "different people")
+await shot("8-walk-end")
+
 await browser.close()

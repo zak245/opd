@@ -17,6 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { href } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
+import { clearEdit, type Edit } from "../../edits"
+import { navItem } from "../../nav"
+import type { Page } from "../../usage/model"
 import { TODAY } from "../../data/seed"
 
 export { toast } from "../../templates/TablePage"
@@ -233,7 +236,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
                   ) : c.header}
                 </TableHead>
               ))}
-              <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>
+              {/* Pinned to the right edge: opening a pane narrows the table, and the controls for
+                  the row you opened the pane to decide about must not scroll away with it. */}
+              <TableHead className="sticky right-0 z-20 w-px bg-background"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -242,7 +247,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
               return (
                 <TableRow
                   key={key}
-                  className={cn("group", p.onOpen && "cursor-pointer")}
+                  // An opaque row background, so the pinned cell can inherit it and nothing shows
+                  // through the rows sliding under it.
+                  className={cn("group bg-background hover:bg-muted has-aria-expanded:bg-muted", p.onOpen && "cursor-pointer")}
                   tabIndex={p.onOpen ? 0 : undefined}
                   data-row-key={key}
                   onClick={p.onOpen ? (e) => { e.currentTarget.focus(); p.onOpen!(row) } : undefined}
@@ -257,7 +264,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                     </TableCell>
                   )}
                   {p.columns.map((c) => <TableCell key={c.key} className={cn("py-2 align-top", c.className)}>{c.cell(row)}</TableCell>)}
-                  <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="sticky right-0 bg-inherit py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {(p.rowActions ?? []).map((a, i) => (
                         <Button
@@ -444,5 +451,74 @@ export function FollowLink({ to, route, title, anchor, className, children }: {
     >
       {children}
     </a>
+  )
+}
+
+/* ------------------------------------------------- what an action did, shown where it was caused */
+
+/** How long the row offers to undo the action that changed it. */
+export const UNDO_MS = 10_000
+
+/**
+ * Re-render once a second while something on the page is still undoable, so the ten seconds are
+ * really ten seconds and the Undo does not linger after its window has closed. Idle otherwise.
+ */
+export function useTick(active: boolean) {
+  const [, bump] = useState(0)
+  useEffect(() => {
+    if (!active) return
+    const t = window.setInterval(() => bump((v) => v + 1), 1000)
+    return () => window.clearInterval(t)
+  }, [active])
+}
+
+/** True while the record is new enough that the row should still offer Undo. */
+export const undoable = (e?: Edit) => !!e?.at && Date.now() - e.at < UNDO_MS
+
+/**
+ * One line under a row's name saying what the last action did to it, with Undo while the window is
+ * open. This is chain rule 8 in one component: a pane action writes to `edits`, and the row it was
+ * caused on says so at once, in place, without the page being told anything by the pane.
+ */
+export function RowNote({ kind, id, note, at }: { kind: string; id: string; note: string; at?: number }) {
+  const fresh = !!at && Date.now() - at < UNDO_MS
+  return (
+    <div role="status" className="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
+      <span className="rounded bg-muted px-1.5 py-0.5">{note}</span>
+      {fresh && (
+        <button
+          type="button"
+          className="underline underline-offset-2 hover:text-foreground"
+          onClick={(e) => { e.stopPropagation(); clearEdit(kind, id) }}
+        >
+          Undo
+        </button>
+      )}
+    </div>
+  )
+}
+
+/**
+ * The page's h1 exactly as the shell writes it, so `Origin.title` is the title the person read and a
+ * crumb can never say something the page never said (chain rule 3). A record reads "{name} · {page}".
+ */
+export function h1Of(page: Page, record?: string): string {
+  const label = navItem(page)?.label ?? page
+  return record ? `${record} · ${label}` : label
+}
+
+/**
+ * The row's name as the way in. People, Companies and Campaigns make the name a control; these
+ * pages did not, so the product taught two rules for the same gesture. Now it teaches one.
+ */
+export function RowOpen({ onOpen, className, children }: { onOpen: () => void; className?: string; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      className={cn("rounded text-left font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none", className)}
+      onClick={(e) => { e.stopPropagation(); onOpen() }}
+    >
+      {children}
+    </button>
   )
 }

@@ -36,6 +36,13 @@ import {
 } from "../../data/seed"
 import { ago, day, dayGroup, daysBetween, money } from "./format"
 
+/**
+ * The setting this page's stage gate is set in, named row and all. Settings opens the door it is
+ * behind, scrolls to it and lights it, so the person lands on the rule they were reading about
+ * rather than at the top of a long page.
+ */
+const STAGE_GATE_SETTING = "/ollopa/settings/pipeline?row=pipe.required-at-stage"
+
 /* ------------------------------------------------------------------------------- small pieces */
 
 const STATE_TONE: Record<string, string> = {
@@ -477,8 +484,8 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             {s.name} needs {missingFor(s.name).join(" and ")}. Set by {admin?.user ?? "your admin"} in{" "}
             {/* A step in the chain, not a jump: Settings opens with this deal remembered, and the
                 crumb comes back to the gate sentence, lit. */}
-            <a className="underline" href={href("/ollopa/settings/pipeline")}
-               onClick={(e) => { e.preventDefault(); follow("/ollopa/settings/pipeline", { route: route.raw, title: pageTitle, anchor: "stage-gate" }) }}>
+            <a className="underline" href={href(STAGE_GATE_SETTING)}
+               onClick={(e) => { e.preventDefault(); follow(STAGE_GATE_SETTING, { route: route.raw, title: pageTitle, anchor: "stage-gate" }) }}>
               Settings › Pipeline and data
             </a>.
           </Thing>

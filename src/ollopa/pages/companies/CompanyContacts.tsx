@@ -8,19 +8,22 @@
 // The one way out is "Open in People", and it exists for one job: acting on the whole set at once.
 // It carries this company as the filter and puts the record on the trail, so the way back is one
 // crumb and lands on the row that was left.
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { openBeside } from "../../beside"
+import { openBeside, useBeside } from "../../beside"
+import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { EmptyState } from "../../ui/EmptyState"
 import { toast } from "../../templates/TablePage"
-import { editPerson, usePersonEdits } from "../people/edits"
 import type { Contact } from "../../data/seed"
 import { ago } from "./format"
 
 /** How many rows a page of the list holds. Paging happens here, inside the section. */
 const PAGE = 10
+
+/** How long an action taken on a row can still be taken back, in place, on that row. */
+const UNDO_MS = 10_000
 
 /**
  * Development only, never in a build a person sees: how many times this list has rendered. It is
@@ -40,6 +43,39 @@ function RenderCount({ label, count }: { label: string; count: number }) {
       {label} renders: {count}
     </span>
   )
+}
+
+/**
+ * Follows the pane without re-rendering the list.
+ *
+ * `[` and `]` walk the whole filtered list, which runs past the ten rows on screen. This renders
+ * nothing and subscribes to the pane store on its own, so opening a pane still does not re-render
+ * a single row; when the walk reaches somebody on another page it turns the page under them, and
+ * marks the row once it is there — the frame marked the row it opened, not the one that arrived.
+ */
+function PaneFollower({ onTarget }: { onTarget: RefObject<(id: string) => void> }) {
+  const target = useBeside()
+  const id = target?.kind === "person" ? target.id : null
+  useEffect(() => {
+    if (!id) return
+    onTarget.current?.(id)
+    // The row may be one page turn away, so look for it on the next frame and once more after it:
+    // whichever finds it marks it, and the other does nothing.
+    let marked: HTMLElement | null = null
+    const mark = () => {
+      if (marked?.isConnected) return
+      marked = document.querySelector<HTMLElement>(`[data-page-active="true"] [data-item="${CSS.escape(id)}"]`)
+      marked?.classList.add("ollopa-beside-open")
+    }
+    const frame = requestAnimationFrame(mark)
+    const later = window.setTimeout(mark, 80)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(later)
+      marked?.classList.remove("ollopa-beside-open")
+    }
+  }, [id, onTarget])
+  return null
 }
 
 function unique(values: string[]): string[] {
@@ -85,15 +121,20 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
 
   // What was done to these people in this session — from this list, or from the pane reading one of
   // them beside it. One store, read by both, so the row and the pane can never say two different
-  // things about the same contact.
-  const edits = usePersonEdits()
+  // things about the same contact. Opening the pane writes nothing here and re-renders nothing;
+  // acting writes, and the row changes in the same paint.
+  const edits = useEdits("person")
+  // The undo window closing is a thing that happens without anybody clicking, so the list has to be
+  // told the time has passed.
+  const [, setTick] = useState(0)
 
   const stages = useMemo(() => unique(contacts.map((c) => c.stage)), [contacts])
   const titles = useMemo(() => unique(contacts.map((c) => c.title)), [contacts])
 
   const sequenceOf = (c: Contact) => {
-    const edit = edits[c.id]
-    return edit?.sequence !== undefined ? edit.sequence || null : c.inSequence
+    const edited = edits[c.id]?.sequence
+    if (edited === undefined) return c.inSequence
+    return (edited as string) || null
   }
 
   const matching = useMemo(() => {
@@ -112,11 +153,22 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
   const pages = Math.max(1, Math.ceil(matching.length / PAGE))
   const at = Math.min(page, pages - 1)
   const shown = matching.slice(at * PAGE, at * PAGE + PAGE)
-  // Next and previous in the pane walk the rows that are on screen, in the order they are on screen.
-  const ids = shown.map((c) => c.id)
+  // Next and previous walk the list the heading counts — every row that matches the search and the
+  // filters, in the order they are in — not the ten of them that happen to be on screen. The page
+  // turns to follow the walk, so the row the pane is reading is always one of the rows behind it.
+  const ids = matching.map((c) => c.id)
   const filtered = matching.length !== contacts.length
 
   const reset = () => show(EMPTY)
+
+  /** Turn the page to whoever the pane is reading, when the walk has left the page on screen. */
+  const followPane = useRef<(id: string) => void>(() => {})
+  followPane.current = (id: string) => {
+    const i = ids.indexOf(id)
+    if (i < 0) return
+    const wanted = Math.floor(i / PAGE)
+    if (wanted !== at) show({ page: wanted })
+  }
 
   /** A row opens beside the company. The record stays where it is and does not re-render. */
   const openPerson = (c: Contact, opener?: HTMLElement | null) => {
@@ -127,6 +179,18 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
       opener: opener ?? (document.activeElement as HTMLElement | null),
     })
   }
+
+  // The newest undo window on a row that is on screen, and the timer that closes it.
+  const undoUntil = shown.reduce((max, c) => {
+    const at2 = edits[c.id]?.at
+    return typeof at2 === "number" ? Math.max(max, at2 + UNDO_MS) : max
+  }, 0)
+  useEffect(() => {
+    const ms = undoUntil - Date.now()
+    if (ms <= 0) return
+    const t = window.setTimeout(() => setTick((n) => n + 1), ms + 50)
+    return () => window.clearTimeout(t)
+  }, [undoUntil])
 
   const chip = (label: string, value: string, key: keyof ListView, options: { value: string; label: string }[]) => (
     <Select value={value} onValueChange={(v) => show({ [key]: v, page: 0 })}>
@@ -156,6 +220,9 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
         <RenderCount label="contacts" count={listRenders} />
       </div>
 
+      {/* Renders nothing: it turns the page under a walk that has left the rows on screen. */}
+      <PaneFollower onTarget={followPane} />
+
       {matching.length === 0 ? (
         <EmptyState
           title="Nobody here matches"
@@ -166,7 +233,9 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
         <div>
           {shown.map((c) => {
             const seq = sequenceOf(c)
-            const note = edits[c.id]?.note
+            const edit = edits[c.id]
+            const note = typeof edit?.note === "string" ? edit.note : null
+            const canUndo = typeof edit?.at === "number" && Date.now() - edit.at < UNDO_MS
             return (
               <div key={c.id} data-item={c.id} data-item-label={c.name} className="border-t py-2 first:border-t-0 first:pt-0">
                 {/* The name and the row's actions share the top line and wrap on their own; the
@@ -184,21 +253,21 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                   {seq ? (
                     <Button
                       size="sm" variant="ghost" className="h-7 text-xs text-destructive"
-                      onClick={() => { editPerson(c.id, { sequence: "", note: `Taken out of ${seq} · nothing further is sent` }); toast(`${c.name} taken out of ${seq}. Nothing further is sent to them.`) }}
+                      onClick={() => { recordEdit("person", c.id, { sequence: "", note: `Taken out of ${seq} · nothing further is sent` }); toast(`${c.name} taken out of ${seq}. Nothing further is sent to them.`) }}
                     >
                       Stop the sequence
                     </Button>
                   ) : (
                     <Button
                       size="sm" variant="ghost" className="h-7 text-xs"
-                      onClick={() => { editPerson(c.id, { sequence: sequenceName, note: `Added to ${sequenceName} · step 1` }); toast(`${c.name} starts at step 1 of ${sequenceName} in the next sending window.`) }}
+                      onClick={() => { recordEdit("person", c.id, { sequence: sequenceName, note: `Added to ${sequenceName} · step 1` }); toast(`${c.name} starts at step 1 of ${sequenceName} in the next sending window.`) }}
                     >
                       Add to {sequenceName}
                     </Button>
                   )}
                   <Button
                     size="sm" variant="ghost" className="h-7 text-xs"
-                    onClick={() => { editPerson(c.id, { note: "Call task created · due today" }); toast(`Call task created for ${c.name}, due today.`) }}
+                    onClick={() => { recordEdit("person", c.id, { note: "Call task created · due today" }); toast(`Call task created for ${c.name}, due today.`) }}
                   >
                     Create a call task
                   </Button>
@@ -207,8 +276,23 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                 <div className="text-xs text-muted-foreground">
                   {c.title} · {c.stage} · {seq ? `in ${seq}` : "not in a sequence"} · {ago(c.lastActivity)}
                 </div>
-                {/* What the last action did to this person, under the name that caused it. */}
-                {note && <div role="status" className="text-xs">{note}</div>}
+                {/* What the last action did to this person, under the name that caused it —
+                    whether it was done from this row or from the pane reading them beside it —
+                    with ten seconds to take it back, in the same place. */}
+                {note && (
+                  <div role="status" className="flex flex-wrap items-center gap-2 text-xs">
+                    <span>{note}</span>
+                    {canUndo && (
+                      <button
+                        type="button"
+                        className="underline hover:no-underline"
+                        onClick={() => { clearEdit("person", c.id); toast(`Undone · ${c.name} is back as they were`) }}
+                      >
+                        Undo
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}

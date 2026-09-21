@@ -3,19 +3,17 @@
 // Done is on the row. Snooze and Skip are a separate choice, so they sit in the row's menu with the
 // key that runs them, and Skip carries what it does to the sequence in its label. Everything that
 // happens leaves an undo line, and nothing reorders while you work.
-import { useEffect, useState } from "react"
+import { useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { openBeside } from "../../beside"
-import { onTaskAct } from "../work/register"
+import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { toast } from "../../templates/TablePage"
 import { Door, type Disclosure } from "../../ui"
 import type { Task } from "../../data/seed"
 import type { HomeData } from "./data"
 import { day, overdueBy } from "./format"
 import { Nothing, Row, RowList, RowMenu, Section, UndoLine, useUndo } from "./rows"
-
-type Acted = Record<string, "Done" | "Snoozed" | "Skipped">
 
 interface TaskRowProps {
   t: Task
@@ -81,7 +79,10 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
 }
 
 export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order: number }) {
-  const [acted, setActed] = useState<Acted>({})
+  // What has happened to these tasks this session, from the shared store: this section's own Done,
+  // the queue's, and the task pane's, all the same record. One source, so the row and the pane can
+  // never disagree, and the pane needs no private channel back to here.
+  const acted = useEdits("task")
   const [note, setNote, clearNote] = useUndo()
   const showSequence = d.atLevelOne("home.tasks.from-sequence")
 
@@ -90,28 +91,27 @@ export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order
   const dueToday = live(data.tasks.dueToday)
   const later = live(data.tasks.later)
 
-  function act(t: Task, what: "Done" | "Snoozed" | "Skipped", sentence: string) {
-    setActed((a) => ({ ...a, [t.id]: what }))
-    setNote({ text: sentence, undo: () => setActed((a) => { const next = { ...a }; delete next[t.id]; return next }) })
+  function act(t: Task, what: "done" | "snoozed" | "skipped", sentence: string) {
+    recordEdit("task", t.id, { [what]: true, note: sentence })
     toast(sentence)
   }
 
-  const done = (t: Task) => act(t, "Done", `Done · ${t.kind} with ${t.contact}.`)
-  const snooze = (t: Task) => act(t, "Snoozed", `Snoozed to tomorrow · ${t.kind} with ${t.contact}.`)
-  const skip = (t: Task) => act(t, "Skipped", `Skipped · ${t.contact} moves to the next step of ${t.sequence ?? "the sequence"}.`)
+  const done = (t: Task) => act(t, "done", `Done · ${t.kind} with ${t.contact}.`)
+  const snooze = (t: Task) => act(t, "snoozed", `Snoozed to tomorrow · ${t.kind} with ${t.contact}.`)
+  const skip = (t: Task) => act(t, "skipped", `Skipped · ${t.contact} moves to the next step of ${t.sequence ?? "the sequence"}.`)
 
-  // A task done or snoozed inside the pane changes this row, here, with its undo line — the pane
-  // already said the sentence out loud, so this does not say it twice.
-  useEffect(() => onTaskAct((id, what) => {
-    const t = [...data.tasks.overdue, ...data.tasks.dueToday, ...data.tasks.later].find((x) => x.id === id)
-    if (!t) return
-    const label = what === "done" ? "Done" : "Snoozed"
-    const sentence = what === "done"
-      ? `Done · ${t.kind} with ${t.contact}.`
-      : `Snoozed to tomorrow · ${t.kind} with ${t.contact}.`
-    setActed((a) => ({ ...a, [t.id]: label }))
-    setNote({ text: sentence, undo: () => setActed((a) => { const next = { ...a }; delete next[t.id]; return next }) })
-  }), [data, setNote])
+  // The undo line says what the last action did, whoever pressed it — a row here, or the task pane
+  // beside this page. It reads the record rather than the button, so there is one line and one way
+  // back, and a record that was already there when the section mounted never raises a stale line.
+  const since = useRef(Date.now())
+  useEffect(() => {
+    const latest = Object.entries(acted)
+      .filter(([, e]) => typeof e.at === "number" && e.at > since.current && e.note)
+      .sort((a, b) => (b[1].at as number) - (a[1].at as number))[0]
+    if (!latest) return
+    since.current = latest[1].at as number
+    setNote({ text: String(latest[1].note), undo: () => clearEdit("task", latest[0]) })
+  }, [acted, setNote])
 
   const ids = [...overdue, ...dueToday].map((t) => t.id)
   const rowProps = { showSequence, ids, onDone: done, onSnooze: snooze, onSkip: skip }

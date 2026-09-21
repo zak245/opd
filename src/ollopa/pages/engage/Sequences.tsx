@@ -18,7 +18,7 @@ import { businessById } from "../../data/businesses"
 import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "../../data/seed"
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
-import { type Col, DataTable, Pill, day, focusSearch, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { type Col, DataTable, Pill, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
 /** The words the status cell uses. Bounce guard is a state of the sequence, not a separate screen. */
 export function statusOf(s: Sequence): { label: string; tone: "good" | "warning" | "error" | "muted" } {
@@ -70,7 +70,7 @@ export function SequencesPage({ session }: { session: Session }) {
   // A row opens its record along the trail, with the row as the anchor: the record's
   // "← Sequences" and the crumb both come back to this row, lit.
   const open = (s: Sequence) =>
-    follow(`/ollopa/sequences/${s.id}`, { route: "/ollopa/sequences", title: "Sequences", anchor: s.id })
+    follow(`/ollopa/sequences/${s.id}`, { route: "/ollopa/sequences", title: h1Of("sequences"), anchor: s.id })
 
   const pauseResume = (s: Sequence) => {
     if (s.guardState === "auto-paused") { open(s); return }
@@ -106,7 +106,7 @@ export function SequencesPage({ session }: { session: Session }) {
       key: "name", header: "Sequence", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
       cell: (s) => (
         <div className="min-w-0">
-          <div className="font-medium">{s.name}</div>
+          <RowOpen onOpen={() => open(s)}>{s.name}</RowOpen>
           <div className="text-xs text-muted-foreground">{s.owner}</div>
         </div>
       ),

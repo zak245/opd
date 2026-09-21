@@ -101,4 +101,60 @@ await shot("5-back")
 
 if (phone) console.log("(phone width: the pane takes the whole width and the trail shows one step back)")
 
+/* ------------------------------------------------------ arriving by follow, and who lights what */
+
+// 6. A plain follow: focus lands on the new page's own title, one Shift+Tab from the crumb back.
+await page.goto(`${base}/#/ollopa/sequences/${seq}`, { waitUntil: "networkidle0" })
+await page.reload({ waitUntil: "networkidle0" })
+await wait(500)
+await page.evaluate(() => document.querySelector("#seq-people")?.scrollIntoView())
+await wait(300)
+await page.evaluate(() => {
+  const el = Array.from(document.querySelectorAll('[data-page-active="true"] #seq-people [data-item] button')).find((b) => b.offsetParent !== null)
+  el?.click()
+})
+await wait(500)
+await page.evaluate(() => Array.from(document.querySelectorAll("[data-beside] button")).find((b) => b.textContent.trim() === "Open the page")?.click())
+await wait(700)
+const where = () => page.evaluate(() => {
+  const a = document.activeElement
+  return a && a !== document.body ? `${a.tagName} "${(a.innerText || a.getAttribute("aria-label") || "").replace(/\n/g, " ").slice(0, 40)}"` : "BODY"
+})
+console.log("after a follow, focus:", await where(), "· title lit:",
+  await page.evaluate(() => document.querySelector("header h1")?.classList.contains("ollopa-returned")))
+await shot("6-arrival")
+
+// 7. A follow that names a row: the page lights the row and the shell keeps its hands off the
+// title. Walked for real — the admin seat, the sequence's sending-rules link, Enter on the link —
+// because a deep link never sets an arrival and would not test this at all.
+await page.goto(base + "/#/", { waitUntil: "networkidle0" })
+await page.evaluate(() => localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: "admin" })))
+await page.goto(`${base}/#/ollopa/sequences/${seq}`, { waitUntil: "networkidle0" })
+await page.reload({ waitUntil: "networkidle0" })
+await wait(600)
+await page.keyboard.press("s")
+await wait(400)
+const linked = await page.evaluate(() => {
+  const el = document.querySelector('[data-item="seq.link.mailboxes"]')
+  if (!el) return false
+  el.scrollIntoView({ block: "center" })
+  el.focus()
+  return true
+})
+if (!linked) {
+  console.log("?row= arrival: the sequence's sending-rules link is not there to follow")
+} else {
+  await page.keyboard.press("Enter")
+  await wait(900)
+  console.log("?row= arrival — route:", await page.evaluate(() => location.hash))
+  console.log("?row= arrival — lit  :", await page.evaluate(() => {
+    const el = document.querySelector(".ollopa-returned")
+    return el ? `${el.tagName}${el.getAttribute("data-item") ? ` [${el.getAttribute("data-item")}]` : ""} "${el.innerText.replace(/\n/g, " ").slice(0, 40)}"` : "(nothing lit)"
+  }))
+  console.log("?row= arrival — focus:", await where())
+  console.log("?row= arrival — the page title is not lit:",
+    await page.evaluate(() => !document.querySelector("header h1")?.classList.contains("ollopa-returned")))
+  await shot("7-row-arrival")
+}
+
 await browser.close()

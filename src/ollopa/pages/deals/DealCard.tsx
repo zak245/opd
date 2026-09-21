@@ -138,13 +138,19 @@ export function DealCard(p: DealCardProps) {
       tabIndex={0}
       draggable={p.canEdit && !closed}
       aria-grabbed={p.carrying || undefined}
-      aria-label={`${deal.name}, ${moneyShort(deal.amount, deal.currency || p.currency)}, ${deal.stage}`}
+      // The keys are part of the card's name, because a card that only answers a mouse is a card
+      // half the people here cannot use. Enter is the quick look and O is the record, the same pair
+      // the People table uses; Space stays the board's, for picking a card up and dropping it.
+      aria-label={`${deal.name}, ${moneyShort(deal.amount, deal.currency || p.currency)}, ${deal.stage}. Enter for the quick look, O for the record, M for the menu.`}
       onFocus={p.onFocus}
       onDragStart={(e) => { e.dataTransfer.setData("text/plain", deal.id); e.dataTransfer.effectAllowed = "move" }}
       onClick={() => p.onGlance()}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget) return
-        if (e.key === "Enter") { e.preventDefault(); p.onOpen() }
+        // Enter is what the click is: the quick look, with the board still behind it. The record is
+        // a level further on, so it has its own key rather than taking the one people press first.
+        if (e.key === "Enter") { e.preventDefault(); p.onGlance() }
+        if (e.key.toLowerCase() === "o") { e.preventDefault(); p.onOpen() }
         // Space is the page's: it is the same key for picking up and for dropping, and only the page
         // knows whether something is already in the air (the ARIA drag pattern).
         if (e.key.toLowerCase() === "m") { e.preventDefault(); menuButton.current?.click() }
@@ -196,7 +202,8 @@ export function DealCard(p: DealCardProps) {
           </DropdownMenuTrigger>
           {/* Flat: a list of actions and two radio groups. No sub-menu, because a menu inside a menu is the third level. */}
           <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuItem onSelect={p.onOpen}>Open the deal record</DropdownMenuItem>
+            <DropdownMenuItem onSelect={p.onOpen}>Open the deal record <span className="ml-auto text-xs text-muted-foreground">O</span></DropdownMenuItem>
+            <DropdownMenuItem onSelect={p.onGlance}>Quick look <span className="ml-auto text-xs text-muted-foreground">Enter</span></DropdownMenuItem>
             {p.canEdit && <DropdownMenuItem onSelect={() => p.onEditingNextStep(true)}>Edit next step <span className="ml-auto text-xs text-muted-foreground">E</span></DropdownMenuItem>}
             <DropdownMenuItem onSelect={p.onLog}>Log a call or note</DropdownMenuItem>
             {p.canEdit && !closed && (

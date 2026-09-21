@@ -101,7 +101,7 @@ export function Queue(p: QueueProps) {
             <button className={p.sort === "due" ? "font-medium underline underline-offset-4" : "underline underline-offset-4 opacity-70"} onClick={() => p.onSort("due")}>due</button>
             ·
             <button className={p.sort === "score" ? "font-medium underline underline-offset-4" : "underline underline-offset-4 opacity-70"} onClick={() => p.onSort("score")}>call score</button>
-            {p.sort === "score" && <span className="text-muted-foreground">Ranked by the scoring agent · <button type="button" className="underline underline-offset-4" onClick={() => follow("/ollopa/settings/scoring", originHere(task.contactId))}>how it was built</button></span>}
+            {p.sort === "score" && <span className="text-muted-foreground">Ranked by the scoring agent · <button type="button" className="underline underline-offset-4" onClick={() => follow("/ollopa/settings/scoring?row=score.weights", originHere(task.contactId))}>how it was built</button></span>}
           </span>
         ) : (
           <span className="text-muted-foreground">Overdue first, then oldest due. Nothing is reordered on its own.</span>
@@ -135,13 +135,15 @@ export function Queue(p: QueueProps) {
               </button>
               <span className="text-sm text-muted-foreground">{contact?.title} · {task.company}</span>
               {task.dealId && (
-                <button
-                  type="button"
-                  className="text-sm underline underline-offset-4"
-                  onClick={(e) => p.onOpenDeal(task, e.currentTarget)}
-                >
-                  The deal
-                </button>
+                <span data-item={task.dealId}>
+                  <button
+                    type="button"
+                    className="text-sm underline underline-offset-4"
+                    onClick={(e) => p.onOpenDeal(task, e.currentTarget)}
+                  >
+                    The deal
+                  </button>
+                </span>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm">

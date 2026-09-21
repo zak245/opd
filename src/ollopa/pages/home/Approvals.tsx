@@ -9,13 +9,13 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { openBeside } from "../../beside"
+import { clearEdit, useEdits } from "../../edits"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
 import { toast } from "../../templates/TablePage"
 import { ApproveBar, ConsequenceLine, Door, Panel, consequenceText, useDoorState, type Disclosure } from "../../ui"
 import type { AgentEvent } from "../../data/seed"
 import type { Session } from "../../session"
-import { onApprovalDecision } from "./acts"
 import { consequenceOf, proposalOf, wordsOf, type Batch, type HomeData } from "./data"
 import { count, plural, when } from "./format"
 import { Nothing, Row, RowList, Section, UndoLine, useUndo } from "./rows"
@@ -162,7 +162,7 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
   const canApprove = (e: AgentEvent) => (e.needsSecondApproval ? isAdmin : owned.has(e.id) || isAdmin)
   const mine = (e: AgentEvent) => owned.has(e.id)
 
-  function decide(items: AgentEvent[], decision: Decision) {
+  const decide = useCallback((items: AgentEvent[], decision: Decision, alsoUndo?: () => void) => {
     const ids = items.map((e) => e.id)
     setDecided((m) => ({ ...m, ...Object.fromEntries(ids.map((id) => [id, decision])) }))
     const credits = items.reduce((n, e) => n + (e.ifApproved?.credits ?? e.credits), 0)
@@ -174,16 +174,26 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
       ? `${words} · approved by ${session.user} for ${[...new Set(forSomeone)].join(", ")}`
       : words
     toast(line)
-    setNote({ text: line, undo: () => setDecided((m) => { const next = { ...m }; ids.forEach((id) => delete next[id]); return next }) })
+    setNote({ text: line, undo: () => { alsoUndo?.(); setDecided((m) => { const next = { ...m }; ids.forEach((id) => delete next[id]); return next }) } })
     setPanel(null)
-  }
+  }, [isAdmin, mine, session.user, setNote])
 
-  // Approve or Decline pressed inside the pane: the row decides here, keeps its undo line and
-  // writes the same ledger sentence, so the pane and the page can never disagree.
-  useEffect(() => onApprovalDecision((id, decision) => {
-    const e = data.approvals.waiting.find((x) => x.id === id)
-    if (e) decide([e], decision)
-  }))
+  // Approve or Decline pressed inside the pane writes one record to the shared store; this reads it
+  // and decides the row here, so the section keeps its own undo line and its ledger sentence, and
+  // the pane and the page can never disagree. Records already there on mount raise no stale line.
+  const inPane = useEdits("agent-run")
+  const since = useRef(Date.now())
+  useEffect(() => {
+    const fresh = Object.entries(inPane)
+      .filter(([, r]) => typeof r.at === "number" && r.at > since.current && r.decision)
+      .sort((a, b) => (a[1].at as number) - (b[1].at as number))
+    if (fresh.length === 0) return
+    since.current = fresh[fresh.length - 1][1].at as number
+    for (const [id, r] of fresh) {
+      const e = data.approvals.waiting.find((x) => x.id === id)
+      if (e) decide([e], r.decision as Decision, () => clearEdit("agent-run", id))
+    }
+  }, [inPane, data, decide])
 
   const research = data.approvals.researchRun
   const showResearch = research && d.atLevelOne("home.agents.brief-digest")

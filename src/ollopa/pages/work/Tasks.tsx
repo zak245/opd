@@ -20,7 +20,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { openBeside } from "../../beside"
+import { closeBeside, openBeside } from "../../beside"
+import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -31,7 +32,7 @@ import { day, dueLabel, isOverdue, isToday, localTime, tomorrow } from "./format
 import {
   adminSeat, contactIndex, queueOrder, scoreOrder, seatsOf, seesEveryone, tasksFor,
 } from "./data"
-import { onTaskAct, useRenderCount } from "./acts"
+import { useRenderCount } from "./acts"
 import { Queue } from "./Queue"
 import { CallLogPanel } from "./CallLog"
 import { LinkedInPanel } from "./LinkedIn"
@@ -70,13 +71,28 @@ export function Tasks({ session }: { session: Session }) {
 
   const base = useMemo(() => tasksFor(session), [session])
   const [changes, setChanges] = useState<Record<string, Change>>({})
+  // Done, Snooze and Skip are written to the shared store (src/ollopa/edits.ts), whoever pressed
+  // them: this page, the queue's footer, or a task pane open beside another page. One source, so a
+  // row and a pane can never say different things about the same task. Reading it re-renders these
+  // rows only when a task actually changes — never when a pane merely opens.
+  const acted = useEdits("task")
   const all: Task[] = useMemo(
     () => base.map((t) => {
       const c = changes[t.id]
-      if (!c) return t
-      return { ...t, status: c.status ?? t.status, due: c.due ?? t.due, owner: c.owner ?? t.owner, snoozedUntil: c.snoozedUntil !== undefined ? c.snoozedUntil : t.snoozedUntil }
+      const a = acted[t.id] as { done?: boolean; snoozed?: boolean; skipped?: boolean; until?: string } | undefined
+      if (!c && !a) return t
+      const status: Task["status"] =
+        a?.done ? "Done" : a?.skipped ? "Skipped" : a?.snoozed ? "Snoozed" : c?.status ?? t.status
+      const until = a?.snoozed ? a.until ?? tomorrow() : undefined
+      return {
+        ...t,
+        status,
+        due: until ?? c?.due ?? t.due,
+        owner: c?.owner ?? t.owner,
+        snoozedUntil: until ?? (c?.snoozedUntil !== undefined ? c.snoozedUntil : t.snoozedUntil),
+      }
     }).filter((t) => !changes[t.id]?.gone),
-    [base, changes],
+    [base, changes, acted],
   )
 
   // The admin opens on Everyone when they have no open task of their own — object state, not history.
@@ -142,16 +158,48 @@ export function Tasks({ session }: { session: Session }) {
     })
   }, [say])
 
+  /** The list as it is on screen, in the order it is on screen: what the pane's walker counts. */
+  const onScreen = mode === "queue" ? queueRows : rows
+
+  /**
+   * Take a task off the list, and take the pane with it.
+   *
+   * The frame marks the row a pane is reading with `.ollopa-beside-open` on the page itself, so
+   * this can ask whether a pane is open without subscribing to the pane store — which would
+   * re-render this page every time one opened. When the pane is reading the contact or the deal of
+   * the task that just left, it moves to the one that took its place and its walker counts the list
+   * as it is now; when nothing is left, it closes.
+   */
+  const leaves = useCallback((gone: Task, note: string) => {
+    const open = document.querySelector<HTMLElement>('[data-page-active="true"] .ollopa-beside-open')
+    const reading = open?.dataset.item
+    say(note, () => clearEdit("task", gone.id))
+    if (!reading) return
+    const kind = reading === gone.contactId ? "person" : reading === gone.dealId ? "deal" : null
+    if (!kind) return
+    const rest = onScreen.filter((x) => x.id !== gone.id)
+    const ids = kind === "person" ? rest.map((x) => x.contactId) : rest.filter((x) => x.dealId).map((x) => x.dealId!)
+    if (ids.length === 0) { closeBeside(); return }
+    const index = Math.min(Math.max(0, onScreen.findIndex((x) => x.id === gone.id)), ids.length - 1)
+    openBeside({ kind, id: ids[index], list: { ids, index }, opener: open })
+  }, [onScreen, say])
+
   const done = useCallback((t: Task, outcome?: string) => {
     const stops = outcome === "Connected"
-    apply(t.id, { status: "Done" }, `${t.kind} with ${t.contact} marked done${outcome ? `: ${outcome}` : ""}.${t.sequence ? (stops ? ` “${t.sequence}” stops for ${t.contact.split(" ")[0]}.` : " The contact moves to the next step.") : ""}`)
-  }, [apply])
+    const note = `${t.kind} with ${t.contact} marked done${outcome ? `: ${outcome}` : ""}.${t.sequence ? (stops ? ` “${t.sequence}” stops for ${t.contact.split(" ")[0]}.` : " The contact moves to the next step.") : ""}`
+    recordEdit("task", t.id, { done: true, note })
+    leaves(t, note)
+  }, [leaves])
   const snooze = useCallback((t: Task, until = tomorrow()) => {
-    apply(t.id, { status: "Snoozed", due: until, snoozedUntil: until }, `${t.contact}'s ${t.kind.toLowerCase()} snoozed to ${day(until)}.${t.sequence ? " The sequence waits." : ""}`)
-  }, [apply])
+    const note = `${t.contact}'s ${t.kind.toLowerCase()} snoozed to ${day(until)}.${t.sequence ? " The sequence waits." : ""}`
+    recordEdit("task", t.id, { snoozed: true, until, note })
+    leaves(t, note)
+  }, [leaves])
   const skip = useCallback((t: Task) => {
-    apply(t.id, { status: "Skipped" }, `${t.kind} with ${t.contact} skipped.${t.sequence ? ` ${t.contact.split(" ")[0]} moves to the next step of “${t.sequence}”.` : ""}`)
-  }, [apply])
+    const note = `${t.kind} with ${t.contact} skipped.${t.sequence ? ` ${t.contact.split(" ")[0]} moves to the next step of “${t.sequence}”.` : ""}`
+    recordEdit("task", t.id, { skipped: true, note })
+    leaves(t, note)
+  }, [leaves])
   const reassign = useCallback((t: Task, to: string) => apply(t.id, { owner: to }, `${t.contact}'s ${t.kind.toLowerCase()} reassigned to ${to}.`), [apply])
   const remove = useCallback((t: Task) => apply(t.id, { gone: true }, `Task “${t.title}” deleted.`), [apply])
 
@@ -160,7 +208,6 @@ export function Tasks({ session }: { session: Session }) {
    * the order it is on screen, so ] walks the queue rather than jumping somewhere else, and the page
    * behind — the queue's note, the row's open door, the search — is untouched.
    */
-  const onScreen = mode === "queue" ? queueRows : rows
   const openContact = useCallback((t: Task, opener?: HTMLElement | null) => {
     const ids = onScreen.map((x) => x.contactId)
     openBeside({
@@ -181,21 +228,6 @@ export function Tasks({ session }: { session: Session }) {
       opener: opener ?? (document.activeElement as HTMLElement | null),
     })
   }, [onScreen])
-
-  // A task marked done or snoozed from a pane somewhere else — Home's task pane — changes its row
-  // here too, so the two never say different things about the same task. No second toast: the pane
-  // that caused it already said what happened.
-  useEffect(() => onTaskAct((id, what) => {
-    setChanges((c) => ({
-      ...c,
-      [id]: {
-        ...(c[id] ?? {}),
-        ...(what === "done"
-          ? { status: "Done" as const }
-          : { status: "Snoozed" as const, due: tomorrow(), snoozedUntil: tomorrow() }),
-      },
-    }))
-  }), [])
 
   const openPanel = useCallback((t: Task) => {
     if (t.kind === "Call") setCalling(t)
@@ -466,7 +498,9 @@ export function Tasks({ session }: { session: Session }) {
             onOpenDeal={openDeal}
             onSnoozeRest={() => {
               const rest = rows.filter((t) => t.kind === "LinkedIn")
-              rest.forEach((t) => apply(t.id, { status: "Snoozed", due: nextMonday(), snoozedUntil: nextMonday() }, `${rest.length} LinkedIn ${rest.length === 1 ? "task" : "tasks"} snoozed to Monday.`))
+              rest.forEach((t) => recordEdit("task", t.id, { snoozed: true, until: nextMonday() }))
+              say(`${rest.length} LinkedIn ${rest.length === 1 ? "task" : "tasks"} snoozed to Monday.`,
+                () => rest.forEach((t) => clearEdit("task", t.id)))
             }}
             say={say}
           />

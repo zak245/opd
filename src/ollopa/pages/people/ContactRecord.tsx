@@ -18,6 +18,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
+import { useEdits } from "../../edits"
 import { toast } from "../../templates/TablePage"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -28,7 +29,7 @@ import { STAGE_TONE } from "./columns"
 import { ago, day, glanceFields, rowsFor, type PersonRow } from "./person"
 import { CallLog } from "./CallLog"
 import { EnrichPanel } from "./EnrichPanel"
-import { usePersonEdits } from "./edits"
+import type { PersonEdit } from "./edits"
 
 type Kind = "email" | "call" | "meeting" | "note" | "sequence" | "agent" | "task"
 
@@ -60,9 +61,10 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
   const b = businessById(session.business)
   const d = useDisclosure("people")
   const route = useRoute()
-  // What the pane's actions did to a colleague in this session. The card behind the pane reads it,
-  // so acting in the pane shows its effect on the row that opened it, at once.
-  const edits = usePersonEdits()
+  // What the pane's actions did to a colleague in this session, from the one store every page
+  // reads. The card behind the pane reads it, so acting in the pane shows its effect on the row
+  // that opened it, at once — and only this kind re-renders.
+  const edits = useEdits("person") as Record<string, PersonEdit>
 
   const rows = useMemo(() => rowsFor(seed), [seed])
   const person: PersonRow | undefined = useMemo(

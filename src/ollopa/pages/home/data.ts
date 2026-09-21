@@ -213,7 +213,7 @@ export function homeData(session: Session) {
     ? `/ollopa/sequences/${pausedSequences[0].id}`
     : pausedSequences.length > 1
       ? "/ollopa/sequences?guard=auto-paused"
-      : "/ollopa/settings/email-sending"
+      : "/ollopa/settings/email-sending?row=mail.bounce-guard"
   const crmName = seed.workspace.crm?.split(" ")[0] ?? "The CRM"
 
   /* ---------------------------------------------------------- the workspace change, and set-up */
@@ -234,15 +234,16 @@ export function homeData(session: Session) {
       id: `ws-${i}`,
       noun: /crm/i.test(text) ? "CRM" : /invit/i.test(text) ? "invites" : "mailbox",
       text,
-      href: /crm/i.test(text) ? "/ollopa/settings/integrations" : "/ollopa/settings/email-sending",
+      // The row is named, so following the link lands on it lit rather than at the top of the page.
+      href: /crm/i.test(text) ? "/ollopa/settings/integrations?row=int.crm" : "/ollopa/settings/email-sending?row=mail.mailboxes",
     })),
     ...(seed.workspace.crm === null
       ? []
       : seed.integrations.some((i) => i.kind === seed.workspace.crm?.split(" ")[0])
         ? []
-        : [{ id: "crm", noun: "CRM", text: `Connect ${crmName}`, href: "/ollopa/settings/integrations", declare: "ollopA is our CRM" }]),
+        : [{ id: "crm", noun: "CRM", text: `Connect ${crmName}`, href: "/ollopa/settings/integrations?row=int.crm", declare: "ollopA is our CRM" }]),
     ...(health.invitesPending > 0
-      ? [{ id: "invites", noun: "invites", text: `${plural(health.invitesPending, "invitation")} not accepted`, href: "/ollopa/settings/team" }]
+      ? [{ id: "invites", noun: "invites", text: `${plural(health.invitesPending, "invitation")} not accepted`, href: "/ollopa/settings/team?row=team.users" }]
       : []),
   ]
 

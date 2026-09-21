@@ -19,7 +19,7 @@ import { seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import { copyRows, usedByLine } from "./Templates"
 import { engage } from "./store"
-import { BesideLink, FollowLink, Pill, ago, day, n, toast } from "./shared"
+import { BesideLink, FollowLink, Pill, ago, day, h1Of, n, toast } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
 const SEARCH_OVER = 10
@@ -179,7 +179,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                         {/* A look beside, so the copy being edited stays on screen. A campaign has no
                             pane of its own, so that one is a page move that keeps the trail. */}
                         {u.kind === "campaign"
-                          ? <FollowLink className="hover:underline" to={u.to} route={`/ollopa/templates/${row.id}`} title={row.name} anchor={u.key}>{u.label}</FollowLink>
+                          ? <FollowLink className="hover:underline" to={u.to} route={`/ollopa/templates/${row.id}`} title={h1Of("templates", row.name)} anchor={u.key}>{u.label}</FollowLink>
                           : <BesideLink className="hover:underline" kind={u.kind} id={u.id}>{u.label}</BesideLink>}
                       </li>
                     ))}

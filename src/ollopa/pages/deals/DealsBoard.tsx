@@ -24,6 +24,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useRoute } from "@/app/router"
 import { follow } from "../../chain"
 import { openBeside } from "../../beside"
+import { useEdits } from "../../edits"
 import { TablePage, toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
@@ -35,7 +36,6 @@ import type { Session } from "../../session"
 import { STAGE_FORECAST, STAGE_PROBABILITY, TODAY, seedFor, type Deal, type DealStage } from "../../data/seed"
 import { ago, day, daysBetween, money } from "../deal/format"
 import { DealCard, chipText, type CardFlags } from "./DealCard"
-import { useDealEdits } from "./edits"
 import { coverageFor } from "../reports/coverage"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
@@ -176,9 +176,10 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const owners = b.roles.map((r) => r.user)
   const crm = seed.integrations.find((i) => /crm|salesforce|hubspot/i.test(`${i.kind} ${i.name}`))
   const route = useRoute()
-  // What a pane elsewhere did to a deal in this session, so the board and a deal read beside some
-  // other page can never say two different things about the same deal. The page's own edits win.
-  const shared = useDealEdits()
+  // What an action in a pane did to a deal in this session. The cards and the table read it, so a
+  // deal closed won in a pane beside some other page is in the Closed won rail the moment you look
+  // at the board. The page's own edits win where both have touched the same field.
+  const shared = useEdits("deal")
 
   /**
    * Leaving the board for a record, remembering the card. `anchor` is the deal's id, which the card
@@ -233,7 +234,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   /* ------------------------------------------------------------------- what is on the board */
 
   const all = useMemo(
-    () => [...addedDeals, ...seed.deals].map((x) => (edits[x.id] || shared[x.id] ? { ...x, ...shared[x.id], ...edits[x.id] } : x)),
+    () => [...addedDeals, ...seed.deals].map((x) => (edits[x.id] || shared[x.id] ? { ...x, ...(shared[x.id] as Partial<Deal>), ...edits[x.id] } : x)),
     [seed.deals, addedDeals, edits, shared],
   )
 
@@ -788,7 +789,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
                   <DropdownMenuSeparator />
                   {/* Settings is a page, so this is a `follow`: the crumb comes back to this board
                       with the menu button lit, not to whatever the sidebar would have shown. */}
-                  <DropdownMenuItem onSelect={() => leaveFor("/ollopa/settings/pipeline", "deals.more")}>Edit stages in Settings</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => leaveFor("/ollopa/settings/pipeline?row=pipe.stages", "deals.more")}>Edit stages in Settings</DropdownMenuItem>
                   {/* The shell owns the list and opens it on "?"; this is the same panel, not a copy. */}
                   <DropdownMenuItem onSelect={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }))}>
                     Keyboard shortcuts

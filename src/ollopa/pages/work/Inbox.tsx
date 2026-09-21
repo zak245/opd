@@ -12,12 +12,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
-import { openBeside } from "../../beside"
+import { openBeside, openBesideNested } from "../../beside"
 import { follow } from "../../chain"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -154,8 +154,10 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
 
   /** The element focus returns to when a pane closes: the row, which is focusable and stays put. */
   const rowEl = (r: InboxReply) => document.getElementById(`reply-${r.id}`)
+  /** The deal behind a reply, so the menu names it rather than saying "the deal". */
+  const dealOf = (r: InboxReply) => (r.dealId ? seed.deals.find((x) => x.id === r.dealId) : undefined)
 
-  const doAction = useCallback((key: string, r: InboxReply, arg?: string) => {
+  const doAction = useCallback((key: string, r: InboxReply, arg?: string, opener?: HTMLElement | null) => {
     const first = r.contact.split(" ")[0]
     switch (key) {
       case "reply": setOpenId(r.id); setFocusComposer((n) => n + 1); break
@@ -172,7 +174,9 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
       case "create-deal": {
         const ids = filtered.filter((x) => x.dealId).map((x) => x.dealId!)
         if (r.dealId) {
-          openBeside({ kind: "deal", id: r.dealId, list: { ids, index: Math.max(0, ids.indexOf(r.dealId)) }, opener: rowEl(r) })
+          // Read while the contact is already beside the thread, the deal is the next step of the
+          // same look and the header keeps one "‹ them"; with nothing open it is simply the deal.
+          openBesideNested({ kind: "deal", id: r.dealId, list: { ids, index: Math.max(0, ids.indexOf(r.dealId)) }, opener: opener ?? rowEl(r) })
         } else {
           // Nothing to look at yet: making one is a page, and the trail keeps this reply.
           follow(`/ollopa/deals/${seed.deals[0].id}`, originHere(r.contactId))
@@ -181,7 +185,9 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
       }
       case "open-contact": {
         const ids = filtered.map((x) => x.contactId)
-        openBeside({ kind: "person", id: r.contactId, list: { ids, index: Math.max(0, ids.indexOf(r.contactId)) }, opener: rowEl(r) })
+        // One call for both routes — the row's menu and the thread's own "Contact details" — so the
+        // same pane always carries the same list and [ and ] walk the same replies.
+        openBeside({ kind: "person", id: r.contactId, list: { ids, index: Math.max(0, ids.indexOf(r.contactId)) }, opener: opener ?? rowEl(r) })
         break
       }
       case "change-meaning": change(r.id, { outcome: arg as Outcome, meantBy: "you" }, `Read as ${arg}, by you. The correction is logged for the classifier.`); break
@@ -363,39 +369,64 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           ))}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon-sm" variant="ghost" aria-label={`More actions for ${r.contact}`}><MoreHorizontal className="size-4" /></Button>
+              <Button size="icon-sm" variant="ghost" data-row-menu aria-label={`${r.contact}: the contact and the deal, reply, route, read as, record`}><MoreHorizontal className="size-4" /></Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="max-h-96 overflow-y-auto">
-              {CANDIDATES[group].filter((k) => available(k)).map((k) => (
-                <DropdownMenuItem key={k} onSelect={() => doAction(k, r)}>
-                  {labelFor(k, r)}
-                  <span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">{{ reply: "r", book: "b", done: "d", "not-interested": "n", hand: "h", "confirm-unsub": "u" }[k] ?? ""}</span>
-                </DropdownMenuItem>
-              ))}
+            <DropdownMenuContent align="start" className="max-h-96 w-72 overflow-y-auto">
+              {/* Four labelled groups, in the order the work goes: what this reply is about, how to
+                  answer it, where it goes next, what it was read as, and the record. The label says
+                  what is behind it (rule 4), and nothing appears twice. */}
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">The people and deals behind this reply</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => doAction("open-contact", r)}>Open {r.contact} beside the thread</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("create-deal", r)}>
+                {r.dealId ? `Open ${dealOf(r)?.name ?? "the deal"} beside the thread` : "Create a deal from this reply"}
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator />
-              {aes.length > 0 && session.role === "sdr" && aes.map((a) => (
-                <DropdownMenuItem key={a.user} onSelect={() => doAction("hand", r, a.user)}>Hand to {a.user}</DropdownMenuItem>
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Reply</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => doAction("reply", r)}>Reply<DropdownMenuShortcut>r</DropdownMenuShortcut></DropdownMenuItem>
+              {available("book") && (
+                <DropdownMenuItem onSelect={() => doAction("book", r)}>Book a meeting<DropdownMenuShortcut>b</DropdownMenuShortcut></DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={() => doAction("forward", r)}>Forward the thread</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("open-in-mailbox", r)}>
+                Open in {seed.mailboxes[0]?.provider === "Microsoft 365" ? "Outlook" : "Gmail"}
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Route: who takes it, and when it comes back</DropdownMenuLabel>
+              {available("hand") && aes.map((a) => (
+                <DropdownMenuItem key={a.user} onSelect={() => doAction("hand", r, a.user)}>Hand to {a.user} · {a.title}</DropdownMenuItem>
               ))}
-              <DropdownMenuItem onSelect={() => doAction("done", r)}>Mark done<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">d</span></DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("not-interested", r)}>Mark not interested · ends the sequence</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("create-deal", r)}>{labelFor("create-deal", r)}</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("open-contact", r)}>Open contact</DropdownMenuItem>
+              {sdrSeats(session.business).filter((x) => x.user !== session.user).map((x) => (
+                <DropdownMenuItem key={x.user} onSelect={() => doAction("assign", r, x.user)}>Assign to {x.user}</DropdownMenuItem>
+              ))}
+              {r.outcome === "Not now" && (
+                <DropdownMenuItem onSelect={() => doAction("follow-up", r)}>Follow up on {day(r.followUpOn)}</DropdownMenuItem>
+              )}
+              {r.outcome === "Out of office" && (
+                <DropdownMenuItem onSelect={() => doAction("resume", r)}>Resume on {day(r.returnsOn)}</DropdownMenuItem>
+              )}
+              {r.outcome === "Unsubscribe" && (
+                <DropdownMenuItem onSelect={() => doAction("confirm-unsub", r)}>Confirm the unsubscribe<DropdownMenuShortcut>u</DropdownMenuShortcut></DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={() => doAction("done", r)}>Mark done<DropdownMenuShortcut>d</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("not-interested", r)}>Mark not interested · ends the sequence<DropdownMenuShortcut>n</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("remove-from-sequence", r)}>Remove from the sequence, keep the history</DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Read as {r.outcome} · change it to</DropdownMenuLabel>
               {MEANINGS.filter((m) => m !== r.outcome).map((m) => (
-                <DropdownMenuItem key={m} onSelect={() => doAction("change-meaning", r, m)}>Change what they meant: {m}</DropdownMenuItem>
+                <DropdownMenuItem key={m} onSelect={() => doAction("change-meaning", r, m)}>{m}</DropdownMenuItem>
               ))}
-              <DropdownMenuItem onSelect={() => doAction("remove-from-sequence", r)}>Remove from sequence, keep history</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("note", r)}>Add a note</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("forward", r)}>Forward thread</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("open-in-mailbox", r)}>Open in {seed.mailboxes[0]?.provider === "Microsoft 365" ? "Outlook" : "Gmail"}</DropdownMenuItem>
-              {sdrSeats(session.business).filter((s) => s.user !== session.user).map((s) => (
-                <DropdownMenuItem key={s.user} onSelect={() => doAction("assign", r, s.user)}>Assign to {s.user}</DropdownMenuItem>
-              ))}
-              <DropdownMenuItem onSelect={() => doAction("add-to-list", r)}>Add to list</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => doAction("unread", r)}>Mark unread</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => { setSelecting(true); setSelection([r.id]) }}>Select<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => doAction("spam", r)}>Mark as spam or bot reply</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => doAction("misread", r)}>Report a misread reply</DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Record</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => doAction("note", r)}>Add a note</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("add-to-list", r)}>Add to a list</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("unread", r)}>Mark unread</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => { setSelecting(true); setSelection([r.id]) }}>Select this reply<DropdownMenuShortcut>x</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => doAction("spam", r)}>Mark as spam or a bot reply</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -428,7 +459,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           <p className="pt-0.5 text-xs text-muted-foreground">
             No calendar is connected.{" "}
             <button type="button" className="underline underline-offset-4"
-                    onClick={() => follow("/ollopa/settings/integrations", originHere(open?.contactId))}>
+                    onClick={() => follow("/ollopa/settings/integrations?row=int.calendar", originHere(open?.contactId))}>
               Connect a calendar to book from here
             </button>.
           </p>
@@ -578,6 +609,8 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
                   onBook={() => setBooking(open)}
                   onBack={() => setOnPhoneThread(false)}
                   focusComposer={focusComposer}
+                  onOpenContact={(opener) => doAction("open-contact", open, undefined, opener)}
+                  onOpenDeal={(opener) => doAction("create-deal", open, undefined, opener)}
                 />
               </div>
             </div>

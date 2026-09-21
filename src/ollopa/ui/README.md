@@ -253,6 +253,9 @@ Nothing is inferred. The trail grows only from `follow` and shrinks only from `b
 a pasted URL, the browser's back button, the sidebar, the bottom bar and the palette all start with
 an empty one.
 
+Arriving anywhere by `follow` puts focus on that page's own `h1` and lights it for the same three
+seconds a return gets, so the crumb back is one Shift+Tab away instead of a walk through the sidebar.
+
 The shell does the rest: it draws the crumbs in the header (`Q4 enterprise outbound › Amara
 Nakamura`, and at phone width only `‹ Q4 enterprise outbound`), and on arrival it takes the return
 cue — scrolls the anchor into view if it drifted out, lights it for three seconds with
@@ -309,8 +312,42 @@ openBeside({
 The frame gives you 28 rem pushed in from the right with the page shrinking to make room (the whole
 width on a phone), about 200 ms and nothing under `prefers-reduced-motion`, a header with the name,
 one line of context, close (Escape) and "Open the page", the body, and previous and next (`[` and
-`]`) when `list` is set. Focus moves in on open and back to the opener on close. The row the pane is
+`]`) when `list` is set. Focus moves in on open and back to the opener on close — including when the
+pane was opened from a "…" menu, which puts focus back on its own trigger as it closes, so the frame
+takes focus once more after that has settled.
+
+On a phone the pane covers the page, so its header carries one line of what it is covering —
+"From Q4 enterprise outbound · row Mateo Okonkwo" — and closing is a return: the row is scrolled back
+into view and lit, not merely focused. At desktop widths the row never left the screen, so it is
+marked rather than flashed. The row the pane is
 reading is marked on the page itself with `.ollopa-beside-open`.
+
+### An action in the pane lands on the row behind it
+
+Opening a pane must not re-render the page; **acting in one must**. The two are not in conflict, and
+`src/ollopa/edits.ts` is how they are both kept: the pane writes one small record, and only the rows
+that read that kind of object re-render.
+
+```tsx
+// in the pane body, when the action is taken
+recordEdit("person", p.id, { inSequence: "Warm inbound follow-up", note: `Moved to Warm inbound follow-up` })
+
+// in the row behind, on the page
+const edits = useEdits("person")                 // every person changed this session
+const changed = edits[p.id]
+<td>{changed?.inSequence ?? p.inSequence}</td>
+{changed?.note && <span className="text-xs text-muted-foreground">{changed.note}</span>}
+```
+
+`recordEdit(kind, id, patch)` merges into what is already known and stamps `at`. `useEdits(kind)`
+gives a list every record of that kind and re-renders it when one changes; `useEdit(kind, id)` follows
+one object; `editOf(kind, id)` reads one without subscribing. `clearEdit(kind, id)` is undo — the row
+and the pane both stop saying it in the same commit. The store is this session only, per seat:
+signing out, switching account or changing seat wipes it, the way the trail goes.
+
+**The pane's footer says it too.** Whenever the record carries a `note`, the frame draws
+"Done · what happened · Undo" above previous and next, with Undo calling `clearEdit`. A body whose
+undo has to do more than drop that record replaces the line with `useBesideDone({ note, onUndo })`.
 
 Closing the pane widens the page again, and the frame holds the row that opened it at the same place
 on screen while that happens. If an action in the pane removed that row — a task marked done, a reply

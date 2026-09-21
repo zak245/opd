@@ -32,7 +32,12 @@ await page.setViewport({ width: Number(w), height: Number(h), deviceScaleFactor:
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const shot = async (n) => { const o = `${dir}/${n}-${w}.png`; await page.screenshot({ path: o }); console.log("wrote", o) }
 const trail = () => page.evaluate(() => document.querySelector('nav[aria-label="Your path"]')?.innerText.replace(/\n/g, " ") ?? "(none)")
-const lit = () => page.evaluate(() => document.querySelector(".ollopa-returned")?.innerText.replace(/\s+/g, " ").slice(0, 70) ?? "(nothing lit)")
+const lit = () => page.evaluate(() => {
+  const root = document.querySelector('[data-page-active="true"]') ?? document.body
+  const els = Array.from(root.querySelectorAll(".ollopa-returned"))
+  if (els.length === 0) return "(nothing lit)"
+  return els.map((e) => `[${e.getAttribute("data-item") ?? e.tagName}] ${e.innerText.replace(/\s+/g, " ").slice(0, 60)}`).join(" || ")
+})
 const focused = () => page.evaluate(() => (document.activeElement?.innerText || document.activeElement?.getAttribute("aria-label") || document.activeElement?.tagName || "(none)").replace(/\s+/g, " ").slice(0, 70))
 const paneTitle = () => page.evaluate(() => document.querySelector("aside h2")?.textContent ?? "(no pane)")
 const paneCount = () => page.evaluate(() => document.querySelector("aside footer span")?.textContent ?? "(no list)")
@@ -153,18 +158,50 @@ await wait(500)
 console.log("after ] :", await paneTitle(), "·", await paneCount(), "· marked behind:", await besideMarked())
 await shot("8-next")
 
-// Act in the pane: the row behind it has to say the same thing, at once.
+// Act in the pane. The destination is chosen, never guessed: the picker first, then the button.
+console.log("before choosing, the button reads:", await page.evaluate(() =>
+  (Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.outerHTML.match(/disabled/) ? "disabled · " : "enabled · ")
+  + (Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.textContent.trim() ?? "(none)")))
+await page.click('aside [role="combobox"]')
+await wait(400)
+const chose = await page.evaluate(() => {
+  const opt = document.querySelector('[role="option"]')
+  const name = opt?.textContent.trim()
+  opt?.click()
+  return name
+})
+await wait(400)
 const acted = await page.evaluate(() => {
-  const b = Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add to|Move to) /.test(x.textContent.trim()))
-  if (!b) return null
-  const label = b.textContent.trim()
-  b.click()
+  const b = Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))
+  const label = b?.textContent.trim()
+  b?.click()
   return label
 })
 await wait(600)
-console.log("clicked:", acted)
+console.log("chose:", chose, "· clicked:", acted)
+console.log("pane result line:", await page.evaluate(() => (document.querySelector('aside [role="status"]')?.innerText ?? "").replace(/\s+/g, " ") ?? "(none)"))
 console.log("row behind now says:", await besideMarked())
 await shot("9-acted")
+
+// A second click must not move them again by surprise: the picker is empty and the button is off.
+console.log("after acting, the button reads:", await page.evaluate(() => {
+  const b = Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))
+  return (b?.disabled ? "disabled · " : "ENABLED · ") + (b?.textContent.trim() ?? "(none)")
+}))
+
+// Undo puts it back, in the pane and on the row behind, at once.
+await page.evaluate(() => Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Undo")?.click())
+await wait(500)
+console.log("after Undo — row behind:", await besideMarked(), "· result line:", await page.evaluate(() => (document.querySelector('aside [role="status"]')?.innerText ?? "").replace(/\s+/g, " ") ?? "(none)"))
+await shot("9b-undone")
+
+// Put it back so the rest of the walk shows the acted state.
+await page.click('aside [role="combobox"]')
+await wait(400)
+await page.evaluate(() => document.querySelector('[role="option"]')?.click())
+await wait(300)
+await page.evaluate(() => Array.from(document.querySelectorAll("aside button")).find((x) => /^(Add|Move) to /.test(x.textContent.trim()))?.click())
+await wait(500)
 
 await page.evaluate(() => Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Open the page")?.click())
 await wait(800)

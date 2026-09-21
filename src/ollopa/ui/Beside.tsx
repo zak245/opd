@@ -12,18 +12,24 @@
 //   · [ and ] walk the list the pane was opened from, without closing;
 //   · nothing inside it opens a door, and it never opens a second pane — a related object opened
 //     from in here swaps the content and leaves one "‹ back", and past that the way on is the page.
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { ChevronLeft, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
-import { findAnchor, follow, showReturn } from "../chain"
+import { crumbName, findAnchor, follow, showReturn } from "../chain"
+import { clearEdit, useEdit } from "../edits"
 import { besides } from "../Product"
 import type { Session } from "../session"
 import { FlatProvider } from "./Door"
 
 const MS = 200
+
+/** Below `sm` the pane takes the whole width, so the page behind it is not on screen at all. */
+function phoneWidth() {
+  return typeof window !== "undefined" && window.matchMedia?.("(max-width: 639px)").matches === true
+}
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
@@ -80,6 +86,36 @@ function tookItsPlace(target: BesideTarget, container: HTMLElement | null): HTML
   return container?.isConnected ? container : null
 }
 
+
+/* ------------------------------------------------------------------- what the last action did */
+
+export interface BesideDone {
+  /** What happened, in the words the row shows: "Moved to Warm inbound follow-up". */
+  note: string
+  /** Put it back. The pane and the row both drop the record, so neither can go on saying it. */
+  onUndo: () => void
+}
+
+const DoneSlot = createContext<(done: BesideDone | null) => void>(() => {})
+
+/**
+ * A pane body calls this to put a line in the pane's footer: "Done · what happened · Undo".
+ *
+ * Most bodies do not need it. An action in the pane writes `recordEdit(kind, id, { note })` to the
+ * shared edits store, the row behind reads it with `useEdits(kind)` and changes in place, and this
+ * frame draws the same note with an Undo that clears the record — so undo is one click in the pane
+ * as well as on the row. Use this hook only when undoing has to do more than drop that record.
+ */
+export function useBesideDone(done: BesideDone | null) {
+  const set = useContext(DoneSlot)
+  const note = done?.note ?? null
+  useEffect(() => {
+    set(note ? { note, onUndo: done!.onUndo } : null)
+    return () => set(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note, set])
+}
+
 export function Beside({ session, pageTitle }: { session: Session; pageTitle: string }) {
   const target = useBeside()
   const parent = useBesideParent()
@@ -94,6 +130,9 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   const row = useRef<HTMLElement | null>(null)
   const rowList = useRef<HTMLElement | null>(null)
   const last = useRef<BesideTarget | null>(null)
+  /** What the row behind is called, for the phone header's one line of where you came from. */
+  const [fromRow, setFromRow] = useState<string | null>(null)
+  const [bodyDone, setBodyDone] = useState<BesideDone | null>(null)
 
   if (target && target !== shown) {
     // Render-phase, so the body and the header change in the same paint as the width.
@@ -118,12 +157,41 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   // Focus in on open, and back to the row that opened it on close.
   const wasOpen = useRef(false)
   useLayoutEffect(() => {
-    if (target && !wasOpen.current) { wasOpen.current = true; panel.current?.focus() }
+    if (target && !wasOpen.current) {
+      wasOpen.current = true
+      panel.current?.focus()
+      // A pane opened from a "…" menu loses the focus again a moment later: the menu puts focus
+      // back on its own trigger as it closes, and it does that whenever it finishes closing, not
+      // on a frame we can name. So for a third of a second after the pane opens, any focus that
+      // lands outside it comes back — unless the person has said otherwise by pressing a key or
+      // a pointer, which stops this at once and leaves focus exactly where they put it.
+      let theirs = false
+      const stop = () => { theirs = true }
+      const grab = () => {
+        const el = panel.current
+        if (theirs || !el || el.contains(document.activeElement)) return
+        el.focus()
+      }
+      document.addEventListener("pointerdown", stop, true)
+      document.addEventListener("keydown", stop, true)
+      document.addEventListener("focusin", grab)
+      const until = window.setTimeout(stop, 350)
+      return () => {
+        window.clearTimeout(until)
+        document.removeEventListener("pointerdown", stop, true)
+        document.removeEventListener("keydown", stop, true)
+        document.removeEventListener("focusin", grab)
+      }
+    }
     if (!target && wasOpen.current) {
       wasOpen.current = false
       const back = opener.current
       const gone = last.current
       opener.current = null
+      // On a phone the pane covered the page, so coming back is a return: the row is scrolled back
+      // into view and lit, not merely focused. On a desktop the row never left the screen and a
+      // flash would be noise. The anchor goes in by id, so focus lands on the row's own name.
+      if (phoneWidth() && gone && findAnchor(gone.id)) { showReturn(gone.id); return }
       if (back?.isConnected) { back.focus(); return }
       // The row that opened the pane has been acted on and removed. Focus does not fall to the top
       // of the page: it goes to whatever took that row's place, lit the same way a return is.
@@ -143,6 +211,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     const marked = (hit?.closest("tr, li") as HTMLElement | null) ?? hit
     row.current = marked ?? null
     rowList.current = marked?.parentElement ?? null
+    setFromRow(hit?.getAttribute("data-item-label") ?? hit?.textContent?.trim().split("\n")[0].slice(0, 40) ?? null)
     marked?.classList.add("ollopa-beside-open")
     return () => marked?.classList.remove("ollopa-beside-open")
   }, [target])
@@ -163,9 +232,19 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     return () => document.removeEventListener("keydown", onKey)
   }, [target])
 
+  // The frame is inside a hook-free branch below, so read the store before the early return.
+  const recorded = useEdit(shown?.kind ?? "", shown?.id ?? "")
+
   if (!shown) return null
 
   const head = headFor(session, shown)
+  // "Done · what happened · Undo". The default comes from the shared edits store — the same record
+  // the row behind is reading, so the pane and the row can never say different things — and a body
+  // with more to undo than that record replaces it with `useBesideDone`.
+  const done: BesideDone | null = bodyDone
+    ?? (typeof recorded?.note === "string"
+      ? { note: recorded.note, onUndo: () => clearEdit(shown.kind, shown.id) }
+      : null)
   const Body = besides[shown.kind]
   const list = shown.list
   const hasPrev = !!list && list.index > 0
@@ -180,6 +259,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
 
   return (
     <aside
+      data-beside={shown.kind}
       aria-label={`${head.name}, beside ${pageTitle}`}
       style={{ width: open ? "min(100%, 28rem)" : 0 }}
       className={cn(
@@ -200,6 +280,10 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
               {parentHead.name}
             </button>
           )}
+          {/* On a phone the pane covers the page, so the header says what it is covering. */}
+          <p className="mb-1 truncate text-xs text-muted-foreground sm:hidden">
+            From {crumbName(pageTitle)}{fromRow ? ` · row ${fromRow}` : ""}
+          </p>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-sm font-semibold">{head.name}</h2>
@@ -216,12 +300,21 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
 
         {/* Flat by construction: a door rendered in here renders in place instead. */}
         <FlatProvider value={true}>
+          <DoneSlot.Provider value={setBodyDone}>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm">
             {Body ? <Body session={session} id={shown.id} target={shown} /> : (
               <p className="text-muted-foreground">Nothing is registered to show a {shown.kind} here yet.</p>
             )}
           </div>
+          </DoneSlot.Provider>
         </FlatProvider>
+
+        {done && (
+          <div role="status" className="flex shrink-0 items-baseline gap-2 border-t bg-muted/60 px-4 py-2 text-xs">
+            <span className="min-w-0 flex-1">Done · {done.note}</span>
+            <button type="button" className="shrink-0 font-medium underline underline-offset-4" onClick={done.onUndo}>Undo</button>
+          </div>
+        )}
 
         {list && (
           <footer className="flex shrink-0 items-center gap-2 border-t px-4 py-2">

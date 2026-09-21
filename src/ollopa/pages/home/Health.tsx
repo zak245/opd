@@ -47,7 +47,7 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
     lines.push({
       kind: "warning",
       text: `${h.mailboxesNearLimit} mailbox${h.mailboxesNearLimit === 1 ? "" : "es"} near the daily limit`,
-      href: href("/ollopa/settings/email-sending"),
+      href: href("/ollopa/settings/email-sending?row=mail.mailboxes"),
     })
   }
 
@@ -55,7 +55,7 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
     lines.push({
       kind: "warning",
       text: `${h.crmName}: ${h.syncErrors} record${h.syncErrors === 1 ? "" : "s"} did not sync`,
-      href: href("/ollopa/settings/integrations"),
+      href: href("/ollopa/settings/integrations?row=int.error-log"),
     })
   }
 
@@ -66,7 +66,7 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
       text: tight
         ? `Credits: at ${count(h.credits.burnPerWeek)} a week the cap is reached on ${h.runsOutOn}`
         : `Credits on track · ${count(h.credits.balance)} left, ${count(h.credits.burnPerWeek)} a week, cap reached ${h.runsOutOn}`,
-      href: href("/ollopa/settings/plan"),
+      href: href("/ollopa/settings/plan?row=plan.credits"),
     })
   }
 
@@ -74,7 +74,7 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
     lines.push({
       kind: "info",
       text: `${h.invitesPending} invitation${h.invitesPending === 1 ? "" : "s"} not accepted`,
-      href: href("/ollopa/settings/team"),
+      href: href("/ollopa/settings/team?row=team.users"),
     })
   }
 
@@ -83,7 +83,7 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
     lines.push({
       kind: "info",
       text: `Sending healthy · bounce ${h.bounceRate}%${clean ? " · sync clean" : ""}`,
-      href: href("/ollopa/settings/email-sending"),
+      href: href("/ollopa/settings/email-sending?row=mail.bounce-guard"),
     })
   }
 

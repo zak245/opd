@@ -26,7 +26,8 @@ import { agentWatch, alreadyInASequence, companyMembersOf, enrolCredits, enrichC
 import { AddToSequencePanel } from "./AddToSequence"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
-import { type Col, BesideLink, DataTable, FollowLink, Pill, ago, day, n, toast, usePersisted } from "./shared"
+import { useEdits } from "../../edits"
+import { type Col, BesideLink, DataTable, FollowLink, Pill, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
 const SEARCH_OVER = 10
@@ -56,6 +57,10 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   // The members are found inside the list, whatever the count: over ten rows the search appears, and
   // it never becomes a reason to leave for People (rule 4).
   const [memberQ, setMemberQ] = useState("")
+  // What actions took on these people this session, so a row shows the effect of a pane action at
+  // once, where it was caused (chain rule 8). Opening a pane writes nothing here.
+  const personEdits = useEdits("person")
+  useTick(Object.values(personEdits).some(undoable))
   const [sort, setSort] = usePersisted<{ key: string; dir: "asc" | "desc" }>(
     `ollopa.list.members.sort.${session.user}`, { key: "added", dir: "desc" },
   )
@@ -79,7 +84,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
     ? companies.filter((c) => `${c.name} ${c.industry}`.toLowerCase().includes(needle))
     : companies
   /** Where the page and the crumb agree about what this page is called. */
-  const origin = { route: `/ollopa/lists/${list.id}`, title: list.name }
+  const origin = { route: `/ollopa/lists/${list.id}`, title: h1Of("lists", list.name) }
   // The same split the enrol panel will run, so the line on the page and the line in the panel agree.
   const enrolable = splitForEnrol(people).adding
   const credits = enrolCredits(enrolable)
@@ -95,12 +100,16 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   const peopleColumns: Col<Contact>[] = [
     {
       key: "name", header: "Name", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
-      cell: (c) => (
-        <div className="min-w-0">
-          <BesideLink className="font-medium hover:underline" kind="person" id={c.id} list={walkPeople(c.id)}>{c.name}</BesideLink>
-          <div className="text-xs text-muted-foreground">{c.title}</div>
-        </div>
-      ),
+      cell: (c) => {
+        const edit = personEdits[c.id]
+        return (
+          <div className="min-w-0">
+            <BesideLink className="font-medium hover:underline" kind="person" id={c.id} list={walkPeople(c.id)}>{c.name}</BesideLink>
+            <div className="text-xs text-muted-foreground">{c.title}</div>
+            {edit?.note && <RowNote kind="person" id={c.id} note={String(edit.note)} at={edit.at} />}
+          </div>
+        )
+      },
     },
     { key: "company", header: "Company", phone: true, cell: (c) => c.company, sort: (a, c) => a.company.localeCompare(c.company) },
     {
@@ -113,9 +122,13 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
     },
     { key: "stage", header: "Stage", phone: true, cell: (c) => <Pill tone="muted">{c.stage}</Pill> },
     {
-      key: "sequence", header: "Sequence", cell: (c) => c.inSequence
-        ? <span className="text-xs">{c.inSequence} <Pill tone="warning">already in a sequence</Pill></span>
-        : <span className="text-muted-foreground">—</span>,
+      key: "sequence", header: "Sequence", cell: (c) => {
+        const now = personEdits[c.id]?.sequence
+        const inSeq = now === undefined ? c.inSequence : String(now)
+        return inSeq
+          ? <span className="text-xs">{inSeq} <Pill tone="warning">already in a sequence</Pill></span>
+          : <span className="text-muted-foreground">—</span>
+      },
     },
     { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => <div><div>{day(c.addedOn)}</div><div className="text-xs text-muted-foreground">by {list.owner}</div></div> },
     { key: "activity", header: "Last activity", className: "tabular-nums", sort: (a, c) => a.lastActivity.localeCompare(c.lastActivity), cell: (c) => ago(c.lastActivity) },

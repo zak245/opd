@@ -11,17 +11,18 @@
 // and `X-meeting` are opened from a row, from the queue body, and — by the contact, company and deal
 // records — from theirs. `D-thread-agent` and `X-reply` live inside the thread, where sending the
 // agent's draft is the approval.
-import { useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { PageComponent } from "../../Product"
-import { openBesideNested, type BesideComponent } from "../../beside"
+import { closeBeside, openBeside, openBesideNested, type BesideComponent } from "../../beside"
 import { follow } from "../../chain"
+import { editOf, recordEdit } from "../../edits"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor } from "../../data/seed"
 import { Inbox, ThreadRoute } from "./Inbox"
 import { Tasks } from "./Tasks"
-import { actOnTask, originHere, type TaskAct } from "./acts"
+import { originHere } from "./acts"
 import { calendarOf, contactIndex, repliesFor, tasksFor } from "./data"
 import { day, dueLabel, tomorrow, waiting } from "./format"
 
@@ -140,17 +141,35 @@ ReplyBeside.head = ({ session, id }) => {
  * when it is due, what kind it is, who it is with, which step it came from. Done and Snooze are here
  * because they are the whole point of a task, and the page behind is told so its row changes in place.
  */
-const TaskBeside: BesideComponent = ({ session, id }) => {
+const TaskBeside: BesideComponent = ({ session, id, target }) => {
   const seed = seedFor(session.business)
-  // What this pane did to this task. The pane cannot ask the page behind it, and it must not offer
-  // Done twice for a task it has already finished, so it remembers its own one action.
-  const [acted, setActed] = useState<TaskAct | null>(null)
   const t = tasksFor(session).find((x) => x.id === id)
   if (!t) return <p className="text-muted-foreground">This task is not in {seed.workspace.name}.</p>
 
   const contact = contactIndex(session.business)(t.contactId)
   const first = t.contact.split(" ")[0]
   const from = t.createdBy === "sequence" ? `“${t.sequence}”` : t.createdBy === "agent" ? t.creator : `${t.creator}, by hand`
+
+  /**
+   * Done and Snooze both take this task off the list. The record goes to the shared store, which is
+   * where the row behind reads it from, and then the pane moves with the list rather than sitting on
+   * a task that is no longer there: the one that took its place, counted against the list as it is
+   * now. When nothing is left the pane closes, because there is nothing beside the page to read.
+   */
+  const act = (what: "done" | "snoozed") => {
+    const note = what === "done"
+      ? `${t.kind} with ${t.contact} marked done.${t.sequence ? ` ${first} moves to the next step of “${t.sequence}”.` : ""}`
+      : `${t.contact}'s ${t.kind.toLowerCase()} snoozed to ${day(tomorrow())}.${t.sequence ? " The sequence waits." : ""}`
+    recordEdit("task", t.id, what === "done" ? { done: true, note } : { snoozed: true, until: tomorrow(), note })
+    say(note)
+
+    const was = target.list?.ids ?? [t.id]
+    const gone = (x: string) => x === t.id || !!editOf("task", x)?.done || !!editOf("task", x)?.snoozed
+    const rest = was.filter((x) => !gone(x))
+    if (rest.length === 0) { closeBeside(); return }
+    const index = Math.min(Math.max(0, was.indexOf(t.id)), rest.length - 1)
+    openBeside({ kind: "task", id: rest[index], list: { ids: rest, index }, opener: target.opener })
+  }
 
   return (
     <div className="space-y-4">
@@ -171,37 +190,27 @@ const TaskBeside: BesideComponent = ({ session, id }) => {
       )}
 
       <div className="space-y-3 border-t pt-3">
-        {acted ? (
-          <p role="status" className="rounded-md bg-muted px-2.5 py-1.5 text-xs">
-            {acted === "done"
-              ? `Done. ${t.kind} with ${t.contact} is off the list${t.sequence ? `, and ${first} moves to the next step of “${t.sequence}”` : ""}. Undo it on the row.`
-              : `Snoozed to ${day(tomorrow())}${t.sequence ? "; the sequence waits until then" : ""}. Undo it on the row.`}
-          </p>
-        ) : (
-          <>
-            <div>
-              <Button size="sm" variant="outline" className="w-full justify-start"
-                      onClick={() => { setActed("done"); actOnTask(t.id, "done"); say(`${t.kind} with ${t.contact} marked done.`) }}>
-                Done
-              </Button>
-              <ConsequenceLine
-                className="mt-1"
-                changes={t.sequence ? `Takes it off the list and moves ${first} to the next step of “${t.sequence}”` : "Takes it off the list"}
-              />
-            </div>
+        <div>
+          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => act("done")}>
+            Done
+          </Button>
+          <ConsequenceLine
+            className="mt-1"
+            changes={t.sequence
+              ? `Takes it off the list and moves ${first} to the next step of “${t.sequence}”; this pane moves to the task that takes its place`
+              : "Takes it off the list; this pane moves to the task that takes its place"}
+          />
+        </div>
 
-            <div>
-              <Button size="sm" variant="outline" className="w-full justify-start"
-                      onClick={() => { setActed("snoozed"); actOnTask(t.id, "snoozed"); say(`${t.contact}'s ${t.kind.toLowerCase()} snoozed to ${day(tomorrow())}.`) }}>
-                Snooze to tomorrow
-              </Button>
-              <ConsequenceLine
-                className="mt-1"
-                changes={t.sequence ? `Comes back on ${day(tomorrow())}; the sequence waits until then` : `Comes back on ${day(tomorrow())}`}
-              />
-            </div>
-          </>
-        )}
+        <div>
+          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => act("snoozed")}>
+            Snooze to tomorrow
+          </Button>
+          <ConsequenceLine
+            className="mt-1"
+            changes={t.sequence ? `Comes back on ${day(tomorrow())}; the sequence waits until then` : `Comes back on ${day(tomorrow())}`}
+          />
+        </div>
 
         <div>
           <Button size="sm" variant="ghost" className="w-full justify-start"
@@ -238,6 +247,6 @@ export { LinkedInPanel, LinkedInBody, InviteCounter } from "./LinkedIn"
 export { MeetingPanel } from "./MeetingPanel"
 /** X-thread and X-reply, for a record page that wants the thread and its composer in place. */
 export { Thread } from "./Thread"
-/** What a pane says about a task, and where a page thinks it is standing. */
-export { actOnTask, onTaskAct, originHere, useRenderCount } from "./acts"
+/** Where a page thinks it is standing, and the dev render count the walk reads. */
+export { originHere, useRenderCount } from "./acts"
 export { Inbox, Tasks }

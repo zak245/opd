@@ -10,7 +10,7 @@ import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor } from "../../data/seed"
 import { DealsBoard } from "./DealsBoard"
-import { editDeal, useDealEdits } from "./edits"
+import { recordEdit, useEdit } from "../../edits"
 import { WON_STAGE, dealGlanceFields, lostConsequenceText, wonConsequenceText } from "./pipeline"
 
 export const nodes: Record<string, PageComponent> = {
@@ -34,12 +34,13 @@ function say(text: string) {
 const DealBeside: BesideComponent = ({ session, id }) => {
   const seed = seedFor(session.business)
   const b = businessById(session.business)
-  // What an earlier action in this session did to this deal. The board reads the same store.
-  const edit = useDealEdits()[id]
+  // What an earlier action in this session did to this deal, from the one store the cards and the
+  // table behind this pane read too, so the pane and the row can never say different things.
+  const edit = useEdit("deal", id)
   const found = seed.deals.find((x) => x.id === id)
   if (!found) return <p className="text-muted-foreground">This deal is not in {seed.workspace.name}.</p>
 
-  const deal = { ...found, ...edit }
+  const deal = { ...found, ...(edit as Partial<typeof found>) }
   const closed = deal.stage === WON_STAGE
   const archived = !!deal.archivedAt
   const won = wonConsequenceText(deal, seed, b)
@@ -71,7 +72,7 @@ const DealBeside: BesideComponent = ({ session, id }) => {
             className="w-full justify-start"
             disabled={!canEdit || closed || archived}
             onClick={() => {
-              editDeal(deal.id, { stage: WON_STAGE, probability: 100, forecast: "Closed", note: `Closed won · ${won}` })
+              recordEdit("deal", deal.id, { stage: WON_STAGE, probability: 100, forecast: "Closed", note: `Closed won · ${won}` })
               say(`${deal.name} closed won.`)
             }}
           >
@@ -90,7 +91,7 @@ const DealBeside: BesideComponent = ({ session, id }) => {
             className="w-full justify-start"
             disabled={!canEdit || archived}
             onClick={() => {
-              editDeal(deal.id, { archivedAt: TODAY, lostReason: "No decision", note: `Archived as lost · No decision · ${lost}` })
+              recordEdit("deal", deal.id, { archivedAt: TODAY, lostReason: "No decision", note: `Archived as lost · No decision · ${lost}` })
               say(`${deal.name} archived as lost.`)
             }}
           >

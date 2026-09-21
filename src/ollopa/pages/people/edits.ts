@@ -1,16 +1,14 @@
-// What the pane's actions did to a person, for the rest of the session.
+// The people folder's names for the one shared store, and nothing else.
 //
-// A person read beside a page can be added to a sequence, written to or called from inside the
-// pane. The row behind the pane — the People table's row, the "People at this company" card on a
-// contact record — has to show that at once, in place, because that is where the action was caused
-// (chain rule 8). The pane and the page are two different components with no props between them,
-// so the fact lives here instead, in one small store both of them read.
-//
-// In memory only, and only for this session: nothing here is a saved edit, it is what happened
-// while the person was working. A reload starts clean, the same way the demo's other local edits do.
-import { useSyncExternalStore } from "react"
+// What an action did to a person has to be readable by whatever page the pane was opened over — a
+// sequence's enrolled list, a company's contacts, a task queue — so it cannot live in this folder.
+// It lives in `src/ollopa/edits.ts`, under the kind "person", and this file only puts a typed name
+// on the four calls this folder makes. Anything outside the folder reads the same fact with
+// `useEdits("person")`.
+import { clearEdit, recordEdit, useEdit, useEdits, type Edit } from "../../edits"
 
-export interface PersonEdit {
+/** What this folder writes about a person. The rows and the pane agree on these three words. */
+export interface PersonEdit extends Edit {
   /** The sequence they are in now. "" means an action took them out of the one they were in. */
   sequence?: string
   /** One line saying what the last action did, in the words the row shows under the name. */
@@ -19,35 +17,29 @@ export interface PersonEdit {
   phoneRevealed?: boolean
 }
 
-let edits: Record<string, PersonEdit> = {}
-const listeners = new Set<() => void>()
+/** The kind every person record in the shared store is filed under. */
+export const PERSON = "person"
 
-/** Record what an action did. Replaces the map, so `useSyncExternalStore` sees a new snapshot. */
+/** Record what an action did to a person. */
 export function editPerson(id: string, patch: PersonEdit) {
-  edits = { ...edits, [id]: { ...edits[id], ...patch } }
-  listeners.forEach((l) => l())
+  recordEdit(PERSON, id, patch)
 }
 
-/** Undo one action: drop everything recorded about this person. */
+/** Undo: drop everything this session recorded about them. */
 export function clearPersonEdit(id: string) {
-  if (!edits[id]) return
-  const next = { ...edits }
-  delete next[id]
-  edits = next
-  listeners.forEach((l) => l())
+  clearEdit(PERSON, id)
 }
 
-function subscribe(l: () => void) {
-  listeners.add(l)
-  return () => { listeners.delete(l) }
+/** One person, subscribed, for the pane — which draws one and must follow it. */
+export function usePersonEdit(id: string): PersonEdit | undefined {
+  return useEdit(PERSON, id) as PersonEdit | undefined
 }
 
-/** The whole map, for a list that draws many rows. */
+/**
+ * Every person acted on this session, for a list that draws many rows. The same thing as
+ * `useEdits("person")` from the shared store, with this folder's type on it; a page outside the
+ * folder can call either.
+ */
 export function usePersonEdits(): Record<string, PersonEdit> {
-  return useSyncExternalStore(subscribe, () => edits, () => edits)
-}
-
-/** One person, for the pane, which only ever draws one. */
-export function personEdit(id: string): PersonEdit | undefined {
-  return edits[id]
+  return useEdits(PERSON) as Record<string, PersonEdit>
 }

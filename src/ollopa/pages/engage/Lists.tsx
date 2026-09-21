@@ -24,7 +24,7 @@ import { engage, useEngage } from "./store"
 import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
-import { type Col, DataTable, Pill, day, focusSearch, moveRow, n, toast, usePersisted, useKeys } from "./shared"
+import { type Col, DataTable, Pill, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
 const KINDS_OF_LIST = [
@@ -80,7 +80,7 @@ export function ListsPage({ session }: { session: Session }) {
   // A row opens its record along the trail, with the row as the anchor: the record's
   // "← Lists" and the crumb both come back to this row, lit.
   const open = (l: List) =>
-    follow(`/ollopa/lists/${l.id}`, { route: "/ollopa/lists", title: "Lists", anchor: l.id })
+    follow(`/ollopa/lists/${l.id}`, { route: "/ollopa/lists", title: h1Of("lists"), anchor: l.id })
 
   /* The row's visible actions come from the usage numbers, not from a list of names: the actions this
      seat touches often enough to be worth a click, most-used first. Everything stays in the menu. */
@@ -95,7 +95,7 @@ export function ListsPage({ session }: { session: Session }) {
       case "lists.row.add-to-sequence":
         // Acting on the whole set is the one reason to leave a list, and the jump carries the
         // filter and the trail, so the crumb comes back to this row (rule 4).
-        if (l.kind === "companies") follow(`/ollopa/people?companies=${l.id}`, { route: "/ollopa/lists", title: "Lists", anchor: l.id })
+        if (l.kind === "companies") follow(`/ollopa/people?companies=${l.id}`, { route: "/ollopa/lists", title: h1Of("lists"), anchor: l.id })
         else setEnrolling(l)
         return
       case "lists.row.add-to-campaign": return toast(`${l.name}: pick a campaign · ${n(l.memberIds.length)} records`)
@@ -115,7 +115,7 @@ export function ListsPage({ session }: { session: Session }) {
       cell: (l) => (
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-medium">{l.name}</span>
+            <RowOpen onOpen={() => open(l)}>{l.name}</RowOpen>
             <Pill tone="muted">{l.kind === "people" ? "People" : "Companies"}</Pill>
             <Pill tone={l.mode === "segment" ? "good" : "muted"}>{l.mode === "segment" ? "Segment" : "Static"}</Pill>
             {l.archived && <Pill tone="muted">Archived</Pill>}
