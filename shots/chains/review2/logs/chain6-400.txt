@@ -1,0 +1,101 @@
+
+=== CHAIN 6 · deals board › quick look › open › back; deal › contact; deal › company (400) ===
+  1. the board
+    hash      #/ollopa/deals
+    h1        Deals
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content Deals 1.84M · 410k/wk 9+ EV NEEDS YOU NOW Bo"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/deals*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review2/06-deals/01-board-400.png
+    cards     3, first deal d-118 "Gatehouse Systems · Platform"
+    focused   LI "Gatehouse Systems · Platform Gatehouse Systems €5k" visible=true
+    Enter →   hash=#/ollopa/deals drawer=true  (a quick look, or straight to the record?)
+  [shot] shots/chains/review2/06-deals/02-card-enter-400.png
+  2. a click on the card body — the quick look
+    hash      #/ollopa/deals
+    h1        Deals
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Qualified"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/deals*@0
+    h-scroll  doc=400
+    drawer    Gatehouse Systems · Platform A glance at this record. Open it for everything else. Stage Qualified Amount €4,800 Close date 22 Sep Next step Security review call · 25 Sep Owner Elena Vasquez Last activity 7 Sep · 6 days ago Open Close
+    doors in  0
+  [shot] shots/chains/review2/06-deals/03-quick-look-400.png
+    opened by "Open"
+  3. the deal record
+    hash      #/ollopa/deals/d-118
+    h1        Gatehouse Systems
+    trail     Deals
+    pane      (none)
+    focus     H1 "Gatehouse Systems"
+    lit       Gatehouse Systems
+    row mark  (none)
+    mounted   /ollopa/deals hidden inert@0 , /ollopa/deals/d-118*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review2/06-deals/04-deal-400.png
+  4. back on the board, the card lit
+    hash      #/ollopa/deals
+    h1        Deals
+    trail     (empty)
+    pane      (none)
+    focus     LI[Gatehouse Systems · Platform, €5k, Qualified. Enter for the quick look, O for the record, M for the menu.] "Gatehouse Systems · Platform Gatehouse Systems €5k Closes 22"
+    lit       Gatehouse Systems · Platform Gatehouse Systems €5k Closes 22 Sep Security review
+    row mark  (none)
+    mounted   /ollopa/deals*@39
+    h-scroll  doc=400
+  [shot] shots/chains/review2/06-deals/05-back-board-400.png
+    company   opened from the card by "Gatehouse Systems"
+  5. board card › company beside
+    hash      #/ollopa/deals
+    h1        Deals
+    trail     (empty)
+    pane      "Gatehouse Systems" / "Cold · 4 contacts · gatehousesystems.com" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Research · 12 credits | Mark do not prospect
+    walker    (none)
+    body      Gatehouse Systems Cold · 4 contacts · gatehousesystems.com
+    focus     DIV "From Deals Gatehouse Systems Cold · 4 contacts · gatehousesy"  [inside the pane]
+    lit       Gatehouse Systems · Platform Gatehouse Systems €5k Closes 22 Sep Security review
+    row mark  (none)
+    mounted   /ollopa/deals*@39
+    h-scroll  doc=400
+  [shot] shots/chains/review2/06-deals/06-board-company-400.png
+    after Esc focus=BUTTON "Gatehouse Systems" visible=true
+    contacts  4 on the deal record
+  6. deal record › contact beside
+    hash      #/ollopa/deals/d-118
+    h1        Gatehouse Systems · Platform · Deals
+    trail     (empty)
+    pane      "Luca Yilmaz" / "Head of Demand Generation · Gatehouse Systems" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Choose a sequence | Add to the chosen sequence | Draft an email | Reveal the phone · 8 credits | Previous [ | Next ]
+    walker    Previous [ 1 of 4 Next ]
+    body      Luca Yilmaz Head of Demand Generation · Gatehouse Systems
+    focus     DIV "From Gatehouse Systems · row Luca Yilmaz Luca Yilmaz Head of"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Luca Yilmaz
+    mounted   /ollopa/deals/d-118*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review2/06-deals/07-deal-contact-400.png
+    after Esc focus=BUTTON "Luca Yilmaz" visible=true
+  [shot] shots/chains/review2/06-deals/08-deal-contact-closed-400.png
+    company   the deal record's company control is "Gatehouse Systems"
+  7. deal record › company — beside, or a whole page with no way back?
+    hash      #/ollopa/deals/d-118
+    h1        Gatehouse Systems · Platform · Deals
+    trail     (empty)
+    pane      "Gatehouse Systems" / "Cold · 4 contacts · gatehousesystems.com" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Research · 12 credits | Mark do not prospect
+    walker    (none)
+    body      Gatehouse Systems Cold · 4 contacts · gatehousesystems.com
+    focus     DIV "From Gatehouse Systems Gatehouse Systems Cold · 4 contacts ·"  [inside the pane]
+    lit       Luca Yilmaz
+    row mark  (none)
+    mounted   /ollopa/deals/d-118*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review2/06-deals/09-deal-company-400.png

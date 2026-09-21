@@ -1,5 +1,380 @@
 # Stage 3 review: the chains
 
+Round 2 is the current review. Round 1, the walk that produced the defect list the owners fixed, is
+kept below under its own heading.
+
+---
+
+# Round 2 — the walk after the fixes
+
+I built none of this. I re-walked every chain in `BUILD-CHAINS.md` at 1440 and at 400, by keyboard
+wherever the brief asks for the keyboard, with my own driver (`scripts/review-chains.mjs`, updated
+for round 2) against my own `npx vite preview --port 4180`; the render counters were read from the
+dev build on 4181, where `import.meta.env.DEV` is true. Both servers were killed afterwards.
+
+186 screenshots are in `shots/chains/review2/`, one per step, with the raw observation logs — the
+trail, the pane, what had focus, what was lit, which pages were mounted, at what scroll — in
+`shots/chains/review2/logs/`. Round 1's 180 screenshots stay where they were, in
+`shots/chains/review/`, so the round-1 proof lines below still point at something.
+
+Two changes to the harness, because round 1's numbers would have been wrong against the fixed
+build: the crumb is now counted from wherever the page *actually* puts focus on arrival (backwards
+first, since the header sits above the content) instead of from a re-seeded top of document; and a
+shared `actInPane` helper does the pane's real action — pick a destination, press the button, read
+the row before and after — so "the effect shows where it was caused" is measured the same way on
+every chain.
+
+**Disclosure ceiling, unchanged and restated:** D2 scores 1 everywhere (the pane's fields come from
+a fixed `glanceFields` list, not from `useDisclosure`, so no usage number sits behind the pane's
+choice of level one) and D9 scores 1 everywhere (no analytics; the residue `BUILD-CHAINS.md`
+already allows). 16 is therefore a full disclosure card in this build, and every chain now reaches
+it — the two lines round 1 docked, D4 on chain 7 and D5 on chain 6, are both back to 2.
+
+---
+
+## Scores at a glance
+
+| Chain | Chain card | Δ | Disclosure card | Δ |
+|---|---|---|---|---|
+| 1 · Sequence › person | **18**/18 | +3 | **16**/18 | — |
+| 2 · Campaign › audience › person | **17**/18 | +1 | **16**/18 | — |
+| 3 · Company › person | **18**/18 | +4 | **16**/18 | — |
+| 4 · Sequence › setting | **18**/18 | +1 | **16**/18 | — |
+| 5 · Settings › set-up | **18**/18 | +1 | **16**/18 | — |
+| 6 · Deals | **17**/18 | +2 | **16**/18 | +1 |
+| 7 · Inbox, Tasks, Home | **18**/18 | +6 | **16**/18 | +1 |
+| 8 · Index laps | **18**/18 | +2 | **16**/18 | — |
+| 9 · Cross-cutting | **18**/18 | +1 | **16**/18 | — |
+
+Two chains are short of a full chain card: chain 2 on C8 and chain 6 on C5. Both are named below.
+
+---
+
+## Chain 1 — Sequence › enrolled person beside › next › previous › act › open the page › back
+
+Meridian SDR, `/ollopa/sequences/seq-1`. Shots: `shots/chains/review2/01-sequence/`.
+**Chain: 18/18. Disclosure: 16/18.**
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | With Mateo Okonkwo beside it the sequence table was still on screen, same 34 rows, same sort, his row marked. `01-sequence/02-pane-1440.png`. |
+| C2 | 2 | The crumb landed back at scroll 855, row lit, focus on the name button — and the row still carried the move I had made from the pane. `01-sequence/07-back-1440.png`. |
+| C3 | 2 | Trail empty on arrival, empty through the pane and the walker, `Q4 enterprise outbound ›` only after "Open the page". |
+| C4 | 2 | "People (34)" inside the sequence, with a search box and six status filters; rows open beside. |
+| C5 | 2 | Actions, a destination picker, and "Previous [ · 1 of 34 · Next ]"; `]` went to Orla Ivanova, `[` came back. No `data-door` in the pane. |
+| C6 | 2 | The move is reversible from both sides: "Undo" sits on the row and in the pane, and pressing it put the row back to *Active · 1. Email* and the pane's Sequence field back to "Q4 enterprise outbound · step 1 of 3". `01-sequence/92-undo-1440.png`. |
+| C7 | 2 | Every action has its consequence under it, and the picker restates the current state: "Choose where Mateo Okonkwo goes; they are in Warm inbound follow-up now". |
+| **C8** | **2** *(was 0)* | The action lands on the row. Before: *Active · 1. Email*. After: the row reads "moved from Q4 enterprise outbound to Warm inbound follow-up · step 1 · Undo" and its Status cell reads "Moved to Warm inbound follow-up", while the pane's Sequence field reads "Warm inbound follow-up · step 1 of 5". Page and pane agree. `01-sequence/05-acted-1440.png`. |
+| **C9** | **2** *(was 1)* | The whole lap on the keyboard: 8 tabs to the row, Enter, `]`, `[`, the picker, "Open the page" 1 Shift+Tab from where the action left focus — and arrival puts focus on the lit `H1 "Mateo Okonkwo"`, with the crumb 1 Shift+Tab away. The counters: `page renders: 2` before the pane, `2` with it open, `2` after the action; only `rows renders` moved, 2 → 6. Opening still does not re-render; acting re-renders only the rows. |
+
+At 400 the same lap runs, the pane is full width and names where it came from ("From Q4 enterprise
+outbound · row Mateo Okonkwo"), and the crumb is 1 Shift+Tab from the h1.
+`01-sequence/02-pane-400.png`, `07-back-400.png`.
+
+---
+
+## Chain 2 — Campaign › audience beside › the page › a person beside › back › back
+
+Ridgeline marketer. Shots: `shots/chains/review2/02-campaign/`.
+**Chain: 17/18. Disclosure: 16/18.**
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | The campaign stayed on screen at scroll 136 with the audience link marked while the audience was read beside it. |
+| C2 | 2 | Both returns lit and focused: the audience crumb to Amara Okonkwo, the campaign crumb to the audience link. |
+| C3 | 2 | `Onboarding week 1 › Enterprise prospects, EMEA ›`, three pages mounted, none `display:none`, then empty again. |
+| C4 | 2 | The recipients are a 40-row table inside the audience record. |
+| C5 | 2 | The person pane walks "1 of 40"; the audience pane has no walker, correctly, having been opened from a single link. |
+| C6 | 2 | Scrolls survived both ways (campaign 136, audience 362). |
+| C7 | 2 | "Runs the rules again now; the total and the 5,759 after suppressions may both change" / "Holds Enterprise prospects, EMEA at 6,122". |
+| **C8** | **1** *(was 1)* | **The one place the round-1 fix did not reach.** I pressed "Add to Renewal 60 days" from the person pane on the audience record. The pane said "Done · added to Renewal 60 days · step 1 · Undo" and the toast announced it — and the recipients row behind was byte-for-byte unchanged: "Amara Okonkwo Head of Growth · Umber Studios", no added line, no undo, nothing. The sequence and company tables both grew one; this one did not. `02-campaign/90-acted-1440.png`. |
+| **C9** | **2** *(was 1)* | Arrival focus on the lit `H1`, both times; the audience crumb 1 Shift+Tab away at 1440 and at 400. |
+
+---
+
+## Chain 3 — Company › search a person inside it › beside › act › next › back
+
+Meridian AE, Northwind Analytics (`co-1`), 24 contacts. Shots: `shots/chains/review2/03-company/`.
+**Chain: 18/18. Disclosure: 16/18.**
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | Company page held at scroll 3192 with Petra Okonkwo's row marked. |
+| C2 | 2 | Crumb back at scroll 2824, Rosa Okonkwo's row lit and focused. |
+| C3 | 2 | Trail empty → `Northwind Analytics ›` → empty. |
+| C4 | 2 | Unchanged and still the model answer: heading "Contacts at this company 24", a search box, three filters, paging, and "Open in People to act on all 24 at once; it carries Northwind Analytics as the filter." |
+| **C5** | **2** *(was 1)* | The walker now reads "1 of 24", not "1 of 10". I pressed `]` thirty times: it ended on "24 of 24" (Zev Novak) and the table behind had paged itself to "21–24 of 24" to keep the marked row on screen. `03-company/90-walk-end-1440.png`. |
+| C6 | 2 | Nothing destroyed; the move carries an Undo. |
+| C7 | 2 | Consequence lines and "Reveal the phone · 8 credits" unchanged. |
+| **C8** | **2** *(was 0)* | The row went from "CMO · Cold · in Churned re-engagement · yesterday" to "CMO · Cold · in **Q4 enterprise outbound** · yesterday — moved from Churned re-engagement to Q4 enterprise outbound · step 1 · Undo". |
+| **C9** | **2** *(was 1)* | 4 tabs from the search box to the row, the rest of the lap on the keyboard, arrival focus on the lit `H1 "Rosa Okonkwo"`. |
+
+**Would the list hold at 200?** Now yes. The walker takes the whole filtered set and pages the table
+under it, so a person can open contact 1 and press `]` to contact 200 without closing the pane, and
+the "Open in People … carries the filter" escape is still there for acting on the set at once.
+
+---
+
+## Chain 4 — Sequence › sending-rules link › Settings with the row lit › back to the row
+
+Meridian admin. Shots: `shots/chains/review2/04-setting/`.
+**Chain: 18/18. Disclosure: 16/18.**
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | The sequence stayed mounted and inert while I was in Settings and came back untouched. |
+| C2 | 2 | Crumb back to the sequence with "Bounce guard thresholds (Settings)" lit and focused. |
+| C3 | 2 | `Q4 enterprise outbound › Email sending`. |
+| C4 | 2 | The link sits in the sequence's own sending settings and carries `?row=mail.bounce-guard`. |
+| C5 | 2 | Nothing opened a further level. |
+| C6 | 2 | Nothing destroyed either way. |
+| C7 | 2 | "warns at 4% · pauses at 6% · 1.9% of 14,200 in 7 days · Nothing paused · Auto-pause stops every mailbox on the domain until you resume it" — all before any edit. |
+| **C8** | **2** *(was 1, untested)* | I tested it this round: pressing Up on "Warn at" took it 4 → 5 immediately, in the field, on the lit row, with the observed-rate line beside it unchanged (correctly — the observed rate did not change). No misreport. See the real-user list for what is missing around it. |
+| C9 | 2 | 29 tabs at 1440 / 14 at 400 to the link, Enter, and focus lands **in the "% warns" field** on the lit row. `04-setting/02-settings-1440.png`. |
+
+---
+
+## Chain 5 — Settings › Change the answers › finish › back to the row with the notice
+
+Meridian admin. Shots: `shots/chains/review2/05-setup/`.
+**Chain: 18/18. Disclosure: 16/18.**
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | The set-up runs inside the shell, sidebar and header intact, crumb `Settings › Workspace set-up`. |
+| C2 | 2 | "Save the answers" returns to Settings with the Workspace profile row lit and focus on "Change the answers". |
+| C3 | 2 | `Settings ›` in, empty out. |
+| C4 | 2 | The answers live under "How your team works"; leaving carries the trail. |
+| C5 | 2 | No pane, nothing deeper. |
+| C6 | 2 | "Answers are saved as you make them. Leaving and coming back returns this page exactly as it is." |
+| C7 | 2 | "Starter includes 3 seats at $147 a month. 150 seats need Growth: $11850 a month for 150", and "Sent when you press Start" over the invites — total for the period, before the commit. |
+| C8 | 2 | "Saved. Product-led growth: **Lists and Sequences left your sidebar.**" — announced live and lit in place, with the sidebar redrawn to match. |
+| **C9** | **2** *(was 1)* | Arriving in the set-up now puts focus on the lit `H1 "Workspace set-up"`, at both widths, so the keyboard carries on from the questions rather than from the top of the document. |
+
+---
+
+## Chain 6 — Deals board › quick look › open › back; deal › contact; deal › company
+
+Meridian AE. Shots: `shots/chains/review2/06-deals/`.
+**Chain: 17/18. Disclosure: 16/18.**
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | Company beside the board and contact beside the record; the origin stayed put both times. |
+| C2 | 2 | The crumb returns to the board with the card lit and focused, at both widths. |
+| C3 | 2 | `Deals ›` after the quick look's "Open", empty after the crumb. |
+| C4 | 2 | Contacts are a section on the record; the company opens beside from both the card and the record. |
+| **C5** | **1** *(was 1)* | The contact and company panes are right and open nothing deeper. **The quick look still has no previous or next** — its only controls are the Stage picklist, "Open" and "Close", so scanning a column still costs a close and a reopen per card. `06-deals/92-quicklook-keyboard-1440.png`. |
+| C6 | 2 | Nothing destroyed. |
+| C7 | 2 | "Stops sequences for the 3 contacts here; the 4 people stay on People". |
+| **C8** | **2** *(was 1, untested)* | Tested this round: changing Stage to Discovery in the quick look moved the card out of Qualified and into the Discovery column, whose header went to "4 · €245k", with the board still under the drawer. `06-deals/93-stage-moved-1440.png`. |
+| **C9** | **2** *(was 1)* | **The quick look now opens from the keyboard.** With the card focused, Enter opens the drawer and the hash does not change; the card's own label teaches the rest — "Gatehouse Systems · Platform, €5k, Qualified. Enter for the quick look, O for the record, M for the menu." Esc returns focus to the opener; arrival on the record focuses the lit `H1`. |
+
+Disclosure D5 returns to 2: level one of the deal record now works by keyboard.
+
+---
+
+## Chain 7 — Inbox, Tasks, Home
+
+Meridian SDR. Shots: `shots/chains/review2/07-work/` and `shots/chains/review2/07-work-thread/`.
+**Chain: 18/18. Disclosure: 16/18.** Round 1's worst chain is now the biggest move, +6.
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | The reply list and the open thread both stay on screen behind the pane. |
+| C2 | 2 | Home › a reply › crumb: back on Home with the Sami Novak item lit and focused. `07-work/13-home-back-1440.png`. |
+| C3 | 2 | `Home ›` out, empty back. |
+| **C4** | **2** *(was 1)* | The row menu is labelled by what is behind it — "Cyrus Rossi: the contact and the deal, reply, route, read as, record" — and its first group, under the heading "The people and deals behind this reply", is "Open Cyrus Rossi beside the thread" and "Open Zephyr Holdings · Platform beside the thread". 21 items, down from 25, with the two duplicates gone. `07-work/02-inbox-menu-1440.png`. |
+| **C5** | **2** *(was 1)* | Both routes to the contact pane now carry the list: from the row menu and from the thread's "Open Cyrus Rossi beside this", both read "1 of 4" and both walk on `]`. The one in-pane step works and comes back: the deal opens with "‹ Kai Andersen" in the header and, on `‹ back`, the contact pane returns with its walker intact at "2 of 4". The deal pane itself walks the deals behind the reply, "1 of 2". `07-work-thread/04-deal-nested-1440.png`, `05-back-in-pane-1440.png`. |
+| **C6** | **2** *(was 1)* | "Mark complete" no longer strands the pane. |
+| C7 | 2 | Consequence lines throughout, including "Owned by Dev Dubois; only the owner or an admin can close it" in the nested deal. |
+| **C8** | **2** *(was 0)* | The clearest fix in the round. After "Mark complete" the page shows Kai Kowalski, the row mark is on Kai Kowalski, **and the pane reads Kai Kowalski**, with the walker at "1 of 13" on a list that is now 13. `07-work/10-task-done-1440.png`. |
+| **C9** | **2** *(was 1)* | The pane takes focus when it opens from the row menu — the log reads `[inside the pane]` at 1440 and at 400, where round 1 left focus on the trigger. Esc returns to the row. |
+
+---
+
+## Chain 8 — Index laps: Sequences, People, Companies, Lists, Templates, Campaigns
+
+Meridian SDR, except Campaigns (not in that seat) as the Ridgeline marketer.
+Shots: `shots/chains/review2/08-indexes/`. **Chain: 18/18. Disclosure: 16/18.**
+
+Six for six at 1440 and five checked by hand at 400 (my automated row-finder does not match the
+phone card layout; I walked those by hand rather than report an instrument failure as a defect).
+Every lap pushed a crumb and every crumb came back with the row lit and focused.
+
+| # | Score | What I saw |
+|---|---|---|
+| C1 | 2 | The index stays mounted, `visibility:hidden` and `inert`, at its own scroll. |
+| C2 | 2 | Sequences → seq-6, People → c-763, Companies → co-3, Lists → list-13, Templates → tpl-7, Campaigns → camp-7; all six lit and focused on the way back. |
+| **C3** | **2** *(was 1)* | The Templates crumb now reads "Templates", matching the `h1` I left. All six crumbs read the way their page did. |
+| C4–C8 | 2 | No pane on these laps, nothing acted on, nothing deeper. |
+| **C9** | **2** *(was 1)* | Sequences and Lists have a real name button at 1440 now, so there is something to Tab to; Templates and Campaigns still open by the row (see the real-user list). At 400 all five laps open from the name and land on the lit `H1`. |
+
+---
+
+## Chain 9 — Cross-cutting
+
+Shots: `shots/chains/review2/09-cross/`. **Chain: 18/18. Disclosure: 16/18.**
+
+Everything held, at both widths:
+
+- Trail empty after a sidebar click, after a ⌘K palette jump, after a deep link, and after sign-out
+  (`ollopa.chain.meridian.Marcus Adeyemi` present before, gone after; nothing in `localStorage`;
+  signing back in gives an empty trail).
+- The half-typed subject survived: I opened the step door, typed until it read "Closing the loop
+  HALF-TYPED", followed a contact, came back on the crumb — same text, **and the step door still
+  open**.
+- The page behind does not re-render when the pane opens: `page renders: 2` before, during and
+  after, with `rows renders` moving only when I acted.
+- `prefers-reduced-motion`: the pane's computed `transition-property` is `none`.
+- Esc closes and focus goes back to the opener.
+- No `data-door` in any pane, on any chain, at either width.
+- Nothing opens past two levels: from the nested deal pane the only ways on are `‹ back` and
+  "Open the page".
+
+One thing to note rather than score: the pane now contains a `role="combobox"` ("Choose a
+sequence") that opens a listbox of 11 sequences in a portal outside the pane. It is not a `Door` —
+the pane still has zero — and RULES rule 2 counts a menu as its own channel, so I judge it inside
+the rule. `01-sequence/91-picker-1440.png`.
+
+---
+
+# The fifteen items, one by one
+
+## The ten defects
+
+**1. A pane action changes nothing on the page behind it — PARTLY FIXED.**
+Fixed on the sequence (the row gains "moved from … to … · step 1 · Undo" and its Status cell
+changes), on the company (the row's sequence changes in place), and on the deals board (the card
+moves column). **Not fixed on the audience record**: "Add to Renewal 60 days" from the person pane
+leaves the recipients row byte-for-byte identical while the pane says "Done · added to Renewal 60
+days · step 1". The shared edits store reaches engage, companies, people, deals and work; marketing
+is the folder it did not reach. Still costs chain 2 C8. Owner: `src/ollopa/pages/marketing/`.
+
+**2. Tasks: the pane and the page disagree — FIXED.**
+"Mark complete" now moves the page, the row mark and the pane together, and the walker goes 14 → 13.
+
+**3. Focus dropped to the document body on every `follow` — FIXED.**
+Every arrival I watched — contact record, audience record, person record, deal record, Settings,
+the set-up, all six index records, at both widths — lands with focus on the page's `h1`, lit, with
+the crumb one Shift+Tab away. The one exception is under new defects below.
+
+**4. Previous and next walked a page, not the list — FIXED.**
+"1 of 24" on a 24-row list; thirty presses of `]` reach "24 of 24" and the table pages itself to
+21–24 underneath.
+
+**5. The deals board quick look was mouse-only — FIXED.**
+Enter on a focused card opens the drawer without changing the hash, and the card's accessible name
+now teaches all three keys.
+
+**6. The pane did not take focus when opened from a menu — FIXED.**
+Focus is inside the pane at both widths.
+
+**7. The thread's contact pane carried no list — FIXED.**
+"1 of 4" from both routes, and `besideBack` restores the walker.
+
+**8. The Inbox row's unlabelled 25-item menu — FIXED.**
+Labelled by its contents, grouped under real headings, contact and deal first, duplicates gone,
+21 items.
+
+**9. A `follow` into Settings with no `?row=` — FIXED.**
+The deal record's link is now `/ollopa/settings/pipeline?row=pipe.required-at-stage` and lands with
+"Required to enter a stage" lit. I found no other bare settings link on Tasks or the Inbox.
+
+**10. A crumb that did not read the way the page did — FIXED.**
+Templates now reads "Templates", at both widths.
+
+## The eight "wrong for a real person" items
+
+*(Round 1 listed eight, not five; all eight are accounted for.)*
+
+**1. On a phone the origin is not visible — PARTLY FIXED.** The pane still covers the page at 400,
+which the brief licenses. What is new is that the pane now says where it came from in its first
+line — "From Q4 enterprise outbound · row Mateo Okonkwo", "From Inbox · row Cyrus Rossi", "From
+Deals" — so the origin is at least *named* when it cannot be seen.
+
+**2. The pane pushed the row's own actions off screen — PARTLY FIXED.** Each row now keeps a "…"
+menu pinned at the right edge of the shrunken table, so the row's actions stay reachable while the
+pane is open. The Added and Last activity columns still disappear.
+
+**3. "Move to …" guessed the destination — FIXED.** It is now a two-part control: "Choose a
+sequence" then "Move to the chosen sequence", with the current state restated ("Choose where Mateo
+Okonkwo goes; they are in Warm inbound follow-up now") and an Undo on both the row and the pane.
+
+**4. Index row names that are not links — PARTLY FIXED.** Sequences and Lists have a name button at
+1440 now. **Templates and Campaigns still do not**: at 1440 the name is plain text and the row
+itself is the target. The product still teaches two rules for the same gesture.
+
+**5. The AE's company record labelled Accounts and Companies at once — FIXED.** The back link now
+reads "Companies" and matches the `h1`.
+
+**6. Tasks says "1 of 14" with one task on screen — NOT FIXED.** The page still shows a single task
+while the pane counts the queue. The number is true of the queue and false of the screen.
+
+**7. The quick look has no way to the next card — NOT FIXED.** Still Stage, Open, Close.
+
+**8. "Open the deal" on a reply with no deal — FIXED.** The menu item now reads "Create a deal from
+this reply" when there is no deal, instead of leaving for an unrelated one.
+
+---
+
+# New defects the fixes introduced
+
+**N1. Two rows lit at once, briefly.** At 400 on the deal record: I opened a contact beside,
+pressed Esc, then opened the company beside within the three-second return highlight. The pane read
+"Gatehouse Systems" while "Luca Yilmaz" was still lit on the page. The close-focus fix leaves its
+highlight running and opening a second pane does not clear it, so for up to three seconds the page
+marks one row while the pane reads another. Small, and self-clearing — but it is the same class of
+thing as defect 2. Owner: `src/ollopa/ui/Beside.tsx`.
+
+**N2. The arrival fix does not reach the Inbox thread route.** Home › a reply › the reply page
+(`/ollopa/inbox/r-6`) lands with focus on an `H2` and **nothing lit**, where every other followed
+page lands on a lit `h1`. The crumb and the return both work; it is the arrival cue that is
+missing, and it is the SDR's most-used follow. Owner: `src/ollopa/pages/work/`.
+
+Nothing else regressed: I re-ran all nine cross-cutting checks and all six index laps, and every
+round-1 pass still passes.
+
+---
+
+# Still wrong for a real person, after round 2
+
+1. **The Tasks queue still shows one task and counts fourteen** (real-user item 6, unfixed).
+2. **The quick look still cannot walk a column** (real-user item 7, unfixed).
+3. **Templates and Campaigns rows still have no name control at 1440** (real-user item 4, half
+   done).
+4. **Nothing confirms the setting was saved.** Pressing Up on "Warn at" takes 4 to 5 and that is
+   all: no "saved", no live-region announcement, no note that the sequence which sent me here is
+   affected. Every other change in the product says something; this one, which pauses mailboxes,
+   says nothing.
+5. **The sequence's "People (34)" heading does not move when someone leaves it.** The row says
+   "Moved to Warm inbound follow-up" and offers Undo, so the heading arguably should not change
+   until the undo window closes — but nothing says that, and the count is the number a person
+   reads first.
+6. **Walking the pane away from the open thread.** On the Inbox, `]` moves the pane to the next
+   reply while the reading pane keeps showing the first one. Both are labelled, so nothing lies,
+   but the screen then shows two different replies side by side with no relation between them.
+7. **The sequence picker is an 11-item list with no search.** Fine at eleven; a workspace with
+   sixty sequences would be scrolling a menu inside a pane.
+8. **The toast overlaps the table and the pane.** On a 900-high window the "moved from … to …"
+   toast sits over the bottom rows and over the pane's walker. `01-sequence/05-acted-1440.png`.
+
+---
+
+# What I would tell the coordinator
+
+Eight of the ten defects are fixed outright, one is fixed everywhere but one folder, and one — the
+focus fix — is fixed everywhere but one route. Five of the eight real-user items are fixed, three
+partly or not at all, and two small new things appeared, both in the class of "the page and the
+pane briefly disagree".
+
+Seven of the nine chains are at 18 and 18-minus-the-documented-residue. The two that are not are
+named, narrow, and in one folder each.
+
+---
+
+## Round 1 — the first walk (superseded by round 2 above)
+
 I built none of this. I read `BUILD-CHAINS.md`, `RULES.md`, `knowledge-base/13-chains-of-work.md`
 section 6 and `src/ollopa/ui/README.md`, then wrote my own driver — `scripts/review-chains.mjs` —
 rather than running the builders' `walk-*.mjs`, and walked every chain in the brief at 1440 and at
@@ -16,7 +391,7 @@ I say so and score it down rather than guess.
 
 ---
 
-## How I scored
+### How I scored
 
 **Disclosure** is the nine-question score at the end of `RULES.md`. Two of its lines are the same
 everywhere in this build and I will not repeat the argument nine times:
@@ -36,7 +411,7 @@ So 16 is a full disclosure card in this build. I say where a chain drops below i
 
 ---
 
-## Chain 1 — Sequence › enrolled person beside › next › previous › open the page › back
+### Chain 1 — Sequence › enrolled person beside › next › previous › open the page › back
 
 Meridian SDR, `/ollopa/sequences/seq-1`. Shots: `shots/chains/review/01-sequence/`.
 
@@ -63,7 +438,7 @@ the crumb is one tab away. `01-sequence/02-pane-400.png`, `01-sequence/06-back-4
 
 ---
 
-## Chain 2 — Campaign › audience beside › open the page › a person beside › back › back
+### Chain 2 — Campaign › audience beside › open the page › a person beside › back › back
 
 Ridgeline marketer, `/ollopa/campaigns/camp-4`. Shots: `shots/chains/review/02-campaign/`.
 
@@ -83,7 +458,7 @@ Ridgeline marketer, `/ollopa/campaigns/camp-4`. Shots: `shots/chains/review/02-c
 
 ---
 
-## Chain 3 — Company › search a person inside it › open beside › act › next › back
+### Chain 3 — Company › search a person inside it › open beside › act › next › back
 
 Meridian AE, Northwind Analytics (`co-1`), the largest account in the seed at 24 contacts.
 Shots: `shots/chains/review/03-company/`.
@@ -110,7 +485,7 @@ walker has to take the whole filtered set, or say plainly that it is walking a p
 
 ---
 
-## Chain 4 — Sequence › sending-rules link › Settings with the row lit › back to the sequence row
+### Chain 4 — Sequence › sending-rules link › Settings with the row lit › back to the sequence row
 
 Meridian admin. Shots: `shots/chains/review/04-setting/`.
 
@@ -130,7 +505,7 @@ Meridian admin. Shots: `shots/chains/review/04-setting/`.
 
 ---
 
-## Chain 5 — Settings › Change the answers › finish › back to the row with the notice
+### Chain 5 — Settings › Change the answers › finish › back to the row with the notice
 
 Meridian admin. Shots: `shots/chains/review/05-setup/`.
 
@@ -150,7 +525,7 @@ Meridian admin. Shots: `shots/chains/review/05-setup/`.
 
 ---
 
-## Chain 6 — Deals board › quick look › open › back; deal › contact beside; deal › company beside
+### Chain 6 — Deals board › quick look › open › back; deal › contact beside; deal › company beside
 
 Meridian AE. Shots: `shots/chains/review/06-deals/`.
 
@@ -173,7 +548,7 @@ level one of the deal record does not.
 
 ---
 
-## Chain 7 — Inbox, Tasks, Home
+### Chain 7 — Inbox, Tasks, Home
 
 Meridian SDR. Shots: `shots/chains/review/07-work/` and `shots/chains/review/07-work-thread/`.
 
@@ -198,7 +573,7 @@ non-standard icon is the evidence the rule cites.
 
 ---
 
-## Chain 8 — Index laps: Sequences, People, Companies, Lists, Templates, Campaigns
+### Chain 8 — Index laps: Sequences, People, Companies, Lists, Templates, Campaigns
 
 Meridian SDR, except Campaigns, which is not in that seat and opens a no-access page — that lap was
 run as the Ridgeline marketer. Shots: `shots/chains/review/08-indexes/`.
@@ -229,7 +604,7 @@ back with the row lit and focused:
 
 ---
 
-## Chain 9 — Cross-cutting
+### Chain 9 — Cross-cutting
 
 Shots: `shots/chains/review/09-cross/`.
 
@@ -263,9 +638,9 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 
 ---
 
-# The defect list
+## The defect list
 
-## 1. A pane action changes nothing on the page behind it — the page then misreports state
+### 1. A pane action changes nothing on the page behind it — the page then misreports state
 
 - **Chain:** 1 and 3 (and by construction every pane with an action).
 - **Step:** chain 1 step 2→3, "Move to Warm inbound follow-up"; chain 3 step 3, "Move to Q4
@@ -284,7 +659,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
   `src/ollopa/pages/companies/CompanyContacts.tsx` act through it. The two properties are not
   actually in conflict — *opening* must not re-render; *acting* must.
 
-## 2. Tasks: the pane and the page disagree about which task you are on
+### 2. Tasks: the pane and the page disagree about which task you are on
 
 - **Chain:** 7. **Step:** Tasks › contact beside › "Mark complete".
 - **What I saw:** the page advanced to "Step 2 of 3 · Send the follow-up" for Kai Kowalski, the row
@@ -296,7 +671,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Owner:** `src/ollopa/pages/work/Tasks.tsx`, with `src/ollopa/beside.ts` (the store has no way to
   be told its target is gone).
 
-## 3. Focus is dropped to the document body on every `follow`
+### 3. Focus is dropped to the document body on every `follow`
 
 - **Chain:** 1, 2, 3, 5, 6, 7, 8 — every chain except 4.
 - **Step:** every "Open the page", every index row, every `FollowLink`.
@@ -310,7 +685,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Owner:** `src/ollopa/shell/AppShell.tsx` — the return cue already knows how to move focus on
   `back()`; arrival by `follow()` has no equivalent.
 
-## 4. Previous and next walk a page of the list, not the list, and say "10 of 10" for 24
+### 4. Previous and next walk a page of the list, not the list, and say "10 of 10" for 24
 
 - **Chain:** 3. **Step:** step 4, `]` pressed repeatedly.
 - **What I saw:** from the first contact, twelve presses of `]` ended on "10 of 10" while the
@@ -322,7 +697,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Owner:** `src/ollopa/pages/companies/CompanyContacts.tsx` (it hands `openBeside` the ids of the
   current page only).
 
-## 5. The deals board's quick look cannot be opened from the keyboard
+### 5. The deals board's quick look cannot be opened from the keyboard
 
 - **Chain:** 6. **Step:** step 2.
 - **What I saw:** with the card focused, Enter navigated straight to `/ollopa/deals/d-118`; no
@@ -335,7 +710,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Costs:** chain C9 (1) and disclosure D5 (1) on chain 6.
 - **Owner:** `src/ollopa/pages/deals/DealCard.tsx`.
 
-## 6. The pane does not take focus when it is opened from a menu
+### 6. The pane does not take focus when it is opened from a menu
 
 - **Chain:** 7. **Step:** Inbox › "…" › "Open contact".
 - **What I saw:** the pane opened with Cyrus Rossi in it and focus stayed on the "More actions for
@@ -345,7 +720,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Costs:** chain C9 on chain 7.
 - **Owner:** `src/ollopa/ui/Beside.tsx`.
 
-## 7. The same pane has next/previous down one route and not down the other
+### 7. The same pane has next/previous down one route and not down the other
 
 - **Chain:** 7. **Step:** thread › "Contact details" › "Open Cyrus Rossi beside this", then `]`.
 - **What I saw:** nothing happened; the pane has no footer and no list. The identical pane opened
@@ -354,7 +729,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Costs:** chain C5 (1) on chain 7.
 - **Owner:** `src/ollopa/pages/work/Thread.tsx` (its `openBeside` passes no `list`).
 
-## 8. The contact beside a reply is item 11 of an unlabelled 25-item menu
+### 8. The contact beside a reply is item 11 of an unlabelled 25-item menu
 
 - **Chain:** 7. **Step:** Inbox row.
 - **What I saw:** the full menu, in order: Reply · Book meeting · Hand to an AE · Open the deal ·
@@ -367,7 +742,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Costs:** chain C4 (1) and disclosure D4 (1) on chain 7.
 - **Owner:** `src/ollopa/pages/work/Inbox.tsx`.
 
-## 9. A `follow` into Settings without a `?row=` lands with nothing lit
+### 9. A `follow` into Settings without a `?row=` lands with nothing lit
 
 - **Chain:** 6 (also the Queue's "how it was built" link and the Inbox's integrations links).
 - **Step:** deal record › "Settings › Pipeline and data".
@@ -382,7 +757,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 - **Owner:** `src/ollopa/pages/deal/DealRecord.tsx` and the other callers, not the settings folder —
   the anchors exist, the callers do not pass them.
 
-## 10. A crumb that does not read the way the page did
+### 10. A crumb that does not read the way the page did
 
 - **Chain:** 8. **Step:** Templates › a template › the crumb.
 - **What I saw:** the crumb reads "Templates and snippets"; the page I left had `h1` "Templates".
@@ -392,7 +767,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 
 ---
 
-# Not defects against the brief, but wrong for a real person
+## Not defects against the brief, but wrong for a real person
 
 1. **On a phone the origin is not visible at all.** The brief says full width on a phone and the
    build does that, so this is not a defect — but it means the first property of the whole
@@ -432,7 +807,7 @@ C9 is 1, for the one thing that is wrong everywhere: focus after a `follow`.
 
 ---
 
-# What is genuinely good
+## What is genuinely good
 
 I want this on the record because most of the mechanic works and the defects above are narrow.
 
@@ -453,7 +828,7 @@ I want this on the record because most of the mechanic works and the defects abo
 
 ---
 
-# Scores at a glance
+## Scores at a glance
 
 | Chain | Chain card | Disclosure card |
 |---|---|---|

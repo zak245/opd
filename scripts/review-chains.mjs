@@ -131,7 +131,7 @@ export { base, appendFileSync }
 
 /* ============================================================== the chains, one function each */
 
-const DIR = "shots/chains/review"
+const DIR = process.env.OPD_SHOTS ?? "shots/chains/review2"
 /** The pane, told apart from the shell's own <aside> sidebar by its aria-label. */
 export const PANE = 'aside[aria-label*=" beside "]' 
 
@@ -157,6 +157,87 @@ export async function focusTop(page) {
     first?.focus()
   })
   await wait(120)
+}
+
+/** Shift+Tab backwards from wherever focus is, looking for `match`. */
+export async function shiftTabTo(page, match, max = 20) {
+  for (let i = 1; i <= max; i++) {
+    await page.keyboard.down("Shift"); await page.keyboard.press("Tab"); await page.keyboard.up("Shift")
+    const hit = await page.evaluate((m) => {
+      const el = document.activeElement
+      if (!el || el.tagName === "BODY" || el.tagName === "HTML") return null
+      const text = (el.innerText || el.value || el.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim()
+      return new RegExp(m, "i").test(text) ? `${el.tagName} "${text.slice(0, 50)}"` : null
+    }, match)
+    if (hit) return { tabs: -i, on: hit }
+  }
+  return { tabs: 0, on: "(not found backwards)" }
+}
+
+/**
+ * How far the crumb is from wherever the page put focus on arrival: backwards first, because the
+ * header sits above the content, then forwards. Never re-seeds focus, so the count is the one a
+ * person actually pays.
+ */
+/**
+ * Do the first real thing the pane offers: pick a destination if it asks for one, then press the
+ * action. Returns what was pressed and the row's text before and after, which is the whole of
+ * "the effect shows where it was caused".
+ */
+export async function actInPane(page) {
+  const before = await page.evaluate(() => (document.querySelector(".ollopa-beside-open")?.innerText || "").replace(/\s+/g, " ").trim())
+  const picker = await page.evaluate(() => {
+    const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button'))
+      .find((x) => /^choose a/i.test((x.innerText || "").trim()))
+    if (!el) return null
+    el.click()
+    return (el.innerText || "").replace(/\s+/g, " ").trim()
+  })
+  let option = null
+  if (picker) {
+    await wait(600)
+    option = await page.evaluate(() => {
+      const el = Array.from(document.querySelectorAll('[role="option"], [role="menuitem"]')).find((x) => x.offsetParent !== null && (x.innerText || "").trim())
+      if (!el) return null
+      const t = (el.innerText || "").replace(/\s+/g, " ").trim()
+      el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }))
+      el.click()
+      return t
+    })
+    await wait(500)
+  }
+  const pressed = await page.evaluate(() => {
+    const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button'))
+      .find((x) => !x.disabled && /^(move to|add to|mark |stop |research|create )/i.test((x.innerText || "").trim()))
+    if (!el) return null
+    const t = (el.innerText || "").replace(/\s+/g, " ").trim()
+    el.click()
+    return t
+  })
+  await wait(1300)
+  const after = await page.evaluate(() => (document.querySelector(".ollopa-beside-open")?.innerText || "").replace(/\s+/g, " ").trim())
+  note(`    picker    ${picker ? `"${picker}" → "${option}"` : "(no picker)"}`)
+  note(`    pressed   ${pressed ?? "(no action button found)"}`)
+  note(`    row was   ${before}`)
+  note(`    row now   ${after}`)
+  note(`    effect    ${before === after ? "NONE — the page behind still says the old thing" : "landed on the row"}`)
+  return { before, after, pressed }
+}
+
+export async function reach(page, match, label = "it") {
+  const from = await focusInfo(page)
+  const back = await shiftTabTo(page, match, 15)
+  if (back.tabs < 0) return { ...back, from, how: `${-back.tabs} Shift+Tab` }
+  const fwd = await tabTo(page, match, 60)
+  return { ...fwd, from, how: fwd.tabs > 0 ? `${fwd.tabs} Tab` : "never reached" }
+}
+
+export async function reachCrumb(page, match) {
+  const from = await focusInfo(page)
+  const back = await shiftTabTo(page, match, 15)
+  if (back.tabs < 0) return { ...back, from, how: `${-back.tabs} Shift+Tab` }
+  const fwd = await tabTo(page, match, 60)
+  return { ...fwd, from, how: fwd.tabs > 0 ? `${fwd.tabs} Tab` : "never reached" }
 }
 
 export const focusInfo = (page) => page.evaluate(() => {
@@ -240,20 +321,61 @@ export async function chain1(w, h) {
   report(await observe(page), "4. [ — previous, back to the first")
   await shot("previous")
 
-  // 5. Open the page, by keyboard
-  const op = await tabTo(page, "Open the page")
-  note(`    keyboard  ${op.tabs} tabs from the pane to "Open the page"`)
-  await page.keyboard.press("Enter")
+  // 4b. Act from the pane, and watch the row behind it.
+  const rowBefore = await page.evaluate(() => (document.querySelector(".ollopa-beside-open")?.innerText || "").replace(/\s+/g, " ").trim())
+  const rBefore = (await observe(page)).renders
+  const chose = await page.evaluate(() => {
+    // The destination picker the pane now carries, then the act itself.
+    const sel = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button, aside[aria-label*=" beside "] select'))
+      .find((x) => /choose a sequence/i.test(x.innerText || x.getAttribute("aria-label") || ""))
+    if (!sel) return null
+    sel.click()
+    return (sel.innerText || sel.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim()
+  })
+  await wait(600)
+  const option = await page.evaluate(() => {
+    const el = Array.from(document.querySelectorAll('[role="option"], [role="menuitem"]')).find((x) => x.offsetParent !== null && (x.innerText || "").trim())
+    if (!el) return null
+    const t = (el.innerText || "").replace(/\s+/g, " ").trim()
+    el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }))
+    el.click()
+    return t
+  })
+  await wait(500)
+  note(`    picker    "${chose}" → chose "${option}"`)
+  const acted = await page.evaluate(() => {
+    const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button'))
+      .find((x) => /^Move to/i.test((x.innerText || "").trim()) && !x.disabled)
+    if (!el) return "(no move button)"
+    const t = (el.innerText || "").replace(/\s+/g, " ").trim()
+    el.click()
+    return `clicked "${t}"`
+  })
+  await wait(1200)
+  const rowAfter = await page.evaluate(() => (document.querySelector(".ollopa-beside-open")?.innerText || "").replace(/\s+/g, " ").trim())
+  const oAct = await observe(page)
+  note(`    acted     ${acted}`)
+  note(`    row was   ${rowBefore}`)
+  note(`    row now   ${rowAfter}`)
+  note(`    row moved ${rowBefore === rowAfter ? "NO — the page behind still says the old thing" : "yes"}`)
+  note(`    renders   ${rBefore.join(" · ")}  →  ${oAct.renders.join(" · ")}`)
+  note(`    heading   ${await page.evaluate(() => { const h = Array.from(document.querySelectorAll('[data-page-active="true"] h3')).find((x) => /^People \(/.test(x.innerText)); return h ? h.innerText.replace(/\s+/g, " ").trim() : "(no People heading)" })}`)
+  report(oAct, "4b. after the pane's action")
+  await shot("acted")
+
+  // 5. Open the page, by keyboard, counted from wherever the action left focus.
+  const op = await reach(page, "^Open the page$")
+  note(`    keyboard  focus was ${op.from}; "Open the page" is ${op.how} away`)
+  if (op.tabs === 0) { await clickText(page, "Open the page", PANE); note('    (not reachable by keyboard; clicked it)') }
+  else await page.keyboard.press("Enter")
   await wait(800)
   report(await observe(page), "5. Open the page — the contact record with the trail")
   await shot("page")
 
-  // 6. back by the crumb, by keyboard. Focus was dropped to the document by the follow, so the
-  // count below is what a person pressing Tab from the top of the page actually pays.
-  await focusTop(page)
-  const cr = await tabTo(page, "^Q4 enterprise outbound$")
-  note(`    keyboard  ${cr.tabs} tabs from the top of the page to the crumb → ${cr.on}`)
-  if (cr.tabs < 0) { await clickText(page, "Q4 enterprise outbound"); note("    (crumb was not reachable by Tab; clicked it instead)") }
+  // 6. back by the crumb, by keyboard, counted from wherever the arrival put focus.
+  const cr = await reachCrumb(page, "^Q4 enterprise outbound$")
+  note(`    keyboard  arrived on ${cr.from}; crumb is ${cr.how} away → ${cr.on}`)
+  if (cr.tabs === 0) { await clickText(page, "Q4 enterprise outbound"); note("    (crumb not reachable by keyboard; clicked it instead)") }
   else await page.keyboard.press("Enter")
   await wait(900)
   const o6 = await observe(page)
@@ -303,10 +425,9 @@ export async function chain2(w, h) {
   await shot("person-page")
 
   // back to the audience, then back to the campaign
-  await focusTop(page)
-  const c1 = await tabTo(page, "Enterprise prospects|audience", 40)
-  note(`    keyboard  ${c1.tabs} tabs to the audience crumb → ${c1.on}`)
-  if (c1.tabs > 0) await page.keyboard.press("Enter"); else await page.evaluate(() => document.querySelectorAll('nav[aria-label="Your path"] ol button')[1]?.click())
+  const c1 = await reachCrumb(page, "^Enterprise prospects, EMEA$")
+  note(`    keyboard  arrived on ${c1.from}; audience crumb is ${c1.how} away → ${c1.on}`)
+  if (c1.tabs !== 0) await page.keyboard.press("Enter"); else await page.evaluate(() => document.querySelectorAll('nav[aria-label="Your path"] ol button')[1]?.click())
   await wait(900)
   report(await observe(page), "6. back on the audience")
   await shot("back-audience")
@@ -371,10 +492,8 @@ export async function chain3(w, h) {
   report(o3, "2. the contact beside the company")
   await shot("beside")
 
-  // act: the first real action in the pane that is not navigation
-  const act = (o3.pane?.buttons ?? []).find((t) => !/Open the page|Previous|Next|Close/.test(t))
-  note(`    acting on "${act}"`)
-  if (act) { await clickText(page, act, PANE); await wait(900) }
+  // act: the first real action the pane offers
+  await actInPane(page)
   report(await observe(page), "3. after the action — is the effect visible where it was caused?")
   note(`    page says ${await page.evaluate(() => (document.querySelector('[data-page-active="true"]')?.innerText || "").replace(/\s+/g, " ").match(/.{0,80}(sequence|added|Added).{0,60}/)?.[0] ?? "(no mention)")}`)
   await shot("acted")
@@ -412,7 +531,7 @@ export async function chain4(w, h) {
 
   await focusTop(page)
   const r = await tabTo(page, "Bounce guard", 80)
-  note(`    keyboard  ${r.tabs} tabs to the settings link → ${r.on}`)
+  note(`    keyboard  ${r.tabs} tabs from the top of the page to the settings link → ${r.on}`)
   if (r.tabs > 0) await page.keyboard.press("Enter")
   else await clickText(page, "Bounce guard thresholds (Settings)")
   await wait(1200)
@@ -592,7 +711,7 @@ export async function chain7(w, h) {
   const replies = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [id^="reply-"]')).map((e) => `${e.id}/${e.getAttribute("data-item")}:${e.getAttribute("data-item-label")}`))
   note(`    replies   ${replies.join(" | ")}`)
 
-  const menuSel = '[data-page-active="true"] button[aria-label^="More actions"]'
+  const menuSel = '[data-page-active="true"] [data-row-menu], [data-page-active="true"] button[aria-label^="More actions"]'
   const menu = await page.evaluate((sel) => document.querySelector(sel)?.getAttribute("aria-label") ?? null, menuSel)
   await page.click(menuSel)   // a real mouse press: the menu opens on pointerdown, not on .click()
   await wait(700)
@@ -600,7 +719,8 @@ export async function chain7(w, h) {
   note(`    menu      "${menu}" → ${items.join(" | ")}`)
   await shot("inbox-menu")
   const picked = await page.evaluate(() => {
-    const el = Array.from(document.querySelectorAll('[role="menuitem"]')).find((x) => /contact|person|profile/i.test(x.innerText))
+    const el = Array.from(document.querySelectorAll('[role="menuitem"]')).find((x) => /beside the thread/i.test(x.innerText) && !/·/.test(x.innerText.split("beside")[0]))
+      ?? Array.from(document.querySelectorAll('[role="menuitem"]')).find((x) => /contact|person|profile|beside/i.test(x.innerText))
     if (!el) return null
     const t = el.innerText.replace(/\s+/g, " ").trim()
     el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }))
@@ -613,7 +733,17 @@ export async function chain7(w, h) {
   report(o2, "2. the contact beside the reply")
   await shot("inbox-contact")
 
-  const nested = await page.evaluate(() => { const el = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button, aside[aria-label*=" beside "] a')).find((x) => /deal/i.test(x.innerText)); el?.click(); return el?.innerText.replace(/\s+/g, " ").trim() ?? null })
+  // The one in-pane step: the deal behind the reply, from inside the contact's pane or from the
+  // thread beside it.
+  const nested = await page.evaluate(() => {
+    const inPane = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button, aside[aria-label*=" beside "] a')).find((x) => /deal|·\s*(Platform|Pilot|Growth)/i.test(x.innerText))
+    const onPage = Array.from(document.querySelectorAll('[data-page-active="true"] button')).find((x) => x.offsetParent !== null && /beside the thread/i.test(x.innerText) && /·/.test(x.innerText))
+    const el = inPane ?? onPage
+    if (!el) return null
+    const t = el.innerText.replace(/\s+/g, " ").trim()
+    el.click()
+    return `${t}${inPane ? " (from inside the pane)" : " (from the thread)"}`
+  })
   note(`    nested    "${nested ?? "(no deal offered inside the pane)"}"`)
   await wait(800)
   report(await observe(page), "3. one step inside the pane")

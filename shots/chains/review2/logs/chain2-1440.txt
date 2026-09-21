@@ -1,0 +1,90 @@
+
+=== CHAIN 2 · campaign › audience beside › the page › a person beside › back, back (1440) ===
+  1. the campaign
+    hash      #/ollopa/campaigns/camp-4
+    h1        Onboarding week 1 · Campaigns
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Lists WIN Campai"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/01-campaign-1440.png
+    ok=true  (the audience, beside)
+  2. the audience beside the campaign
+    hash      #/ollopa/campaigns/camp-4
+    h1        Onboarding week 1 · Campaigns
+    trail     (empty)
+    pane      "Enterprise prospects, EMEA" / "Static · live · 5,759 after suppressions" w=448 doors=0 trans=0.2s
+    buttons   Open the page | Rebuild now | Freeze
+    walker    (none)
+    body      Enterprise prospects, EMEA Static · live · 5,759 after suppressions
+    focus     DIV "Enterprise prospects, EMEA Static · live · 5,759 after suppr"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Enterprise prospects, EMEA
+    mounted   /ollopa/campaigns/camp-4*@136
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/02-audience-beside-1440.png
+    ok=true
+  3. the audience record, campaign on the trail
+    hash      #/ollopa/audiences/aud-4
+    h1        Enterprise prospects, EMEA
+    trail     Onboarding week 1 ›
+    pane      (none)
+    focus     H1 "Enterprise prospects, EMEA"
+    lit       Enterprise prospects, EMEA
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4 hidden inert@116 , /ollopa/audiences/aud-4*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/03-audience-page-1440.png
+    items     42: Onboarding week 1 / Amara Okonkwo Head of Growth · Umber Stu / Ben Okonkwo Procurement Lead · Kiln Syst / Chloe Okonkwo SDR Manager · Atlas Freigh
+  4. a person beside the audience
+    hash      #/ollopa/audiences/aud-4
+    h1        Enterprise prospects, EMEA
+    trail     Onboarding week 1 ›
+    pane      "Amara Okonkwo" / "Head of Growth · Umber Studios" w=448 doors=0 trans=0.2s
+    buttons   Open the page | Choose a sequence | Add to the chosen sequence | Draft an email | Reveal the phone · 8 credits | Previous [ | Next ]
+    walker    Previous [ 1 of 40 Next ]
+    body      Amara Okonkwo Head of Growth · Umber Studios
+    focus     DIV "Amara Okonkwo Head of Growth · Umber Studios Open the page T"  [inside the pane]
+    lit       Enterprise prospects, EMEA
+    row mark  Amara Okonkwo Head of Growth · Umber Studios
+    mounted   /ollopa/campaigns/camp-4 hidden inert@136 , /ollopa/audiences/aud-4*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/04-person-beside-1440.png
+    ok=true
+  5. the person's record, two crumbs
+    hash      #/ollopa/people/c-1
+    h1        Amara Okonkwo
+    trail     Onboarding week 1 › Enterprise prospects, EMEA ›
+    pane      (none)
+    focus     H1 "Amara Okonkwo"
+    lit       Amara Okonkwo
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4 hidden inert@136 , /ollopa/audiences/aud-4 hidden inert@0 , /ollopa/people/c-1*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/05-person-page-1440.png
+    keyboard  arrived on H1 "Amara Okonkwo" visible=true; audience crumb is 1 Shift+Tab away → BUTTON "Enterprise prospects, EMEA"
+  6. back on the audience
+    hash      #/ollopa/audiences/aud-4
+    h1        Enterprise prospects, EMEA
+    trail     Onboarding week 1 ›
+    pane      (none)
+    focus     BUTTON "Amara Okonkwo"
+    lit       Amara Okonkwo Head of Growth · Umber Studios
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4 hidden inert@136 , /ollopa/audiences/aud-4*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/06-back-audience-1440.png
+  7. back on the campaign
+    hash      #/ollopa/campaigns/camp-4
+    h1        Onboarding week 1 · Campaigns
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Enterprise prospects, EMEA"
+    lit       Enterprise prospects, EMEA
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review2/02-campaign/07-back-campaign-1440.png
