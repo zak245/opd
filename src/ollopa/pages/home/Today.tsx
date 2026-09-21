@@ -27,9 +27,11 @@ interface TaskRowProps {
 }
 
 /**
- * The row names a task, so the row opens the task — beside Home, with Home still on screen. The
- * contact it is with is one more thing this row names, and opens beside too. Neither is a page:
- * the way to a page from either is "Open the page" in the pane, which keeps Home on the trail.
+ * The row names a task, so the row opens the task — beside Home, with Home still on screen and the
+ * rest of the day's list under the pane's walker. The task's own name is the control that does it,
+ * so it is one click with a mouse and Enter from the keyboard, not a thing behind a menu. The
+ * contact is reached from inside that pane, which is the one step in; the way to a page from
+ * either is "Open the page", which keeps Home on the trail.
  */
 function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskRowProps) {
   const openTask = (opener?: HTMLElement | null) => openBeside({
@@ -38,21 +40,22 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
     list: { ids, index: Math.max(0, ids.indexOf(t.id)) },
     opener: opener ?? document.querySelector<HTMLElement>(`[data-item="${t.id}"]`),
   })
-  const openContact = () => openBeside({
-    kind: "person",
-    id: t.contactId,
-    opener: document.querySelector<HTMLElement>(`[data-item="${t.id}"]`),
-  })
   return (
     <Row
       itemId={t.id}
       itemLabel={t.contact}
-      keys={{ d: () => onDone(t), s: () => onSnooze(t), x: () => onSkip(t), o: () => openContact() }}
+      keys={{ d: () => onDone(t), s: () => onSnooze(t), x: () => onSkip(t) }}
       onEnter={() => openTask()}
     >
       <Badge variant="outline" className="w-[4.5rem] shrink-0 justify-center font-normal">{t.kind}</Badge>
       <span className="min-w-[11rem] flex-1">
-        <span className="font-medium">{t.contact}</span>
+        <button
+          type="button"
+          className="text-left font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+          onClick={(e) => openTask(e.currentTarget)}
+        >
+          {t.contact}
+        </button>
         <span className="text-muted-foreground"> · {t.company}</span>
         <span className="block text-xs text-muted-foreground">
           {t.title}
@@ -68,8 +71,7 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
             ...(showSequence || !t.sequence ? [] : [{ label: `From ${t.sequence}`, fact: true, onSelect: () => { } }]),
             { label: "Done", shortcut: "D", onSelect: () => onDone(t) },
             { label: "Snooze to tomorrow", shortcut: "S", onSelect: () => onSnooze(t) },
-            { label: "Open the task beside this", shortcut: "Enter", onSelect: () => openTask() },
-            { label: `Open ${t.contact} beside this`, shortcut: "O", onSelect: () => openContact() },
+            { label: `Open this ${t.kind.toLowerCase()} task beside Home`, shortcut: "Enter", onSelect: () => openTask() },
             { label: t.sequence ? `Skip this step · ${t.contact} moves on in ${t.sequence}` : "Skip this task", shortcut: "X", destructive: true, onSelect: () => onSkip(t) },
           ]}
         />

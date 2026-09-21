@@ -176,18 +176,35 @@ export function DataTable<T>(p: DataTableProps<T>) {
           const key = p.rowKey(row)
           const primary = p.columns.find((c) => c.primary) ?? p.columns[0]
           return (
-            <li key={key} className="flex items-start gap-2 px-4 py-3">
+            /* The card is the row, so it behaves like the row above: focusable, Enter opens it, x
+               selects it. The two controls inside it — select, and the name that opens the record —
+               are siblings of each other and never nested, because a control inside a control is
+               invalid HTML with no defined keyboard activation. The select is a real checkbox input
+               with its own label, so Space toggles it without anything being wired up. */
+            <li
+              key={key}
+              className="flex items-start gap-2 px-4 py-3 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              data-row-key={key}
+              tabIndex={p.onOpen ? 0 : undefined}
+              onClick={p.onOpen ? (e) => { (e.currentTarget as HTMLElement).focus(); p.onOpen!(row) } : undefined}
+              onKeyDown={p.onOpen ? (e) => {
+                if (e.key === "Enter" && e.target === e.currentTarget) { e.preventDefault(); p.onOpen!(row) }
+                if (e.key === "x" && e.target === e.currentTarget && p.selection) { e.preventDefault(); toggle(key) }
+              } : undefined}
+            >
               {p.selection && (
-                <Checkbox className="mt-1" checked={selected.includes(key)} onCheckedChange={() => toggle(key)} aria-label={`Select ${p.menuLabel(row)}`} />
+                <label className="mt-1 flex shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-current"
+                    checked={selected.includes(key)}
+                    onChange={() => toggle(key)}
+                  />
+                  <span className="sr-only">Select {p.menuLabel(row)}</span>
+                </label>
               )}
               <div className="min-w-0 flex-1">
-                <button
-                  type="button"
-                  className="block w-full text-left"
-                  onClick={() => p.onOpen?.(row)}
-                >
-                  {primary.cell(row)}
-                </button>
+                {primary.cell(row)}
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   {p.columns.filter((c) => c.phone).map((c) => (
                     <span key={c.key} className="inline-flex items-center gap-1">

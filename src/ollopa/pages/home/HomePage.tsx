@@ -59,16 +59,18 @@ export function HomePage({ session }: { session: Session }) {
   const lines = healthLines(data, d)
   const strip = needsAttention(lines)
 
+  // `key` is React's own, never a prop: spreading it in would hand each section a prop it does not
+  // declare and warn twice on every render. It goes on the element, and only there.
   function render(key: SectionKey) {
-    const props = { data, d, order: order(key), key }
+    const props = { data, d, order: order(key) }
     switch (key) {
-      case "today": return <Today {...props} />
-      case "replies": return <Replies {...props} />
-      case "pipeline": return <Pipeline {...props} hasReports={session.hasReports} />
-      case "approvals": return <Approvals {...props} session={session} />
-      case "campaigns": return <Campaigns {...props} />
-      case "accounts": return <Accounts {...props} />
-      case "week": return <Week {...props} hasReports={session.hasReports} />
+      case "today": return <Today key={key} {...props} />
+      case "replies": return <Replies key={key} {...props} />
+      case "pipeline": return <Pipeline key={key} {...props} hasReports={session.hasReports} />
+      case "approvals": return <Approvals key={key} {...props} session={session} />
+      case "campaigns": return <Campaigns key={key} {...props} />
+      case "accounts": return <Accounts key={key} {...props} />
+      case "week": return <Week key={key} {...props} hasReports={session.hasReports} />
     }
   }
 

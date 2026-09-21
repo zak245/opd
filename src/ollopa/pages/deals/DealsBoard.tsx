@@ -609,8 +609,11 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const anyFilter = filtersOn(filters) > 0 || q.trim().length > 0
   const clearAll = () => { setFilters(NO_FILTERS); setQ("") }
 
+  // The label is the chip: no two chips in one row say the same thing, so it is the stable identity
+  // React needs when a row of them is built from a list.
   const chip = (label: string, on: boolean, onClick: () => void) => (
     <button
+      key={label}
       type="button"
       aria-pressed={on}
       onClick={onClick}

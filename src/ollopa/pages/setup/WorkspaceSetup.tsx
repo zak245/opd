@@ -83,6 +83,15 @@ function leftOutList(profile: Profile): { label: string; signal: string; seats: 
 }
 
 /**
+ * The jobs a workspace's seats cover, once each. The question is which jobs exist, not how many
+ * people hold one: Meridian has two seats on "ae" (Account executive and Sales manager) and running
+ * the workspace is not on the list at all.
+ */
+function jobs(seats: Role[]): Role[] {
+  return Array.from(new Set(seats.filter((s) => s !== "admin")))
+}
+
+/**
  * The answers a workspace already gave, so an admin opening this page reads its own set-up rather
  * than an empty form (spec 16 §3, "Already set up" and "By role and by business"). The profile the
  * workspace declared is what these answers produce, checked by `profileFrom`.
@@ -91,8 +100,8 @@ function declaredAnswers(profile: Profile, seats: Role[]): SetupAnswers {
   switch (profile) {
     case "founder-led": return { firstJob: "reach", people: "2-5", seats: [], everything: true }
     case "agency": return { firstJob: "reach", people: "6-25", seats: [], everything: true }
-    case "product-led": return { firstJob: "grow", people: "6-25", seats: seats.filter((s) => s !== "admin"), everything: false }
-    case "separated": return { firstJob: "reach", people: "100+", seats: seats.filter((s) => s !== "admin"), everything: false }
+    case "product-led": return { firstJob: "grow", people: "6-25", seats: jobs(seats), everything: false }
+    case "separated": return { firstJob: "reach", people: "100+", seats: jobs(seats), everything: false }
     default: return { firstJob: null, people: null, seats: [], everything: false }
   }
 }
@@ -102,8 +111,8 @@ export function answerWords(a: SetupAnswers): string {
   const job = JOBS.find((j) => j.id === a.firstJob)?.label
   const size = SIZES.find((s) => s.id === a.people)?.label
   const kinds = new Set(a.seats).size
-  const jobs = a.everything ? "everyone does everything" : `${kinds || "no"} of the four jobs`
-  return [job ? `"${job.toLowerCase()}"` : null, size ? `${size.toLowerCase()} people` : null, jobs]
+  const which = a.everything ? "everyone does everything" : `${kinds || "no"} of the four jobs`
+  return [job ? `"${job.toLowerCase()}"` : null, size ? `${size.toLowerCase()} people` : null, which]
     .filter(Boolean).join(", ")
 }
 
@@ -116,12 +125,16 @@ function longDate(iso: string): string {
 }
 
 function ProfileBlock({ profile, seats }: { profile: Profile; seats: Role[] }) {
-  const shown = seats.length ? seats : (["admin"] as Role[])
+  // The question is which jobs exist, not how many people hold each one: Meridian has two seats on
+  // the "ae" role (Account executive and Sales manager) and they read the same sidebar. The list is
+  // deduplicated so it says each job once, and keyed by role and position so that even if a caller
+  // passes the same role twice both rows render and React never drops or swaps one.
+  const shown = Array.from(new Set(seats.length ? seats : (["admin"] as Role[])))
   const out = leftOutList(profile)
   return (
     <div className="grid gap-3">
-      {shown.map((r) => (
-        <div key={r} className="text-sm">
+      {shown.map((r, i) => (
+        <div key={`${r}-${i}`} className="text-sm">
           <div className="font-medium">{ROLE_LABEL[r]}</div>
           <div className="text-muted-foreground">{sidebarPreview(profile, r).join(" · ")}</div>
         </div>

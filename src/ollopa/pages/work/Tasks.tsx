@@ -218,6 +218,17 @@ export function Tasks({ session }: { session: Session }) {
     })
   }, [onScreen])
 
+  /** The task itself, beside the list it is in, with the list under the pane's walker. */
+  const openTask = useCallback((t: Task, opener?: HTMLElement | null) => {
+    const ids = onScreen.map((x) => x.id)
+    openBeside({
+      kind: "task",
+      id: t.id,
+      list: { ids, index: Math.max(0, ids.indexOf(t.id)) },
+      opener: opener ?? document.querySelector<HTMLElement>(`[data-task-row="${t.id}"] [data-row-focus]`),
+    })
+  }, [onScreen])
+
   const openDeal = useCallback((t: Task, opener?: HTMLElement | null) => {
     if (!t.dealId) return
     const ids = onScreen.filter((x) => x.dealId).map((x) => x.dealId!)
@@ -264,10 +275,11 @@ export function Tasks({ session }: { session: Session }) {
       if (key === "x") { e.preventDefault(); skip(t) }
       if (key === "e" && (t.kind === "Email" || t.kind === "Follow-up")) { e.preventDefault(); setMode("queue") }
       if (key === "l" && t.kind === "Call") { e.preventDefault(); setCalling(t) }
+      if (key === "o") { e.preventDefault(); openTask(t) }
     }
     document.addEventListener("keydown", onKey)
     return () => document.removeEventListener("keydown", onKey)
-  }, [mode, rows, done, snooze, skip])
+  }, [mode, rows, done, snooze, skip, openTask])
 
   /* ------------------------------------------------------------------- what sits at level one */
 
@@ -370,11 +382,12 @@ export function Tasks({ session }: { session: Session }) {
             ) : (
               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => done(t)}>Done</Button>
             )}
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => openTask(t, e.currentTarget)}>Open the task beside</Button>
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={primary.run}>{primary.label}</Button>
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => snooze(t)}>{t.sequence ? "Snooze · the sequence waits" : "Snooze"}</Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={`Snooze until, note, edit, open contact${teamView ? ", reassign" : ""}, delete — for ${t.contact}`}><MoreHorizontal className="size-4" /></Button>
+                <Button size="icon-sm" variant="ghost" aria-label={`The task and the contact beside, snooze until, note, edit${teamView ? ", reassign" : ""}, delete — for ${t.contact}`}><MoreHorizontal className="size-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => done(t)}>Done<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">d</span></DropdownMenuItem>
@@ -384,7 +397,8 @@ export function Tasks({ session }: { session: Session }) {
                 <DropdownMenuItem onSelect={() => skip(t)}>{t.sequence ? "Skip · contact moves to next step" : "Skip"}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => say(`Note added to ${t.contact}'s task.`)}>Add note</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Edit the due date</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => openContact(t)}>Open contact beside the list</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openTask(t)}>Open the task beside the list<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">o</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openContact(t)}>Open {t.contact} beside the list</DropdownMenuItem>
                 {teamView && seatsOf(session.business).filter((s) => s.user !== t.owner && s.role !== "marketer").map((s) => (
                   <DropdownMenuItem key={s.user} onSelect={() => reassign(t, s.user)}>Reassign to {s.user}</DropdownMenuItem>
                 ))}

@@ -24,6 +24,15 @@ mkdirSync(dir, { recursive: true })
 
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ["--hide-scrollbars"] })
 const page = await browser.newPage()
+
+// Anything the browser complains about, kept and printed at the end: a warning in the console is a
+// defect like any other, and a walk that does not look at it is not a walk.
+const noise = []
+page.on("pageerror", (e) => noise.push(`page error: ${e.message.split("\n")[0]}`))
+page.on("response", (r) => { if (r.status() >= 400) noise.push(`${r.status()} ${r.url()}`) })
+page.on("console", (m) => {
+  if (m.type() === "error" || m.type() === "warning") noise.push(`${m.type()}: ${m.text().replace(/\s+/g, " ").slice(0, 160)}`)
+})
 await page.setViewport({ width: Number(w), height: Number(h), deviceScaleFactor: 1 })
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -246,11 +255,12 @@ await shot("c4-back-home-lit")
 /* ------------------------- D. Home › the task beside › Done in the pane › the row says so */
 
 await go("/ollopa")
+// A mouse, not the keyboard: the task's own name on the row is the control that opens it.
 const task = await page.evaluate(() => {
   const row = document.querySelector('[data-page-active="true"] [data-section="home-today"] li[data-row]')
-  if (!row) return null
-  row.focus()
-  row.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
+  const name = row?.querySelector("button")
+  if (!name) return null
+  name.click()
   return row.textContent.replace(/\s+/g, " ").slice(0, 50)
 })
 await wait(600)
@@ -281,5 +291,46 @@ console.log("D pane moved to:", await pane())
 console.log("D Home says:", await page.evaluate(() =>
   document.querySelector('[data-page-active="true"] [data-section="home-approvals"] [role="status"]')?.textContent ?? "(no line)"))
 await shot("d4-declined-on-the-row")
+
+/* ------------------------- E. The Tasks list: the task itself, beside the list it is in */
+
+await go("/ollopa/tasks")
+await clickReal('[data-page-active="true"] button', "All tasks")
+await wait(600)
+console.log("E list mode:", await page.evaluate(() => document.querySelectorAll('[data-page-active="true"] [data-task-row]').length + " rows"))
+console.log("E opened the task:", await clickReal('[data-page-active="true"] button', "Open the task beside"))
+await wait(700)
+console.log("E task pane:", await pane())
+console.log("E task pane fields:", await paneFields())
+await shot("e1-task-beside-the-list")
+await page.keyboard.press("]")
+await wait(500)
+console.log("E after ]:", await pane())
+// The one step in: the contact, from inside the task pane.
+console.log("E the one step in:", await page.evaluate(() => {
+  const el = Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim().endsWith("›"))
+  if (!el) return false
+  el.click()
+  return el.textContent.trim()
+}))
+await wait(600)
+console.log("E in-pane step:", await pane())
+await shot("e2-contact-one-step-in")
+
+/* ------------- F. The same pane, two seats: the fields are the seat's level one, not a list */
+
+for (const [biz, role] of [["meridian", "sdr"], ["ridgeline", "sdr"]]) {
+  await page.goto(base + "/#/", { waitUntil: "networkidle0" })
+  await page.evaluate(([bz, rl]) => localStorage.setItem("ollopa.session", JSON.stringify({ business: bz, role: rl })), [biz, role])
+  await go("/ollopa")
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-page-active="true"] [data-section="home-today"] li[data-row] button')
+    el?.click()
+  })
+  await wait(700)
+  console.log(`F ${biz}/${role} task pane:`.padEnd(30), await paneFields())
+}
+
+console.log(noise.length === 0 ? "\nconsole: silent" : `\nconsole: ${noise.length} complaint(s)\n  ${[...new Set(noise)].join("\n  ")}`)
 
 await browser.close()
