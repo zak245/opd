@@ -16,7 +16,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 import { ChevronLeft, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useRoute } from "@/app/router"
+import { href as hashHref, useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
 import { clearHighlight, crumbName, findAnchor, follow, showReturn } from "../chain"
 import { clearEdit, useEdit } from "../edits"
@@ -25,6 +25,7 @@ import type { Session } from "../session"
 import type { Page } from "../usage/model"
 import { useDisclosure } from "./useDisclosure"
 import { FlatProvider } from "./Door"
+import { Actions } from "./Actions"
 
 const MS = 200
 
@@ -364,8 +365,14 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
               <X className="size-4" aria-hidden="true" />
             </Button>
           </div>
+          {/* A destination, not a state change, so it is a real link (DESIGN.md §1). Its click is
+              still the product's, which is what keeps the trail. */}
           {head.route && (
-            <Button size="sm" variant="outline" className="mt-2 w-full" onClick={openPage}>Open the page</Button>
+            <Actions
+              className="mt-2"
+              surface="pane"
+              items={[{ kind: "link", label: "Open the page", href: hashHref(head.route), onClick: openPage }]}
+            />
           )}
         </header>
 

@@ -1,6 +1,7 @@
 // The shared primitives every ollopA page codes against. Documented, with an example each, in README.md.
 export { Door, DoorGroup, ExpandAll, useDoorState, FlatProvider, useFlat, type DoorProps } from "./Door"
 export { Panel, type PanelProps } from "./Panel"
+export { Actions, Confirm, readActions, type Action, type ActionKind, type Surface, type Layout } from "./Actions"
 export { ConsequenceLine, consequenceText, type ConsequenceProps } from "./ConsequenceLine"
 export { ApproveBar, approveAllLabel, type ApproveBarProps, type ApproveItem } from "./ApproveBar"
 export { Locked, type LockedProps } from "./Locked"

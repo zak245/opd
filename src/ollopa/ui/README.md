@@ -8,7 +8,7 @@ Nothing in here renders a usage number, a rule name or a word of teaching text. 
 first non-negotiable.
 
 ```ts
-import { Door, Panel, QuickLook, ConsequenceLine, ApproveBar, Locked, gate,
+import { Door, Panel, Actions, Confirm, QuickLook, ConsequenceLine, ApproveBar, Locked, gate,
          HealthStrip, Announcement, SectionHeader, EmptyState, useDisclosure } from "@/ollopa/ui"
 import { follow, back, clearTrail, useTrail } from "@/ollopa/chain"
 import { openBeside, closeBeside, useBeside } from "@/ollopa/beside"
@@ -58,6 +58,78 @@ focus returns. A panel may open a page; it never opens another panel, and it nev
   <p className="text-xs text-muted-foreground">{consequence}</p>
 </Panel>
 ```
+
+## `Actions`
+
+`{ items: Action[]; layout?: "row" | "stack" | "menu"; surface?: "page" | "pane" | "dialog" | "card" }`
+
+Every control on a surface, drawn by its kind. A page never picks a `Button` variant by hand: it says
+what each control *is* and this decides how it looks, where it sits and whether it asks first. The
+rules are DESIGN.md §1 and §2.
+
+```ts
+type Action = {
+  label: string
+  kind: "primary" | "secondary" | "destructive" | "link"
+  onClick?: () => void
+  href?: string            // a link renders a real <a>; with onClick too, the click stays the page's
+  cost?: string            // "8 credits", "1 email" — the only thing that earns a line beside a control
+  consequence?: string     // the rest of that line ("Charged once"), allowed only beside cost or irreversible
+  irreversible?: { title: string; consequence: string; confirmLabel: string }
+  disabledBecause?: string // object state the person can change; never a seat or a permission
+  keys?: string            // the shortcut, printed on the control
+}
+```
+
+| Kind | Drawn as | Where it sits |
+|---|---|---|
+| primary | Filled | First. One per surface. |
+| secondary | Outline | After the primary. |
+| link | A real `<a>`, underlined on hover | After the acts. |
+| destructive | Text in the destructive colour, low emphasis | Last, after a gap. |
+
+What it enforces, with a development warning each time:
+
+- **One primary per surface.** A second one is drawn as a secondary and the console says which.
+- **Destructive is never filled** and never next to a benign control: it is separated by a rule.
+- **Emphasis by fill, never size.** One size per surface; the kind cannot change it.
+- **Full width only on a phone.** `layout="stack"` fills the width below `sm` and hugs its label above it.
+- **A line beside a control only where the act spends or cannot be undone.** A `consequence` passed
+  for a free, reversible act is dropped and named.
+- **A pane carries at most three acts and nothing irreversible.** An irreversible item on a pane is
+  not drawn at all, with a warning telling the builder to leave it on the record page.
+
+```tsx
+// the deal record's header: one act the page exists for, one more, and the end of the deal
+<Actions surface="page" items={[
+  { label: "Log activity", kind: "primary", onClick: logActivity, keys: "l" },
+  { label: "Close won", kind: "secondary", onClick: closeWon,
+    irreversible: { title: "Close this deal won?",
+      consequence: "Stage becomes Closed won. HubSpot is updated. Cedar Systems hands off to customer success.",
+      confirmLabel: "Close won" } },
+  { label: "Mark lost and archive", kind: "destructive", onClick: markLost,
+    irreversible: { title: "Archive this deal as lost?",
+      consequence: "The deal leaves the board and the forecast. Its activities stay on the company.",
+      confirmLabel: "Archive as lost" } },
+]} />
+
+// a pane: at most three comparable acts, so none of them is filled
+<Actions surface="pane" layout="stack" items={[
+  { label: "Add to a sequence", kind: "secondary", onClick: move, disabledBecause: dest ? undefined : "Choose a sequence above" },
+  { label: "Reveal the phone", kind: "secondary", onClick: reveal, cost: "8 credits", consequence: "Charged once" },
+  { label: "Create a call task", kind: "secondary", onClick: task },
+]} />
+```
+
+**Confirmation.** `irreversible` routes the click through the shared `Confirm`: the consequence sits
+above the affirmative and the affirmative carries the verb — "Archive as lost", never "OK". Confirm
+on reversibility, not on danger: a reversible act, however large, acts at once. After it acts, say so
+where it was caused — `recordEdit(kind, id, { note })` gives you "Done · … · Undo" on the row and in
+the pane's footer, which is the backstop confirmation never replaces.
+
+**What it cannot enforce.** Whether a seat may act at all. A seat that cannot act gets *no control*
+and one sentence naming who can (RULES.md rule 4), so the page leaves the item out of the list
+rather than passing it here with `disabledBecause`.
 
 ## `QuickLook` (`templates/QuickLook.tsx`)
 
