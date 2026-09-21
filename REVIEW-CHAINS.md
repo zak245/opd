@@ -1,12 +1,95 @@
 # Stage 3 review: the chains
 
-Round 7 is the current review — the short walk after the design fixes, chains 2, 3 and 7. Rounds 6
-through 1 are kept below, in order, so the proof lines each fix round was made against are still
-readable.
+Round 8 is the current review — the last confirmation, chains 7 and 8. Rounds 7 through 1 are kept
+below, in order, so the proof lines each fix round was made against are still readable.
 
 ---
 
-# Round 7 — the short walk after the design fixes
+# Round 8 — the last confirmation
+
+Chains 7 and 8 only, at 1440 and at 400, by keyboard, against my own `npx vite preview --port 4180`,
+with the dev server on 4181 for the console. Both killed after. 72 screenshots in
+`shots/chains/review8/`. Both consoles silent on all four runs.
+
+## Scores
+
+| Chain | Chain card | Δ vs r7 | Disclosure card | Δ |
+|---|---|---|---|---|
+| 7 · Inbox, Tasks, Home | **18**/18 | **+1** | **17**/18 | — |
+| 8 · Index laps | **18**/18 | — | **17**/18 | — |
+
+Chain 7 gets C8 back: the row now follows the send. D9 remains the one residue on both.
+
+## The four, one by one
+
+**1. Sequences, Lists and Templates names are real links — fixed.** At 1440 and at 400 the first
+row's name is an `<a href>`: `#/ollopa/sequences/seq-6`, `#/ollopa/lists/list-13`,
+`#/ollopa/templates/tpl-7`. Visible anchors per index: 12, 13 and 18 at each width — half the
+24/26/36 reported, because the table and the phone card list each hold a copy and only one is on
+screen at a time. Every index lap still opens from the name, pushes a crumb and returns to the lit
+row.
+
+**2. "N credits · Charged once" under the button — half fixed.** **Enrich** has it: the contact
+record shows `Enrich` with *"2 credits · Charged once"* 4px beneath it, 12px, muted.
+**Research does not.** On the company record, at two seats and two companies, the control is
+`Research · 12 credits` sitting in a plain row of buttons —
+`<div data-print-hide><button>Research · 12 credits</button><button>Add to list</button>…</div>` —
+with no line beside it and no text sibling at all. `90-credit-line-1440.png`.
+
+*On the layout question:* the gap does not need widening. 4px between a small button and its own
+12px muted line is what makes the line read as belonging to **that** control; open it up and it
+starts to look like a heading for whatever comes next. What matters is the asymmetry, and it is
+right here — the space under the line to the next control is larger than the space above it. I
+would write that ratio down rather than the pixel: a line sits closer to its own control than to
+anything else. The only place two lined controls stack is a pane, and this seat's pane has no cost
+acts, so I could not see the pair fail; the rule above is what would keep it from failing.
+
+**3. The email task has one filled control — fixed.** The queue's first task shows `["Done"]`;
+pressing it moves to *"Step 2 of 3 · Send the follow-up"*, which now shows `["Send and mark done"]`
+alone, at 1440 and at 400. `92-queue-email-1440.png`.
+
+**4. A sent reply is handled through the shared store — fixed, all four parts.**
+
+- *During the ten seconds*: the thread reads **Sending** with **Undo** on screen, the counts do not
+  move (Interested 4, Handled 3) and the row is untouched — correct, the send has not gone.
+  `93-send-sending-1440.png`.
+- *After*: **Interested (4) → (3)**, **Handled (3) → (4)**, and Cyrus Rossi leaves the Interested
+  list. `94-send-sent-1440.png`.
+- *Under Handled*: the row is there and reads **"… Happy to take a look. · Sent · Reply"** — the
+  row and the thread now say the same thing, which is the line chain 7 lost in round 7.
+  `98-handled-list-1440.png`.
+- *Undo within the window*: counts back to Interested (4) / Handled (3), and the row restored to
+  *"3 d · Sep 10 overdue · Cyrus Rossi · Interested"*. `95-send-undone-1440.png`.
+
+(The counts I watched moved Interested 4→3 rather than Question 2→1: I replied to the reply the
+Inbox opens on, which is an Interested one. Same store, same mechanism.)
+
+## Checks A and B on these surfaces
+
+**A — no failures.** No surface on either chain carries two filled controls; no destructive control
+is filled or out of order; every disabled control is disabled by object state the person can change
+with the reason beside it (*"Choose a sequence above"*; the walker's "Previous" at item 1 with its
+count); no control stands in for a seat or a state that cannot act; and the index names that were
+buttons are now links.
+
+**B — no failures.** Every sentence next to a control on these surfaces carries one of the three
+reasons: *"2 credits · Charged once"* and *"1 email · to Cyrus Rossi from marcus@meridian.io"*
+(reason 1), the ownership sentences (reason 2), *"One at a time. 13 more behind this one"*
+(reason 3), and *"Done · … · Undo"* in §2's own form.
+
+## Still open
+
+Two, both small and neither about money or irreversibility:
+
+1. **Research carries no "Charged once".** Its price is in its label, so nobody is surprised by the
+   charge; what is missing is the half of §2's own example that says it is charged once.
+2. **The Home task chip still runs together**: *"Send a connection request4 days overdue"*.
+
+Everything on round 4's "wrong for a real person" list that was never assigned is unchanged.
+
+---
+
+# Round 7 — the short walk after the design fixes (superseded)
 
 Chains 2, 3 and 7 only, at 1440 and at 400, by keyboard, against my own `npx vite preview --port
 4180`, with the dev server on 4181 for the console. Both killed after. 57 screenshots in

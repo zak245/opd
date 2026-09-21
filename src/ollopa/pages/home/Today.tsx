@@ -60,7 +60,7 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
         <span className="block text-xs text-muted-foreground">
           {t.title}
           {showSequence && t.sequence && <> · {t.sequence}</>}
-          {late && <span className="ml-2 font-medium text-destructive">{overdueBy(t.due)}</span>}
+          {late && <span className="ml-2 font-medium text-destructive">{" "}{overdueBy(t.due)}</span>}
         </span>
       </span>
       <span className="ml-auto flex shrink-0 items-center gap-2">

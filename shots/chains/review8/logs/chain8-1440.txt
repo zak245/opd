@@ -1,0 +1,51 @@
+
+=== CHAIN 8 · index laps: row › record › back to the row lit (1440) ===
+
+  -- Sequences (meridian sdr)
+    landed    h1="Sequences" trail=(empty)
+  [shot] shots/chains/review8/08-indexes/01-sequences-index-1440.png
+    opened    "the name "Security buyers, DACH"" → hash=#/ollopa/sequences/seq-6 h1="Security buyers, DACH" trail=Sequences › pane=none
+  [shot] shots/chains/review8/08-indexes/02-sequences-record-1440.png
+    back by   crumb → h1="Sequences" lit=Security buyers, DACH Daniel Okafor Active 286 of  focus=TR "Security buyers, DACH Daniel Okafor Active 286 of 645 35
+  [shot] shots/chains/review8/08-indexes/03-sequences-back-1440.png
+
+  -- People (meridian sdr)
+    landed    h1="People" trail=(empty)
+  [shot] shots/chains/review8/08-indexes/04-people-index-1440.png
+    opened    "the name "Mateo Novak VP Sales"" → hash=#/ollopa/people/c-763 h1="Mateo Novak" trail=People › pane=none
+  [shot] shots/chains/review8/08-indexes/05-people-record-1440.png
+    back by   crumb → h1="People" lit=Mateo Novak VP Sales Changed job Wayfare Systems m focus=TR "Mateo Novak VP Sales Changed job Wayfare Systems mateo.n
+  [shot] shots/chains/review8/08-indexes/06-people-back-1440.png
+
+  -- Companies (meridian sdr)
+    landed    h1="Companies" trail=(empty)
+  [shot] shots/chains/review8/08-indexes/07-companies-index-1440.png
+    opened    "the name "Kestrel Health"" → hash=#/ollopa/companies/co-3 h1="Kestrel Health" trail=Companies › pane=none
+  [shot] shots/chains/review8/08-indexes/08-companies-record-1440.png
+    back by   crumb → h1="Companies" lit=Kestrel Health kestrelhealth.com 7 1 Current clien focus=BUTTON "Kestrel Health"
+  [shot] shots/chains/review8/08-indexes/09-companies-back-1440.png
+
+  -- Lists (meridian sdr)
+    landed    h1="Lists" trail=(empty)
+  [shot] shots/chains/review8/08-indexes/10-lists-index-1440.png
+    opened    "the name "Unsubscribed"" → hash=#/ollopa/lists/list-13 h1="Unsubscribed" trail=Lists › pane=none
+  [shot] shots/chains/review8/08-indexes/11-lists-record-1440.png
+    back by   crumb → h1="Lists" lit=Unsubscribed People Static 231 +14 this week — Mar focus=TR "Unsubscribed People Static 231 +14 this week — Marcus Ad
+  [shot] shots/chains/review8/08-indexes/12-lists-back-1440.png
+
+  -- Templates (meridian sdr)
+    landed    h1="Templates" trail=(empty)
+  [shot] shots/chains/review8/08-indexes/13-templates-index-1440.png
+    opened    "the name "Event follow-up"" → hash=#/ollopa/templates/tpl-7 h1="Event follow-up" trail=Templates › pane=none
+  [shot] shots/chains/review8/08-indexes/14-templates-record-1440.png
+    back by   crumb → h1="Templates" lit=Event follow-up Template Customer Marcus Adeyemi t focus=TR "Event follow-up Template Customer Marcus Adeyemi today 4
+  [shot] shots/chains/review8/08-indexes/15-templates-back-1440.png
+
+  -- Campaigns (ridgeline marketer)
+    landed    h1="Campaigns" trail=(empty)
+  [shot] shots/chains/review8/08-indexes/16-campaigns-index-1440.png
+    opened    "the name "Case study: Kestrel Health"" → hash=#/ollopa/campaigns/camp-7 h1="Case study: Kestrel Health" trail=Campaigns › pane=none
+  [shot] shots/chains/review8/08-indexes/17-campaigns-record-1440.png
+    back by   crumb → h1="Campaigns" lit=Case study: Kestrel Health · Email What changed in focus=TR "Case study: Kestrel Health · Email What changed in ollop
+  [shot] shots/chains/review8/08-indexes/18-campaigns-back-1440.png
+  [console] nothing — no warning, no error, no failed request

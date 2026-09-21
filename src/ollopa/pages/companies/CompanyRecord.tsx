@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
-import { Actions } from "../../ui/Actions"
+import { Actions, type Action } from "../../ui/Actions"
 import { follow, routeKey, useTrail } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { CardRow, RecordPage, type RecordCard, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
@@ -777,6 +777,35 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       : []),
   ]
 
+  // The header drawn by the Actions primitive (DESIGN.md §1 and §2): Research is the one filled act
+  // and prices itself on one line rather than asking; stopping prospecting confirms because nothing
+  // puts the people back; removal is destructive and confirms with the verb.
+  const headerItems: Action[] = [
+    { kind: "primary", label: "Research", onClick: runResearch, cost: `${CREDITS.research} credits`, consequence: "Charged once", keys: "R" },
+    { kind: "secondary", label: "Add to list", onClick: () => setListOpen(true), keys: "L" },
+    ...(customer && holdsAccounts ? [{ kind: "secondary" as const, label: "Run a play", onClick: () => setPlayOpen(true), keys: "P" }] : []),
+    ...(canEdit
+      ? [merged.stage === "Do not prospect"
+          ? { kind: "secondary" as const, label: "Allow prospecting again", onClick: () => changeStage("Cold") }
+          : {
+              kind: "secondary" as const,
+              label: "Mark do not prospect",
+              onClick: () => changeStage("Do not prospect"),
+              irreversible: {
+                title: `Stop prospecting ${merged.name}?`,
+                consequence: `Stops sequences for the ${v.inSequence.length} contact${v.inSequence.length === 1 ? "" : "s"} at ${merged.name}. The ${v.contacts.length} people stay on People.`,
+                confirmLabel: "Stop prospecting",
+              },
+            },
+          {
+            kind: "destructive" as const,
+            label: "Remove company",
+            onClick: () => { applyChange(merged.id, { removed: true }); toast(`${merged.name} removed. Undo is on the table for ten seconds.`) },
+            irreversible: { title: `Remove ${merged.name}?`, consequence: removeConsequence, confirmLabel: "Remove company" },
+          }]
+      : []),
+  ]
+
   /* -------------------------------------------------------------------------------- the ribbon */
 
   const churnNotice = account?.risks.find((r) => r.type === "Churn notice" && !r.resolved)
@@ -805,6 +834,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         }
         ribbon={ribbon}
         fields={fields}
+        headerActions={<Actions surface="page" items={headerItems} />}
         actions={{
           primary,
           secondary,
