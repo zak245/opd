@@ -70,6 +70,9 @@ const pane = async () => {
   const p = await paneRaw()
   return p ? `${p.name}${p.stepBack ? ` (‹ ${p.stepBack})` : ""}${p.count ? ` · ${p.count}` : " · no walker"}` : "(no pane)"
 }
+/** The pane's field labels, in the order it shows them: what the seat's level one actually is. */
+const paneFields = () => page.evaluate(() =>
+  Array.from(document.querySelectorAll("aside dl dt")).map((el) => el.textContent.trim()).join(" · ") || "(no fields)")
 const trail = () => page.evaluate(() => document.querySelector('nav[aria-label="Your path"]')?.innerText.replace(/\n/g, " ") ?? "(none)")
 
 await page.goto(base + "/#/", { waitUntil: "networkidle0" })
@@ -166,6 +169,10 @@ await go("/ollopa/tasks")
 await shot("b1-tasks-queue")
 const bBefore = await renders()
 console.log("B before the pane:", bBefore)
+console.log("B queue says:", await page.evaluate(() =>
+  document.querySelector('[data-page-active="true"] [role="main"], [data-page-active="true"]')?.innerText.split("\n").find((l) => /more behind|last/.test(l)) ?? "(no line)"))
+console.log("B see-the-list control:", await page.evaluate(() =>
+  !!Array.from(document.querySelectorAll('[data-page-active="true"] button')).find((b) => b.textContent.trim() === "See the list")))
 console.log("B task 1:", await page.evaluate(() => document.querySelector('[data-page-active="true"] h3')?.textContent ?? ""))
 
 await page.evaluate(() => {
@@ -178,11 +185,17 @@ const bAfter = await renders()
 console.log("B after the pane: ", bAfter, bBefore === bAfter ? "· the page did not re-render" : "· THE PAGE RE-RENDERED")
 await shot("b2-contact-beside")
 
-// Done on the page behind the pane: the queue moves on, the pane stays open.
+// Done on the page behind the pane: the queue moves on and the pane moves with it. On a phone the
+// pane is the whole screen, so the page behind it cannot be pressed at all: close it first, which is
+// what a person on a phone does, and the same lap carries on.
+if (phone) { await page.keyboard.press("Escape"); await wait(400) }
 console.log("B Done pressed:", await clickReal('[data-page-active="true"] button', "Done"))
 await wait(700)
 console.log("B task after Done:", await page.evaluate(() => document.querySelector('[data-page-active="true"] h3')?.textContent ?? ""))
-console.log("B pane after Done:", await pane(), "· the pane and the page must name the same person, and the count must be one shorter")
+console.log("B pane after Done:", await pane(), phone
+  ? "· (phone: the pane was closed to reach the page, so there is nothing to move)"
+  : "· the pane and the page must name the same person, and the count must be one shorter")
+if (phone) { await page.evaluate(() => document.querySelector('[data-page-active="true"] [data-item] button')?.click()); await wait(600) }
 await shot("b3-done")
 
 await page.keyboard.press("BracketRight")
@@ -206,6 +219,7 @@ const opened = await page.evaluate(() => {
 })
 await wait(600)
 console.log("C row:", opened, "pane:", await pane())
+console.log("C reply pane fields:", await paneFields())
 const cAfter = await renders()
 console.log("C after the pane: ", cAfter, cBefore === cAfter ? "· the page did not re-render" : "· THE PAGE RE-RENDERED")
 await shot("c2-reply-beside")
@@ -213,6 +227,11 @@ await shot("c2-reply-beside")
 console.log("C open the page:", await clickReal("aside button", "Open the page"))
 await wait(800)
 console.log("C trail:", await trail())
+console.log("C lit on arrival:", await page.evaluate(() => document.querySelector(".ollopa-returned")?.textContent?.replace(/\s+/g, " ").slice(0, 40) ?? "(nothing lit)"))
+console.log("C focused on arrival:", await page.evaluate(() => {
+  const el = document.activeElement
+  return el && el !== document.body ? `${el.tagName} "${(el.textContent ?? "").replace(/\s+/g, " ").slice(0, 34)}"` : "BODY — focus lost"
+}))
 await shot("c3-thread-page")
 
 await page.evaluate(() => {
@@ -236,6 +255,7 @@ const task = await page.evaluate(() => {
 })
 await wait(600)
 console.log("D row:", task, "pane:", await pane())
+console.log("D task pane fields:", await paneFields())
 await shot("d1-task-beside")
 
 console.log("D Done in the pane:", await clickReal("aside button", "Done"))

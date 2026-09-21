@@ -75,6 +75,22 @@ console.log("Enter on the card:", await page.evaluate(() => `hash=${location.has
 console.log("the card says:", await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).getAttribute("aria-label"), card.id))
 await shot("2-quicklook")
 
+// The drawer walks its own column with [ and ], the same keys and the same "n of m" as the pane.
+const drawer = () => page.evaluate(() => {
+  const sheet = document.querySelector('[role="dialog"]')
+  if (!sheet) return "(no drawer)"
+  const count = Array.from(sheet.querySelectorAll("span")).find((el) => /^\d+ of \d+$/.test(el.textContent.trim()))
+  return `${sheet.querySelector("h2, [data-slot='sheet-title']")?.textContent?.trim()} · ${count?.textContent.trim() ?? "(no n of m)"}`
+})
+console.log("the drawer opened on:", await drawer())
+await page.keyboard.press("BracketRight")
+await wait(400)
+console.log("after ] in the drawer:", await drawer())
+await shot("2b-quicklook-next")
+await page.keyboard.press("BracketLeft")
+await wait(400)
+console.log("after [ in the drawer:", await drawer())
+
 // The drawer opens with the one editable field focused, so Tab down to "Open" and press it.
 await press(`Array.from(document.querySelectorAll('[role="dialog"] button')).find((b) => b.textContent.trim() === "Open")`)
 await wait(900)
@@ -251,5 +267,20 @@ console.log("back on the board itself:", await page.evaluate((id) => {
   return `the card is in ${column} · rail reads "${rail?.textContent.trim() ?? "(no rail)"}"`
 }, acted.id))
 await shot("14-board-after")
+
+/* --------------------------- the pane's fields are the model's answer, not a list anyone typed out */
+
+for (const role of ["ae", "admin"]) {
+  await page.evaluate((r) => localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: r })), role)
+  await page.goto(`${base}/#/ollopa/deals/d-118`, { waitUntil: "networkidle0" })
+  await page.reload({ waitUntil: "networkidle0" })
+  await wait(700)
+  await page.evaluate(() => document.body.focus())
+  await page.keyboard.press("BracketRight")
+  await wait(600)
+  const labels = await page.evaluate(() => Array.from(document.querySelectorAll("aside dl dt")).map((el) => el.textContent.trim()))
+  console.log(`the deal pane for the Meridian ${role}:`, labels.join(", ") || "(no pane)")
+  await shot(`15-pane-fields-${role}`)
+}
 
 await browser.close()

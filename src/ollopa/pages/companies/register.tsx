@@ -5,10 +5,12 @@
 //
 // `/ollopa/accounts/:id` redirects to `/ollopa/companies/:id`: a company and an account are one
 // object with a customer state, and there is one record, not two (PLAN.md, 15 September 2026).
+import { declarePaneFields } from "../../ui/Beside"
 import { Button } from "@/components/ui/button"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
+import { useDisclosure } from "../../ui/useDisclosure"
 import { CompaniesPage } from "./CompaniesPage"
 import { AccountsPage } from "./AccountsPage"
 import { CompanyRecord } from "./CompanyRecord"
@@ -88,6 +90,10 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
   // What has already been changed on this company in this session, so an action taken in here shows
   // its effect in here, at once, and the record behind says the same thing.
   void useChanges()
+  // Which fields this pane shows is the same question the record page asks about its own header and
+  // the table asks about its drawer: what does this seat, at this business, read in a typical week.
+  const d = useDisclosure("companies")
+  declarePaneFields("companies")
   const found = mergedCompany(session.business, id)
   if (!found) return <p className="text-muted-foreground">This company is not in this workspace.</p>
 
@@ -121,7 +127,7 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
   return (
     <div className="space-y-4">
       <dl className="space-y-2.5">
-        {quickLookFields(v, business.currency).map((f) => (
+        {quickLookFields(v, business.currency, d.level).map((f) => (
           <div key={f.label} className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
             <dt className="text-xs text-muted-foreground">{f.label}</dt>
             <dd className="min-w-0">{f.value}</dd>

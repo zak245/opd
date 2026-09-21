@@ -17,6 +17,9 @@ import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
+import { useEdits } from "../../edits"
+import { RowNote, useTick } from "../engage/shared"
+import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
@@ -103,6 +106,12 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   const route = useRoute()
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
 
+  // What actions took on the recipients and on this campaign's audience this session, from the one
+  // store every page reads: acting in a pane redraws the row it was caused on, here, at once.
+  const personEdits = useEdits("person")
+  const audienceEdits = useEdits("audience")
+  useTick(Object.values({ ...personEdits, ...audienceEdits }).some(undoable))
+
   const c = rows.campaigns.find((x) => x.id === id)
   const [qaOpen, setQaOpen] = useState(false)
   const [testOpen, setTestOpen] = useState(route.query.get("open") === "test")
@@ -186,6 +195,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         ? (
           <span data-item={audience.id} data-item-label={audience.name}>
             <button type="button" className="underline" onClick={(ev) => readAudience(ev.currentTarget)}>{audience.name}</button>
+            <ActedNote business={session.business} kind="audience" id={audience.id} edit={audienceEdits[audience.id]} />
           </span>
         )
         : `Audience removed; ${num(c.audienceSize)} people at send time`,
@@ -350,6 +360,8 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             <tr key={p.id} className="border-t" data-item={p.id} data-item-label={p.name}>
               <td className="py-1">
                 <button type="button" className="underline" onClick={(ev) => readPerson(p.id, recipientIds, ev.currentTarget)}>{p.name}</button>
+                {/* What an action from the pane beside this list did to this person, in place. */}
+                {personEdits[p.id]?.note && <RowNote kind="person" id={p.id} note={String(personEdits[p.id].note)} at={personEdits[p.id].at} />}
               </td>
               <td>{p.company}</td>
               <td className="tabular-nums">{p.opens}</td>
@@ -402,6 +414,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             }}>{audience.mode === "live" ? "Freeze" : "Make live"}</Button>
             <Button size="sm" variant="ghost" onClick={(ev) => readAudience(ev.currentTarget)}>Read the audience beside this</Button>
           </div>
+          <ActedNote business={session.business} kind="audience" id={audience.id} edit={audienceEdits[audience.id]} />
         </>
       ) : (
         <p className="text-sm text-muted-foreground">Audience removed; {num(c.audienceSize)} people at send time.</p>

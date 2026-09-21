@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
-import { useBesideDone } from "../../ui/Beside"
+import { useBesideDone, declarePaneFields } from "../../ui/Beside"
+import { useDisclosure } from "../../ui/useDisclosure"
 import { CREDITS, seedFor } from "../../data/seed"
 import { PeoplePage } from "./PeoplePage"
 import { ContactRecord } from "./ContactRecord"
@@ -38,6 +39,10 @@ function say(text: string) {
  */
 const PersonBeside: BesideComponent = ({ session, id }) => {
   const seed = seedFor(session.business)
+  // What sits at level one for this seat at this business — the same question the record page and
+  // the quick look ask, so the pane is not a third opinion about what a contact is.
+  const d = useDisclosure("people")
+  declarePaneFields("people")
   // What earlier actions in this session did to this person, from the one store every page reads.
   // The row behind this pane — on a sequence, a company, a task queue or People — reads the same
   // record under `useEdits("person")`, so the pane and the page can never say different things.
@@ -97,6 +102,21 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
     say(`Draft ready for ${p.name} · ${CREDITS.draft} credits. It is in your drafts.`)
   }
 
+  /** Whether this seat reads the action weekly. The model answers; nothing here is hard-coded. */
+  const shows = (itemId: string) => d.level(itemId) === 1
+
+  const listName = seed.lists.find((l) => l.kind === "people")?.name ?? "a list"
+
+  const callTask = () => {
+    editPerson(p.id, { note: `call task due today · owned by ${session.user}` })
+    say(`Call task due today for ${p.name}. It is in Tasks.`)
+  }
+
+  const addToList = () => {
+    editPerson(p.id, { note: `added to ${listName}` })
+    say(`${p.name} added to ${listName}.`)
+  }
+
   const callOrReveal = () => {
     if (canCall) {
       editPerson(p.id, { note: `called ${p.phoneNumber} · logged on the record` })
@@ -110,7 +130,7 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
   return (
     <div className="space-y-4">
       <dl className="space-y-2.5">
-        {glanceFields(p, seed).map((f) => (
+        {glanceFields(p, seed, d.level).map((f) => (
           <div key={f.label} className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
             <dt className="text-xs text-muted-foreground">{f.label}</dt>
             <dd className="min-w-0">{f.value}</dd>
@@ -118,30 +138,35 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
         ))}
       </dl>
 
-      {/* The actions the chain needs: a real control each, with what it will do written under it. */}
+      {/* The actions the chain needs, and only the ones this seat does: each candidate names its
+          usage item and the model decides, so a Meridian SDR gets the sequence and the call task
+          and a Ridgeline marketer does not. Writing to a person is never gated — it is the one way
+          every seat acts on a contact, and the record offers it to every seat too. */}
       <div className="space-y-3 border-t pt-3">
-        <div>
-          {/* A picker, in place — not a door and not a guess. Flat, so the pane stays one level. */}
-          <Select value={dest} onValueChange={(v) => setPicked({ id, dest: v })}>
-            <SelectTrigger className="h-8 w-full text-xs" aria-label={`Sequence to ${verb.toLowerCase()} ${p.name} to`}>
-              <SelectValue placeholder="Choose a sequence" />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button size="sm" variant="outline" className="mt-1.5 w-full justify-start" disabled={!dest} onClick={move}>
-            {dest ? `${verb} to ${dest}` : `${verb} to the chosen sequence`}
-          </Button>
-          <ConsequenceLine
-            className="mt-1"
-            changes={!dest
-              ? `Choose where ${p.name} goes${p.inSequence ? `; they are in ${p.inSequence} now` : ""}`
-              : p.inSequence
-                ? `Takes ${p.name} out of ${p.inSequence} and starts them at step 1 of ${dest}`
-                : `Starts ${p.name} at step 1 of ${dest}; the first email goes in its next sending window`}
-          />
-        </div>
+        {shows("people.row.sequence") && (
+          <div>
+            {/* A picker, in place — not a door and not a guess. Flat, so the pane stays one level. */}
+            <Select value={dest} onValueChange={(v) => setPicked({ id, dest: v })}>
+              <SelectTrigger className="h-8 w-full text-xs" aria-label={`Sequence to ${verb.toLowerCase()} ${p.name} to`}>
+                <SelectValue placeholder="Choose a sequence" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" className="mt-1.5 w-full justify-start" disabled={!dest} onClick={move}>
+              {dest ? `${verb} to ${dest}` : `${verb} to the chosen sequence`}
+            </Button>
+            <ConsequenceLine
+              className="mt-1"
+              changes={!dest
+                ? `Choose where ${p.name} goes${p.inSequence ? `; they are in ${p.inSequence} now` : ""}`
+                : p.inSequence
+                  ? `Takes ${p.name} out of ${p.inSequence} and starts them at step 1 of ${dest}`
+                  : `Starts ${p.name} at step 1 of ${dest}; the first email goes in its next sending window`}
+            />
+          </div>
+        )}
 
         <div>
           <Button size="sm" variant="outline" className="w-full justify-start" disabled={blocked} onClick={draftEmail}>
@@ -155,19 +180,44 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
           />
         </div>
 
-        <div>
-          <Button size="sm" variant="outline" className="w-full justify-start" disabled={p.doNotCall} onClick={callOrReveal}>
-            {canCall ? `Call ${p.phoneNumber}` : `Reveal the phone · ${CREDITS.revealPhone} credits`}
-          </Button>
-          <ConsequenceLine
-            className="mt-1"
-            {...(p.doNotCall
-              ? { changes: `${p.name} is marked do not call${p.doNotCallSource ? ` · ${p.doNotCallSource}` : ""}` }
-              : canCall
-                ? { changes: `Opens the dialler and logs the call on ${p.name}'s record` }
-                : { credits: CREDITS.revealPhone, changes: "Charged once; the number stays on the record" })}
-          />
-        </div>
+        {shows("people.row.call") && (
+          <div>
+            <Button size="sm" variant="outline" className="w-full justify-start" disabled={p.doNotCall} onClick={callTask}>
+              Create a call task
+            </Button>
+            <ConsequenceLine
+              className="mt-1"
+              changes={p.doNotCall
+                ? `${p.name} is marked do not call${p.doNotCallSource ? ` · ${p.doNotCallSource}` : ""}`
+                : `Due today, owned by you, on ${p.name}'s record and in Tasks`}
+            />
+          </div>
+        )}
+
+        {shows("people.row.reveal-phone") && (
+          <div>
+            <Button size="sm" variant="outline" className="w-full justify-start" disabled={p.doNotCall} onClick={callOrReveal}>
+              {canCall ? `Call ${p.phoneNumber}` : `Reveal the phone · ${CREDITS.revealPhone} credits`}
+            </Button>
+            <ConsequenceLine
+              className="mt-1"
+              {...(p.doNotCall
+                ? { changes: `${p.name} is marked do not call${p.doNotCallSource ? ` · ${p.doNotCallSource}` : ""}` }
+                : canCall
+                  ? { changes: `Opens the dialler and logs the call on ${p.name}'s record` }
+                  : { credits: CREDITS.revealPhone, changes: "Charged once; the number stays on the record" })}
+            />
+          </div>
+        )}
+
+        {shows("people.row.list") && (
+          <div>
+            <Button size="sm" variant="outline" className="w-full justify-start" onClick={addToList}>
+              Add to {listName}
+            </Button>
+            <ConsequenceLine className="mt-1" changes={`Puts ${p.name} on ${listName}; nothing is sent`} />
+          </div>
+        )}
       </div>
 
       {/* What the last action did and the way out of it are the frame's footer line, from the same

@@ -496,6 +496,7 @@ export function Tasks({ session }: { session: Session }) {
             onSkip={skip}
             onOpenContact={openContact}
             onOpenDeal={openDeal}
+            onSeeList={() => setMode("list")}
             onSnoozeRest={() => {
               const rest = rows.filter((t) => t.kind === "LinkedIn")
               rest.forEach((t) => recordEdit("task", t.id, { snoozed: true, until: nextMonday() }))

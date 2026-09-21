@@ -12,16 +12,18 @@
 //   · [ and ] walk the list the pane was opened from, without closing;
 //   · nothing inside it opens a door, and it never opens a second pane — a related object opened
 //     from in here swaps the content and leaves one "‹ back", and past that the way on is the page.
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
-import { crumbName, findAnchor, follow, showReturn } from "../chain"
+import { clearHighlight, crumbName, findAnchor, follow, showReturn } from "../chain"
 import { clearEdit, useEdit } from "../edits"
 import { besides } from "../Product"
 import type { Session } from "../session"
+import type { Page } from "../usage/model"
+import { useDisclosure } from "./useDisclosure"
 import { FlatProvider } from "./Door"
 
 const MS = 200
@@ -87,6 +89,52 @@ function tookItsPlace(target: BesideTarget, container: HTMLElement | null): HTML
 }
 
 
+
+/* ------------------------------------------------------------------- what the pane's fields are */
+
+export interface PaneField {
+  /** The usage-model item id for this field on the record's page: "person.title", "deal.amount". */
+  item: string
+  label: string
+  value: ReactNode
+}
+
+/** Set by the body, read by the frame, so development can say when a pane has not asked. */
+const DeclaredPage = createContext<(page: Page) => void>(() => {})
+
+/**
+ * The pane's fields: the record's own first level for this seat at this business, in the record's
+ * order. Never a hand-written list — the whole point of the pane is that it is the top of the
+ * record page cut short, and what sits at the top of the record page is decided by the usage model
+ * and nothing else. Hand a field its usage item id and this drops the ones at level two.
+ *
+ * ```tsx
+ * const fields = usePaneFields("people", [
+ *   { item: "person.title",   label: "Title",   value: p.title },
+ *   { item: "person.company", label: "Company", value: p.company },
+ * ])
+ * ```
+ *
+ * A body that renders fields without calling this gets a warning in development, because it is
+ * showing one set of fields to five seats that do not use the same ones.
+ */
+export function usePaneFields(page: Page, fields: PaneField[]): PaneField[] {
+  const d = useDisclosure(page)
+  declarePaneFields(page)
+  return fields.filter((f) => d.level(f.item) === 1)
+}
+
+/**
+ * The same promise without the filtering: "my fields came from this page's usage model, and I did
+ * the level test myself". A body that builds its fields in a shape `usePaneFields` cannot take —
+ * groups, a mix of fields and cards — calls this instead, and the warning stays quiet.
+ */
+export function declarePaneFields(page: Page) {
+  const declare = useContext(DeclaredPage)
+  // Every render, not only when `page` changes: the frame asks again for each object it draws.
+  useEffect(() => { declare(page) })
+}
+
 /* ------------------------------------------------------------------- what the last action did */
 
 export interface BesideDone {
@@ -133,6 +181,9 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   /** What the row behind is called, for the phone header's one line of where you came from. */
   const [fromRow, setFromRow] = useState<string | null>(null)
   const [bodyDone, setBodyDone] = useState<BesideDone | null>(null)
+  /** Which page's usage model the body said its fields came from, this commit. Development only. */
+  const declaredPage = useRef<Page | null>(null)
+  const warned = useRef(new Set<string>())
 
   if (target && target !== shown) {
     // Render-phase, so the body and the header change in the same paint as the width.
@@ -142,6 +193,9 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   useEffect(() => {
     const ms = reducedMotion() ? 0 : MS
     if (target) {
+      // Opening a pane is a new answer to "which one are you on", so whatever a return lit three
+      // seconds ago goes out: the marked row behind the pane is the only mark left.
+      clearHighlight()
       opener.current = target.opener ?? opener.current
       last.current = target
       pinRow(row.current ?? opener.current, ms + 60)
@@ -235,6 +289,21 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   // The frame is inside a hook-free branch below, so read the store before the early return.
   const recorded = useEdit(shown?.kind ?? "", shown?.id ?? "")
 
+  // Development only. Child effects run before this one, so a body that called `usePaneFields` has
+  // already said which page it read. One warning per kind; nothing of this exists in a build.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const kind = shown?.kind
+    if (kind && !declaredPage.current && !warned.current.has(kind)) {
+      warned.current.add(kind)
+      console.warn(
+        `[ollopa] The "${kind}" pane draws its fields without saying which page's usage model they came from. ` +
+        "Build them with usePaneFields(page, items) so the pane shows this seat's first level and not a fixed list.",
+      )
+    }
+    declaredPage.current = null
+  })
+
   if (!shown) return null
 
   const head = headFor(session, shown)
@@ -250,6 +319,8 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   const hasPrev = !!list && list.index > 0
   const hasNext = !!list && list.index < list.ids.length - 1
   const parentHead = parent ? headFor(session, parent) : null
+
+  const declarePage = (page: Page) => { declaredPage.current = page }
 
   const openPage = () => {
     if (!head.route) return
@@ -301,11 +372,13 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
         {/* Flat by construction: a door rendered in here renders in place instead. */}
         <FlatProvider value={true}>
           <DoneSlot.Provider value={setBodyDone}>
+          <DeclaredPage.Provider value={declarePage}>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm">
             {Body ? <Body session={session} id={shown.id} target={shown} /> : (
               <p className="text-muted-foreground">Nothing is registered to show a {shown.kind} here yet.</p>
             )}
           </div>
+          </DeclaredPage.Provider>
           </DoneSlot.Provider>
         </FlatProvider>
 

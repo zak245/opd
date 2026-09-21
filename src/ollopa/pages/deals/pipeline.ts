@@ -200,19 +200,37 @@ export function newDeal(input: {
 /* ----------------------------------------------------------- level one, and what closing it does */
 
 /**
- * The deal's first level: the six fields the record opens with, in the record's order and with the
- * record's labels (spec 09 §6.8). The quick look, the table's quick look and the deal pane all read
- * this one list, so a deal read in three places is read the same way.
+ * The deal's first level, in the record's own order and with the record's labels (spec 09 §6.8).
+ *
+ * Which rows appear is not a list anyone typed here: it is the header fields the usage model puts at
+ * level one for the seat doing the looking, which is the same question the record asks before it
+ * decides what goes in its header grid. So a Meridian AE, who moves forecast categories every week
+ * and hands a deal away twice a year, reads Forecast category and not Owner; the admin, who
+ * reassigns deals, reads both. The quick look on the board and the deal pane both read this, so a
+ * deal glanced in two places is the same deal at the same level.
+ *
+ * `one(itemId)` is `useDisclosure("deal").atLevelOne` from the caller, which is where the seat and
+ * the business come from. Probability and forecast sit next to the stage and never across a gap
+ * from it (rule 5), which is why they are adjacent rows here as they are one group on the record.
  */
-export function dealGlanceFields(deal: Deal, currency: string): { label: string; value: string }[] {
-  return [
-    { label: "Stage", value: deal.stage },
-    { label: "Amount", value: money(deal.amount, deal.currency || currency) },
-    { label: "Close date", value: day(deal.closeDate) },
-    { label: "Next step", value: deal.nextStep ? `${deal.nextStep} · ${day(deal.nextStepDue)}` : "No next step" },
-    { label: "Owner", value: deal.owner },
-    { label: "Last activity", value: `${day(deal.lastActivity)} · ${ago(deal.lastActivity)}` },
+export function dealGlanceFields(
+  deal: Deal,
+  currency: string,
+  one: (itemId: string) => boolean,
+): { label: string; value: string }[] {
+  const rows: { id: string; label: string; value: string }[] = [
+    { id: "deal.stage", label: "Stage", value: deal.stage },
+    { id: "deal.probability", label: "Probability", value: `${deal.probability}%` },
+    { id: "deal.forecast", label: "Forecast category", value: deal.forecast },
+    { id: "deal.amount", label: "Amount", value: money(deal.amount, deal.currency || currency) },
+    { id: "deal.currency", label: "Currency", value: deal.currency || currency },
+    { id: "deal.close-date", label: "Close date", value: day(deal.closeDate) },
+    { id: "deal.next-step", label: "Next step", value: deal.nextStep ? `${deal.nextStep} · ${day(deal.nextStepDue)}` : "No next step" },
+    { id: "deal.owner", label: "Owner", value: deal.owner },
+    { id: "deal.last-activity", label: "Last activity", value: `${day(deal.lastActivity)} · ${ago(deal.lastActivity)}` },
+    { id: "deal.pipeline", label: "Pipeline", value: deal.pipeline },
   ]
+  return rows.filter((r) => one(r.id)).map(({ label, value }) => ({ label, value }))
 }
 
 /**

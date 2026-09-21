@@ -19,6 +19,9 @@ import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
+import { useEdits } from "../../edits"
+import { RowNote, useTick } from "../engage/shared"
+import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Panel } from "../../ui/Panel"
@@ -40,6 +43,13 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   const route = useRoute()
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
   const sdr = b.roles.find((r) => r.role === "sdr")?.user ?? admin
+
+  // What actions took on these people and on the campaigns using this audience, from the one store
+  // every page reads. Opening a pane writes nothing here, so it still does not re-render the page;
+  // acting writes one record and the row it was caused on redraws at once (chain rule 8).
+  const personEdits = useEdits("person")
+  const campaignEdits = useEdits("campaign")
+  useTick(Object.values({ ...personEdits, ...campaignEdits }).some(undoable))
 
   const a = rows.audiences.find((x) => x.id === id)
   const [records, setRecords] = useState<string | null>(route.query.get("records"))
@@ -119,6 +129,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
         ? (
           <span data-item={campaign.id} data-item-label={campaign.name}>
             <button type="button" className="underline" onClick={(ev) => readCampaign(campaign.id, usedByIds, ev.currentTarget)}>{builtFor}</button>
+            <ActedNote business={session.business} kind="campaign" id={campaign.id} edit={campaignEdits[campaign.id]} />
           </span>
         )
         : builtFor ?? "No campaign yet",
@@ -238,8 +249,17 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
       <ul className="text-sm">
         {people.map((p) => (
           <li key={p.id} data-item={p.id} data-item-label={p.name} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-1.5 first:border-t-0">
-            <button type="button" className="underline" onClick={(ev) => readPerson(p.id, peopleIds, ev.currentTarget)}>{p.name}</button>
-            <span className="text-xs text-muted-foreground">{p.title} · {p.company}</span>
+            <span className="min-w-0">
+              <button type="button" className="underline" onClick={(ev) => readPerson(p.id, peopleIds, ev.currentTarget)}>{p.name}</button>
+              {/* What an action from the pane beside this list did to this person, in place. */}
+              {personEdits[p.id]?.note && <RowNote kind="person" id={p.id} note={String(personEdits[p.id].note)} at={personEdits[p.id].at} />}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {p.title} · {p.company}
+              {personEdits[p.id]?.sequence !== undefined && (
+                <span className="block">{String(personEdits[p.id].sequence) || "Not in a sequence"}</span>
+              )}
+            </span>
           </li>
         ))}
         {people.length === 0 && (
@@ -298,6 +318,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
                     <li key={name} data-item={cc.id} data-item-label={cc.name}>
                       <button type="button" className="underline" onClick={(ev) => readCampaign(cc.id, usedByIds, ev.currentTarget)}>{name}</button>
                       <span className="text-muted-foreground"> · {cc.status}</span>
+                      <ActedNote business={session.business} kind="campaign" id={cc.id} edit={campaignEdits[cc.id]} />
                     </li>
                   )
                 })}

@@ -1,11 +1,17 @@
-// `Q-company`: one quick look, two field sets.
+// The company's first level: one ordered list of fields, read by three things.
 //
-// Companies opens it on a prospect and Accounts opens it on the same object in its customer state.
-// It is the top of the company record cut short — same labels, same order — and it is flat: the four
-// health drivers are lines under the health field, never a door, because a score and the reasons that
-// sum to it never sit on opposite sides of one (rule 5).
+// The record page's header, the quick-look drawer on the two tables, and the pane a company reads in
+// beside another page are the same first level of the same object. They are built from `companyFields`
+// below — one list, in the record's order — and every entry names the usage item that decides whether
+// it is level one for the seat and the business that is signed in. Nothing here is a hard-coded set:
+// `useDisclosure("companies")` answers, so a Ridgeline CS reads health, its drivers, the renewal and
+// the next step where a Meridian SDR reads contacts and the two decision-critical fields, and the
+// three surfaces cannot drift because there is one list and one question asked about it.
 //
-// Both tables and the record build their fields from here, so the drawer and the page cannot drift.
+// Rule 7 shows through the usage model rather than around it: `rec.renewal` and `rec.risks` are
+// marked critical in `usage/companies.ts`, so a commitment date and an open risk are level one for
+// every seat whatever the weekly number says.
+import type { ReactNode } from "react"
 import type { QuickLookField } from "../../templates/QuickLook"
 import { ago, day, delta, money, renewalText } from "./format"
 import { isCustomer, type CompanyView } from "./data"
@@ -22,28 +28,50 @@ export function riskLine(v: CompanyView): string {
   return `${open.length} open · newest ${newest.type}${newest.type === "Churn notice" ? " — they have given notice" : ""}`
 }
 
-/** The prospect field set: what a glance down Companies needs. */
-export function prospectFields(v: CompanyView): QuickLookField[] {
-  return [
-    { label: "Company", value: <span>{v.company.name} <span className="font-mono text-xs text-muted-foreground">{v.company.domain}</span></span> },
-    { label: "Stage", value: v.company.stage },
-    { label: "Owner", value: v.company.owner },
-    { label: "Contacts held", value: `${v.contacts.length}` },
-    { label: "Contacts in a sequence", value: `${v.inSequence.length}` },
-    { label: "Last activity", value: `${day(v.lastActivity)} · ${ago(v.lastActivity)}` },
-    { label: "Open deals", value: `${v.openDeals.length}` },
-  ]
+/** One field of the company's first level, and the usage item that decides where it goes. */
+export interface CompanyField {
+  key: string
+  /** The item in `usage/companies.ts` that says whether this seat reads this field in a week. */
+  usage: string
+  label: string
+  value: ReactNode
+  /** A dependent value that never leaves this field: "you" under the owner, the stage's warning. */
+  under?: ReactNode
+  tone?: "warning"
+  span?: 2
+  wide?: boolean
+  /**
+   * The record draws this one as the section directly under the score rather than as a header
+   * field — a score and the numbers that sum to it never sit on opposite sides of anything
+   * (rule 5) — while the drawer and the pane draw it flat, in this position.
+   */
+  asSection?: boolean
 }
 
-/** The customer-state field set: what a glance down fifty renewals needs. */
-export function customerFields(v: CompanyView, currency: string): QuickLookField[] {
+/**
+ * Every first-level field a company can carry, in the record's order.
+ *
+ * The customer-state fields exist only when the object is in a customer state; which of the rest
+ * are level one is not decided here — `companyFirstLevel` asks the usage model, and the record page
+ * asks the same question and puts the answer's level-2 fields inside its All fields door.
+ */
+export function companyFields(v: CompanyView, currency: string, user?: string): CompanyField[] {
+  const c = v.company
   const a = v.account
-  if (!a) return prospectFields(v)
-  return [
-    { label: "Account", value: <span>{a.name} <span className="font-mono text-xs text-muted-foreground">{a.domain}</span></span> },
-    { label: "Health", value: healthLine(a.health, a.band, a.healthDelta30) },
+  const customer = isCustomer(c) && Boolean(a)
+
+  const ownerField: CompanyField = {
+    key: "owner", usage: "rec.header", label: "Owner", value: c.owner,
+    under: user && c.owner === user ? "you" : undefined,
+  }
+
+  const customerFieldSet: CompanyField[] = customer && a ? [
     {
-      label: "What makes up the score",
+      key: "health", usage: "rec.health", label: "Health",
+      value: <span><span className="text-lg font-semibold tabular-nums">{a.health}</span> · {a.band} <span className="text-muted-foreground">· {delta(a.healthDelta30)}</span></span>,
+    },
+    {
+      key: "health-drivers", usage: "rec.health-drivers", label: "What makes up the score", asSection: true, wide: true,
       value: (
         <ul className="space-y-0.5">
           {a.drivers.map((x) => (
@@ -55,17 +83,58 @@ export function customerFields(v: CompanyView, currency: string): QuickLookField
         </ul>
       ),
     },
-    { label: "Renewal", value: renewalText(a.renewal) },
-    { label: "Contract value", value: `${money(a.value, currency)} a year` },
-    { label: "Open risks", value: riskLine(v) },
-    { label: "Last touch", value: `${day(a.lastTouch)} · ${ago(a.lastTouch)}` },
-    { label: "Champion", value: a.champion },
-    { label: "Owner", value: a.owner },
-    { label: "Next step", value: `${a.nextStep.text} · ${day(a.nextStep.due)}` },
+    { key: "renewal", usage: "rec.renewal", label: "Renewal", value: renewalText(a.renewal) },
+    {
+      key: "value", usage: "rec.renewal", label: "Contract value",
+      value: <span><span className="tabular-nums">{money(a.value, currency)}</span> a year <span className="text-muted-foreground">· {a.billing} billing</span></span>,
+    },
+    {
+      key: "risks", usage: "rec.risks", label: "Open risks",
+      tone: a.risks.some((r) => r.type === "Churn notice" && !r.resolved) ? "warning" : undefined,
+      value: riskLine(v),
+    },
+    { key: "last-touch", usage: "rec.touches", label: "Last touch", value: `${day(a.lastTouch)} · ${ago(a.lastTouch)}` },
+    { key: "champion", usage: "rec.contacts", label: "Champion", value: a.champion },
+    ownerField,
+    {
+      key: "next-step", usage: "rec.next-step", label: "Next step", span: 2,
+      value: <span>{a.nextStep.text} <span className="text-muted-foreground">· {day(a.nextStep.due)}</span></span>,
+    },
+  ] : []
+
+  return [
+    ...customerFieldSet,
+    {
+      key: "stage", usage: "rec.header", label: "Stage", value: c.stage,
+      under: c.stage === "Do not prospect" ? `Sequences are stopped for the ${v.inSequence.length} contacts here` : undefined,
+    },
+    ...(customer ? [] : [ownerField]),
+    { key: "contacts", usage: "rec.contacts", label: "Contacts held", value: <span className="tabular-nums">{v.contacts.length}</span> },
+    { key: "in-sequence", usage: "rec.in-sequence", label: "Contacts in a sequence", value: <span className="tabular-nums">{v.inSequence.length}</span> },
+    { key: "last-activity", usage: "rec.header", label: "Last activity", value: <span>{day(v.lastActivity)} <span className="text-muted-foreground">· {ago(v.lastActivity)}</span></span> },
+    { key: "open-deals", usage: "rec.deals", label: "Open deals", value: <span className="tabular-nums">{v.openDeals.length}</span> },
+    { key: "industry", usage: "rec.details", label: "Industry", value: c.industry },
+    { key: "employees", usage: "rec.details", label: "Employees", value: c.employees.toLocaleString() },
+    { key: "location", usage: "rec.details", label: "Location", value: `${c.location.city}, ${c.location.country}` },
+    { key: "founded", usage: "rec.details", label: "Founded", value: c.founded },
+    { key: "description", usage: "rec.details", label: "What they do", wide: true, value: c.description },
   ]
 }
 
-/** Which of the two a row gets, from the object's state and nothing else. */
-export function quickLookFields(v: CompanyView, currency: string): QuickLookField[] {
-  return isCustomer(v.company) && v.account ? customerFields(v, currency) : prospectFields(v)
+/**
+ * The first level for the seat that is signed in: the same list, in the same order, with the items
+ * this seat does not read in a typical week left out. The drawer and the pane render this; the
+ * record page renders the whole list and puts the rest inside its All fields door, which is the
+ * same answer drawn two ways.
+ */
+export function companyFirstLevel(v: CompanyView, currency: string, level: (item: string) => 1 | 2, user?: string): CompanyField[] {
+  return companyFields(v, currency, user).filter((f) => level(f.usage) === 1)
+}
+
+/** The drawer's and the pane's shape: label and value, nothing else. */
+export function quickLookFields(v: CompanyView, currency: string, level: (item: string) => 1 | 2): QuickLookField[] {
+  return [
+    { label: "Company", value: <span>{v.company.name} <span className="font-mono text-xs text-muted-foreground">{v.company.domain}</span></span> },
+    ...companyFirstLevel(v, currency, level).map((f) => ({ label: f.label, value: f.value })),
+  ]
 }

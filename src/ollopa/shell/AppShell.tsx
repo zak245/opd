@@ -22,7 +22,7 @@ import { Palette } from "./Palette"
 import { Shortcuts } from "./Shortcuts"
 import { Panel } from "../ui/Panel"
 import { Beside } from "../ui/Beside"
-import { back, clearTrail, crumbName, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, RETURN_HIGHLIGHT_MS, type Origin } from "../chain"
+import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY } from "./notifications"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
@@ -172,8 +172,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
       // One mark at a time: a page that lit something of its own keeps the only light on screen,
       // and the title takes the focus without a second flash competing with it.
       if (main?.querySelector(".ollopa-returned")) return
-      h1.classList.add("ollopa-returned")
-      window.setTimeout(() => h1.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
+      lightUp(h1)
     }, 60)
     return () => window.clearTimeout(t)
   }, [route.raw])

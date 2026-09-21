@@ -3,11 +3,13 @@
 // `Q-deal` is the deal quick look: a drawer over the board, not a page of its own, so it renders the
 // board with that deal's glance already open. The record it opens into is `R-deal`, which lives in
 // pages/deal and is linked to from here, never rebuilt.
+import { declarePaneFields } from "../../ui/Beside"
 import { Button } from "@/components/ui/button"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { businessById } from "../../data/businesses"
+import { useDisclosure } from "../../ui/useDisclosure"
 import { TODAY, seedFor } from "../../data/seed"
 import { DealsBoard } from "./DealsBoard"
 import { recordEdit, useEdit } from "../../edits"
@@ -34,6 +36,11 @@ function say(text: string) {
 const DealBeside: BesideComponent = ({ session, id }) => {
   const seed = seedFor(session.business)
   const b = businessById(session.business)
+  // The same question the deal record asks before it lays out its header: which of the deal's fields
+  // this seat at this business actually touches in a week. The pane shows those, in the record's
+  // order, and nothing else — so what a Meridian AE reads here is not what the admin reads.
+  const dealLevel = useDisclosure("deal")
+  declarePaneFields("deal")
   // What an earlier action in this session did to this deal, from the one store the cards and the
   // table behind this pane read too, so the pane and the row can never say different things.
   const edit = useEdit("deal", id)
@@ -50,7 +57,7 @@ const DealBeside: BesideComponent = ({ session, id }) => {
   return (
     <div className="space-y-4">
       <dl className="space-y-2.5">
-        {dealGlanceFields(deal, seed.workspace.currency).map((f) => (
+        {dealGlanceFields(deal, seed.workspace.currency, dealLevel.atLevelOne).map((f) => (
           <div key={f.label} className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
             <dt className="text-xs text-muted-foreground">{f.label}</dt>
             <dd className="min-w-0">{f.value}</dd>

@@ -253,6 +253,11 @@ Nothing is inferred. The trail grows only from `follow` and shrinks only from `b
 a pasted URL, the browser's back button, the sidebar, the bottom bar and the palette all start with
 an empty one.
 
+**One thing is lit at a time.** The cue lasts three seconds, which is long enough to open a pane or
+follow a link inside it, and two rows lit at once would say two different things are the one you came
+back to. So a new cue, opening a pane, and following a link each put out whatever was lit before.
+`lightUp(el)` and `clearHighlight()` in `chain.ts` are the only two ways the mark goes on and off.
+
 Arriving anywhere by `follow` puts focus on that page's own `h1` and lights it for the same three
 seconds a return gets, so the crumb back is one Shift+Tab away instead of a walk through the sidebar.
 
@@ -375,10 +380,46 @@ PersonBeside.head = ({ session, id }) => ({ name, context: `${title} · ${compan
 export const besides: Record<string, BesideComponent> = { person: PersonBeside }
 ```
 
-The body is the record's **first level** — the same fields, the same order, the same labels the
-record page opens with, which for a contact means `glanceFields` — plus the actions the chain needs,
-each a real button with its consequence line where the rules require one (rule 7). Nothing in the
-body opens a further level.
+### What a pane's fields are
+
+The body is the record's **first level** — the same fields, in the record's order, with the record's
+labels — plus the actions the chain needs, each a real button with its consequence line where the
+rules require one (rule 7). Nothing in the body opens a further level.
+
+"First level" means exactly what it means on the record page: the items the usage model puts at
+level one **for this seat at this business**, from `useDisclosure(page)`. It is never a hand-written
+list. A fixed list shows an SDR at Meridian and a founder at Fathom the same seven fields when the
+record pages behind them do not, and then the pane is a third version of the object rather than the
+top of the record cut short.
+
+Build them with `usePaneFields`, which every pane shares:
+
+```tsx
+import { usePaneFields } from "@/ollopa/ui/Beside"
+
+const fields = usePaneFields("people", [
+  { item: "person.title",    label: "Title",    value: p.title },
+  { item: "person.company",  label: "Company",  value: p.company },
+  { item: "person.owner",    label: "Owner",    value: p.owner },
+  { item: "person.sequence", label: "Sequence", value: sequenceLine(p) },
+])
+```
+
+`item` is the usage-model item id for that field on the record's page. The hook drops everything at
+level two and returns the rest in the order you gave, which is the record's order. It also tells the
+frame which page's usage model you read: a pane body that draws fields without saying gets one
+warning per kind in development, because nothing behind its field choice is a usage number.
+
+A body whose fields do not fit that shape — groups, a mix of fields and cards — asks `useDisclosure`
+itself and says so with one line, which quiets the warning and makes the same promise:
+
+```tsx
+const d = useDisclosure("people")
+declarePaneFields("people")
+```
+
+Decision-critical fields are level one whatever the numbers say (rule 7), so they arrive in the pane
+without a special case.
 
 
 ---

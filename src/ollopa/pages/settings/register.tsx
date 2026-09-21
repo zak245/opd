@@ -6,6 +6,7 @@
 import { useMemo } from "react"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
+import { declarePaneFields } from "../../ui/Beside"
 import { businessById } from "../../data/businesses"
 import { nodeById } from "../../map"
 import { seedFor } from "../../data/seed"
@@ -86,6 +87,7 @@ const SettingBeside: BesideComponent = ({ session, id }) => (
 )
 
 function SettingBesideBody({ session, id }: { session: Session; id: string }) {
+  declarePaneFields("settings")   // one setting row, at the level the settings model gives it
   const ctx = useMemo(() => besideCtx(session), [session])
   const row = useMemo(() => [...personalRows(ctx), ...rowsFor(ctx)].find((r) => r.id === id), [ctx, id])
   if (!row) return <p className="text-muted-foreground">This workspace has no setting called {id}.</p>

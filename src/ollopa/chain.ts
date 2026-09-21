@@ -101,8 +101,9 @@ export function bindChain(business: string | null, user: string | null) {
  */
 function go(to: string): boolean {
   // Leaving the page takes the pane with it: a pane is a look at something beside where you are,
-  // and you are no longer there.
+  // and you are no longer there. Anything still lit on the page you are leaving goes out too.
   closeBeside()
+  clearHighlight()
   const before = location.hash
   navigate(to)
   if (location.hash === before) { expecting = null; pending = null; return false }
@@ -225,6 +226,26 @@ export function findAnchor(anchor: string): HTMLElement | null {
 }
 
 /**
+ * One thing is lit at a time. Three seconds is long enough to open a second pane inside, and two
+ * rows lit at once says two things are "the one you came back to", which is a lie about state. So
+ * every new cue — and opening a pane, and following a link — puts out whatever was lit before.
+ */
+let lit: number[] = []
+export function clearHighlight() {
+  lit.forEach((t) => window.clearTimeout(t))
+  lit = []
+  document.querySelectorAll(".ollopa-returned").forEach((el) => el.classList.remove("ollopa-returned"))
+}
+
+/** Light one element for the three seconds, and put out anything else that was lit. */
+export function lightUp(el: HTMLElement) {
+  clearHighlight()
+  void el.offsetWidth
+  el.classList.add("ollopa-returned")
+  lit.push(window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS))
+}
+
+/**
  * Light the thing you left, once: scroll it into view if it drifted out (clear of the phone's
  * bottom bar), hold it lit for three seconds, and move focus to it — the row's own name link where
  * it has one, so the keyboard carries on from the row and not from the top of the page.
@@ -247,10 +268,7 @@ export function showReturn(anchor: string | HTMLElement) {
     }
   }
 
-  el.classList.remove("ollopa-returned")
-  void el.offsetWidth
-  el.classList.add("ollopa-returned")
-  window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
+  lightUp(el)
 
   // Where focus lands. When the anchor names a part of the row — the name cell — focus that part,
   // because it is the thing the person left. When the anchor is the whole row and the row can take

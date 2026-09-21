@@ -30,8 +30,8 @@ import { businessById } from "../../data/businesses"
 import { ACCOUNT_STAGES, CREDITS, TODAY, seedFor, type AccountStage } from "../../data/seed"
 import type { Session } from "../../session"
 import { activityOf, isCustomer, viewOf } from "./data"
-import { customerFields, healthLine, prospectFields, riskLine } from "./quickLook"
-import { ago, day, daysLeft, delta, money, renewalText } from "./format"
+import { companyFields, healthLine, quickLookFields, riskLine } from "./quickLook"
+import { ago, day, money, renewalText } from "./format"
 import { applyChange, changeFor, useChanges } from "./changes"
 import { PlayPanel } from "./PlayPanel"
 import { CompanyContacts } from "./CompanyContacts"
@@ -139,6 +139,11 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
 
   /* ------------------------------------------------------------------------------- the fields */
 
+  // The header is `companyFields` — one list, in this order, shared with the quick look and with
+  // the pane a company reads in beside another page. Which of them sit on the page and which sit
+  // inside the All fields door is not decided here either: `useDisclosure` answers, item by item,
+  // for the seat and the business signed in. The record's affordances — the editable stage, the
+  // editable next step — are attached by key, because a drawer cannot edit and a page can.
   const changeStage = (to: AccountStage) => {
     applyChange(merged.id, { stage: to })
     toast(to === "Do not prospect"
@@ -146,55 +151,26 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       : `${merged.name} · stage ${to}`)
   }
 
-  const customerFieldSet: RecordField[] = customer && account ? [
-    {
-      key: "health", label: "Health", editor: "readonly",
-      value: <span><span className="text-lg font-semibold tabular-nums">{account.health}</span> · {account.band}</span>,
-      under: delta(account.healthDelta30),
-    },
-    { key: "renewal", label: "Renewal", editor: "readonly", tone: daysLeft(account.renewal) < 30 && daysLeft(account.renewal) >= 0 ? "warning" : undefined, value: renewalText(account.renewal) },
-    { key: "value", label: "Contract value", editor: "readonly", value: <span className="tabular-nums">{money(account.value, b.currency)}</span>, under: `${account.billing} billing` },
-    { key: "risks", label: "Open risks", editor: "readonly", tone: account.risks.some((r) => r.type === "Churn notice") ? "warning" : undefined, value: riskLine(v) },
-    { key: "last-touch", label: "Last touch", editor: "readonly", value: `${day(localTouches[0]?.at ?? account.lastTouch)} · ${ago(localTouches[0]?.at ?? account.lastTouch)}` },
-    { key: "champion", label: "Champion", editor: "readonly", value: account.champion },
-  ] : []
+  const editorOf: Record<string, RecordField["editor"]> = { stage: "select", owner: "user", "next-step": "text" }
+  const editOf: Record<string, RecordField["edit"]> = canEdit
+    ? {
+        stage: { value: merged.stage, options: [...ACCOUNT_STAGES], onSave: (to) => changeStage(to as AccountStage) },
+        ...(customer && account
+          ? { "next-step": { value: account.nextStep.text, onSave: (text: string) => { applyChange(merged.id, { nextStep: { text, due: account.nextStep.due } }); toast(`Next step · ${text}`) } } }
+          : {}),
+      }
+    : {}
 
-  const nextStepField: RecordField[] = customer && account ? [{
-    key: "next-step", label: "Next step", span: 2, editor: "text",
-    value: <span>{account.nextStep.text} <span className="text-muted-foreground">· {day(account.nextStep.due)}</span></span>,
-    edit: canEdit ? { value: account.nextStep.text, onSave: (text) => { applyChange(merged.id, { nextStep: { text, due: account.nextStep.due } }); toast(`Next step · ${text}`) } } : undefined,
-  }] : []
-
-  const detailsLevel = d.level("rec.details")
-
-  const ownerField: RecordField = {
-    key: "owner", label: "Owner", editor: "user", value: merged.owner,
-    under: merged.owner === session.user ? "you" : undefined,
-  }
-
-  // The order of the header is the order of the quick look, so the drawer is the top of this page
-  // cut short: for a customer, health, renewal, value, risks, last touch, champion, owner, next step.
   const fields: RecordField[] = [
-    ...customerFieldSet,
-    ...(customer ? [ownerField, ...nextStepField] : []),
-    {
-      key: "stage", label: "Stage", editor: "select",
-      value: <Badge variant="secondary">{merged.stage}</Badge>,
-      edit: canEdit ? { value: merged.stage, options: [...ACCOUNT_STAGES], onSave: (to) => changeStage(to as AccountStage) } : undefined,
-      under: merged.stage === "Do not prospect" ? `Sequences are stopped for the ${v.inSequence.length} contacts here` : undefined,
-    },
-    ...(customer ? [] : [ownerField]),
-    { key: "contacts", label: "Contacts held", editor: "readonly", value: <span className="tabular-nums">{v.contacts.length}</span> },
-    { key: "in-sequence", label: "Contacts in a sequence", editor: "readonly", value: <span className="tabular-nums">{v.inSequence.length}</span> },
-    { key: "last-activity", label: "Last activity", editor: "readonly", value: <span>{day(v.lastActivity)} <span className="text-muted-foreground">· {ago(v.lastActivity)}</span></span> },
-    { key: "open-deals", label: "Open deals", editor: "readonly", value: <span className="tabular-nums">{v.openDeals.length}</span> },
-
-    // Company details: header fields where the seat reads them, the All fields door where it does not.
-    { key: "industry", label: "Industry", level: detailsLevel, value: merged.industry },
-    { key: "employees", label: "Employees", level: detailsLevel, value: merged.employees.toLocaleString() },
-    { key: "location", label: "Location", level: detailsLevel, value: `${merged.location.city}, ${merged.location.country}` },
-    { key: "founded", label: "Founded", level: detailsLevel, value: merged.founded },
-    { key: "description", label: "What they do", level: detailsLevel, wide: true, value: merged.description },
+    ...companyFields(v, b.currency, session.user)
+      // The drivers are a section directly under the score on this page, never a header field.
+      .filter((f) => !f.asSection)
+      .map((f) => ({
+        key: f.key, label: f.label, value: f.value, under: f.under, tone: f.tone, span: f.span, wide: f.wide,
+        level: d.level(f.usage),
+        editor: editorOf[f.key] ?? "readonly",
+        edit: editOf[f.key],
+      }) as RecordField),
 
     // The tail every record accumulates: the template puts these inside the All fields door.
     ...([
@@ -806,7 +782,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         side={cards}
         doors={doors}
         quickLook={{
-          fields: customer && account ? customerFields(v, b.currency) : prospectFields(v),
+          fields: quickLookFields(v, b.currency, d.level),
           editable: customer && account
             ? { label: "Next step", value: account.nextStep.text, onChange: (text) => applyChange(merged.id, { nextStep: { text, due: account.nextStep.due } }) }
             : { label: "Stage", value: merged.stage, options: [...ACCOUNT_STAGES], onChange: (to) => changeStage(to as AccountStage) },

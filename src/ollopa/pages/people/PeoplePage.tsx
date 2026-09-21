@@ -1164,7 +1164,9 @@ export function PeoplePage({ session }: { session: Session }) {
           /* Closing the drawer puts the keyboard back where it was: on the row it was opened from. */
           onOpenChange={(o) => { if (!o) { setGlancing(null); window.setTimeout(() => (document.querySelector(`tr[data-row="${focused}"]`) as HTMLElement | null)?.focus(), 220) } }}
           title={glancing.name}
-          fields={glanceFields(glancing, seed).map((f) => ({ label: f.label, value: f.label === "Stage" ? stageOf(glancing) : f.value }))}
+          /* The seat's own first level, from the usage model — the same call the record header and
+             the pane beside another page make, so the three cannot drift. */
+          fields={glanceFields(glancing, seed, d.level).map((f) => ({ label: f.label, value: f.label === "Stage" ? stageOf(glancing) : f.value }))}
           editable={{ label: "Stage", value: stageOf(glancing), options: [...STAGES], onChange: (v) => moveStage(glancing, v as ContactStage) }}
           /* "Open" leaves for the record and hands the trail this row, so the crumb back lands on
              it, lit and focused, with the drawer closed and everything else as it was. */

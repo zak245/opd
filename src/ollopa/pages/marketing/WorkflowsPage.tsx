@@ -14,6 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
 import { follow, type Origin } from "../../chain"
+import { useEdits } from "../../edits"
+import { useTick } from "../engage/shared"
+import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -36,6 +39,9 @@ export function WorkflowsPage({ session }: { session: Session }) {
   const lock = gate("workflows", session.business)
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
   const route = useRoute()
+  // What a pane's actions did to these workflows this session, from the one store every page reads.
+  const workflowEdits = useEdits("workflow")
+  useTick(Object.values(workflowEdits).some(undoable))
 
   /**
    * The one way off this page. Opening a row is a step in a chain, not a jump: the trail keeps
@@ -115,8 +121,13 @@ export function WorkflowsPage({ session }: { session: Session }) {
   /* -------------------------------------------------------------------------------- the columns */
 
   const columns: GridColumn<Workflow>[] = [
+    // The name is the control, as it is on People: one thing to tab to, one thing to press.
     { key: "name", header: "Workflow", sortBy: (w) => w.name, className: "min-w-[10rem] whitespace-normal", cell: (w) => (
-      <div className="min-w-0"><div className="font-medium">{w.name}</div>{w.folder && <div className="text-xs text-muted-foreground">{w.folder}</div>}</div>
+      <div className="min-w-0">
+        <button type="button" className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/workflows/${w.id}`, w.id) }}>{w.name}</button>
+        {w.folder && <div className="text-xs text-muted-foreground">{w.folder}</div>}
+        <ActedNote business={session.business} kind="workflow" id={w.id} edit={workflowEdits[w.id]} />
+      </div>
     ) },
     { key: "trigger", header: "Trigger", sortBy: (w) => w.trigger, className: "min-w-[9rem] whitespace-normal", cell: (w) => <span className="text-sm">When {w.trigger}</span> },
     { key: "status", header: "Status", sortBy: (w) => w.status, className: "min-w-[7rem] whitespace-normal", cell: (w) => (

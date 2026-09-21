@@ -168,6 +168,9 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const seed = seedFor(session.business)
   const b = businessById(session.business)
   const d = useDisclosure("deals")
+  // What the deal record opens with for this seat. The drawer is the top of that record cut short,
+  // so it asks the record's own page rather than carrying a list of fields someone typed here.
+  const dealLevel = useDisclosure("deal")
   /** A zero means the item is not part of this seat's job here at all: removed, not shown empty. */
   const used = (id: string) => d.weekly(id) > 0
   const one = (id: string) => d.level(id) === 1
@@ -437,6 +440,10 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   /* ------------------------------------------------------------------------------ the quick look */
 
   const glanced = glance ? all.find((x) => x.id === glance) ?? null : null
+  // The column the glanced card sits in, in the order it is on screen, so [ and ] walk it. Moving a
+  // stage from the drawer moves the card, and the count follows it: that is the truth, not a glitch.
+  const glanceColumn = glanced ? byStage(glanced.stage).map((x) => x.id) : []
+  const glanceAtIndex = glanced ? glanceColumn.indexOf(glanced.id) : -1
   const glanceEditable: QuickLookEditable | undefined = glanced
     ? glanced.owner === session.user
       ? { label: "Stage", value: glanced.stage, options: ALL_STAGES, onChange: (v) => move(glanced.id, v as DealStage) }
@@ -651,7 +658,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       ]}
       quickLook={{
         title: (r) => r.name,
-        fields: (r) => dealGlanceFields(r, currency),
+        fields: (r) => dealGlanceFields(r, currency, dealLevel.atLevelOne),
         editable: (r) =>
           r.owner === session.user
             ? { label: "Stage", value: r.stage, options: ALL_STAGES, onChange: (v) => move(r.id, v as DealStage) }
@@ -990,8 +997,13 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           open
           onOpenChange={(o) => { if (!o) setGlance(null) }}
           title={glanced.name}
-          fields={dealGlanceFields(glanced, currency)}
+          fields={dealGlanceFields(glanced, currency, dealLevel.atLevelOne)}
           editable={glanceEditable}
+          list={glanceAtIndex < 0 ? undefined : {
+            index: glanceAtIndex,
+            total: glanceColumn.length,
+            onStep: (by) => { const to = glanceColumn[glanceAtIndex + by]; if (to) setGlance(to) },
+          }}
           // The card the drawer was opened from is the anchor, so the crumb comes back to the board
           // with that card lit and focused rather than to the top of the column.
           onOpen={() => { const id = glanced.id; setGlance(null); leaveFor(`/ollopa/deals/${id}`, id) }}

@@ -15,7 +15,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
+import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
+import { useEdits } from "../../edits"
+import { useTick } from "../engage/shared"
+import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -128,6 +132,12 @@ export function CampaignsPage({ session }: { session: Session }) {
   const [archiveReason, setArchiveReason] = useState("")
   const [deleting, setDeleting] = useState<Campaign | null>(null)
   const route = useRoute()
+  // What a pane's actions did to these three objects this session, from the one store every page
+  // reads, so a campaign paused from a pane beside another page says so on its row here.
+  const campaignEdits = useEdits("campaign")
+  const audienceEdits = useEdits("audience")
+  const formEdits = useEdits("form")
+  useTick(Object.values({ ...campaignEdits, ...audienceEdits, ...formEdits }).some(undoable))
 
   const at = (id: string) => d.level(id) === 1
 
@@ -211,7 +221,11 @@ export function CampaignsPage({ session }: { session: Session }) {
     }
   }
 
+  /** A look at one row beside the table, without leaving the table: the pane, not a second page. */
+  const beside = (kind: string, id: string) => openBeside({ kind, id, opener: document.activeElement as HTMLElement | null })
+
   const rowMenu = (c: Campaign) => [
+    { label: "Read it beside this table", onClick: () => beside("campaign", c.id) },
     { label: "Open", onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) },
     { label: "Duplicate", onClick: () => duplicate(c) },
     { label: "Compare with…", onClick: () => toast(`Pick a second campaign to compare with ${c.name}.`) },
@@ -223,10 +237,22 @@ export function CampaignsPage({ session }: { session: Session }) {
   /* ------------------------------------------------------------------------------- the columns */
 
   const campaignColumns: GridColumn<Campaign>[] = [
+    // The name is the control, as it is on People: one thing to tab to, one thing to press, and
+    // the row is the anchor the crumb comes back to.
     { key: "name", header: "Campaign", sortBy: (c) => c.name, className: "min-w-[13rem] whitespace-normal", cell: (c) => (
       <div className="min-w-0">
-        <div className="font-medium">{c.name} <span className="font-normal text-muted-foreground">· {c.kind}</span></div>
+        <div>
+          <button
+            type="button"
+            className="font-medium hover:underline"
+            onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/campaigns/${c.id}`, c.id) }}
+          >
+            {c.name}
+          </button>
+          <span className="text-muted-foreground"> · {c.kind}</span>
+        </div>
         <div className="truncate text-xs text-muted-foreground">{c.subject}</div>
+        <ActedNote business={session.business} kind="campaign" id={c.id} edit={campaignEdits[c.id]} />
       </div>
     ) },
     { key: "status", header: "Status", sortBy: (c) => c.status, cell: (c) => <StatusBadge c={c} />, optional: !at("camp.list.status") },
@@ -269,7 +295,12 @@ export function CampaignsPage({ session }: { session: Session }) {
   const [hiddenColumns, setHiddenColumns] = usePref<string[]>("campaigns.hidden", optionalCampaignColumns.map((c) => c.key))
 
   const audienceColumns: GridColumn<Audience>[] = [
-    { key: "name", header: "Audience", sortBy: (a) => a.name, cell: (a) => <span className="font-medium">{a.name}</span> },
+    { key: "name", header: "Audience", sortBy: (a) => a.name, className: "min-w-[11rem] whitespace-normal", cell: (a) => (
+      <div className="min-w-0">
+        <button type="button" className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/audiences/${a.id}`, a.id) }}>{a.name}</button>
+        <ActedNote business={session.business} kind="audience" id={a.id} edit={audienceEdits[a.id]} />
+      </div>
+    ) },
     { key: "type", header: "Type", sortBy: (a) => a.type, cell: (a) => a.type },
     { key: "mode", header: "Mode", sortBy: (a) => a.mode, cell: (a) => (
       a.mode === "live"
@@ -293,7 +324,12 @@ export function CampaignsPage({ session }: { session: Session }) {
   ]
 
   const formColumns: GridColumn<Form>[] = [
-    { key: "name", header: "Form", sortBy: (f) => f.name, cell: (f) => <span className="font-medium">{f.name}</span> },
+    { key: "name", header: "Form", sortBy: (f) => f.name, className: "min-w-[11rem] whitespace-normal", cell: (f) => (
+      <div className="min-w-0">
+        <button type="button" className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); open(`/ollopa/forms/${f.id}`, f.id) }}>{f.name}</button>
+        <ActedNote business={session.business} kind="form" id={f.id} edit={formEdits[f.id]} />
+      </div>
+    ) },
     { key: "status", header: "Status", sortBy: (f) => f.status, cell: (f) => <Badge variant="secondary" className={f.status === "Live" ? STATUS_TONE.Sent : STATUS_TONE.Draft}>{f.status}</Badge> },
     { key: "submissions", header: "Submissions, 7 days", sortBy: (f) => f.submissions7d, className: "tabular-nums", cell: (f) => num(f.submissions7d) },
     { key: "enrichment", header: "Enrichment spend", sortBy: (f) => f.enrichUsedToday, cell: (f) => (
@@ -431,7 +467,7 @@ export function CampaignsPage({ session }: { session: Session }) {
               menu={rowMenu}
               hidden={hiddenColumns}
               onHidden={setHiddenColumns}
-              menuName="Open, duplicate, compare, export results, archive, delete draft"
+              menuName="Read it beside this table, open, duplicate, compare, export results, archive, delete draft"
               onOpen={(c) => open(`/ollopa/campaigns/${c.id}`, c.id)}
               rowLabel={(c) => c.name}
               cardTitle={(c) => <span className="font-medium">{c.name} · {c.kind}</span>}
@@ -446,12 +482,13 @@ export function CampaignsPage({ session }: { session: Session }) {
               defaultSort={{ key: "name", dir: "asc" }}
               actions={(a) => [{ label: "Rebuild now", onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } }]}
               menu={(a) => [
+                { label: "Read it beside this table", onClick: () => beside("audience", a.id) },
                 { label: "Open", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
                 { label: "Hand to sales", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
                 { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
                 { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
               ]}
-              menuName="Open, hand to sales, freeze, delete audience"
+              menuName="Read it beside this table, open, hand to sales, freeze, delete audience"
               onOpen={(a) => open(`/ollopa/audiences/${a.id}`, a.id)}
               rowLabel={(a) => a.name}
               cardTitle={(a) => <span className="font-medium">{a.name}</span>}
@@ -466,11 +503,12 @@ export function CampaignsPage({ session }: { session: Session }) {
               defaultSort={{ key: "submissions", dir: "desc" }}
               actions={(f) => [{ label: f.status === "Live" ? "Turn off" : "Turn on", onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } }]}
               menu={(f) => [
+                { label: "Read it beside this table", onClick: () => beside("form", f.id) },
                 { label: "Open", onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
                 { label: "Copy the form link", onClick: () => toast(`Link to ${f.name} copied.`) },
                 { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
               ]}
-              menuName="Open, copy the form link, export submissions"
+              menuName="Read it beside this table, open, copy the form link, export submissions"
               onOpen={(f) => open(`/ollopa/forms/${f.id}`, f.id)}
               rowLabel={(f) => f.name}
               cardTitle={(f) => <span className="font-medium">{f.name}</span>}

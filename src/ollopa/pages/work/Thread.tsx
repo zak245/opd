@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useRoute } from "@/app/router"
+import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor } from "../../data/seed"
@@ -66,7 +68,28 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
   const heading = useRef<HTMLHeadingElement>(null)
 
   // Opening the thread moves focus to its heading; Reply on the row moves it to the composer.
-  useEffect(() => { heading.current?.focus() }, [reply.id])
+  //
+  // Arriving here by following a link from somewhere else is different: the thread *is* the thing
+  // that was followed, so it is lit for the same three seconds every other followed page's title is
+  // and it takes focus itself. The shell's fallback would put focus on the page's h1 ("Inbox"),
+  // which is not what the person asked for; this says the page answered, so the shell leaves it be.
+  // The page's effects run before the shell's, which is what makes saying it here enough.
+  const route = useRoute()
+  useEffect(() => {
+    const el = heading.current
+    if (!el) return
+    // Only when the link named *this* thread. Following to the Inbox itself lands on the page's
+    // own title, the way every other page does.
+    const named = route.raw.split("?")[0].replace(/\/+$/, "").endsWith(`/${reply.id}`)
+    // And only when this copy of the thread is the one on screen: at phone width the list and the
+    // thread are two pages, and focus must never be moved into something nobody can see.
+    if (named && el.offsetParent !== null && takeArrival(route.raw)) {
+      arrivalHandledHere()
+      showReturn(el)
+      return
+    }
+    el.focus()
+  }, [reply.id, route.raw])
   useEffect(() => { if (focusComposer > 0) area.current?.focus() }, [focusComposer])
   useEffect(() => { setBody(""); setFromDraft(false); setSubject(`Re: ${reply.company} · keeping the pipeline honest`) }, [reply.id, reply.company])
 

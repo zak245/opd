@@ -515,7 +515,14 @@ export function RowOpen({ onOpen, className, children }: { onOpen: () => void; c
   return (
     <button
       type="button"
-      className={cn("rounded text-left font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none", className)}
+      // The same affordance People and Companies give their row names, so the product teaches one
+      // rule for the gesture: a real control, underlined on hover and on focus, with a focus ring.
+      data-row-open
+      className={cn(
+        "rounded text-left font-medium underline-offset-4 hover:underline focus-visible:underline",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        className,
+      )}
       onClick={(e) => { e.stopPropagation(); onOpen() }}
     >
       {children}

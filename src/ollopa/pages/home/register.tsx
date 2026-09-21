@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { PageComponent } from "../../Product"
 import { closeBeside, openBeside, type BesideComponent } from "../../beside"
+import { declarePaneFields } from "../../ui/Beside"
 import { editOf, recordEdit } from "../../edits"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { seedFor } from "../../data/seed"
@@ -29,6 +30,7 @@ export const nodes: Record<string, PageComponent> = {
  * row changes there, where it was caused, with its undo line.
  */
 const ApprovalBeside: BesideComponent = ({ session, id, target }) => {
+  declarePaneFields("agents")   // the approval item is drawn at the agents page's level one
   const seed = seedFor(session.business)
   const e = seed.agentEvents.find((x) => x.id === id)
   if (!e) return <p className="text-muted-foreground">This agent run is not in {seed.workspace.name}.</p>

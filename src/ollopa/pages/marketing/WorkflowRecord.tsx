@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
+import { useEdits } from "../../edits"
+import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
 import { Announcement } from "../../ui/Announcement"
@@ -45,6 +47,11 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   const rows = useMarketing(session.business)
   const route = useRoute()
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
+
+  // What actions took on these people this session, from the one store every page reads: acting in
+  // a pane beside this record redraws the run row it was caused on, here, at once (chain rule 8).
+  const personEdits = useEdits("person")
+  useTick(Object.values(personEdits).some(undoable))
 
   const w = rows.workflows.find((x) => x.id === id)
   const [, openRuns] = useDoorState(RUNS_DOOR)
@@ -146,7 +153,10 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
             <ul className="text-sm">
               {breached.map(({ run, over }) => (
                 <li key={run.id} data-item={run.personId} data-item-label={run.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5">
-                  <button type="button" className="underline" onClick={(ev) => readPerson(run.personId, breachedIds, ev.currentTarget)}>{run.person}</button>
+                  <span className="min-w-0">
+                    <button type="button" className="underline" onClick={(ev) => readPerson(run.personId, breachedIds, ev.currentTarget)}>{run.person}</button>
+                    {personEdits[run.personId]?.note && <RowNote kind="person" id={run.personId} note={String(personEdits[run.personId].note)} at={personEdits[run.personId].at} />}
+                  </span>
                   <span className="text-xs">
                     enrolled {clockOf(run.at)} · window {w.sla!.windows.hot} · <span className="font-medium text-amber-700 dark:text-amber-400">{over}</span> · {run.assignedTo ?? "nobody"}
                   </span>
@@ -335,6 +345,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                 <span>
                   <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, enrolledIds, ev.currentTarget)}>{r.person}</button>
                   {" · "}{day(r.at.slice(0, 10))} {clockOf(r.at)}
+                  {personEdits[r.personId]?.note && <RowNote kind="person" id={r.personId} note={String(personEdits[r.personId].note)} at={personEdits[r.personId].at} />}
                   {r.ruleId && <> · <a className="underline" href={`#${r.ruleId}`}>rule {w.rules.findIndex((x) => x.id === r.ruleId) + 1}</a></>}
                 </span>
                 <span className={r.outcome === "errored" ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}>
@@ -358,6 +369,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                   <span>
                     <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, exceptionIds, ev.currentTarget)}>{r.person}</button>
                     {" · "}{day(r.at.slice(0, 10))} {clockOf(r.at)}
+                    {personEdits[r.personId]?.note && <RowNote kind="person" id={r.personId} note={String(personEdits[r.personId].note)} at={personEdits[r.personId].at} />}
                   </span>
                   <span>
                     {sentence(r.reason ?? "no rule matched")} ·{" "}

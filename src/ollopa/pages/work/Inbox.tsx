@@ -101,7 +101,9 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
   const [openId, setOpenId] = useState<string | null>(thread ?? null)
   const [focusComposer, setFocusComposer] = useState(0)
   const [booking, setBooking] = useState<InboxReply | null>(null)
-  const [onPhoneThread, setOnPhoneThread] = useState(false)
+  // On a phone the thread is a page reached by tapping a row — except when the link named a thread,
+  // which is a person asking for that thread and not for the list.
+  const [onPhoneThread, setOnPhoneThread] = useState(!!thread)
   const [width, setWidth] = useState(() => Number(recall(session, "width", "420")))
 
   useEffect(() => { remember(session, "group", group) }, [session, group])

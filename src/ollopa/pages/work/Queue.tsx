@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { href } from "@/app/router"
 import { follow } from "../../chain"
 import { EmptyState } from "../../ui/EmptyState"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
@@ -45,6 +44,8 @@ export interface QueueProps {
   onOpenContact: (t: Task, opener?: HTMLElement | null) => void
   /** The deal this task points at, where it has one. Same list, same page underneath. */
   onOpenDeal: (t: Task, opener?: HTMLElement | null) => void
+  /** The whole list, as a body rather than a queue: what "See the list" opens. */
+  onSeeList: () => void
   say: (message: string, undo?: () => void) => void
 }
 
@@ -72,13 +73,14 @@ export function Queue(p: QueueProps) {
         <EmptyState
           title="Done for today."
           body={p.dueTomorrow > 0 ? `${p.dueTomorrow} due tomorrow.` : "Nothing is due tomorrow either."}
-          action={<Button size="sm" variant="outline" asChild><a href={href("/ollopa/tasks")}>See this week</a></Button>}
+          action={<Button size="sm" variant="outline" onClick={p.onSeeList}>See the list</Button>}
         />
       </div>
     )
   }
 
   const contact = contactOf(task.contactId)
+  const next = p.tasks[i + 1] ?? task
   const sequenceWaiting = task.sequence && task.status === "Open"
 
   return (
@@ -92,6 +94,21 @@ export function Queue(p: QueueProps) {
           <Button size="icon-sm" variant="ghost" aria-label="Previous task" disabled={i === 0} onClick={() => setI((n) => n - 1)}><ChevronLeft className="size-4" /></Button>
           <Button size="icon-sm" variant="ghost" aria-label="Next task" disabled={i >= p.tasks.length - 1} onClick={() => setI((n) => n + 1)}><ChevronRight className="size-4" /></Button>
         </div>
+      </div>
+
+      {/* The count is never left to be read as a lie: the queue shows one task and says where the
+          rest are, names the one that comes next, and carries the control that shows them all. */}
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b px-4 py-1.5 text-xs sm:px-6">
+        <span className="text-muted-foreground">
+          {p.tasks.length === 1
+            ? "The last one; nothing else is waiting behind it."
+            : <>One at a time. {p.tasks.length - i - 1 > 0
+                ? <>{p.tasks.length - i - 1} more behind this one · next: <span className="text-foreground">{next.contact} · {next.step ? next.step.title : next.title}</span></>
+                : <>{p.tasks.length - 1} already worked; this is the last.</>}</>}
+        </span>
+        <Button size="sm" variant="ghost" className="ml-auto h-6 px-2 text-xs" onClick={p.onSeeList}>
+          See the list
+        </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-1.5 text-xs sm:px-6">

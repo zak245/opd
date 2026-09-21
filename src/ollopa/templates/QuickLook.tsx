@@ -43,12 +43,35 @@ export interface QuickLookProps {
   editable?: QuickLookEditable
   /** "Open" goes to the record page: the drawer carries no deep link, the page does. */
   onOpen: () => void
+  /**
+   * When the drawer was opened from a list — a board column, a table's rows — where this record sits
+   * in it, so `[` and `]` walk that list without closing. The same convention as the pane's footer,
+   * because the two are the same move at two depths and should not need learning twice.
+   */
+  list?: { index: number; total: number; onStep: (by: 1 | -1) => void }
 }
 
-export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen }: QuickLookProps) {
+export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen, list }: QuickLookProps) {
   const [draft, setDraft] = useState(editable?.value ?? "")
   const first = useRef<HTMLButtonElement>(null)
   useEffect(() => { setDraft(editable?.value ?? "") }, [editable?.value, open])
+
+  // `[` and `]` walk the list from anywhere in the drawer, and never while someone is typing in it.
+  const step = list?.onStep
+  const at = list?.index ?? 0
+  const of_ = list?.total ?? 0
+  useEffect(() => {
+    if (!open || !step) return
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return
+      if (e.key === "[" && at > 0) { e.preventDefault(); step(-1) }
+      if (e.key === "]" && at < of_ - 1) { e.preventDefault(); step(1) }
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [open, step, at, of_])
 
   const editableInline = editable && fields.some((f) => f.label === editable.label)
 
@@ -94,7 +117,20 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen 
             {editable && !editableInline && <div className="border-t pt-3">{editor}</div>}
           </dl>
         </FlatProvider>
-        <SheetFooter className="border-t px-5 py-3">
+        <SheetFooter className="gap-2 border-t px-5 py-3">
+          {list && list.total > 1 && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" disabled={at === 0} onClick={() => list.onStep(-1)}>
+                Previous
+                <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">[</kbd>
+              </Button>
+              <span className="text-xs tabular-nums text-muted-foreground">{at + 1} of {list.total}</span>
+              <Button size="sm" variant="ghost" className="ml-auto" disabled={at >= list.total - 1} onClick={() => list.onStep(1)}>
+                Next
+                <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">]</kbd>
+              </Button>
+            </div>
+          )}
           <Button ref={first} className="w-full" onClick={onOpen}>Open</Button>
         </SheetFooter>
       </SheetContent>

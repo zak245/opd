@@ -444,7 +444,7 @@ export function CompaniesPage({ session }: { session: Session }) {
         ]}
         quickLook={{
           title: (v) => v.company.name,
-          fields: (v) => quickLookFields(v, b.currency),
+          fields: (v) => quickLookFields(v, b.currency, d.level),
           editable: (v) => ({
             label: "Stage",
             value: v.company.stage,

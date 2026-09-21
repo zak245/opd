@@ -25,7 +25,7 @@ import { TODAY, seedFor, type AccountRisk } from "../../data/seed"
 import type { Session } from "../../session"
 import { DataTable, type Col, type FilterDef, type MenuAction, type RowAction } from "./Table"
 import { viewsOf, type CompanyView } from "./data"
-import { customerFields } from "./quickLook"
+import { quickLookFields } from "./quickLook"
 import { ago, day, daysLeft, delta, money, renewalText } from "./format"
 import { usePageState } from "./persist"
 import { applyChange, changeFor, undoChange, useChanges } from "./changes"
@@ -445,7 +445,7 @@ export function AccountsPage({ session }: { session: Session }) {
         }}
         quickLook={{
           title: (v) => v.account!.name,
-          fields: (v) => customerFields(v, b.currency),
+          fields: (v) => quickLookFields(v, b.currency, d.level),
           editable: (v) => ({
             label: "Next step",
             value: v.account!.nextStep.text,

@@ -15,6 +15,9 @@ import { cn } from "@/lib/utils"
 import { href, navigate, useRoute } from "@/app/router"
 import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
+import { useEdits } from "../../edits"
+import { RowNote, useTick } from "../engage/shared"
+import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
 import { EmptyState } from "../../ui/EmptyState"
@@ -32,6 +35,12 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
   const d = useDisclosure("campaigns")
   const route = useRoute()
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
+
+  // What actions took on the people who filled this in, and on the workflow that routes them, from
+  // the one store every page reads. Acting in a pane redraws the row it was caused on, here, at once.
+  const personEdits = useEdits("person")
+  const workflowEdits = useEdits("workflow")
+  useTick(Object.values({ ...personEdits, ...workflowEdits }).some(undoable))
 
   const f = rows.forms.find((x) => x.id === id)
   const [newCap, setNewCap] = useState("")
@@ -141,6 +150,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
               ? (
                 <span data-item={workflow.id} data-item-label={workflow.name}>
                   <button type="button" className="underline" onClick={(ev) => openBeside({ kind: "workflow", id: workflow.id, opener: ev.currentTarget })}>{workflow.name}</button>
+                  <ActedNote business={session.business} kind="workflow" id={workflow.id} edit={workflowEdits[workflow.id]} />
                 </span>
               )
               : "no workflow yet"} — round-robin across the pool, skipping anyone away.
@@ -188,6 +198,8 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
                     <span className="min-w-0">
                       <button type="button" className="underline" onClick={(ev) => readPerson(s.contactId, ev.currentTarget)}>{s.name}</button>
                       <span className="text-xs text-muted-foreground"> · {s.email} · {contact?.company}</span>
+                      {/* What an action from the pane beside this list did to this person, in place. */}
+                      {personEdits[s.contactId]?.note && <RowNote kind="person" id={s.contactId} note={String(personEdits[s.contactId].note)} at={personEdits[s.contactId].at} />}
                       <span className="block text-xs text-muted-foreground">Form: {f.name}, {day(s.at.slice(0, 10))} — the answers are a note on the contact</span>
                     </span>
                     <span className="text-xs">

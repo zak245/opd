@@ -26,7 +26,7 @@ import { businessById } from "../../data/businesses"
 import { CREDITS, STAGES, seedFor, type Call, type ContactStage } from "../../data/seed"
 import type { Session } from "../../session"
 import { STAGE_TONE } from "./columns"
-import { ago, day, glanceFields, rowsFor, type PersonRow } from "./person"
+import { ago, day, glanceSplit, rowsFor, type PersonRow } from "./person"
 import { CallLog } from "./CallLog"
 import { EnrichPanel } from "./EnrichPanel"
 import type { PersonEdit } from "./edits"
@@ -196,7 +196,12 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
 
   /* --------------------------------------------------------------------------------- the fields */
 
-  const glance = glanceFields(p, seed).map((f) =>
+  // The first level is the seat's own: `d.level` comes from the usage model, so the header, the
+  // quick look and the pane beside another page all show the same fields for this seat, and the
+  // ones this seat does not read weekly move behind the history door rather than disappearing.
+  const split = glanceSplit(p, seed, d.level)
+  const belowTheLine = split.rest
+  const glance = split.first.map((f) =>
     f.label === "Stage" ? { ...f, value: currentStage }
     : f.label === "Phone" && revealed ? { ...f, value: p.phoneNumber ?? "On file" }
     : f)
@@ -257,9 +262,20 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
     {
       id: "person.history",
       label: "Full history, custom fields and files",
-      count: Object.keys(p.custom).length + 4,
+      count: Object.keys(p.custom).length + belowTheLine.length + 4,
       content: (
         <div className="space-y-3">
+          {belowTheLine.length > 0 && (
+            <section>
+              <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">The rest of the record</h4>
+              {/* What this seat does not read weekly. Demoted by the usage model, never dropped. */}
+              <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-0.5">
+                {belowTheLine.map((f) => (
+                  <div key={f.label} className="contents"><dt className="text-muted-foreground">{f.label}</dt><dd>{f.value}</dd></div>
+                ))}
+              </dl>
+            </section>
+          )}
           <section>
             <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Custom fields</h4>
             {Object.keys(p.custom).length === 0
@@ -486,7 +502,9 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
         doors={doors}
         quickLook={{
           fields: glance,
-          editable: canEdit ? { label: "Stage", value: currentStage, options: [...STAGES], onChange: (v) => setStage(v as ContactStage) } : undefined,
+          editable: canEdit && glance.some((f) => f.label === "Stage")
+            ? { label: "Stage", value: currentStage, options: [...STAGES], onChange: (v) => setStage(v as ContactStage) }
+            : undefined,
         }}
         shortcuts={[
           { keys: "S", label: "Add to sequence", run: () => toast(`${p.name} added to a sequence.`) },
