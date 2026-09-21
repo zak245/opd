@@ -116,7 +116,7 @@ export function ListsPage({ session }: { session: Session }) {
       cell: (l) => (
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <RowOpen onOpen={() => open(l)}>{l.name}</RowOpen>
+            <RowOpen to={`/ollopa/lists/${l.id}`} onOpen={() => open(l)}>{l.name}</RowOpen>
             <Pill tone="muted">{l.kind === "people" ? "People" : "Companies"}</Pill>
             <Pill tone={l.mode === "segment" ? "good" : "muted"}>{l.mode === "segment" ? "Segment" : "Static"}</Pill>
             {l.archived && <Pill tone="muted">Archived</Pill>}

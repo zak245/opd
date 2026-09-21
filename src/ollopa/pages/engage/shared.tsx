@@ -532,21 +532,34 @@ export function h1Of(page: Page, record?: string): string {
  * The row's name as the way in. People, Companies and Campaigns make the name a control; these
  * pages did not, so the product taught two rules for the same gesture. Now it teaches one.
  */
-export function RowOpen({ onOpen, className, children }: { onOpen: () => void; className?: string; children: ReactNode }) {
+export function RowOpen({ to, onOpen, className, children }: {
+  /** The record this row is the way into. */
+  to: string
+  /** What a plain click does instead of following the href: `follow`, which keeps the trail. */
+  onOpen: () => void
+  className?: string
+  children: ReactNode
+}) {
   return (
-    <button
-      type="button"
-      // The same affordance People and Companies give their row names, so the product teaches one
-      // rule for the gesture: a real control, underlined on hover and on focus, with a focus ring.
+    <a
+      href={href(to)}
+      // A destination is a link, never a button (DESIGN.md §1) — so ⌘-click opens a new tab and the
+      // row name reads the way People, Companies and Campaigns read theirs. The plain click is the
+      // page's: it goes through `follow`, so the crumb comes back to this row.
       data-row-open
       className={cn(
         "rounded text-left font-medium underline-offset-4 hover:underline focus-visible:underline",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         className,
       )}
-      onClick={(e) => { e.stopPropagation(); onOpen() }}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+        e.preventDefault()
+        e.stopPropagation()
+        onOpen()
+      }}
     >
       {children}
-    </button>
+    </a>
   )
 }

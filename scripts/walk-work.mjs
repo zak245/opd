@@ -339,6 +339,10 @@ await page.goto(base + "/#/", { waitUntil: "networkidle0" })
 await page.evaluate(() => localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: "sdr" })))
 await go("/ollopa/inbox")
 
+/** The group tabs and their counts: what the page says is still waiting. */
+const counts = () => page.evaluate(() =>
+  Array.from(document.querySelectorAll('[data-page-active="true"] [role="tab"]')).map((t) => t.textContent.trim()).join(" · "))
+
 /** The state of the open thread and of its row in the list, in one line each. */
 const sending = () => page.evaluate(() => {
   const root = document.querySelector('[data-page-active="true"]')
@@ -353,10 +357,13 @@ const write = async (text) => {
   await page.keyboard.type(text)
 }
 
+console.log("G counts before:      ", await counts())
+console.log("G thread before:      ", await page.evaluate(() => document.querySelector('[data-page-active="true"] section[aria-label^="Thread"] h2')?.textContent ?? ""))
 await write("Thursday works — I will send an invite.")
 console.log("G sent:", await clickReal('[data-page-active="true"] button', "Send"))
 await wait(700)
 console.log("G within the window:", JSON.stringify(await sending()))
+console.log("G counts sending:     ", await counts())
 
 // Pulled back inside the ten seconds: nothing was sent, and the words come back.
 await clickReal('[data-page-active="true"] button', "Undo")
@@ -364,13 +371,31 @@ await wait(600)
 console.log("G after undo:       ", JSON.stringify(await sending()))
 console.log("G composer after undo:", JSON.stringify(await page.evaluate(() =>
   document.querySelector('[data-page-active="true"] textarea[aria-label^="Reply to"]')?.value ?? "")))
+console.log("G counts after undo:  ", await counts())
 await shot("g1-undo-put-it-back")
 
 // Sent again and left alone: after ten seconds it has gone and says so.
 console.log("G sent again:", await clickReal('[data-page-active="true"] button', "Send"))
 await wait(SEND_WINDOW + 1500)
 console.log("G after the window: ", JSON.stringify(await sending()))
+console.log("G counts after:       ", await counts())
+console.log("G thread moved on to: ", await page.evaluate(() => document.querySelector('[data-page-active="true"] section[aria-label^="Thread"] h2')?.textContent ?? ""))
 await shot("g2-sent")
+
+// The reply that was answered is in Handled, and its row says so. Handled may sit behind the
+// tab that holds the groups this seat does not open on, so take either way in.
+if (!(await clickReal('[data-page-active="true"] [role="tab"]', "Handled"))) {
+  await clickReal('[data-page-active="true"] [role="tab"]', "Out of office")
+  await wait(400)
+  await clickReal('[role="menuitem"]', "Handled")
+}
+await wait(700)
+console.log("G in Handled:         ", await page.evaluate(() => {
+  const row = Array.from(document.querySelectorAll('[data-page-active="true"] [role="row"]'))
+    .find((r) => r.textContent.includes("Sent"))
+  return row ? row.textContent.replace(/\s+/g, " ").slice(0, 60) : "(not there)"
+}))
+await shot("g3-handled")
 
 console.log(noise.length === 0 ? "\nconsole: silent" : `\nconsole: ${noise.length} complaint(s)\n  ${[...new Set(noise)].join("\n  ")}`)
 

@@ -112,7 +112,7 @@ export function TemplatesPage({ session }: { session: Session }) {
       cell: (r) => (
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <RowOpen onOpen={() => open(r)}>{r.name}</RowOpen>
+            <RowOpen to={`/ollopa/templates/${r.id}`} onOpen={() => open(r)}>{r.name}</RowOpen>
             <Pill tone="muted">{r.kind}</Pill>
           </div>
           <div className="text-xs text-muted-foreground">{r.folder}</div>

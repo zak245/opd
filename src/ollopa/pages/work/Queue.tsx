@@ -256,9 +256,16 @@ export function Queue(p: QueueProps) {
               />
             </div>
           ) : (
+            // An email task carries its own primary in the body — "Send and mark done" — so the
+            // footer's Done steps back to an outline: one filled control on the surface, whichever
+            // kind of task the queue is on (DESIGN.md §1).
             <Actions
               surface="card"
-              items={([{ kind: "primary", label: "Done", onClick: () => { p.onDone(task); advance() } }]) as Action[]}
+              items={([{
+                kind: task.kind === "Email" || task.kind === "Follow-up" ? "secondary" : "primary",
+                label: "Done",
+                onClick: () => { p.onDone(task); advance() },
+              }]) as Action[]}
             />
           )}
           <Actions

@@ -106,7 +106,7 @@ export function SequencesPage({ session }: { session: Session }) {
       key: "name", header: "Sequence", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
       cell: (s) => (
         <div className="min-w-0">
-          <RowOpen onOpen={() => open(s)}>{s.name}</RowOpen>
+          <RowOpen to={`/ollopa/sequences/${s.id}`} onOpen={() => open(s)}>{s.name}</RowOpen>
           <div className="text-xs text-muted-foreground">{s.owner}</div>
         </div>
       ),

@@ -182,13 +182,13 @@ export const auditSurfaces = (page) => page.evaluate(() => {
   if (pane) out.push(look(pane, "pane", txt(pane.querySelector("h2"), 40)))
   const dialog = document.querySelector('[role="dialog"]')
   if (dialog) out.push(look(dialog, "dialog", txt(dialog.querySelector("h2"), 40) || "dialog"))
-  const cards = Array.from(active?.querySelectorAll('li[tabindex], [data-card-id], tbody tr, ul li[data-item], [role="listitem"]') ?? [])
+  const cards = Array.from(active?.querySelectorAll('li[tabindex], [data-card-id], tbody tr, ul li[data-item], [role="listitem"], [role="row"]') ?? [])
     .filter((e) => onScreen(e)).slice(0, 2)
   for (const c of cards) out.push(look(c, "card", txt(c, 34)))
   // Filled controls outside all four surfaces, for the record.
   if (active) {
     const stray = Array.from(active.querySelectorAll(BTN)).filter((e) => onScreen(e) && isFilled(e)
-      && !e.closest('header, aside[aria-label*=" beside "], [role="dialog"], li[tabindex], [data-card-id], tbody tr, ul li[data-item], [role="listitem"]'))
+      && !e.closest('header, aside[aria-label*=" beside "], [role="dialog"], li[tabindex], [data-card-id], tbody tr, ul li[data-item], [role="listitem"], [role="row"]'))
     if (stray.length) out.push({ surface: "page body", label: "(outside the four surfaces)", filled: stray.map(name), destructive: [], disabled: [], destinationsAsButtons: [], links: 0, sentences: [] })
   }
   return out.filter(Boolean)
@@ -252,7 +252,7 @@ export { base, appendFileSync }
 
 /* ============================================================== the chains, one function each */
 
-const DIR = process.env.OPD_SHOTS ?? "shots/chains/review6"
+const DIR = process.env.OPD_SHOTS ?? "shots/chains/review7"
 /** The pane, told apart from the shell's own <aside> sidebar by its aria-label. */
 export const PANE = 'aside[aria-label*=" beside "]' 
 
@@ -517,7 +517,16 @@ export async function chain2(w, h) {
   await reportWithAudit(page, (await observe(page)), "1. the campaign")
   await shot("campaign")
 
-  note(`    ok=${await clickText(page, "Read the audience beside this")}  (the audience, beside)`)
+  // The control was renamed in the design pass; take whichever way in the page offers.
+  const openedAudience = await page.evaluate(() => {
+    const el = Array.from(document.querySelectorAll('[data-page-active="true"] button'))
+      .find((x) => x.getClientRects().length > 0 && /audience beside|^Enterprise prospects/i.test(x.innerText || ""))
+    if (!el) return null
+    const t = (el.innerText || "").replace(/\s+/g, " ").trim()
+    el.click()
+    return t
+  })
+  note(`    opened by "${openedAudience}"  (the audience, beside)`)
   await wait(600)
   await reportWithAudit(page, (await observe(page)), "2. the audience beside the campaign")
   await shot("audience-beside")

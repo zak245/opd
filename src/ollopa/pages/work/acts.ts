@@ -55,9 +55,10 @@ export function sendReply(id: string, what: string) {
   recordEdit("reply", id, { sending: true, sent: false, note: `Sending · ${what}` })
   going.set(id, window.setTimeout(() => {
     going.delete(id)
-    // It has gone, and the row says so where it was written. Answering is not the same as being
-    // done with a reply — Mark done is its own act — so the reply stays where it was.
-    recordEdit("reply", id, { sending: false, sent: true, note: `Sent · ${what}` })
+    // It has gone. An answered reply is no longer waiting, so it is handled: its row says "Sent"
+    // and moves to Handled, the group counts follow it, and the thread moves on to the next reply
+    // still waiting. Undo inside the window drops the whole record and puts all of that back.
+    recordEdit("reply", id, { sending: false, sent: true, handled: true, note: `Sent · ${what}` })
   }, SEND_UNDO_MS))
 }
 
