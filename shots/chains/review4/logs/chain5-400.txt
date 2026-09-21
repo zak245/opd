@@ -1,0 +1,56 @@
+
+=== CHAIN 5 · Settings › change the answers › finish › back to the row with the notice (400) ===
+    candidates How your team works | Change the answers
+  1. Settings
+    hash      #/ollopa/settings
+    h1        Settings
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content Settings 1.84M · 410k/wk 9+ DO NEEDS YOU NOW"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/settings*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/05-setup/01-settings-400.png
+  2. How your team works
+    hash      #/ollopa/settings
+    h1        Settings
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content Settings 1.84M · 410k/wk 9+ DO NEEDS YOU NOW"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/settings*@1225
+    h-scroll  doc=400
+  [shot] shots/chains/review4/05-setup/02-how-your-team-works-400.png
+    clicked   Change the answers
+  3. the set-up questions — inside the shell, or fallen out of it?
+    hash      #/ollopa/setup
+    h1        Workspace set-up
+    trail     Settings
+    pane      (none)
+    focus     H1 "Workspace set-up"
+    lit       Workspace set-up
+    row mark  (none)
+    mounted   /ollopa/settings hidden inert@1225 , /ollopa/setup*@0
+    h-scroll  doc=400
+    sidebar   true
+    chrome    Skip to content Settings Workspace set-up 1.84M · 410k/wk 9+ DO NEEDS YOU NOW Bounce rate 4.3% on Q4 enterprise outbound Open Dismiss Proposes enrolling 2220 people in "Expansion: new seats" Open Dism
+  [shot] shots/chains/review4/05-setup/03-setup-400.png
+    answer    changed to "Grow existing accounts"
+  [shot] shots/chains/review4/05-setup/04-answer-changed-400.png
+    finished  by "Save the answers"
+  4. after finishing
+    hash      #/ollopa/settings
+    h1        Settings
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Change the answers"
+    lit       Workspace profile Product-led growth Change the answers Saved. Product-led growt
+    row mark  (none)
+    mounted   /ollopa/settings*@1070
+    h-scroll  doc=400
+    notice    Changing it redraws the sidebar and says what moved
+    sidebar   Home · People · Companies · Deals · Campaigns · Accounts · Workflows · Requests · Reports · Agents · Settings · You · Workspace · How your team works · Team and access · Email sending · Prospecting rules · Pipeline and d
+  [shot] shots/chains/review4/05-setup/05-finished-400.png
+  [console] nothing — no warning, no error, no failed request

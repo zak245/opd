@@ -323,7 +323,7 @@ export function Tasks({ session }: { session: Session }) {
             : { label: "Write", run: () => setMode("queue") }
 
     return (
-      <div role="listitem" data-task-row={t.id} data-item={t.contactId} data-item-label={t.contact} className="group border-b px-3 py-2 sm:px-4">
+      <div role="listitem" data-task-row={t.id} data-item={t.id} data-item-label={`${t.kind} · ${t.contact}`} className="group border-b px-3 py-2 sm:px-4">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-1 md:flex-nowrap">
           <span className="pt-1">
             <Checkbox aria-label={`Select the ${t.kind.toLowerCase()} for ${t.contact}`} checked={selected} onCheckedChange={(v) => setSelection((s) => (v === true ? [...s, t.id] : s.filter((x) => x !== t.id)))} />
@@ -340,6 +340,8 @@ export function Tasks({ session }: { session: Session }) {
             <button
               type="button"
               data-row-focus
+              data-item={t.contactId}
+              data-item-label={t.contact}
               className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
               onClick={(e) => openContact(t, e.currentTarget)}
             >

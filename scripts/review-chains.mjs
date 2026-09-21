@@ -34,13 +34,11 @@ export async function browser(width, height, opts = {}) {
     const t = msg.type()
     const text = msg.text().replace(/\s+/g, " ").slice(0, 300)
     // The only thing neither server has is a favicon; it says nothing about the product.
-    const where = msg.location?.().url ?? ""
-    if (/favicon\.ico/.test(text) || /favicon\.ico/.test(where)) return
     if (t === "warning" || t === "error" || t === "assert") page.__console.push(`${t}: ${text}`)
   })
   page.on("pageerror", (err) => page.__console.push(`pageerror: ${String(err).replace(/\s+/g, " ").slice(0, 300)}`))
-  page.on("requestfailed", (r) => { if (!/favicon\.ico/.test(r.url())) page.__console.push(`requestfailed: ${r.url().slice(0, 120)}`) })
-  page.on("response", (r) => { if (r.status() >= 400 && !/favicon\.ico/.test(r.url())) page.__console.push(`http ${r.status()}: ${r.url().slice(0, 120)}`) })
+  page.on("requestfailed", (r) => page.__console.push(`requestfailed: ${r.url().slice(0, 120)}`))
+  page.on("response", (r) => { if (r.status() >= 400) page.__console.push(`http ${r.status()}: ${r.url().slice(0, 120)}`) })
   await page.setViewport({ width: Number(width), height: Number(height), deviceScaleFactor: 1 })
   if (opts.reducedMotion) await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }])
   return { b, page }
@@ -155,7 +153,7 @@ export { base, appendFileSync }
 
 /* ============================================================== the chains, one function each */
 
-const DIR = process.env.OPD_SHOTS ?? "shots/chains/review3"
+const DIR = process.env.OPD_SHOTS ?? "shots/chains/review4"
 /** The pane, told apart from the shell's own <aside> sidebar by its aria-label. */
 export const PANE = 'aside[aria-label*=" beside "]' 
 

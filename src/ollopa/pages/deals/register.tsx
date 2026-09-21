@@ -70,7 +70,12 @@ const DealBeside: BesideComponent = ({ session, id }) => {
         <p role="status" aria-live="polite" className="rounded-md bg-muted px-2.5 py-1.5 text-xs">{edit.note}</p>
       )}
 
-      {/* The two actions a chain that arrives at a deal needs, each with what it will do under it. */}
+      {/* The two actions a chain that arrives at a deal needs, each with what it will do under it.
+          A seat that may not close or archive this deal gets the sentence naming who can, not two
+          disabled buttons (rule 4: remove what does not apply, and say who holds it). */}
+      {!canEdit ? (
+        <p className="border-t pt-3 text-xs text-muted-foreground">Owned by {deal.owner}; only the owner or an admin can close or archive it.</p>
+      ) : (
       <div className="space-y-3 border-t pt-3">
         <div>
           <Button
@@ -110,6 +115,7 @@ const DealBeside: BesideComponent = ({ session, id }) => {
           />
         </div>
       </div>
+      )}
     </div>
   )
 }

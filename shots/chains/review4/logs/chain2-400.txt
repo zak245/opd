@@ -1,0 +1,91 @@
+
+=== CHAIN 2 · campaign › audience beside › the page › a person beside › back, back (400) ===
+  1. the campaign
+    hash      #/ollopa/campaigns/camp-4
+    h1        Onboarding week 1 · Campaigns
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content Onboarding week 1 · Campaigns 210k · 38k/wk "
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/01-campaign-400.png
+    ok=true  (the audience, beside)
+  2. the audience beside the campaign
+    hash      #/ollopa/campaigns/camp-4
+    h1        Onboarding week 1 · Campaigns
+    trail     (empty)
+    pane      "Enterprise prospects, EMEA" / "Static · live · 5,759 after suppressions" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Rebuild now | Freeze
+    walker    (none)
+    body      Enterprise prospects, EMEA Static · live · 5,759 after suppressions
+    focus     DIV "From Onboarding week 1 · row Enterprise prospects, EMEA Ente"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Enterprise prospects, EMEA
+    mounted   /ollopa/campaigns/camp-4*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/02-audience-beside-400.png
+    ok=true
+  3. the audience record, campaign on the trail
+    hash      #/ollopa/audiences/aud-4
+    h1        Enterprise prospects, EMEA
+    trail     Onboarding week 1
+    pane      (none)
+    focus     H1 "Enterprise prospects, EMEA"
+    lit       Enterprise prospects, EMEA
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4 hidden inert@0 , /ollopa/audiences/aud-4*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/03-audience-page-400.png
+    items     42: Onboarding week 1 / Amara Okonkwo Head of Growth · Umber Stu / Ben Okonkwo Procurement Lead · Kiln Syst / Chloe Okonkwo SDR Manager · Atlas Freigh
+  4. a person beside the audience
+    hash      #/ollopa/audiences/aud-4
+    h1        Enterprise prospects, EMEA
+    trail     Onboarding week 1
+    pane      "Amara Okonkwo" / "Head of Growth · Umber Studios" w=400 doors=0 trans=0.2s
+    buttons   Open the page | Draft an email | Add to Trial day 14, no invite sent | Previous [ | Next ]
+    walker    Previous [ 1 of 40 Next ]
+    body      Amara Okonkwo Head of Growth · Umber Studios
+    focus     DIV "From Enterprise prospects, EMEA · row Amara Okonkwo Amara Ok"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Amara Okonkwo Head of Growth · Umber Studios
+    mounted   /ollopa/campaigns/camp-4 hidden inert@0 , /ollopa/audiences/aud-4*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/04-person-beside-400.png
+    ok=true
+  5. the person's record, two crumbs
+    hash      #/ollopa/people/c-1
+    h1        Amara Okonkwo
+    trail     Enterprise prospects, EMEA
+    pane      (none)
+    focus     H1 "Amara Okonkwo"
+    lit       Amara Okonkwo
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4 hidden inert@0 , /ollopa/audiences/aud-4 hidden inert@0 , /ollopa/people/c-1*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/05-person-page-400.png
+    keyboard  arrived on H1 "Amara Okonkwo" visible=true; audience crumb is 1 Shift+Tab away → BUTTON "Enterprise prospects, EMEA"
+  6. back on the audience
+    hash      #/ollopa/audiences/aud-4
+    h1        Enterprise prospects, EMEA
+    trail     Onboarding week 1
+    pane      (none)
+    focus     BUTTON "Amara Okonkwo"
+    lit       Amara Okonkwo Head of Growth · Umber Studios
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4 hidden inert@0 , /ollopa/audiences/aud-4*@362
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/06-back-audience-400.png
+  7. back on the campaign
+    hash      #/ollopa/campaigns/camp-4
+    h1        Onboarding week 1 · Campaigns
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Enterprise prospects, EMEA"
+    lit       Enterprise prospects, EMEA
+    row mark  (none)
+    mounted   /ollopa/campaigns/camp-4*@0
+    h-scroll  doc=400
+  [shot] shots/chains/review4/02-campaign/07-back-campaign-400.png
+  [console] nothing — no warning, no error, no failed request

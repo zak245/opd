@@ -262,7 +262,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
     const hit = Array.from(root.querySelectorAll<HTMLElement>(`[data-item="${CSS.escape(target.id)}"]`))
       .find((el) => el.offsetParent !== null)
-    const marked = (hit?.closest("tr, li") as HTMLElement | null) ?? hit
+    const marked = (hit?.closest('tr, li, [role="listitem"], [data-task-row]') as HTMLElement | null) ?? hit
     row.current = marked ?? null
     rowList.current = marked?.parentElement ?? null
     setFromRow(hit?.getAttribute("data-item-label") ?? hit?.textContent?.trim().split("\n")[0].slice(0, 40) ?? null)
