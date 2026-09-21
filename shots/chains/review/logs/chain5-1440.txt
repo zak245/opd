@@ -1,0 +1,55 @@
+
+=== CHAIN 5 · Settings › change the answers › finish › back to the row with the notice (1440) ===
+    candidates How your team works | Change the answers
+  1. Settings
+    hash      #/ollopa/settings
+    h1        Settings
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Companies Lists "
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/settings*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review/05-setup/01-settings-1440.png
+  2. How your team works
+    hash      #/ollopa/settings
+    h1        Settings
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Companies Lists "
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/settings*@668
+    h-scroll  doc=1440
+  [shot] shots/chains/review/05-setup/02-how-your-team-works-1440.png
+    clicked   Change the answers
+  3. the set-up questions — inside the shell, or fallen out of it?
+    hash      #/ollopa/setup
+    h1        Workspace set-up
+    trail     Settings ›
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Companies Lists "
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/settings hidden inert@668 , /ollopa/setup*@0
+    h-scroll  doc=1440
+    sidebar   true
+    chrome    Skip to content ollopA Home PROSPECT People Companies Lists ENGAGE Sequences WIN Deals Campaigns Accounts Workflows Requests Reports Agents Settings Collapse Meridian Software Settings › Workspace set
+  [shot] shots/chains/review/05-setup/03-setup-1440.png
+    answer    changed to "Grow existing accounts"
+  [shot] shots/chains/review/05-setup/04-answer-changed-1440.png
+    finished  by "Save the answers"
+  4. after finishing
+    hash      #/ollopa/settings
+    h1        Settings
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Change the answers"
+    lit       Workspace profile Product-led growth Change the answers Saved. Product-led growt
+    row mark  (none)
+    mounted   /ollopa/settings*@411
+    h-scroll  doc=1440
+    notice    Changing it redraws the sidebar and says what moved
+    sidebar   Home · People · Companies · Deals · Campaigns · Accounts · Workflows · Requests · Reports · Agents · Settings · You · Workspace · How your team works · Team and access · Email sending · Prospecting rules · Pipeline and d
+  [shot] shots/chains/review/05-setup/05-finished-1440.png

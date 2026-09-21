@@ -1,0 +1,84 @@
+
+=== CHAIN 3 · company › search a person inside it › beside › act › next › back (1440) ===
+  1. Northwind Analytics, the biggest account in the seed
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Companies ENGAGE"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/companies/co-1*@0
+    h-scroll  doc=1440
+    contacts  {"heading":"Contacts at this company24","search":["Find a person at Northwind Analytics"],"filters":["Stage: all","In a sequence: all","Title: all"],"rows":10,"paging":"o 1–10 of 24 Previous Next Reading and acting on one person happens here. Open in People to act on all 24 at once; it carries Northwind Analytics as the filter."}
+  [shot] shots/chains/review/03-company/01-company-1440.png
+    search box Find a person at Northwind Analytics
+    after "a" 10 contact rows
+  [shot] shots/chains/review/03-company/02-searched-1440.png
+    keyboard  4 tabs from the search box to the row → BUTTON "Petra Okonkwo"
+  2. the contact beside the company
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      "Petra Okonkwo" / "CMO · Northwind Analytics" w=448 doors=0 trans=0.2s
+    buttons   Open the page | Move to Q4 enterprise outbound | Draft an email | Reveal the phone · 8 credits | Previous [ | Next ]
+    walker    Previous [ 1 of 10 Next ]
+    body      Petra Okonkwo CMO · Northwind Analytics
+    focus     DIV "Petra Okonkwo CMO · Northwind Analytics Open the page Title "  [inside the pane]
+    lit       (nothing lit)
+    row mark  Petra Okonkwo Stop the sequence Create a call task CMO · Cold · in Churned re-en
+    mounted   /ollopa/companies/co-1*@3192
+    h-scroll  doc=1440
+  [shot] shots/chains/review/03-company/03-beside-1440.png
+    acting on "Move to Q4 enterprise outbound"
+  3. after the action — is the effect visible where it was caused?
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      "Petra Okonkwo" / "CMO · Northwind Analytics" w=448 doors=0 trans=0.2s
+    buttons   Open the page | Move to Warm inbound follow-up | Draft an email | Reveal the phone · 8 credits | Previous [ | Next ]
+    walker    Previous [ 1 of 10 Next ]
+    body      Petra Okonkwo CMO · Northwind Analytics
+    focus     DIV "Petra Okonkwo CMO · Northwind Analytics Open the page Title "  [inside the pane]
+    lit       (nothing lit)
+    row mark  Petra Okonkwo Stop the sequence Create a call task CMO · Cold · in Q4 enterprise
+    mounted   /ollopa/companies/co-1*@3192
+    h-scroll  doc=1440
+    page says  the renewal number · 4 Oct Stage Current client Contacts held 24 Contacts in a sequence 14 Last activity 13 Sep · today Open deals 2 What makes up 
+  [shot] shots/chains/review/03-company/04-acted-1440.png
+  4. ] — the next contact at this company
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      "Rosa Okonkwo" / "Sales Director · Northwind Analytics" w=448 doors=0 trans=0.2s
+    buttons   Open the page | Add to Q4 enterprise outbound | Draft an email | Reveal the phone · 8 credits | Previous [ | Next ]
+    walker    Previous [ 2 of 10 Next ]
+    body      Rosa Okonkwo Sales Director · Northwind Analytics
+    focus     DIV "Rosa Okonkwo Sales Director · Northwind Analytics Open the p"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Rosa Okonkwo Add to Q4 enterprise outbound Create a call task Sales Director · M
+    mounted   /ollopa/companies/co-1*@3192
+    h-scroll  doc=1440
+  [shot] shots/chains/review/03-company/05-next-1440.png
+  5. Open the page
+    hash      #/ollopa/people/c-18
+    h1        Rosa Okonkwo
+    trail     Northwind Analytics ›
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Companies ENGAGE"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/companies/co-1 hidden inert@2824 , /ollopa/people/c-18*@0
+    h-scroll  doc=1440
+  [shot] shots/chains/review/03-company/06-page-1440.png
+  6. back on the company
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Rosa Okonkwo"
+    lit       Rosa Okonkwo Add to Q4 enterprise outbound Create a call task Sales Director · M
+    row mark  (none)
+    mounted   /ollopa/companies/co-1*@2824
+    h-scroll  doc=1440
+  [shot] shots/chains/review/03-company/07-back-1440.png
