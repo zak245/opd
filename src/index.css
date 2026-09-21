@@ -74,3 +74,59 @@
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground; }
 }
+
+/* The return cue. Coming back along the trail, the row, door or field you left is lit for three
+   seconds, in the same two colours the lesson view uses for "where it is now" — one mark meaning
+   "this is the thing", wherever a person meets it. Under reduced motion the mark still appears; it
+   just does not fade. */
+:root {
+  --lesson-accent: oklch(0.52 0.14 250);
+  --lesson-accent-soft: oklch(0.94 0.035 250);
+}
+
+.dark {
+  --lesson-accent: oklch(0.76 0.12 250);
+  --lesson-accent-soft: oklch(0.33 0.07 255);
+}
+
+@keyframes ollopa-return-ring {
+  0% { box-shadow: 0 0 0 3px var(--lesson-accent); background-color: var(--lesson-accent-soft); }
+  60% { box-shadow: 0 0 0 3px var(--lesson-accent-soft); background-color: var(--lesson-accent-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; background-color: transparent; }
+}
+
+@keyframes ollopa-return-fill {
+  0%, 60% { background-color: var(--lesson-accent-soft); }
+  100% { background-color: transparent; }
+}
+
+/* A table row cannot paint a box-shadow (the table collapses its borders), so the row and its cells
+   take the fill and everything else takes the ring as well. */
+.ollopa-returned,
+.ollopa-returned > td,
+.ollopa-returned > th {
+  animation: ollopa-return-fill 3s ease-out;
+}
+
+.ollopa-returned:not(tr) {
+  border-radius: 5px;
+  animation: ollopa-return-ring 3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ollopa-returned,
+  .ollopa-returned > td,
+  .ollopa-returned > th,
+  .ollopa-returned:not(tr) {
+    animation: none;
+    background-color: var(--lesson-accent-soft);
+  }
+  .ollopa-returned:not(tr) { box-shadow: 0 0 0 2px var(--lesson-accent-soft); }
+}
+
+/* The row a pane is reading, marked on the page itself so the effect shows where it was caused.
+   Quieter than the return cue on purpose: this one says "still open", not "here it is". */
+.ollopa-beside-open,
+.ollopa-beside-open > td {
+  background-color: var(--muted);
+}

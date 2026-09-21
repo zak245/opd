@@ -10,6 +10,8 @@ first non-negotiable.
 ```ts
 import { Door, Panel, QuickLook, ConsequenceLine, ApproveBar, Locked, gate,
          HealthStrip, Announcement, SectionHeader, EmptyState, useDisclosure } from "@/ollopa/ui"
+import { follow, back, clearTrail, useTrail } from "@/ollopa/chain"
+import { openBeside, closeBeside, useBeside } from "@/ollopa/beside"
 ```
 
 ---
@@ -203,6 +205,119 @@ const historyOpensByDefault = d.level("history.changes") === 1   // the seat tha
 
 Re-exported from `../session` (the shell builder owns it): `{ business, role, user, hasReports, profile,
 sidebarAdded, exposures }`.
+
+---
+
+## Moving between objects: the trail and the pane
+
+A page never sends a person to a related object with a bare `navigate()`. There are two moves and
+only two: **`openBeside`** for a look, which keeps the page you are on, and **`follow`** for the
+whole record, which remembers where you were. Both are in the two stores below; the shell draws
+them. `navigate()` stays for the shell's own jumps — the sidebar, the bottom bar, the palette — and
+each of those clears the trail, because a jump is not a step in a chain.
+
+### `chain.ts` — the trail
+
+```ts
+interface Origin { route: string; title: string; anchor?: string }
+
+useTrail(): Origin[]                      // the path, for the shell's crumbs
+follow(to: string, origin: Origin): void  // leave for `to`, remembering where you were
+back(index: number): void                 // return to trail[index], truncating after it
+clearTrail(): void                        // the shell, on any move that starts fresh
+takeReturnCue(route: string): string | undefined   // the anchor to light on arrival, once
+```
+
+`origin.title` is the page's h1 as it read at the moment of leaving, and `origin.anchor` is the
+thing you left: a `data-item` id, a `data-row-key`, a door id or an element id. Tag the row with
+`data-item` and hand the same id to `follow`, and returning lands on it:
+
+```tsx
+<div data-item={contact.id} data-item-label={contact.name}>…</div>
+
+follow(`/ollopa/people/${contact.id}`, {
+  route: `/ollopa/sequences/${seq.id}`,
+  title: `${seq.name} · Sequences`,
+  anchor: contact.id,
+})
+```
+
+The store lives in memory and in `sessionStorage`, keyed by workspace and person (never
+`localStorage`, and never across a sign-out). The trail holds four origins, so the page stack —
+the current page plus every page the trail is holding, in `Product.tsx` — is never more than five
+mounted pages. A trail page keeps its DOM, hidden with `visibility: hidden` and `inert`, never
+`display: none`: that is what keeps its scroll position, its open doors, its selection and its
+half-typed text alive while you are away. Each mounted page owns its own scroller.
+
+Nothing is inferred. The trail grows only from `follow` and shrinks only from `back`; a deep link,
+a pasted URL, the browser's back button, the sidebar, the bottom bar and the palette all start with
+an empty one.
+
+The shell does the rest: it draws the crumbs in the header (`Q4 enterprise outbound › Amara
+Nakamura`, and at phone width only `‹ Q4 enterprise outbound`), and on arrival it takes the return
+cue — scrolls the anchor into view if it drifted out, lights it for three seconds with
+`.ollopa-returned`, and moves focus to it.
+
+### `beside.ts` and `Beside.tsx` — the pane
+
+```ts
+interface BesideTarget {
+  kind: string                              // "person" | "company" | "deal" | "audience" | …
+  id: string
+  list?: { ids: string[]; index: number }   // the ids in the order shown, for [ and ]
+  opener?: HTMLElement | null               // focus goes back here on close
+}
+
+openBeside(target): void · closeBeside(): void · useBeside(): BesideTarget | null
+openBesideNested(target) · besideBack() · besideStep(+1 | -1)   // one step in, and back out
+```
+
+A row opens beside the page it is on. The page stays mounted, scrollable and clickable, and — this
+is the property the mechanic rests on — **it does not re-render**: the pane has its own store, and
+nothing about it reaches the page. The sequence record carries a dev-only render counter so this is
+checked rather than assumed.
+
+```tsx
+openBeside({
+  kind: "person",
+  id: e.contactId,
+  list: { ids, index },                   // `ids` in the order the rows are on screen
+  opener: ev.currentTarget,
+})
+```
+
+The frame gives you 28 rem pushed in from the right with the page shrinking to make room (the whole
+width on a phone), about 200 ms and nothing under `prefers-reduced-motion`, a header with the name,
+one line of context, close (Escape) and "Open the page", the body, and previous and next (`[` and
+`]`) when `list` is set. Focus moves in on open and back to the opener on close. The row the pane is
+reading is marked on the page itself with `.ollopa-beside-open`.
+
+A pane never contains a `Door` and never opens a second pane. Opening a related object from inside
+it (`openBesideNested`) swaps the content and leaves one `‹ back` in the header; past that one step,
+the way on is "Open the page".
+
+### Registering a pane
+
+The folder that owns the object registers the renderer next to its `nodes`, in `register.tsx`.
+`Product.tsx` collects `besides` with the same glob it uses for `nodes`, so nothing else changes:
+
+```tsx
+const PersonBeside: BesideComponent = ({ session, id }) => {
+  const p = rowsFor(seedFor(session.business)).find((r) => r.id === id)
+  return <>{/* glanceFields, then the actions the chain needs */}</>
+}
+
+/** The frame's header, and where "Open the page" goes. */
+PersonBeside.head = ({ session, id }) => ({ name, context: `${title} · ${company}`, route })
+
+export const besides: Record<string, BesideComponent> = { person: PersonBeside }
+```
+
+The body is the record's **first level** — the same fields, the same order, the same labels the
+record page opens with, which for a contact means `glanceFields` — plus the actions the chain needs,
+each a real button with its consequence line where the rules require one (rule 7). Nothing in the
+body opens a further level.
+
 
 ---
 

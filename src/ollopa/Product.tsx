@@ -1,9 +1,11 @@
 // Product routes a node id to a component. One table decides what exists (map.ts), one decides what
 // the seat may open (map.ts seats), one decides what is in the sidebar (nav.ts), and this file only
 // chooses the body.
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useSession, applyTheme, type Session } from "./session"
 import { useRoute } from "@/app/router"
+import { bindChain, routeKey, useTrail } from "./chain"
+import type { BesideComponent } from "./beside"
 import { SignIn } from "./pages/SignIn"
 import { WorkspaceSetup } from "./pages/setup/WorkspaceSetup"
 import { AppShell } from "./shell/AppShell"
@@ -60,9 +62,21 @@ function Toaster() {
  */
 export type PageComponent = (props: { session: Session; id?: string }) => ReactNode
 const registered: Record<string, PageComponent> = {}
-for (const mod of Object.values(import.meta.glob<{ nodes?: Record<string, PageComponent> }>("./pages/*/register.tsx", { eager: true }))) {
+
+/**
+ * Pane registry, collected by the same glob as `nodes`. A page folder that owns an object registers
+ * how that object reads beside another page:
+ *   export const besides: Record<string, BesideComponent> = { person: PersonBeside }
+ * The frame that draws around them is `ui/Beside.tsx`; the type lives in `beside.ts`.
+ */
+export const besides: Record<string, BesideComponent> = {}
+for (const mod of Object.values(import.meta.glob<{ nodes?: Record<string, PageComponent>; besides?: Record<string, BesideComponent> }>("./pages/*/register.tsx", { eager: true }))) {
   Object.assign(registered, mod.nodes ?? {})
+  Object.assign(besides, mod.besides ?? {})
 }
+
+/** The page stack: the current page plus the trail's pages, never more than this many at once. */
+const STACK_MAX = 5
 
 /** Every node id that has its own built component today. Everything else renders its real counts. */
 function bodyFor(node: MapNode, session: Session, id: string | undefined) {
@@ -80,18 +94,12 @@ export function PageBody({ nodeId, session, id }: { nodeId: string; session: Ses
   return bodyFor(node, session, id)
 }
 
-export function Product() {
-  const session = useSession()
-  const route = useRoute()
+/** What one route resolves to: the node, its record id, its h1 and whether the seat holds it. */
+interface Resolved { node: MapNode; id?: string; page: Page; title: string; held: boolean }
 
-  useEffect(() => { applyTheme() }, [])
-
-  if (!session || route.path[1] === "signin") return <SignIn />
-
-  // Workspace set-up runs before the sidebar exists, so it renders without the shell.
-  if (route.path[1] === "setup") return <><WorkspaceSetup session={session} /><Toaster /></>
-
-  const match = matchRoute(route.path) ?? { node: nodeById("P-home")!, id: undefined }
+function resolve(route: string, session: Session): Resolved {
+  const path = route.replace(/^#/, "").split("?")[0].split("/").filter(Boolean)
+  const match = matchRoute(path) ?? { node: nodeById("P-home")!, id: undefined }
   const { node, id } = match
   const page: Page = node.page
 
@@ -112,9 +120,65 @@ export function Product() {
     || seatCarries(page, session.business, session.role)
     || (node.type === "settings area" && seatCarries("settings", session.business, session.role))
 
+  return { node, id, page, title, held }
+}
+
+export function Product() {
+  const session = useSession()
+  const route = useRoute()
+  // The trail belongs to this seat and to this browser tab. Signing out unbinds it, which is what
+  // empties it: a path is never carried across a sign-out.
+  bindChain(session?.business ?? null, session?.user ?? null)
+  const trail = useTrail()
+
+  useEffect(() => { applyTheme() }, [])
+
+  /**
+   * The page stack: the page you are on, plus every page the trail is still holding, all mounted.
+   * A trail page is hidden with `visibility: hidden` and made `inert` — never `display: none`,
+   * which would throw away its scroll position, its open doors and its half-typed text. Each one
+   * owns its own scroller, so returning to it lands exactly where it was left.
+   */
+  const stack = useMemo(() => {
+    if (!session) return []
+    const here = routeKey(route.raw)
+    const wanted = [...trail.map((o) => o.route), route.raw]
+    const seen = new Set<string>()
+    const out: { key: string; route: string; active: boolean }[] = []
+    // Last occurrence wins, so a route visited twice is mounted once, in its latest position.
+    for (let i = wanted.length - 1; i >= 0; i--) {
+      const key = routeKey(wanted[i])
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.unshift({ key, route: wanted[i], active: key === here })
+    }
+    return out.slice(-STACK_MAX)
+  }, [trail, route.raw, session])
+
+  if (!session || route.path[1] === "signin") return <SignIn />
+
+  // Workspace set-up runs before the sidebar exists, so it renders without the shell.
+  if (route.path[1] === "setup") return <><WorkspaceSetup session={session} /><Toaster /></>
+
+  const current = resolve(route.raw, session)
+
   return (
-    <AppShell session={session} page={page} title={title}>
-      {held ? bodyFor(node, session, id) : <NoAccess session={session} page={page} />}
+    <AppShell session={session} page={current.page} title={current.title}>
+      {stack.map((entry) => {
+        const r = entry.active ? current : resolve(entry.route, session)
+        return (
+          <div
+            key={entry.key}
+            data-page={entry.key}
+            data-page-active={entry.active ? "true" : undefined}
+            inert={!entry.active}
+            style={entry.active ? undefined : { visibility: "hidden" }}
+            className="absolute inset-0 overflow-y-auto pb-16 md:pb-0"
+          >
+            {r.held ? bodyFor(r.node, session, r.id) : <NoAccess session={session} page={r.page} />}
+          </div>
+        )
+      })}
       <Toaster />
     </AppShell>
   )

@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, Grid3x3, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { href, navigate } from "@/app/router"
+import { href, navigate, useRoute } from "@/app/router"
 import { businessById } from "../data/businesses"
 import { seedFor } from "../data/seed"
 import { BOTTOM_BAR, NAV, navItem, seatCarries, sidebarFor, type SidebarEntry } from "../nav"
@@ -21,6 +21,8 @@ import { AccountMenu } from "./AccountMenu"
 import { Palette } from "./Palette"
 import { Shortcuts } from "./Shortcuts"
 import { Panel } from "../ui/Panel"
+import { Beside } from "../ui/Beside"
+import { back, clearTrail, takeReturnCue, useTrail, RETURN_HIGHLIGHT_MS, type Origin } from "../chain"
 import { notificationsFor, TODAY } from "./notifications"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
@@ -32,6 +34,7 @@ function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry;
   const link = (
     <a
       href={href(`/ollopa/${i.page === "home" ? "" : i.page}`)}
+      onClick={clearTrail}
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
@@ -66,6 +69,75 @@ function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry;
   )
 }
 
+
+/**
+ * The trail in the header: the person's own path, `Q4 enterprise outbound › Amara Nakamura`.
+ * Every crumb but the last is a button back to that page, exactly as it was left. At phone width
+ * there is only room for one, so only the step back shows.
+ */
+function Crumbs({ trail, title }: { trail: Origin[]; title: string }) {
+  if (trail.length === 0) return null
+  const previous = trail[trail.length - 1]
+  return (
+    <nav aria-label="Your path" className="flex min-w-0 items-center">
+      <button
+        type="button"
+        onClick={() => back(trail.length - 1)}
+        className="flex min-w-0 items-center gap-1 rounded text-sm text-muted-foreground hover:text-foreground sm:hidden"
+      >
+        <ChevronLeft className="size-4 shrink-0" aria-hidden="true" />
+        <span className="truncate">{previous.title}</span>
+      </button>
+      <ol className="hidden min-w-0 items-center gap-1 sm:flex">
+        {trail.map((o, i) => (
+          <li key={`${o.route}-${i}`} className="flex min-w-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => back(i)}
+              className="max-w-[14rem] truncate rounded text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              {o.title}
+            </button>
+            <span aria-hidden="true" className="shrink-0 text-muted-foreground">›</span>
+          </li>
+        ))}
+      </ol>
+      <span className="sr-only">Now on {title}</span>
+    </nav>
+  )
+}
+
+/**
+ * The return cue. Coming back to a page, the thing you left is scrolled into view if it drifted out,
+ * lit for three seconds in the same colour the lessons use for "where it is now", and focused — so
+ * the keyboard carries on from the row rather than from the top of the page.
+ */
+function showReturn(anchor: string) {
+  const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
+  // A page may render the same thing twice — a table above `sm`, a card list below it — so take
+  // the copy that is actually on screen.
+  const id = CSS.escape(anchor)
+  const all = root.querySelectorAll<HTMLElement>(`[data-item="${id}"], [data-row-key="${id}"], [data-door="${id}"], #${id}`)
+  const found = Array.from(all).find((el) => el.offsetParent !== null) ?? all[0]
+  if (!found) return
+  const el = (found.closest("tr, li") as HTMLElement | null) ?? found
+  const box = el.getBoundingClientRect()
+  if (box.top < 0 || box.bottom > window.innerHeight) {
+    el.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })
+  }
+  el.classList.remove("ollopa-returned")
+  void el.offsetWidth
+  el.classList.add("ollopa-returned")
+  window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
+  // Focus the thing itself where it can take focus — the row's own name link or button — and the
+  // row otherwise, so the keyboard carries on from where the person left rather than from the top.
+  const move = found.querySelector<HTMLElement>("a, button, [tabindex]")
+    ?? (el.matches("a, button, [tabindex]") ? el : null)
+    ?? el
+  if (!move.matches("a, button, input, [tabindex]")) move.setAttribute("tabindex", "-1")
+  move.focus({ preventScroll: true })
+}
+
 export function AppShell({ session, page, title, children, defaultCollapsed }: { session: Session; page: Page; title: string; children: ReactNode; defaultCollapsed?: boolean }) {
   const b = businessById(session.business)
   const seed = seedFor(session.business)
@@ -84,6 +156,8 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const [expiring, setExpiring] = useState(false)
   const [, setTick] = useState(0)
   const refresh = () => setTick((t) => t + 1)
+  const trail = useTrail()
+  const route = useRoute()
 
   const entries = sidebarFor(session, TODAY)
   const notes = useMemo(() => notificationsFor(session), [session])
@@ -97,6 +171,15 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
   // The page title, everywhere the browser shows one.
   useEffect(() => { document.title = `${title} · ${b.name} · ollopA` }, [title, b.name])
+
+  // Arriving back somewhere: light the thing that was left, once. The page is already mounted, so
+  // this waits only for the browser to lay the now-visible copy out.
+  useEffect(() => {
+    const anchor = takeReturnCue(route.raw)
+    if (!anchor) return
+    const t = window.setTimeout(() => showReturn(anchor), 60)
+    return () => window.clearTimeout(t)
+  }, [route.raw])
 
   // The two-week exposure appears on the next load of Home, never mid-task.
   useEffect(() => {
@@ -149,7 +232,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         last = ""
         if (e.key === "n") { e.preventDefault(); setBell(true); return }
         const target = NAV.find((n) => n.key === e.key && seatCarries(n.page, session.business, session.role))
-        if (target) { e.preventDefault(); navigate(`/ollopa/${target.page === "home" ? "" : target.page}`) }
+        if (target) { e.preventDefault(); clearTrail(); navigate(`/ollopa/${target.page === "home" ? "" : target.page}`) }
         return
       }
       if (e.key === "g") { last = "g"; at = Date.now() }
@@ -176,7 +259,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
       </a>
 
       <aside className={cn("hidden shrink-0 flex-col border-r bg-muted/30 md:flex", collapsed ? "w-14" : "w-56")}>
-        <a href={href("/ollopa")} className={cn("flex h-14 items-center gap-2 border-b px-4 font-semibold tracking-tight", collapsed && "justify-center px-0")}>
+        <a href={href("/ollopa")} onClick={clearTrail} className={cn("flex h-14 items-center gap-2 border-b px-4 font-semibold tracking-tight", collapsed && "justify-center px-0")}>
           <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
           {!collapsed && "ollopA"}
         </a>
@@ -213,7 +296,8 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
             and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
         <header className={cn("flex shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
-          <h1 className={cn("truncate text-sm font-semibold", (canAdd || added) && "mr-auto md:mr-0")}>{title}</h1>
+          <Crumbs trail={trail} title={title} />
+          <h1 className={cn("truncate text-sm font-semibold", (canAdd || added) && "mr-auto md:mr-0", trail.length > 0 && "max-sm:sr-only")}>{title}</h1>
           {client && <span className="hidden shrink-0 rounded border px-2 py-0.5 text-xs text-muted-foreground sm:inline">{client} · client workspace</span>}
           {canAdd && (
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>
@@ -256,7 +340,12 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           </div>
         )}
 
-        <main id="ollopa-main" className="min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0">{children}</main>
+        {/* The page and the pane are siblings, so opening a pane shrinks the page instead of covering
+            it. Below `sm` there is no room for both and the pane takes the whole width. */}
+        <div className="relative flex min-h-0 flex-1">
+          <main id="ollopa-main" className="relative min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0">{children}</main>
+          <Beside session={session} pageTitle={title} />
+        </div>
 
         <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-background md:hidden" aria-label="Pages">
           {bottom.map((p) => {
@@ -265,6 +354,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
               <a
                 key={p}
                 href={href(`/ollopa/${p === "home" ? "" : p}`)}
+                onClick={clearTrail}
                 aria-current={p === page ? "page" : undefined}
                 className={cn("flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]", p === page ? "font-medium" : "text-muted-foreground")}
               >
@@ -291,7 +381,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
               <a
                 className="flex items-center gap-2 rounded-md px-2 py-2 text-sm"
                 href={href(`/ollopa/${e.item.page === "home" ? "" : e.item.page}`)}
-                onClick={() => setAllPages(false)}
+                onClick={() => { clearTrail(); setAllPages(false) }}
               >
                 <e.item.icon className="size-4" aria-hidden="true" />
                 {e.item.label}

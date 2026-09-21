@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { navigate, openInNewTab } from "@/app/router"
+import { clearTrail } from "../chain"
 import { businessById } from "../data/businesses"
 import { seedFor } from "../data/seed"
 import { NODES, routeTo, seatsSentence, SETTING_SYNONYMS, type MapNode } from "../map"
@@ -295,6 +296,8 @@ export function Palette({ session, open, onOpenChange }: { session: Session; ope
 
   const choose = (row: Row) => {
     if (row.explanation) return
+    // The palette is a jump, not a step in a chain: whatever path you were on, it ends here.
+    clearTrail()
     if (row.run) { row.run(); return }
     if (row.target) {
       remember(session.business, session.role, row)

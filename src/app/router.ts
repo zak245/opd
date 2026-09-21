@@ -21,14 +21,12 @@ function parse(): Route {
 let current = parse()
 const listeners = new Set<() => void>()
 
+// A new page starts at the top because it is a new element with its own scroller (the page stack in
+// Product.tsx). A page the trail is still holding is the element it always was, so it keeps the
+// scroll position it was left at — which is the whole point of holding it.
 window.addEventListener("hashchange", () => {
-  const previous = current
   current = parse()
   listeners.forEach((l) => l())
-  // A new page starts at the top; a query change on the same page keeps its place.
-  if (previous.path.join("/") !== current.path.join("/")) {
-    document.getElementById("ollopa-main")?.scrollTo({ top: 0 })
-  }
 })
 
 export function useRoute(): Route {
