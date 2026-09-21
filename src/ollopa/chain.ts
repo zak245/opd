@@ -37,6 +37,12 @@ let cues: Record<string, string> = {}
 let key: string | null = null
 /** The route `follow` or `back` asked for, so the hash listener can tell a move from a fresh start. */
 let expecting: string | null = null
+/**
+ * The route `back` is on its way to. Product keeps it mounted until it is the current route, so the
+ * page being returned to is never dropped for a frame and never remounted — which is what kept an
+ * unsaved field alive on the way back.
+ */
+let pending: string | null = null
 
 const listeners = new Set<() => void>()
 function announce() { listeners.forEach((l) => l()) }
@@ -72,14 +78,29 @@ export function bindChain(business: string | null, user: string | null) {
   cues = {}
 }
 
-/** Navigate, and drop the expectation when the hash did not actually change (no event will come). */
-function go(to: string) {
+/**
+ * Navigate. Returns true when a `hashchange` is on its way, which is the render that will show the
+ * new trail and the new route in the same commit. Nothing here announces: announcing first would
+ * paint one frame with the new trail and the old route, and that frame is what unmounted the page
+ * being returned to.
+ */
+function go(to: string): boolean {
   // Leaving the page takes the pane with it: a pane is a look at something beside where you are,
   // and you are no longer there.
   closeBeside()
   const before = location.hash
   navigate(to)
-  if (location.hash === before) expecting = null
+  if (location.hash === before) { expecting = null; pending = null; return false }
+  return true
+}
+
+/** The route `back` is heading for, until it arrives. Product mounts it alongside the current page. */
+export function usePendingReturn(): string | null {
+  return useSyncExternalStore(
+    (l) => { listeners.add(l); return () => listeners.delete(l) },
+    () => pending,
+    () => pending,
+  )
 }
 
 export function useTrail(): Origin[] {
@@ -102,27 +123,30 @@ export function follow(to: string, origin: Origin) {
   trail = next.length > TRAIL_MAX ? next.slice(next.length - TRAIL_MAX) : next
   write()
   expecting = routeKey(to)
-  announce()
-  go(to)
+  if (!go(to)) announce()
 }
 
 /** Return to trail[index], truncating the trail after it, and set the cue for that page. */
 export function back(index: number) {
   const origin = trail[index]
   if (!origin) return
+  // Truncate now but say nothing: the hash change is what re-renders, and by then the trail and the
+  // route agree. `pending` holds the page being returned to in the mounted set meanwhile, so even a
+  // stray render from somewhere else cannot drop it.
   trail = trail.slice(0, index)
   write()
   if (origin.anchor) cues[routeKey(origin.route)] = origin.anchor
   expecting = routeKey(origin.route)
-  announce()
-  go(origin.route)
+  pending = origin.route
+  if (!go(origin.route)) announce()
 }
 
 /** Called by the shell on sidebar, bottom bar, palette and deep-link navigation. */
 export function clearTrail() {
-  if (trail.length === 0 && Object.keys(cues).length === 0) return
+  if (trail.length === 0 && Object.keys(cues).length === 0 && pending === null) return
   trail = []
   cues = {}
+  pending = null
   write()
   announce()
 }
@@ -136,13 +160,79 @@ export function takeReturnCue(route: string): string | undefined {
   return anchor
 }
 
+
+/* ------------------------------------------------------------------------------ the return cue */
+
+/**
+ * The phone's bottom bar covers the foot of the page, so "in view" stops above it. It is a fixed
+ * element, which has no `offsetParent` even when it is on screen, so its height is what says
+ * whether it is there.
+ */
+function bottomBarHeight(): number {
+  const bar = document.querySelector<HTMLElement>('nav[aria-label="Pages"]')
+  return bar ? bar.getBoundingClientRect().height : 0
+}
+
+/** The thing a `data-item`, `data-row-key`, door id or element id names, on the page you can see. */
+export function findAnchor(anchor: string): HTMLElement | null {
+  const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
+  const id = CSS.escape(anchor)
+  // A page may render the same thing twice — a table above `sm`, a card list below it — so take the
+  // copy that is actually on screen.
+  const all = root.querySelectorAll<HTMLElement>(`[data-item="${id}"], [data-row-key="${id}"], [data-door="${id}"], #${id}`)
+  return Array.from(all).find((el) => el.offsetParent !== null) ?? all[0] ?? null
+}
+
+/**
+ * Light the thing you left, once: scroll it into view if it drifted out (clear of the phone's
+ * bottom bar), hold it lit for three seconds, and move focus to it — the row's own name link where
+ * it has one, so the keyboard carries on from the row and not from the top of the page.
+ */
+export function showReturn(anchor: string | HTMLElement) {
+  const found = typeof anchor === "string" ? findAnchor(anchor) : anchor
+  if (!found || !found.isConnected) return
+  const el = (found.closest("tr, li") as HTMLElement | null) ?? found
+
+  const scroller = el.closest<HTMLElement>("[data-page]")
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  if (scroller) {
+    const box = el.getBoundingClientRect()
+    const frame = scroller.getBoundingClientRect()
+    const top = frame.top
+    const bottom = Math.min(frame.bottom, window.innerHeight - bottomBarHeight())
+    if (box.top < top || box.bottom > bottom) {
+      const wanted = top + Math.max(0, (bottom - top - box.height) / 2)
+      scroller.scrollTo({ top: scroller.scrollTop + (box.top - wanted), behavior: reduce ? "auto" : "smooth" })
+    }
+  }
+
+  el.classList.remove("ollopa-returned")
+  void el.offsetWidth
+  el.classList.add("ollopa-returned")
+  window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
+
+  // Where focus lands. When the anchor names a part of the row — the name cell — focus that part,
+  // because it is the thing the person left. When the anchor is the whole row and the row can take
+  // focus, focus the row: landing on the first button inside it would put Enter on an action
+  // nobody asked for.
+  const move = (found === el && el.matches("a, button, [tabindex]") ? el : null)
+    ?? found.querySelector<HTMLElement>("a, button, [tabindex]")
+    ?? (el.matches("a, button, [tabindex]") ? el : null)
+    ?? el
+  if (!move.matches("a, button, input, [tabindex]")) move.setAttribute("tabindex", "-1")
+  move.focus({ preventScroll: true })
+}
+
 // Any hash change the store did not ask for is a fresh start: a deep link, a pasted URL, the
 // browser's own back button, or a link the shell owns. Nothing is inferred from it; the trail goes.
 if (typeof window !== "undefined") {
   window.addEventListener("hashchange", () => {
     const now = routeKey(location.hash.replace(/^#/, "") || "/")
-    if (expecting && expecting === now) { expecting = null; return }
+    // The route we asked for has landed. Nothing is announced here on purpose: the router notifies
+    // for this same event, and that one render sees the final trail and the final route together.
+    if (expecting && expecting === now) { expecting = null; pending = null; return }
     expecting = null
+    pending = null
     clearTrail()
   })
 }

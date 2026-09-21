@@ -258,6 +258,26 @@ Nakamura`, and at phone width only `‹ Q4 enterprise outbound`), and on arrival
 cue — scrolls the anchor into view if it drifted out, lights it for three seconds with
 `.ollopa-returned`, and moves focus to it.
 
+### Every row-to-record move goes through the trail
+
+A row on an index that opens its record is a step in a chain, not a jump, so every one of them uses
+`follow` with the row as the anchor — Sequences, Lists, Templates, Campaigns, Companies, People,
+Deals. The shell then does both halves of the return for free:
+
+- the crumb in the header comes back to the index with the row lit and focused;
+- **`RecordPage`'s own back link** ("← Sequences") calls `back()` instead of navigating, whenever the
+  last origin on the trail is that index. Reached any other way — a deep link, ⌘K, a link from
+  somewhere else — it stays the ordinary link it has always been. A record page gets this by passing
+  `back={{ label, href }}` as before; there is nothing to opt into.
+
+```tsx
+const open = (s: Sequence) =>
+  follow(`/ollopa/sequences/${s.id}`, { route: "/ollopa/sequences", title: "Sequences", anchor: s.id })
+```
+
+`DataTable` already writes `data-row-key` on every row, so a table whose row key is the record id
+needs no extra tagging; anywhere else, put `data-item` on the row and hand the same id to `follow`.
+
 ### `beside.ts` and `Beside.tsx` — the pane
 
 ```ts
@@ -291,6 +311,11 @@ width on a phone), about 200 ms and nothing under `prefers-reduced-motion`, a he
 one line of context, close (Escape) and "Open the page", the body, and previous and next (`[` and
 `]`) when `list` is set. Focus moves in on open and back to the opener on close. The row the pane is
 reading is marked on the page itself with `.ollopa-beside-open`.
+
+Closing the pane widens the page again, and the frame holds the row that opened it at the same place
+on screen while that happens. If an action in the pane removed that row — a task marked done, a reply
+handled — focus does not fall to the top of the page on close: it goes to the row that took its
+place in the list, lit the same way a return is.
 
 A pane never contains a `Door` and never opens a second pane. Opening a related object from inside
 it (`openBesideNested`) swaps the content and leaves one `‹ back` in the header; past that one step,

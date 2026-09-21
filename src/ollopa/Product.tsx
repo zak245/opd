@@ -1,10 +1,10 @@
 // Product routes a node id to a component. One table decides what exists (map.ts), one decides what
 // the seat may open (map.ts seats), one decides what is in the sidebar (nav.ts), and this file only
 // chooses the body.
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { memo, useEffect, useMemo, useState, type ReactNode } from "react"
 import { useSession, applyTheme, type Session } from "./session"
 import { useRoute } from "@/app/router"
-import { bindChain, routeKey, useTrail } from "./chain"
+import { bindChain, routeKey, usePendingReturn, useTrail } from "./chain"
 import type { BesideComponent } from "./beside"
 import { SignIn } from "./pages/SignIn"
 import { WorkspaceSetup } from "./pages/setup/WorkspaceSetup"
@@ -123,6 +123,24 @@ function resolve(route: string, session: Session): Resolved {
   return { node, id, page, title, held }
 }
 
+/**
+ * One page in the stack. Memoised on purpose: `Product` re-renders on every route change, and a
+ * page the trail is holding must not re-render when the person walks away from it or comes back —
+ * that is what keeps its rows, its scroll and its half-typed text exactly as they were. Every prop
+ * here is a string, a boolean or the session, so the comparison is a real one.
+ */
+const StackPage = memo(function StackPage({ nodeId, id, session, held, page }: {
+  nodeId: string
+  id?: string
+  session: Session
+  held: boolean
+  page: Page
+}) {
+  const node = nodeById(nodeId)
+  if (!node) return <Placeholder session={session} page={page} title={nodeId} />
+  return held ? bodyFor(node, session, id) : <NoAccess session={session} page={page} />
+})
+
 export function Product() {
   const session = useSession()
   const route = useRoute()
@@ -130,6 +148,7 @@ export function Product() {
   // empties it: a path is never carried across a sign-out.
   bindChain(session?.business ?? null, session?.user ?? null)
   const trail = useTrail()
+  const pending = usePendingReturn()
 
   useEffect(() => { applyTheme() }, [])
 
@@ -142,7 +161,9 @@ export function Product() {
   const stack = useMemo(() => {
     if (!session) return []
     const here = routeKey(route.raw)
-    const wanted = [...trail.map((o) => o.route), route.raw]
+    // `pending` is the page `back` is on its way to: it stays mounted through the move, so the
+    // element the person is returning to is the element they left.
+    const wanted = [...trail.map((o) => o.route), ...(pending ? [pending] : []), route.raw]
     const seen = new Set<string>()
     const out: { key: string; route: string; active: boolean }[] = []
     // Last occurrence wins, so a route visited twice is mounted once, in its latest position.
@@ -153,12 +174,15 @@ export function Product() {
       out.unshift({ key, route: wanted[i], active: key === here })
     }
     return out.slice(-STACK_MAX)
-  }, [trail, route.raw, session])
+  }, [trail, pending, route.raw, session])
 
   if (!session || route.path[1] === "signin") return <SignIn />
 
-  // Workspace set-up runs before the sidebar exists, so it renders without the shell.
-  if (route.path[1] === "setup") return <><WorkspaceSetup session={session} /><Toaster /></>
+  // Workspace set-up runs before the sidebar exists, so a fresh workspace renders it without the
+  // shell. Reached from Settings by `follow`, the trail is not empty and the person is in the middle
+  // of something, so it resolves through the map like any other page: inside the shell, with the
+  // crumb back to the row it was opened from.
+  if (route.path[1] === "setup" && trail.length === 0) return <><WorkspaceSetup session={session} /><Toaster /></>
 
   const current = resolve(route.raw, session)
 
@@ -175,7 +199,7 @@ export function Product() {
             style={entry.active ? undefined : { visibility: "hidden" }}
             className="absolute inset-0 overflow-y-auto pb-16 md:pb-0"
           >
-            {r.held ? bodyFor(r.node, session, r.id) : <NoAccess session={session} page={r.page} />}
+            <StackPage nodeId={r.node.id} id={r.id} session={session} held={r.held} page={r.page} />
           </div>
         )
       })}

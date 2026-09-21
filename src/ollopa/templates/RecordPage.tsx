@@ -25,10 +25,31 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { back, routeKey, useTrail } from "../chain"
 import { Door, DoorGroup, ExpandAll } from "../ui/Door"
 import { Panel } from "../ui/Panel"
 import { SectionHeader } from "../ui/SectionHeader"
 import type { QuickLookEditable, QuickLookField } from "./QuickLook"
+
+
+/**
+ * The record's way back to its index. When the person got here from that index — a row on Sequences,
+ * People, Deals — this is the same move as the crumb: `back` returns to the index as it was, with
+ * the row lit and focused. Reached any other way (a deep link, ⌘K, a link from elsewhere) it is an
+ * ordinary link to the index, which is what it has always been.
+ */
+function BackToIndex({ label, to, compact }: { label: string; to: string; compact?: boolean }) {
+  const trail = useTrail()
+  const at = trail.length - 1
+  const returns = at >= 0 && routeKey(trail[at].route) === routeKey(to)
+  const className = compact
+    ? "inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+    : "text-sm text-muted-foreground hover:underline"
+  const body = <>{compact && <ArrowLeft className="size-3" aria-hidden="true" />}{label}</>
+  return returns
+    ? <button type="button" className={className} onClick={() => back(at)}>{body}</button>
+    : <a href={to} className={className}>{body}</a>
+}
 
 /* ------------------------------------------------------------------------------------ the props */
 
@@ -129,10 +150,18 @@ export interface RecordShortcut {
   run: () => void
 }
 
+/** The id the header's subtitle link carries, so a trail can return to it and light it. */
+export const SUBTITLE_ANCHOR = "record.subtitle"
+
 export interface RecordPageProps {
   back: { label: string; href: string }
   title: { value: string; onRename?: (value: string) => void }
-  subtitle?: { label: string; href: string }
+  /**
+   * The object this record hangs off — a deal's company, an account's parent. `href` keeps it a real
+   * link for a new tab and for copying; a record that would rather show that object beside itself
+   * than leave the page passes `onOpen`, and the click goes there instead.
+   */
+  subtitle?: { label: string; href: string; onOpen?: (opener: HTMLElement) => void }
   chips?: ReactNode
   /** Object state only: closed, archived, a sync error, deactivated. A live region. */
   ribbon?: { tone: "info" | "warning" | "error" | "good"; text: string; action?: ReactNode }
@@ -341,7 +370,7 @@ export function RecordPage(p: RecordPageProps) {
   if (p.noAccess) {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
-        <a href={p.back.href} className="text-sm text-muted-foreground hover:underline">{p.back.label}</a>
+        <BackToIndex label={p.back.label} to={p.back.href} />
         <h2 className="mt-6 text-lg font-semibold">{p.noAccess.message}</h2>
         <p className="mt-2 text-sm text-muted-foreground">Who works here: {p.noAccess.who.join(", ")}.</p>
       </div>
@@ -402,9 +431,7 @@ export function RecordPage(p: RecordPageProps) {
       <div className="flex min-h-full flex-col">
         {/* ------------------------------------------------------------------ header */}
         <header className="border-b px-5 pt-4 lg:px-6">
-          <a href={p.back.href} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
-            <ArrowLeft className="size-3" aria-hidden="true" />{p.back.label}
-          </a>
+          <BackToIndex label={p.back.label} to={p.back.href} compact />
 
           <div className="mt-2 flex flex-wrap items-start gap-x-3 gap-y-2">
             <div className="min-w-0">
@@ -436,7 +463,15 @@ export function RecordPage(p: RecordPageProps) {
                 {p.chips}
               </div>
               {p.subtitle && (
-                <a href={p.subtitle.href} className="text-sm text-muted-foreground hover:underline">{p.subtitle.label}</a>
+                <a
+                  href={p.subtitle.href}
+                  data-item={SUBTITLE_ANCHOR}
+                  data-item-label={p.subtitle.label}
+                  className="text-sm text-muted-foreground hover:underline"
+                  onClick={p.subtitle.onOpen ? (e) => { e.preventDefault(); p.subtitle!.onOpen!(e.currentTarget) } : undefined}
+                >
+                  {p.subtitle.label}
+                </a>
               )}
             </div>
 

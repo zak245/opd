@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
-import { follow } from "../chain"
+import { findAnchor, follow, showReturn } from "../chain"
 import { besides } from "../Product"
 import type { Session } from "../session"
 import { FlatProvider } from "./Door"
@@ -35,6 +35,51 @@ function headFor(session: Session, target: BesideTarget): BesideHead {
   return C?.head?.({ session, id: target.id, target }) ?? { name: target.id, context: "", route: "" }
 }
 
+
+/**
+ * Hold a row where it is on screen while the page beside it changes width. Opening and closing the
+ * pane reflows the page, which would slide the row the person is looking at up or down; this
+ * watches it for the length of the transition and corrects the page's own scroll to match.
+ */
+function pinRow(row: HTMLElement | null, ms: number) {
+  if (!row?.isConnected) return
+  const scroller = row.closest<HTMLElement>("[data-page]")
+  if (!scroller) return
+  const start = row.getBoundingClientRect().top
+  const until = performance.now() + ms
+  const step = () => {
+    if (!row.isConnected) return
+    const drift = row.getBoundingClientRect().top - start
+    if (Math.abs(drift) > 0.5) scroller.scrollTop += drift
+    if (performance.now() < until) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+/**
+ * Where focus goes when the pane closes and the row that opened it has gone — a task marked done, a
+ * reply handled. The row that took its place in the same list, else the one before it, else the
+ * list itself. Never the top of the page, and never nowhere.
+ */
+function tookItsPlace(target: BesideTarget, container: HTMLElement | null): HTMLElement | null {
+  const list = target.list
+  if (list) {
+    for (let i = list.index + 1; i < list.ids.length; i++) {
+      const el = findAnchor(list.ids[i])
+      if (el?.isConnected) return el
+    }
+    for (let i = list.index - 1; i >= 0; i--) {
+      const el = findAnchor(list.ids[i])
+      if (el?.isConnected) return el
+    }
+  }
+  if (container?.isConnected) {
+    const next = container.querySelector<HTMLElement>("[data-item]")
+    if (next) return next
+  }
+  return container?.isConnected ? container : null
+}
+
 export function Beside({ session, pageTitle }: { session: Session; pageTitle: string }) {
   const target = useBeside()
   const parent = useBesideParent()
@@ -45,6 +90,10 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   const [open, setOpen] = useState(false)
   const panel = useRef<HTMLDivElement>(null)
   const opener = useRef<HTMLElement | null>(null)
+  /** The row the pane is reading, and the list it sits in, for pinning and for focus on close. */
+  const row = useRef<HTMLElement | null>(null)
+  const rowList = useRef<HTMLElement | null>(null)
+  const last = useRef<BesideTarget | null>(null)
 
   if (target && target !== shown) {
     // Render-phase, so the body and the header change in the same paint as the width.
@@ -52,13 +101,17 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   }
 
   useEffect(() => {
+    const ms = reducedMotion() ? 0 : MS
     if (target) {
       opener.current = target.opener ?? opener.current
+      last.current = target
+      pinRow(row.current ?? opener.current, ms + 60)
       const id = requestAnimationFrame(() => setOpen(true))
       return () => cancelAnimationFrame(id)
     }
     setOpen(false)
-    const t = window.setTimeout(() => setShown(null), reducedMotion() ? 0 : MS)
+    pinRow(row.current ?? opener.current, ms + 60)
+    const t = window.setTimeout(() => setShown(null), ms)
     return () => window.clearTimeout(t)
   }, [target])
 
@@ -69,8 +122,13 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     if (!target && wasOpen.current) {
       wasOpen.current = false
       const back = opener.current
+      const gone = last.current
       opener.current = null
-      if (back?.isConnected) back.focus()
+      if (back?.isConnected) { back.focus(); return }
+      // The row that opened the pane has been acted on and removed. Focus does not fall to the top
+      // of the page: it goes to whatever took that row's place, lit the same way a return is.
+      const next = gone ? tookItsPlace(gone, rowList.current) : null
+      if (next) showReturn(next)
     }
   }, [target])
 
@@ -82,9 +140,11 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
     const hit = Array.from(root.querySelectorAll<HTMLElement>(`[data-item="${CSS.escape(target.id)}"]`))
       .find((el) => el.offsetParent !== null)
-    const row = (hit?.closest("tr, li") as HTMLElement | null) ?? hit
-    row?.classList.add("ollopa-beside-open")
-    return () => row?.classList.remove("ollopa-beside-open")
+    const marked = (hit?.closest("tr, li") as HTMLElement | null) ?? hit
+    row.current = marked ?? null
+    rowList.current = marked?.parentElement ?? null
+    marked?.classList.add("ollopa-beside-open")
+    return () => marked?.classList.remove("ollopa-beside-open")
   }, [target])
 
   // The keyboard runs the lap from anywhere on the page, not only from inside the pane.

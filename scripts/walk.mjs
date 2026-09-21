@@ -80,7 +80,11 @@ await page.evaluate(() => {
   buttons.find((b) => b.textContent.trim() === "Open the page")?.click()
 })
 await wait(700)
-console.log("trail:", await page.evaluate(() => document.querySelector('nav[aria-label="Your path"]')?.innerText.replace(/\n/g, " ") ?? "(none)"))
+console.log("trail:", await page.evaluate(() => {
+  const nav = document.querySelector('nav[aria-label="Your path"]')
+  const h1 = document.querySelector("header h1")
+  return nav ? `${nav.innerText.replace(/\n/g, " ")} ${h1?.innerText ?? ""}`.trim() : "(none)"
+}))
 await shot("4-page")
 
 // 4 → 5. The crumb: back to the sequence, scrolled to the row, lit and focused.

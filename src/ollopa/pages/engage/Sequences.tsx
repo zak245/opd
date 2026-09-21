@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
+import { follow } from "../../chain"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { HealthStrip } from "../../ui/HealthStrip"
@@ -66,7 +67,10 @@ export function SequencesPage({ session }: { session: Session }) {
 
   const paused = sequences.filter((s) => s.guardState === "auto-paused" && !s.archivedAt)
 
-  const open = (s: Sequence) => navigate(`/ollopa/sequences/${s.id}`)
+  // A row opens its record along the trail, with the row as the anchor: the record's
+  // "← Sequences" and the crumb both come back to this row, lit.
+  const open = (s: Sequence) =>
+    follow(`/ollopa/sequences/${s.id}`, { route: "/ollopa/sequences", title: "Sequences", anchor: s.id })
 
   const pauseResume = (s: Sequence) => {
     if (s.guardState === "auto-paused") { open(s); return }

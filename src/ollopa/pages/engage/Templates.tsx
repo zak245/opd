@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
+import { follow } from "../../chain"
 import { EmptyState } from "../../ui/EmptyState"
 import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
@@ -100,7 +101,10 @@ export function TemplatesPage({ session }: { session: Session }) {
     })
   }, [rowsAll, q, folder, owner, session.user])
 
-  const open = (r: CopyRow) => navigate(`/ollopa/templates/${r.id}`)
+  // A row opens its record along the trail, with the row as the anchor: the record's
+  // "← Templates" and the crumb both come back to this row, lit.
+  const open = (r: CopyRow) =>
+    follow(`/ollopa/templates/${r.id}`, { route: "/ollopa/templates", title: "Templates and snippets", anchor: r.id })
 
   const columns: Col<CopyRow>[] = [
     {

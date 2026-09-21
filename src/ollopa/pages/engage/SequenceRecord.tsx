@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
-import { follow } from "../../chain"
+import { back, follow, routeKey, useTrail } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
 import { Locked } from "../../ui/Locked"
@@ -59,6 +59,18 @@ function RenderCount({ label, count }: { label: string; count: number }) {
       {label} renders: {count}
     </span>
   )
+}
+
+/** The same move as the crumb when the person came from the Sequences table; a plain link otherwise. */
+function BackToSequences() {
+  const trail = useTrail()
+  const at = trail.length - 1
+  const returns = at >= 0 && routeKey(trail[at].route) === routeKey("/ollopa/sequences")
+  const body = <><ArrowLeft className="size-3" aria-hidden="true" />Sequences</>
+  const className = "inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+  return returns
+    ? <button type="button" className={className} onClick={() => back(at)}>{body}</button>
+    : <a href={href("/ollopa/sequences")} className={className}>{body}</a>
 }
 
 export function SequenceRecord({ session, id }: { session: Session; id?: string }) {
@@ -135,9 +147,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         {/* ------------------------------------------------------------------------- the header */}
         <header className="border-b px-4 pt-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <a href={href("/ollopa/sequences")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
-              <ArrowLeft className="size-3" aria-hidden="true" />Sequences
-            </a>
+            <BackToSequences />
             <RenderCount label="page" count={renders} />
           </div>
 

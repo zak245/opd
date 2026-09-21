@@ -22,7 +22,7 @@ import { Palette } from "./Palette"
 import { Shortcuts } from "./Shortcuts"
 import { Panel } from "../ui/Panel"
 import { Beside } from "../ui/Beside"
-import { back, clearTrail, takeReturnCue, useTrail, RETURN_HIGHLIGHT_MS, type Origin } from "../chain"
+import { back, clearTrail, showReturn, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY } from "./notifications"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
@@ -71,11 +71,19 @@ function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry;
 
 
 /**
+ * A crumb is the record's name, not the page's whole h1: "Q4 enterprise outbound · Sequences" is
+ * how the header names the page, and "Q4 enterprise outbound" is what the person went there for.
+ */
+function crumbName(title: string): string {
+  return title.split(" · ")[0]
+}
+
+/**
  * The trail in the header: the person's own path, `Q4 enterprise outbound › Amara Nakamura`.
  * Every crumb but the last is a button back to that page, exactly as it was left. At phone width
  * there is only room for one, so only the step back shows.
  */
-function Crumbs({ trail, title }: { trail: Origin[]; title: string }) {
+function Crumbs({ trail }: { trail: Origin[] }) {
   if (trail.length === 0) return null
   const previous = trail[trail.length - 1]
   return (
@@ -86,56 +94,26 @@ function Crumbs({ trail, title }: { trail: Origin[]; title: string }) {
         className="flex min-w-0 items-center gap-1 rounded text-sm text-muted-foreground hover:text-foreground sm:hidden"
       >
         <ChevronLeft className="size-4 shrink-0" aria-hidden="true" />
-        <span className="truncate">{previous.title}</span>
+        <span className="truncate">{crumbName(previous.title)}</span>
       </button>
       <ol className="hidden min-w-0 items-center gap-1 sm:flex">
         {trail.map((o, i) => (
-          <li key={`${o.route}-${i}`} className="flex min-w-0 items-center gap-1">
+          // The oldest crumb gives way first: its shrink weight is the largest, so the page you are
+          // on and the step you just took stay readable while the head of the path shortens.
+          <li key={`${o.route}-${i}`} className="flex min-w-0 items-center gap-1" style={{ flexShrink: trail.length - i }}>
             <button
               type="button"
               onClick={() => back(i)}
-              className="max-w-[14rem] truncate rounded text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              className="min-w-0 truncate rounded text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              {o.title}
+              {crumbName(o.title)}
             </button>
             <span aria-hidden="true" className="shrink-0 text-muted-foreground">›</span>
           </li>
         ))}
       </ol>
-      <span className="sr-only">Now on {title}</span>
     </nav>
   )
-}
-
-/**
- * The return cue. Coming back to a page, the thing you left is scrolled into view if it drifted out,
- * lit for three seconds in the same colour the lessons use for "where it is now", and focused — so
- * the keyboard carries on from the row rather than from the top of the page.
- */
-function showReturn(anchor: string) {
-  const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
-  // A page may render the same thing twice — a table above `sm`, a card list below it — so take
-  // the copy that is actually on screen.
-  const id = CSS.escape(anchor)
-  const all = root.querySelectorAll<HTMLElement>(`[data-item="${id}"], [data-row-key="${id}"], [data-door="${id}"], #${id}`)
-  const found = Array.from(all).find((el) => el.offsetParent !== null) ?? all[0]
-  if (!found) return
-  const el = (found.closest("tr, li") as HTMLElement | null) ?? found
-  const box = el.getBoundingClientRect()
-  if (box.top < 0 || box.bottom > window.innerHeight) {
-    el.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })
-  }
-  el.classList.remove("ollopa-returned")
-  void el.offsetWidth
-  el.classList.add("ollopa-returned")
-  window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS)
-  // Focus the thing itself where it can take focus — the row's own name link or button — and the
-  // row otherwise, so the keyboard carries on from where the person left rather than from the top.
-  const move = found.querySelector<HTMLElement>("a, button, [tabindex]")
-    ?? (el.matches("a, button, [tabindex]") ? el : null)
-    ?? el
-  if (!move.matches("a, button, input, [tabindex]")) move.setAttribute("tabindex", "-1")
-  move.focus({ preventScroll: true })
 }
 
 export function AppShell({ session, page, title, children, defaultCollapsed }: { session: Session; page: Page; title: string; children: ReactNode; defaultCollapsed?: boolean }) {
@@ -296,8 +274,13 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
             and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
         <header className={cn("flex shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
-          <Crumbs trail={trail} title={title} />
-          <h1 className={cn("truncate text-sm font-semibold", (canAdd || added) && "mr-auto md:mr-0", trail.length > 0 && "max-sm:sr-only")}>{title}</h1>
+          <Crumbs trail={trail} />
+          {/* The last crumb is the page you are on, and it never truncates: the earlier ones do. */}
+          <h1 className={cn(
+            "text-sm font-semibold",
+            (canAdd || added) && "mr-auto md:mr-0",
+            trail.length > 0 ? "shrink-0 whitespace-nowrap max-sm:sr-only" : "truncate",
+          )}>{trail.length > 0 ? crumbName(title) : title}</h1>
           {client && <span className="hidden shrink-0 rounded border px-2 py-0.5 text-xs text-muted-foreground sm:inline">{client} · client workspace</span>}
           {canAdd && (
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>

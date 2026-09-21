@@ -77,7 +77,10 @@ export function ListsPage({ session }: { session: Session }) {
     })
   }, [lists, q, kind, owner, mode, source, archived, session.user])
 
-  const open = (l: List) => navigate(`/ollopa/lists/${l.id}`)
+  // A row opens its record along the trail, with the row as the anchor: the record's
+  // "← Lists" and the crumb both come back to this row, lit.
+  const open = (l: List) =>
+    follow(`/ollopa/lists/${l.id}`, { route: "/ollopa/lists", title: "Lists", anchor: l.id })
 
   /* The row's visible actions come from the usage numbers, not from a list of names: the actions this
      seat touches often enough to be worth a click, most-used first. Everything stays in the menu. */
