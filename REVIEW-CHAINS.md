@@ -1,9 +1,65 @@
 # Stage 3 review: the chains
 
-Round 4 is the current review. Rounds 3, 2 and 1 are kept below, in order, so the proof lines each
-fix round was made against are still readable.
+Round 5 is the current review — a short one, chains 6 and 7 only. Rounds 4, 3, 2 and 1 are kept
+below, in order, so the proof lines each fix round was made against are still readable.
 
 ---
+
+# Round 5 — the short walk, chains 6 and 7
+
+Chains 6 and 7 only, at 1440 and at 400, by keyboard, against my own `npx vite preview --port 4180`
+(killed after). 46 screenshots in `shots/chains/review5/`, logs beside them. Both consoles silent
+on both chains at both widths.
+
+## Scores
+
+| Chain | Chain card | Δ vs r4 | Disclosure card | Δ |
+|---|---|---|---|---|
+| 6 · Deals | **18**/18 | — | **17**/18 | — |
+| 7 · Inbox, Tasks, Home | **18**/18 | **+1** | **17**/18 | — |
+
+D9 (no analytics) is still the one residue, so 17 is a full disclosure card. **Both chains are now
+full.**
+
+## The two round-4 items
+
+**D-R4-1, the Tasks row is not marked — fixed.** The list rows now carry the task
+(`data-item="t-11"` on a `role="listitem"`) with the contact moved onto its own control
+(`data-item="c-752"` on a `<button>`). Opening the **task** pane marks exactly one row; opening the
+**person** pane from the contact control on the same row marks the same one row. True at 1440 and
+at 400: `document.querySelectorAll(".ollopa-beside-open").length === 1` in all four cases, and the
+marked element is the task row itself ("Overdue 4 d · LinkedIn · Ben Novak · SDR Manager · Nettle
+Labs…"). The queue-mode Tasks page marks its row too. `07-work/90-tasks-row-marked-1440.png`.
+Chain 7 C1 returns to 2.
+
+**D-R4-2, two disabled buttons in the deal pane — fixed.** The Meridian SDR's deal pane, opened
+from a reply, now carries its six fields and then one sentence: *"Owned by Dev Dubois; only the
+owner or an admin can close or archive it."* No action buttons at all. The only `disabled` control
+left in the pane is the walker's "Previous" at item 1 of 2, which is correct and is the same on
+every pane in the product. Same on the Ridgeline SDR. And it is genuinely conditional, not blanket:
+walking the AE's deal pane with `]` to **Pebble Group · Pilot**, a deal that seat owns, brings back
+live "Close won" and "Mark lost and archive". Removed, not disabled — rule 4 as written.
+`07-work/91-deal-pane-sdr-1440.png`.
+
+## Everything else on these two chains still holds
+
+Chain 6: Enter on a focused card opens the quick look without changing the hash, the drawer walks
+its column ("Previous [ · 1 of 2 · Next ]"), the crumb returns with the card lit and focused,
+arrival on the deal record lands on the lit `H1 "Gatehouse Systems"`, Esc returns focus to the
+opener, the company pane keeps the board in place.
+
+Chain 7: the contact pane walks "1 of 4" from the Inbox row menu; the task pane walks its list and
+"Done" takes it 14 → 13 with the pane and the page moving together; Home › a reply arrives lit and
+the crumb comes back to the lit item.
+
+## Nothing new
+
+No new defect on either chain. The list from round 4 of things that are not defects but are still
+wrong for a real person is unchanged, and still led by the silent save on the bounce-guard
+threshold and the missing Undo on a completed task.
+
+---
+
 
 # Round 4 — the walk after the third fixes
 
