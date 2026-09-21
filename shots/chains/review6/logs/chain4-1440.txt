@@ -1,0 +1,45 @@
+
+=== CHAIN 4 · sequence › sending-rules link › Settings, row lit › back to the row (1440) ===
+  1. the sequence's sending settings
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home PROSPECT People Companies Lists "
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1*@311
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=0
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+    links     Bounce guard thresholds (Settings) → #/ollopa/settings/email-sending?row=mail.bounce-guard |  → #/ollopa/settings/email-sending?row=mail.mailboxes |  → #/ollopa/settings/sequences?row=seq.schedules |  → #/ollopa/settings/sequences?row=seq.rulesets
+  [shot] shots/chains/review6/04-setting/01-sequence-1440.png
+    keyboard  29 tabs from the top of the page to the settings link → A "Bounce guard thresholds (Settings)"
+  2. Settings, arrived by follow
+    hash      #/ollopa/settings/email-sending?row=mail.bounce-guard
+    h1        Email sending
+    trail     Q4 enterprise outbound ›
+    pane      (none)
+    focus     INPUT[Warn at] ""
+    lit       Bounce guard % warns % pauses 1.9% of 14,200 in 7 days Nothing paused Auto-pause
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1 hidden inert@0 , /ollopa/settings/email-sending*@2291
+    h-scroll  doc=1440
+    door open 
+  [shot] shots/chains/review6/04-setting/02-settings-1440.png
+  3. back on the sequence, at the row we left
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      (none)
+    focus     A "Bounce guard thresholds (Settings)"
+    lit       Bounce guard thresholds (Settings)
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1*@0
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=0
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+  [shot] shots/chains/review6/04-setting/03-back-1440.png
+  [console] nothing — no warning, no error, no failed request

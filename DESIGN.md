@@ -13,19 +13,21 @@ What a builder may not decide alone. Each rule names the evidence behind it ([me
 | destructive | An act that cannot be undone, or removes something | Text in the destructive colour, low emphasis, last, separated |
 | link | A destination, not a state change | A real link, underlined on hover, never a button |
 
-**One primary per surface.** A surface is a page header, a pane, a dialog, a card. One filled control on it. Two comparable acts are both secondary. Three or more comparable acts all drop to low emphasis (a group or a menu). Emphasis comes from fill and colour, never from size or width. Full width only on a phone sheet. (Agreed across Material, Fluent, Polaris, Carbon, Pajamas, Atlassian; Apple allows two, we take one.)
+**One primary per surface.** A surface is any bounded region that holds its own acts: a page header, a page section or body, a pane, a dialog, a card, a queue footer, a bulk bar. One filled control on it. Two comparable acts are both secondary. Three or more comparable acts all drop to low emphasis (a group or a menu). Emphasis comes from fill and colour, never from size or width. Full width only on a phone sheet. (Agreed across Material, Fluent, Polaris, Carbon, Pajamas, Atlassian; Apple allows two, we take one.)
 
 **Destructive is never the primary**, except inside its own confirmation, where the affirmative button is the destructive act with the verb in its label ("Archive the deal", never "OK"). (Carbon and Pajamas require this; Apple forbids a destructive primary on the surface; we take both.)
 
 **Order.** In a row, primary first, then secondary, then the destructive act after a gap. In a dialog the affirmative sits at the trailing edge. In a menu, groups are labelled, related objects first, destructive last.
 
-**A seat that cannot act sees no control.** Not a disabled button: one sentence naming who can ("Owned by Dev Dubois; only the owner or an admin can close it"). A control is disabled only for object state that the person can change (nothing selected, a field empty), and the reason sits beside it. (RULES.md rule 4; Windows UX guide "remove, don't disable".)
+**An act that is not available here shows no control.** Not a disabled button and never a live-looking button that does nothing: one sentence naming who or what makes it available ("Owned by Dev Dubois; only the owner or an admin can close it"; "Used by Onboarding week 1; delete that campaign first"). The sentence names a different person or thing from the one already on screen, or it names nothing. A control is disabled only for object state the person can change right here (nothing selected, a field empty), with the reason beside it. (RULES.md rule 4; Windows UX guide "remove, don't disable".)
 
 **What a pane may carry.** At most three acts, the ones the chain runs most for that seat, gated by the usage model like the fields. Irreversible acts stay on the record page; the pane offers "Open the page" for them. Navigation in a pane is a link.
 
 ## 2. Confirmation, consequence and undo
 
 **Confirm on reversibility, not on danger.** An act gets a confirmation only if it cannot be undone (a send, a payment, a delete that leaves nothing to restore, a merge). A reversible act, however large, acts at once and offers undo. Routine confirmations teach people to click through them. (NN/g; Apple's own example is not confirming a deleted email; Chen et al. 2026 measured worse performance without confirmation on irreversible acts, so the gate stays where it belongs.)
+
+**A delay can make an irreversible act reversible, and then it needs no confirmation.** A send that leaves ten seconds to undo before it goes is a reversible act: it acts at once, shows "Sent · Undo" where it was caused, and asks nothing first. This is the pattern for the acts a lap repeats all day (send a reply, complete a task), where a confirmation would cry wolf. An act with no such delay (a payment, a merge, a delete with nothing to restore) still confirms. (Chosen here; NN/g on routine confirmations.)
 
 **Undo is in addition to confirmation, never instead.** Every act that can be undone shows "Done · what happened · Undo" where it was caused, for ten seconds, through the shared edits store. (Shneiderman's easy reversal; memo 21 on cost that lands where caused.)
 
@@ -43,7 +45,7 @@ Examples:
 **Three reasons a sentence may exist next to a control, and no fourth:**
 
 1. The act spends or cannot be undone (one line, section 2).
-2. The seat cannot act, and the sentence names who can.
+2. The act is not available here, and the sentence names who or what makes it available.
 3. A count on screen would otherwise mislead ("One at a time. 13 more behind this one").
 
 Everything else is education, and education lives on the library site, never in the product. A label carries a count, not a sentence. A field shows a value, not a note about the value. A door is labelled by what is behind it. Helper text, when one of the three reasons allows it, is persistent and below the control; placeholder text is never used to explain. (Design-system agreement; Nielsen on reading.)

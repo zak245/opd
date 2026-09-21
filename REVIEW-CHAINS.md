@@ -1,11 +1,166 @@
 # Stage 3 review: the chains
 
-Round 5 is the current review — a short one, chains 6 and 7 only. Rounds 4, 3, 2 and 1 are kept
-below, in order, so the proof lines each fix round was made against are still readable.
+Round 6 is the current review — the design-system pass over all nine chains. Rounds 5, 4, 3, 2 and 1
+are kept below, in order, so the proof lines each fix round was made against are still readable.
 
 ---
 
-# Round 5 — the short walk, chains 6 and 7
+# Round 6 — the design-system pass
+
+A different kind of round. I read `DESIGN.md` and memo 26, then walked all nine chain sets again at
+1440 and at 400, by keyboard, against my own `npx vite preview --port 4180`, with the dev server on
+4181 for the console. Both killed after. 168 screenshots in `shots/chains/review6/`.
+
+Two new checks, applied to every surface the chains pass through, and recorded surface by surface:
+
+- **A** — at most one filled control per surface; destructive drawn last, as text, confirmed with
+  the verb in the affirmative; destinations rendered as links; no disabled control standing in for
+  a seat that cannot act.
+- **B** — every sentence next to a control carries one of the three reasons in §3 (spends or
+  irreversible, seat cannot act, a count would mislead).
+
+I added a DOM auditor to `scripts/review-chains.mjs` that reads the four surfaces `DESIGN.md` §1
+names, classifies each control by its rendered variant rather than by what the source claims, and
+collects every piece of text adjacent to a control so I can judge the sentences myself. It runs at
+every step of every chain; the per-surface sweep below is a second pass over the same surfaces so
+the table is readable.
+
+## Scores
+
+| Chain | Chain card | Δ vs r5/r4 | Disclosure card | Δ |
+|---|---|---|---|---|
+| 1 · Sequence › person | **18**/18 | — | **17**/18 | — |
+| 2 · Campaign › audience › person | **17**/18 | **−1** | **17**/18 | — |
+| 3 · Company › person | **18**/18 | — | **17**/18 | — |
+| 4 · Sequence › setting | **18**/18 | — | **17**/18 | — |
+| 5 · Settings › set-up | **18**/18 | — | **17**/18 | — |
+| 6 · Deals | **18**/18 | — | **17**/18 | — |
+| 7 · Inbox, Tasks, Home | **18**/18 | — | **17**/18 | — |
+| 8 · Index laps | **18**/18 | — | **17**/18 | — |
+| 9 · Cross-cutting | **18**/18 | — | **17**/18 | — |
+
+Nothing regressed on the chain mechanics: every trail, return cue, walker, pane focus, render
+counter and console check from rounds 4 and 5 still passes, at both widths, and both consoles are
+silent on all eighteen runs. The one line lost is chain 2's C8, for a control that does nothing and
+says nothing — below.
+
+## Surfaces against checks A and B
+
+Read at 1440; the 400 pass found the same set, plus the page-body doublings that phone width makes
+obvious. ✓ = passes, ! = fails, ? = passes as written but see the note.
+
+| Surface | A | B | What I saw |
+|---|---|---|---|
+| Sequence record, page header | ✓ | ✓ | One filled ("Add people"), "Pause" outline, three links. One sentence: *"· RevOps admins change them"* — reason 2. |
+| Sequence record, enrolled card | ✓ | ✓ | No filled control; the name is a button, the row menu is a menu. |
+| Person pane (from a sequence, a company, an audience, a task, a reply) | ✓ | ✓ | No filled control at all; acts are outline; "Open the page" is a link. Two disabled: "Move to a sequence" with *"Choose a sequence above"* and "Previous" at item 1 with its count — both object state the person can change, which §1 allows, with the reason beside. |
+| Contact record, page header | ✓ | ? | One filled ("Move sequence"), one destructive last. The body carries a second filled ("Add a note"), which §1 does not reach. |
+| Campaign record, page header | ✓ | ✓ | One filled ("Pause"). |
+| Campaign record, body | ! | ✓ | A second filled **"Pause"** in the Trigger section — the same act, drawn as a primary twice on one page. |
+| Audience record, page header | ! | ! | One filled ("Rebuild now") and one destructive ("Delete audience") — but the destructive is **inert** and carries a fourth-reason sentence. Both below. |
+| Company record, page header | ✓ | ✓ | One filled ("Research · 12 credits"). Sentence: *"Marcus Adeyemi owns this company — you can read it"* — reason 2. |
+| Settings, email sending | ✓ | ✓ | No filled control on the header; the bounce-guard row is fields. |
+| Workspace set-up | ✓ | ✓ | One filled ("Start"). |
+| Deals board, page header / card | ✓ | ✓ | No filled control in the header; no filled control on a card; "New deal" is the body's one. Card sentences are values ("Security review call · 25 Sep"), not prose. |
+| Deal record, page header | ✓ | ? | One filled ("Log activity"), one destructive last. "Log call" is a second filled in the body. |
+| Deal quick look (dialog) | ✓ | ✓ | One filled ("Open"); Stage is the one editable field; walker below. |
+| Delete-deal confirmation (dialog) | ✓ | ✓ | **The model answer.** Title *"Delete Gatehouse Systems · Platform?"*, consequence above — *"Removes this deal and its 4 activities. Contacts, the company and files stay on Gatehouse Systems."* — affirmative **"Delete the deal"** in the destructive variant, Cancel ghost. |
+| Inbox, reply card | ✓ | ✓ | One filled per card ("Reply"); the row menu is a labelled menu, destructive last. |
+| Inbox, composer | ✓ | ✓ | One filled ("Send") with its line *"1 email · to Cyrus Rossi from marcus@meridian.io"* — reason 1, correct. See §2 below for what it is missing. |
+| Deal pane (from a reply) | ✓ | ✓ | No control at all for a seat that may not act, one sentence instead: *"Owned by Dev Dubois; only the owner or an admin can close or archive it."* Reason 2, exactly as §1 asks. |
+| Tasks, queue | ! | ✓ | **Three filled on one surface**: "New task", "Mark complete", "Done". Sentence *"One at a time. 13 more behind this one · next: Kai Kowalski"* — reason 3. |
+| Tasks, list card | ✓ | ? | One filled per card ("Done"); "Open the LinkedIn step" is a **button where a destination belongs**. |
+| Home, task and reply cards | ✓ | ✓ | No filled control on a card. |
+| Index laps (six) | ✓ | ✓ | No filled control on any row; one filled in each page body ("New sequence", "Add people", "Find companies", …). |
+| Add-people dialog | ✓ | ✓ | Consequence above the affirmative — *"Sends 153 emails to People and Lists from marcus@meridian.io"* — affirmative **"Add 153 people"**, the verb and the count in the label. |
+
+## Check A — seven findings, three against the rule as written
+
+1. **Tasks, queue mode: three filled controls on one surface** — "New task", "Mark complete",
+   "Done". In queue mode there is no card element: the whole page is the one task, so all three sit
+   on the same surface. Against §1 whichever way you cut it.
+2. **Campaign record: the same act filled twice** — "Pause" in the page header and "Pause" again in
+   the Trigger section. `shots/chains/review6/91-campaign-two-pause-1440.png`.
+3. **Audience record: "Delete audience" is inert.** It is drawn as a destructive control, it is
+   **not disabled**, and clicking it does nothing at all: same route, same heading, no dialog, no
+   live region, silence. §1 says a control that does not apply is removed, not disabled — this one
+   is neither. It is also the one thing this round that costs a score: chain 2 **C8** drops to 1,
+   because a live-looking control that does nothing and says nothing misreports what it will do.
+   `shots/chains/review6/90-audience-delete-1440.png`.
+4. **"Open the LinkedIn step"** on a Tasks card is a button where §1 requires a link.
+5. **"Back to the list"** is a button where §1 requires a link.
+6. **Contact record: two filled** — "Move sequence" in the header, "Add a note" in the body.
+7. **Deal record: two filled** — "Log activity" in the header, "Log call" in the body.
+
+Findings 1, 2, 6 and 7 all live in a **page body**, and §1 names four surfaces — page header, pane,
+dialog, card — so the rule as written does not reach them. That is the gap this pass found in the
+rule rather than in the product: the body of a record page is where most of its acts live, and
+nothing governs it. At 400 it is worse, because the body *is* the page. I would add "a page
+section" to §1's list of surfaces rather than leave four filled controls legal on one screen.
+
+**Everything else A asks for passes**: no destructive control was filled anywhere; every
+destructive control I found sat last; every disabled control I found was disabled by object state
+the person can change, with the reason beside it; and no disabled control stood in for a seat that
+cannot act — the deal pane proves the opposite, replacing both buttons with one sentence.
+
+## Check B — two failures
+
+Every other sentence I found next to a control carried one of the three reasons: costs and sends
+(reason 1), ownership (reason 2), the queue count (reason 3). The two that do not:
+
+1. **Audience record, beside "Delete audience":** *"Onboarding week 1 uses this audience, so it
+   cannot be deleted while that campaign exists."* This is a fourth reason — object state that
+   blocks the act, which §3 does not list and which the person cannot change from here. The
+   sentence exists because the control does; remove the control and the sentence goes with it.
+2. **Contact record, Rosa Okonkwo:** *"Daniel Okafor owns this contact; only they or Daniel Okafor
+   can change or remove it."* Reason 2 in intent, broken in execution: it names the same person as
+   the owner and as the escalation, so it tells the reader nothing about who to ask.
+
+Two smaller text problems, not B failures: on Home the task title and its chip run together with no
+separator — *"Send a connection request4 days overdue"* — and the bounce-guard sentence begins with
+a stray separator, *"· RevOps admins change them"*.
+
+## The opposite failure — what the cut took
+
+I looked for an irreversible or costly act that lost its line or its confirmation.
+
+- **The Inbox composer's "Send" has its line but no confirmation.** The line is right —
+  *"1 email · to Cyrus Rossi from marcus@meridian.io"* — and after the send a live region says
+  *"Reply sent to Cyrus Rossi from marcus@meridian.io."* with no Undo, correctly, because a send
+  cannot be undone. But §2 names a send as its first example of an act that gets a confirmation,
+  and this one commits on one click. `shots/chains/review6/93-inbox-send-1440.png`. It costs no
+  card line — the result *is* visible before the commitment, so C7 and D1 hold — but it is a §2
+  failure and the highest-consequence one in the product.
+- **"Research · 12 credits" on the company page header lost its "Charged once".** The cost is in
+  the label, which §2's own example endorses, but the clarifying half of that example is gone from
+  the page. The pane still carries it. Minor.
+- **Nothing else was lost.** "Delete deal", "Add people" and the quick look all still confirm with
+  the consequence above and the verb in the affirmative, and every credit act still names its price
+  in its label.
+
+I also noticed the set-up page no longer invites anyone: there is no invite section and no mention
+of one, so "Start" sends nothing and correctly carries no line. Chain 5 still runs end to end. I
+record it because it is a change, not because it is a defect.
+
+## Still wrong for a real person
+
+Unchanged from round 4, minus nothing: the bounce-guard threshold still saves in silence, "Done" on
+a task still offers no Undo, "People (34)" still does not move when someone leaves the sequence,
+`]` still walks the pane away from the open thread, the sequence picker is still eleven options with
+no search, and the toast still overlaps the table and the pane.
+
+## Verdict
+
+Seven A findings and two B failures, and the design pass has plainly done most of its work: no
+destructive control is filled anywhere, panes carry no filled control at all, the seat that cannot
+act gets a sentence instead of a dead button, and the delete confirmation is a model of §2. The
+three things I would fix are the inert "Delete audience", the missing confirmation on Send, and the
+duplicated name in the ownership sentence — and then I would widen §1, because four of my seven A
+findings are legal under a rule that does not name the surface they live on.
+
+---
+
+# Round 5 — the short walk, chains 6 and 7 (superseded)
 
 Chains 6 and 7 only, at 1440 and at 400, by keyboard, against my own `npx vite preview --port 4180`
 (killed after). 46 screenshots in `shots/chains/review5/`, logs beside them. Both consoles silent

@@ -1,0 +1,35 @@
+
+=== CHAIN 9 · cross-cutting (400) ===
+  trail before the sidebar click: Q4 enterprise outbound
+  [shot] shots/chains/review6/09-cross/01-a-trail-before-sidebar-400.png
+  a. sidebar "Companies" → h1="Companies" trail=(EMPTY — correct) mounted=1
+  [shot] shots/chains/review6/09-cross/02-a-after-sidebar-400.png
+  [shot] shots/chains/review6/09-cross/03-b-palette-400.png
+  b. palette jump → h1="Companies" hash=#/ollopa/companies trail=(EMPTY — correct)
+  [shot] shots/chains/review6/09-cross/04-b-after-palette-400.png
+  c. deep link → h1="Mateo Okonkwo · People" trail=(EMPTY — correct)
+  [shot] shots/chains/review6/09-cross/05-c-deep-link-400.png
+  d. sessionStorage before sign-out: ollopa.chain.meridian.Marcus Adeyemi=[{"route":"/ollopa/sequences/seq-1","title":"Q4 enterprise o
+  d. after sign-out: keys=(none) session=null screen="ollopA Sign in Choose the workspace and the seat you are signing in to. The seat decides what you see. WORKSPACE Fathom "
+  [shot] shots/chains/review6/09-cross/06-d-signed-out-400.png
+  d. signed back in → trail=(EMPTY — correct)
+  [shot] shots/chains/review6/09-cross/07-d-signed-back-in-400.png
+  [console] nothing — no warning, no error, no failed request
+  e. opened the step door: "Open step"
+  e. typed into subj-seq-1-st1: "Closing the loop HALF-TYPED"
+  [shot] shots/chains/review6/09-cross/01-e-half-typed-400.png
+  f. render counters before the pane: page=page renders: 2 · page=page renders: 2 · rows=rows renders: 2
+  f. render counters with the pane open: page=page renders: 2 · page=page renders: 2 · rows=rows renders: 2  → NO re-render
+  [shot] shots/chains/review6/09-cross/02-f-counters-400.png
+  g. Esc → pane=closed focus=BUTTON "Mateo Okonkwo" visible=true (was, in the pane: DIV "From Q4 enterprise outbound · row Mateo Okonkwo Ma" visible=true)
+  [shot] shots/chains/review6/09-cross/03-g-esc-400.png
+  [shot] shots/chains/review6/09-cross/04-e-away-400.png
+  e. after follow and back, the field reads: "Closing the loop HALF-TYPED"  → the draft survived
+  e. the step door on return: still open
+  f. render counters after the return: page=page renders: 2 · page=page renders: 2 · rows=rows renders: 2
+  [shot] shots/chains/review6/09-cross/05-e-back-400.png
+  [console] nothing — no warning, no error, no failed request
+  h. reduced motion=true → the pane transitions "none" over 0.2s, width 400
+  [shot] shots/chains/review6/09-cross/01-h-reduced-motion-400.png
+  i. things that look like a door inside the pane: 1 ["BUTTON:Choose a sequence"]
+  [console] nothing — no warning, no error, no failed request
