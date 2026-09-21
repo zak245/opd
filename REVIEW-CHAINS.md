@@ -1,11 +1,88 @@
 # Stage 3 review: the chains
 
-Round 6 is the current review — the design-system pass over all nine chains. Rounds 5, 4, 3, 2 and 1
-are kept below, in order, so the proof lines each fix round was made against are still readable.
+Round 7 is the current review — the short walk after the design fixes, chains 2, 3 and 7. Rounds 6
+through 1 are kept below, in order, so the proof lines each fix round was made against are still
+readable.
 
 ---
 
-# Round 6 — the design-system pass
+# Round 7 — the short walk after the design fixes
+
+Chains 2, 3 and 7 only, at 1440 and at 400, by keyboard, against my own `npx vite preview --port
+4180`, with the dev server on 4181 for the console. Both killed after. 57 screenshots in
+`shots/chains/review7/`. Both consoles silent on all six runs.
+
+One harness correction, not a product change: my auditor's card selector did not include
+`[role="row"]`, which made the Inbox's one-filled-per-reply read as a pile of filled controls in
+round 6. Fixed; that finding was mine, not the product's. My chain-2 opener was also stale — the
+audience control was renamed from "Read the audience beside this" to the audience's own name — so
+the first pass showed a broken chain 2 that is not broken.
+
+## Scores
+
+| Chain | Chain card | Δ vs r6 | Disclosure card | Δ |
+|---|---|---|---|---|
+| 2 · Campaign › audience › person | **18**/18 | **+1** | **17**/18 | — |
+| 3 · Company › person | **18**/18 | — | **17**/18 | — |
+| 7 · Inbox, Tasks, Home | **17**/18 | **−1** | **17**/18 | — |
+
+Chain 2 gets its C8 back: the inert control that cost it is gone. Chain 7 loses C8 for a new
+reason, below.
+
+## The nine, one by one
+
+| # | Fix | Status | What I saw |
+|---|---|---|---|
+| 1 | Delete audience gone when in use, with a sentence | **Fixed** | No control on any of the five Ridgeline audiences, and each carries its own sentence: *"Used by Onboarding week 1; delete that campaign first"*, *"Used by Trial day 7 nudge; …"*, *"Used by Feature limit hit; …"*, *"Used by Renewal 60 days out; …"*, *"Used by Seat limit reached; …"*. Reason 2 under the widened §3, and it names a different thing from the one on screen. |
+| 1b | …and confirms when not in use | **Untestable** | Every audience in the seed is used by a campaign, so I could not reach the unblocked case. Not a finding; a gap in what I can walk. |
+| 2 | Pause filled once | **Fixed** | One filled control on the campaign record: `["Pause"]`. |
+| 3 | Index names and empty-state returns are links | **Partly** | Campaigns is now `<a href="#/ollopa/campaigns/camp-7">`. **Sequences and Lists are still `<button>` with no href** ("Security buyers, DACH", "Unsubscribed"). |
+| 4 | The ownership sentence names the admin seat, never the owner twice | **Fixed** | *"Owned by Hana Kobayashi; only the owner or Revenue operations can change or remove it"* — the seat, not a second copy of the name. Where the owner **is** the admin it collapses correctly: *"Owned by Daniel Okafor; only the owner can change or remove it"*. |
+| 5 | Research and Enrich carry "12 credits · Charged once" | **Partly** | Enrich does: `"Enrich"` with the line *"2 credits · Charged once"*. **Research does not**: the company header still reads `"Research · 12 credits"` with no line. |
+| 6 | The Tasks queue has one filled control | **Partly** | The queue's first task has one (`["Done"]`). Press it and the queue moves to *"Step 2 of 3 · Send the follow-up"*, which has **two**: `["Send and mark done", "Done"]`. At 1440 and at 400. `93-queue-email-task-1440.png`. |
+| 7 | Send acts at once, "Sending · Undo" for ten seconds, then "Sent" | **Partly** | The send half is exactly right: no confirmation, the thread reads *"Sending"* with an **Undo** on screen immediately, and eleven seconds later it reads *"Sent"* with the Undo gone. `90-send-sending-1440.png`, `91-send-sent-1440.png`. **Row and thread do not agree**: below. |
+| 8 | Task destinations are real links | **Fixed** | *"Open the LinkedIn step"* is `<a href="#/ollopa/tasks?task=t-11">`. "Open the task beside" stays a button, correctly — it opens a pane, so it is an act, not a destination. |
+| 9 | Two filled controls in a page body | **Fixed by the rule** | The contact record still has "Move sequence" in the header and "Add a note" in the body — which is now one filled per surface, because §1 counts a page body as a surface. It passes as written. |
+
+## Checks A and B, on these three chains' surfaces
+
+**A — one failure.** The Tasks queue's email task carries two filled controls, "Send and mark done"
+and "Done", on one surface (item 6 above). Everything else passes: no destructive control is
+filled anywhere on these chains, no destructive control is out of order, every disabled control is
+disabled by object state the person can change with the reason beside it ("Choose a sequence
+above"; the walker's "Previous" at item 1 with its count), and no control stands in for a seat or a
+state that cannot act — the audience record and the deal pane both now show a sentence and no
+button.
+
+**B — no failures.** Every sentence next to a control on these surfaces carries one of the three
+reasons: *"Used by Onboarding week 1; delete that campaign first"* and the two ownership sentences
+(reason 2), *"2 credits · Charged once"* and *"1 email · to Cyrus Rossi from marcus@meridian.io"*
+(reason 1), *"Done · call task due today · owned by Elena Vasquez"* beside Undo (§2's own form),
+and the queue's *"One at a time. 13 more behind this one"* (reason 3).
+
+One text defect survives, not a B failure: on Home the task title and its chip still run together
+with no separator — *"Send a connection request4 days overdue"* reads as
+**"Send a connection request4 days overdue"**.
+
+## The one line lost
+
+**Chain 7, C8 → 1. The reply row does not follow the send.** I typed a reply, pressed Send, and
+watched the thread go *Sending · Undo* → *Sent*. The reply row beside it was byte-identical before
+the send, during it and eleven seconds after: *"3 d · Sep 10 overdue · Cyrus Rossi · Interested"*.
+The filter counts did not move either — Interested (4), Handled (3) — so the list still presents a
+reply I have just answered as overdue and waiting. The thread and the row disagree, which is the
+half of item 7 the fix did not reach, and it is the "never misreports state" line.
+`92-send-row-after-1440.png`.
+
+## Still open
+
+The row after a send (above), Sequences and Lists names still drawn as buttons, "Research" without
+its "Charged once", the queue's email task with two filled controls, and the Home chip separator.
+Everything from round 4's "wrong for a real person" list is unchanged.
+
+---
+
+# Round 6 — the design-system pass (superseded)
 
 A different kind of round. I read `DESIGN.md` and memo 26, then walked all nine chain sets again at
 1440 and at 400, by keyboard, against my own `npx vite preview --port 4180`, with the dev server on
