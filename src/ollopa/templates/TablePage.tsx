@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { surfaceClass } from "../ui/Surface"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
@@ -109,7 +110,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
       </div>
       <div className="min-h-0 flex-1 overflow-auto border-t">
         <Table>
-          <TableHeader className="surface-page sticky top-0">
+          <TableHeader className={cn(surfaceClass("table", false), "sticky top-0")}>
             <TableRow>
               {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
               {(p.rowActions || p.moreActions) && <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>}
@@ -122,7 +123,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
                 // The row you are on is the raised surface: hovered, focused, or the one the quick
                 // look is open on (DESIGN.md §5, the three depths).
                 className={cn(
-                  "group hover:[background-color:var(--surface-raised)] focus-visible:[background-color:var(--surface-raised)] focus-visible:[box-shadow:inset_0_0_0_1px_var(--border-strong)]",
+                  "group hover:[background-color:var(--surface-raised)] focus-visible:[background-color:var(--surface-raised)] focus-visible:[box-shadow:inset_0_0_0_var(--inset-hairline)_var(--border-strong)]",
                   p.quickLook && "cursor-pointer",
                   glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--surface-raised)]",
                 )}

@@ -1,3 +1,4 @@
+import { surfaceClass } from "../ui/Surface"
 // The quick look: level one of a record, opened from a table row with the table still in view.
 //
 // It is the top of the record page cut short — the same fields, in the same order, with the same
@@ -21,6 +22,7 @@ import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Actions } from "../ui/Actions"
 import { type ReactNode } from "react"
+import { cn } from "@/lib/utils"
 
 export interface QuickLookField {
   label: string
@@ -107,10 +109,10 @@ export function QuickLook({ family, open, onOpenChange, title, fields, editable,
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="surface-floating w-full gap-0 p-0 sm:max-w-sm">
+      <SheetContent side="right" className={cn(surfaceClass("sheet", false), "w-full gap-0 p-0 sm:max-w-sm")}>
         {/* A thin bar in the record's family hue, so the drawer says what it is holding before it is
             read — the same mark the pane carries (DESIGN.md §5). */}
-        <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />
+        <div aria-hidden="true" className="h-[var(--bar-thin)] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />
         <SheetHeader className="border-b px-5 py-4">
           <SheetTitle className="t-section inline-flex items-center gap-2">
             <FamilyIcon of={family} size="header" />

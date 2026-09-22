@@ -1224,7 +1224,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <Bell className="size-3.5" /> 1
       </Button>
       <Place id="bell" label="the notification bell" open={bellOpen}
-        className={cn("absolute right-0 top-8 z-30 w-72 rounded-md border bg-background p-2 text-xs shadow-md", !bellOpen && "hidden")}>
+        className={cn("absolute right-0 top-8 z-30 w-72 rounded-md border bg-background p-2 text-xs shadow-small", !bellOpen && "hidden")}>
         <ThingPlace id="agent.proposal" label="The agent proposal" place="bell.item" placeLabel="the notification bell">
           <span className="block font-medium">{proposal.agent}</span>
           <span className="block text-muted-foreground">{proposal.summary}</span>
@@ -1240,7 +1240,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <MoreHorizontal className="size-4" />
       </Button>
       <Place id="parody.menu" label={"the \u201c\u2026\u201d menu"} open={parodyMenu}
-        className={cn("absolute right-0 top-8 z-30 w-48 rounded-md border bg-background p-1 text-xs shadow-md", !parodyMenu && "hidden")}>
+        className={cn("absolute right-0 top-8 z-30 w-48 rounded-md border bg-background p-1 text-xs shadow-small", !parodyMenu && "hidden")}>
         <button type="button" data-item="close.delete" data-item-label="Delete deal"
           className="block w-full rounded px-2 py-1 text-left text-destructive hover:bg-muted"
           onClick={() => { setParodyMenu(false); toast("Delete this deal?") }}>

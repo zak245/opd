@@ -235,7 +235,7 @@ export function RequestsPage({ session }: { session: Session }) {
           {rows.map((r) => {
             const w = waitingOf(r, target)
             return (
-              <li key={r.id} className="surface-raised rounded-[10px] border p-3">
+              <li key={r.id} className="surface-raised rounded-[var(--radius-container)] border p-3">
                 <a className="text-sm font-medium underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}

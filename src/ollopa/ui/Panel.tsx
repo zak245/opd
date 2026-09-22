@@ -7,6 +7,7 @@
 import { type ReactNode } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { surfaceClass } from "./Surface"
 import { FlatProvider } from "./Door"
 
 export interface PanelProps {
@@ -25,7 +26,7 @@ export function Panel({ id, title, open, onOpenChange, side = "right", children,
       <SheetContent
         id={id}
         side={side}
-        className={cn("gap-0 p-0", side === "right" ? "w-full sm:max-w-lg" : "max-h-[85vh]")}
+        className={cn(surfaceClass("sheet", false), "gap-0 p-0", side === "right" ? "w-full sm:max-w-lg" : "max-h-[85vh]")}
       >
         <SheetHeader className="border-b px-5 py-4">
           <SheetTitle className="t-section">{title}</SheetTitle>

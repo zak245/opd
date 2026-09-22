@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Every visual value lives in one file. This one holds only resets and the utilities that read it. */
+@import "./theme/theme.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -7,237 +9,6 @@
    the accent (indigo, "act here" and "you are here"), six object families, five statuses, and
    nothing. Both themes derive from one set of role names, so a family and a status look like
    themselves in either. Every pair below is measured: `node scripts/contrast.mjs`. */
-:root {
-  /* Structure. Slightly warm — a little chroma at hue 80 — never pure grey. */
-  /* Four levels and the chrome, each a tone step the eye can see (DESIGN.md §5). Light cannot go
-     lighter than white, so the page starts low and every level rises to it; the chrome steps the
-     other way, below the page, so the frame separates from the work. Steps are measured —
-     `scripts/contrast.mjs` fails below 0.03 in light and 0.05 in dark. */
-  --surface-chrome: oklch(0.865 0.008 80);
-  --surface-page: oklch(0.900 0.007 80);
-  --surface-raised: oklch(0.935 0.005 80);
-  --surface-floating: oklch(0.968 0.004 80);
-  --surface-overlay: oklch(1 0 0);
-
-  --background: var(--surface-page);
-  --foreground: oklch(0.24 0.008 80);
-  --card: var(--surface-raised);
-  --card-foreground: var(--foreground);
-  --popover: var(--surface-overlay);
-  --popover-foreground: var(--foreground);
-
-  /* The accent. One hue for the primary fill, the active sidebar item, links, the ring, info. */
-  --brand: oklch(0.52 0.17 264);
-  --brand-tint: oklch(0.93 0.025 264);
-  --brand-ink: oklch(0.47 0.17 264);
-  --primary: var(--brand);
-  --primary-foreground: oklch(0.99 0.003 80);
-  --ring: oklch(0.55 0.16 264);
-
-  /* shadcn's `accent` is the neutral hover wash, not the brand. It stays neutral on purpose. */
-  --secondary: oklch(0.935 0.007 80);
-  --secondary-foreground: oklch(0.24 0.008 80);
-  --muted: oklch(0.935 0.007 80);
-  --muted-foreground: oklch(0.45 0.012 80);
-  --accent: oklch(0.935 0.007 80);
-  --accent-foreground: oklch(0.24 0.008 80);
-  /* One border that carries meaning — 3:1 against every surface it can sit on — and one for a
-     divider inside a card, which only has to be seen. */
-  --shadow-small: 0 1px 2px oklch(0.30 0.02 80 / 0.10), 0 2px 8px oklch(0.30 0.02 80 / 0.08);
-  --shadow-large: 0 4px 12px oklch(0.30 0.02 80 / 0.14), 0 16px 40px oklch(0.30 0.02 80 / 0.16);
-  --scrim: oklch(0.30 0.02 80 / 0.42);
-  --border-strong: oklch(0.54 0.012 80);
-  --border-soft: oklch(0.80 0.008 80);
-  --border: var(--border-strong);
-  --input: oklch(0.55 0.012 80);
-
-  /* The six object families: a fill for bars and dots, a tint for chips, an ink for icons and text.
-     Always with their icon, never as a large fill (DESIGN.md §5). */
-  --family-people: oklch(0.57 0.09 200);
-  --family-people-tint: oklch(0.93 0.03 200);
-  --family-people-ink: oklch(0.47 0.08 200);
-  --family-companies: oklch(0.58 0.16 295);
-  --family-companies-tint: oklch(0.93 0.025 295);
-  --family-companies-ink: oklch(0.49 0.17 295);
-  --family-deals: oklch(0.59 0.13 55);
-  --family-deals-tint: oklch(0.93 0.035 55);
-  --family-deals-ink: oklch(0.50 0.10 55);
-  --family-engagement: oklch(0.58 0.18 335);
-  --family-engagement-tint: oklch(0.93 0.025 335);
-  --family-engagement-ink: oklch(0.46 0.18 335);
-  --family-work: oklch(0.58 0.12 120);
-  --family-work-tint: oklch(0.93 0.03 120);
-  --family-work-ink: oklch(0.45 0.11 120);
-  --family-agents: oklch(0.58 0.08 15);
-  --family-agents-tint: oklch(0.93 0.02 15);
-  --family-agents-ink: oklch(0.48 0.09 15);
-  /* Settings, Reports and Home are neutral and lean on their icon alone. */
-  --family-neutral: oklch(0.55 0.01 80);
-  --family-neutral-tint: oklch(0.93 0.006 80);
-  --family-neutral-ink: oklch(0.40 0.03 80);
-
-  /* The five statuses. Only ever state, never decoration and never a family; always with a word. */
-  --danger: oklch(0.55 0.20 27);
-  --danger-tint: oklch(0.935 0.035 27);
-  --danger-ink: oklch(0.50 0.11 27);
-  --warning: oklch(0.65 0.14 75);
-  --warning-tint: oklch(0.93 0.04 75);
-  --warning-ink: oklch(0.47 0.10 75);
-  --success: oklch(0.55 0.13 150);
-  --success-tint: oklch(0.93 0.035 150);
-  --success-ink: oklch(0.43 0.09 150);
-  --info: var(--brand);
-  --info-tint: var(--brand-tint);
-  --info-ink: var(--brand-ink);
-  /* Paused is a state, so it is not the neutral family's grey: a cool neutral, its own thing. */
-  --paused: oklch(0.60 0.035 250);
-  --paused-tint: oklch(0.93 0.018 250);
-  --paused-ink: oklch(0.45 0.045 250);
-
-  --destructive: var(--danger);
-  --radius: 0.625rem;
-}
-
-.dark {
-  /* The same four levels by tone, lighter as they rise, with the chrome one step below the page. */
-  --surface-chrome: oklch(0.140 0.006 80);
-  --surface-page: oklch(0.195 0.007 80);
-  --surface-raised: oklch(0.250 0.008 80);
-  --surface-floating: oklch(0.305 0.009 80);
-  --surface-overlay: oklch(0.360 0.010 80);
-
-  --background: var(--surface-page);
-  --foreground: oklch(0.96 0.005 80);
-  --card: var(--surface-raised);
-  --card-foreground: var(--foreground);
-  --popover: var(--surface-overlay);
-  --popover-foreground: var(--foreground);
-
-  --brand: oklch(0.52 0.17 264);
-  --brand-tint: oklch(0.31 0.06 264);
-  --brand-ink: oklch(0.76 0.12 264);
-  --primary: var(--brand);
-  --primary-foreground: oklch(0.99 0.003 80);
-  --ring: oklch(0.66 0.15 264);
-
-  --secondary: oklch(0.27 0.008 80);
-  --secondary-foreground: oklch(0.96 0.005 80);
-  --muted: oklch(0.27 0.008 80);
-  --muted-foreground: oklch(0.73 0.011 80);
-  --accent: oklch(0.29 0.008 80);
-  --accent-foreground: oklch(0.96 0.005 80);
-  --shadow-small: 0 1px 2px oklch(0 0 0 / 0.40), 0 2px 8px oklch(0 0 0 / 0.32);
-  --shadow-large: 0 4px 12px oklch(0 0 0 / 0.50), 0 16px 40px oklch(0 0 0 / 0.45);
-  --scrim: oklch(0.10 0.01 80 / 0.62);
-  --border-strong: oklch(0.66 0.012 80);
-  --border-soft: oklch(0.40 0.010 80);
-  --border: var(--border-strong);
-  --input: oklch(0.64 0.012 80);
-
-  --family-people: oklch(0.70 0.12 200);
-  --family-people-tint: oklch(0.30 0.045 200);
-  --family-people-ink: oklch(0.82 0.11 200);
-  --family-companies: oklch(0.70 0.15 295);
-  --family-companies-tint: oklch(0.31 0.055 295);
-  --family-companies-ink: oklch(0.79 0.115 295);
-  --family-deals: oklch(0.76 0.13 55);
-  --family-deals-tint: oklch(0.31 0.045 55);
-  --family-deals-ink: oklch(0.83 0.11 55);
-  --family-engagement: oklch(0.70 0.17 335);
-  --family-engagement-tint: oklch(0.31 0.055 335);
-  --family-engagement-ink: oklch(0.73 0.14 335);
-  --family-work: oklch(0.74 0.13 120);
-  --family-work-tint: oklch(0.30 0.045 120);
-  --family-work-ink: oklch(0.81 0.14 120);
-  --family-agents: oklch(0.70 0.08 15);
-  --family-agents-tint: oklch(0.31 0.03 15);
-  --family-agents-ink: oklch(0.83 0.06 15);
-  --family-neutral: oklch(0.70 0.01 80);
-  --family-neutral-tint: oklch(0.29 0.008 80);
-  --family-neutral-ink: oklch(0.79 0.03 80);
-
-  --danger: oklch(0.66 0.19 27);
-  --danger-tint: oklch(0.31 0.065 27);
-  --danger-ink: oklch(0.76 0.14 27);
-  --warning: oklch(0.78 0.14 75);
-  --warning-tint: oklch(0.31 0.05 75);
-  --warning-ink: oklch(0.84 0.13 75);
-  --success: oklch(0.72 0.14 150);
-  --success-tint: oklch(0.30 0.05 150);
-  --success-ink: oklch(0.83 0.13 150);
-  --info: var(--brand);
-  --info-tint: var(--brand-tint);
-  --info-ink: var(--brand-ink);
-  --paused: oklch(0.70 0.035 250);
-  --paused-tint: oklch(0.30 0.025 250);
-  --paused-ink: oklch(0.79 0.055 250);
-
-  --destructive: var(--danger);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-surface-page: var(--surface-page);
-  --color-surface-raised: var(--surface-raised);
-  --color-surface-floating: var(--surface-floating);
-  --color-surface-overlay: var(--surface-overlay);
-  --color-surface-chrome: var(--surface-chrome);
-  --color-border-strong: var(--border-strong);
-  --color-border-soft: var(--border-soft);
-  --color-brand: var(--brand);
-  --color-brand-tint: var(--brand-tint);
-  --color-brand-ink: var(--brand-ink);
-  --color-danger: var(--danger);
-  --color-danger-tint: var(--danger-tint);
-  --color-danger-ink: var(--danger-ink);
-  --color-warning: var(--warning);
-  --color-warning-tint: var(--warning-tint);
-  --color-warning-ink: var(--warning-ink);
-  --color-success: var(--success);
-  --color-success-tint: var(--success-tint);
-  --color-success-ink: var(--success-ink);
-  --color-info: var(--info);
-  --color-info-tint: var(--info-tint);
-  --color-info-ink: var(--info-ink);
-  --color-paused: var(--paused);
-  --color-paused-tint: var(--paused-tint);
-  --color-paused-ink: var(--paused-ink);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
-/* One declared typeface. `local()` only — nothing is fetched at runtime, so a machine with Inter
-   installed gets Inter and every other machine gets the system stack below it. */
-@font-face {
-  font-family: "Inter local";
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: local("InterVariable"), local("Inter Variable"), local("Inter var"), local("Inter");
-}
-
-@theme {
-  --font-sans: "Inter local", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
 
 @layer base {
   * { @apply border-border; }
@@ -246,8 +17,8 @@
     font-family: var(--font-sans);
     /* The body size is the body step of the scale, so text nobody classed still lands on it rather
        than on the browser's 16 px (DESIGN.md §5: five sizes, and no others). */
-    font-size: 14px;
-    line-height: 20px;
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
     /* Numbers line up in every column without a page asking for it (DESIGN.md §5). */
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
@@ -257,8 +28,8 @@
      against the control as well as the page. An outline rather than a shadow, so it is never
      clipped by an overflow and so it survives Windows High Contrast. */
   :where(button, a, input, select, textarea, summary, [role="button"], [role="option"], [role="menuitem"], [tabindex]):focus-visible {
-    outline: 3px solid var(--ring);
-    outline-offset: 2px;
+    outline: var(--ring-width) solid var(--ring);
+    outline-offset: var(--ring-offset);
   }
 }
 
@@ -273,7 +44,7 @@
     left: 0;
     right: 0;
     top: 50%;
-    height: 44px;
+    height: var(--hit-phone);
     transform: translateY(-50%);
   }
 }
@@ -289,24 +60,10 @@
   .ollopa-done { animation: none; }
 }
 
-/* The return cue. Coming back along the trail, the row, door or field you left is lit for three
-   seconds, in the same two colours the lesson view uses for "where it is now" — one mark meaning
-   "this is the thing", wherever a person meets it. Under reduced motion the mark still appears; it
-   just does not fade. */
-:root {
-  --lesson-accent: oklch(0.52 0.14 250);
-  --lesson-accent-soft: oklch(0.94 0.035 250);
-}
-
-.dark {
-  --lesson-accent: oklch(0.76 0.12 250);
-  --lesson-accent-soft: oklch(0.33 0.07 255);
-}
-
 @keyframes ollopa-return-ring {
-  0% { box-shadow: 0 0 0 3px var(--lesson-accent); background-color: var(--lesson-accent-soft); }
-  60% { box-shadow: 0 0 0 3px var(--lesson-accent-soft); background-color: var(--lesson-accent-soft); }
-  100% { box-shadow: 0 0 0 0 transparent; background-color: transparent; }
+  0% { box-shadow: 0 0 0 var(--cue-ring) var(--lesson-accent); background-color: var(--lesson-accent-soft); }
+  60% { box-shadow: 0 0 0 var(--cue-ring) var(--lesson-accent-soft); background-color: var(--lesson-accent-soft); }
+  100% { box-shadow: none; background-color: transparent; }
 }
 
 @keyframes ollopa-return-fill {
@@ -335,7 +92,7 @@
     animation: none;
     background-color: var(--lesson-accent-soft);
   }
-  .ollopa-returned:not(tr) { box-shadow: 0 0 0 2px var(--lesson-accent-soft); }
+  .ollopa-returned:not(tr) { box-shadow: 0 0 0 var(--inset-hairline) var(--lesson-accent-soft); }
 }
 
 /* The row a pane is reading, marked on the page itself so the effect shows where it was caused.
@@ -349,22 +106,31 @@
    Five sizes and no others (DESIGN.md §5). Hierarchy comes from size and weight, never from more
    space, so the density does not change. */
 @layer components {
-  .t-title { font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.01em; }
-  .t-section { font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.005em; }
-  .t-body { font-size: 14px; line-height: 20px; font-weight: 400; }
-  .t-label { font-size: 13px; line-height: 18px; font-weight: 500; }
-  .t-small { font-size: 12px; line-height: 16px; font-weight: 400; }
+  .t-title { font-size: var(--text-title); line-height: var(--leading-title); font-weight: var(--weight-title); letter-spacing: -0.01em; }
+  .t-section { font-size: var(--text-section); line-height: var(--leading-section); font-weight: var(--weight-section); letter-spacing: -0.005em; }
+  .t-body { font-size: var(--text-body); line-height: var(--leading-body); font-weight: var(--weight-body); }
+  .t-label { font-size: var(--text-label); line-height: var(--leading-label); font-weight: var(--weight-label); }
+  .t-small { font-size: var(--text-small); line-height: var(--leading-small); font-weight: var(--weight-small); }
 }
 
 /* ---------------------------------------------------------------------------- the three depths
    The page, then raised (cards, panes, the row you are on), then overlay (dialogs, menus). Group
    with space first, then a border, then a tint; a shadow only at the overlay level, and in dark
    higher is lighter instead. */
-.surface-page { background-color: var(--surface-page); }
+/* One class per level. `src/theme/levels.ts` says which component is at which level; nothing picks
+   a class by hand (the `Surface` primitive does it). */
 .surface-chrome { background-color: var(--surface-chrome); }
-.surface-raised { background-color: var(--surface-raised); border-color: var(--border-strong); }
-.surface-floating { background-color: var(--surface-floating); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
-.surface-overlay { background-color: var(--surface-overlay); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
+.surface-0 { background-color: var(--surface-0); }
+.surface-1 { background-color: var(--surface-1); border-color: var(--border-strong); }
+.surface-2 { background-color: var(--surface-2); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
+.surface-3 { background-color: var(--surface-3); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
+.surface-4 { background-color: var(--surface-4); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
+
+/* The names the product used before levels, kept so the refactor could land in one piece. */
+.surface-page { background-color: var(--surface-0); }
+.surface-raised { background-color: var(--surface-1); border-color: var(--border-strong); }
+.surface-floating { background-color: var(--surface-2); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
+.surface-overlay { background-color: var(--surface-4); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
 
 /* Exactly two shadows exist and nothing else casts one. */
 .shadow-small { box-shadow: var(--shadow-small); }

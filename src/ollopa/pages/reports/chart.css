@@ -1,3 +1,4 @@
+/* The chart's own rules. Its four series colours are --viz-1…4 in src/theme/theme.css. */
 /* The one chart on a report, and the only colour on this page that is not ink.
  *
  * Four slots in a fixed order, never cycled: a fifth series folds into the table instead. The first
@@ -14,16 +15,10 @@
      The rest are a neutral ramp with 0.17 of lightness between steps, which is the gap that still
      reads as three different lines when they run together at the foot of the plot. */
   --viz-1: var(--brand-ink);
-  --viz-2: oklch(0.28 0.012 80);
-  --viz-3: oklch(0.45 0.010 80);
-  --viz-4: oklch(0.62 0.008 80);
 }
 
 .dark .ollopa-viz {
   /* The same 0.17 steps, started low enough that no neutral line outshines the accent one. */
-  --viz-2: oklch(0.86 0.008 80);
-  --viz-3: oklch(0.69 0.008 80);
-  --viz-4: oklch(0.52 0.010 80);
 }
 
 /* Print: the chart is ink on paper, and every door is already open by then. */

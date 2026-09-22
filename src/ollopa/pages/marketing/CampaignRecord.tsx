@@ -96,7 +96,7 @@ function Previews({ c }: { c: Campaign }) {
       </figure>
       <figure>
         <figcaption className="t-label pb-1 text-muted-foreground">Phone, 400 px</figcaption>
-        <div className="surface-raised t-small min-h-40 w-[200px] rounded-md border p-2">{body}</div>
+        <div className="surface-raised t-small min-h-40 w-[var(--menu-min-width)] rounded-md border p-2">{body}</div>
       </figure>
     </div>
   )

@@ -16,6 +16,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { surfaceClass } from "./Surface"
 import { Button } from "@/components/ui/button"
 import { href as hashHref, useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
@@ -338,7 +339,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
       aria-label={`${head.name}, beside ${pageTitle}`}
       style={{ width: open ? "min(100%, 28rem)" : 0 }}
       className={cn(
-        "surface-floating z-40 shrink-0 overflow-hidden border-l",
+        surfaceClass("pane", false) + " z-40 shrink-0 overflow-hidden border-l",
         "transition-[width] duration-200 ease-out motion-reduce:transition-none",
         "max-sm:absolute max-sm:inset-y-0 max-sm:right-0",
       )}
@@ -346,7 +347,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
       <div ref={panel} tabIndex={-1} className="flex h-full w-[min(100vw,28rem)] flex-col outline-none">
         {/* A thin bar in the object's family hue, so the pane says what it is holding before it is
             read (DESIGN.md §5). */}
-        <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(shown.kind).fill }} />
+        <div aria-hidden="true" className="h-[var(--bar-thin)] shrink-0" style={{ backgroundColor: familyOf(shown.kind).fill }} />
         <header className="shrink-0 border-b px-4 py-3">
           {parentHead && (
             <button

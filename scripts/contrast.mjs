@@ -1,6 +1,9 @@
 // Every colour pair in the product, measured against the floor it has to clear, plus a colour-vision
-// check on the eleven hues that carry meaning. Reads `src/index.css` directly, so it cannot drift
-// from what ships.
+// check on the eleven hues that carry meaning, plus a lint that keeps them all in one file.
+//
+// Reads `src/theme/theme.css` directly, so it cannot drift from what ships. The owner's rule is that
+// a visual change is a single-file edit, so the second half of this script fails when a value
+// escapes that file.
 //
 //   node scripts/contrast.mjs            every pair, both themes, and the colour-vision distances
 //   node scripts/contrast.mjs --quiet    only the failures and the summary
@@ -61,11 +64,11 @@ function tokensIn(css, selector) {
   return out
 }
 
-const css = readFileSync(new URL("../src/index.css", import.meta.url), "utf8")
+const css = readFileSync(new URL("../src/theme/theme.css", import.meta.url), "utf8")
 const THEMES = { light: tokensIn(css, ":root {"), dark: tokensIn(css, ".dark {") }
 
 /** The four levels plus the chrome, in the order they rise. DESIGN.md §5. */
-const LEVELS = ["surface-chrome", "surface-page", "surface-raised", "surface-floating", "surface-overlay"]
+const LEVELS = ["surface-chrome", "surface-0", "surface-1", "surface-2", "surface-3", "surface-4"]
 /** A tone step the eye can see: the floor the first version of the rule failed. */
 const STEP = { light: 0.03, dark: 0.05 }
 
@@ -90,7 +93,7 @@ function pairs(T) {
   for (const level of LEVELS) nontext(`strong border on ${level}`, T["border-strong"], T[level])
   for (const level of LEVELS) seen(`soft divider on ${level}`, T["border-soft"], T[level])
 
-  for (const surface of ["surface-page", "surface-raised", "surface-floating", "surface-overlay", "surface-chrome"]) {
+  for (const surface of ["surface-0", "surface-1", "surface-2", "surface-3", "surface-4", "surface-chrome"]) {
     text(`body text on ${surface}`, T.foreground, T[surface])
     text(`muted text on ${surface}`, T["muted-foreground"], T[surface])
     seen(`divider on ${surface}`, T.border, T[surface])
@@ -171,6 +174,9 @@ for (const [theme, T] of Object.entries(THEMES)) {
     const a = T[LEVELS[i]], b = T[LEVELS[i + 1]]
     if (!a || !b || a.alias || b.alias) { console.log(`  ?  ${LEVELS[i]} → ${LEVELS[i + 1]} — token missing`); failures++; continue }
     const step = Math.abs(oklab(b)[0] - oklab(a)[0])
+    // Levels 2 and 3 share a tone today and are told apart by their shadow; `levels.ts` says so and
+    // the memo may separate them. Every other pair of neighbours must step.
+    if (LEVELS[i] === "surface-2" && LEVELS[i + 1] === "surface-3") continue
     worstStep = Math.min(worstStep, step)
     const ok = step >= floor
     if (!ok) failures++
@@ -216,6 +222,62 @@ if (!quiet) {
     console.log(` ${theme}: ` + [...FAMILIES.map((f) => `${f} ${hex(T[`family-${f}-ink`])}`), ...STATUSES.map((s) => `${s} ${hex(T[`${s}-ink`])}`)].join(" · "))
   }
 }
+
+
+/* ----------------------------------------------------------- one file holds the visual values */
+
+// The owner's rule: a visual change is a single-file edit. So no file outside `src/theme` declares
+// a colour, a shadow, a radius or a raw pixel size. Tailwind's own scale utilities (`px-3`,
+// `rounded-md`, `gap-2`) are not values — they read the theme — so what is hunted here is a literal:
+// an oklch or hex colour, a shadow utility with a size in it, or an arbitrary `[…px]`.
+import { readdirSync, statSync } from "node:fs"
+import { join, relative } from "node:path"
+
+/** The mockups exist to show the version we are criticising; they keep the look they criticise. */
+const ALLOW = [
+  /\/pages\/[a-z]+\/parody\.tsx$/,
+  /\/pages\/agents\/Parody\.tsx$/,
+  /\/pages\/connect\/lesson\.tsx$/,
+  /\/learn\//,
+  /\/site\/Tokens\.tsx$/,
+]
+
+const RULES = [
+  { what: "an oklch colour", re: /oklch\(/g },
+  { what: "a hex colour", re: /#[0-9a-fA-F]{6}\b/g },
+  { what: "a sized shadow", re: /\bshadow-(xs|sm|md|lg|xl|2xl)\b/g },
+  { what: "a raw pixel size", re: /\[[-\d.]+px\]/g },
+  // A shadow whose geometry is written out is fine; a shadow that names its own colour is not.
+  { what: "a box-shadow with a colour in it", re: /box-shadow:[^;]*(?:oklch\(|#[0-9a-fA-F]{3,8}\b|rgba?\()/g },
+]
+
+function walk(dir, out = []) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name)
+    if (statSync(p).isDirectory()) walk(p, out)
+    else if (/\.(tsx?|css)$/.test(p)) out.push(p)
+  }
+  return out
+}
+
+const root = new URL("../src", import.meta.url).pathname
+let escaped = 0
+for (const file of walk(root)) {
+  const rel = relative(root, file)
+  if (rel.startsWith("theme/")) continue
+  if (ALLOW.some((re) => re.test("/" + rel))) continue
+  const text = readFileSync(file, "utf8")
+  for (const { what, re } of RULES) {
+    const hits = text.match(re)
+    if (!hits) continue
+    escaped += hits.length
+    failures++
+    console.log(`  ✗ ${rel}: ${hits.length} × ${what} — move it to src/theme/theme.css`)
+  }
+}
+console.log(escaped === 0
+  ? "\nevery visual value is in src/theme/theme.css"
+  : `\n${escaped} value(s) outside src/theme/theme.css`)
 
 console.log(failures === 0 ? "\nall pairs clear their floor and no two meanings collapse" : `\n${failures} failure(s)`)
 process.exit(failures === 0 ? 0 : 1)

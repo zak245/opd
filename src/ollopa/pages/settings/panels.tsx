@@ -28,7 +28,7 @@ import { toast } from "./state"
 
 export function Fields({ rows }: { rows: { label: string; value: ReactNode; note?: string }[] }) {
   return (
-    <dl className="surface-raised grid gap-3 rounded-[10px] border px-3 py-2.5">
+    <dl className="surface-raised grid gap-3 rounded-[var(--radius-container)] border px-3 py-2.5">
       {rows.map((r) => (
         <div key={r.label} className="grid gap-1 border-b pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-3">
           <dt className="t-label text-muted-foreground">{r.label}</dt>
@@ -284,7 +284,7 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
   return (
     <Panel id="x-removal" title="Removal list" {...p}
       footer={<Actions surface="dialog" items={[{ label: "Export as CSV", kind: "secondary", onClick: () => toast("Exported the removal list as CSV.") }]} />}>
-      <div className="surface-raised rounded-[10px] border p-3">
+      <div className="surface-raised rounded-[var(--radius-container)] border p-3">
         <p className="t-label flex items-center gap-2">
           Delete everywhere
           <Chip status="do not contact">Cannot be undone</Chip>

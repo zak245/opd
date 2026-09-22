@@ -246,7 +246,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           <legend className="t-section">What are you here to do first?</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {JOBS.map((j) => (
-              <label key={j.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border p-3", firstJob === j.id && "border-foreground")}>
+              <label key={j.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border p-3", firstJob === j.id && "border-foreground")}>
                 <input
                   type="radio"
                   name="firstJob"
@@ -263,7 +263,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           <legend className="t-section">How many people will use it?</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {SIZES.map((s) => (
-              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border px-3 py-2", people === s.id && "border-foreground")}>
+              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border px-3 py-2", people === s.id && "border-foreground")}>
                 <input type="radio" name="people" checked={people === s.id} onChange={() => { setPeople(s.id); save({ people: s.id }) }} />
                 {s.label}
               </label>
@@ -276,7 +276,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           <legend className="t-section">Which of these jobs exist here?</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {SEAT_JOBS.map((s) => (
-              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border p-3", seats.includes(s.id) && !everything && "border-foreground", everything && "opacity-60")}>
+              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border p-3", seats.includes(s.id) && !everything && "border-foreground", everything && "opacity-60")}>
                 <input
                   type="checkbox"
                   checked={seats.includes(s.id) && !everything}
@@ -288,14 +288,14 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                 {s.label}
               </label>
             ))}
-            <label className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border p-3 sm:col-span-2", everything && "border-foreground")}>
+            <label className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border p-3 sm:col-span-2", everything && "border-foreground")}>
               <input type="checkbox" checked={everything} onChange={() => { const v = !everything; setEverything(v); setSeats(v ? [] : seats); save({ everything: v, seats: v ? [] : seats }) }} />
               We all do everything
             </label>
           </div>
         </fieldset>
 
-        <section aria-live="polite" className="surface-raised mt-8 rounded-[10px] border p-4">
+        <section aria-live="polite" className="surface-raised mt-8 rounded-[var(--radius-container)] border p-4">
           <h2 className="t-section">
             {answered ? PROFILE_LABEL[profile] : "Answer the three questions and this will say what your team gets"}
             {!answered && (firstJob || people || seats.length) ? ` · ${PROFILE_LABEL[profile]} so far` : ""}
@@ -342,7 +342,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
                 />
                 <select
-                  className="surface-raised t-body rounded-[8px] border px-2"
+                  className="surface-raised t-body rounded-[var(--radius-control)] border px-2"
                   aria-label="Seat"
                   value={row.seat}
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: e.target.value as Role } : r)))}
