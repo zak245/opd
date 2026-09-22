@@ -72,6 +72,43 @@ The same act must look the same and sit in the same place everywhere, because th
 
 **Motion.** Hover and press change colour in about 100 ms. "Done · Undo" fades in over 150 ms where the act was caused. Nothing slides, scales or bounces on a control, and all of it stops under `prefers-reduced-motion`.
 
-## 5. What is still open
+## 5. Visual identity: colour, place, depth and type
+
+Agreed with the owner on 22 September 2026 from [memo 28](knowledge-base/sources/28-visual-identity-colour-and-wayfinding.md). The product was monochrome and two type sizes; every page looked alike and people navigated by reading. These rules give the eye something to recognise. Tokens live in `src/index.css`; the family registry in `src/ollopa/identity.ts`; the shell and the primitives apply them, so a page never picks a hue.
+
+**Colour has five jobs and nothing else may use colour.**
+
+1. *Structure.* Backgrounds, borders, body text: neutral, slightly warm, never pure grey. Most of every screen, on purpose.
+2. *The accent.* One hue, indigo, for "act here" and "you are here": the primary fill, the active sidebar item, links, the focus ring, informational status. Nothing else is indigo.
+3. *Object families.* Six, each a fixed icon plus a fixed hue, always together, the same everywhere the thing appears (sidebar, row, chip, pane top bar, crumb, empty state). Used small: an icon, a thin bar, a tinted chip. Never a large fill.
+
+   | Family | Holds | Icon | Hue (oklch) |
+   |---|---|---|---|
+   | People | person, list | Users | 200 teal |
+   | Companies | company, account | Building2 | 295 violet |
+   | Deals | deal | Columns3 | 55 ochre |
+   | Engagement | sequence, template, campaign, audience, form, workflow | Send | 335 magenta |
+   | Work | reply, task | Inbox | 120 olive |
+   | Agents | agent, agent run, approval | Bot | 15 terracotta, low chroma |
+
+   Settings, Reports and Home are neutral with their own icon.
+4. *Status.* Five, used only for state and never for decoration or for a family: danger (27, red), warning (75, amber), success (150, green), info (the accent), paused (neutral). A status is always a chip or a line with a word.
+5. *Nothing else.* Every colour passes the swap test: swap two and something must read wrong.
+
+**Colour never works alone.** A family always has its icon; a status always has its word. Text 4.5:1, icons and borders 3:1, checked with a colour-vision simulation before shipping.
+
+**You know where you are three ways at once.** The page title carries its family icon and hue. The active sidebar item is filled with the accent tint and a leading bar. The trail crumb carries the family icon of the page you left. A pane carries its object's icon and a thin top bar in its family hue.
+
+**Depth has three levels.** The page; raised (cards, panes, the row you are on); overlay (dialogs, menus). Group with space first, then a border, then a tint; shadow only on the overlay level. In dark, higher is lighter.
+
+**Type has five sizes and uses them.** Title 24, section and record title 18, body 14, label 13, small 12; one declared typeface (Inter, system fallback); tabular numbers in columns; hierarchy from size and weight, not from more space. Density unchanged.
+
+**Icons are one set, one size per place.** Family icons are never reused. 16 px in rows and chips, 20 px in headers. Every icon has a label except the menu trigger, close, previous and next.
+
+**Both themes derive from one set of role tokens.** A family and a status look like themselves in both; the person picks the theme.
+
+**Order of application.** Tokens, the family registry and the shared pieces first; then Home, People with a pane open, and a deal record in both themes for the owner to see; then every page.
+
+## 6. What is still open
 
 Where the sources disagree and we have not needed to choose: dialog button order beyond the affirmative at the trailing edge; whether a low-severity destructive act (remove from a list) needs the destructive colour at all. Decided if and when a screen forces it.
