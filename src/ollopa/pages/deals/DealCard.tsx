@@ -308,7 +308,7 @@ export function DealCard(p: DealCardProps) {
       )}
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 t-small text-muted-foreground">
-        {flags.forecast && <Chip status="none">{deal.forecast}</Chip>}
+        {flags.forecast && <Chip>{deal.forecast}</Chip>}
         {flags.touch && (
           <span>
             Last touch {daysBetween(deal.lastActivity)}d · last reply{" "}

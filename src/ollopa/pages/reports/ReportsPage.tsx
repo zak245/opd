@@ -10,6 +10,8 @@
 // inside a report. What goes where is asked of the usage model for this seat at this business, never
 // hard-coded: an item whose weekly number is zero is not part of this seat's job here and is removed,
 // not greyed.
+import { familyOf, iconOf } from "../../identity"
+const ReportsIcon = iconOf("reports")
 import { useEffect, useMemo, useState } from "react"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -319,6 +321,10 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
   return (
     <div className="flex h-full flex-col">
       <div className="space-y-4 px-6 py-5">
+        <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("reports").ink }}>
+          <ReportsIcon className="size-5" aria-hidden="true" />
+          Reports
+        </h2>
 
         {/* The control bar. The fee statement sits on it beside Export, not inside the menu that
             confirms the decision: a charge disclosed only in the control that confirms it is the

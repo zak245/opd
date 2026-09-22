@@ -1,11 +1,69 @@
 # Stage 3 review: the chains
 
-Round 9 is the current review — the visual pass over every page of the map. Rounds 8 through 1 are
+Round 10 is the current review — the short confirmation of the visual pass. Rounds 9 through 1 are
 kept below, in order.
 
 ---
 
-# Round 9 — the visual pass
+# Round 10 — the short visual confirmation
+
+Home, the Deals board, Inbox, Reports, the connect wizard and Settings, in both themes, against my
+own `npx vite preview --port 4180`. Screenshots in `shots/chains/review10/light/` and `…/dark/`.
+
+`node scripts/contrast.mjs` — **passes, exit 0**: *"all pairs clear their floor and no two meanings
+collapse."* The line that matters for round 9's second finding is in its ink table: **paused is no
+longer the neutral family's colour.** It was `#504635` light / `#c5b9a5` dark, identical to neutral;
+it is now `#42576e` / `#a0bedd`, a cool neutral of its own. The swap test bites where it did not.
+
+## The five
+
+| # | Finding | Status | What I saw |
+|---|---|---|---|
+| 1 | The Deals board has no page title | **Fixed** | `H2 24px "Deals · Mine · closing this quarter"`, ink `family:deals-ink`, glyph `lucide-columns3`, in both themes. The page announces itself before you read it. |
+| 2 | Non-states painted as states | **Partly** | Two of three parts done. Reply outcomes are now bordered neutral chips — Inbox's "Interested" paints `border:n:border`, not a status. And paused has its own cool tint, so it no longer collapses into the neutral family. **But the Deals board's forecast categories are still statuses**: "Pipeline", "Best case", "Commit" and "Omitted" all paint `status:paused-tint` with `status:paused-ink`. A forecast category is not a state, and paused now says something specific — stopped on purpose — which is wrong for all four. |
+| 3 | The Reports chart is four grey dashes | **Partly** | The lead series is now the indigo accent with round markers and a heavier width, and it separates cleanly from the rest in both themes. The legend distinguishes all four. **In the plot, Calls, Meetings and Tasks still overlap into one band** — at 442, 458 and 485 against 1,328 they sit within a few pixels, and a lightness ramp cannot separate three neutral lines at that spacing. `dark/reports-1440.png`. |
+| 4 | Light had two surface levels; shadow on controls | **Fixed** | `--surface-page 0.960`, `--surface-raised 0.982`, `--surface-overlay 1.0` — three measured steps, with dark unchanged at 0.165 / 0.215 / 0.265. And shadow has left the controls: the whole Deals board paints **one** shadowed element, a `div`, where Home alone used to paint 29 across buttons and divs. |
+| 5 | The connect wizard wore Home's glyph; nine type sizes | **Fixed** | The wizard's shell icon is now `lucide-plug`. And exactly five sizes are painted, on every one of the six pages: Home 12/13/14/18/24, Deals 12/13/14/24, Inbox 12/13/14/18/24, Reports 12/14/24, connect 12/13/14/18, Settings 12/13/14/18. No 10 px, no 11, no 16, no 20 — the strays round 9 counted are gone. |
+
+## The swap test, on every chip on these six pages
+
+77 chips on Home, 31 on the board, 24 on Inbox, 12 on Reports, 13 in the wizard; **none wordless**
+in either theme. Grouped by what paints them:
+
+- `status:info-tint` — only the lit sidebar item and the wizard's "You are here". Swap it for
+  warning and the product would be shouting about where you are.
+- `status:warning-tint` — only the NEEDS YOU NOW band.
+- `status:danger-tint` — only "overdue", "Overdue (5)", "Overdue · 6d".
+- `status:success-tint` — only "Done" on a finished wizard step.
+- `family:work-tint` — only the task kinds, "LinkedIn", "Email", "Call". Swap it for deals ochre and
+  a task would claim to be a deal.
+- `border:n:border` — counts, filters, keycaps, "Interested", "1.84M credits · 410k/wk". Swap any of
+  these for a status tint and the product would be asserting a state it does not have.
+
+Every group survives the test except one: **`status:paused-tint` on "Pipeline", "Best case",
+"Commit" and "Omitted"**. Swap those for the bordered neutral the Inbox now uses for its outcomes
+and nothing reads wrong — which is the definition of a colour that means nothing.
+
+## New this round
+
+Nothing new. One thing carried: **Reports still has no page title.** Round 9's first finding named
+the board and Reports; the board was fixed, Reports was not. Its name appears only in the 14 px
+shell strip, and the largest heading on the page is an H3 at 14 px — the four 24 px items are the
+stat-tile numbers. Of the three ways to know where you are, Reports has the sidebar and the strip.
+
+## The owner's complaint
+
+**Answered.** The product is not monochrome and the pages do not look alike. Six families carry
+fixed glyphs and inks that hold in both themes and survive a colour-vision simulation; five statuses
+each carry a word; three surface steps now exist in light as well as dark; the type scale is five
+sizes and is used; and every page I walked except Reports opens with a titled heading in its family
+colour. Home, the board and Inbox are recognisable at a glance and by different means — a card
+stack, a kanban, a list with a reading pane. Two things keep it from being finished: the forecast
+chips still borrow a status, and Reports still opens without a name on it.
+
+---
+
+# Round 9 — the visual pass (superseded)
 
 I read `DESIGN.md` §5 and `src/ollopa/identity.ts`, then walked every page of the map as a seat that
 holds it, at 1440 and 400, in light and dark: 76 screenshots under `shots/chains/review9/light/`
