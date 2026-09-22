@@ -1,11 +1,122 @@
 # Stage 3 review: the chains
 
-Round 11 is the current review — the shadcn pass over every page. Rounds 10 through 1 are kept
+Round 12 is the current review — the confirmation of the shadcn pass. Rounds 11 through 1 are kept
 below, in order.
 
 ---
 
-# Round 11 — is this the library's look?
+# Round 12 — the library's look, confirmed
+
+Same walk as round 11: all 21 pages as a seat that holds each, 1440 and 400, light and dark, on my
+own `npx vite preview --port 4180` with the dev server on 4181. **84 screenshots** under
+`shots/chains/review12/`, the same `scripts/review-shadcn.mjs` probe, the same A–F questions.
+
+**Consoles: silent.** All 84 page loads and all six chain runs: no warning, no error, no failed
+request.
+
+## A — the hand-drawn total
+
+**1,128 → 234 instances across the walk, and only 30 of those are a page's doing.**
+
+| What | Instances | Whose |
+|---|---|---|
+| `a.rounded-md.bg-foreground` "Skip to content" | 80 (one a page) | shell · off-screen until focused |
+| `div.rounded-md.bg-foreground.shadow-lg` | 84 (one a page) | shell · the live region, `role="status" aria-live="polite"`, `opacity-0`, invisible until it speaks. There is no toast component in this repo's set. |
+| `nav.bg-background.border-t` | 40 (400 only) | shell · the phone bottom bar |
+| **`span.rounded-full.border` "1" "2" "3"** | 12 | **sequence record** · the step numbers, hand-drawn circles |
+| **`div.rounded-lg.border`** | 8 | **deal record** "Evidence and source quotes", **contact record** "Enrichment data and sources" — a door's body drawn as a bordered box |
+| **`div.border-t.bg-background`** | 4 | **deal and contact record at 400** · the pinned phone action bar |
+| **`div.bg-card.rounded-lg.border`** | 4 | **deal record** · the "No open tasks" empty state |
+| **`button.rounded-md.border`** | 2 | **connect wizard at 400** · the step header button |
+
+Every one of round 11's six idioms is gone: **zero `span.rounded-md`** where 128 stood, zero
+`border-t.first:border-t-0` dividers where 56 stood, zero `bg-muted` full-bleed strips where 32
+stood, zero hand-drawn buttons in the pages, zero `p.rounded-md` tinted blocks, and **zero
+`border-l` on the library's `Table`** — the override §4 forbids by name is removed.
+
+Per page, at 1440 light: nineteen of twenty-one pages are at **2**, both of them the shell's pair.
+The three that are not: sequence record 5, deal record 4, contact record 3.
+
+## B — the chrome above the content
+
+**Every page is now two bands or fewer.** Home was three; its strip of pills has moved inside the
+Alert as outline `Badge`s, so the band count is right. The pixels went the other way: Home's chrome
+is **216 px**, up from 200, because the Alert now carries four lines. Requests, Reports, Agents,
+Settings and the connect wizard sit at 190–194 px with a 90 px Alert; the index pages at 159–169 px;
+Campaigns, Accounts and Workflows at 72–76 px with no Alert at all.
+
+## C — containment
+
+Every table on every page is inside a `Card`; none outside, at either width, in either theme.
+
+One `Card` now nests, on the **Deals board**: a deal card inside a column card. That is the allowed
+case — §4's "a card per thing only where each thing is read on its own" — and the column became a
+`Card` in this pass, which is what produced the nesting. I name it so nobody reads the probe's
+"nested: 1" as a regression.
+
+Two sections still sit outside a Card and they are the same two boxes as in A: the deal record's
+"Evidence and source quotes" and the contact record's "Enrichment data and sources".
+
+## D — dark
+
+Unchanged and good. Five type sizes on every page (12/13/14/18/24), the library's own card, border
+and muted tokens carrying the hierarchy, our six family inks and five statuses at their contrast
+floors. Agents in dark is the page that gained most: the amber block that used to run square-cornered
+to the card's edges is now a real `Alert` inside the card with its own radius and its own spacing.
+
+## E — overflow, context loss, disruption
+
+**Agents is fixed.** Its top card is now a sentence, a shadcn `Progress` bar, a destructive `Alert`
+titled "2 exceptions" holding both messages and their four controls, a `Separator`, and the settings
+line. The three agent cards below are Cards with Separators. Nothing runs full-bleed, nothing is
+square inside something round.
+
+**One thing did not go away, it moved.** Home's status strip is now inside the "Needs you now"
+`Alert`, as three outline Badges under the two red messages. So a destructive Alert is carrying
+*"An agent paused outreach in 6 places"*, *"Credits on track"* and *"Sending healthy · bounce 1.9%"*
+in the same red-bordered box as *"Bounce rate 4.3%"* and a required-field change. Two of those three
+are the product telling you nothing is wrong, inside the box that exists to say something is. The
+band count is right and the register is not.
+
+Nothing else reads as overflow, context loss or disruption on any page I walked.
+
+## F — console
+
+Nothing, anywhere, on either build.
+
+## Page by page
+
+| Page | A | B | C | D | E | F |
+|---|---|---|---|---|---|---|
+| Home | 2 ✓ shell only | 2 / 216 px ✓ | ✓ 4 cards | ✓ | ! the Alert mixes alarm and reassurance | ✓ |
+| People · Companies · Lists · Sequences · Templates | 2 ✓ | 2 / 162–169 px ✓ | ✓ table in a card | ✓ | ✓ | ✓ |
+| Sequence record | **5** ? | 2 / 184 px ✓ | ✓ 5 cards | ✓ | ✓ | ✓ |
+| Inbox · Tasks | 2 ✓ | 2 / 159 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Deals board | 2 ✓ | 2 / 159 px ✓ | ? card-in-card, the allowed case | ✓ | ✓ | ✓ |
+| Deal record | **4** ? | 2 / 187 px ✓ | ? one section outside a card | ✓ | ✓ | ✓ |
+| Contact record | **3** ? | 2 / 187 px ✓ | ? one section outside a card | ✓ | ✓ | ✓ |
+| Campaigns · Accounts · Workflows | 2 ✓ | 1 / 72–76 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Requests · Reports · Settings | 2 ✓ | 2 / 190 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Agents | 2 ✓ | 2 / 194 px ✓ | ✓ 6 cards | ✓ | ✓ **fixed** | ✓ |
+| Connect wizard | 2 ✓ (4 at 400) | 2 / 194 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Workspace set-up | 1 ✓ | outside the shell ✓ | ✓ 6 cards | ✓ | ✓ | ✓ |
+
+## The chains
+
+| Chain | Chain card | Disclosure card |
+|---|---|---|
+| 1 · Sequence › person | **18**/18 | **17**/18 |
+| 3 · Company › person | **18**/18 | **17**/18 |
+| 7 · Inbox, Tasks, Home | **18**/18 | **17**/18 |
+
+Walkers read 1 of 34, 1 of 24, 1 of 4 and 14 → 13; the pane action still lands on the row with its
+Undo; arrival still focuses the lit `h1`; the crumb still returns to the lit row. The one A-failure
+from round 9 is unchanged: at 400 the contact record's header collapses and "Move sequence" and
+"Add a note" become two filled controls on one surface.
+
+---
+
+# Round 11 — is this the library's look? (superseded)
 
 I read the rewritten `DESIGN.md` §4, then walked all 21 pages of the map as a seat that holds each,
 at 1440 and 400, in light and dark: **84 screenshots** under `shots/chains/review11/light/` and
