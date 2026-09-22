@@ -21,6 +21,7 @@ import { useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
+import { Separator } from "@/components/ui/separator"
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
@@ -415,8 +416,10 @@ export function Actions({ items, layout, surface = "page", menuLabel, className 
         {doing.map((a) => <One key={a.label} action={a} surface={surface} layout={how} onIrreversible={irreversible} />)}
         {/* The gap. A destructive act is never next to a benign one (memo 26, part B). */}
         {ending.length > 0 && (
-          <div className={cn(how === "stack" ? "mt-2 w-full border-t pt-3" : "ml-4 border-l pl-4")}>
-            <div className={cn(how === "stack" ? "flex flex-col items-start gap-3" : "flex flex-wrap items-start gap-2")}>
+          <div className={cn(how === "stack" ? "mt-2 flex w-full flex-col gap-3" : "ml-2 flex items-stretch gap-2")}>
+            {/* The gap is drawn by the library's rule, never by a border of our own. */}
+            <Separator orientation={how === "stack" ? "horizontal" : "vertical"} className={how === "stack" ? undefined : "data-[orientation=vertical]:h-auto"} />
+            <div className={cn(how === "stack" ? "flex flex-col items-start gap-3" : "flex flex-wrap items-start gap-2 pl-2")}>
               {ending.map((a) => <One key={a.label} action={a} surface={surface} layout={how} onIrreversible={irreversible} />)}
             </div>
           </div>

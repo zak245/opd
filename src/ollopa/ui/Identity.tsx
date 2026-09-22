@@ -6,6 +6,7 @@
 // word, so neither leans on colour alone.
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { familyOf, iconOf, statusOf, STATUSES, type Status } from "../identity"
 
 /** 16 px in a row or a chip, 20 px in a header (DESIGN.md §5). */
@@ -61,40 +62,28 @@ export function Chip({ family, status, children, icon = true, className }: {
       // category chip — a border and the word — because a status colour on a thing that is not a
       // status is decoration, and §5 has no room for that.
       warnCategory(status)
-      return (
-        <span className={cn("t-small inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium text-muted-foreground", className)}>
-          {word}
-        </span>
-      )
+      return <Badge variant="outline" className={cn("text-muted-foreground", className)}>{word}</Badge>
     }
     const look = STATUSES[id]
+    // The shape, padding, radius and type are Badge's. Only the two colours are ours, and they are
+    // the five statuses from `identity.ts` — the one thing the library has no word for.
     return (
-      <span
-        className={cn("t-small inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium", className)}
-        style={{ backgroundColor: look.tint, color: look.ink }}
-      >
+      <Badge variant="ghost" data-tone={id} className={className} style={{ backgroundColor: look.tint, color: look.ink }}>
         {word}
-      </span>
+      </Badge>
     )
   }
   if (!family) {
     // Neither a state nor a family: a category. A border and the word, and no colour that would
     // mean something it does not (DESIGN.md §5).
-    return (
-      <span className={cn("t-small inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium text-muted-foreground", className)}>
-        {word}
-      </span>
-    )
+    return <Badge variant="outline" className={cn("text-muted-foreground", className)}>{word}</Badge>
   }
   const look = familyOf(family)
   return (
-    <span
-      className={cn("t-small inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium", className)}
-      style={{ backgroundColor: look.tint, color: look.ink }}
-    >
+    <Badge variant="ghost" data-family={family} className={className} style={{ backgroundColor: look.tint, color: look.ink }}>
       {icon && <FamilyIcon of={family} tone="current" className="size-3" />}
       {word ?? look.name}
-    </span>
+    </Badge>
   )
 }
 
@@ -129,15 +118,14 @@ export function StatusLine({ status, word, children, className, role = "status" 
   className?: string
   role?: "status" | "alert"
 }) {
-  const look = STATUSES[statusOf(status) ?? "paused"]
+  const id = statusOf(status) ?? "paused"
+  const look = STATUSES[id]
   const lead = word ?? status
+  // A Badge and a sentence, not a tinted block: the state word carries the colour and the text is
+  // read on the page's own surface.
   return (
-    <p
-      role={role}
-      className={cn("t-body flex flex-wrap items-center gap-2 rounded-md px-3 py-2", className)}
-      style={{ backgroundColor: look.tint, color: look.ink }}
-    >
-      <span className="font-medium">{lead}</span>
+    <p role={role} className={cn("t-body flex flex-wrap items-center gap-2", className)}>
+      <Badge variant="ghost" data-tone={id} style={{ backgroundColor: look.tint, color: look.ink }}>{lead}</Badge>
       <span className="min-w-0 flex-1">{children}</span>
     </p>
   )

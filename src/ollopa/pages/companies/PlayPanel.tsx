@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import { TODAY } from "../../data/seed"
@@ -111,7 +112,8 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
           <Input id="play-recheck" type="date" className="mt-1" value={recheck} onChange={(e) => setRecheck(e.target.value)} />
         </div>
 
-        <div className="border-t pt-2">
+        <Separator />
+        <div>
           <div className="t-label">The agent's draft note <span className="font-normal text-muted-foreground">· draft, logged, not sent</span></div>
           <p className="mt-1 t-small text-muted-foreground">
             {play.kind === "expansion"

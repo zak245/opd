@@ -19,6 +19,10 @@ import { FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
@@ -28,7 +32,6 @@ import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { Actions } from "../../ui/Actions"
-import { Group } from "../../ui/Section"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -989,15 +992,18 @@ export function PeoplePage({ session }: { session: Session }) {
           {/* The selection band: a group inside the container, never a second box. */}
           {rStable ? (
             count > 0 && (
-              <Group
-                className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b px-4 py-2"
-                data-container="people.bulk.bar"
-                data-container-label="the selection bar"
-                data-print-hide
-              >
-                {selectionControls}
-                <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
-              </Group>
+              <>
+                <div
+                  className="flex flex-wrap items-center gap-2 px-4 pb-2"
+                  data-container="people.bulk.bar"
+                  data-container-label="the selection bar"
+                  data-print-hide
+                >
+                  {selectionControls}
+                  <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
+                </div>
+                <Separator />
+              </>
             )
           ) : (
             /* Before rule 6 the strip is simply always there, selection or no selection. */
@@ -1005,9 +1011,10 @@ export function PeoplePage({ session }: { session: Session }) {
           )}
 
           {/* Phone: the same items as cards, no level change. */}
-          <ul className="divide-y md:hidden">
+          <ul className="md:hidden">
             {page.map((p, i) => (
               <li key={p.id} className="px-4 py-3" data-item={p.id} data-item-label={p.name}>
+                {i > 0 && <Separator className="-mx-4 mb-3 w-auto" />}
                 <div className="flex items-start gap-2">
                   {selectMode && (
                     <input
@@ -1046,35 +1053,35 @@ export function PeoplePage({ session }: { session: Session }) {
             ))}
           </ul>
 
-          <table className="hidden w-full caption-bottom text-sm md:table">
-            <thead className="bg-muted sticky top-0 z-10">
-              <tr className="border-b">
-                <th scope="col" className="w-8 px-3">
-                  <input
-                    type="checkbox"
+          {/* The library's table, as it ships: its own header, its own row hover, its own dividers.
+              Nothing is added to its internals — no vertical rules, no tinted head. */}
+          <Table className="hidden md:table">
+            <TableHeader className="bg-card sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="w-8 px-3">
+                  <Checkbox
                     aria-label={`Select the ${page.length} people on this page`}
                     checked={page.length > 0 && page.every((p) => selected.includes(p.id))}
-                    onChange={(e) => setSelected(e.target.checked ? page.map((p) => p.id) : [])}
+                    onCheckedChange={(v) => setSelected(v === true ? page.map((p) => p.id) : [])}
                   />
-                </th>
+                </TableHead>
                 {shownColumns.map((c) => (
-                  <th
+                  <TableHead
                     key={c.id}
-                    scope="col"
                     data-item={c.id}
                     data-item-label={c.header}
                     aria-sort={sort?.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
-                    className={cn("h-9 px-2 text-left align-middle text-xs font-medium text-muted-foreground", c.className)}
+                    className={cn("px-2", c.className)}
                   >
                     {sortHeader(c)}
-                  </th>
+                  </TableHead>
                 ))}
-                <th scope="col" className="sticky right-0 w-px border-l px-2 [background-color:var(--muted)]"><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
+                <TableHead className="bg-card sticky right-0 w-px px-2"><span className="sr-only">Actions</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {page.map((p, i) => (
-                <tr
+                <TableRow
                   key={p.id}
                   ref={(el) => { rowRefs.current[i] = el }}
                   data-row={i}
@@ -1087,25 +1094,21 @@ export function PeoplePage({ session }: { session: Session }) {
                   onFocus={() => setFocused(i)}
                   onKeyDown={(e) => onRowKey(e, p, i)}
                   onClick={(e) => { if ((e.target as HTMLElement).closest("a,button,input,[role=menuitem]")) return; rowRefs.current[i]?.focus(); setGlancing(p) }}
-                  /* The row you are on — hovered, focused, or selected — is the container-low
-                     region inside the table's container (DESIGN.md §5, the level map's `rowOn`). */
-                  className={cn(
-                    "group cursor-pointer border-b focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
-                    "hover:[background-color:var(--muted)] focus-visible:[background-color:var(--muted)]",
-                    selected.includes(p.id) && "[background-color:var(--muted)]",
-                  )}
+                  /* The row you are on is the library's own hover and its own selected state; the
+                     page adds no background of its own. */
+                  data-state={selected.includes(p.id) || allMatching ? "selected" : undefined}
+                  className="group cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                 >
-                  <td className={cn("px-3", pad)}>
-                    <input
-                      type="checkbox"
+                  <TableCell className={cn("px-3", pad)}>
+                    <Checkbox
                       aria-label={`Select ${p.name}`}
                       checked={selected.includes(p.id) || allMatching}
-                      onChange={() => toggleRow(p, i, false)}
+                      onCheckedChange={() => toggleRow(p, i, false)}
                       onClick={(e) => { e.stopPropagation(); if (e.shiftKey) toggleRow(p, i, true) }}
                     />
-                  </td>
+                  </TableCell>
                   {shownColumns.map((c) => (
-                    <td key={c.id} className={cn("px-2 align-middle", pad, c.className)}>
+                    <TableCell key={c.id} className={cn("px-2 align-middle", pad, c.className)}>
                       <div className={c.width}>
                       {c.key === "name" ? (
                         <span className="flex min-w-0 items-center gap-2">
@@ -1138,14 +1141,16 @@ export function PeoplePage({ session }: { session: Session }) {
                           ) : <span className="text-muted-foreground">No phone</span>
                       ) : c.cell(p)}
                       </div>
-                    </td>
+                    </TableCell>
                   ))}
                   {/* The menu is always in the row; the named buttons come forward on hover and on
                       keyboard focus, over the row rather than taking a column's width from it. */}
-                  <td className={cn("sticky right-0 w-10 border-l px-2 [background-color:var(--card)] group-hover:[background-color:var(--muted)]", pad)} onClick={(e) => e.stopPropagation()}>
-                    <div className="relative flex items-center justify-end">
+                  {/* The named buttons come forward on hover and on keyboard focus. They sit in the
+                      row's own cell, with no box of their own: the row's hover is the library's. */}
+                  <TableCell className={cn("px-2 text-right", pad)} onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
                       <div
-                        className="bg-popover absolute right-7 flex items-center gap-1 rounded-md border opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                        className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
                         data-container="people.row.actions"
                         data-container-label="the row's buttons"
                       >
@@ -1157,15 +1162,16 @@ export function PeoplePage({ session }: { session: Session }) {
                       </div>
                       <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
 
           {sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}
           </CardContent>
-          <CardFooter className="border-t">
+          <Separator />
+          <CardFooter className="pt-3">
             {sorted.length > shown && (
               <Button variant="outline" size="sm" onClick={() => setShown((n) => n + pageSize)}>
                 Show {Math.min(pageSize, sorted.length - shown)} more
@@ -1186,19 +1192,23 @@ export function PeoplePage({ session }: { session: Session }) {
       </div>
 
       {pending && (
-        <div role="status" aria-live="assertive" className="flex items-center gap-3 border-t bg-card px-4 py-2 text-sm lg:px-6" data-print-hide>
-          <span className="min-w-0 flex-1">{pending.text}</span>
-          <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { pending.run(); setPending(null) }}>Spend</Button>
-          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setPending(null)}>Cancel</Button>
-        </div>
+        <Alert role="status" aria-live="assertive" className="mx-4 mb-4 w-auto lg:mx-6" data-print-hide>
+          <AlertDescription className="flex-row flex-wrap items-center gap-3">
+            <span className="min-w-0 flex-1">{pending.text}</span>
+            <Button size="sm" onClick={() => { pending.run(); setPending(null) }}>Spend</Button>
+            <Button size="sm" variant="ghost" onClick={() => setPending(null)}>Cancel</Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Undo, for ten seconds, on anything undoable. ⌘Z does the same. */}
       {undo && (
-        <div role="status" aria-live="polite" className="flex items-center gap-3 border-t bg-card px-4 py-2 text-sm lg:px-6" data-print-hide>
-          <span className="min-w-0 flex-1">{undo.text}</span>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { undo.run(); setUndo(null) }}>Undo</Button>
-        </div>
+        <Alert role="status" aria-live="polite" className="mx-4 mb-4 w-auto lg:mx-6" data-print-hide>
+          <AlertDescription className="flex-row flex-wrap items-center gap-3">
+            <span className="min-w-0 flex-1">{undo.text}</span>
+            <Button size="sm" variant="outline" onClick={() => { undo.run(); setUndo(null) }}>Undo</Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {glancing && (
@@ -1424,7 +1434,8 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction, onPage = tru
         <Input aria-label="Search views" placeholder="Search views" className="h-8" value={q} onChange={(e) => setQ(e.target.value)} />
         {group("Mine", mine)}
         {group("Shared with everyone", shared)}
-        <div className="mt-3 border-t pt-3">
+        <Separator className="mt-3" />
+        <div className="pt-3">
           <label htmlFor="save-view" className="text-xs text-muted-foreground">Save the filters you are looking at</label>
           <div className="mt-1 flex gap-1.5">
             <Input id="save-view" className="h-8" placeholder="Name this view" value={name} onChange={(e) => setName(e.target.value)} />
@@ -1432,7 +1443,9 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction, onPage = tru
           </div>
         </div>
         {current && (
-          <div className="mt-3 border-t pt-3">
+          <>
+            <Separator className="mt-3" />
+            <div className="pt-3">
             <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{current.name}</h4>
             <div className="flex flex-wrap gap-1">
               {[...(onPage ? ["Set as my default"] : []), "Rename", "Share with everyone", "Email me daily", "Email me weekly", "Copy a link", "Delete"].map((what) => (
@@ -1446,7 +1459,8 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction, onPage = tru
                 Your default view is set in <a className="underline" href={href("/ollopa/settings")}>Settings › Users and teams › Sharing and defaults</a>.
               </p>
             )}
-          </div>
+            </div>
+          </>
         )}
       </PopoverContent>
     </Popover>
@@ -1503,7 +1517,7 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
                   className="flex min-w-0 flex-1 items-center gap-2 rounded px-1.5 py-1 text-left text-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   onClick={() => onChange(on ? shownIds.filter((x) => x !== c.id) : [...shownIds, c.id])}
                 >
-                  <span aria-hidden="true" className={cn("size-3.5 shrink-0 rounded-sm border", on && "border-foreground bg-foreground")} />
+                  <Checkbox checked={on} aria-hidden="true" tabIndex={-1} className="pointer-events-none" />
                   <span className="min-w-0 truncate">{c.header}</span>
                 </button>
                 {on && (
@@ -1516,7 +1530,8 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
             )
           })}
         </ul>
-        <div className="mt-3 space-y-2 border-t pt-3">
+        <Separator className="mt-3" />
+        <div className="space-y-2 pt-3">
           <Button size="sm" variant="outline" onClick={onReset}>Reset to the {roleLabel} default</Button>
           <div className="flex flex-wrap items-center gap-2" data-item="people.density" data-item-label="Density">
             <span className="text-xs text-muted-foreground">Density</span>

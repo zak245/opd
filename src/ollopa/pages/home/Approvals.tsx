@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Chip } from "../../ui/Identity"
 import { Button } from "@/components/ui/button"
 import { href } from "@/app/router"
+import { Separator } from "@/components/ui/separator"
 import { openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
 import { clearEdit, useEdits } from "../../edits"
@@ -61,7 +62,7 @@ function ItemBody({ e, inPanel }: { e: AgentEvent; inPanel?: boolean }) {
           ))}
         </p>
         {e.draft
-          ? <p className="whitespace-pre-wrap rounded-md bg-card p-2 text-xs">{e.draft}</p>
+          ? <p className="whitespace-pre-wrap t-small text-muted-foreground">{e.draft}</p>
           : <p className="text-xs text-muted-foreground">{e.detail}</p>}
         {e.sourceQuote && <p className="pt-1 text-xs text-muted-foreground">{e.sourceQuote}</p>}
       </Door>
@@ -233,7 +234,7 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
       <UndoLine note={note} onDone={clearNote} />
 
       {showResearch && (
-        <p className="mb-2 rounded-md border px-3 py-2 text-sm">
+        <p className="mb-2 t-body">
           <span className="font-medium">Research agent</span>
           <span className="text-muted-foreground"> · {plural(data.approvals.researchCompanies, "company", "companies")} overnight</span>
           {data.approvals.strongest.length > 0 && (

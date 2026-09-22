@@ -8,11 +8,13 @@
 // The one way out is the "Open in People" link in the section's heading, and it exists for one job:
 // acting on the whole set at once. It carries this company as the filter and puts the record on the
 // trail, so the way back is one crumb and lands on the row that was left.
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { openBeside, useBeside } from "../../beside"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Actions } from "../../ui/Actions"
 import { FamilyIcon } from "../../ui/Identity"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
@@ -41,9 +43,9 @@ function useRenderCount() {
 function RenderCount({ label, count }: { label: string; count: number }) {
   if (!import.meta.env.DEV) return null
   return (
-    <span data-renders={label} className="shrink-0 rounded border px-1.5 py-0.5 font-mono t-small tabular-nums text-muted-foreground">
+    <Badge variant="outline" data-renders={label} className="shrink-0 font-mono tabular-nums">
       {label} renders: {count}
-    </span>
+    </Badge>
   )
 }
 
@@ -154,8 +156,9 @@ export function CompanyContactsToolbar({ companyId, contacts, companyName, child
 }) {
   const [view, show] = useView(companyId)
   const { stages, titles } = useMemo(() => optionsOf(contacts), [contacts])
+  // One row that wraps: the card's action slot is a plain block, so the toolbar brings its own.
   return (
-    <>
+    <div className="flex max-w-[30rem] flex-wrap items-center justify-end gap-2">
       <Input
         className="h-8 w-48"
         aria-label={`Find a person at ${companyName}`}
@@ -174,7 +177,7 @@ export function CompanyContactsToolbar({ companyId, contacts, companyName, child
       <Chip label="Title" value={view.title} onChange={(v) => show({ title: v, page: 0 })}
             options={[{ value: "all", label: "Title: all" }, ...titles.map((x) => ({ value: x, label: x }))]} />
       {children}
-    </>
+    </div>
   )
 }
 
@@ -282,7 +285,7 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
         />
       ) : (
         <div>
-          {shown.map((c) => {
+          {shown.map((c, i) => {
             const seq = sequenceOf(c)
             const edit = edits[c.id]
             const fresh = typeof edit?.at === "number" && Date.now() - edit.at < UNDO_MS
@@ -290,7 +293,9 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
             // nothing: a row carries values, never a standing note about them (DESIGN.md §2, §3).
             const note = fresh && typeof edit?.note === "string" ? edit.note : null
             return (
-              <div key={c.id} data-item={c.id} data-item-label={c.name} className="border-t py-2 first:border-t-0 first:pt-0">
+              <Fragment key={c.id}>
+                {i > 0 && <Separator />}
+                <div data-item={c.id} data-item-label={c.name} className="py-2">
                 {/* The name and the row's actions share the top line and wrap on their own; the
                     line that describes the person has the width to itself, so a narrow column —
                     a phone, or the page shrunk to make room for the pane — never overlaps them. */}
@@ -333,11 +338,13 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                     </button>
                   </div>
                 )}
-              </div>
+                </div>
+              </Fragment>
             )
           })}
 
-          <div className="flex flex-wrap items-center gap-2 border-t pt-2">
+          <Separator />
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             <span className="t-small tabular-nums text-muted-foreground">
               {at * PAGE + 1}–{at * PAGE + shown.length} of {matching.length}
               {filtered ? ` · ${contacts.length} held here` : ""}

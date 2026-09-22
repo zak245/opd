@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { href, navigate } from "@/app/router"
 import type { Session } from "../session"
 import { Panel } from "../ui/Panel"
+import { Divider } from "../ui/Divider"
 import { KIND_LABEL, older, readState, sectioned, shortDate, TODAY, writeState, type Note } from "./notifications"
 
 export function unreadCount(rows: Note[]): number {
@@ -34,7 +35,8 @@ export function BellButton({ count, onOpen }: { count: number; onOpen: () => voi
 
 function Row({ note, unread, onOpen, onRead, onSnooze }: { note: Note; unread: boolean; onOpen: () => void; onRead: () => void; onSnooze: () => void }) {
   return (
-    <li className="group flex items-start gap-2 border-b px-4 py-2.5 last:border-b-0 focus-within:bg-muted/50 hover:bg-muted/50">
+    <li className="group relative flex items-start gap-2 px-4 py-2.5 focus-within:bg-muted/50 hover:bg-muted/50 first:[&>[data-slot=separator]]:hidden">
+      <Divider className="absolute inset-x-0 top-0" />
       <a
         href={href(note.target)}
         onClick={onOpen}
@@ -113,7 +115,7 @@ export function NotificationPanel({
         </div>
       }
     >
-      <div className="flex items-center gap-2 border-b px-4 py-2">
+      <div className="flex items-center gap-2 px-4 py-2">
         <Button
           variant={unreadOnly ? "default" : "outline"}
           size="sm"

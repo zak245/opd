@@ -9,6 +9,7 @@
 import type { ElementType, ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 
 export interface SectionProps {
   as?: ElementType
@@ -52,7 +53,7 @@ export function Section({
         </CardHeader>
       )}
       <CardContent className={cn(padded ? "px-4" : "px-0", bodyClassName)}>{children}</CardContent>
-      {footer && <CardFooter className="border-t px-4 pt-3">{footer}</CardFooter>}
+      {footer && <><Separator /><CardFooter className="px-4 pt-3">{footer}</CardFooter></>}
     </Card>
   )
 }
@@ -61,8 +62,9 @@ export function Section({
 export const Container = Section
 
 /**
- * A band inside a section — a summary strip, a card header, the row you are on. It is a `div` with
- * shadcn's muted background and nothing else; the withdrawn rule's "container-low" role is gone.
+ * A band inside a section — a summary strip, a row of facts. It carries no tint and no border: a
+ * full-bleed grey bar inside a card body is the invented look the owner rejected, so grouping is
+ * done with a `Divider` above it and the card's own padding around it.
  */
 export function Group({ className, children, ...rest }: {
   className?: string
@@ -70,5 +72,5 @@ export function Group({ className, children, ...rest }: {
   [key: string]: unknown
 }) {
   const { as: _as, component: _component, ...props } = rest
-  return <div className={cn("bg-muted", className)} {...props}>{children}</div>
+  return <div className={cn(className)} {...props}>{children}</div>
 }

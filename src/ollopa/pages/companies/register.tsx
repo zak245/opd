@@ -8,6 +8,7 @@
 import { declarePaneFields } from "../../ui/Beside"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
+import { Separator } from "@/components/ui/separator"
 import { Actions } from "../../ui/Actions"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { CompaniesPage } from "./CompaniesPage"
@@ -132,7 +133,8 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
 
       {/* A seat that cannot change this company gets the sentence naming who can, not a control it
           may not use (RULES.md rule 4). Researching spends credits and anybody may do it. */}
-      <div className="space-y-3 border-t pt-3">
+      <Separator />
+      <div className="space-y-3">
         <Actions
           surface="pane"
           layout="stack"

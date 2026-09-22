@@ -5,10 +5,12 @@
 // and results are read against each other. The thing nobody may lose sight of is whether sending is
 // on or stopped and why, so the status, the button that changes it, its consequence and the bounce
 // guard's two thresholds are in the header without a click, in every state.
-import { useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { ArrowLeft, Clock, Linkedin, Mail, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -37,7 +39,7 @@ import { statusOf, totalPeople } from "./Sequences"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Section"
+import { Container } from "../../ui/Section"
 import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
@@ -150,7 +152,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
     <DoorGroup>
       <div className="flex min-h-full flex-col">
         {/* ------------------------------------------------------------------------- the header */}
-        <header className="border-b px-4 pt-4 sm:px-6">
+        <header className="px-4 pt-4 sm:px-6">
           <div className="flex items-center gap-2">
             <BackToSequences />
             <RenderCount label="page" count={renders} />
@@ -173,7 +175,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                   <h2 className="t-section flex min-w-0 items-center gap-2 truncate">
                     <FamilyIcon of="sequences" size="header" />
                     {canEdit
-                      ? <button type="button" className="rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => { setName(seq.name); setRenaming(true) }}>{seq.name}<span className="sr-only"> — rename</span></button>
+                      ? <Button variant="ghost" className="h-auto px-1 py-0 text-inherit" onClick={() => { setName(seq.name); setRenaming(true) }}>{seq.name}<span className="sr-only"> — rename</span></Button>
                       : seq.name}
                   </h2>
                 )}
@@ -313,17 +315,18 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             <SendingSettings session={session} seq={seq} canEdit={canEdit} onSaid={say} />
           </div>
 
-          <nav aria-label="Sections of this sequence" className="flex gap-1 overflow-x-auto border-t py-2 text-sm" data-print-hide>
+          <Separator className="mt-2" />
+          <nav aria-label="Sections of this sequence" className="flex gap-1 overflow-x-auto py-2" data-print-hide>
             {[["seq-steps", "Steps"], ["seq-people", "People"], ["seq-results", "Results"], ["seq-settings", "Settings"], ["seq-history", "History"]].map(([anchor, label]) => (
-              <button
-                key={anchor} type="button"
-                className="rounded px-2 py-1 whitespace-nowrap hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              <Button
+                key={anchor} variant="ghost" size="sm" className="whitespace-nowrap"
                 onClick={() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              >{label}</button>
+              >{label}</Button>
             ))}
           </nav>
           <p className="sr-only" role="status" aria-live="polite">{live}</p>
         </header>
+        <Separator />
 
         {/* -------------------------------------------------------------------------- the steps */}
         <div id="seq-steps" className="px-4 pt-5 sm:px-6">
@@ -337,7 +340,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             actions={canEdit ? <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} /> : undefined}
           >
           {adding && canEdit && (
-            <Group className="mx-4 mb-3 flex flex-wrap gap-2 rounded-md p-3">
+            <div className="mx-4 mb-3 flex flex-wrap gap-2">
               {(["Email", "Call task", "LinkedIn task", "Wait"] as const).map((kind) => (
                 <Button
                   key={kind} size="sm" variant="outline"
@@ -359,7 +362,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                 >{kind}</Button>
               ))}
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
-            </Group>
+            </div>
           )}
 
           {/* The steps have their own expand-all, because "every step" is the set a person means. */}
@@ -367,9 +370,10 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             <div className="flex justify-end px-4" data-expand-steps data-print-hide>
               <ExpandAll />
             </div>
-            <ol className="divide-y border-t">
+            <ol>
               {steps.map((step, i) => (
-                <li key={step.id}>
+                <li key={step.id} className="[&:not(:first-child)]:border-0">
+                  <Separator />
                   <StepCard
                     session={session} seq={seq} step={step} steps={steps} index={i}
                     enrollments={enrollments} canEdit={canEdit} onSaid={say}
@@ -382,7 +386,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
           {steps.length === 0 && <div className="px-4 pb-3"><EmptyState title="No steps yet" body="Add an email, a call, a LinkedIn task or a wait." /></div>}
 
           {seq.status === "Draft" && (
-            <Group className="mt-3 flex flex-wrap items-center gap-3 border-t p-3">
+            <><Separator className="mt-3" /><div className="flex flex-wrap items-center gap-3 p-3">
               <Button
                 size="sm"
                 disabled={stepsOn === 0 || !seq.mailbox}
@@ -399,7 +403,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                     ? "No mailbox is linked to this sequence. Link one in the sending settings."
                     : `${n(stepsOn)} of ${n(steps.length)} steps are on.${offStep ? ` Step ${offStep.order} is off and will be skipped.` : ""}`}
               </span>
-            </Group>
+            </div></>
           )}
           </Container>
         </div>
@@ -417,7 +421,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             <div>
               <Door id="seq.results" label="Results by step and by audience" defaultOpen={d.level("seq.results.by-step") === 1}>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
+                  <table className="w-full divide-y text-xs">
                     <thead>
                       <tr className="text-left text-muted-foreground">
                         <th className="py-1 pr-3 font-normal">Step</th>
@@ -426,7 +430,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                     </thead>
                     <tbody>
                       {steps.filter((s) => s.kind === "Email").map((s) => (
-                        <tr key={s.id} className="border-t">
+                        <tr key={s.id}>
                           <td className="py-1 pr-3">{s.order}. {s.subject || "Untitled email"}</td>
                           <td className="py-1 pr-3 tabular-nums">{n(s.stats.sent)}</td>
                           <td className="py-1 pr-3 tabular-nums">{n(s.stats.delivered)} · {rate(s.stats.delivered, s.stats.sent)}</td>
@@ -441,7 +445,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                   </table>
 
                   <h4 className="pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">By audience</h4>
-                  <table className="w-full text-xs">
+                  <table className="w-full divide-y text-xs">
                     <thead>
                       <tr className="text-left text-muted-foreground">
                         <th className="py-1 pr-3 font-normal">Group</th><th className="py-1 pr-3 font-normal">People</th><th className="py-1 pr-3 font-normal">Replied</th>
@@ -449,7 +453,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                     </thead>
                     <tbody>
                       {audienceRows(session, enrollments).map((row) => (
-                        <tr key={row.label} className="border-t">
+                        <tr key={row.label}>
                           <td className="py-1 pr-3">{row.label}</td>
                           <td className="py-1 pr-3 tabular-nums">{n(row.people)}</td>
                           <td className="py-1 pr-3 tabular-nums">{n(row.replied)} · {rate(row.replied, row.people)}</td>
@@ -578,7 +582,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
           {!ab && <p className="t-small tabular-nums text-muted-foreground">{results}</p>}
           {ab && (
             <>
-              <p className="mt-1 rounded bg-muted px-2 py-1 text-xs">{decisionBar(step.variants)}</p>
+              <Badge variant="secondary" className="mt-1 font-normal">{decisionBar(step.variants)}</Badge>
               {step.variants.map((v) => (
                 <p key={v.label} className="t-small tabular-nums text-muted-foreground">
                   {v.label}: sent {n(v.sent)} · replied {n(v.replied)} · {rate(v.replied, v.sent)}
@@ -632,10 +636,10 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
       </div>
 
       {confirmDelete && (
-        <div className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 p-2">
-          <span className="text-xs text-destructive">
+        <Alert variant="destructive" className="mx-3 mt-2 flex flex-wrap items-center gap-2">
+          <AlertDescription className="basis-full">
             {waiting > 0 ? `${n(waiting)} people are waiting at this step. They move to step ${Math.min(step.order + 1, steps.length)}.` : "Nobody is waiting at this step."}
-          </span>
+          </AlertDescription>
           <Button size="sm" variant="destructive" onClick={() => {
             engage.removeStep(session.business, step.id)
             engage.patchSequence(session.business, seq.id, { steps: Math.max(0, steps.length - 1) })
@@ -643,7 +647,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
             onSaid(`Step ${step.order} deleted`)
           }}>Delete step</Button>
           <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>Keep it</Button>
-        </div>
+        </Alert>
       )}
 
       <Door id={`seq.step.${step.id}`} label="Open step" defaultOpen={seq.status === "Draft" && index === 0}>
@@ -791,13 +795,16 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
             )}
 
             {step.variants.slice(1).map((v, i) => (
-              <div key={v.label} className="rounded-md border p-2">
+              <Fragment key={v.label}>
+              {i > 0 && <Separator />}
+              <div className="py-2">
                 <p className="t-label">Variant {v.label}</p>
                 <Input aria-label={`Variant ${v.label} subject`} className="mt-1 h-8" defaultValue={v.subject}
                   onBlur={(e) => engage.patchStep(session.business, step.id, { variants: step.variants.map((x, j) => (j === i + 1 ? { ...x, subject: e.target.value } : x)) })} />
                 <Textarea aria-label={`Variant ${v.label} body`} className="mt-1" rows={4} defaultValue={v.body}
                   onBlur={(e) => engage.patchStep(session.business, step.id, { variants: step.variants.map((x, j) => (j === i + 1 ? { ...x, body: e.target.value } : x)) })} />
               </div>
+              </Fragment>
             ))}
           </div>
         )}
@@ -858,10 +865,10 @@ function PreviewBody({ session, subject, body }: { session: Session; subject: st
           {n(unfilled.length)} {unfilled.length === 1 ? "variable has" : "variables have"} no value for {person?.name}: {unfilled.join(", ")}
         </p>
       )}
-      <Group className="mt-3 rounded-md p-3">
+      <div className="mt-3">
         <p className="t-body font-medium">{render(subject) || "No subject"}</p>
         <p className="mt-2 whitespace-pre-wrap text-sm">{render(body)}</p>
-      </Group>
+      </div>
     </>
   )
 }

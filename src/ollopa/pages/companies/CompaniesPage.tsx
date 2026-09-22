@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href } from "@/app/router"
+import { Separator } from "@/components/ui/separator"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Actions } from "../../ui/Actions"
@@ -526,9 +527,10 @@ export function CompaniesPage({ session }: { session: Session }) {
               ))}
           </div>
 
-          <ul className="divide-y border-t">
-            {findRows.slice(0, 12).map((v) => (
+          <ul>
+            {findRows.slice(0, 12).map((v, i) => (
               <li key={v.company.id} className="flex flex-wrap items-center gap-2 p-2">
+                {i > 0 && <Separator className="-mt-px w-full" />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate t-label">{v.company.name}</div>
                   <div className="t-small text-muted-foreground">{v.company.industry} · {v.company.employees.toLocaleString()} people · {v.company.location.country}</div>
@@ -617,8 +619,8 @@ function ViewsPopover({ name, views, onPick }: { name: string; views: string[]; 
         <ul className="space-y-0.5">
           {["All companies", ...views].map((v) => (
             <li key={v} className="flex items-center gap-1">
-              <button type="button" className="min-w-0 flex-1 truncate rounded px-1.5 py-1 text-left t-body hover:bg-muted" onClick={() => onPick(v)}>{v}</button>
-              <button type="button" className="rounded px-1 t-small text-muted-foreground underline" onClick={() => toast(`“${v}” is your default view`)}>Set as default</button>
+              <Button variant="ghost" size="sm" className="min-w-0 flex-1 justify-start truncate" onClick={() => onPick(v)}>{v}</Button>
+              <Button variant="link" size="sm" className="text-muted-foreground" onClick={() => toast(`“${v}” is your default view`)}>Set as default</Button>
             </li>
           ))}
         </ul>

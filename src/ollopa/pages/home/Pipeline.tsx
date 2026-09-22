@@ -28,13 +28,13 @@ function Stat({ label, value, sub, to }: { label: string; value: string; sub?: s
     ? (
       <button
         type="button"
-        className="rounded-md border px-3 py-2 text-left hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="rounded-md px-3 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         onClick={() => follow(to, originHere("home-pipeline"))}
       >
         {body}
       </button>
     )
-    : <div className="rounded-md border px-3 py-2">{body}</div>
+    : <div className="px-3 py-2">{body}</div>
 }
 
 /**
@@ -85,7 +85,7 @@ export function Pipeline({ data, d, order, hasReports }: { data: HomeData; d: Di
       {warnings && (
         <button
           type="button"
-          className="mb-2 flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="mb-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left t-body hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           onClick={() => follow("/ollopa/deals?filter=warnings", originHere("home-pipeline"))}
         >
           <span className="font-medium">Needs attention</span>
@@ -110,7 +110,7 @@ export function Pipeline({ data, d, order, hasReports }: { data: HomeData; d: Di
       </div>
 
       {hasReports && perRep.length > 0 && (
-        <ul className="mt-2 divide-y rounded-lg border text-sm">
+        <ul className="mt-2 divide-y t-body">
           {perRep.map((r) => (
             <li key={r.rep} className="flex items-center gap-3 px-3 py-1.5">
               <span className="min-w-0 flex-1">{r.rep === data.user ? `${r.rep} (you)` : r.rep}</span>

@@ -5,13 +5,14 @@
 // every column the desktop row carries. Nothing is hover-only: a row's actions show on hover and on
 // focus-within, and the same actions repeat in the row's "…" menu, whose accessible name is the list
 // of what is in it — no menu in this product is called "More actions".
-import { useMemo, useRef, type ReactNode } from "react"
+import { Fragment, useMemo, useRef, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Separator } from "@/components/ui/separator"
 import { Actions, type Action } from "../../ui/Actions"
 import { usePref } from "./prefs"
 
@@ -46,15 +47,6 @@ export interface GridProps<T> {
   onOpen?: (row: T) => void
   cardTitle: (row: T) => ReactNode
   empty?: ReactNode
-  /** Extra controls that sit in the header row beside the column chooser. */
-  headerExtra?: ReactNode
-  /**
-   * The page has put this table in a `Container` (DESIGN.md §5, containment). The grid then paints
-   * no surface and draws no edge of its own — the container's outline is the boundary — its toolbar
-   * lives in the container's header (see `GridColumns`), and the phone list is divided rows rather
-   * than a card each, because a card inside a container is a box inside a box.
-   */
-  inContainer?: boolean
   /** What a row is called, for the crumb and for the return cue that lights it on the way back. */
   rowLabel?: (row: T) => string
 }
@@ -118,48 +110,20 @@ export function Grid<T>(p: GridProps<T>) {
 
   return (
     <div>
-      {!p.inContainer && (optional.length > 0 || p.headerExtra) && (
-        <div className="hidden flex-wrap items-center justify-end gap-2 px-6 pb-2 md:flex">
-          {p.headerExtra}
-          {optional.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 text-xs">
-                  Columns: {optional.map((c) => c.header.toLowerCase()).join(", ")} ({optional.length})
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-64">
-                <fieldset>
-                  <legend className="pb-2 text-xs font-medium">Columns you can add</legend>
-                  <div className="space-y-2">
-                    {optional.map((c) => (
-                      <label key={c.key} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={!hidden.includes(c.key)}
-                          onCheckedChange={(v) => setHidden(v ? hidden.filter((k) => k !== c.key) : [...hidden, c.key])}
-                        />
-                        {c.header}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-      )}
-
       {/* ---------------------------------------------------------------- the table, from tablet up */}
-      <div className={cn("hidden overflow-x-auto md:block", p.inContainer ? "" : "bg-card border-t")}>
+      <div className="hidden overflow-x-auto md:block">
         <Table>
-          <TableHeader className={cn("sticky top-0 z-10", p.inContainer ? "bg-card" : "bg-card")}>
+          <TableHeader className="bg-card sticky top-0 z-10">
             <TableRow>
               {shown.map((c) => (
                 <TableHead key={c.key} className={cn("t-label", c.className)}>
+                  {/* A sortable header is the library's ghost Button, as shadcn's own data table
+                      draws it — never a hand-rolled button (DESIGN.md §4). */}
                   {c.sortBy ? (
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 rounded hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="t-label -ml-2 h-7 px-2"
                       aria-label={`Sort by ${c.header}`}
                       onClick={() => setSort({ key: c.key, dir: sort.key === c.key && sort.dir === "asc" ? "desc" : "asc" })}
                     >
@@ -167,7 +131,7 @@ export function Grid<T>(p: GridProps<T>) {
                       {sort.key === c.key
                         ? (sort.dir === "asc" ? <ArrowUp className="size-3" aria-hidden="true" /> : <ArrowDown className="size-3" aria-hidden="true" />)
                         : <ChevronsUpDown className="size-3 opacity-40" aria-hidden="true" />}
-                    </button>
+                    </Button>
                   ) : c.header}
                 </TableHead>
               ))}
@@ -217,13 +181,16 @@ export function Grid<T>(p: GridProps<T>) {
       {/* -------------------------- the phone: cards carrying every column the desktop row carries */}
       {/* The phone: one list with dividers between rows when the page has contained it, and a card
           each when it has not. A card inside a container reads as two groups where there is one. */}
-      <ul className={cn("md:hidden", p.inContainer ? "" : "space-y-2 border-t px-4 py-3")}>
-        {rows.map((row) => (
+      <ul className="md:hidden">
+        {rows.map((row, i) => (
+          <Fragment key={p.rowKey(row)}>
+          {/* One list divided by the library, not a card per row: a card inside a card is two
+              groups where there is one thing (DESIGN.md §4). */}
+          {i > 0 && <li aria-hidden="true"><Separator /></li>}
           <li
-            key={p.rowKey(row)}
             data-item={p.rowKey(row)}
             data-item-label={p.rowLabel?.(row)}
-            className={cn(p.inContainer ? "border-t px-4 py-3 first:border-t-0" : "bg-card rounded-lg border p-3")}
+            className="px-4 py-3"
           >
             <div className="flex items-start gap-2">
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>
@@ -238,6 +205,7 @@ export function Grid<T>(p: GridProps<T>) {
               ))}
             </dl>
           </li>
+          </Fragment>
         ))}
         {rows.length === 0 && <li className="t-body py-8 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</li>}
       </ul>

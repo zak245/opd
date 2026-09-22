@@ -14,6 +14,7 @@ import { seedFor, type Surface } from "../data/seed"
 import type { Session } from "../session"
 import { Panel } from "../ui/Panel"
 import { runwayWeeks, shortDate, TODAY } from "./notifications"
+import { Divider } from "../ui/Divider"
 
 export function credits(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(2).replace(/\.?0+$/, "") + "M"
@@ -57,7 +58,8 @@ function Group({ title, rows }: { title: string; rows: SpendRow[] }) {
   const [all, setAll] = useState(false)
   const shown = all ? rows : rows.slice(0, 5)
   return (
-    <section className="border-t px-5 py-3">
+    <section className="first:[&>[data-slot=separator]]:hidden px-5 py-3">
+      <Divider className="-mx-5 mb-3" />
       <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</h3>
       <ul className="mt-2 grid gap-1.5">
         {shown.map((r) => (

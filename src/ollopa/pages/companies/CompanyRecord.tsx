@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
+import { Separator } from "@/components/ui/separator"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { follow, routeKey, useTrail } from "../../chain"
 import { toast } from "../../templates/TablePage"
@@ -211,7 +213,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       <div>
         <div className="flex h-24 items-end gap-1" role="img" aria-label={`Usage index ${account!.usage30}, ${account!.usageDelta30 >= 0 ? "up" : "down"} ${Math.abs(account!.usageDelta30)}% over 30 days`}>
           {usageSeries.map((n, i) => (
-            <span key={i} className="min-w-0 flex-1 rounded-t bg-foreground/70" style={{ height: `${Math.max(4, n)}%` }} />
+            <span key={i} className="min-w-0 flex-1 bg-foreground/70" style={{ height: `${Math.max(4, n)}%` }} />
           ))}
         </div>
         <p className="pt-2 t-body">
@@ -244,10 +246,13 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         <div>
           <p className="t-body pb-2">{healthLine(account.health, account.band, account.healthDelta30)}</p>
           <ul className="t-body space-y-1">
-            {account.drivers.map((x) => (
-              <li key={x.label} className="flex justify-between gap-3 border-t py-1 first:border-t-0">
-                <span className="min-w-0">{x.label}</span>
-                <span className="shrink-0 tabular-nums">{x.points > 0 ? "+" : ""}{x.points}</span>
+            {account.drivers.map((x, i) => (
+              <li key={x.label}>
+                {i > 0 && <Separator className="my-1" />}
+                <span className="flex justify-between gap-3 py-1">
+                  <span className="min-w-0">{x.label}</span>
+                  <span className="shrink-0 tabular-nums">{x.points > 0 ? "+" : ""}{x.points}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -300,8 +305,9 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               : "Not confirmed yet. Ninety days without it raises an Onboarding stalled risk."}
           </p>
           <ul className="space-y-1">
-            {account.goals.map((g) => (
-              <li key={g.text} className="border-t pt-1">
+            {account.goals.map((g, i) => (
+              <li key={g.text} className="pt-1">
+                {i > 0 && <Separator className="mb-1" />}
                 {g.text}
                 <span className="block t-small text-muted-foreground">Agreed {day(g.agreedOn)} · {g.source}</span>
               </li>
@@ -391,15 +397,17 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               From {h.from} · sent {day(h.sent)} ·
               <Chip status={h.accepted ? "approved" : "waiting"}>{h.accepted ? `accepted ${day(h.accepted)}` : "not accepted yet"}</Chip>
             </p>
-            {parts.map(([label, value]) => (
-              <div key={label} className="border-t pt-2">
+            {parts.map(([label, value], i) => (
+              <div key={label} className="pt-2">
+                {i > 0 && <Separator className="mb-2" />}
                 <div className="t-label">{label}
                   {wrote(label) && <span className="pl-1 font-normal text-muted-foreground">· {wrote(label)}</span>}
                 </div>
                 <div>{value}</div>
               </div>
             ))}
-            <div className="border-t pt-2">
+            <Separator />
+            <div className="pt-2">
               <div className="t-label">Checklist</div>
               <ul>{h.checklist.map((c) => <li key={c.item}>{c.done ? "Done" : "Not done"} · {c.item}</li>)}</ul>
             </div>
@@ -560,10 +568,13 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     usage: "rec.all-activity", id: "company.activity", label: "All activity", count: activity.length,
     content: activity.length === 0
       ? <p className="text-muted-foreground">Nothing has been logged against {merged.name}.</p>
-      : <ul className="space-y-1">{activity.map((a) => (
-          <li key={a.id} className="flex justify-between gap-3 border-t py-1 first:border-t-0">
-            <span className="min-w-0">{a.kind} · {a.text}</span>
-            <span className="shrink-0 tabular-nums text-muted-foreground">{day(a.at)}</span>
+      : <ul className="space-y-1">{activity.map((a, i) => (
+          <li key={a.id}>
+            {i > 0 && <Separator className="my-1" />}
+            <span className="flex justify-between gap-3 py-1">
+              <span className="min-w-0">{a.kind} · {a.text}</span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">{day(a.at)}</span>
+            </span>
           </li>
         ))}</ul>,
   })
@@ -582,7 +593,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       : (
         <ul className="space-y-2">
           {runs.map((run, i) => (
-            <li key={run.id} className="border-t pt-2 first:border-t-0 first:pt-0">
+            <li key={run.id} className={i === 0 ? "" : "pt-2"}>
+              {i > 0 && <Separator className="mb-2" />}
               {/* Provenance in words, not an icon: which agent, when, how many sources, how much. */}
               <div className="t-small text-muted-foreground">{run.agent} · {day(run.at)} · {run.sources} sources · {run.credits} credits</div>
               {i === 0 && briefHref && (
@@ -606,9 +618,9 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     usage: "rec.signals", id: "company.signals", label: "Signals and news", count: signalNames.length,
     content: (
         <ul className="space-y-1">
-          {merged.signals.map((s) => <li key={s} className="border-t py-1 first:border-t-0">{s}</li>)}
+          {merged.signals.map((s) => <li key={s} className="py-1">{s}</li>)}
           {(account?.signals ?? []).map((s) => (
-            <li key={s.id} className="border-t py-1">
+            <li key={s.id} className="py-1">
               <div>{s.kind}</div>
               <div className="t-small text-muted-foreground">{s.detail} · {s.source} · {day(s.fired)} · routed to {s.routedTo}</div>
             </li>
@@ -716,9 +728,14 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     count: 6,
     content: (
       <div className="space-y-3">
-        <table className="w-full t-body">
-          <thead><tr className="text-left t-small text-muted-foreground"><th className="py-1">Field</th><th>Value</th><th>Where it came from</th><th>When</th></tr></thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Field</TableHead><TableHead>Value</TableHead>
+              <TableHead>Where it came from</TableHead><TableHead>When</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {[
               ["Industry", merged.industry],
               ["Employees", merged.employees.toLocaleString()],
@@ -727,15 +744,15 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               ["Revenue", merged.revenue],
               ["Technology", merged.technologies.join(", ") || "—"],
             ].map(([label, value]) => (
-              <tr key={label} className="border-t">
-                <td className="py-1 t-small text-muted-foreground">{label}</td>
-                <td>{value}</td>
-                <td className="t-small text-muted-foreground">{merged.source === "CRM" ? crmName || "the CRM" : merged.source === "Imported" ? "A CSV import" : "The enrichment provider"}</td>
-                <td className="t-small tabular-nums text-muted-foreground">{merged.enrichedOn ? day(merged.enrichedOn) : day(merged.addedOn)}</td>
-              </tr>
+              <TableRow key={label}>
+                <TableCell className="t-small text-muted-foreground">{label}</TableCell>
+                <TableCell>{value}</TableCell>
+                <TableCell className="t-small text-muted-foreground">{merged.source === "CRM" ? crmName || "the CRM" : merged.source === "Imported" ? "A CSV import" : "The enrichment provider"}</TableCell>
+                <TableCell className="t-small tabular-nums text-muted-foreground">{merged.enrichedOn ? day(merged.enrichedOn) : day(merged.addedOn)}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         <Actions surface="card" items={[{
           kind: "secondary", label: "Re-enrich this company",
           onClick: () => toast(`Re-enriching ${merged.name} · about ${CREDITS.enrich} credits`),

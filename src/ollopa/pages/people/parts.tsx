@@ -9,6 +9,8 @@ import { ChevronDown, Pin, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { chipLabel, type Active, type FilterDef, type FilterGroup } from "./filters"
 import { FILTER_GROUPS } from "./filters"
@@ -67,7 +69,7 @@ export function ValueList({ filter, values, chosen, count, onChange }: PickerPro
                   on && "bg-muted",
                 )}
               >
-                <span aria-hidden="true" className={cn("size-3.5 shrink-0 rounded-sm border", on && "border-foreground bg-foreground")} />
+                <Checkbox checked={on} aria-hidden="true" tabIndex={-1} className="pointer-events-none" />
                 <span className="min-w-0 flex-1 truncate">{v}</span>
                 <span className="shrink-0 tabular-nums text-xs text-muted-foreground">{count(v).toLocaleString()}</span>
               </button>
@@ -163,15 +165,17 @@ export function FiltersPanelBody({ filters, active, values, count, onChange, onC
 
       {/* Safety state, stated rather than silently applied: excluded by default, with its count. */}
       {showDnc && (
-        <div className="rounded-md border p-2.5 text-xs" data-item="people.dnc-exclusion" data-item-label="Do not contact">
-          <p>
-            {dnc.toLocaleString()} {dnc === 1 ? "person carries" : "people carry"} “do not contact”.{" "}
-            {includeDnc ? "They are in these results." : "They are left out of these results."}
-          </p>
-          <Button size="sm" variant="outline" className="mt-1.5" onClick={() => onIncludeDnc(!includeDnc)}>
-            {includeDnc ? "Leave them out again" : "Show them anyway"}
-          </Button>
-        </div>
+        <Alert data-item="people.dnc-exclusion" data-item-label="Do not contact">
+          <AlertDescription>
+            <span>
+              {dnc.toLocaleString()} {dnc === 1 ? "person carries" : "people carry"} “do not contact”.{" "}
+              {includeDnc ? "They are in these results." : "They are left out of these results."}
+            </span>
+            <Button size="sm" variant="outline" onClick={() => onIncludeDnc(!includeDnc)}>
+              {includeDnc ? "Leave them out again" : "Show them anyway"}
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {sections.map((section) => {

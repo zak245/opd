@@ -29,6 +29,7 @@ import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
+import { Separator } from "@/components/ui/separator"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Container } from "../../ui/Section"
 import { type Col, BesideLink, DataTable, FollowLink, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
@@ -195,7 +196,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
   return (
     <DoorGroup>
       <div className="flex min-h-full flex-col">
-        <header className="border-b px-4 pt-4 sm:px-6">
+        <header className="px-4 pt-4 sm:px-6">
           <a href={href("/ollopa/lists")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
             <ArrowLeft className="size-3" aria-hidden="true" />Lists
           </a>
@@ -217,7 +218,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                   <h2 className="t-section flex min-w-0 items-center gap-2 truncate">
                     <FamilyIcon of={list.kind === "people" ? "people" : "companies"} size="header" />
                     {isOwner
-                      ? <button type="button" className="rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => { setName(list.name); setRenaming(true) }}>{list.name}<span className="sr-only"> — rename</span></button>
+                      ? <Button variant="ghost" className="h-auto px-1 py-0 text-inherit" onClick={() => { setName(list.name); setRenaming(true) }}>{list.name}<span className="sr-only"> — rename</span></Button>
                       : list.name}
                   </h2>
                 )}
@@ -315,7 +316,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
           {list.mode === "segment" && (
             <div className="mt-3">
               {editingFilters ? (
-                <div className="rounded-md border p-3">
+                <div>
                   <h3 className="t-body font-medium">Filters</h3>
                   <div className="mt-2 space-y-2">
                     {list.filters.map((f, i) => (
@@ -381,6 +382,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
 
           <p className="sr-only" role="status" aria-live="polite">{status}</p>
         </header>
+        <Separator />
 
         {/* --------------------------------------------------------------------------- members */}
         <div className="min-h-0 flex-1 space-y-3 px-4 pt-4 pb-6 sm:px-6">
@@ -617,7 +619,7 @@ function AddMembersPanel({ open, onOpenChange, list, session, onAdd }: {
         )}
       </div>
 
-      <ul className="mt-3 divide-y border-t">
+      <ul className="mt-3 divide-y">
         {pool.map((r) => (
           <li key={r.id}>
             <label className="flex cursor-pointer items-center gap-2 py-2">

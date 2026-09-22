@@ -13,6 +13,8 @@ import { toast } from "../../templates/TablePage"
 import type { Call, Seed } from "../../data/seed"
 import type { Session } from "../../session"
 import { day } from "./person"
+import { Separator } from "@/components/ui/separator"
+import { Card, CardContent } from "@/components/ui/card"
 
 function minutes(sec: number): string {
   const m = Math.floor(sec / 60)
@@ -58,13 +60,14 @@ export function CallLog({ call, seed, session, onOpenChange }: {
         <section>
           <h4 className="pb-1 text-xs font-medium text-muted-foreground">Transcript</h4>
           {call.transcript ? (
-            <p className="whitespace-pre-line rounded-md border p-2.5 text-muted-foreground">{call.transcript}</p>
+            <Card className="py-3"><CardContent className="px-3"><p className="whitespace-pre-line text-muted-foreground">{call.transcript}</p></CardContent></Card>
           ) : (
             <p className="text-muted-foreground">No recording integration supplied a transcript for this call.</p>
           )}
         </section>
 
-        <section className="border-t pt-3">
+        <Separator />
+        <section>
           <h4 className="pb-1 text-xs font-medium text-muted-foreground">Coaching note</h4>
           {existing && !written ? (
             <div className="space-y-1">

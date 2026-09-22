@@ -34,6 +34,7 @@ import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY, type Kind } from "./notifications"
+import { useBanner } from "./banner"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
 const COLLAPSE_KEY = "ollopa.sidebar"
@@ -164,6 +165,8 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const [expiring, setExpiring] = useState(false)
   const [, setTick] = useState(0)
   const refresh = () => setTick((t) => t + 1)
+  const banner = useBanner()
+  const [newsRead, setNewsRead] = useState(false)
   const trail = useTrail()
   const route = useRoute()
   const heading = useRef<HTMLHeadingElement>(null)
@@ -277,6 +280,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   }, [session])
 
   const alerts = notes.filter((n) => n.interrupting && !dismissed.includes(n.id))
+  const news = newsRead ? undefined : banner.news
   // The bottom bar is the sidebar at phone width, so it carries only pages the sidebar carries:
   // the seat's four, in the fixed order, topped up from the sidebar when the profile left one out.
   const inSidebarPages = entries.map((e) => e.item.page)
@@ -374,13 +378,14 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
         {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
             with the library's gap. */}
-        {/* One row above the page, never a stack: everything interrupting is one Alert, and each
-            item keeps its own Open and Dismiss as inline links inside the description. */}
-        {(expiring || alerts.length > 0) && (
+        {/* Above the content there is the header and one Alert. Everything a page has to say up
+            here — what interrupts, the workspace's health, a workspace change — is said inside it:
+            the items as lines, the health as small outline Badges on the last line. */}
+        {(expiring || alerts.length > 0 || banner.items.length > 0 || news) && (
           <div className="p-3">
             <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) ? "destructive" : "default"} className="py-2">
               <TriangleAlert />
-              <AlertTitle>Needs you now</AlertTitle>
+              <AlertTitle>{alerts.length > 0 || expiring ? "Needs you now" : "Your workspace"}</AlertTitle>
               <AlertDescription>
                 {expiring && (
                   <p className="flex flex-wrap items-baseline gap-x-2">
@@ -395,6 +400,26 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                     <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</button>
                   </p>
                 ))}
+                {news && (
+                  <p className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="min-w-0">{news.text}</span>
+                    {news.href && <a className="shrink-0 underline underline-offset-4" href={news.href}>Open</a>}
+                    <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setNewsRead(true)}>Dismiss</button>
+                  </p>
+                )}
+                {banner.items.length > 0 && (
+                  <p className="flex flex-wrap items-center gap-1.5">
+                    {banner.items.map((h) => {
+                      const cut = h.text.indexOf(" · ")
+                      const short = cut > 0 && h.text.length > 44 ? h.text.slice(0, cut) : h.text
+                      return (
+                        <Badge key={h.text} asChild variant="outline" className="font-normal text-muted-foreground">
+                          <a href={h.href} title={h.text}>{short}</a>
+                        </Badge>
+                      )
+                    })}
+                  </p>
+                )}
               </AlertDescription>
             </Alert>
           </div>

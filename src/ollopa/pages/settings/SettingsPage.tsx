@@ -12,6 +12,7 @@ import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Kbd } from "@/components/ui/kbd"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -34,7 +35,7 @@ import { settingsFor } from "./derived"
 import { JUMP_EVENT, leaveSettings } from "./leave"
 import { useSidebarMove } from "../setup/moved"
 import { credits, longDay, money, plural } from "./format"
-import { Row, personalRows, rowsFor, type PanelRequest, type SettingRow } from "./rows"
+import { RowList, personalRows, rowsFor, type PanelRequest, type SettingRow } from "./rows"
 import { SaveBar, SettingsState, toast, useSettingsState } from "./state"
 import {
   CliPanel, DomainPanel, FieldPanel, HookPanel, KeyPanel, ListPanel, MailboxPanel, McpScopePanel,
@@ -349,12 +350,12 @@ function AreaTabs({ area, rows, admin, honest }: { area: string; rows: SettingRo
               data-open={active === g.id ? "true" : "false"}
               hidden={active !== g.id}
             >
-              {g.rows.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}
+              <RowList rows={g.rows} admin={admin} honest={honest} />
             </div>
           ))}
         </>
       )}
-      {rest.length > 0 && <div>{rest.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}</div>}
+      {rest.length > 0 && <div><RowList rows={rest} admin={admin} honest={honest} /></div>}
     </>
   )
 }
@@ -391,7 +392,7 @@ function Area({ area, one, two, admin, register, flat, honest }: {
       <div data-container={`area.${slug(area)}`} data-container-label={area}>
         {tabbed
           ? <AreaTabs area={area} rows={one} admin={admin} honest={honest} />
-          : one.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}
+          : <RowList rows={one} admin={admin} honest={honest} />}
       </div>
       {two.length > 0 && (
         <div className={cn(one.length > 0 && "mt-2")}>
@@ -400,7 +401,7 @@ function Area({ area, one, two, admin, register, flat, honest }: {
             label={honest ? two.map((r) => r.short).join(", ") : "Advanced"}
             count={honest ? two.length : undefined}
           >
-            <div>{two.map((r) => <Row key={r.id} row={r} admin={admin} honest={honest} />)}</div>
+            <div><RowList rows={two} admin={admin} honest={honest} /></div>
           </Door>
         </div>
       )}
@@ -453,7 +454,7 @@ function SettingsSearch({ rows, onJump, inputRef, accelerators = true }: {
           if (e.key === "Escape") { setQ(""); (e.target as HTMLInputElement).blur() }
         }}
       />
-      {accelerators && <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono t-small text-muted-foreground">/</kbd>}
+      {accelerators && <Kbd className="pointer-events-none absolute right-2 top-2">/</Kbd>}
       {hits.length > 0 && (
         <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-lg" role="listbox">
           {hits.map((h, i) => (

@@ -33,7 +33,7 @@ import { BOUNCE_GUARD, CAMPAIGN_CHECKS, TODAY, seedFor, type Audience, type Camp
 import type { Session } from "../../session"
 import type { Business } from "../../usage/model"
 import { familyOf } from "../../identity"
-import { Group } from "../../ui/Section"
+import { Separator } from "@/components/ui/separator"
 import { Grid, GridColumns, type GridColumn } from "./grid"
 import { usePref } from "./prefs"
 import { addRow, patchRow, removeRow, useMarketing } from "./store"
@@ -81,7 +81,10 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
   // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
   const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
   return (
-    <Group as="p" id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 border-b px-4 py-2">
+    <>
+    {/* The card's first row, not a tinted full-bleed band: the library's rule divides it from the
+        table below (DESIGN.md §4). */}
+    <p id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pb-2">
       <span>Bounce guard: warn {guard.warnPercent}%, pause {guard.pausePercent}%</span>
       <span aria-hidden="true">·</span>
       <span
@@ -105,7 +108,9 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
       >
         Sending policy
       </a>
-    </Group>
+    </p>
+    <Separator />
+    </>
   )
 }
 
@@ -488,7 +493,6 @@ export function CampaignsPage({ session }: { session: Session }) {
               menu={rowMenu}
               hidden={hiddenColumns}
               onHidden={setHiddenColumns}
-              inContainer
               menuName="Read it beside this table, open, duplicate, compare, export results, archive, delete draft"
               onOpen={(c) => open(`/ollopa/campaigns/${c.id}`, c.id)}
               rowLabel={(c) => c.name}
@@ -510,7 +514,6 @@ export function CampaignsPage({ session }: { session: Session }) {
                 { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
                 { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
               ]}
-              inContainer
               menuName="Read it beside this table, open, hand to sales, freeze, delete audience"
               onOpen={(a) => open(`/ollopa/audiences/${a.id}`, a.id)}
               rowLabel={(a) => a.name}
@@ -535,7 +538,6 @@ export function CampaignsPage({ session }: { session: Session }) {
               onOpen={(f) => open(`/ollopa/forms/${f.id}`, f.id)}
               rowLabel={(f) => f.name}
               cardTitle={(f) => <span className="font-medium">{f.name}</span>}
-              inContainer
             />
           )}
           </TableCard>
@@ -543,9 +545,12 @@ export function CampaignsPage({ session }: { session: Session }) {
       )}
 
       {!isAdmin && (
-        <p className="border-t px-6 py-2 text-xs text-muted-foreground">
-          Owners and sending policy are the admin's: {admin} can change an owner or the bounce guard.
-        </p>
+        <>
+          <Separator />
+          <p className="t-small px-6 py-2 text-muted-foreground">
+            Owners and sending policy are the admin's: {admin} can change an owner or the bounce guard.
+          </p>
+        </>
       )}
 
       {/* ------------------------------------------------------------------ new campaign: which kind */}

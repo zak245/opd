@@ -28,6 +28,7 @@ import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Container, Group } from "../../ui/Section"
+import { Divider } from "../../ui/Divider"
 import { FamilyIcon, inkOf } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { useEdits } from "../../edits"
@@ -549,8 +550,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     const summary = weightedInHeader || one("deals.column.stale-count") || doorParts.length > 0
     return (
       // A stage is a container: its name and its total are the container's header, and the
-      // weighted total and the stale count sit in the one container-low band a container may hold
-      // rather than in a second box (DESIGN.md §5, containment).
+      // weighted total and the stale count are a band at the top of the card's body, separated from
+      // the deals by the library's rule rather than by a tinted bar of our own.
       <Container
         key={stage}
         component="section"
@@ -561,7 +562,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         bodyClassName="flex min-h-0 flex-1 flex-col"
       >
         {summary && (
-          <Group className="space-y-0.5 border-y px-4 py-2">
+          <Group className="space-y-0.5 px-4 pb-2">
             {weightedInHeader && <div className="t-small tabular-nums text-muted-foreground">Weighted {moneyShort(weightedOf(list), currency)}</div>}
             {one("deals.column.stale-count") && <div className="t-small tabular-nums text-muted-foreground">{stale} not moving</div>}
             {doorParts.length > 0 && (
@@ -578,6 +579,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
             )}
           </Group>
         )}
+        {summary && <Divider />}
         <ul
           data-stage-list
           data-stage={stage}
@@ -588,7 +590,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         >
           {list.map(renderCard)}
           {list.length === 0 && (
-            <li className="t-small rounded-md border border-dashed px-2 py-6 text-center text-muted-foreground">
+            <li className="t-small px-2 py-6 text-center text-muted-foreground">
               0 · {moneyShort(0, currency)}
               <div>Drop a deal here</div>
             </li>
@@ -603,14 +605,15 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const railSum = sumOf(wonRows)
   const rail = !used("deals.board.closed-won-rail") ? null : railOpen ? (
     <div className="flex min-h-0 flex-col">
-      <button className="self-end px-2 py-1 text-xs text-muted-foreground underline underline-offset-4" aria-expanded={true} onClick={() => setRailOpen(false)}>
+      <Button variant="link" size="sm" className="h-auto self-end px-2 py-1 text-muted-foreground" aria-expanded={true} onClick={() => setRailOpen(false)}>
         Collapse Closed won
-      </button>
+      </Button>
       {column(WON_STAGE)}
     </div>
   ) : (
-    <button
-      className="bg-card flex w-12 shrink-0 items-center justify-center rounded-[var(--radius)] border py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    <Button
+      variant="outline"
+      className="h-auto w-12 shrink-0 self-stretch py-3"
       aria-expanded={false}
       onClick={() => setRailOpen(true)}
     >
@@ -619,7 +622,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       <span className="t-small [writing-mode:vertical-rl] tabular-nums" style={{ color: statusInk("closed won") }}>
         Closed won · {wonRows.length} · {moneyShort(railSum, currency)}
       </span>
-    </button>
+    </Button>
   )
 
   /* --------------------------------------------------------------------------------- the header */
@@ -949,13 +952,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         </div>
 
         {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it.
-            One band across the top of the board, not four boxes: the sums are read together and a
-            box each would say they are four separate things (DESIGN.md §5, containment). */}
-        <Group as="div" className="mx-4 mb-3 rounded-[var(--radius)] border px-4 py-3 sm:mx-6">
+            One section, shadcn's Card, so the sums read as one thing and the box is the library's. */}
+        <Container className="mx-4 mb-3 sm:mx-6">
           {one("deals.forecast.strip")
             ? strip
             : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
-        </Group>
+        </Container>
 
         {workspaceEmpty ? (
           <div className="px-4 pb-6 sm:px-6">

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useSession } from "../session"
 import "./disclosure.css"
+import { Divider } from "./Divider"
 
 export interface DoorProps {
   id: string
@@ -207,7 +208,8 @@ export function Door({ id, label, count, children, defaultOpen = false }: DoorPr
   }
 
   return (
-    <section data-door={id} data-open={open ? "true" : "false"} className="border-t border-border first:border-t-0">
+    <section data-door={id} data-open={open ? "true" : "false"} className="first:[&>[data-slot=separator]]:hidden">
+      <Divider />
       <h3 className="m-0">
         <button
           type="button"

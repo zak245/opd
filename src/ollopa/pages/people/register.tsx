@@ -16,6 +16,7 @@ import { PeoplePage } from "./PeoplePage"
 import { ContactRecord } from "./ContactRecord"
 import { clearPersonEdit, editPerson, usePersonEdit } from "./edits"
 import { glanceFields, rowsFor } from "./person"
+import { Separator } from "@/components/ui/separator"
 
 export const nodes: Record<string, PageComponent> = {
   "P-people": ({ session }) => <PeoplePage session={session} />,
@@ -202,7 +203,8 @@ const PersonBeside: BesideComponent = ({ session, id }) => {
           these are comparable acts, so they are all secondary — and nothing here cannot be undone:
           an irreversible act stays on the record page, which "Open the page" above leads to.
           A line sits beside a control only where the act spends credits. */}
-      <div className="border-t pt-3">
+      <Separator />
+      <div className="pt-3">
         {shows("people.row.sequence") && (
           // A picker, in place — not a door and not a guess. Flat, so the pane stays one level.
           <Select value={dest} onValueChange={(v) => setPicked({ id, dest: v })}>

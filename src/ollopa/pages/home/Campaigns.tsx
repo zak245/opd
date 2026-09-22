@@ -54,7 +54,7 @@ export function Campaigns({ data, d, order }: { data: HomeData; d: Disclosure; o
       )}
 
       {routing && (
-        <p className="mt-2 rounded-md border px-3 py-2 text-sm">
+        <p className="mt-2 t-body">
           <span className="font-medium">Routing</span>
           <span className="text-muted-foreground">: </span>
           <button type="button" className="underline underline-offset-2" onClick={(e) => openBeside({ kind: "workflow", id: routing.workflowId, opener: e.currentTarget })}>{count(routing.leads)} leads today</button>
@@ -66,7 +66,7 @@ export function Campaigns({ data, d, order }: { data: HomeData; d: Disclosure; o
       )}
 
       {forms && (
-        <p className={"mt-2 rounded-md border px-3 py-2 text-sm" + (capReached ? " border-destructive" : "")}>
+        <p className="mt-2 t-body">
           <span className="font-medium">Forms</span>
           <span className="text-muted-foreground">: </span>
           <button type="button" className="underline underline-offset-2" onClick={(e) => openBeside({ kind: "form", id: forms.formId, opener: e.currentTarget })}>{count(forms.submissions)} submissions today</button>

@@ -20,6 +20,7 @@ import { seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import { copyRows, usedByLine } from "./Templates"
 import { engage } from "./store"
+import { Separator } from "@/components/ui/separator"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Container } from "../../ui/Section"
 import { BesideLink, FollowLink, ago, day, h1Of, n, toast } from "./shared"
@@ -85,7 +86,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="border-b px-4 pt-4 sm:px-6">
+      <header className="px-4 pt-4 sm:px-6">
         <a href={href("/ollopa/templates")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
           <ArrowLeft className="size-3" aria-hidden="true" />Templates and snippets
         </a>
@@ -99,6 +100,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
           {row.owner} · updated {row.updated ? day(row.updated) : "—"} · last used {row.lastUsed ? ago(row.lastUsed) : "never"}
         </p>
       </header>
+      <Separator />
 
       <div className="grid gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-4">
@@ -117,14 +119,14 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
               </>
             ) : (
               /* Not yours to change: the copy is readable and the edit controls are absent, not greyed. */
-              <div className="rounded-md border p-3">
+              <div>
                 {row.kind === "Template" && <p className="t-body font-medium">{subject || "No subject"}</p>}
                 <p className="mt-1 whitespace-pre-wrap text-sm">{body}</p>
               </div>
             )}
 
             {row.snippetIds.length > 0 && (
-              <div className="rounded-md border p-3">
+              <div>
                 <p className="t-label">Snippets this template nests</p>
                 <ul className="mt-1 space-y-1 text-xs">
                   {row.snippetIds.map((sid) => {
@@ -193,7 +195,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
               : shownUses.length === 0
                 ? <p className="t-body text-muted-foreground">Nothing that uses this matches "{usesQ}".</p>
                 : (
-                  <ul className="divide-y border-t text-sm">
+                  <ul className="divide-y text-sm">
                     {shownUses.map((u) => (
                       <li key={u.key} className="py-2">
                         {/* A look beside, so the copy being edited stays on screen. A campaign has no
@@ -222,7 +224,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                 {n(unfilled.length)} {unfilled.length === 1 ? "variable has" : "variables have"} no value for {person?.name}: {unfilled.join(", ")}
               </p>
             )}
-            <div className="mt-2 rounded-md border p-2">
+            <div className="mt-2">
               {row.kind === "Template" && <p className="t-body font-medium">{render(subject) || "No subject"}</p>}
               <p className="mt-1 whitespace-pre-wrap text-sm">{render(body)}</p>
             </div>

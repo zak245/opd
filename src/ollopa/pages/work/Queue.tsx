@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { follow } from "../../chain"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { CardFooter } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { Container } from "../../ui/Section"
 import { EmptyState } from "../../ui/EmptyState"
 import type { Task } from "../../data/seed"
@@ -125,7 +127,8 @@ export function Queue(p: QueueProps) {
       )}
       footer={behind}
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y px-4 py-1.5 t-small">
+      <Separator />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 t-small">
         {p.scores ? (
           <span className="flex items-center gap-2">
             Sort:
@@ -139,6 +142,8 @@ export function Queue(p: QueueProps) {
         )}
         {p.tasks.some((t) => t.kind === "LinkedIn") && <InviteCounter session={p.session} onSnoozeRest={p.onSnoozeRest} />}
       </div>
+
+      <Separator />
 
       {/* -------------------------------------------------------------------------- the task */}
       <div className="px-4 py-4">
@@ -156,9 +161,10 @@ export function Queue(p: QueueProps) {
             </p>
           </div>
 
-          {/* The contact, already open: the queue never asks for a door to see who this is. A
-              divided region inside the task's container, never a second box (DESIGN.md §5). */}
-          <div className="border-y py-3">
+          {/* The contact, already open: the queue never asks for a door to see who this is. Set
+              apart by the library's rules, never by a box of its own (DESIGN.md §4). */}
+          <Separator />
+          <div className="py-3">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1" data-item={task.contactId} data-item-label={task.contact}>
               <button
                 type="button"
@@ -261,7 +267,7 @@ export function Queue(p: QueueProps) {
       {/* Done is the act the queue exists for, so it is the one filled control here; snoozing and
           skipping are the other two the person came for. A call has four comparable outcomes
           instead, and four comparable acts are never one filled and three outlined. */}
-      <div className="border-t px-4 py-3">
+      <CardFooter className="border-t px-4 pt-3">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
           {task.kind === "Call" ? (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -292,7 +298,7 @@ export function Queue(p: QueueProps) {
             ]) as Action[]}
           />
         </div>
-      </div>
+      </CardFooter>
 
       {meetingOpen && (
         <MeetingPanel

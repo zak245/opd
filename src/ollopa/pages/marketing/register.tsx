@@ -18,6 +18,7 @@
 import { type ReactNode } from "react"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
+import { Separator } from "@/components/ui/separator"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { ink } from "./look"
@@ -123,7 +124,8 @@ const AudienceBeside: BesideComponent = ({ session, id }) => {
       {/* Freezing and making live are the one act this chain runs from here, and the model keeps it
           at level one for every seat because a live audience is a commitment the send makes. Both
           directions are reversible and free, so nothing is written under the control. */}
-      <div className="border-t pt-3">
+      <Separator className="my-1" />
+      <div>
         <Actions surface="pane" layout="stack" items={acts(d, [
           {
             item: "aud.mode",
@@ -211,7 +213,9 @@ const CampaignBeside: BesideComponent = ({ session, id }) => {
           the record page with their confirmations. A seat that does not own this campaign gets the
           sentence naming who does, not a control it cannot press (RULES.md rule 4). */}
       {sending && (
-        <div className="border-t pt-3">
+        <>
+        <Separator className="my-1" />
+        <div>
           {mine ? (
             <Actions surface="pane" layout="stack" items={acts(d, [{
               item: "camp.act.pause",
@@ -226,9 +230,10 @@ const CampaignBeside: BesideComponent = ({ session, id }) => {
               },
             }])} />
           ) : (
-            <p className="text-xs text-muted-foreground">Owned by {c.owner}; the owner or an admin can pause this send.</p>
+            <p className="t-small text-muted-foreground">Owned by {c.owner}; the owner or an admin can pause this send.</p>
           )}
         </div>
+        </>
       )}
     </div>
   )
@@ -286,7 +291,8 @@ const FormBeside: BesideComponent = ({ session, id }) => {
         },
       ]} />
 
-      <div className="border-t pt-3">
+      <Separator className="my-1" />
+      <div>
         <Actions surface="pane" layout="stack" items={acts(d, [{
           item: "form.row",
           action: {

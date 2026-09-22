@@ -5,7 +5,7 @@
 // and what happens at the ceiling; who it never touches; and only then the switch that turns it on.
 // One door at the foot holds the run history, and the two things inside it are sections, not doors,
 // so nothing here is three levels deep.
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,7 +17,8 @@ import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { FAMILY, PERSON_FAMILY, ink } from "./look"
+import { FAMILY, PERSON_FAMILY, RowGap, ink } from "./look"
+import { Separator } from "@/components/ui/separator"
 import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
@@ -153,8 +154,10 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           </p>
           {breached.length > 0 && (
             <ul className="text-sm">
-              {breached.map(({ run, over }) => (
-                <li key={run.id} data-item={run.personId} data-item-label={run.person} className="t-body flex flex-wrap justify-between gap-2 border-t py-1.5">
+              {breached.map(({ run, over }, i) => (
+                <Fragment key={run.id}>
+                {i > 0 && <RowGap />}
+                <li data-item={run.personId} data-item-label={run.person} className="t-body flex flex-wrap justify-between gap-2 py-1.5">
                   <span className="min-w-0">
                     <span className="inline-flex items-center gap-1.5">
                       <FamilyIcon of={PERSON_FAMILY} />
@@ -168,6 +171,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                     · {run.assignedTo ?? "nobody"}
                   </span>
                 </li>
+                </Fragment>
               ))}
             </ul>
           )}
@@ -205,10 +209,13 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         {/* A description list: condition then action, so the pairing survives without the layout. */}
         <dl className="space-y-2">
           {w.rules.map((r, i) => (
-            <div key={r.id} id={r.id} className="border-t pt-2 first:border-t-0 first:pt-0">
+            <Fragment key={r.id}>
+            {i > 0 && <Separator />}
+            <div id={r.id} className="pt-2 first:pt-0">
               <dt className="text-sm font-medium">Rule {i + 1} · If {r.condition.toLowerCase()}</dt>
               <dd className="text-sm text-muted-foreground">then {r.action} — {r.config}</dd>
             </div>
+            </Fragment>
           ))}
         </dl>
 
@@ -358,8 +365,10 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         <section>
           <h4 className="t-label pb-1 uppercase tracking-wide text-muted-foreground">Enrolled ({num(shownEnrolled.length)})</h4>
           <ul>
-            {shownEnrolled.map((r) => (
-              <li key={r.id} data-item={r.personId} data-item-label={r.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
+            {shownEnrolled.map((r, i) => (
+              <Fragment key={r.id}>
+              {i > 0 && <RowGap />}
+              <li data-item={r.personId} data-item-label={r.person} className="t-small flex flex-wrap justify-between gap-2 py-1.5">
                 <span>
                   <span className="inline-flex items-center gap-1.5">
                     <FamilyIcon of={PERSON_FAMILY} className="size-3" />
@@ -375,6 +384,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                     : <>created a task for {r.assignedTo} · <a className="underline" href={href("/ollopa/tasks")} onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/tasks", from(r.personId)) } }}>open the task</a> · {r.credits} credits</>}
                 </span>
               </li>
+              </Fragment>
             ))}
             {shownEnrolled.length === 0 && <li className="py-3 text-xs text-muted-foreground">Nothing matches these filters.</li>}
           </ul>
@@ -383,10 +393,12 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         <section>
           <h4 className="t-label pb-1 uppercase tracking-wide text-muted-foreground">Could not route ({num(shownExceptions.length)})</h4>
           <ul>
-            {shownExceptions.map((r) => {
+            {shownExceptions.map((r, i) => {
               const rule = ruleForReason(w, r.reason)
               return (
-                <li key={r.id} data-item={r.personId} data-item-label={r.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
+                <Fragment key={r.id}>
+                {i > 0 && <RowGap />}
+                <li data-item={r.personId} data-item-label={r.person} className="t-small flex flex-wrap justify-between gap-2 py-1.5">
                   <span>
                     <span className="inline-flex items-center gap-1.5">
                       <FamilyIcon of={PERSON_FAMILY} className="size-3" />
@@ -400,6 +412,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                     {rule.ruleId ? <a className="underline" href={`#${rule.ruleId}`}>{rule.label}</a> : <span className="text-muted-foreground">{rule.label}</span>}
                   </span>
                 </li>
+                </Fragment>
               )
             })}
             {shownExceptions.length === 0 && <li className="py-3 text-xs text-muted-foreground">Nothing could not be routed.</li>}
@@ -504,7 +517,9 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
             </Select>
           </div>
           {tested && person && (
-            <ol className="space-y-2 border-t pt-3 text-sm">
+            <>
+            <Separator />
+            <ol className="t-body space-y-2 pt-3">
               <li>
                 <span className="font-medium">Enrolment</span>
                 <p className="text-xs text-muted-foreground">
@@ -521,6 +536,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                 </li>
               ))}
             </ol>
+            </>
           )}
         </div>
       </Panel>

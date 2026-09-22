@@ -10,7 +10,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Actions } from "../../ui/Actions"
-import { Group } from "../../ui/Section"
+import { Separator } from "@/components/ui/separator"
 import { Panel } from "../../ui/Panel"
 import type { Task } from "../../data/seed"
 import { Chip } from "../../ui/Identity"
@@ -51,7 +51,7 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
     <div className="space-y-4">
       <InviteCounter session={session} onSnoozeRest={onSnoozeRest} />
 
-      <div className="border-b pb-3">
+      <div className="pb-3">
         <div className="font-medium">{task.contact}</div>
         <div className="text-sm text-muted-foreground">{contact?.title} · {task.company}</div>
         <div className="pt-1 text-sm">
@@ -93,8 +93,9 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
         </Button>
       </div>
 
-      <div className="border-t pt-3">
-        <p className="text-xs text-muted-foreground">
+      <Separator className="my-3" />
+      <div>
+        <p className="t-small text-muted-foreground">
           ollopA cannot see LinkedIn. Marking complete records that you sent it and advances the sequence.
         </p>
         {/* An outline, not a filled control: in the queue the page is the one task and Done in the

@@ -4,9 +4,10 @@
 // Nothing here is hover-only: a row's actions are buttons in the row, visible on focus as well as
 // hover, and repeated in the row's "…" menu with the key that runs them. J and K move, Enter opens,
 // and the letters are the ones the menu prints.
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { Children, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
@@ -73,7 +74,7 @@ export function Section({ id, title, count, link, order = 0, children }: Section
 /** One sentence where a list would be: an empty section keeps its shape rather than disappearing. */
 export function Nothing({ text, link }: { text: string; link?: { label: string; to: string } }) {
   return (
-    <p className="t-body rounded-lg border border-dashed px-3 py-2.5 text-muted-foreground">
+    <p className="t-body px-3 py-2.5 text-muted-foreground">
       {text}{link && (
         <> <button type="button" className="text-foreground underline underline-offset-4"
                    onClick={() => follow(link.to, originHere())}>{link.label}</button></>
@@ -85,29 +86,38 @@ export function Nothing({ text, link }: { text: string; link?: { label: string; 
 /* ---------------------------------------------------------------------------------- the list */
 
 export function RowList({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  const list = useRef<HTMLUListElement>(null)
+  const list = useRef<HTMLDivElement>(null)
 
-  function move(e: KeyboardEvent<HTMLUListElement>, step: 1 | -1) {
-    const rows = Array.from(list.current?.querySelectorAll<HTMLElement>("li[data-row]") ?? [])
-    const here = (document.activeElement as HTMLElement | null)?.closest("li[data-row]") as HTMLElement | null
+  function move(e: KeyboardEvent<HTMLDivElement>, step: 1 | -1) {
+    const rows = Array.from(list.current?.querySelectorAll<HTMLElement>("[data-row]") ?? [])
+    const here = (document.activeElement as HTMLElement | null)?.closest("[data-row]") as HTMLElement | null
     const next = rows[Math.min(rows.length - 1, Math.max(0, rows.indexOf(here!) + step))]
     if (next) { next.focus(); e.preventDefault() }
   }
 
+  // The rows are the card's own rows: no second box around them, and the library's `Separator`
+  // between them rather than a border drawn by hand (DESIGN.md §4).
   return (
-    <ul
+    <div
       ref={list}
+      role="list"
       aria-label={label}
-      className={cn("divide-y rounded-lg border", className)}
+      className={cn(className)}
       onKeyDown={(e) => {
         if (typing(e.target)) return
         if (e.key === "ArrowDown" || e.key.toLowerCase() === "j") move(e, 1)
         if (e.key === "ArrowUp" || e.key.toLowerCase() === "k") move(e, -1)
       }}
     >
-      {children}
-    </ul>
+      {divided(children)}
+    </div>
   )
+}
+
+/** The library's rule between one row and the next, and nowhere else. */
+function divided(children: ReactNode): ReactNode {
+  return Children.toArray(children).flatMap((child, i) =>
+    i === 0 ? [child] : [<Separator key={`sep-${i}`} />, child])
 }
 
 function typing(target: EventTarget | null): boolean {
@@ -135,7 +145,8 @@ export interface RowProps {
 
 export function Row({ keys = {}, onEnter, children, className, seen, itemId, itemLabel }: RowProps) {
   return (
-    <li
+    <div
+      role="listitem"
       data-row
       data-item-id={itemId}
       data-item={itemId}
@@ -143,7 +154,7 @@ export function Row({ keys = {}, onEnter, children, className, seen, itemId, ite
       tabIndex={0}
       ref={seen}
       className={cn(
-        "group flex flex-wrap items-start gap-x-3 gap-y-1 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg",
+        "group flex flex-wrap items-start gap-x-3 gap-y-1 px-3 py-2.5 t-body",
         "focus-within:bg-muted/50 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
@@ -162,7 +173,7 @@ export function Row({ keys = {}, onEnter, children, className, seen, itemId, ite
       }}
     >
       {children}
-    </li>
+    </div>
   )
 }
 

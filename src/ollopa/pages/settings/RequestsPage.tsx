@@ -8,11 +8,14 @@
 // many people feel the change, and Cost is the monthly total on an upgrade row before it is opened.
 // Where nothing in the workspace is locked, the upgrade kind cannot occur and the Cost column is
 // removed rather than shown empty.
-import { useMemo, useState } from "react"
+import { Fragment, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Section"
+import { Card, CardContent } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Container } from "../../ui/Section"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { Door, DoorGroup } from "../../ui/Door"
@@ -145,7 +148,7 @@ export function RequestsPage({ session }: { session: Session }) {
     <div className="block sm:flex sm:h-full sm:flex-col">
       <DoorGroup>
         <div className="shrink-0 px-4 pt-5 sm:px-6">
-          <Group className="rounded-[var(--radius)] px-3 py-2">
+          <Card><CardContent className="py-3">
           <p className="t-body">
             <strong className="font-semibold">{plural(open.length, "waiting", "waiting")}</strong>
             {" · "}
@@ -155,26 +158,25 @@ export function RequestsPage({ session }: { session: Session }) {
             {oldest && <> · oldest {businessDaysBetween(oldest.raisedOn)} days ({oldest.requester.user})</>}
           </p>
           <p className="t-small mt-0.5 text-muted-foreground">Nothing here closes on its own.</p>
-          </Group>
+          </CardContent></Card>
 
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <button
-              className={cn("rounded-full border px-2.5 py-0.5 text-xs", chip === "all" ? "bg-foreground text-background" : "hover:bg-muted")}
-              aria-pressed={chip === "all"} onClick={() => setChip("all")}
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              aria-label="Filter by state"
+              value={chip}
+              onValueChange={(v) => setChip((v || "all") as typeof chip)}
+              className="flex-wrap"
             >
-              Everything ({all.length})
-            </button>
-            {CHIP_ORDER.map((s) => {
-              const n = all.filter((r) => r.state === s).length
-              if (n === 0) return null
-              return (
-                <button key={s} aria-pressed={chip === s}
-                  className={cn("rounded-full border px-2.5 py-0.5 text-xs", chip === s ? "bg-foreground text-background" : "hover:bg-muted")}
-                  onClick={() => setChip(chip === s ? "all" : s)}>
-                  {STATE_LABEL[s]} ({n})
-                </button>
-              )
-            })}
+              <ToggleGroupItem value="all">Everything ({all.length})</ToggleGroupItem>
+              {CHIP_ORDER.map((s) => {
+                const n = all.filter((r) => r.state === s).length
+                if (n === 0) return null
+                return <ToggleGroupItem key={s} value={s}>{STATE_LABEL[s]} ({n})</ToggleGroupItem>
+              })}
+            </ToggleGroup>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -237,10 +239,12 @@ export function RequestsPage({ session }: { session: Session }) {
         <div className="px-4 pb-6 pt-4 sm:hidden">
         <Container component="list" heading="The queue" count={`${rows.length} shown of ${all.length}`} padded={false} bodyClassName="px-0">
         <ul>
-          {rows.map((r) => {
+          {rows.map((r, i) => {
             const w = waitingOf(r, target)
             return (
-              <li key={r.id} className="border-t px-4 py-3 first:border-t-0">
+              <Fragment key={r.id}>
+              {i > 0 && <Separator />}
+              <li className="px-4 py-3">
                 <a className="text-sm font-medium underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}
@@ -255,6 +259,7 @@ export function RequestsPage({ session }: { session: Session }) {
                   {r.decisionOwner} decides
                 </p>
               </li>
+              </Fragment>
             )
           })}
         </ul>
@@ -284,7 +289,8 @@ export function RequestsPage({ session }: { session: Session }) {
           />
         </div>
       </DoorGroup>
-      <p className="shrink-0 border-t px-4 py-2 text-xs text-muted-foreground sm:px-6">
+      <Separator />
+      <p className="t-small shrink-0 px-4 py-2 text-muted-foreground sm:px-6">
         {b.name} · a request is raised where the problem was met, never here.{" "}
         {hasUpgrades ? "An upgrade row carries its monthly total before it is opened." : `Nothing is locked on ${b.plan.name}, so the upgrade kind cannot occur here and its column is removed.`}
       </p>

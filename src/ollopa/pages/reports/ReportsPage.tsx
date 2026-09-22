@@ -25,6 +25,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor, TODAY, type Deal } from "../../data/seed"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
+import { Separator } from "@/components/ui/separator"
 import { Container } from "../../ui/Section"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
@@ -335,19 +336,18 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             {tabs.map((t) => {
               const locked = lockedTab(t.key)
               const button = (
-                <button
+                <Button
                   key={t.key}
                   role="tab"
+                  variant={report === t.key ? "default" : "ghost"}
+                  size="sm"
                   aria-selected={report === t.key}
                   aria-keyshortcuts={t.key1to5}
                   onClick={() => setReport(t.key)}
-                  className={cn(
-                    "whitespace-nowrap rounded-md px-3 py-1.5 t-body focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    report === t.key ? "bg-foreground text-background" : "hover:bg-muted",
-                  )}
+                  className="whitespace-nowrap"
                 >
                   {t.label}
-                </button>
+                </Button>
               )
               return locked ? (
                 <Locked key={t.key} feature={`The ${t.label} report`} plan={all.plan} pricePerMonth={all.pricePerMonth} what={all.what}>
@@ -492,7 +492,8 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             disclosed is the record-level detail behind the numbers, never the numbers. */}
         {one("rep.overview") && strip.length > 1 && (
           <Container component="section" padded={false} heading="Overview" data-print-hide>
-            <ul className="border-t">
+            <Separator />
+            <ul>
               {strip.map((t) => {
                 const locked = lockedTab(t.key)
                 return (

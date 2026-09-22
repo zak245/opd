@@ -24,6 +24,7 @@ import { engage, useEngage } from "./store"
 import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
+import { Separator } from "@/components/ui/separator"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { type Col, DataTable, RowOpen, TableCard, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
@@ -222,18 +223,18 @@ export function ListsPage({ session }: { session: Session }) {
             <h3 className="t-body font-medium">New list</h3>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               {KINDS_OF_LIST.map((k) => (
-                <button
+                <Button
                   key={k.id}
-                  type="button"
-                  className="rounded-md border p-3 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  variant="outline"
+                  className="h-auto justify-start p-3 font-normal"
                   onClick={() => {
                     setChooser(false)
                     if (k.id === "csv") { navigate("/ollopa/import"); return }
                     toast(`New ${k.id === "static" ? "static list" : "segment"} · name it, then ${k.id === "static" ? "pick members" : "set filters"}`)
                   }}
                 >
-                  <div className="t-body font-medium">{k.label}</div>
-                </button>
+                  <span className="t-body font-medium">{k.label}</span>
+                </Button>
               ))}
             </div>
           </div>
@@ -359,22 +360,22 @@ export function ListsPage({ session }: { session: Session }) {
         </div>
 
         {/* ------------------------------------------------------------- delete, with its words */}
-        {confirming && (
-          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t border-destructive/40 bg-popover px-4 py-3 sm:px-6">
+        {confirming && (<><Separator />
+          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 bg-popover px-4 py-3 sm:px-6">
             <p className="text-sm">
               Delete <span className="font-medium">{confirming.name}</span>. The {n(confirming.memberIds.length)}{" "}
               {confirming.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
             </p>
             <Button size="sm" variant="destructive" onClick={() => del(confirming)}>Delete list</Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>
-          </div>
+          </div></>
         )}
 
-        {undo && (
-          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t bg-popover px-4 py-2 sm:px-6">
+        {undo && (<><Separator />
+          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 bg-popover px-4 py-2 sm:px-6">
             <span className="text-sm">{undo.name} deleted. The people stay in People.</span>
             <Button size="sm" variant="outline" onClick={() => { engage.undeleteList(session.business, undo.id); setUndo(null) }}>Undo</Button>
-          </div>
+          </div></>
         )}
 
         {enrolling && (

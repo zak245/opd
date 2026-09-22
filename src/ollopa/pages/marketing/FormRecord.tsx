@@ -5,7 +5,7 @@
 // how many matched; what happens at the cap — submissions are still accepted and still routed, marked
 // "not enriched"; and the count of submissions that reached nobody. A form that starts refusing people
 // because a credit budget ran out is a form that loses the pipeline it exists to collect.
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,7 +17,8 @@ import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { FAMILY, PERSON_FAMILY, ink } from "./look"
+import { FAMILY, PERSON_FAMILY, RowGap, ink } from "./look"
+import { Separator } from "@/components/ui/separator"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -95,11 +96,14 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
 
   const fieldList = (
     <div className="space-y-1">
-      {f.fields.map((x) => (
-        <div key={x.label} className="flex items-baseline justify-between gap-3 border-t py-1.5 first:border-t-0">
-          <span className="t-body">{x.label}</span>
-          <span className="t-small text-muted-foreground">{x.kind === "asked" ? "asked" : `enriched · ${x.credits} credit${x.credits === 1 ? "" : "s"}`}</span>
-        </div>
+      {f.fields.map((x, i) => (
+        <Fragment key={x.label}>
+          {i > 0 && <Separator />}
+          <div className="flex items-baseline justify-between gap-3 py-1.5">
+            <span className="t-body">{x.label}</span>
+            <span className="t-small text-muted-foreground">{x.kind === "asked" ? "asked" : `enriched · ${x.credits} credit${x.credits === 1 ? "" : "s"}`}</span>
+          </div>
+        </Fragment>
       ))}
     </div>
   )
@@ -200,10 +204,12 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
         : (
           <div className="space-y-2">
             <ul className="t-body">
-              {submissions.map((s) => {
+              {submissions.map((s, i) => {
                 const contact = seed.contacts.find((c) => c.id === s.contactId)
                 return (
-                  <li key={s.id} data-item={s.contactId} data-item-label={s.name} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-2 first:border-t-0">
+                  <Fragment key={s.id}>
+                  {i > 0 && <RowGap />}
+                  <li data-item={s.contactId} data-item-label={s.name} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
                     <span className="min-w-0">
                       <span className="inline-flex items-center gap-1.5">
                         <FamilyIcon of={PERSON_FAMILY} />
@@ -223,6 +229,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
                         : <Chip status="failed">could not be routed</Chip>}
                     </span>
                   </li>
+                  </Fragment>
                 )
               })}
               {submissions.length === 0 && <li className="py-4 text-muted-foreground">Nothing here matches “{q}”.</li>}

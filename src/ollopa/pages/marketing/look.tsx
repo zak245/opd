@@ -4,6 +4,7 @@
 // `Chip`; every number that has passed a threshold takes its ink from the status set, with the word
 // that explains it always beside it — a bounce rate is amber because the guard warns, not because
 // amber looked right.
+import { Separator } from "@/components/ui/separator"
 import { STATUSES, type Status } from "../../identity"
 import { inkOf } from "../../ui/Identity"
 
@@ -22,3 +23,12 @@ export const FAMILY = "engagement"
 
 /** The family a recipient, a submission or an enrolled person belongs to. */
 export const PERSON_FAMILY = "people"
+
+/**
+ * The divider between two rows of a list. The library draws it; nothing in this folder draws a
+ * border of its own (DESIGN.md §4). It is hidden from assistive technology, so a list of nine
+ * things is still nine things.
+ */
+export function RowGap() {
+  return <li aria-hidden="true"><Separator /></li>
+}

@@ -15,6 +15,9 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { navigate } from "@/app/router"
 import { back, useTrail } from "../../chain"
@@ -57,8 +60,11 @@ const SEAT_JOBS: { id: Role; label: string }[] = [
   { id: "cs", label: "Keeping customers and renewals" },
 ]
 
-/** One option, as a divided row inside its question's container. The box is the group, not the row. */
-const ROW = "t-body flex items-center gap-2 border-t px-4 py-3 first:border-t-0"
+/** The shape the three questions share: a full-width stack of the library's toggle items. */
+const GROUP = "grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+const ITEM = "h-auto justify-start whitespace-normal px-3 py-2.5 text-left"
+/** The one answer that is not a seat: everybody does everything. */
+const EVERY = "everything"
 
 const STARTER_SEATS = 3
 const PRICE = { Starter: 49, Growth: 79, Scale: 129 }
@@ -218,10 +224,11 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   return (
     <div className={cn(!inShell && "min-h-screen bg-muted/30")}>
       {!inShell && (
-        <header className={cn("bg-sidebar", "flex h-14 items-center gap-3 border-x-0 border-t-0 px-4")}>
+        <header className="relative flex h-14 items-center gap-3 bg-sidebar px-4">
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
           <span className="t-label">{workspace.name}</span>
           <span className="t-body text-muted-foreground">· {session.user}</span>
+          <Separator orientation="horizontal" className="absolute inset-x-0 bottom-0" />
         </header>
       )}
 
@@ -246,56 +253,46 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           </label>
         </Container>
 
-        {/* One container per question, the options divided inside it: the box is the group, and a
-            box per option would be a second group where there is one (DESIGN.md §5). */}
-        <Container as="fieldset" component="form" className="mt-4" aria-label="What are you here to do first?" heading="What are you here to do first?" padded={false}>
-          <div>
-            {JOBS.map((j) => (
-              <label key={j.id} className={cn(ROW, firstJob === j.id && "font-medium")}>
-                <input
-                  type="radio"
-                  name="firstJob"
-                  checked={firstJob === j.id}
-                  onChange={() => { setFirstJob(j.id); save({ firstJob: j.id }) }}
-                />
-                {j.label}
-              </label>
-            ))}
-          </div>
+        {/* One section per question, its options a library ToggleGroup: one choice at a time for
+            the first two, several for the third. Nothing here is a control drawn by hand. */}
+        <Container as="section" className="mt-4" aria-label="What are you here to do first?" heading="What are you here to do first?">
+          <ToggleGroup
+            type="single" variant="outline" className={GROUP} aria-label="What are you here to do first?"
+            value={firstJob ?? ""}
+            onValueChange={(v) => { if (!v) return; const id = v as NonNullable<SetupAnswers["firstJob"]>; setFirstJob(id); save({ firstJob: id }) }}
+          >
+            {JOBS.map((j) => <ToggleGroupItem key={j.id} value={j.id} className={ITEM}>{j.label}</ToggleGroupItem>)}
+          </ToggleGroup>
         </Container>
 
-        <Container as="fieldset" component="form" className="mt-4" aria-label="How many people will use it?" heading="How many people will use it?" padded={false}
+        <Container as="section" className="mt-4" aria-label="How many people will use it?" heading="How many people will use it?"
           footer={<Chip status="new">{priceLine(people)}</Chip>}>
-          <div>
-            {SIZES.map((s) => (
-              <label key={s.id} className={cn(ROW, people === s.id && "font-medium")}>
-                <input type="radio" name="people" checked={people === s.id} onChange={() => { setPeople(s.id); save({ people: s.id }) }} />
-                {s.label}
-              </label>
-            ))}
-          </div>
+          <ToggleGroup
+            type="single" variant="outline" className="flex-wrap justify-start" aria-label="How many people will use it?"
+            value={people ?? ""}
+            onValueChange={(v) => { if (!v) return; const id = v as NonNullable<SetupAnswers["people"]>; setPeople(id); save({ people: id }) }}
+          >
+            {SIZES.map((s) => <ToggleGroupItem key={s.id} value={s.id}>{s.label}</ToggleGroupItem>)}
+          </ToggleGroup>
         </Container>
 
-        <Container as="fieldset" component="form" className="mt-4" aria-label="Which of these jobs exist here?" heading="Which of these jobs exist here?" padded={false}>
-          <div>
-            {SEAT_JOBS.map((s) => (
-              <label key={s.id} className={cn(ROW, seats.includes(s.id) && !everything && "font-medium", everything && "opacity-60")}>
-                <input
-                  type="checkbox"
-                  checked={seats.includes(s.id) && !everything}
-                  onChange={() => {
-                    const next = seats.includes(s.id) ? seats.filter((x) => x !== s.id) : [...seats, s.id]
-                    setSeats(next); setEverything(false); save({ seats: next, everything: false })
-                  }}
-                />
-                {s.label}
-              </label>
-            ))}
-            <label className={cn(ROW, everything && "font-medium")}>
-              <input type="checkbox" checked={everything} onChange={() => { const v = !everything; setEverything(v); setSeats(v ? [] : seats); save({ everything: v, seats: v ? [] : seats }) }} />
-              We all do everything
-            </label>
-          </div>
+        <Container as="section" className="mt-4" aria-label="Which of these jobs exist here?" heading="Which of these jobs exist here?">
+          <ToggleGroup
+            type="multiple" variant="outline" className={GROUP} aria-label="Which of these jobs exist here?"
+            value={everything ? [EVERY] : seats}
+            onValueChange={(next) => {
+              const was = everything ? [EVERY] : (seats as string[])
+              const added = next.find((v) => !was.includes(v))
+              const gone = was.find((v) => !next.includes(v))
+              if (added === EVERY) { setEverything(true); setSeats([]); save({ everything: true, seats: [] }); return }
+              if (gone === EVERY) { setEverything(false); save({ everything: false, seats }); return }
+              const kept = next.filter((v) => v !== EVERY) as Role[]
+              setSeats(kept); setEverything(false); save({ seats: kept, everything: false })
+            }}
+          >
+            {SEAT_JOBS.map((s) => <ToggleGroupItem key={s.id} value={s.id} className={ITEM}>{s.label}</ToggleGroupItem>)}
+            <ToggleGroupItem value={EVERY} className={ITEM}>We all do everything</ToggleGroupItem>
+          </ToggleGroup>
         </Container>
 
         <Container as="section" component="section" aria-live="polite" className="mt-4"
@@ -309,7 +306,8 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
             </div>
           )}
 
-          <div className="mt-4 border-t pt-3">
+          <Separator className="mt-4" />
+          <div className="pt-3">
             <h3>
               <button
                 className="t-label flex items-center gap-1"
@@ -343,14 +341,12 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                   value={row.email}
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
                 />
-                <select
-                  className="t-body rounded-[var(--radius)] border bg-transparent px-2"
-                  aria-label="Seat"
-                  value={row.seat}
-                  onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: e.target.value as Role } : r)))}
-                >
-                  {(["sdr", "ae", "marketer", "cs", "admin"] as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
-                </select>
+                <Select value={row.seat} onValueChange={(v) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: v as Role } : r)))}>
+                  <SelectTrigger aria-label="Seat" className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(["sdr", "ae", "marketer", "cs", "admin"] as Role[]).map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             ))}
           </div>
@@ -358,7 +354,8 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
         </Container>
 
         {/* The wizard's footer is a form bar: the primary at the leading edge, Skip after it. */}
-        <div className="mt-8 flex flex-wrap items-center gap-3 border-t pt-6">
+        <Separator className="mt-8" />
+        <div className="flex flex-wrap items-center gap-3 pt-6">
           <Actions surface="form" items={[
             { label: trail.length > 0 ? "Save the answers" : "Start", kind: "primary",
               disabledBecause: answered ? undefined : "Answer all three questions",

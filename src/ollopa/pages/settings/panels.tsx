@@ -3,7 +3,7 @@
 //
 // `X-user`, `X-removal`, `X-key` and `X-mcpscope` carry their whole consequence inside; the rest are
 // field lists with the controls the row exists for.
-import { useState, type ReactNode } from "react"
+import { Fragment, useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,7 @@ import { href } from "@/app/router"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Group } from "../../ui/Section"
+import { Separator } from "@/components/ui/separator"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
@@ -31,14 +31,17 @@ export function Fields({ rows }: { rows: { label: string; value: ReactNode; note
   return (
     // The sheet around this is the container; inside it a group is a divider, never a second box.
     <dl className="grid gap-3">
-      {rows.map((r) => (
-        <div key={r.label} className="grid gap-1 border-b pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-3">
+      {rows.map((r, i) => (
+        <Fragment key={r.label}>
+        {i > 0 && <Separator />}
+        <div className="grid gap-1 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-3">
           <dt className="t-label text-muted-foreground">{r.label}</dt>
           <dd className="t-body">
             {r.value}
             {r.note && <p className="t-small mt-1 text-muted-foreground">{r.note}</p>}
           </dd>
         </div>
+        </Fragment>
       ))}
     </dl>
   )
@@ -286,7 +289,7 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
   return (
     <Panel id="x-removal" title="Removal list" {...p}
       footer={<Actions surface="dialog" items={[{ label: "Export as CSV", kind: "secondary", onClick: () => toast("Exported the removal list as CSV.") }]} />}>
-      <Group className="rounded-[var(--radius)] p-3">
+      <div>
         <p className="t-label flex items-center gap-2">
           Delete everywhere
           <Chip status="do not contact">Cannot be undone</Chip>
@@ -302,7 +305,7 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
             consequence: `Deletes ${removal.people} people here, unlinks them in ${b.crm?.split(" ")[0] ?? "the CRM"}, removes them from ${plural(removal.lists, "list")} and ${plural(removal.sequences, "sequence")}, and stops ${plural(removal.jobs, "enrichment job")} from re-importing them.`,
             confirmLabel: `Delete ${removal.people} people` },
         }]} />
-      </Group>
+      </div>
       <dl className="mt-4 grid gap-2 border-t pt-4 text-sm">
         {([
           { label: "Sequences that still hold them", n: removal.sequences, to: "/ollopa/sequences" },
@@ -497,14 +500,17 @@ export function CliPanel({ session, ...p }: PanelShell & { session: Session }) {
       {seed.cliDevices.length === 0
         ? <p className="text-sm text-muted-foreground">No device has been authorised. <code className="rounded bg-muted px-1">ollopa auth login</code> starts one.</p>
         : <ul className="grid gap-3">
-            {seed.cliDevices.map((d) => (
-              <li key={d.id} className="grid gap-0.5 border-b pb-3 last:border-b-0">
+            {seed.cliDevices.map((d, i) => (
+              <Fragment key={d.id}>
+              {i > 0 && <Separator />}
+              <li className="grid gap-0.5 pb-3 last:pb-0">
                 <span className="text-sm font-medium">{d.label}</span>
                 <span className="text-xs text-muted-foreground">{d.user} · {d.workspace} · authorised {day(d.authorisedOn)} · last used {d.lastUsedAt ? day(d.lastUsedAt) : "never"}</span>
                 <Actions className="mt-1" surface="card" items={[{ label: "Revoke", kind: "destructive",
                   onClick: () => toast(`Revoked · ${d.label}`),
                   irreversible: { title: `Revoke ${d.label}?`, consequence: "That device has to authorise again before it can run a command.", confirmLabel: "Revoke the device" } }]} />
               </li>
+              </Fragment>
             ))}
           </ul>}
     </Panel>

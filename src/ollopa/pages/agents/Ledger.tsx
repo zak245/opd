@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
+import { Separator } from "@/components/ui/separator"
 import { Chip } from "../../ui/Identity"
 import { Container } from "../../ui/Section"
 import { Panel } from "../../ui/Panel"
@@ -236,7 +237,8 @@ export function Ledger(p: LedgerProps) {
       {/* The filters that are not promoted stay one door, labelled by what is inside it — a door,
           not a second box, because a container never holds a container (DESIGN.md §5). */}
       {inDoor.length > 0 && (
-        <div className="hidden border-t sm:block">
+        <div className="hidden sm:block">
+          <Separator />
           <Door id="agents.filters" label={`${inDoor[0][0].toUpperCase() + inDoor[0].slice(1)}${inDoor.length > 1 ? ", " + inDoor.slice(1).join(", ") : ""}`}>
             {doorControls}
           </Door>
@@ -260,7 +262,8 @@ export function Ledger(p: LedgerProps) {
       </div>
 
       {/* The columns, at the widths that fit. Below `sm` every row is two lines and the header goes. */}
-      <div className="bg-muted mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-y px-2 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
+      <Separator className="mt-3" />
+      <div className="hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 px-2 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
         style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
         <span>When</span>
         {rules.r4 && <span data-item="act.actor" data-item-label="Actor">Actor</span>}
@@ -270,6 +273,7 @@ export function Ledger(p: LedgerProps) {
         {showSurface && <span>Surface</span>}
         {rules.r2 && <span data-item="act.credits-per-event" data-item-label="Credits per event" className="text-right">Credits</span>}
       </div>
+      <Separator />
 
       <div>
         {days.length === 0 && (
@@ -286,12 +290,13 @@ export function Ledger(p: LedgerProps) {
           return (
             <div key={when}>
               <h3 {...(rules.r2 ? { "data-item": `act.day-digest.${when}`, "data-item-label": `Digest for ${dayGroup(when)}` } : {})}
-                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-card/95 py-1.5 t-small backdrop-blur">
+                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 bg-card/95 py-1.5 t-small backdrop-blur">
                 <span className="font-semibold">{dayGroup(when)}</span>
                 {rules.r2 && <span className="text-muted-foreground">
                   {digest.count} {digest.count === 1 ? "event" : "events"} · {digest.kinds} · <span className="tabular-nums">{digest.credits.toLocaleString()}</span> {digest.credits === 1 ? "credit" : "credits"}
                 </span>}
               </h3>
+              <Separator />
               <ul className="divide-y">
                 {events.map((e) => (
                   <Row

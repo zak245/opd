@@ -13,11 +13,12 @@ import { Bot, CalendarClock, CheckSquare, Mail, MessageSquare, Phone, Send } fro
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions, type Action } from "../../ui/Actions"
-import { Group } from "../../ui/Section"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -197,7 +198,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
    */
   const preFirstTouch = currentStage === "Cold" || currentStage === "Approaching"
   const formNote = p.source === "Form" && preFirstTouch ? (
-    <article className="mb-3 border-b pb-3">
+    <article className="mb-3 pb-3">
       <div className="text-xs font-medium text-muted-foreground">Form: Book a demo, {day(p.addedOn)}</div>
       <dl className="mt-1 grid grid-cols-[9rem_1fr] gap-x-3 gap-y-0.5 text-sm">
         <dt className="text-muted-foreground">What they wrote</dt>
@@ -207,6 +208,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
         <dt className="text-muted-foreground">Added by enrichment</dt>
         <dd>Title, company size, industry</dd>
       </dl>
+      <Separator className="mt-3" />
     </article>
   ) : undefined
 
@@ -260,19 +262,21 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
           <p className="text-muted-foreground">
             Last enriched {p.enrichedOn ? `${day(p.enrichedOn)} · ${ago(p.enrichedOn)}` : "never"}.
           </p>
-          <table className="w-full text-xs">
-            <thead><tr className="text-left text-muted-foreground"><th className="py-1">Field</th><th>Source</th><th className="text-right">Credits</th></tr></thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow><TableHead>Field</TableHead><TableHead>Source</TableHead><TableHead className="text-right">Credits</TableHead></TableRow>
+            </TableHeader>
+            <TableBody>
               {/* What the last enrichment filled in on this person, and what each field cost. */}
               {p.lastEnrichedFields.map((field) => (
-                <tr key={field} className="border-t">
-                  <td className="py-1">{field}</td>
-                  <td>{job?.providers[0] ?? "—"}</td>
-                  <td className="text-right tabular-nums">{job?.byField.find((f) => f.field === field)?.cost ?? (field === "Mobile" ? CREDITS.revealPhone : field === "Email" ? CREDITS.enrich : 1)}</td>
-                </tr>
+                <TableRow key={field}>
+                  <TableCell>{field}</TableCell>
+                  <TableCell>{job?.providers[0] ?? "—"}</TableCell>
+                  <TableCell className="text-right tabular-nums">{job?.byField.find((f) => f.field === field)?.cost ?? (field === "Mobile" ? CREDITS.revealPhone : field === "Email" ? CREDITS.enrich : 1)}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           <Actions surface="card" items={[
             { kind: "primary", label: "Enrich again", onClick: () => setEnrich(true), cost: `${CREDITS.enrich} credits`, consequence: "Charged once" },
           ]} />
@@ -462,7 +466,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             children: (
               <div className="space-y-3">
           {canEdit ? (
-            <Group className="-mx-4 border-y px-4 py-3">
+            <div className="pb-3">
               <Textarea aria-label="Add a note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={`Anything the next person reading ${p.name.split(" ")[0]} should know`} />
               <div className="mt-2">
                 <Actions surface="card" items={[{
@@ -477,7 +481,8 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
                   },
                 }]} />
               </div>
-            </Group>
+              <Separator className="mt-3" />
+            </div>
           ) : null}
           {formNote}
           {visible.length === 0 ? (
@@ -486,10 +491,12 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             </p>
           ) : (
             <ol>
-              {visible.slice(0, shown).map((it) => {
+              {visible.slice(0, shown).map((it, i) => {
                 const Icon = ICON[it.kind]
                 return (
-                  <li key={it.id} className="flex gap-2.5 border-t py-2 first:border-t-0 first:pt-0">
+                  <li key={it.id} className="py-2 first:pt-0">
+                    {i > 0 && <Separator className="mb-2" />}
+                    <div className="flex gap-2.5">
                     <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2">
@@ -502,15 +509,19 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
                       </div>
                       {it.detail && <p className="text-sm text-muted-foreground">{it.detail}</p>}
                     </div>
+                    </div>
                   </li>
                 )
               })}
             </ol>
           )}
           {visible.length > shown && (
-            <div className="flex justify-center border-t pt-3">
+            <>
+            <Separator />
+            <div className="flex justify-center pt-3">
               <Actions surface="card" items={[{ kind: "secondary", label: "Load older", onClick: () => setShown((n) => n + 12) }]} />
             </div>
+            </>
           )}
               </div>
             ),

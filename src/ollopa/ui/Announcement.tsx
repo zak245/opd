@@ -15,7 +15,7 @@ export function Announcement({ text, href }: AnnouncementProps) {
   const [saidIt, setSaidIt] = useState(false)
   if (saidIt) return null
   return (
-    <div className="t-small flex items-center gap-1.5 border-b px-4 py-1.5 text-muted-foreground sm:px-6">
+    <div className="t-small flex items-center gap-1.5 px-4 py-1.5 text-muted-foreground sm:px-6">
       <Megaphone className="size-3.5 shrink-0" aria-hidden="true" />
       <span className="min-w-0 flex-1 truncate">{text}</span>
       {href && (

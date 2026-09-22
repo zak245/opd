@@ -8,6 +8,7 @@
 //
 // Undo here is real, not cosmetic: these four kinds have state in the marketing store, so the record
 // carries the values the action replaced and Undo puts them back before dropping the note.
+import { Badge } from "@/components/ui/badge"
 import { clearEdit, recordEdit, useEdit, type Edit } from "../../edits"
 import type { Business } from "../../usage/model"
 import { UNDO_MS, useTick } from "../engage/shared"
@@ -78,7 +79,7 @@ export function ActedNote({ business, kind, id, edit }: {
   if (!edit?.note) return null
   return (
     <div role="status" className="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-      <span className="rounded bg-muted px-1.5 py-0.5 font-normal">{String(edit.note)}</span>
+      <Badge variant="secondary" className="t-small font-normal">{String(edit.note)}</Badge>
       {fresh && (
         <button
           type="button"

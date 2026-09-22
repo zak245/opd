@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Chip } from "../../ui/Identity"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Divider } from "../../ui/Divider"
 import { Group } from "../../ui/Section"
 import { inkOf } from "../../ui/Identity"
 import { TODAY, type Deal, type DealStage, type DealWarning, type ForecastCategory } from "../../data/seed"
@@ -170,22 +172,21 @@ export function DealCard(p: DealCardProps) {
         if (e.key.toLowerCase() === "m") { e.preventDefault(); menuButton.current?.click() }
         if (e.key.toLowerCase() === "e") { e.preventDefault(); if (p.canEdit) p.onEditingNextStep(true) }
       }}
-      className={cn(
-        // A card per deal is the exception the rule allows: a deal on a board is read on its own,
-        // decided on on its own and dragged on its own, so it is a thing and not a row in a list
-        // (DESIGN.md §5, containment). The exception is paid for by uniformity — every card in
-        // every column has the same structure, the same padding and the same order: name and
-        // company, amount and close date, next step, warnings, the footer facts. It is flat and
-        // outlined like any container; nothing on the page casts a shadow except while it is in
-        // the air, which is what the drag lift below says. It uses the card role's classes rather
-        // than `Container`, because a container inside a container is two groups where there is one.
-        "bg-card",
-        "t-body group cursor-pointer rounded-[var(--radius)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        flags.compact ? "space-y-1 p-2" : "space-y-1.5 p-2.5",
-        p.carrying && "shadow-sm ring-2 ring-ring",
-        p.selected && "border-foreground",
-      )}
+      className="group/card cursor-pointer rounded-[var(--radius)] focus-visible:outline-none"
     >
+      {/* A card per deal is the one case the shape allows: a deal on a board is read, decided on
+          and dragged on its own. The box is shadcn's `Card` as shipped — its radius, its border and
+          its padding — and every card in every column has the same two sections in the same order:
+          the header carries who it is, the content carries the numbers, the next step, the warnings
+          and the footer facts. The drag lift is the only shadow on the page. */}
+      <Card
+        className={cn(
+          "t-body gap-0 py-0 group-focus-visible/card:ring-2 group-focus-visible/card:ring-ring",
+          p.carrying && "shadow-sm ring-2 ring-ring",
+          p.selected && "border-foreground",
+        )}
+      >
+      <CardHeader className={cn("gap-0 [grid-template-columns:minmax(0,1fr)]", flags.compact ? "px-2 pt-2" : "px-2.5 pt-2.5")}>
       <div className="flex items-start gap-2">
         <span onClick={(e) => e.stopPropagation()} className="pt-0.5">
           <Checkbox checked={p.selected} aria-label={`Select ${deal.name}`} onCheckedChange={(v) => p.onSelect(Boolean(v))} />
@@ -266,9 +267,11 @@ export function DealCard(p: DealCardProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      </CardHeader>
 
+      <CardContent className={cn(flags.compact ? "space-y-1 px-2 pt-1 pb-2" : "space-y-1.5 px-2.5 pt-1.5 pb-2.5")}>
       {/* What it is worth and when it closes: never edited apart, never hidden. */}
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
+      <div className="t-small flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span className="font-medium tabular-nums text-foreground">
           <InlineValue
             label={moneyShort(deal.amount, deal.currency || p.currency)}
@@ -322,7 +325,8 @@ export function DealCard(p: DealCardProps) {
       )}
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 t-small text-muted-foreground">
-        {flags.forecast && <Chip>{deal.forecast}</Chip>}
+        {/* A forecast category is a category, not a state: a bordered word and no status colour. */}
+        {flags.forecast && <Badge variant="outline" className="text-muted-foreground">{deal.forecast}</Badge>}
         {flags.touch && (
           <span>
             Last touch {daysBetween(deal.lastActivity)}d · last reply{" "}
@@ -351,7 +355,8 @@ export function DealCard(p: DealCardProps) {
 
       {/* A proposal waits here for the next time the AE looks at the deal. Nothing interrupts. */}
       {deal.agentProposal && (
-        <div className="t-small border-t pt-2" onClick={(e) => e.stopPropagation()}>
+        <div className="t-small" onClick={(e) => e.stopPropagation()}>
+          <Divider className="my-2" />
           <div className="font-medium text-muted-foreground">Proposed by the research agent</div>
           <p className="pt-0.5">{deal.agentProposal}</p>
           <div className="flex gap-1.5 pt-1.5">
@@ -360,6 +365,8 @@ export function DealCard(p: DealCardProps) {
           </div>
         </div>
       )}
+      </CardContent>
+      </Card>
     </li>
   )
 }

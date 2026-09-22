@@ -222,7 +222,7 @@ const cBefore = await renders()
 console.log("C before the pane:", cBefore)
 
 const opened = await page.evaluate(() => {
-  const row = document.querySelector('[data-page-active="true"] [data-section="home-replies"] li[data-row]')
+  const row = document.querySelector('[data-page-active="true"] [data-section="home-replies"] [data-row]')
   if (!row) return null
   row.focus()
   row.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
@@ -259,7 +259,7 @@ await shot("c4-back-home-lit")
 await go("/ollopa")
 // A mouse, not the keyboard: the task's own name on the row is the control that opens it.
 const task = await page.evaluate(() => {
-  const row = document.querySelector('[data-page-active="true"] [data-section="home-today"] li[data-row]')
+  const row = document.querySelector('[data-page-active="true"] [data-section="home-today"] [data-row]')
   const name = row?.querySelector("button")
   if (!name) return null
   name.click()
@@ -279,7 +279,7 @@ await shot("d2-done-on-the-row")
 
 // And an agent's proposal, read and declined from the pane.
 await page.evaluate(() => {
-  const row = document.querySelector('[data-page-active="true"] [data-section="home-approvals"] li[data-row]')
+  const row = document.querySelector('[data-page-active="true"] [data-section="home-approvals"] [data-row]')
   row?.focus()
   row?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
 })
@@ -326,7 +326,7 @@ for (const [biz, role] of [["meridian", "sdr"], ["ridgeline", "sdr"]]) {
   await page.evaluate(([bz, rl]) => localStorage.setItem("ollopa.session", JSON.stringify({ business: bz, role: rl })), [biz, role])
   await go("/ollopa")
   await page.evaluate(() => {
-    const el = document.querySelector('[data-page-active="true"] [data-section="home-today"] li[data-row] button')
+    const el = document.querySelector('[data-page-active="true"] [data-section="home-today"] [data-row] button')
     el?.click()
   })
   await wait(700)

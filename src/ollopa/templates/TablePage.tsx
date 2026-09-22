@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "./QuickLook"
+import { Separator } from "@/components/ui/separator"
 
 export interface Column<T> {
   key: string
@@ -103,7 +104,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
           page's own name is the h2 above — the card never says it twice, so the header is one full
           width toolbar row and no CardTitle. */}
       <Card className="gap-0 overflow-hidden py-0">
-        <CardHeader className="gap-2 border-b px-4 py-3 [grid-template-columns:1fr]">
+        <CardHeader className="gap-2 px-4 py-3 [grid-template-columns:1fr]">
           <div className="flex w-full flex-wrap items-center gap-2">
             <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
             {(p.filters ?? []).map((f) => (
@@ -120,6 +121,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
             </span>
           </div>
         </CardHeader>
+        <Separator />
         <CardContent className="px-0">
         <Table>
           <TableHeader className="bg-muted sticky top-0">
@@ -192,11 +194,14 @@ export function TablePage<T>(p: TablePageProps<T>) {
         </Table>
         </CardContent>
         {rows.length > limit && (
-          <CardFooter className="justify-center border-t px-4 py-3">
+          <>
+          <Separator />
+          <CardFooter className="justify-center px-4 py-3">
             <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
               Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
             </Button>
           </CardFooter>
+          </>
         )}
       </Card>
         {p.quickLook && glancing && (

@@ -408,7 +408,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
         {done && (
           <>
             <Separator />
-            <div role="status" className="ollopa-done flex shrink-0 items-center gap-2 bg-muted/60 px-4 py-1.5 text-xs">
+            <div role="status" className="ollopa-done flex shrink-0 items-center gap-2 px-4 py-1.5 text-xs">
               <span className="t-small min-w-0 flex-1" style={{ color: "var(--success-ink)" }}>Done · {done.note}</span>
               <Button variant="link" size="sm" className="ollopa-act shrink-0 px-0" onClick={done.onUndo}>Undo</Button>
             </div>

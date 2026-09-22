@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { href, useRoute } from "@/app/router"
@@ -101,8 +102,9 @@ export function WorkflowsPage({ session }: { session: Session }) {
         <p className="px-6 pb-3 text-xs text-muted-foreground">
           Without it: assign an owner by hand from People, and route by saved view.
         </p>
-        {/* The real shape and the real count, values withheld — never a screenshot and never a chart. */}
-        <div className="overflow-x-auto border-t">
+        {/* The real shape and the real count, values withheld — never a screenshot and never a chart.
+            The card's own edge divides it from the lock above; nothing here draws a rule. */}
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>{COLUMN_NAMES.map((c) => <TableHead key={c}>{c}</TableHead>)}</TableRow></TableHeader>
             <TableBody>
@@ -292,16 +294,18 @@ export function WorkflowsPage({ session }: { session: Session }) {
             onOpen={(w) => open(`/ollopa/workflows/${w.id}`, w.id)}
             rowLabel={(w) => w.name}
             cardTitle={(w) => <span className="font-medium">{w.name}</span>}
-            inContainer
           />
           </TableCard>
         </div>
       )}
 
       {session.role !== "admin" && (
-        <p className="border-t px-6 py-2 text-xs text-muted-foreground">
-          Territories and permission profiles are the admin's: {admin} sets them in Settings › Team and access.
-        </p>
+        <>
+          <Separator />
+          <p className="t-small px-6 py-2 text-muted-foreground">
+            Territories and permission profiles are the admin's: {admin} sets them in Settings › Team and access.
+          </p>
+        </>
       )}
     </div>
   )

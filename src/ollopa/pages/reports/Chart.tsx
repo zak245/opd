@@ -6,6 +6,8 @@
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { familyOf } from "../../identity"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { Container } from "../../ui/Section"
 import type { Series, Trend } from "./compute"
 import { shortDay } from "./format"
@@ -132,18 +134,17 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
       actions={
         <div role="group" aria-label="Trend as a chart or a table" className="flex gap-1" data-print-hide>
           {(["chart", "table"] as const).map((v) => (
-            <button
+            <Button
               key={v}
               type="button"
+              variant={view === v ? "default" : "ghost"}
+              size="sm"
               aria-pressed={view === v}
               onClick={() => onViewChange(v)}
-              className={cn(
-                "rounded-md px-2 py-0.5 t-small capitalize focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                view === v ? "bg-foreground text-background" : "hover:bg-muted",
-              )}
+              className="capitalize"
             >
               {v}
-            </button>
+            </Button>
           ))}
         </div>
       }
@@ -247,7 +248,8 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
         </div>
       )}
 
-      <p id={describedById} className="border-t px-3 py-1.5 t-small text-muted-foreground">{trend.summary}</p>
+      <Separator />
+      <p id={describedById} className="px-3 py-1.5 t-small text-muted-foreground">{trend.summary}</p>
     </Container>
   )
 }

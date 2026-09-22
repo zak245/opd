@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDoorState } from "../../ui/Door"
-import { Container } from "../../ui/Section"
+import { Container, Section } from "../../ui/Section"
 import { money as usd, type Plan } from "../../ui/gate"
 import { toast } from "../../templates/TablePage"
 import type { Tile } from "./compute"
@@ -246,21 +246,23 @@ function RowDoor({ door, signal }: { door: { id: string; label: string; count?: 
 export function InlineDoor({ id, label, count, children, defaultOpen = false }: { id: string; label: string; count?: number; children: ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useDoorState(id, defaultOpen)
   return (
-    <section className="rounded-lg border">
-      <h3 className="m-0">
+    <Section
+      padded={false}
+      heading={
         <button
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(!open)}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left t-body font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex w-full items-center gap-2 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ChevronRight aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
           <span>{label}{count !== undefined ? ":" : ""}</span>
-          {count !== undefined && <span className="tabular-nums text-muted-foreground">{` ${count}`}</span>}
+          {count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{` ${count}`}</span>}
         </button>
-      </h3>
-      {open && <div className="px-3 pb-3 t-body">{children}</div>}
-    </section>
+      }
+    >
+      {open && <div className="px-4 t-body">{children}</div>}
+    </Section>
   )
 }
 

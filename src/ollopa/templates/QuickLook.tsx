@@ -23,6 +23,7 @@ import { familyOf } from "../identity"
 import { Actions } from "../ui/Actions"
 import { type ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import { Separator } from "@/components/ui/separator"
 
 export interface QuickLookField {
   label: string
@@ -113,13 +114,14 @@ export function QuickLook({ family, open, onOpenChange, title, fields, editable,
         {/* A thin bar in the record's family hue, so the drawer says what it is holding before it is
             read — the same mark the pane carries (DESIGN.md §5). */}
         <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />
-        <SheetHeader className="border-b px-5 py-4">
+        <SheetHeader className="px-5 py-4">
           <SheetTitle className="t-section inline-flex items-center gap-2">
             <FamilyIcon of={family} size="header" />
             {title}
           </SheetTitle>
           <SheetDescription className="sr-only">A glance at this record. Open it for everything else.</SheetDescription>
         </SheetHeader>
+        <Separator />
         {/* Flat by construction: anything openable rendered in here renders in place instead. */}
         <FlatProvider value={true}>
           <dl className="t-body min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
@@ -133,10 +135,10 @@ export function QuickLook({ family, open, onOpenChange, title, fields, editable,
                 </div>
               )
             ))}
-            {editable && !editableInline && <div className="border-t pt-3">{editor}</div>}
+            {editable && !editableInline && <><Separator className="my-3" />{editor}</>}
           </dl>
         </FlatProvider>
-        <SheetFooter className="gap-2 border-t px-5 py-3">
+        <SheetFooter className="gap-2 px-5 py-3">
           {list && list.total > 1 && (
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" disabled={at === 0} onClick={() => list.onStep(-1)}>

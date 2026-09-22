@@ -28,7 +28,7 @@ const go = async (route) => {
   await wait(700)
 }
 const openRowIn = (section) => page.evaluate((s) => {
-  const el = document.querySelector(`[data-page-active="true"] [data-section="${s}"] li[data-row] button`)
+  const el = document.querySelector(`[data-page-active="true"] [data-section="${s}"] [data-row] button`)
   if (!el) return false
   el.click()
   return true
@@ -55,7 +55,7 @@ await wait(400)
 
 // The reply beside Home.
 console.log("reply pane:", await page.evaluate(() => {
-  const row = document.querySelector('[data-page-active="true"] [data-section="home-replies"] li[data-row]')
+  const row = document.querySelector('[data-page-active="true"] [data-section="home-replies"] [data-row]')
   if (!row) return false
   row.focus()
   row.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
@@ -68,7 +68,7 @@ await wait(400)
 
 // An agent's proposal beside Home.
 console.log("approval pane:", await page.evaluate(() => {
-  const row = document.querySelector('[data-page-active="true"] [data-section="home-approvals"] li[data-row]')
+  const row = document.querySelector('[data-page-active="true"] [data-section="home-approvals"] [data-row]')
   if (!row) return false
   row.focus()
   row.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))

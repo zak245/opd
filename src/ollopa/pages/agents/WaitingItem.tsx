@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
@@ -193,7 +195,8 @@ export function WaitingItem(p: WaitingItemProps) {
           </div>
 
           {second && (
-            <p className="t-small mt-2 rounded-md bg-muted px-2 py-1.5">
+            <Alert className="mt-2 py-2">
+              <AlertDescription className="t-small">
               {e.status === "waiting-second" ? (
                 <>
                   {owner} approved this at {e.at}. Waiting for {adminLine(p)} · {(e.ifApproved?.recipients ?? 0).toLocaleString()} recipients, over the {seed.secondApproval.recipients.toLocaleString()} in Settings. Nothing has been sent.
@@ -203,7 +206,8 @@ export function WaitingItem(p: WaitingItemProps) {
                   {(e.ifApproved?.recipients ?? 0).toLocaleString()} recipients. Over the {seed.secondApproval.recipients.toLocaleString()} in Settings, so {adminLine(p)} approves after you.
                 </>
               )}
-            </p>
+              </AlertDescription>
+            </Alert>
           )}
 
           {paused && (
@@ -223,7 +227,7 @@ export function WaitingItem(p: WaitingItemProps) {
       {failure && <p role="status" className="t-small px-4 pb-2" style={{ color: "var(--danger-ink)" }}>{failure}</p>}
 
       {asking === "why" && (
-        <div className="border-t px-4 py-3">
+        <div className="px-4 py-3">
           <label className="t-small text-muted-foreground" htmlFor={`why-${e.id}`}>Tell the agent why</label>
           <Textarea id={`why-${e.id}`} value={why} onChange={(ev) => setWhy(ev.target.value)} rows={2} className="mt-1" placeholder="Wrong person: she left in July." />
           <Actions className="mt-2" surface="card" items={[
@@ -234,7 +238,7 @@ export function WaitingItem(p: WaitingItemProps) {
       )}
 
       {asking === "hand" && (
-        <div className="border-t px-4 py-3">
+        <div className="px-4 py-3">
           <label className="t-small text-muted-foreground">Hand the decision to a teammate</label>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Select value={mate} onValueChange={setMate}>
@@ -253,7 +257,7 @@ export function WaitingItem(p: WaitingItemProps) {
       {/* Only the case that cannot be undone asks: waiting on this one declines it. The benign case
           acts from the menu at once, so there is no panel and no sentence to read (DESIGN.md §2). */}
       {asking === "snooze" && (
-        <div className="t-small border-t px-4 py-3">
+        <div className="t-small px-4 py-3">
           <p>This sends before tomorrow 08:00, so deciding tomorrow declines it.</p>
           <Actions className="mt-2" surface="card" items={[
             { kind: "primary", label: "Decline it instead", onClick: () => { p.onDecline("Not decided in time"); setAsking(null) } },
@@ -263,7 +267,8 @@ export function WaitingItem(p: WaitingItemProps) {
       )}
 
       {/* Level two: what it was built from, and the thing itself. One door, never two. */}
-      <div className="border-t px-1">
+      <Separator />
+      <div className="px-1">
         <Door id={`agents.item.${e.id}`} label={rules.r4 ? doorLabel(e, p.draft) : "Preview"}>
           {!rules.r5 && hasConsequence && (
             <div data-item={`wait.consequence.${e.id}`} data-item-label="What happens if you approve">

@@ -6,7 +6,7 @@
 // it acts on ("Actions for Q4 enterprise targets"), which the rules require over "More actions".
 // Everything else follows the template: row actions on hover *and* on focus, repeated in the menu,
 // so nothing is pointer-only.
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { href } from "@/app/router"
 import { FamilyIcon } from "../../ui/Identity"
@@ -78,13 +79,14 @@ export function CountButton({ label, count, active, onClick, tone }: {
   label: string; count: number; active?: boolean; onClick: () => void; tone?: "warning" | "error"
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant={active ? "secondary" : "outline"}
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "rounded-md border px-2.5 py-1.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        active && "border-foreground bg-muted",
+        "h-auto flex-col items-start gap-0 px-2.5 py-1.5 font-normal",
+        active && "border-foreground",
         tone === "warning" && "border-[color:var(--warning-ink)]",
         tone === "error" && "border-[color:var(--danger-ink)]",
       )}
@@ -92,7 +94,7 @@ export function CountButton({ label, count, active, onClick, tone }: {
       <span className="t-small block text-muted-foreground">{label}</span>
       <span className="t-body block font-medium tabular-nums">{n(count)}</span>
       <span className="sr-only">filter people by {label.toLowerCase()}</span>
-    </button>
+    </Button>
   )
 }
 
@@ -186,11 +188,13 @@ export function DataTable<T>(p: DataTableProps<T>) {
   return (
     <div>
       {/* ------------------------------------------------------------- phone: one card per row */}
-      <ul className="divide-y border-t sm:hidden">
-        {sorted.map((row) => {
+      <ul className="sm:hidden">
+        {sorted.map((row, rowIndex) => {
           const key = p.rowKey(row)
           const primary = p.columns.find((c) => c.primary) ?? p.columns[0]
           return (
+            <Fragment key={`row-${key}`}>
+            <Separator />
             /* The card is the row, so it behaves like the row above: focusable, Enter opens it, x
                selects it. The two controls inside it — select, and the name that opens the record —
                are siblings of each other and never nested, because a control inside a control is
@@ -230,6 +234,8 @@ export function DataTable<T>(p: DataTableProps<T>) {
               </div>
               <RowMenu row={row} p={p} />
             </li>
+            {rowIndex === sorted.length - 1 && <Separator />}
+            </Fragment>
           )
         })}
       </ul>
@@ -281,7 +287,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                   key={key}
                   // An opaque row background, so the pinned cell can inherit it and nothing shows
                   // through the rows sliding under it.
-                  className={cn("group bg-background hover:bg-muted has-aria-expanded:bg-muted", p.onOpen && "cursor-pointer")}
+                  className={cn("group bg-card", p.onOpen && "cursor-pointer")}
                   tabIndex={p.onOpen ? 0 : undefined}
                   data-row-key={key}
                   onClick={p.onOpen ? (e) => { e.currentTarget.focus(); p.onOpen!(row) } : undefined}
@@ -330,11 +336,14 @@ export function DataTable<T>(p: DataTableProps<T>) {
         <div
           role="region"
           aria-label={`${selected.length} selected`}
-          className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t bg-popover/95 px-4 py-2 backdrop-blur"
+          className="sticky bottom-0 z-20 bg-popover/95 backdrop-blur"
         >
-          <span className="text-sm font-medium tabular-nums">{n(selected.length)} selected</span>
-          {p.selection.bar(selected)}
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={() => p.selection!.onChange([])}>Clear</Button>
+          <Separator />
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2">
+            <span className="t-body font-medium tabular-nums">{n(selected.length)} selected</span>
+            {p.selection.bar(selected)}
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => p.selection!.onChange([])}>Clear</Button>
+          </div>
         </div>
       )}
     </div>
@@ -520,7 +529,7 @@ export function RowNote({ kind, id, note, at }: { kind: string; id: string; note
   const fresh = !!at && Date.now() - at < UNDO_MS
   return (
     <div role="status" className="t-small mt-0.5 flex flex-wrap items-center gap-2">
-      <span className="rounded bg-muted px-1.5 py-0.5">{note}</span>
+      <Badge variant="secondary" className="font-normal">{note}</Badge>
       {fresh && (
         <button
           type="button"

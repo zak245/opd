@@ -19,8 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Separator } from "@/components/ui/separator"
 import { Door } from "../../ui/Door"
-import { Group } from "../../ui/Section"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 
@@ -202,7 +202,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
         {col.sortValue ? (
           <button
             type="button"
-            className="inline-flex items-start gap-1 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="inline-flex items-start gap-1 text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             onClick={() => p.onSortChange({ id: col.id, dir: sorted && p.sort.dir === "asc" ? "desc" : "asc" })}
           >
             {col.header}
@@ -261,13 +261,11 @@ export function DataTable<T>(p: DataTableProps<T>) {
             count, one flex-wrap row, and carries no title of its own. */}
         <CardHeader>
           <div className="flex w-full flex-wrap items-center gap-2">{toolbar}</div>
-        </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col px-0">
-      {/* The one container-low band this container may hold: whatever the page puts above its rows
-          — the renewal counters, a hand-off waiting, a confirmation, an undo — and, while rows are
-          selected, what can be done to them. Never a second box (DESIGN.md §5, nesting). */}
-      {(p.strip || p.doorFilters.length > 0 || selected.length > 0 || allMatching || activeFilters.length > 0) && (
-        <Group className="border-b px-4 py-2.5">
+          {/* Whatever the page puts above its rows — the renewal counters, a hand-off waiting, a
+              confirmation, an undo — and, while rows are selected, what can be done to them. It is
+              part of the card's header, not a tinted bar of its own. */}
+          {(p.strip || p.doorFilters.length > 0 || selected.length > 0 || allMatching || activeFilters.length > 0) && (
+            <div className="w-full">
       {p.strip && <div className="pb-2">{p.strip}</div>}
 
       {/* While anything is selected the bar replaces the filter row, so the two never fight. */}
@@ -322,8 +320,11 @@ export function DataTable<T>(p: DataTableProps<T>) {
           )}
         </div>
       )}
-        </Group>
-      )}
+            </div>
+          )}
+        </CardHeader>
+        <Separator />
+        <CardContent className="flex min-h-0 flex-1 flex-col px-0">
 
       <div role="status" aria-live="polite" className="sr-only">{rows.length} rows match</div>
 
@@ -388,7 +389,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                         not widen the table, and the "…" stays pinned to the right edge. */}
                     <TableCell className="bg-card sticky right-0 z-10 w-12 py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex items-center justify-end gap-1">
-                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 rounded-md bg-card opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
+                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 bg-card opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
                         {p.rowActions.map((a) => (
                           <Button
                             key={a.id}
@@ -458,8 +459,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
       </div>
         </CardContent>
+        {rows.length > limit && <Separator />}
         {rows.length > limit && (
-          <CardFooter className="border-t">
+          <CardFooter>
             <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
               Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
             </Button>
@@ -498,7 +500,7 @@ function ColumnsPopover<T>({ columns, chosen, onChange }: { columns: Col<T>[]; c
         <ul className="space-y-0.5">
           {columns.map((c) => (
             <li key={c.id}>
-              <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 t-body hover:bg-muted">
+              <label className="flex cursor-pointer items-center gap-2 px-1.5 py-1 t-body hover:bg-muted">
                 <Checkbox
                   checked={chosen.includes(c.id)}
                   disabled={c.always}

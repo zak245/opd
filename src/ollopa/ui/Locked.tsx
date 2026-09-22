@@ -16,6 +16,7 @@ import { businessById } from "../data/businesses"
 import { useSession } from "../session"
 import { Panel } from "./Panel"
 import { money, type Plan } from "./gate"
+import { Separator } from "@/components/ui/separator"
 
 export interface LockedProps {
   feature: string
@@ -75,7 +76,8 @@ export function Locked({ feature, plan, pricePerMonth, what, children }: LockedP
         }
       >
         <p>{what}</p>
-        <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t pt-4">
+        <Separator className="mt-4" />
+        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 pt-4">
           <dt className="text-muted-foreground">Plan</dt>
           <dd className="font-medium">{plan}</dd>
           <dt className="text-muted-foreground">Your plan</dt>
@@ -84,7 +86,7 @@ export function Locked({ feature, plan, pricePerMonth, what, children }: LockedP
           <dd className="font-medium tabular-nums">{money(pricePerMonth)} a month for {b.plan.seats} seats</dd>
         </dl>
         {!isAdmin && (
-          <div className="mt-4 border-t pt-4">
+          <div className="mt-4 pt-4">
             <Label htmlFor={`why-${feature}`} className="text-xs">Why you need it — {admin?.user ?? "your admin"} sees this with the cost</Label>
             <Textarea id={`why-${feature}`} value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1" rows={3}
               placeholder="What you are trying to do" />

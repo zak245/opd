@@ -9,7 +9,7 @@
 // The people are found inside the audience, whatever the count: one list with search, and the six
 // counts filter it in place, directly above it, so a count and the names it stands for are never in
 // two different places. A row opens the person beside this page; the page stays where it is.
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,7 +21,8 @@ import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { FAMILY, PERSON_FAMILY } from "./look"
+import { FAMILY, PERSON_FAMILY, RowGap } from "./look"
+import { Separator } from "@/components/ui/separator"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, actOn, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -165,9 +166,8 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
               />
             </label>
           ))}
-          <div className="border-t pt-2">
-            <Actions surface="card" items={[{ kind: "secondary", label: "Upload a suppression list", onClick: () => toast("Upload a CSV of addresses this audience never mails.") }]} />
-          </div>
+          <Separator />
+          <Actions surface="card" items={[{ kind: "secondary", label: "Upload a suppression list", onClick: () => toast("Upload a CSV of addresses this audience never mails.") }]} />
         </div>
       ),
     },
@@ -270,8 +270,10 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
             : <>The first {num(pool.length)} of {num(net)} after suppressions.</>}
       </p>
       <ul className="text-sm">
-        {people.map((p) => (
-          <li key={p.id} data-item={p.id} data-item-label={p.name} className="t-body flex flex-wrap items-baseline justify-between gap-2 border-t py-1.5 first:border-t-0">
+        {people.map((p, i) => (
+          <Fragment key={p.id}>
+          {i > 0 && <RowGap />}
+          <li data-item={p.id} data-item-label={p.name} className="t-body flex flex-wrap items-baseline justify-between gap-2 py-1.5">
             <span className="min-w-0">
               <span className="inline-flex items-center gap-1.5">
                 <FamilyIcon of={PERSON_FAMILY} />
@@ -287,6 +289,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
               )}
             </span>
           </li>
+          </Fragment>
         ))}
         {people.length === 0 && (
           <li className="py-4 text-sm text-muted-foreground">{needle ? <>Nobody here matches “{q}”.</> : <>Nobody is in this set.</>}</li>

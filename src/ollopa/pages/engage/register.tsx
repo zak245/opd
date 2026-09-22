@@ -17,6 +17,7 @@
 import type { ReactNode } from "react"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
+import { Separator } from "@/components/ui/separator"
 import { Actions, type Action } from "../../ui/Actions"
 import { declarePaneFields } from "../../ui/Beside"
 import { useDisclosure, type Disclosure } from "../../ui/useDisclosure"
@@ -71,9 +72,10 @@ function PaneBody({ d, blocks, acts }: { d: Disclosure; blocks: Block[]; acts: A
         </dl>
       )}
       {acts.length > 0 && (
-        <div className="border-t pt-3">
+        <>
+          <Separator />
           <Actions surface="pane" layout="stack" items={acts} />
-        </div>
+        </>
       )}
     </div>
   )

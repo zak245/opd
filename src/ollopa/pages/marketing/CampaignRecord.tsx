@@ -25,7 +25,8 @@ import { RecordPage, type RecordDoor, type RecordField } from "../../templates/R
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Group } from "../../ui/Section"
+import { Separator } from "@/components/ui/separator"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { FAMILY, PERSON_FAMILY, ink } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -233,7 +234,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           {c.sendsByDay.slice(-14).map((s) => (
             <li key={s.day} className="flex items-center gap-2 text-xs">
               <span className="w-14 shrink-0 text-muted-foreground">{day(s.day)}</span>
-              <span className="h-2 rounded bg-foreground/70" style={{ width: `${Math.max(4, (s.sent / peak) * 100)}%` }} aria-hidden="true" />
+              <span className="bg-foreground/70 h-2" style={{ width: `${Math.max(4, (s.sent / peak) * 100)}%` }} aria-hidden="true" />
               <span className="tabular-nums">{num(s.sent)}</span>
             </li>
           ))}
@@ -248,18 +249,20 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     doors.push({
       id: "campaign.links", label: `Links clicked · ${num(clicks)}`, count: c.links.length,
       content: (
-        <table className="w-full text-xs">
-          <thead><tr className="text-left text-muted-foreground"><th className="py-1">Link</th><th className="text-right">Clicks</th><th className="text-right">Of delivered</th></tr></thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow><TableHead>Link</TableHead><TableHead className="text-right">Clicks</TableHead><TableHead className="text-right">Of delivered</TableHead></TableRow>
+          </TableHeader>
+          <TableBody>
             {[...c.links].sort((a, z) => z.clicks - a.clicks).map((l) => (
-              <tr key={l.url} className="border-t">
-                <td className="max-w-0 truncate py-1"><span title={l.url}>{l.url}</span></td>
-                <td className="text-right tabular-nums">{num(l.clicks)}</td>
-                <td className="text-right tabular-nums">{pct(l.clicks, c.delivered)}</td>
-              </tr>
+              <TableRow key={l.url}>
+                <TableCell className="max-w-0 truncate"><span title={l.url}>{l.url}</span></TableCell>
+                <TableCell className="text-right tabular-nums">{num(l.clicks)}</TableCell>
+                <TableCell className="text-right tabular-nums">{pct(l.clicks, c.delivered)}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       ),
     })
   }
@@ -370,29 +373,32 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   const recipientsBlock = (
     <div className="space-y-2">
       <p className="t-body text-muted-foreground">The first {num(recipientPool.length)} of {num(recipients)}.</p>
-      <table className="w-full text-xs">
-        <thead><tr className="t-label text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
-        <tbody>
+      {/* The library's table: it draws the rule between rows, so nothing here draws one. */}
+      <Table>
+        <TableHeader>
+          <TableRow><TableHead>Person</TableHead><TableHead>Company</TableHead><TableHead>Opened</TableHead><TableHead>Replied</TableHead></TableRow>
+        </TableHeader>
+        <TableBody>
           {recipientRows.map((p) => (
-            <tr key={p.id} className="border-t" data-item={p.id} data-item-label={p.name}>
-              <td className="py-1">
+            <TableRow key={p.id} data-item={p.id} data-item-label={p.name}>
+              <TableCell>
                 <span className="inline-flex items-center gap-1.5">
                   <FamilyIcon of={PERSON_FAMILY} />
                   <button type="button" className="underline" onClick={(ev) => readPerson(p.id, recipientIds, ev.currentTarget)}>{p.name}</button>
                 </span>
                 {/* What an action from the pane beside this list did to this person, in place. */}
                 {personEdits[p.id]?.note && <RowNote kind="person" id={p.id} note={String(personEdits[p.id].note)} at={personEdits[p.id].at} />}
-              </td>
-              <td>{p.company}</td>
-              <td className="tabular-nums">{p.opens}</td>
-              <td className="tabular-nums">{p.replies}</td>
-            </tr>
+              </TableCell>
+              <TableCell>{p.company}</TableCell>
+              <TableCell className="tabular-nums">{p.opens}</TableCell>
+              <TableCell className="tabular-nums">{p.replies}</TableCell>
+            </TableRow>
           ))}
           {recipientRows.length === 0 && (
-            <tr><td colSpan={4} className="py-4 text-center text-muted-foreground">Nobody here matches “{recipientQ}”.</td></tr>
+            <TableRow><TableCell colSpan={4} className="py-4 text-center text-muted-foreground">Nobody here matches “{recipientQ}”.</TableCell></TableRow>
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 
@@ -471,7 +477,8 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       )}
 
       {/* The QA line, directly above the button, never disabled and never blocking. */}
-      <Group className="rounded-[var(--radius)] border px-3 py-2">
+      <Separator />
+      <div>
         <p className="t-body">
           <Chip status={failures.length ? "failed" : "done"}>{line}</Chip>
           {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}</span>}
@@ -479,7 +486,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         <div id="camp-run-checks" className="mt-1">
           <Actions surface="card" items={[{ kind: "secondary", label: "Run the checks", onClick: () => setQaOpen(true), keys: "Q" }]} />
         </div>
-      </Group>
+      </div>
 
       {c.status === "Sent" ? (
         <p className="text-sm text-muted-foreground">Sent {day(c.sendAt)}.</p>
@@ -735,8 +742,9 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             </Select>
           </div>
 
-          <div className="rounded-md border p-3">
-            <p className="text-sm">{sendConsequence}</p>
+          <Separator />
+          <div>
+            <p className="t-body">{sendConsequence}</p>
             {audience && (
               <p className="pt-1 text-xs text-muted-foreground">
                 Suppressed: {suppressionCounts(audience).filter((s) => s.on).map((s) => `${num(s.count)} ${s.label}`).join(" · ")}.

@@ -12,6 +12,7 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 import { Panel } from "../../ui/Panel"
 import { StatusLine } from "../../ui/Identity"
 import { Actions } from "../../ui/Actions"
@@ -103,7 +104,7 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
       }
     >
       {/* The consequences of the click, above everything, whatever the panel is set to. */}
-      <div className="rounded-md border p-3">
+      <div>
         <ConsequenceLine
           sends={split.adding.length}
           to={p.from}
@@ -134,7 +135,8 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
       )}
 
       {/* 1 — who is added, who is skipped, by reason */}
-      <div className="mt-4 border-t pt-4">
+      <Separator className="my-4" />
+      <div>
         <p className="text-sm">
           {n(split.adding.length)} will be added
           {split.skipped.length > 0 && <> · {n(split.skipped.length)} skipped: {byReason.map(([why, count]) => `${n(count)} ${why}`).join(", ")}</>}
@@ -147,7 +149,8 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
       </div>
 
       {/* 2 — the mailbox, with its capacity beside it, and the sequence's own rotation default */}
-      <div className="mt-4 border-t pt-4">
+      <Separator className="my-4" />
+      <div>
         <Label htmlFor="enrol-mailbox" className="text-xs">Send from</Label>
         <Select value={mailboxChoice} onValueChange={setMailboxChoice}>
           <SelectTrigger id="enrol-mailbox" className="mt-1 w-full"><SelectValue /></SelectTrigger>
@@ -172,7 +175,8 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
       </div>
 
       {/* 3 — the day-one volume: added and sent are not the same number */}
-      <div className="mt-4 border-t pt-4 text-sm">
+      <Separator className="my-4" />
+      <div className="text-sm">
         {n(split.adding.length)} added · {n(dayOne)} can send tomorrow from {boxes.length || 1} {boxes.length === 1 ? "mailbox" : "mailboxes"}
         {split.adding.length > dayOne && <> · the rest start {nextWorkingDayAfterTomorrow()}</>}
       </div>

@@ -8,6 +8,7 @@ import { type ReactNode } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { FlatProvider } from "./Door"
+import { Separator } from "@/components/ui/separator"
 
 export interface PanelProps {
   id: string
@@ -27,15 +28,16 @@ export function Panel({ id, title, open, onOpenChange, side = "right", children,
         side={side}
         className={cn("bg-popover", "gap-0 p-0", side === "right" ? "w-full sm:max-w-lg" : "max-h-[85vh]")}
       >
-        <SheetHeader className="border-b px-5 py-4">
+        <SheetHeader className="px-5 py-4">
           <SheetTitle className="t-section">{title}</SheetTitle>
           <SheetDescription className="sr-only">Press Escape to close and return to the page.</SheetDescription>
         </SheetHeader>
+        <Separator />
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm">
           {/* A panel never contains a door: anything openable inside renders flat. */}
           <FlatProvider value={true}>{children}</FlatProvider>
         </div>
-        {footer && <SheetFooter className="border-t px-5 py-3">{footer}</SheetFooter>}
+        {footer && <><Separator /><SheetFooter className="px-5 py-3">{footer}</SheetFooter></>}
       </SheetContent>
     </Sheet>
   )

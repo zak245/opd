@@ -18,7 +18,9 @@ import { useRoute } from "@/app/router"
 import { href } from "@/app/router"
 import { useEdit } from "../../edits"
 import { Actions } from "../../ui/Actions"
-import { Container, Group } from "../../ui/Section"
+import { CardFooter, CardHeader } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Container } from "../../ui/Section"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
@@ -132,7 +134,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
    * thread, edge to edge, rather than in a box of its own (DESIGN.md §5, containment).
    */
   const composer = (
-    <Group as="div" className="rounded-none border-x-0 border-b-0 px-4 py-3" data-composer>
+    <CardFooter className="block px-4 pt-3" data-composer>
             <div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <label className="t-label text-muted-foreground">
@@ -248,7 +250,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 </p>
               )}
             </div>
-    </Group>
+    </CardFooter>
   )
 
   return (
@@ -264,7 +266,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
       bodyClassName="min-h-0 flex-1 divide-y overflow-y-auto"
     >
       <DoorGroup>
-        <header className="bg-card sticky top-0 z-[1] border-b px-4 py-3">
+        <CardHeader className="sticky top-0 z-[1] block bg-card px-4 pb-3">
           <div className="flex items-start gap-2">
             {/* A destination, so a real link: it copies, it opens in a new tab, and the click
                 keeps the list where it is rather than reloading it (DESIGN.md §1). */}
@@ -316,7 +318,8 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
             </div>
             <ExpandAll className="shrink-0" />
           </div>
-        </header>
+        </CardHeader>
+        <Separator />
 
         {/* -------------------------------------------------------------------- the reply itself */}
         <div>
@@ -338,7 +341,8 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
           </article>
 
           {/* -------------------------------------------------------------- the doors of the thread */}
-          <div className="divide-y border-t">
+          <Separator />
+          <div className="divide-y">
             <Door id="inbox.thread.earlier" label="Earlier messages" count={sent.length} defaultOpen={disclosure.level("inbox.thread.earlier-messages") === 1}>
               <ul className="space-y-3">
                 {sent.map((m, i) => (

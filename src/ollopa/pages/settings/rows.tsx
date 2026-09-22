@@ -7,9 +7,12 @@
 // Three things a row may carry: a plan `feature`, which wraps its control in `Locked` where the
 // workspace's plan does not include it; a `block`, for the two tables people edit in the row rather
 // than in a drawer; and `readOnly`, for a value an admin set that this seat may read and not change.
-import { useState, type ReactNode } from "react"
+import { Fragment, useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import { Actions } from "../../ui/Actions"
 import { Chip as StatusChip, FamilyIcon } from "../../ui/Identity"
 import { Input } from "@/components/ui/input"
@@ -293,17 +296,17 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
   add({
     id: "work.seats", area: "How your team works", label: "Which seats exist here", short: "Seats",
     value: (
-      <span className="flex flex-wrap items-center gap-1.5">
+      <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {(["sdr", "ae", "marketer", "cs", "admin"] as Role[]).map((r) => {
           const on = ws.seats.includes(r)
           const held = seed.users.filter((u) => u.role === r).length
           const label = { sdr: "SDR", ae: "Account executive", marketer: "Marketer", cs: "Customer success", admin: "RevOps admin" }[r]
           return (
-            <label key={r} className={cn("flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs", !on && "text-muted-foreground")}>
-              <input type="checkbox" defaultChecked={on} aria-label={label}
-                onChange={(e) => toast(e.target.checked ? `${label} added. Nobody holds it yet.` : `${label} removed. ${plural(held, "person", "people")} hold it and would lose those areas.`)} />
-              {label} · {held}
-            </label>
+            <span key={r} className="flex items-center gap-2">
+              <Checkbox id={`seat-${r}`} defaultChecked={on} aria-label={label}
+                onCheckedChange={(v) => toast(v ? `${label} added. Nobody holds it yet.` : `${label} removed. ${plural(held, "person", "people")} hold it and would lose those areas.`)} />
+              <Label htmlFor={`seat-${r}`} className={cn("t-body font-normal", !on && "text-muted-foreground")}>{label} · {held}</Label>
+            </span>
           )
         })}
       </span>
@@ -1116,6 +1119,23 @@ function DeleteWorkspace({ name, seed }: { name: string; seed: Seed }) {
   )
 }
 
+/**
+ * A list of settings rows with the library's `Separator` between them. The divider belongs to the
+ * list, not to the row: a row drawn on its own — beside another page — has nothing to divide from.
+ */
+export function RowList({ rows, admin, honest = true }: { rows: SettingRow[]; admin: string; honest?: boolean }) {
+  return (
+    <>
+      {rows.map((r, i) => (
+        <Fragment key={r.id}>
+          {i > 0 && <Separator />}
+          <Row row={r} admin={admin} honest={honest} />
+        </Fragment>
+      ))}
+    </>
+  )
+}
+
 /* ------------------------------------------------------------------------------------- one row */
 
 /**
@@ -1158,9 +1178,8 @@ export function Row({ row, admin, honest = true, idPrefix = "row-", stacked = fa
       data-row={row.id}
       data-item={row.id}
       data-item-label={row.label}
-      className={cn("border-t border-border/60 px-2 py-2.5 first:border-t-0", lit && "rounded-md")}
-      // The row you were sent to: the accent's own tint, the one "you are here" colour.
-      style={lit ? { backgroundColor: "var(--info-tint)" } : undefined}
+      // The row you were sent to wears the library's own row highlight, the same one hover uses.
+      className={cn("px-2 py-2.5", lit && "rounded-md bg-muted")}
     >
       {row.block ? (
         <>

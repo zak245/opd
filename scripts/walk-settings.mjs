@@ -151,9 +151,11 @@ await shot("5-setup-in-the-shell")
 
 // Change an answer, then finish. The answers save as they are made; the button is the way back.
 await page.evaluate(() => {
-  const labels = Array.from(document.querySelectorAll("label"))
-  const grow = labels.find((l) => /grow existing accounts/i.test(l.textContent ?? ""))
-  grow?.querySelector("input")?.click()
+  // The options are the library's toggle items now, not labels wrapping a radio.
+  const el = Array.from(document.querySelectorAll('button,[role="radio"],label'))
+    .find((x) => /^grow existing accounts$/i.test((x.textContent ?? "").trim()))
+  if (el && el.tagName === "LABEL") { el.querySelector("input")?.click(); return }
+  el?.click()
 })
 await wait(300)
 await page.evaluate(() => {

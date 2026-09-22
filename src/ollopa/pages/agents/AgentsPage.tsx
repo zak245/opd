@@ -13,6 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { href, navigate, useRoute } from "@/app/router"
 import { useLesson } from "@/learn/context"
 import { Actions } from "../../ui/Actions"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import { Container } from "../../ui/Section"
 import { ApproveBar } from "../../ui/ApproveBar"
 import { DoorGroup, useDoorState } from "../../ui/Door"
@@ -335,11 +337,13 @@ export function AgentsPage({ session }: { session: Session }) {
               <div aria-live="polite" className="sr-only">{announce || `${queue.length} waiting.`}</div>
               <div data-container="waiting" data-container-label="Waiting for you">
               {byAgent(queue).map((group) => (
-                <div key={group.agent} className="mt-3 border-t">
+                <div key={group.agent} className="mt-3">
+                  <Separator />
                   <h3 className="t-small py-1.5 font-medium uppercase tracking-wider text-muted-foreground">
                     {group.agent} · {group.items.length}
                   </h3>
-                  <ul className="divide-y border-t">
+                  <Separator />
+                  <ul className="divide-y">
                     {group.items.map((e) => (
                       <WaitingItem
                         key={e.id}
@@ -376,7 +380,7 @@ export function AgentsPage({ session }: { session: Session }) {
         </div>
       </Container>}
 
-      {result && <p role="status" className="t-small mt-6 rounded-md bg-muted px-2 py-1.5">{result}</p>}
+      {result && <Alert role="status" className="mt-6 py-2"><AlertDescription className="t-small">{result}</AlertDescription></Alert>}
 
       {/* Step 0 and step 1: the assistant's conversation, which is where Apollo keeps the record. */}
       {!rules.r1 && (

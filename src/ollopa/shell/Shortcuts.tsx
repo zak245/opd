@@ -2,6 +2,7 @@
 import { NAV } from "../nav"
 import { Kbd } from "@/components/ui/kbd"
 import { Panel } from "../ui/Panel"
+import { Divider } from "../ui/Divider"
 
 const GENERAL: { keys: string; what: string }[] = [
   { keys: "⌘K / Ctrl K", what: "Search or jump to" },
@@ -25,7 +26,8 @@ export function Shortcuts({ open, onOpenChange }: { open: boolean; onOpenChange:
           ))}
         </ul>
       </section>
-      <section className="border-t px-4 py-3">
+      <section className="first:[&>[data-slot=separator]]:hidden px-4 py-3">
+      <Divider className="-mx-4 mb-3" />
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Go to a page</h3>
         <ul className="mt-2 grid gap-1.5">
           {NAV.map((n) => (

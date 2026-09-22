@@ -53,7 +53,7 @@ await wait(600)
 // The contacts list is a section down the record; bring it into view before anything is clicked.
 await page.evaluate(() => document.querySelector("#contacts")?.scrollIntoView({ block: "start" }))
 await wait(400)
-console.log("contacts section:", await page.evaluate(() => document.querySelector("#contacts h3, #contacts h2")?.textContent ?? "(none)"))
+console.log("contacts section:", await page.evaluate(() => document.querySelector("#contacts [data-slot='card-title'], #contacts h2, #contacts h3")?.textContent ?? "(none)"))
 console.log("rows on the first page:", (await rows()).length)
 await shot("1-company")
 

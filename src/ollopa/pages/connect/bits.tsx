@@ -148,7 +148,7 @@ function StepRows({ steps, current, go, tagged }: { steps: StepState[]; current:
         )
         const openable = s.n !== current && (s.done || !s.blocked)
         return (
-          <li key={s.n} className={cn("rounded-md px-2 py-1.5", s.n === current && "bg-card")}>
+          <li key={s.n} className="px-2 py-1.5">
             {openable ? (
               <button type="button" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`} className="block text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
                 <span className="t-label hover:underline">Step {s.n}: {s.name}</span>

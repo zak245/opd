@@ -27,6 +27,7 @@ import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Container, Group } from "../../ui/Section"
+import { Divider } from "../../ui/Divider"
 import { inkOf } from "../../ui/Identity"
 import { warningStatus } from "../deals/pipeline"
 import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
@@ -230,7 +231,8 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
                 </label>
                 {/* The agent's draft sits beside the human's and is marked as a draft. Sending is the approval. */}
                 {/* Inside the composer's band already: a divider and a line of its own, not a second box. */}
-                <div className="t-small border-t pt-2">
+                <Divider className="mt-2" />
+          <div className="t-small pt-2">
                   <div className="font-medium">The agent's draft <span className="font-normal text-muted-foreground">· draft, not sent</span></div>
                   <p className="mt-1 text-muted-foreground">Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?</p>
                   <Button size="sm" variant="ghost" className="mt-1 h-6 px-1 text-xs"
@@ -703,15 +705,18 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     <ThingPlace id="timeline.list" label="The activity timeline" place="timeline" placeLabel="the timeline" className="space-y-4">
       {groups.map((g) => (
         <section key={g.day}>
-          {/* The day is a divider with a word on it, not a heading over a stack of boxes. */}
-          <h3 className="bg-card t-small sticky top-0 z-10 border-b py-1 font-medium text-muted-foreground">{g.day}</h3>
+          {/* The day is a word with the library's rule under it, not a heading over a stack of boxes. */}
+          <h3 className="bg-card t-small sticky top-0 z-10 py-1 font-medium text-muted-foreground">{g.day}</h3>
+          <Divider />
           <div>
-            {g.items.map((a) => {
+            {g.items.map((a, i) => {
               const Icon = KIND_ICON[a.kind]
               return (
-                // One event is a row in the timeline's container, separated by a divider. A box
-                // each would make every event its own group (DESIGN.md §5, containment).
-                <article key={a.id} className="flex gap-2.5 border-b py-2.5 last:border-b-0">
+                // One event is a row in the timeline's card, separated from the next by the
+                // library's rule. A box each would make every event its own group.
+                <div key={a.id}>
+                {i > 0 && <Divider />}
+                <article className="flex gap-2.5 py-2.5">
                   <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm">{a.summary}</div>
@@ -727,6 +732,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
                     {a.detail && a.kind !== "email" && <p className="mt-1 text-xs text-muted-foreground">{a.detail}</p>}
                   </div>
                 </article>
+                </div>
               )
             })}
           </div>
@@ -748,7 +754,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <ThingPlace id="agent.proposal" label="The agent proposal" place="card.proposal" placeLabel="the Agent proposal card" className="space-y-2 text-sm">
           <div className="text-xs text-muted-foreground">{proposal.agent} · {day(proposal.when)} {proposal.at}</div>
           <div className="font-medium">Stage · {stage} → {stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)]?.name}</div>
-          {q && <blockquote className="border-l-2 pl-2 text-xs text-muted-foreground">{quoted(q.quote)} — {q.sourceKind}, {day(q.at)}</blockquote>}
+          {q && (
+            <blockquote className="flex gap-2 text-xs text-muted-foreground">
+              <Divider orientation="vertical" className="h-auto self-stretch" />
+              <span>{quoted(q.quote)} — {q.sourceKind}, {day(q.at)}</span>
+            </blockquote>
+          )}
           <StateChip state="suggested" />
           {r7 && <p className="text-xs">
             {`Stage becomes ${stages[Math.min(stages.findIndex((s) => s.name === stage) + 1, stages.length - 1)]?.name}. `}
@@ -771,11 +782,13 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   // Qualification: the AE's weekly work. A human validates; the model proposes; the quote sits beside it.
   const qualCard = (
     <ThingPlace id="qual.card" label="Qualification" place="card.qual" placeLabel="the Qualification card" className="space-y-1">
-      {QUAL_ELEMENTS.map((element) => {
+      {QUAL_ELEMENTS.map((element, i) => {
         const v = qual?.[element]
         const quote = evidence.find((e) => e.element === element)
         return (
-          <div key={element} className="border-t py-2 first:border-t-0">
+          <div key={element}>
+          {i > 0 && <Divider />}
+          <div className="py-2">
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="text-xs font-medium">{element}</span>
               <span className="min-w-0 flex-1 text-sm">{v?.value || <span className="text-muted-foreground">Not answered yet</span>}</span>
@@ -787,7 +800,12 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
               </p>
             )}
             {/* The words the buyer used, beside the value: a model's answer is checkable only with the quote. */}
-            {quote && <blockquote className="mt-1 border-l-2 pl-2 text-xs text-muted-foreground">{quoted(quote.quote)}</blockquote>}
+            {quote && (
+              <blockquote className="mt-1 flex gap-2 text-xs text-muted-foreground">
+                <Divider orientation="vertical" className="h-auto self-stretch" />
+                {quoted(quote.quote)}
+              </blockquote>
+            )}
             {v?.value && v.state !== "validated" && canEdit && (
               <div className="flex gap-1 pt-1">
                 <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => {
@@ -801,6 +819,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
                 }}>Edit</Button>
               </div>
             )}
+          </div>
           </div>
         )
       })}
@@ -996,7 +1015,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     content: evidence.length === 0
       ? <p className="text-muted-foreground">No conversation has been recorded against this deal yet.</p>
       : <ul data-item="qual.evidence" data-item-label="Evidence and source quotes" className="space-y-2">{evidence.map((e) => (
-          <li key={e.id}><div className="text-xs font-medium">{e.element}</div><blockquote className="border-l-2 pl-2 text-xs text-muted-foreground">{quoted(e.quote)}</blockquote><div className="t-small text-muted-foreground">{e.sourceKind} · {day(e.at)}</div></li>
+          <li key={e.id}><div className="text-xs font-medium">{e.element}</div><blockquote className="flex gap-2 text-xs text-muted-foreground"><Divider orientation="vertical" className="h-auto self-stretch" />{quoted(e.quote)}</blockquote><div className="t-small text-muted-foreground">{e.sourceKind} · {day(e.at)}</div></li>
         ))}</ul>,
   })
 
@@ -1126,10 +1145,11 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   )
 
   const pinnedNote = pinned ? (
-    <Group as="article" data-item="timeline.pin" data-item-label="Pinned note" className="mb-3 rounded-[var(--radius)] border px-3 py-2">
+    <Group as="article" data-item="timeline.pin" data-item-label="Pinned note" className="mb-3">
       <div className="t-small font-medium text-muted-foreground">Pinned note</div>
       <p className="t-body">{pinned.body}</p>
       <div className="t-small text-muted-foreground">{pinned.author} · {day(pinned.at)}</div>
+      <Divider className="mt-2" />
     </Group>
   ) : undefined
 
@@ -1500,7 +1520,8 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           kind: "timeline",
           items: (
             <Container component="section" heading="Activity" count={filtered.length} padded={false}>
-              <Group className="border-y px-4 py-3">{composerBlock}</Group>
+              <Group className="px-4 pb-3">{composerBlock}</Group>
+              <Divider />
               {timeline("px-4 pt-3 pb-1", "px-4 pb-3")}
               {residualTabs && <div className="px-4 pb-3">{residualTabs}</div>}
             </Container>

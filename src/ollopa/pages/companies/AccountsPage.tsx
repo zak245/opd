@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
+import { Separator } from "@/components/ui/separator"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
@@ -166,10 +167,11 @@ export function AccountsPage({ session }: { session: Session }) {
       {handoffs.length > 0 && (
         <Door id="accounts.handoffs" label="Hand-offs waiting for you" count={handoffs.length} defaultOpen>
           <ul className="space-y-2">
-            {handoffs.map((v) => {
+            {handoffs.map((v, i) => {
               const h = v.account!.handoff!
               return (
-                <li key={v.company.id} className="border-t pt-2 first:border-t-0 first:pt-0">
+                <li key={v.company.id} className={i === 0 ? "" : "pt-2"}>
+                  {i > 0 && <Separator className="mb-2" />}
                   <div className="t-label">{v.account!.name}</div>
                   <div className="t-small text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
                   <p className="pt-1 t-small">Why they bought: {h.whyTheyBought}</p>
@@ -522,7 +524,7 @@ function NextStepCell({ value, onSave }: { value: { text: string; due: string };
   return (
     <button
       type="button"
-      className="block w-full truncate rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="block w-full truncate text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       onClick={(e) => { e.stopPropagation(); setEditing(true) }}
     >
       {value.text} <span className="text-muted-foreground">· {day(value.due)}</span>

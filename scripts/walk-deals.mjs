@@ -293,7 +293,7 @@ for (const role of ["ae", "admin"]) {
   await wait(700)
   await page.evaluate(() => document.body.focus())
   await page.keyboard.press("BracketRight")
-  await wait(600)
+  await wait(1000)
   const labels = await page.evaluate(() => Array.from(document.querySelectorAll("aside dl dt")).map((el) => el.textContent.trim()))
   console.log(`the deal pane for the Meridian ${role}:`, labels.join(", ") || "(no pane)")
   await shot(`15-pane-fields-${role}`)

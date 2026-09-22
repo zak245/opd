@@ -33,6 +33,7 @@ import { familyOf } from "../identity"
 import { Panel } from "../ui/Panel"
 import { SectionHeader } from "../ui/SectionHeader"
 import type { QuickLookEditable, QuickLookField } from "./QuickLook"
+import { Divider } from "../ui/Divider"
 
 
 /**
@@ -297,7 +298,8 @@ export function CardRow({ title, meta, actions, children }: {
   children?: ReactNode
 }) {
   return (
-    <div className="group flex items-start gap-2 border-t py-2 first:border-t-0">
+    <div className="group relative flex items-start gap-2 py-2 first:[&>[data-slot=separator]]:hidden">
+      <Divider className="absolute inset-x-0 top-0" />
       <div className="min-w-0 flex-1">
         <div className="t-body">{title}</div>
         {meta && <div className="t-small text-muted-foreground">{meta}</div>}
@@ -352,7 +354,8 @@ function Section({ section }: { section: RecordSection }) {
 function DrawerDoor({ door }: { door: RecordDoor }) {
   const [open, setOpen] = useState(false)
   return (
-    <section data-door className="border-t border-border first:border-t-0">
+    <section data-door className="first:[&>[data-slot=separator]]:hidden">
+          <Divider />
       <h3 className="m-0">
         <button
           type="button"
@@ -463,7 +466,7 @@ export function RecordPage(p: RecordPageProps) {
     <DoorGroup>
       <div className="flex min-h-full flex-col">
         {/* ------------------------------------------------------------------ header */}
-        <header className="border-b px-5 pt-4 lg:px-6">
+        <header className="px-5 pt-4 lg:px-6">
           <BackToIndex label={p.back.label} to={p.back.href} compact />
 
           <div className="mt-2 flex flex-wrap items-start gap-x-3 gap-y-2">
@@ -542,6 +545,7 @@ export function RecordPage(p: RecordPageProps) {
             </CardContent>
           </Card>
         </header>
+        <Divider />
 
         {/* --------------------------------------------- phone: the actions sit under the header */}
         <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 border-t bg-background px-5 py-2 lg:hidden" data-print-hide>

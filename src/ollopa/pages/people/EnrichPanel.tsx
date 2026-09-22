@@ -13,6 +13,9 @@ import { CREDITS, type Seed } from "../../data/seed"
 import { businessById } from "../../data/businesses"
 import type { Session } from "../../session"
 import { daysSince, type PersonRow } from "./person"
+import { Separator } from "@/components/ui/separator"
+import { Card, CardContent } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export interface RevealOption {
   id: "email" | "email-mobile"
@@ -109,7 +112,7 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
           <legend className="pb-2 text-xs font-medium text-muted-foreground">What to reveal</legend>
           <div className="space-y-1.5">
             {REVEAL_OPTIONS.map((o) => (
-              <label key={o.id} className="flex cursor-pointer items-start gap-2 rounded-md border p-2.5 has-[:checked]:border-foreground">
+              <label key={o.id} className="flex cursor-pointer items-start gap-2 rounded-md p-2.5 hover:bg-muted has-[:checked]:bg-muted">
                 <input
                   type="radio"
                   name="reveal"
@@ -126,7 +129,7 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
           </div>
         </fieldset>
 
-        <dl className="space-y-1.5 rounded-md border p-3">
+        <Card className="py-3"><CardContent className="px-3"><dl className="space-y-1.5">
           <div className="flex justify-between gap-3">
             <dt className="text-muted-foreground">Selected</dt>
             <dd className="tabular-nums">{rows.length.toLocaleString()}</dd>
@@ -145,7 +148,8 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
               <dd className="tabular-nums">{plan.excluded.length.toLocaleString()}</dd>
             </div>
           )}
-          <div className="flex justify-between gap-3 border-t pt-1.5">
+          <Separator />
+          <div className="flex justify-between gap-3">
             <dt>Charged</dt>
             <dd className="tabular-nums">{plan.charged.length.toLocaleString()} × {option.perRow}</dd>
           </div>
@@ -157,20 +161,22 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
             <dt className="text-muted-foreground">Balance after</dt>
             <dd className="tabular-nums">{after.toLocaleString()} credits</dd>
           </div>
-        </dl>
+        </dl></CardContent></Card>
 
         {/* The exclusion is stated with its count and can be overridden on purpose, never applied
             silently: a mobile for a do-not-call record is charged and cannot be called. */}
         {choice === "email-mobile" && plan.dnc.length > 0 && (
-          <div className="rounded-md border border-[var(--warning-ink)] p-3">
+          <Alert>
+            <AlertDescription className="flex-col items-start gap-2">
             <p>
               {plan.dnc.length} of {rows.length} carry a do-not-call flag; a mobile for those is charged and
               cannot be called — {includeDnc ? "included" : "excluded"}.
             </p>
-            <Button size="sm" variant="outline" className="mt-2" onClick={() => setIncludeDnc((v) => !v)}>
+            <Button size="sm" variant="outline" onClick={() => setIncludeDnc((v) => !v)}>
               {includeDnc ? `Leave the ${plan.dnc.length} out again` : "Include them anyway"}
             </Button>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
       </div>

@@ -18,7 +18,7 @@ export function Week({ data, d, order, hasReports }: { data: HomeData; d: Disclo
   return (
     <Section id="home-week" title="Your week" order={order} link={{ label: "Reports", to: "/ollopa/reports" }}>
       {line && (
-        <p className="rounded-md border px-3 py-2 text-sm tabular-nums">
+        <p className="t-body tabular-nums">
           Sent {count(w.activity.sentThisWeek)} · Calls {count(w.activity.callsThisWeek)} · Meetings booked {count(w.activity.meetingsBooked)}
           {sequences && <span className="text-muted-foreground"> · {w.sequenceLine}</span>}
         </p>
