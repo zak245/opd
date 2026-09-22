@@ -19,6 +19,8 @@ import { type ReactNode } from "react"
 import type { PageComponent } from "../../Product"
 import type { BesideComponent } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
+import { ink } from "./look"
 import { declarePaneFields, useBesideDone } from "../../ui/Beside"
 import { useDisclosure, type Disclosure } from "../../ui/useDisclosure"
 import { toast } from "../../templates/TablePage"
@@ -64,10 +66,10 @@ function Fields({ d, fields }: { d: Disclosure; fields: PaneField[] }) {
     <dl className="space-y-2.5">
       {shown.map((f) => (
         <div key={f.label} className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
-          <dt className="text-xs text-muted-foreground">{f.label}</dt>
-          <dd className="min-w-0">
+          <dt className="t-label text-muted-foreground">{f.label}</dt>
+          <dd className="t-body min-w-0">
             {f.value}
-            {f.under && <div className="text-xs text-muted-foreground">{f.under}</div>}
+            {f.under && <div className="t-small text-muted-foreground">{f.under}</div>}
           </dd>
         </div>
       ))}
@@ -85,7 +87,7 @@ function acts(d: Disclosure, candidates: { item: string; action: Action }[]): Ac
 }
 
 function Missing({ what }: { what: string }) {
-  return <p className="text-muted-foreground">That {what} is not here. It may have been deleted.</p>
+  return <p className="t-body text-muted-foreground">That {what} is not here. It may have been deleted.</p>
 }
 
 /* --------------------------------------------------------------------------- audience (R-audience) */
@@ -190,7 +192,7 @@ const CampaignBeside: BesideComponent = ({ session, id }) => {
     <div className="space-y-4">
       <Fields d={d} fields={[
         { item: "camp.list.name", label: "Kind", value: c.kind },
-        { item: "camp.list.status", label: "Status", value: c.status, under: c.pausedBy ? `by ${c.pausedBy.toLowerCase()}` : undefined },
+        { item: "camp.list.status", label: "Status", value: <Chip status={c.status}>{c.status}</Chip>, under: c.pausedBy ? `by ${c.pausedBy.toLowerCase()}` : undefined },
         { item: "camp.list.owner", label: "Owner", value: c.owner },
         {
           item: "camp.detail.audience", label: "Audience",
@@ -264,7 +266,7 @@ const FormBeside: BesideComponent = ({ session, id }) => {
   return (
     <div className="space-y-4">
       <Fields d={d} fields={[
-        { item: "form.row", label: "Status", value: f.status },
+        { item: "form.row", label: "Status", value: <Chip status={f.status}>{f.status}</Chip> },
         { item: "form.submissions", label: "Submissions, 7 days", value: <span className="tabular-nums">{num(f.submissions7d)}</span> },
         { item: "form.routing", label: "Routes to", value: f.routesTo },
         { item: "form.row", label: "Reports to", value: f.reportsTo },
@@ -273,13 +275,13 @@ const FormBeside: BesideComponent = ({ session, id }) => {
         // model keeps them at level one for every seat, and so does this pane.
         {
           item: "form.cap", label: "Enrichment today",
-          value: <span className={atCap ? "font-medium tabular-nums text-amber-700 dark:text-amber-400" : "tabular-nums"}>{num(f.enrichUsedToday)} of {num(f.enrichCapDaily)} credits</span>,
+          value: <span className={atCap ? "font-medium tabular-nums" : "tabular-nums"} style={atCap ? ink("warning") : undefined}>{num(f.enrichUsedToday)} of {num(f.enrichCapDaily)} credits</span>,
           under: `${num(f.matched)} of ${num(f.submissions7d)} matched`,
         },
         {
           item: "form.unrouted", label: "Could not route",
           value: f.unrouted > 0
-            ? <span className="font-medium tabular-nums text-amber-700 dark:text-amber-400">{num(f.unrouted)} reached nobody</span>
+            ? <span className="font-medium tabular-nums" style={ink("danger")}>{num(f.unrouted)} reached nobody</span>
             : <span className="tabular-nums">0</span>,
         },
       ]} />
@@ -339,18 +341,18 @@ const WorkflowBeside: BesideComponent = ({ session, id }) => {
     <div className="space-y-4">
       <Fields d={d} fields={[
         { item: "wf.trigger", label: "Trigger", value: `When ${w.trigger}` },
-        { item: "wf.status", label: "Status", value: on ? "On" : "Off", under: `${w.statusChangedBy}, ${ago(w.statusChangedOn)}` },
+        { item: "wf.status", label: "Status", value: <Chip status={on ? "active" : "off"}>{on ? "On" : "Off"}</Chip>, under: `${w.statusChangedBy}, ${ago(w.statusChangedOn)}` },
         { item: "wf.table", label: "Owner", value: w.owner },
         {
           item: "wf.ceiling", label: "Credit ceiling",
-          value: <span className={atCeiling ? "font-medium tabular-nums text-amber-700 dark:text-amber-400" : "tabular-nums"}>{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} today</span>,
+          value: <span className={atCeiling ? "font-medium tabular-nums" : "tabular-nums"} style={atCeiling ? ink("warning") : undefined}>{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} today</span>,
           under: `${num(w.ceiling.perRun)} a run at most`,
         },
         { item: "wf.history", label: "Last edited", value: `${w.editedBy}, ${day(w.editedOn)}` },
         ...(w.sla
           ? [
             { item: "wf.sla-running", label: "On the clock", value: <span className="tabular-nums">{num(w.sla.running)} running</span>, under: `Window ${w.sla.windows.hot} hot · ${w.sla.windows.warm} warm` },
-            { item: "wf.sla-breached", label: "Breached today", value: <span className={w.sla.breachedToday > 0 ? "font-medium tabular-nums text-amber-700 dark:text-amber-400" : "tabular-nums"}>{num(w.sla.breachedToday)}</span> },
+            { item: "wf.sla-breached", label: "Breached today", value: <span className="font-medium tabular-nums" style={w.sla.breachedToday > 0 ? ink("danger") : undefined}>{num(w.sla.breachedToday)}</span> },
           ]
           : []),
       ]} />

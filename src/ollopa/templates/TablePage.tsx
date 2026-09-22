@@ -1,6 +1,8 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Chip, FamilyIcon } from "../ui/Identity"
+import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -8,7 +10,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "./QuickLook"
 
-export interface Column<T> { key: string; header: string; cell: (row: T) => ReactNode; className?: string }
+export interface Column<T> {
+  key: string
+  header: string
+  cell: (row: T) => ReactNode
+  className?: string
+  /**
+   * This column shows a state word. Return it and the template draws the status chip from the one
+   * status set — a page never picks the colour, and the chip always carries the word (DESIGN.md §5).
+   */
+  status?: (row: T) => string
+}
 export interface RowAction<T> { label: string | ((row: T) => string); icon?: LucideIcon; onClick: (row: T) => void }
 const lbl = <T,>(a: RowAction<T>, r: T) => (typeof a.label === "function" ? a.label(r) : a.label)
 export interface MoreAction<T> { label: string; onClick: (row: T) => void; destructive?: boolean }
@@ -29,6 +41,12 @@ export interface QuickLookSpec<T> {
 
 export interface TablePageProps<T> {
   title: string
+  /**
+   * The family these rows belong to — a page id like "people", or a pane kind. The title takes its
+   * icon and ink, and the quick look takes its top bar (DESIGN.md §5). A page names its family; it
+   * never names a colour.
+   */
+  family?: string
   description?: string
   total?: number
   rows: T[]
@@ -66,8 +84,11 @@ export function TablePage<T>(p: TablePageProps<T>) {
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5">
         <div>
-          <h2 className="t-title">{p.title}</h2>
-          {p.description && <p className="text-sm text-muted-foreground">{p.description}</p>}
+          <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf(p.family).ink }}>
+            <FamilyIcon of={p.family} size="header" />
+            {p.title}
+          </h2>
+          {p.description && <p className="t-body text-muted-foreground">{p.description}</p>}
         </div>
         {p.primary && <Button onClick={p.primary.onClick}>{p.primary.label}</Button>}
       </div>
@@ -82,15 +103,15 @@ export function TablePage<T>(p: TablePageProps<T>) {
             </SelectContent>
           </Select>
         ))}
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+        <span className="t-label ml-auto tabular-nums text-muted-foreground">
           {rows.length.toLocaleString()} shown{p.total ? ` of ${p.total.toLocaleString()}` : ""}
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto border-t">
         <Table>
-          <TableHeader className="sticky top-0 bg-background">
+          <TableHeader className="surface-page sticky top-0">
             <TableRow>
-              {p.columns.map((c) => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
+              {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
               {(p.rowActions || p.moreActions) && <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>}
             </TableRow>
           </TableHeader>
@@ -98,12 +119,24 @@ export function TablePage<T>(p: TablePageProps<T>) {
             {rows.slice(0, limit).map((r) => (
               <TableRow
                 key={p.rowKey(r)}
-                className={cn("group", p.quickLook && "cursor-pointer")}
+                // The row you are on is the raised surface: hovered, focused, or the one the quick
+                // look is open on (DESIGN.md §5, the three depths).
+                className={cn(
+                  "group hover:[background-color:var(--surface-raised)] focus-visible:[background-color:var(--surface-raised)]",
+                  p.quickLook && "cursor-pointer",
+                  glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--surface-raised)]",
+                )}
                 tabIndex={p.quickLook ? 0 : undefined}
                 onClick={p.quickLook ? (e) => { e.currentTarget.focus(); setGlancing(r) } : undefined}
                 onKeyDown={p.quickLook ? (e) => { if (e.key === "Enter" && e.target === e.currentTarget) { e.preventDefault(); setGlancing(r) } } : undefined}
               >
-                {p.columns.map((c) => <TableCell key={c.key} className={cn("py-2", c.className)}>{c.cell(r)}</TableCell>)}
+                {p.columns.map((c) => (
+                  <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", c.className)}>
+                    {/* A column that shows a state word draws it as a status chip, from the one set,
+                        always with the word in it. */}
+                    {c.status ? <Chip status={c.status(r)} /> : c.cell(r)}
+                  </TableCell>
+                ))}
                 {(p.rowActions || p.moreActions) && (
                   <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
@@ -122,7 +155,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
                       {p.moreActions && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" className="size-7" aria-label="More actions"><MoreHorizontal className="size-4" /></Button>
+                            <Button size="icon-sm" variant="ghost" aria-label={p.quickLook ? `Actions for ${p.quickLook.title(r)}` : "More actions"}><MoreHorizontal className="size-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {p.quickLook && <DropdownMenuItem onSelect={() => setGlancing(r)}>Quick look</DropdownMenuItem>}
@@ -140,7 +173,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <TableRow><TableCell colSpan={p.columns.length + 1} className="py-10 text-center text-sm text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={p.columns.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -148,6 +181,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
           <QuickLook
             open
             onOpenChange={(o) => { if (!o) setGlancing(null) }}
+            family={p.family}
             title={p.quickLook.title(glancing)}
             fields={p.quickLook.fields(glancing)}
             editable={p.quickLook.editable?.(glancing)}

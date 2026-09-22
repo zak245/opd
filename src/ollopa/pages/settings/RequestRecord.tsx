@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { follow } from "../../chain"
 import { Announcement } from "../../ui/Announcement"
 import { useDoorState } from "../../ui/Door"
@@ -19,7 +20,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor, type Request } from "../../data/seed"
 import type { Session } from "../../session"
 import { businessDaysBetween, day, longDay, money, plural } from "./format"
-import { STATE_LABEL, waitingOf } from "./RequestsPage"
+import { STATE_LABEL, STATE_STATUS, waitingOf } from "./RequestsPage"
 import { toast } from "./state"
 
 /**
@@ -72,10 +73,10 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
     { key: "asked", label: "Asked by", value: `${request.requester.user} · ${request.requester.seat} · ${longDay(request.raisedOn)}` },
     {
       key: "waiting", label: "Waiting", wide: false,
-      value: <span className={cn(w.past > 0 && "text-destructive")}>{w.text}</span>,
+      value: w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : <span>{w.text}</span>,
       under: <span className="text-xs text-muted-foreground">This queue owes an answer in {target} business days: approve to investigate, approve to implement, or decline.</span>,
     },
-    { key: "state", label: "State", value: STATE_LABEL[live] },
+    { key: "state", label: "State", value: <Chip status={STATE_STATUS[live]}>{STATE_LABEL[live]}</Chip> },
     { key: "owner", label: "Decision owner", value: request.decisionOwner },
     {
       key: "affects", label: "Who will feel it",
@@ -210,7 +211,7 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
                   {TOUCH_ROW[t.kind] ? (
                     <button
                       data-item={TOUCH_ROW[t.kind]}
-                      className="underline underline-offset-4"
+                      className="inline-flex items-center gap-1 underline underline-offset-4"
                       onClick={(e) => openBeside({ kind: "setting", id: TOUCH_ROW[t.kind], opener: e.currentTarget })}
                     >{t.name}</button>
                   ) : (
@@ -223,7 +224,10 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
                            title: `${request.outcome} · Requests`,
                            anchor: t.id,
                          })
-                       }}>{t.name}</a>
+                       }}>
+                      <FamilyIcon of={t.kind === "workflow" ? "workflows" : "reports"} className="mr-1 inline-block align-text-bottom" />
+                      {t.name}
+                    </a>
                   )}
                   <span className="text-muted-foreground"> ({t.kind})</span>
                 </span>
@@ -282,7 +286,7 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
         <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{request.kind === "upgrade" ? "A locked feature" : "A workspace change"}</span>
           <span>·</span>
-          <span className={cn(w.past > 0 && "text-destructive")}>{w.text}</span>
+          {w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : <span>{w.text}</span>}
         </span>
       }
       ribbon={

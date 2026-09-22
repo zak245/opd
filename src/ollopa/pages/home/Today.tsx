@@ -4,7 +4,7 @@
 // key that runs them, and Skip carries what it does to the sequence in its label. Everything that
 // happens leaves an undo line, and nothing reorders while you work.
 import { useEffect, useRef } from "react"
-import { Badge } from "@/components/ui/badge"
+import { Chip } from "../../ui/Identity"
 import { Actions } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
@@ -47,7 +47,7 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
       keys={{ d: () => onDone(t), s: () => onSnooze(t), x: () => onSkip(t) }}
       onEnter={() => openTask()}
     >
-      <Badge variant="outline" className="w-[4.5rem] shrink-0 justify-center font-normal">{t.kind}</Badge>
+      <Chip family="tasks" className="w-[4.5rem] shrink-0 justify-center">{t.kind}</Chip>
       <span className="min-w-[11rem] flex-1">
         <button
           type="button"
@@ -60,7 +60,7 @@ function TaskRow({ t, late, showSequence, ids, onDone, onSnooze, onSkip }: TaskR
         <span className="block text-xs text-muted-foreground">
           {t.title}
           {showSequence && t.sequence && <> · {t.sequence}</>}
-          {late && <span className="ml-2 font-medium text-destructive">{" "}{overdueBy(t.due)}</span>}
+          {late && <> <Chip status="overdue">{overdueBy(t.due)}</Chip></>}
         </span>
       </span>
       <span className="ml-auto flex shrink-0 items-center gap-2">
@@ -127,7 +127,7 @@ export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order
 
       {overdue.length > 0 && (
         <div className="pb-3">
-          <p className="pb-1 text-xs font-medium text-destructive">Overdue ({overdue.length})</p>
+          <p className="pb-1"><Chip status="overdue">Overdue ({overdue.length})</Chip></p>
           <RowList label="Overdue tasks">
             {overdue.map((t) => <TaskRow key={t.id} t={t} late {...rowProps} />)}
           </RowList>
@@ -151,7 +151,7 @@ export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order
             <ul className="divide-y">
               {later.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                  <Badge variant="outline" className="w-[4.5rem] shrink-0 justify-center font-normal">{t.kind}</Badge>
+                  <Chip family="tasks" className="w-[4.5rem] shrink-0 justify-center">{t.kind}</Chip>
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{t.contact}</span>
                     <span className="text-muted-foreground"> · {t.company}{showSequence && t.sequence ? ` · ${t.sequence}` : ""}</span>

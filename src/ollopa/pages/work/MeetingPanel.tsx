@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { follow } from "../../chain"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
 import { seedFor, QUAL_ELEMENTS, TODAY, type Meeting } from "../../data/seed"
+import { Chip } from "../../ui/Identity"
 import type { Session } from "../../session"
 import { originHere } from "./acts"
 import { day } from "./format"
@@ -234,7 +234,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
           <section className="space-y-3">
             <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">After the call</h3>
             <div>
-              <label className="text-xs text-muted-foreground" htmlFor="mtg-summary">Summary <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[11px] font-normal">Agent draft</Badge></label>
+              <label className="text-xs text-muted-foreground" htmlFor="mtg-summary">Summary <Chip status="draft">Agent draft</Chip></label>
               <Textarea id="mtg-summary" rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} className="mt-1" />
             </div>
             <div>
@@ -258,7 +258,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
             </div>
             <div>
               <label className="text-xs text-muted-foreground" htmlFor="mtg-follow">
-                Follow-up email <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[11px] font-normal">{followUpEdited ? "edited" : "Agent draft"}</Badge>
+                Follow-up email <Chip status={followUpEdited ? "edited" : "draft"}>{followUpEdited ? "edited" : "Agent draft"}</Chip>
               </label>
               <Textarea id="mtg-follow" rows={3} value={followUp} onChange={(e) => { setFollowUp(e.target.value); setFollowUpEdited(true) }} className="mt-1" />
               <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -308,7 +308,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
               <div key={f.key}>
                 <label className="text-xs text-muted-foreground" htmlFor={`ho-${f.key}`}>
                   {f.label}{" "}
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[11px] font-normal">{edited[f.key] ? "edited" : "Agent draft"}</Badge>
+                  <Chip status={edited[f.key] ? "edited" : "draft"}>{edited[f.key] ? "edited" : "Agent draft"}</Chip>
                 </label>
                 <Textarea
                   id={`ho-${f.key}`}

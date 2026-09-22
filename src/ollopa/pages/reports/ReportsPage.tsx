@@ -335,7 +335,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                   aria-keyshortcuts={t.key1to5}
                   onClick={() => setReport(t.key)}
                   className={cn(
-                    "whitespace-nowrap rounded-md px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    "whitespace-nowrap rounded-md px-3 py-1.5 t-body focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                     report === t.key ? "bg-foreground text-background" : "hover:bg-muted",
                   )}
                 >
@@ -365,7 +365,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                       <button
                         type="button"
                         onClick={() => { update({ range: p.key }); }}
-                        className={cn("w-full rounded px-2 py-1 text-left text-sm hover:bg-muted", rangeKey === p.key && "font-medium")}
+                        className={cn("w-full rounded px-2 py-1 text-left t-body hover:bg-muted", rangeKey === p.key && "font-medium")}
                       >
                         {p.label}{rangeKey === p.key && <span aria-hidden="true"> ✓</span>}
                       </button>
@@ -374,7 +374,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                 </ul>
                 {used("ctl.custom-range") && (
                   <div className="mt-2 border-t pt-2">
-                    <div className="text-xs text-muted-foreground">Custom range</div>
+                    <div className="t-small text-muted-foreground">Custom range</div>
                     <div className="mt-1 flex items-center gap-2">
                       <Input type="date" aria-label="From" className="h-8" value={from || range.from} onChange={(e) => update({ range: "custom", from: e.target.value, to: to || range.to })} />
                       <Input type="date" aria-label="To" className="h-8" value={to || range.to} onChange={(e) => update({ range: "custom", from: from || range.from, to: e.target.value })} />
@@ -384,7 +384,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                 {!one("ctl.compare") && (
                   <div className="mt-2 flex items-center gap-2 border-t pt-2">
                     <Checkbox id="compare-in-menu" checked={compare} onCheckedChange={(v) => update({ compare: Boolean(v) })} />
-                    <Label htmlFor="compare-in-menu" className="text-sm">Compare with the previous period</Label>
+                    <Label htmlFor="compare-in-menu" className="t-body">Compare with the previous period</Label>
                   </div>
                 )}
               </PopoverContent>
@@ -401,11 +401,11 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                 <PopoverContent align="start" className="w-64">
                   <ul className="grid">
                     {!leader && (
-                      <li><button type="button" className="w-full rounded px-2 py-1 text-left text-sm hover:bg-muted" onClick={() => update({ team: "all", person: "all" })}>Everyone</button></li>
+                      <li><button type="button" className="w-full rounded px-2 py-1 text-left t-body hover:bg-muted" onClick={() => update({ team: "all", person: "all" })}>Everyone</button></li>
                     )}
                     {teamOptions.map((t) => (
                       <li key={t.id}>
-                        <button type="button" className={cn("w-full rounded px-2 py-1 text-left text-sm hover:bg-muted", team === t.name && "font-medium")} onClick={() => update({ team: t.name, person: "all" })}>
+                        <button type="button" className={cn("w-full rounded px-2 py-1 text-left t-body hover:bg-muted", team === t.name && "font-medium")} onClick={() => update({ team: t.name, person: "all" })}>
                           {t.name} <span className="text-muted-foreground">· {t.members}</span>
                         </button>
                       </li>
@@ -413,12 +413,12 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                   </ul>
                   {personUsed && !personStandalone && (
                     <div className="mt-2 border-t pt-2">
-                      <div className="text-xs text-muted-foreground">Person</div>
+                      <div className="t-small text-muted-foreground">Person</div>
                       <ul className="mt-1 max-h-48 overflow-y-auto">
-                        <li><button type="button" className="w-full rounded px-2 py-1 text-left text-sm hover:bg-muted" onClick={() => update({ person: "all" })}>Everyone on this team</button></li>
+                        <li><button type="button" className="w-full rounded px-2 py-1 text-left t-body hover:bg-muted" onClick={() => update({ person: "all" })}>Everyone on this team</button></li>
                         {peopleOptions.map((u) => (
                           <li key={u.id}>
-                            <button type="button" className={cn("w-full rounded px-2 py-1 text-left text-sm hover:bg-muted", person === u.name && "font-medium")} onClick={() => update({ person: u.name })}>
+                            <button type="button" className={cn("w-full rounded px-2 py-1 text-left t-body hover:bg-muted", person === u.name && "font-medium")} onClick={() => update({ person: u.name })}>
                               {u.name} <span className="text-muted-foreground">· {u.title}</span>
                             </button>
                           </li>
@@ -432,7 +432,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
 
             {/* A scoped AE gets a sentence naming the admin, never a disabled control. */}
             {scopedAe && (
-              <span className="text-xs text-muted-foreground">
+              <span className="t-small text-muted-foreground">
                 {myTeam ?? "Your team"} (your team). {adminName} can widen this.
               </span>
             )}
@@ -448,10 +448,10 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-64">
                   <ul className="max-h-64 overflow-y-auto">
-                    <li><button type="button" className="w-full rounded px-2 py-1 text-left text-sm hover:bg-muted" onClick={() => update({ person: "all" })}>{teamMenu ? "Everyone on this team" : "Everyone"}</button></li>
+                    <li><button type="button" className="w-full rounded px-2 py-1 text-left t-body hover:bg-muted" onClick={() => update({ person: "all" })}>{teamMenu ? "Everyone on this team" : "Everyone"}</button></li>
                     {peopleOptions.map((u) => (
                       <li key={u.id}>
-                        <button type="button" className={cn("w-full rounded px-2 py-1 text-left text-sm hover:bg-muted", person === u.name && "font-medium")} onClick={() => update({ person: u.name })}>
+                        <button type="button" className={cn("w-full rounded px-2 py-1 text-left t-body hover:bg-muted", person === u.name && "font-medium")} onClick={() => update({ person: u.name })}>
                           {u.name} <span className="text-muted-foreground">· {u.title}</span>
                         </button>
                       </li>
@@ -462,7 +462,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             )}
 
             {one("ctl.compare") && (
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 t-body">
                 <Checkbox checked={compare} onCheckedChange={(v) => update({ compare: Boolean(v) })} aria-label="Compare with the previous period" />
                 Compare with the previous period
               </label>
@@ -474,10 +474,10 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
               { kind: "secondary", label: "Export", onClick: openExport, keys: "e" },
               { kind: "secondary", label: "Print", onClick: () => { window.print(); toast("Sent to the printer with every door open and the filters as a caption.") }, keys: "p" },
             ]} />
-            <span className="ml-auto text-xs text-muted-foreground">{DATA_AS_OF}</span>
+            <span className="ml-auto t-small text-muted-foreground">{DATA_AS_OF}</span>
           </div>
 
-          {chip && <p className="text-xs text-muted-foreground">Applied: {chip} · {range.label}</p>}
+          {chip && <p className="t-small text-muted-foreground">Applied: {chip} · {range.label}</p>}
         </div>
 
         {/* The overview strip: the tile row of every report this seat reads weekly, plus the one open
@@ -485,25 +485,25 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             disclosed is the record-level detail behind the numbers, never the numbers. */}
         {one("rep.overview") && strip.length > 1 && (
           <section className="rounded-lg border" data-print-hide>
-            <h2 className="border-b px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Overview</h2>
+            <h2 className="border-b px-3 py-1.5 t-small font-medium uppercase tracking-wide text-muted-foreground">Overview</h2>
             <ul>
               {strip.map((t) => {
                 const locked = lockedTab(t.key)
                 return (
                   <li key={t.key} className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b px-3 py-2 last:border-b-0">
-                    <span className="w-36 shrink-0 text-sm font-medium">
+                    <span className="w-36 shrink-0 t-body font-medium">
                       {t.label}
-                      {locked && <span className="ml-1 text-xs font-normal text-muted-foreground">· {all.plan}</span>}
+                      {locked && <span className="ml-1 t-small font-normal text-muted-foreground">· {all.plan}</span>}
                     </span>
                     {tilesFor(t.key).slice(0, 5).map((tile) => (
-                      <span key={tile.id} className="text-xs text-muted-foreground">
+                      <span key={tile.id} className="t-small text-muted-foreground">
                         {tile.label} <span className="font-medium tabular-nums text-foreground">{locked && !tile.alwaysPrints ? "—" : tile.value}</span>
                       </span>
                     ))}
                     <span className="ml-auto">
                       {report === t.key
-                        ? <span className="text-xs text-muted-foreground">open</span>
-                        : <button type="button" className="text-xs underline" onClick={() => setReport(t.key)}>Open the {t.label} report</button>}
+                        ? <span className="t-small text-muted-foreground">open</span>
+                        : <button type="button" className="t-small underline" onClick={() => setReport(t.key)}>Open the {t.label} report</button>}
                     </span>
                   </li>
                 )
@@ -679,11 +679,11 @@ function LockedReport({ label, tiles, rows, plan, price, what }: { label: string
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map((t) => (
           <li key={t.id} className="rounded-lg border p-3">
-            <div className="text-xs text-muted-foreground">{t.label}</div>
+            <div className="t-small text-muted-foreground">{t.label}</div>
             {t.alwaysPrints ? (
               <>
-                <div className="mt-0.5 text-xl font-semibold">{t.value}</div>
-                {t.under && <p className="mt-0.5 text-xs text-muted-foreground">{t.under}</p>}
+                <div className="mt-0.5 t-title">{t.value}</div>
+                {t.under && <p className="mt-0.5 t-small text-muted-foreground">{t.under}</p>}
               </>
             ) : (
               <div className="mt-2 h-4 w-20 rounded bg-muted" aria-label="Included on the plan below" />
@@ -691,10 +691,10 @@ function LockedReport({ label, tiles, rows, plan, price, what }: { label: string
           </li>
         ))}
       </ul>
-      <div className="flex h-40 items-center justify-center rounded-lg border text-sm text-muted-foreground">
+      <div className="flex h-40 items-center justify-center rounded-lg border t-body text-muted-foreground">
         The weekly trend for {label}
       </div>
-      <div className="rounded-lg border px-3 py-2 text-sm text-muted-foreground">{rows} rows in the breakdown table</div>
+      <div className="rounded-lg border px-3 py-2 t-body text-muted-foreground">{rows} rows in the breakdown table</div>
       <div className="flex items-center gap-3">
         <Locked feature={`The ${label} report`} plan={plan} pricePerMonth={price} what={what}>
           <Actions surface="card" items={[{ kind: "primary", label: `Open the ${label} report` }]} />
@@ -810,7 +810,7 @@ function PipelineBody({ pipeline, coverage, compare, chartView, onChartView, bre
           <div role="group" aria-label="Break the pipeline down by stage or by rep" className="flex gap-1">
             {(["stage", "rep"] as const).map((v) => (
               <button key={v} type="button" aria-pressed={breakdown === v} onClick={() => onBreakdown(v)}
-                className={cn("rounded-md px-2 py-0.5 text-xs", breakdown === v ? "bg-foreground text-background" : "hover:bg-muted")}>
+                className={cn("rounded-md px-2 py-0.5 t-small", breakdown === v ? "bg-foreground text-background" : "hover:bg-muted")}>
                 By {v}
               </button>
             ))}
@@ -888,7 +888,7 @@ function SequencesBody({ sequences, seed, compare, chartView, onChartView, signa
         columns={columns}
         storageKey="sequences"
         aside={
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onSignal({ n: (signal?.n ?? 0) + 1, open: !signal?.open })}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 t-small" onClick={() => onSignal({ n: (signal?.n ?? 0) + 1, open: !signal?.open })}>
             {signal?.open ? "Collapse all" : "Expand all steps"}
           </Button>
         }
@@ -900,7 +900,7 @@ function SequencesBody({ sequences, seed, compare, chartView, onChartView, signa
             label: "Steps",
             count: steps.length,
             content: (
-              <table className="w-full max-w-xl text-xs">
+              <table className="w-full max-w-xl t-small">
                 <thead>
                   <tr className="border-b text-muted-foreground">
                     {["Step", "Kind", "Sent", "Opened", "Replied", "Bounced"].map((h, i) => (
@@ -989,23 +989,23 @@ function CampaignsBody({ campaigns, seed, compare, chartView, onChartView, onDea
               label: "Audience",
               count: audience?.sources.length ?? 0,
               content: audience ? (
-                <dl className="grid max-w-md grid-cols-[10rem_1fr] gap-x-4 gap-y-1 text-xs">
+                <dl className="grid max-w-md grid-cols-[10rem_1fr] gap-x-4 gap-y-1 t-small">
                   <dt className="text-muted-foreground">Audience</dt><dd>{audience.name} · {audience.type}</dd>
                   <dt className="text-muted-foreground">Size</dt><dd className="tabular-nums">{fmtCount(audience.size)}</dd>
                   <dt className="text-muted-foreground">Built from</dt><dd>{audience.sources.join(", ") || "—"}</dd>
                   <dt className="text-muted-foreground">Suppressed</dt>
                   <dd className="tabular-nums">{fmtCount(audience.suppressed.unsubscribed)} unsubscribed · {fmtCount(audience.suppressed.bounced)} bounced</dd>
                 </dl>
-              ) : <p className="text-xs text-muted-foreground">This campaign has no audience attached.</p>,
+              ) : <p className="t-small text-muted-foreground">This campaign has no audience attached.</p>,
             },
             {
               id: `reports.persona.${r.campaign.id}`,
               label: "Persona",
               count: personas.length,
               content: personas.length === 0
-                ? <p className="text-xs text-muted-foreground">No personas are defined in Settings › Signals, scoring and personas.</p>
+                ? <p className="t-small text-muted-foreground">No personas are defined in Settings › Signals, scoring and personas.</p>
                 : (
-                  <ul className="max-w-md space-y-0.5 text-xs">
+                  <ul className="max-w-md space-y-0.5 t-small">
                     {personas.map((p) => (
                       <li key={p.id} className="flex justify-between gap-3">
                         <span>{p.name} <span className="text-muted-foreground">· {p.title}</span></span>
@@ -1035,7 +1035,7 @@ function CampaignsBody({ campaigns, seed, compare, chartView, onChartView, onDea
 function Definitions({ lines }: { lines: [string, string][] }) {
   return (
     <InlineDoor id="reports.definitions" label="How these numbers are counted" count={lines.length}>
-      <dl className="grid max-w-2xl grid-cols-[10rem_1fr] gap-x-4 gap-y-1.5 text-xs">
+      <dl className="grid max-w-2xl grid-cols-[10rem_1fr] gap-x-4 gap-y-1.5 t-small">
         {lines.map(([term, body]) => (
           <div key={term} className="contents">
             <dt className="text-muted-foreground">{term}</dt>
@@ -1044,8 +1044,8 @@ function Definitions({ lines }: { lines: [string, string][] }) {
         ))}
       </dl>
       <div className="mt-3 border-t pt-2">
-        <p className="text-xs text-muted-foreground">What changes them</p>
-        <ul className="mt-1 grid gap-1.5 text-xs">
+        <p className="t-small text-muted-foreground">What changes them</p>
+        <ul className="mt-1 grid gap-1.5 t-small">
           {[
             ["Include bot opens", "Opens a mail scanner made, rather than a person."],
             ["Show archived sequences", "Sequences someone archived stay out unless you ask for them."],

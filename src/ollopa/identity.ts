@@ -153,6 +153,8 @@ const WORDS: Record<string, Status> = {
   replied: "success", done: "success", approved: "success", connected: "success", live: "success",
   // it is happening, or it is simply a fact about now
   scheduled: "info", sending: "info", running: "info", new: "info", "in progress": "info",
+  // A change of place, not an ending: a person the pane moved out of one sequence is in another.
+  moved: "info", transferred: "info", reassigned: "info",
   // stopped on purpose, or finished and quiet
   paused: "paused", finished: "paused", archived: "paused", snoozed: "paused", skipped: "paused",
   off: "paused", inactive: "paused", none: "paused",

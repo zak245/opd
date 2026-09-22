@@ -12,7 +12,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -25,6 +24,8 @@ import { href, useRoute } from "@/app/router"
 import { follow } from "../../chain"
 import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
+import { STATUSES, statusOf } from "../../identity"
 import { useEdits } from "../../edits"
 import { TablePage, toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
@@ -40,11 +41,14 @@ import { DealCard, chipText, type CardFlags } from "./DealCard"
 import { coverageFor } from "../reports/coverage"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
-  WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText,
+  WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText, warningStatus,
   moneyShort, moneySpoken, newDeal, observedCoverage, scopeNames, sumOf, warningCounts, warningsOf,
   weightedOf, wonConsequenceText,
   type PeriodKey, type Scope, type WarningKind,
 } from "./pipeline"
+
+/** The ink a state word carries, asked of the registry so this page holds no hue (DESIGN.md §5). */
+const statusInk = (word: string) => STATUSES[statusOf(word)].ink
 
 /* --------------------------------------------------------------------------------- page state */
 
@@ -138,11 +142,13 @@ interface TableCol { key: string; header: string; cell: (d: Deal, ctx: { currenc
 const TABLE_COLUMNS: TableCol[] = [
   { key: "deal", header: "Deal", on: true, cell: (d) => <span className="font-medium">{d.name}</span> },
   { key: "company", header: "Company", on: true, cell: (d) => d.company },
-  { key: "stage", header: "Stage", on: true, cell: (d) => <Badge variant="secondary">{d.stage}</Badge> },
+  // The table draws this one as a status chip (see `status` on the columns below); this is what a
+  // CSV export and any other reader of the column gets.
+  { key: "stage", header: "Stage", on: true, cell: (d) => <Chip status={d.stage} /> },
   { key: "amount", header: "Amount", on: true, cell: (d, c) => <span className="tabular-nums">{money(d.amount, d.currency || c.currency)}</span> },
   { key: "forecast", header: "Forecast", on: true, cell: (d) => d.forecast },
   { key: "close", header: "Close date", on: true, cell: (d) => <span className="tabular-nums">{day(d.closeDate)}</span> },
-  { key: "next", header: "Next step and its date", on: true, cell: (d) => (d.nextStep ? `${d.nextStep} · ${day(d.nextStepDue)}` : <span className="text-amber-700 dark:text-amber-400">No next step</span>) },
+  { key: "next", header: "Next step and its date", on: true, cell: (d) => (d.nextStep ? `${d.nextStep} · ${day(d.nextStepDue)}` : <span style={{ color: statusInk("warning") }}>No next step</span>) },
   { key: "owner", header: "Owner", on: true, cell: (d) => d.owner },
   { key: "touch", header: "Last touch and last reply", on: true, cell: (d) => `${daysBetween(d.lastActivity)}d · ${d.lastProspectActivityAt ? `${daysBetween(d.lastProspectActivityAt)}d` : "never"}` },
   { key: "warnings", header: "Warnings", on: true, cell: () => null },
@@ -474,8 +480,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:flex sm:flex-wrap sm:items-baseline sm:gap-x-8">
         {figures.map((f) => (
           <div key={f.key}>
-            <dt className="text-xs text-muted-foreground">{f.label}</dt>
-            <dd className="text-sm font-semibold tabular-nums">
+            <dt className="t-label text-muted-foreground">{f.label}</dt>
+            <dd className="t-body font-semibold tabular-nums">
               {moneyShort(f.amount, currency)} <span className="font-normal text-muted-foreground">· {f.count}</span>
             </dd>
           </div>
@@ -483,8 +489,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         {/* Observed and required on one line: either number alone is unreadable (spec 08 §3). */}
         {one("deals.forecast.coverage") && observed.coverage !== null && required.required !== null && (
           <div className="col-span-2">
-            <dt className="text-xs text-muted-foreground">Coverage</dt>
-            <dd className="text-sm font-semibold tabular-nums">
+            <dt className="t-label text-muted-foreground">Coverage</dt>
+            <dd className="t-body font-semibold tabular-nums">
               {observed.coverage.toFixed(1)}x{" "}
               <span className="font-normal text-muted-foreground">· this team’s {required.line.toLowerCase()}</span>
             </dd>
@@ -543,14 +549,14 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     const weightedInHeader = one("deals.column.weighted")
     const doorParts = [weightedInHeader ? null : "Weighted total", one("deals.column.stale-count") ? null : "stale deals"].filter(Boolean)
     return (
-      <section key={stage} className={cn("flex min-h-0 w-full shrink-0 flex-col rounded-lg border bg-muted/30 md:w-[17rem]", target === stage && carrying && "ring-2 ring-ring", className)}>
+      <section key={stage} className={cn("surface-page flex min-h-0 w-full shrink-0 flex-col rounded-lg border md:w-[17rem]", target === stage && carrying && "ring-2 ring-ring", className)}>
         <header className="space-y-0.5 border-b px-2.5 py-2">
           <div className="flex items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold">{stage}</h3>
-            <span className="text-xs tabular-nums text-muted-foreground">{list.length} · {moneyShort(sum, currency)}</span>
+            <h3 className="t-label">{stage}</h3>
+            <span className="t-small tabular-nums text-muted-foreground">{list.length} · {moneyShort(sum, currency)}</span>
           </div>
-          {weightedInHeader && <div className="text-xs tabular-nums text-muted-foreground">Weighted {moneyShort(weightedOf(list), currency)}</div>}
-          {one("deals.column.stale-count") && <div className="text-xs tabular-nums text-muted-foreground">{stale} not moving</div>}
+          {weightedInHeader && <div className="t-small tabular-nums text-muted-foreground">Weighted {moneyShort(weightedOf(list), currency)}</div>}
+          {one("deals.column.stale-count") && <div className="t-small tabular-nums text-muted-foreground">{stale} not moving</div>}
           {doorParts.length > 0 && (
             <Door id={`deals.column.${stage}`} label={doorParts.join(" and ").replace(/^s/, "S")}>
               <dl className="space-y-1 text-xs">
@@ -596,11 +602,15 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     </div>
   ) : (
     <button
-      className="flex w-12 shrink-0 items-center justify-center rounded-lg border bg-muted/30 py-3 text-xs text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="surface-page flex w-12 shrink-0 items-center justify-center rounded-lg border py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       aria-expanded={false}
       onClick={() => setRailOpen(true)}
     >
-      <span className="[writing-mode:vertical-rl] tabular-nums">Closed won · {wonRows.length} · {moneyShort(railSum, currency)}</span>
+      {/* Won is the one thing on this board that has already gone right, so it carries the success
+          ink — with the word, never the colour alone. */}
+      <span className="t-small [writing-mode:vertical-rl] tabular-nums" style={{ color: statusInk("closed won") }}>
+        Closed won · {wonRows.length} · {moneyShort(railSum, currency)}
+      </span>
     </button>
   )
 
@@ -637,6 +647,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   const table = (
     <TablePage<Deal>
+      family="deals"
       title={`${SCOPE_LABEL[scope]} · closing ${period_.words}`}
       total={b.counts.openDeals}
       rows={sorted}
@@ -646,11 +657,16 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       columns={visibleColumns.map((c) => ({
         key: c.key,
         header: c.header,
+        // The stage is a state word, so the template draws it as a status chip from the one status
+        // set rather than this page picking a colour (DESIGN.md §5).
+        status: c.key === "stage" ? (r: Deal) => r.stage : undefined,
         cell: (r: Deal) =>
           c.key === "warnings"
             ? (warningsOf(r, seed).length === 0
                 ? <span className="text-muted-foreground">—</span>
-                : <span className="text-xs">{warningsOf(r, seed).map(chipText).join(" · ")}</span>)
+                : <span className="flex flex-wrap gap-1">
+                    {warningsOf(r, seed).map((w) => <Chip key={w.kind} status={warningStatus(w.kind)}>{chipText(w)}</Chip>)}
+                  </span>)
             : c.cell(r, { currency }),
       }))}
       moreActions={[
@@ -1015,6 +1031,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       {/* ------------------------------------------------------------------------- the quick look */}
       {glanced && (
         <QuickLook
+          family="deals"
           open
           onOpenChange={(o) => { if (!o) setGlance(null) }}
           title={glanced.name}

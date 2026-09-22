@@ -6,7 +6,6 @@
 // One door at the foot holds the run history, and the two things inside it are sections, not doors,
 // so nothing here is three levels deep.
 import { useEffect, useMemo, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +16,8 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { FAMILY, PERSON_FAMILY, ink } from "./look"
 import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
@@ -126,9 +127,9 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
   const fields: RecordField[] = [
     { key: "trigger", label: "Trigger", value: `When ${w.trigger}`, wide: true },
-    { key: "status", label: "Status", value: <Badge variant="secondary" className={w.status === "on" ? "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200" : ""}>{w.status === "on" ? "On" : "Off"}</Badge>, under: `${w.statusChangedBy}, ${ago(w.statusChangedOn)}` },
+    { key: "status", label: "Status", value: <Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>, under: `${w.statusChangedBy}, ${ago(w.statusChangedOn)}` },
     { key: "owner", label: "Owner", value: w.owner, under: `Told when it errors: ${w.owner}` },
-    { key: "ceiling", label: "Credit ceiling", value: <span className={cn("tabular-nums", atCeiling && "font-medium text-amber-700 dark:text-amber-400")}>{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} today</span>, under: `${num(w.ceiling.perRun)} a run at most` },
+    { key: "ceiling", label: "Credit ceiling", value: <span className={cn("tabular-nums", atCeiling && "font-medium")} style={atCeiling ? ink("warning") : undefined}>{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} today</span>, under: `${num(w.ceiling.perRun)} a run at most` },
     { key: "edited", label: "Last edited", value: `${w.editedBy}, ${day(w.editedOn)}` },
   ]
 
@@ -145,7 +146,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           <p className="text-sm">Hot: {w.sla.windows.hot} · Warm: {w.sla.windows.warm}</p>
           <p className="text-sm">
             <span className="font-medium tabular-nums">{num(w.sla.running)}</span> running against the clock now ·{" "}
-            <span className={cn("font-medium tabular-nums", w.sla.breachedToday > 0 && "text-amber-700 dark:text-amber-400")}>{num(w.sla.breachedToday)}</span> breached today
+            <span className="font-medium tabular-nums" style={w.sla.breachedToday > 0 ? ink("danger") : undefined}>{num(w.sla.breachedToday)}</span> breached today
           </p>
           <p className="text-sm text-muted-foreground">
             Past {w.sla.windows.hot}, reassign to the {w.sla.reassignTo} and tell the first.
@@ -153,13 +154,18 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           {breached.length > 0 && (
             <ul className="text-sm">
               {breached.map(({ run, over }) => (
-                <li key={run.id} data-item={run.personId} data-item-label={run.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5">
+                <li key={run.id} data-item={run.personId} data-item-label={run.person} className="t-body flex flex-wrap justify-between gap-2 border-t py-1.5">
                   <span className="min-w-0">
-                    <button type="button" className="underline" onClick={(ev) => readPerson(run.personId, breachedIds, ev.currentTarget)}>{run.person}</button>
+                    <span className="inline-flex items-center gap-1.5">
+                      <FamilyIcon of={PERSON_FAMILY} />
+                      <button type="button" className="underline" onClick={(ev) => readPerson(run.personId, breachedIds, ev.currentTarget)}>{run.person}</button>
+                    </span>
                     {personEdits[run.personId]?.note && <RowNote kind="person" id={run.personId} note={String(personEdits[run.personId].note)} at={personEdits[run.personId].at} />}
                   </span>
-                  <span className="text-xs">
-                    enrolled {clockOf(run.at)} · window {w.sla!.windows.hot} · <span className="font-medium text-amber-700 dark:text-amber-400">{over}</span> · {run.assignedTo ?? "nobody"}
+                  <span className="t-small flex flex-wrap items-center gap-1.5">
+                    enrolled {clockOf(run.at)} · window {w.sla!.windows.hot}
+                    <Chip status="overdue">{over}</Chip>
+                    · {run.assignedTo ?? "nobody"}
                   </span>
                 </li>
               ))}
@@ -241,7 +247,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
     id: "ceiling", title: "The credit ceiling",
     children: (
       <div className="space-y-2">
-        <p className={cn("text-sm tabular-nums", atCeiling && "font-medium text-amber-700 dark:text-amber-400")}>
+        <p className={cn("t-body tabular-nums", atCeiling && "font-medium")} style={atCeiling ? ink("warning") : undefined}>
           {num(w.ceiling.perDay)} a day · {num(w.ceiling.spentToday)} used{atCeiling ? " · reached" : ""} · at most {num(w.ceiling.perRun)} a run
         </p>
         <p className="text-sm text-muted-foreground">
@@ -350,19 +356,22 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         </div>
 
         <section>
-          <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Enrolled ({num(shownEnrolled.length)})</h4>
+          <h4 className="t-label pb-1 uppercase tracking-wide text-muted-foreground">Enrolled ({num(shownEnrolled.length)})</h4>
           <ul>
             {shownEnrolled.map((r) => (
               <li key={r.id} data-item={r.personId} data-item-label={r.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
                 <span>
-                  <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, enrolledIds, ev.currentTarget)}>{r.person}</button>
+                  <span className="inline-flex items-center gap-1.5">
+                    <FamilyIcon of={PERSON_FAMILY} className="size-3" />
+                    <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, enrolledIds, ev.currentTarget)}>{r.person}</button>
+                  </span>
                   {" · "}{day(r.at.slice(0, 10))} {clockOf(r.at)}
                   {personEdits[r.personId]?.note && <RowNote kind="person" id={r.personId} note={String(personEdits[r.personId].note)} at={personEdits[r.personId].at} />}
                   {r.ruleId && <> · <a className="underline" href={`#${r.ruleId}`}>rule {w.rules.findIndex((x) => x.id === r.ruleId) + 1}</a></>}
                 </span>
-                <span className={r.outcome === "errored" ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}>
+                <span className="text-muted-foreground">
                   {r.outcome === "errored"
-                    ? <>errored — {r.reason}</>
+                    ? <Chip status="error">errored — {r.reason}</Chip>
                     : <>created a task for {r.assignedTo} · <a className="underline" href={href("/ollopa/tasks")} onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/tasks", from(r.personId)) } }}>open the task</a> · {r.credits} credits</>}
                 </span>
               </li>
@@ -372,14 +381,17 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         </section>
 
         <section>
-          <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Could not route ({num(shownExceptions.length)})</h4>
+          <h4 className="t-label pb-1 uppercase tracking-wide text-muted-foreground">Could not route ({num(shownExceptions.length)})</h4>
           <ul>
             {shownExceptions.map((r) => {
               const rule = ruleForReason(w, r.reason)
               return (
                 <li key={r.id} data-item={r.personId} data-item-label={r.person} className="flex flex-wrap justify-between gap-2 border-t py-1.5 text-xs">
                   <span>
-                    <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, exceptionIds, ev.currentTarget)}>{r.person}</button>
+                    <span className="inline-flex items-center gap-1.5">
+                      <FamilyIcon of={PERSON_FAMILY} className="size-3" />
+                      <button type="button" className="underline" onClick={(ev) => readPerson(r.personId, exceptionIds, ev.currentTarget)}>{r.person}</button>
+                    </span>
                     {" · "}{day(r.at.slice(0, 10))} {clockOf(r.at)}
                     {personEdits[r.personId]?.note && <RowNote kind="person" id={r.personId} note={String(personEdits[r.personId].note)} at={personEdits[r.personId].at} />}
                   </span>
@@ -418,9 +430,10 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   return (
     <>
       <RecordPage
+        family={FAMILY}
         back={{ label: "Workflows", href: href("/ollopa/workflows") }}
         title={{ value: w.name, onRename: (v) => { patch({ name: v, editedBy: session.user, editedOn: TODAY }); toast("Saved · Workflow name") } }}
-        chips={<Badge variant="secondary">{w.status === "on" ? "On" : "Off"}</Badge>}
+        chips={<Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>}
         ribbon={atCeiling ? { tone: "warning", text: `At the ceiling: ${num(w.ceiling.perDay)} a day, ${num(w.ceiling.spentToday)} used. Enrolment and routing continue; enrichment does not.` } : undefined}
         fields={fields}
         actions={{

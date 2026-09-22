@@ -6,7 +6,6 @@
 // "not enriched"; and the count of submissions that reached nobody. A form that starts refusing people
 // because a credit budget ran out is a form that loses the pipeline it exists to collect.
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +16,8 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { FAMILY, PERSON_FAMILY, ink } from "./look"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -85,7 +86,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
   }
 
   const fields: RecordField[] = [
-    { key: "status", label: "Status", value: <Badge variant="secondary">{f.status}</Badge> },
+    { key: "status", label: "Status", value: <Chip status={f.status}>{f.status}</Chip> },
     { key: "submissions", label: "Submissions, 7 days", value: <span className="tabular-nums">{num(f.submissions7d)}</span> },
     { key: "routes", label: "Routes to", value: f.routesTo },
     { key: "reports", label: "Reports to", value: f.reportsTo },
@@ -96,8 +97,8 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
     <div className="space-y-1">
       {f.fields.map((x) => (
         <div key={x.label} className="flex items-baseline justify-between gap-3 border-t py-1.5 first:border-t-0">
-          <span className="text-sm">{x.label}</span>
-          <span className="text-xs text-muted-foreground">{x.kind === "asked" ? "asked" : `enriched · ${x.credits} credit${x.credits === 1 ? "" : "s"}`}</span>
+          <span className="t-body">{x.label}</span>
+          <span className="t-small text-muted-foreground">{x.kind === "asked" ? "asked" : `enriched · ${x.credits} credit${x.credits === 1 ? "" : "s"}`}</span>
         </div>
       ))}
     </div>
@@ -111,7 +112,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
       children: (
         <div className="space-y-2">
           <p className="text-sm">
-            <span className={cn("tabular-nums", atCap && "font-medium text-amber-700 dark:text-amber-400")}>
+            <span className={cn("tabular-nums", atCap && "font-medium")} style={atCap ? ink("warning") : undefined}>
               Enrichment cap {num(f.enrichCapDaily)} credits a day · {num(f.enrichUsedToday)} used today
             </span>{" "}
             · <span className="tabular-nums">{num(f.matched)} of {num(f.submissions7d)} submissions matched</span>
@@ -154,7 +155,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
               )
               : "no workflow yet"} — round-robin across the pool, skipping anyone away.
           </p>
-          <p className={f.unrouted > 0 ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground"}>
+          <p className={f.unrouted > 0 ? "t-body font-medium" : "t-body text-muted-foreground"} style={f.unrouted > 0 ? ink("danger") : undefined}>
             {f.unrouted > 0
               ? <>{num(f.unrouted)} submission{f.unrouted === 1 ? "" : "s"} could not be routed and reached nobody.</>
               : <>Every submission reached somebody.</>}
@@ -203,18 +204,22 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
                 return (
                   <li key={s.id} data-item={s.contactId} data-item-label={s.name} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-2 first:border-t-0">
                     <span className="min-w-0">
-                      <button type="button" className="underline" onClick={(ev) => readPerson(s.contactId, ev.currentTarget)}>{s.name}</button>
-                      <span className="text-xs text-muted-foreground"> · {s.email} · {contact?.company}</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <FamilyIcon of={PERSON_FAMILY} />
+                        <button type="button" className="underline" onClick={(ev) => readPerson(s.contactId, ev.currentTarget)}>{s.name}</button>
+                      </span>
+                      <span className="t-small text-muted-foreground"> · {s.email} · {contact?.company}</span>
                       {/* What an action from the pane beside this list did to this person, in place. */}
                       {personEdits[s.contactId]?.note && <RowNote kind="person" id={s.contactId} note={String(personEdits[s.contactId].note)} at={personEdits[s.contactId].at} />}
-                      <span className="block text-xs text-muted-foreground">Form: {f.name}, {day(s.at.slice(0, 10))} — the answers are a note on the contact</span>
+                      <span className="t-small block text-muted-foreground">Form: {f.name}, {day(s.at.slice(0, 10))} — the answers are a note on the contact</span>
                     </span>
-                    <span className="text-xs">
+                    <span className="flex flex-wrap items-center gap-1.5">
                       {s.enriched
-                        ? <span className="text-muted-foreground">enriched</span>
-                        : <span className="text-amber-700 dark:text-amber-400">not enriched — daily cap reached {s.at.slice(11, 16)}</span>}
-                      {" · "}
-                      {s.routedTo ?? <span className="text-amber-700 dark:text-amber-400">could not be routed</span>}
+                        ? <Chip status="done">enriched</Chip>
+                        : <Chip status="warning">not enriched · cap reached {s.at.slice(11, 16)}</Chip>}
+                      {s.routedTo
+                        ? <span className="t-small text-muted-foreground">{s.routedTo}</span>
+                        : <Chip status="failed">could not be routed</Chip>}
                     </span>
                   </li>
                 )
@@ -230,9 +235,10 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
 
   return (
     <RecordPage
+      family={FAMILY}
       back={{ label: "Campaigns", href: href("/ollopa/campaigns") }}
       title={{ value: f.name, onRename: (v) => { patch({ name: v }); toast("Saved · Form name") } }}
-      chips={<Badge variant="secondary">{f.status}</Badge>}
+      chips={<Chip status={f.status}>{f.status}</Chip>}
       ribbon={atCap ? { tone: "warning", text: `At the cap: ${num(f.enrichUsedToday)} of ${num(f.enrichCapDaily)} credits used today. Submissions are still accepted and still routed, marked “not enriched”.` } : undefined}
       fields={fields}
       actions={{

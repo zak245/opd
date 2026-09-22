@@ -6,7 +6,7 @@
 // "Edit then approve" replaces the door's read content in place — it is a state of the door, not a
 // second channel, so the depth is still the door and nothing more (IA-MAP §6.5).
 import { useEffect, useRef, useState } from "react"
-import { Bot, Clock, MoreHorizontal, Terminal } from "lucide-react"
+import { Clock, MoreHorizontal, Terminal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Door, useDoorState } from "../../ui/Door"
 import { TODAY, type AgentEvent, type Seed } from "../../data/seed"
@@ -136,7 +137,7 @@ export function WaitingItem(p: WaitingItemProps) {
       data-item-label={e.summary}
       data-container={`item.${e.id}`}
       data-container-label="the item"
-      className={cn("rounded-lg border bg-card", p.focused && "ring-2 ring-ring")}
+      className={cn("surface-raised rounded-lg border", p.focused && "ring-2 ring-ring")}
     >
       <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:p-4">
         {p.selectable && (
@@ -151,12 +152,16 @@ export function WaitingItem(p: WaitingItemProps) {
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             {/* Rule 4: every item starts with the name of the actor that produced it. */}
             {rules.r4 && (
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium">
-                {remote ? <Terminal className="size-3.5 text-muted-foreground" aria-hidden="true" /> : <Bot className="size-3.5 text-muted-foreground" aria-hidden="true" />}
-                {remote ? e.actorUser : e.agent}
-              </span>
+              <>
+                <span className="t-label inline-flex items-center gap-1.5">
+                  {remote ? <Terminal className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" /> : <FamilyIcon of="agents" />}
+                  {remote ? e.actorUser : e.agent}
+                </span>
+                {/* The state, with its word: never a colour on its own (DESIGN.md §5). */}
+                <Chip status="waiting">Waiting</Chip>
+              </>
             )}
-            <span className="min-w-0 text-sm">
+            <span className="t-body min-w-0">
               {forecast ? `Proposes moving ${forecast.company} from ${forecast.from} to ${forecast.to}` : e.summary}
             </span>
           </div>
@@ -164,31 +169,31 @@ export function WaitingItem(p: WaitingItemProps) {
           {/* What happens if you say yes. Beside Approve, never behind the door (rule 5). */}
           {rules.r5 && hasConsequence && (
             <div data-item={`wait.consequence.${e.id}`} data-item-label="What happens if you approve">
-              <ConsequenceLine {...consequence} className="mt-1.5 text-[13px] text-foreground" />
+              <ConsequenceLine {...consequence} className="t-label mt-1.5 font-normal text-foreground" />
             </div>
           )}
 
           {forecast && (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="t-small mt-1 text-muted-foreground">
               Today: {forecast.from} · {forecast.fromProbability}% · {forecast.fromCategory}. If approved: {forecast.to} · {forecast.toProbability}% · {forecast.toCategory}.
             </p>
           )}
-          {forecast && e.sourceQuote && <p className="mt-1 text-xs italic text-muted-foreground">{e.sourceQuote}</p>}
+          {forecast && e.sourceQuote && <p className="t-small mt-1 italic text-muted-foreground">{e.sourceQuote}</p>}
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <div className="t-small mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
             <span className="inline-flex items-center gap-1"><Clock className="size-3" aria-hidden="true" />Waiting since {day(e.when)} {e.at}</span>
             {!mine && (
               <span>{owner}’s item.{p.canApproveForOthers ? ` You can approve for ${owner.split(" ")[0]}.` : ""}</span>
             )}
             {nearExpiry(e) && left !== null && (
-              <span className="font-medium text-amber-700 dark:text-amber-400">Expires in {left} {left === 1 ? "day" : "days"} · nothing will be sent</span>
+              <span className="font-medium" style={{ color: "var(--warning-ink)" }}>Expires in {left} {left === 1 ? "day" : "days"} · nothing will be sent</span>
             )}
             {!nearExpiry(e) && left !== null && <span>Declined after {EXPIRY_DAYS} days if nobody decides</span>}
             {e.surface !== "app" && <span>{e.surface === "mcp" ? "Asked through an MCP client" : e.surface === "cli" ? "Asked from the terminal" : `From ${e.surface}`}</span>}
           </div>
 
           {second && (
-            <p className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs">
+            <p className="t-small mt-2 rounded-md bg-muted px-2 py-1.5">
               {e.status === "waiting-second" ? (
                 <>
                   {owner} approved this at {e.at}. Waiting for {adminLine(p)} · {(e.ifApproved?.recipients ?? 0).toLocaleString()} recipients, over the {seed.secondApproval.recipients.toLocaleString()} in Settings. Nothing has been sent.
@@ -202,7 +207,7 @@ export function WaitingItem(p: WaitingItemProps) {
           )}
 
           {paused && (
-            <p className="mt-2 text-xs text-destructive">{mailbox} is paused. {paused}. Approving holds this item until it resumes.</p>
+            <p className="t-small mt-2" style={{ color: "var(--danger-ink)" }}>{mailbox} is paused. {paused}. Approving holds this item until it resumes.</p>
           )}
         </div>
 
@@ -215,11 +220,11 @@ export function WaitingItem(p: WaitingItemProps) {
         </div>
       </div>
 
-      {failure && <p role="status" className="px-4 pb-2 text-xs text-destructive">{failure}</p>}
+      {failure && <p role="status" className="t-small px-4 pb-2" style={{ color: "var(--danger-ink)" }}>{failure}</p>}
 
       {asking === "why" && (
         <div className="border-t px-4 py-3">
-          <label className="text-xs text-muted-foreground" htmlFor={`why-${e.id}`}>Tell the agent why</label>
+          <label className="t-small text-muted-foreground" htmlFor={`why-${e.id}`}>Tell the agent why</label>
           <Textarea id={`why-${e.id}`} value={why} onChange={(ev) => setWhy(ev.target.value)} rows={2} className="mt-1" placeholder="Wrong person: she left in July." />
           <Actions className="mt-2" surface="card" items={[
             { kind: "primary", label: "Decline and tell the agent", onClick: () => { p.onDecline(why); setAsking(null) } },
@@ -230,7 +235,7 @@ export function WaitingItem(p: WaitingItemProps) {
 
       {asking === "hand" && (
         <div className="border-t px-4 py-3">
-          <label className="text-xs text-muted-foreground">Hand the decision to a teammate</label>
+          <label className="t-small text-muted-foreground">Hand the decision to a teammate</label>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Select value={mate} onValueChange={setMate}>
               <SelectTrigger className="h-8 w-56" aria-label="Teammate"><SelectValue placeholder="Choose a teammate" /></SelectTrigger>
@@ -248,7 +253,7 @@ export function WaitingItem(p: WaitingItemProps) {
       {/* Only the case that cannot be undone asks: waiting on this one declines it. The benign case
           acts from the menu at once, so there is no panel and no sentence to read (DESIGN.md §2). */}
       {asking === "snooze" && (
-        <div className="border-t px-4 py-3 text-xs">
+        <div className="t-small border-t px-4 py-3">
           <p>This sends before tomorrow 08:00, so deciding tomorrow declines it.</p>
           <Actions className="mt-2" surface="card" items={[
             { kind: "primary", label: "Decline it instead", onClick: () => { p.onDecline("Not decided in time"); setAsking(null) } },
@@ -262,14 +267,14 @@ export function WaitingItem(p: WaitingItemProps) {
         <Door id={`agents.item.${e.id}`} label={rules.r4 ? doorLabel(e, p.draft) : "Preview"}>
           {!rules.r5 && hasConsequence && (
             <div data-item={`wait.consequence.${e.id}`} data-item-label="What happens if you approve">
-              <ConsequenceLine {...consequence} className="mb-2 text-[13px] text-foreground" />
+              <ConsequenceLine {...consequence} className="t-label mb-2 font-normal text-foreground" />
             </div>
           )}
           {editing ? (
             /* X-agent-edit: the read content is replaced, in place. */
             <div>
-              <label className="text-xs text-muted-foreground" htmlFor={`draft-${e.id}`}>Edit the draft</label>
-              <Textarea id={`draft-${e.id}`} value={p.draft} onChange={(ev) => p.onDraft(ev.target.value)} rows={10} className="mt-1 font-mono text-xs" />
+              <label className="t-small text-muted-foreground" htmlFor={`draft-${e.id}`}>Edit the draft</label>
+              <Textarea id={`draft-${e.id}`} value={p.draft} onChange={(ev) => p.onDraft(ev.target.value)} rows={10} className="mt-1 font-mono t-small" />
               <ConsequenceLine {...consequence} className="mt-2" />
               <Actions className="mt-2" surface="card" items={[
                 { kind: "primary", label: "Send edited draft", onClick: () => { setEditing(false); approve({ edited: true }) } },
@@ -305,7 +310,7 @@ export function WaitingItem(p: WaitingItemProps) {
                   <span key={i.label}>{n > 0 && " · "}<a className="underline underline-offset-4" href={i.href}>{i.label}</a></span>
                 ))}
               </p>
-              <pre className="whitespace-pre-wrap font-sans text-[13px]">{p.draft}</pre>
+              <pre className="t-label whitespace-pre-wrap font-sans font-normal">{p.draft}</pre>
               <Actions surface="card" items={[{ kind: "secondary", label: "Edit then approve", onClick: () => setEditing(true) }]} />
             </div>
           )}

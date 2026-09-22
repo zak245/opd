@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
+import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { SectionHeader } from "../../ui/SectionHeader"
@@ -43,6 +44,18 @@ export const NO_FILTERS: Filters = { q: "", agent: "all", who: "all", date: "all
 
 export function activeCount(f: Filters): number {
   return (Object.keys(NO_FILTERS) as (keyof Filters)[]).filter((k) => f[k] !== NO_FILTERS[k]).length
+}
+
+/**
+ * Which of the five statuses an outcome word means. The phrases this ledger shows are longer than
+ * the registry's words ("Approved, edited", "Handed to Priya"), so the first word is what is asked
+ * about — the chip still prints the whole phrase (DESIGN.md §5).
+ */
+function statusWord(outcome: string): string {
+  const first = outcome.split(/[ ,·]/)[0].toLowerCase()
+  if (first === "expired" || first === "undone") return "failed"
+  if (first === "handed" || first === "snoozed") return "snoozed"
+  return first
 }
 
 /** The outcome in one word, because waiting, paused and declined must never be only a colour. */
@@ -195,7 +208,7 @@ export function Ledger(p: LedgerProps) {
       <h2 id="agents-activity" className="sr-only">Activity</h2>
 
       {!teammates && admin && (
-        <p className="text-xs text-muted-foreground">Everyone’s activity is visible to {admin.user}, {admin.title}.</p>
+        <p className="t-small text-muted-foreground">Everyone’s activity is visible to {admin.user}, {admin.title}.</p>
       )}
 
       {/* Search and the filters. One door, labelled by what is still inside it. */}
@@ -227,7 +240,7 @@ export function Ledger(p: LedgerProps) {
         </div>
       )}
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <div className="mt-2 flex flex-wrap items-center gap-2 t-small text-muted-foreground">
         <span className="tabular-nums">{p.events.length} of {p.total} events</span>
         {chips.map((c) => (
           <Badge key={c.k} variant="secondary" className="gap-1 font-normal">
@@ -270,7 +283,7 @@ export function Ledger(p: LedgerProps) {
           return (
             <div key={when}>
               <h3 {...(rules.r2 ? { "data-item": `act.day-digest.${when}`, "data-item-label": `Digest for ${dayGroup(when)}` } : {})}
-                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-background/95 py-1.5 text-xs backdrop-blur">
+                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-background/95 py-1.5 t-small backdrop-blur">
                 <span className="font-semibold">{dayGroup(when)}</span>
                 {rules.r2 && <span className="text-muted-foreground">
                   {digest.count} {digest.count === 1 ? "event" : "events"} · {digest.kinds} · <span className="tabular-nums">{digest.credits.toLocaleString()}</span> {digest.credits === 1 ? "credit" : "credits"}
@@ -333,7 +346,7 @@ function Row({ rules, e, seed, session, local, undone, onUndo, showContact, show
       data-item={`act.row.${e.id}`} data-item-label={e.summary}
       className={cn("py-1.5 outline-none", focused && "ring-2 ring-ring")}>
       <div
-        className="grid grid-cols-1 gap-x-3 px-2 text-sm sm:grid"
+        className="t-body grid grid-cols-1 gap-x-3 px-2 sm:grid"
         style={{ gridTemplateColumns: undefined }}
       >
         <div className="hidden sm:grid sm:gap-3" style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
@@ -348,7 +361,7 @@ function Row({ rules, e, seed, session, local, undone, onUndo, showContact, show
               {e.contactId ? <a className="hover:underline" href={href(`/ollopa/people/${e.contactId}`)}>{e.contact ?? e.company}</a> : e.contact ?? e.company ?? "—"}
             </span>
           )}
-          {showOutcome && <span className="truncate text-muted-foreground">{outcome}</span>}
+          {showOutcome && <span className="min-w-0 truncate"><Chip status={statusWord(outcome)}>{outcome}</Chip></span>}
           {showSurface && <span className="text-muted-foreground">{SURFACE_LABEL[e.surface]}</span>}
           {rules.r2 && <span className="text-right tabular-nums">{e.credits.toLocaleString()}<span className="sr-only"> credits</span></span>}
         </div>
@@ -359,11 +372,11 @@ function Row({ rules, e, seed, session, local, undone, onUndo, showContact, show
             <span className="min-w-0 flex-1">{e.summary}</span>
             <span className="shrink-0 tabular-nums">{e.credits.toLocaleString()}<span className="sr-only"> credits</span></span>
           </div>
-          <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+          <div className="t-small flex flex-wrap items-center gap-x-2 text-muted-foreground">
             <span className="tabular-nums">{e.at}</span>
             <span>{e.surface === "mcp" || e.surface === "cli" ? e.actorUser : e.agent}</span>
             {e.contact && <span className="truncate">{e.contact}</span>}
-            <span>{outcome}</span>
+            <Chip status={statusWord(outcome)}>{outcome}</Chip>
             <span>{SURFACE_LABEL[e.surface]}</span>
           </div>
         </div>
@@ -389,7 +402,7 @@ function Row({ rules, e, seed, session, local, undone, onUndo, showContact, show
           </Door>
         </div>
         {e.undoable && !undone && (
-          <Button variant="ghost" size="sm" className="mt-1 h-7 shrink-0 px-2 text-xs" onClick={onUndo}>
+          <Button variant="ghost" size="sm" className="mt-1 h-7 shrink-0 px-2 t-small" onClick={onUndo}>
             <Undo2 className="size-3.5" aria-hidden="true" />Undo
           </Button>
         )}

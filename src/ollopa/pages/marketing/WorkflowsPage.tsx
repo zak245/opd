@@ -16,6 +16,9 @@ import { href, useRoute } from "@/app/router"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { familyOf } from "../../identity"
+import { FAMILY, ink } from "./look"
 import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -133,8 +136,8 @@ export function WorkflowsPage({ session }: { session: Session }) {
     { key: "trigger", header: "Trigger", sortBy: (w) => w.trigger, className: "min-w-[9rem] whitespace-normal", cell: (w) => <span className="text-sm">When {w.trigger}</span> },
     { key: "status", header: "Status", sortBy: (w) => w.status, className: "min-w-[7rem] whitespace-normal", cell: (w) => (
       <div className="min-w-0">
-        <Badge variant="secondary" className={w.status === "on" ? "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200" : ""}>{w.status === "on" ? "On" : "Off"}</Badge>
-        <div className="text-xs text-muted-foreground">{w.statusChangedBy}, {ago(w.statusChangedOn)}</div>
+        <Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>
+        <div className="t-small text-muted-foreground">{w.statusChangedBy}, {ago(w.statusChangedOn)}</div>
       </div>
     ) },
     { key: "enrolled", header: "Enrolled, 7 days", sortBy: (w) => stats.get(w.id)?.enrolled ?? 0, className: "tabular-nums", cell: (w) => num(stats.get(w.id)?.enrolled ?? 0) },
@@ -143,18 +146,19 @@ export function WorkflowsPage({ session }: { session: Session }) {
       if (!w.sla) return <span className="text-muted-foreground">No clock on this one</span>
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
-        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=sla`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=sla`, w.id) } }}>{num(n)} past {w.sla.windows.hot}</a>
+        : <a className="font-medium tabular-nums underline" style={ink("danger")} href={href(`/ollopa/workflows/${w.id}?at=sla`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=sla`, w.id) } }}>{num(n)} past {w.sla.windows.hot}</a>
     } },
     { key: "notRouted", header: "Could not route", sortBy: (w) => stats.get(w.id)?.notRouted ?? 0, cell: (w) => {
       const n = stats.get(w.id)?.notRouted ?? 0
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
-        : <a className="font-medium tabular-nums text-amber-700 underline dark:text-amber-400" href={href(`/ollopa/workflows/${w.id}?at=runs`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=runs`, w.id) } }}>{num(n)}</a>
+        : <a className="font-medium tabular-nums underline" style={ink("danger")} href={href(`/ollopa/workflows/${w.id}?at=runs`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=runs`, w.id) } }}>{num(n)}</a>
     } },
     { key: "ceiling", header: "Credit ceiling and spend today", sortBy: (w) => w.ceiling.spentToday, className: "min-w-[9rem]", cell: (w) => (
       <a
         href={href(`/ollopa/workflows/${w.id}?at=ceiling`)}
-        className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium text-amber-700 dark:text-amber-400")}
+        className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium")}
+        style={w.ceiling.spentToday >= w.ceiling.perDay ? ink("warning") : undefined}
         onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=ceiling`, w.id) } }}
       >
         {num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} a day
@@ -192,9 +196,12 @@ export function WorkflowsPage({ session }: { session: Session }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5">
-        <div>
-          <h2 className="text-lg font-semibold">Workflows</h2>
-          <p className="text-sm text-muted-foreground">Which rule is firing, on whom, and what it is about to cost.</p>
+        <div className="min-w-0">
+          <h2 className="t-title inline-flex min-w-0 items-center gap-2" style={{ color: familyOf(FAMILY).ink }}>
+            <FamilyIcon of={FAMILY} size="header" />
+            Workflows
+          </h2>
+          <p className="t-body text-muted-foreground">Which rule is firing, on whom, and what it is about to cost.</p>
         </div>
         <Actions surface="page" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />
       </div>

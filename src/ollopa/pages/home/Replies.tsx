@@ -4,14 +4,13 @@
 // product has one and not two. Unsubscribe states what it does to the person before it runs, in place,
 // because it cannot be undone from a toast.
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Actions, type Action } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { originHere } from "../work/register"
 import { toast } from "../../templates/TablePage"
-import { Door, type Disclosure } from "../../ui"
+import { Chip, Door, type Disclosure } from "../../ui"
 import type { Reply } from "../../data/seed"
 import type { HomeData } from "./data"
 import { when } from "./format"
@@ -56,7 +55,7 @@ function ReplyRow({ r, canBook, confirming, ids, onNotInterested, onAsk, onUnsub
         <span className="flex flex-wrap items-center gap-x-2">
           <span className="font-medium">{r.contact}</span>
           <span className="text-muted-foreground">· {r.company}</span>
-          <Badge variant="secondary" className="font-normal">{r.outcome}</Badge>
+          <Chip status={r.outcome}>{r.outcome}</Chip>
           <span className="text-xs text-muted-foreground">{when(r.received)}</span>
         </span>
         <span className="block truncate text-xs text-muted-foreground">{r.snippet}</span>

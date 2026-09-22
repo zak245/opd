@@ -17,6 +17,7 @@ import { href, useRoute } from "@/app/router"
 import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -65,6 +66,16 @@ export const AREA_BY_NODE: Record<string, string> = {
 const slug = (area: string) => area.toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "")
 
 /**
+ * Settings is neutral, but two of its areas are about another family's objects, and the eye should
+ * recognise them from the sidebar: the sequences area is Engagement, the agents area is Agents
+ * (DESIGN.md §5). Every other area is the page's own neutral.
+ */
+const AREA_FAMILY: Record<string, string | undefined> = {
+  "Sequences": "sequences",
+  "Agents and AI": "agents",
+}
+
+/**
  * Settings the category has nowhere at all, so the common version cannot show them and they arrive
  * with the rule that creates them. Each is recorded as missing by the memo or by spec 14 §8, and
  * none of them is a problem this case invented.
@@ -93,11 +104,21 @@ const LATER = new Set([
 
 /* ----------------------------------------------------------------------------------- the strip */
 
-function StripLine({ item, label, children, tone }: { item: string; label: string; children: ReactNode; tone?: "warning" | "error" }) {
+/**
+ * One decision-critical fact. Where it has a state, the state is a chip carrying its own word, so
+ * the sentence beside it stays neutral ink and the colour never has to be read on its own
+ * (DESIGN.md §5). `state` is the word the status set maps: "active", "warning", "auto-paused".
+ */
+function StripLine({ item, label, children, state, word }: {
+  item: string; label: string; children: ReactNode
+  state?: "active" | "warning" | "auto-paused" | "none"
+  word?: string
+}) {
   return (
     <div data-item={item} data-item-label={label} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 py-1">
-      <span className="w-36 shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className={cn("min-w-0 flex-1 text-sm", tone === "warning" && "text-amber-700 dark:text-amber-400", tone === "error" && "text-destructive")}>
+      <span className="t-small w-36 shrink-0 font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="t-body min-w-0 flex-1">
+        {state && <Chip status={state} className="mr-1.5 align-middle">{word}</Chip>}
         {children}
       </span>
     </div>
@@ -139,30 +160,31 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
                 } },
             ]} />
           </StripLine>
-          <StripLine item="plan.credits" label="Credits" tone={runsOutFirst ? "warning" : undefined}>
+          <StripLine item="plan.credits" label="Credits" state={runsOutFirst ? "warning" : "active"} word={runsOutFirst ? "Runs out early" : "Healthy"}>
             {credits(c.balance)} of {credits(c.monthlyCap)} left this month · {credits(c.burnPerWeek)} a week ·{" "}
             {runsOutFirst ? `runs out about ${longDay(c.runsOutOn)}, before the cycle ends on ${longDay(c.cycleEnds)}` : `lasts to about ${longDay(c.runsOutOn)}`}
             <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />
           </StripLine>
-          <StripLine item="mail.bounce-guard" label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
-            {guard.state === "ok" ? "On" : guard.state === "warning" ? "Warning" : "Paused"} · {guard.observedPercent}% of {guard.volume7d.toLocaleString()} in 7 days ·
+          <StripLine item="mail.bounce-guard" label="Bounce guard" state={guard.state === "paused" ? "auto-paused" : guard.state === "warning" ? "warning" : "active"} word={guard.state === "paused" ? "Paused" : guard.state === "warning" ? "Warning" : "On"}>
+            {guard.observedPercent}% of {guard.volume7d.toLocaleString()} in 7 days ·
             {" "}warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% · {paused === 0 ? "nothing paused" : `${plural(paused, "mailbox", "mailboxes")} paused`}
           </StripLine>
           <StripLine item="ai.approvals" label="Agents">
             {plural(seed.agents.filter((a) => a.on).length, "agent")} on · send, add-to-sequence, stage changes and spend over a cap need the owner's approval ·
             {" "}<span data-item="ai.second-approval" data-item-label="Second approval">a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits</span> ·
             {" "}<span data-item="ai.credit-caps" data-item-label="Agent credit caps">caps {seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month</span>
-            {waiting > 0 && <> · <Actions surface="card" className="inline-flex align-middle" items={[{
-              label: `${waiting} waiting for approval`, kind: "link", href: href("/ollopa/agents"),
-              onClick: () => leaveSettings("/ollopa/agents", "ai.approvals"),
-            }]} /></>}
+            {waiting > 0 && <> · <FamilyIcon of="agents" className="inline-block align-text-bottom" />{" "}
+              <Actions surface="card" className="inline-flex align-middle" items={[{
+                label: `${waiting} waiting for approval`, kind: "link", href: href("/ollopa/agents"),
+                onClick: () => leaveSettings("/ollopa/agents", "ai.approvals"),
+              }]} /></>}
           </StripLine>
-          <StripLine item="plan.spike-alert" label="Credit spike" tone={spiked ? "warning" : undefined}>
-            Alert at {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}× · {spiked ? "alerted" : "nothing alerted"}
+          <StripLine item="plan.spike-alert" label="Credit spike" state={spiked ? "auto-paused" : "none"} word={spiked ? "Alerted" : "Quiet"}>
+            Alert at {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}×
           </StripLine>
-          <StripLine item="pros.dnc" label="Do-not-call" tone={dncOverdue ? "error" : undefined}>
+          <StripLine item="pros.dnc" label="Do-not-call" state={dncOverdue ? "auto-paused" : "active"} word={dncOverdue ? "Overdue" : "Current"}>
             Synchronised {longDay(st.prospecting.dnc.synchronisedOn)} · next due {longDay(st.prospecting.dnc.nextDueOn)}
-            {dncOverdue && " · overdue — calls made now are outside safe harbour"}
+            {dncOverdue && " · calls made now are outside safe harbour"}
           </StripLine>
           {homeless && (
             <>
@@ -188,7 +210,8 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
           {upgrades.length > 0 && (
             <StripLine item="plan.upgrade-requests" label="Upgrade requests">
               {plural(upgrades.length, "upgrade request")} · {upgrades[0].requester.user} wants {upgrades[0].upgrade!.feature} ({upgrades[0].upgrade!.plan}, {money(upgrades[0].upgrade!.monthlyTotal)} a month for {b.plan.seats} seats)
-              {" "}<Actions surface="card" className="inline-flex align-middle" items={[{
+              {" "}<FamilyIcon of="requests" className="inline-block align-text-bottom" />{" "}
+              <Actions surface="card" className="inline-flex align-middle" items={[{
                 label: "Review", kind: "link", href: href("/ollopa/requests"),
                 onClick: () => leaveSettings("/ollopa/requests", "plan.upgrade-requests"),
               }]} />
@@ -201,8 +224,8 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
             {mine ? `${credits(mine.used)} used this month${mine.limit ? ` · your limit is ${credits(mine.limit)}` : ""}` : `${credits(c.balance)} left in the workspace`}
             <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />
           </StripLine>
-          <StripLine item="mail.bounce-guard" label="Bounce guard" tone={guard.state === "paused" ? "error" : guard.state === "warning" ? "warning" : undefined}>
-            {guard.state === "ok" ? "On" : guard.state === "warning" ? "Warning" : "Paused"} · warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% ·
+          <StripLine item="mail.bounce-guard" label="Bounce guard" state={guard.state === "paused" ? "auto-paused" : guard.state === "warning" ? "warning" : "active"} word={guard.state === "paused" ? "Paused" : guard.state === "warning" ? "Warning" : "On"}>
+            Warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% ·
             {" "}{myMailboxes.length === 0 ? "you have no mailbox here" : myMailboxes.some((m) => m.paused) ? "one of yours is paused" : `${plural(myMailboxes.length, "mailbox", "mailboxes")} of yours, none paused`}
           </StripLine>
           <StripLine item="ai.approvals" label="Agents">
@@ -287,7 +310,7 @@ function AreaTabs({ area, rows, admin, honest }: { area: string; rows: SettingRo
                 role="tab"
                 aria-selected={active === g.id}
                 onClick={() => setActive(g.id)}
-                className={cn("-mb-px border-b-2 px-3 py-1.5 text-sm", active === g.id ? "border-foreground font-medium" : "border-transparent text-muted-foreground")}
+                className={cn("t-body -mb-px border-b-2 px-3 py-1.5", active === g.id ? "border-foreground font-medium" : "border-transparent text-muted-foreground")}
               >
                 {g.label}
               </button>
@@ -330,7 +353,10 @@ function Area({ area, one, two, admin, register, flat, honest }: {
 
   return (
     <section id={`area-${slug(area)}`} className="scroll-mt-4 border-b px-4 py-5 sm:px-6">
-      <h3 className="pb-2 text-base font-semibold">{honest ? area : VAGUE_AREA[area] ?? area}</h3>
+      <h3 className="t-section flex items-center gap-2 pb-2">
+        {AREA_FAMILY[area] && <FamilyIcon of={AREA_FAMILY[area]} />}
+        {honest ? area : VAGUE_AREA[area] ?? area}
+      </h3>
       <div data-container={`area.${slug(area)}`} data-container-label={area}>
         {tabbed
           ? <AreaTabs area={area} rows={one} admin={admin} honest={honest} />
@@ -404,7 +430,7 @@ function SettingsSearch({ rows, onJump, inputRef, accelerators = true }: {
               <button
                 role="option"
                 aria-selected={i === active}
-                className={cn("block w-full px-3 py-1.5 text-left text-sm", i === active && "bg-muted")}
+                className={cn("t-body block w-full px-3 py-1.5 text-left", i === active && "bg-muted")}
                 onMouseEnter={() => setActive(i)}
                 onClick={() => { onJump(h.id, h.area); setQ("") }}
               >
@@ -628,7 +654,7 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
   return (
     <div>
       {viewing && (
-        <div role="status" className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b bg-foreground px-4 py-2 text-sm text-background sm:px-6">
+        <div role="status" className="t-body sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b bg-foreground px-4 py-2 text-background sm:px-6">
           <span>
             Viewing as {viewing.name} ({viewing.title}{viewing.team ? `, ${viewing.team}` : ""}). This is their Settings page, not yours.
           </span>
@@ -639,8 +665,11 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
       <DoorGroup>
         <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
           <div>
-            <h2 className="text-lg font-semibold">Settings</h2>
-            <p className="text-sm text-muted-foreground">{seed.workspace.name}</p>
+            <h2 className="t-section flex items-center gap-2">
+              <FamilyIcon of="settings" size="header" />
+              Settings
+            </h2>
+            <p className="t-body text-muted-foreground">{seed.workspace.name}</p>
           </div>
           <div className="flex items-center gap-2">
             <SettingsSearch rows={searchable} onJump={jump} inputRef={search} accelerators={accelerators} />
@@ -657,7 +686,7 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
               <ul className="grid gap-0.5">
                 {areas.map((a) => (
                   <li key={a.area}>
-                    <a className="block rounded px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground" href={`#area-${slug(a.area)}`}
+                    <a className="t-label block rounded px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground" href={`#area-${slug(a.area)}`}
                       onClick={(e) => { e.preventDefault(); document.getElementById(`area-${slug(a.area)}`)?.scrollIntoView({ block: "start", behavior: "smooth" }) }}>
                       {areaLabel(a.area)}
                     </a>
@@ -679,7 +708,7 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
               ))}
 
               {!isAdmin && (
-                <p className="px-4 py-6 text-sm text-muted-foreground sm:px-6">
+                <p className="t-body px-4 py-6 text-muted-foreground sm:px-6">
                   Workspace settings (team, email domains, prospecting rules, pipeline, agents, integrations, plan and billing) are managed by {admin}, {adminTitle}.
                 </p>
               )}

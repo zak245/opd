@@ -12,9 +12,39 @@
 // marked critical in `usage/companies.ts`, so a commitment date and an open risk are level one for
 // every seat whatever the weekly number says.
 import type { ReactNode } from "react"
+import { Chip } from "../../ui/Identity"
 import type { QuickLookField } from "../../templates/QuickLook"
-import { ago, day, delta, money, renewalText } from "./format"
+import { ago, day, daysLeft, delta, money, renewalText } from "./format"
 import { isCustomer, type CompanyView } from "./data"
+
+/**
+ * The two state words this object carries, said in the vocabulary the status set already knows.
+ * The chip shows the company's own word — "Watch", "Do not prospect" — and takes its colour from
+ * the meaning underneath it, so no page picks a hue (DESIGN.md §5).
+ */
+const BAND_STATUS: Record<string, string> = {
+  Healthy: "live",
+  Watch: "none",
+  "At risk": "at risk",
+}
+
+const STAGE_STATUS: Record<string, string> = {
+  "Current client": "live",
+  "Active opportunity": "in progress",
+  Cold: "none",
+  Churned: "churned",
+  "Do not prospect": "do not contact",
+}
+
+/** The health band as a chip: the word the account uses, coloured by what that word means. */
+export function bandChip(band: string): ReactNode {
+  return <Chip status={BAND_STATUS[band] ?? "none"}>{band}</Chip>
+}
+
+/** The company's stage as a chip, the same everywhere the stage appears. */
+export function stageChip(stage: string): ReactNode {
+  return <Chip status={STAGE_STATUS[stage] ?? "none"}>{stage}</Chip>
+}
 
 /** The health number, its band and its 30-day move, in one line of words. */
 export function healthLine(health: number, band: string, delta30: number): string {
@@ -68,7 +98,13 @@ export function companyFields(v: CompanyView, currency: string, user?: string): 
   const customerFieldSet: CompanyField[] = customer && a ? [
     {
       key: "health", usage: "rec.health", label: "Health",
-      value: <span><span className="text-lg font-semibold tabular-nums">{a.health}</span> · {a.band} <span className="text-muted-foreground">· {delta(a.healthDelta30)}</span></span>,
+      value: (
+        <span className="inline-flex flex-wrap items-baseline gap-1.5">
+          <span className="text-lg font-semibold tabular-nums">{a.health}</span>
+          {bandChip(a.band)}
+          <span className="t-small text-muted-foreground">{delta(a.healthDelta30)}</span>
+        </span>
+      ),
     },
     {
       key: "health-drivers", usage: "rec.health-drivers", label: "What makes up the score", asSection: true, wide: true,
@@ -83,10 +119,16 @@ export function companyFields(v: CompanyView, currency: string, user?: string): 
         </ul>
       ),
     },
-    { key: "renewal", usage: "rec.renewal", label: "Renewal", value: renewalText(a.renewal) },
+    {
+      key: "renewal", usage: "rec.renewal", label: "Renewal",
+      // Inside thirty days the date is a state, and the template paints a toned field from the
+      // warning token; nothing here picks a colour.
+      tone: daysLeft(a.renewal) >= 0 && daysLeft(a.renewal) < 30 ? "warning" : undefined,
+      value: renewalText(a.renewal),
+    },
     {
       key: "value", usage: "rec.renewal", label: "Contract value",
-      value: <span><span className="tabular-nums">{money(a.value, currency)}</span> a year <span className="text-muted-foreground">· {a.billing} billing</span></span>,
+      value: <span><span className="tabular-nums">{money(a.value, currency)}</span> a year <span className="t-small text-muted-foreground">· {a.billing} billing</span></span>,
     },
     {
       key: "risks", usage: "rec.risks", label: "Open risks",
@@ -98,20 +140,20 @@ export function companyFields(v: CompanyView, currency: string, user?: string): 
     ownerField,
     {
       key: "next-step", usage: "rec.next-step", label: "Next step", span: 2,
-      value: <span>{a.nextStep.text} <span className="text-muted-foreground">· {day(a.nextStep.due)}</span></span>,
+      value: <span>{a.nextStep.text} <span className="t-small text-muted-foreground">· {day(a.nextStep.due)}</span></span>,
     },
   ] : []
 
   return [
     ...customerFieldSet,
     {
-      key: "stage", usage: "rec.header", label: "Stage", value: c.stage,
+      key: "stage", usage: "rec.header", label: "Stage", value: stageChip(c.stage),
       under: c.stage === "Do not prospect" ? `Sequences are stopped for the ${v.inSequence.length} contacts here` : undefined,
     },
     ...(customer ? [] : [ownerField]),
     { key: "contacts", usage: "rec.contacts", label: "Contacts held", value: <span className="tabular-nums">{v.contacts.length}</span> },
     { key: "in-sequence", usage: "rec.in-sequence", label: "Contacts in a sequence", value: <span className="tabular-nums">{v.inSequence.length}</span> },
-    { key: "last-activity", usage: "rec.header", label: "Last activity", value: <span>{day(v.lastActivity)} <span className="text-muted-foreground">· {ago(v.lastActivity)}</span></span> },
+    { key: "last-activity", usage: "rec.header", label: "Last activity", value: <span>{day(v.lastActivity)} <span className="t-small text-muted-foreground">· {ago(v.lastActivity)}</span></span> },
     { key: "open-deals", usage: "rec.deals", label: "Open deals", value: <span className="tabular-nums">{v.openDeals.length}</span> },
     { key: "industry", usage: "rec.details", label: "Industry", value: c.industry },
     { key: "employees", usage: "rec.details", label: "Employees", value: c.employees.toLocaleString() },
@@ -134,7 +176,7 @@ export function companyFirstLevel(v: CompanyView, currency: string, level: (item
 /** The drawer's and the pane's shape: label and value, nothing else. */
 export function quickLookFields(v: CompanyView, currency: string, level: (item: string) => 1 | 2): QuickLookField[] {
   return [
-    { label: "Company", value: <span>{v.company.name} <span className="font-mono text-xs text-muted-foreground">{v.company.domain}</span></span> },
+    { label: "Company", value: <span>{v.company.name} <span className="t-small font-mono text-muted-foreground">{v.company.domain}</span></span> },
     ...companyFirstLevel(v, currency, level).map((f) => ({ label: f.label, value: f.value })),
   ]
 }

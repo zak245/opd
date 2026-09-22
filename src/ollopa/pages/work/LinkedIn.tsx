@@ -9,10 +9,10 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Actions } from "../../ui/Actions"
 import { Panel } from "../../ui/Panel"
 import type { Task } from "../../data/seed"
+import { Chip } from "../../ui/Identity"
 import type { Session } from "../../session"
 import { contactIndex, invitesThisWeek } from "./data"
 
@@ -62,9 +62,9 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
       <div>
         <label className="text-xs text-muted-foreground" htmlFor="li-message">
           The message{" "}
-          <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[11px] font-normal">
+          <Chip status={edited ? "edited" : "from the sequence step"}>
             {edited ? "personalised for this send" : "from the sequence step"}
-          </Badge>
+          </Chip>
         </label>
         <Textarea
           id="li-message" rows={5} className="mt-1" value={message}

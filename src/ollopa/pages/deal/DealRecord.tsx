@@ -23,6 +23,9 @@ import { openBeside } from "../../beside"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
+import { STATUSES, statusOf } from "../../identity"
+import { warningStatus } from "../deals/pipeline"
 import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { Door, useDoorState } from "../../ui/Door"
@@ -46,11 +49,19 @@ const STAGE_GATE_SETTING = "/ollopa/settings/pipeline?row=pipe.required-at-stage
 
 /* ------------------------------------------------------------------------------- small pieces */
 
-const STATE_TONE: Record<string, string> = {
-  suggested: "bg-muted text-muted-foreground",
-  edited: "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200",
-  validated: "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
+/**
+ * The three states a generated value can be in, said in words the status registry knows: nobody has
+ * looked at it yet, a person changed it, a person checked it. The colour comes from there, never
+ * from here (DESIGN.md §5).
+ */
+const STATE_WORD: Record<string, string> = {
+  suggested: "new",
+  edited: "in progress",
+  validated: "verified",
 }
+
+/** The ink a state word carries, for the lines on this page that are a state rather than a chip. */
+const statusInk = (word: string) => STATUSES[statusOf(word)].ink
 
 /** Warnings carry raw numbers and dates; a date is read the way the rest of the page reads dates. */
 function readable(v: string): string {
@@ -108,7 +119,7 @@ function Place({ id, label, className, open, children }: {
 
 /** Every field an agent can write carries one. A value with no chip was typed by a person. */
 function StateChip({ state }: { state: string }) {
-  return <Badge variant="secondary" className={cn("px-1.5 py-0 text-[11px] font-normal", STATE_TONE[state])}>{state}</Badge>
+  return <Chip status={STATE_WORD[state] ?? state}>{state}</Chip>
 }
 
 const KIND_ICON: Record<DealActivity["kind"], typeof Mail> = {
@@ -472,9 +483,9 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
               onClick={() => (missing.length ? toast(`${s.name} needs ${missing.join(" and ")}.`) : moveStage(s.name))}
               className={cn(
                 "rounded-md border px-2.5 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                at <= index ? "bg-foreground text-background" : "bg-background hover:bg-muted",
-                missing.length > 0 && "border-amber-400 dark:border-amber-700",
+                at <= index ? "bg-foreground text-background" : "surface-raised hover:bg-muted",
               )}
+              style={missing.length > 0 ? { borderColor: statusInk("warning") } : undefined}
             >
               {s.name}
             </button>
@@ -483,7 +494,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
       </div>
       {/* The gate is on the step before the click, not after it: a rule met only afterwards is hidden. */}
       {r7 && stages.filter((s) => missingFor(s.name).length > 0).slice(0, 1).map((s) => (
-        <p key={s.name} id="stage-gate" className="text-xs text-amber-700 dark:text-amber-400">
+        <p key={s.name} id="stage-gate" className="t-small" style={{ color: statusInk("warning") }}>
           <Thing id="qual.gate" label="The stage gate">
             {s.name} needs {missingFor(s.name).join(" and ")}. Set by {admin?.user ?? "your admin"} in{" "}
             {/* A step in the chain, not a jump: Settings opens with this deal remembered, and the
@@ -635,9 +646,9 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           value: (
             <div data-item="deal.warnings" data-item-label="Warning chips" className="flex flex-wrap gap-1.5">
               {warnings.map((w) => (
-                <span key={w.kind} className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+                <Chip key={w.kind} status={warningStatus(w.kind)}>
                   {w.kind} · {readable(w.observed)} against {readable(w.threshold)}
-                </span>
+                </Chip>
               ))}
             </div>
           ),
@@ -907,7 +918,8 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <div data-item="company.account-health" data-item-label="Account health" className="space-y-1 text-sm">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-semibold tabular-nums">{account.health}</span>
-            <Badge variant="secondary">{account.band}</Badge>
+            {/* The band is a state, so it is a chip with its word and the registry's ink. */}
+            <Chip status={account.band} />
             {/* One object: the account and the company are the same record, and it opens beside the
                 deal so the health number and the deal stay on screen together. */}
             <button type="button" className="ml-auto text-xs underline" data-item="company.account-open" data-item-label="Open the account"
@@ -961,7 +973,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     content: evidence.length === 0
       ? <p className="text-muted-foreground">No conversation has been recorded against this deal yet.</p>
       : <ul data-item="qual.evidence" data-item-label="Evidence and source quotes" className="space-y-2">{evidence.map((e) => (
-          <li key={e.id}><div className="text-xs font-medium">{e.element}</div><blockquote className="border-l-2 pl-2 text-xs text-muted-foreground">{quoted(e.quote)}</blockquote><div className="text-[11px] text-muted-foreground">{e.sourceKind} · {day(e.at)}</div></li>
+          <li key={e.id}><div className="text-xs font-medium">{e.element}</div><blockquote className="border-l-2 pl-2 text-xs text-muted-foreground">{quoted(e.quote)}</blockquote><div className="t-small text-muted-foreground">{e.sourceKind} · {day(e.at)}</div></li>
         ))}</ul>,
   })
 

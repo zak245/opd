@@ -77,6 +77,38 @@ export function Chip({ family, status, children, icon = true, className }: {
   )
 }
 
+/**
+ * A tinted line, for a state that needs a sentence rather than a word in a box — a sequence's bounce
+ * health, a standing arrangement and its cost, a count that would otherwise mislead. Same five
+ * statuses, same tint and ink, and it opens with the state word so it never leans on colour alone
+ * (DESIGN.md §5). A chip is for a state on a row; this is for a state with something to say.
+ *
+ * It lives here beside `Chip` rather than in `identity.ts`, which is the JSX-free registry the two
+ * of them read.
+ */
+export function StatusLine({ status, word, children, className, role = "status" }: {
+  /** A state word — "Auto-paused", "Warning", "On" — or one of the five ids. */
+  status: string
+  /** The leading word, when the sentence should open with something other than `status` itself. */
+  word?: string
+  children: ReactNode
+  className?: string
+  role?: "status" | "alert"
+}) {
+  const look = STATUSES[statusOf(status)]
+  const lead = word ?? status
+  return (
+    <p
+      role={role}
+      className={cn("t-body flex flex-wrap items-center gap-2 rounded-md px-3 py-2", className)}
+      style={{ backgroundColor: look.tint, color: look.ink }}
+    >
+      <span className="font-medium">{lead}</span>
+      <span className="min-w-0 flex-1">{children}</span>
+    </p>
+  )
+}
+
 /** The tone a status word maps to, for a page that draws its own row rather than a chip. */
 export function statusTone(word: string | undefined | null): Status {
   return statusOf(word)

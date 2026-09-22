@@ -24,7 +24,8 @@ import { engage, useEngage } from "./store"
 import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
-import { type Col, DataTable, Pill, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
 const KINDS_OF_LIST = [
@@ -117,9 +118,9 @@ export function ListsPage({ session }: { session: Session }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <RowOpen to={`/ollopa/lists/${l.id}`} onOpen={() => open(l)}>{l.name}</RowOpen>
-            <Pill tone="muted">{l.kind === "people" ? "People" : "Companies"}</Pill>
-            <Pill tone={l.mode === "segment" ? "good" : "muted"}>{l.mode === "segment" ? "Segment" : "Static"}</Pill>
-            {l.archived && <Pill tone="muted">Archived</Pill>}
+            <Chip family={l.kind === "people" ? "people" : "companies"}>{l.kind === "people" ? "People" : "Companies"}</Chip>
+            <Chip family="neutral" icon={false}>{l.mode === "segment" ? "Segment" : "Static"}</Chip>
+            {l.archived && <Chip status="Archived" />}
           </div>
         </div>
       ),
@@ -131,7 +132,7 @@ export function ListsPage({ session }: { session: Session }) {
       cell: (l) => (
         <div>
           <div>{n(l.memberIds.length)}</div>
-          {l.newThisWeek > 0 && <div className="text-xs text-muted-foreground">+{n(l.newThisWeek)} this week</div>}
+          {l.newThisWeek > 0 && <div className="t-small text-muted-foreground">+{n(l.newThisWeek)} this week</div>}
         </div>
       ),
     },
@@ -144,7 +145,7 @@ export function ListsPage({ session }: { session: Session }) {
             {l.feeds.map((f) => (
               <div key={f.name} className="text-xs">
                 {f.name}
-                {f.auto && <span className="text-amber-700 dark:text-amber-400"> · new matches added automatically</span>}
+                {f.auto && <span style={{ color: "var(--warning-ink)" }}> · new matches added automatically</span>}
               </div>
             ))}
           </div>
@@ -208,14 +209,17 @@ export function ListsPage({ session }: { session: Session }) {
       <div className="flex h-full flex-col">
         <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
           <div>
-            <h2 className="text-lg font-semibold">Lists</h2>
+            <h2 className="t-title flex items-center gap-2">
+              <FamilyIcon of="lists" size="header" />
+              Lists
+            </h2>
           </div>
           <Button onClick={() => setChooser((v) => !v)} aria-expanded={chooser}>New list</Button>
         </div>
 
         {chooser && (
           <div className="mx-4 mt-3 rounded-lg border p-3 sm:mx-6">
-            <h3 className="text-sm font-medium">New list</h3>
+            <h3 className="t-body font-medium">New list</h3>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               {KINDS_OF_LIST.map((k) => (
                 <button
@@ -228,7 +232,7 @@ export function ListsPage({ session }: { session: Session }) {
                     toast(`New ${k.id === "static" ? "static list" : "segment"} · name it, then ${k.id === "static" ? "pick members" : "set filters"}`)
                   }}
                 >
-                  <div className="text-sm font-medium">{k.label}</div>
+                  <div className="t-body font-medium">{k.label}</div>
                 </button>
               ))}
             </div>
@@ -338,7 +342,7 @@ export function ListsPage({ session }: { session: Session }) {
                   {hasCampaigns && <Button size="sm" variant="outline" onClick={() => toast(`${n(ids.length)} lists · pick a campaign`)}>Add to campaign</Button>}
                   <Button size="sm" variant="outline" onClick={() => toast(`Exported ${n(ids.length)} lists`)}>Export CSV</Button>
                   <Button size="sm" variant="outline" onClick={() => { ids.forEach((id) => engage.patchList(session.business, id, { archived: true })); setSelected([]); toast(`Archived ${n(ids.length)} lists`) }}>Archive</Button>
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { ids.forEach((id) => engage.deleteList(session.business, id)); setSelected([]); toast(`Deleted ${n(ids.length)} lists · the people stay in People`) }}>
+                  <Button size="sm" variant="ghost" style={{ color: "var(--danger-ink)" }} onClick={() => { ids.forEach((id) => engage.deleteList(session.business, id)); setSelected([]); toast(`Deleted ${n(ids.length)} lists · the people stay in People`) }}>
                     Delete {n(ids.length)} lists · the people stay in People
                   </Button>
                 </>

@@ -21,25 +21,25 @@ export function TileRow({ tiles, onRecords }: { tiles: Tile[]; onRecords?: (t: T
     // Two per row on a phone, then one row across: sourced and influenced must stay side by side.
     <ul className={cn("grid grid-cols-2 gap-2 sm:grid-cols-3", tiles.length >= 6 ? "lg:grid-cols-6" : "lg:grid-cols-5")}>
       {tiles.map((t) => (
-        <li key={t.id} className={cn("rounded-lg border p-3", t.tone === "warning" && "border-amber-400 dark:border-amber-700")}>
-          <div className="text-xs text-muted-foreground">{t.label}</div>
+        <li key={t.id} className={cn("rounded-lg border p-3", t.tone === "warning" && "border-[color:var(--warning)]")}>
+          <div className="t-small text-muted-foreground">{t.label}</div>
           {/* A count is a link to its records; a zero is data, not a door. */}
           {t.records && onRecords ? (
             <button
               type="button"
               aria-label={`${t.value} ${t.label.toLowerCase()} — open the records behind this number`}
               onClick={() => onRecords(t)}
-              className="mt-0.5 flex items-baseline gap-1 rounded text-xl font-semibold underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="mt-0.5 flex items-baseline gap-1 rounded t-title underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               {t.value}
               <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
             </button>
           ) : (
-            <div className="mt-0.5 text-xl font-semibold">{t.value}</div>
+            <div className="mt-0.5 t-title">{t.value}</div>
           )}
-          {t.under && <p className="mt-0.5 text-xs text-muted-foreground">{t.under}</p>}
+          {t.under && <p className="mt-0.5 t-small text-muted-foreground">{t.under}</p>}
           {t.delta && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 t-small text-muted-foreground">
               <span aria-hidden="true">{t.delta.arrow} </span>{t.delta.text}
             </p>
           )}
@@ -115,12 +115,12 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
   return (
     <section className="rounded-lg border">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
-        <h3 className="text-sm font-medium">{caption} <span className="font-normal tabular-nums text-muted-foreground">({rows.length})</span></h3>
+        <h3 className="t-body font-medium">{caption} <span className="font-normal tabular-nums text-muted-foreground">({rows.length})</span></h3>
         <div className="flex items-center gap-2" data-print-hide>
           {aside}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">Columns: {shown.length} of {columns.length}</Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2 t-small">Columns: {shown.length} of {columns.length}</Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64">
               <ul className="grid gap-2">
@@ -136,7 +136,7 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
                         write(colsKey, next)
                       }}
                     />
-                    <label htmlFor={`${storageKey}-${c.key}`} className="text-sm">{c.header}</label>
+                    <label htmlFor={`${storageKey}-${c.key}`} className="t-body">{c.header}</label>
                   </li>
                 ))}
               </ul>
@@ -146,10 +146,10 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
       </div>
 
       {rows.length === 0 ? (
-        <div className="px-3 py-8 text-center text-sm text-muted-foreground">{empty ?? "Nothing in this range."}</div>
+        <div className="px-3 py-8 text-center t-body text-muted-foreground">{empty ?? "Nothing in this range."}</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-max text-sm">
+          <table className="w-full min-w-max t-body">
             <caption className="sr-only">{caption}</caption>
             <thead>
               <tr className="border-b">
@@ -158,7 +158,7 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
                     key={c.key}
                     scope="col"
                     className={cn(
-                      "whitespace-nowrap px-3 py-1.5 text-xs font-medium text-muted-foreground",
+                      "whitespace-nowrap px-3 py-1.5 t-small font-medium text-muted-foreground",
                       c.align === "right" ? "text-right" : "text-left",
                       c.fixed && "sticky left-0 z-10 bg-background",
                     )}
@@ -228,7 +228,7 @@ function RowDoor({ door, signal }: { door: { id: string; label: string; count?: 
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="flex items-center gap-1.5 rounded t-small text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <ChevronRight aria-hidden="true" className={cn("size-3.5 transition-transform", open && "rotate-90")} />
         {door.label}{door.count !== undefined && `: ${door.count}`}
@@ -249,14 +249,14 @@ export function InlineDoor({ id, label, count, children, defaultOpen = false }: 
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(!open)}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left t-body font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ChevronRight aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
           <span>{label}{count !== undefined ? ":" : ""}</span>
           {count !== undefined && <span className="tabular-nums text-muted-foreground">{` ${count}`}</span>}
         </button>
       </h3>
-      {open && <div className="px-3 pb-3 text-sm">{children}</div>}
+      {open && <div className="px-3 pb-3 t-body">{children}</div>}
     </section>
   )
 }
@@ -283,16 +283,16 @@ export function InlineGate({ feature, plan, pricePerMonth, what, seats, isAdmin,
   return (
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium">{feature}</span>
+        <span className="t-body font-medium">{feature}</span>
         <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
           <Lock className="size-3" aria-hidden="true" />{plan}
         </span>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{what}</p>
-      <p className="mt-1 text-xs tabular-nums text-muted-foreground">{usd(pricePerMonth)} a month for your {seats} seats</p>
+      <p className="mt-1 t-small text-muted-foreground">{what}</p>
+      <p className="mt-1 t-small tabular-nums text-muted-foreground">{usd(pricePerMonth)} a month for your {seats} seats</p>
       {!isAdmin && (
         <div className="mt-2">
-          <Label htmlFor={`why-${feature}`} className="text-xs">Why you need it — {admin} sees this with the cost</Label>
+          <Label htmlFor={`why-${feature}`} className="t-small">Why you need it — {admin} sees this with the cost</Label>
           <Textarea id={`why-${feature}`} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1" placeholder="What you are trying to do" />
         </div>
       )}

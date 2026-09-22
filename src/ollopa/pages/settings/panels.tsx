@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { href } from "@/app/router"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
@@ -27,13 +28,13 @@ import { toast } from "./state"
 
 export function Fields({ rows }: { rows: { label: string; value: ReactNode; note?: string }[] }) {
   return (
-    <dl className="grid gap-3">
+    <dl className="surface-raised grid gap-3 rounded-[10px] border px-3 py-2.5">
       {rows.map((r) => (
-        <div key={r.label} className="grid gap-1 border-b pb-3 last:border-b-0 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-3">
-          <dt className="text-sm text-muted-foreground">{r.label}</dt>
-          <dd className="text-sm">
+        <div key={r.label} className="grid gap-1 border-b pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-3">
+          <dt className="t-label text-muted-foreground">{r.label}</dt>
+          <dd className="t-body">
             {r.value}
-            {r.note && <p className="mt-1 text-xs text-muted-foreground">{r.note}</p>}
+            {r.note && <p className="t-small mt-1 text-muted-foreground">{r.note}</p>}
           </dd>
         </div>
       ))}
@@ -283,9 +284,12 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
   return (
     <Panel id="x-removal" title="Removal list" {...p}
       footer={<Actions surface="dialog" items={[{ label: "Export as CSV", kind: "secondary", onClick: () => toast("Exported the removal list as CSV.") }]} />}>
-      <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
-        <p className="text-sm font-medium">Delete everywhere</p>
-        <p className="mt-1 text-sm">
+      <div className="surface-raised rounded-[10px] border p-3">
+        <p className="t-label flex items-center gap-2">
+          Delete everywhere
+          <Chip status="do not contact">Cannot be undone</Chip>
+        </p>
+        <p className="t-body mt-1">
           Deletes {removal.people} people here, unlinks them in {b.crm?.split(" ")[0] ?? "the CRM"}, removes them from {plural(removal.lists, "list")} and {plural(removal.sequences, "sequence")},
           and stops {plural(removal.jobs, "enrichment job")} from re-importing them. This cannot be undone.
         </p>

@@ -48,8 +48,8 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
   if (!job) {
     return (
       <div className="mx-auto max-w-lg p-10 text-center">
-        <h2 className="text-lg font-semibold">No enrichment jobs yet</h2>
-        <p className="mt-2 text-sm text-muted-foreground">A reveal or an import writes one, with what it cost and what it found.</p>
+        <h2 className="t-section">No enrichment jobs yet</h2>
+        <p className="mt-2 t-body text-muted-foreground">A reveal or an import writes one, with what it cost and what it found.</p>
         <Actions className="mt-5 justify-center" surface="page" items={[{ kind: "primary", label: "Import and enrich a file", onClick: () => navigate("/ollopa/import?step=1") }]} />
       </div>
     )
@@ -99,9 +99,9 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
               count: job.byField.length,
               children: (
                 <div className="min-w-0 overflow-x-auto">
-                  <table className="w-full min-w-[40rem] border-collapse text-sm">
+                  <table className="w-full min-w-[40rem] border-collapse t-body">
                     <caption className="sr-only">Each field: attempted, matched, hit rate, credits and cost per hit, in the order the fields were requested.</caption>
-                    <thead><tr className="border-b text-left text-xs text-muted-foreground">
+                    <thead><tr className="border-b text-left t-small text-muted-foreground">
                       <th scope="col" className="py-2 pr-3 font-medium">Field</th><th scope="col" className="py-2 pr-3 font-medium">Attempted</th>
                       <th scope="col" className="py-2 pr-3 font-medium">Matched</th><th scope="col" className="py-2 pr-3 font-medium">Hit rate</th>
                       <th scope="col" className="py-2 pr-3 font-medium">Credits</th><th scope="col" className="py-2 pr-3 font-medium">Cost per hit</th>
@@ -128,7 +128,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
               id: "charging",
               title: "What was charged and what was not",
               children: (
-                <div className="grid gap-2 text-sm">
+                <div className="grid gap-2 t-body">
                   <p>{n(chargedRows)} rows were charged. {n(freeRows)} returned nothing and were free.</p>
                   <p className="text-muted-foreground">
                     {job.charging.note || "Only matched rows are charged. A mobile that returned for a do-not-call number was charged and cannot be called. Nothing here is refunded."}
@@ -156,7 +156,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                   ),
                   children: (
                     <div className="grid gap-3">
-                      <ul className="grid gap-1 text-sm">
+                      <ul className="grid gap-1 t-body">
                         {unmatched.slice(0, 6).map((c) => (
                           <li key={c.id} className="text-muted-foreground">{c.name} · {c.company} · nothing returned · 0 credits</li>
                         ))}
@@ -190,9 +190,9 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                         const open = seed.deals.filter((d) => d.companyId === m.jobChange?.newCompanyId && d.stage !== "Closed won").length
                         return (
                           <div key={m.id} className="rounded-lg border p-3">
-                            <div className="text-sm font-medium">{m.name} · {m.jobChange?.previousCompany} → {company?.name ?? "a company ollopA does not hold"}</div>
-                            <p className="text-xs text-muted-foreground">Signal fired {day(m.jobChange?.firedOn ?? "")} from {m.jobChange?.source}.</p>
-                            <p className="mt-1 text-sm">
+                            <div className="t-body font-medium">{m.name} · {m.jobChange?.previousCompany} → {company?.name ?? "a company ollopA does not hold"}</div>
+                            <p className="t-small text-muted-foreground">Signal fired {day(m.jobChange?.firedOn ?? "")} from {m.jobChange?.source}.</p>
+                            <p className="mt-1 t-body">
                               {company && account
                                 ? `${company.name} is already an account · owner ${account.owner} · ${open} open deal${open === 1 ? "" : "s"}`
                                 : `${company?.name ?? "The new employer"} is not in the workspace yet.`}
@@ -203,7 +203,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                               { kind: "secondary", label: "Update this record", onClick: () => toast(`Updated ${m.name} · old employer kept in the history`) },
                               { kind: "secondary", label: "Create a new contact", onClick: () => toast(`Created a new contact for ${m.name} · linked to the old record`) },
                             ]} />
-                            <p className="mt-2 text-xs text-muted-foreground">
+                            <p className="mt-2 t-small text-muted-foreground">
                               The new address is not known yet · verifying one costs {CREDITS.revealEmail} credit{CREDITS.revealEmail === 1 ? "" : "s"}.
                             </p>
                           </div>
@@ -232,10 +232,10 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
             id: "where-from",
             title: "Where this job came from",
             children: (
-              <div className="grid gap-2 text-sm">
+              <div className="grid gap-2 t-body">
                 <p>{SOURCE_WORDS[job.source]}{job.keyId ? ` · ${seed.apiKeys.find((k) => k.id === job.keyId)?.name ?? job.keyId}` : ""}</p>
-                {job.keyId && <a className="text-xs underline" href={href("/ollopa/developer/api")}>The key that ran it</a>}
-                <p className="text-xs text-muted-foreground">Balance now {n(seed.credits.balance)} · cap {n(seed.credits.monthlyCap)} a month at {b.name}.</p>
+                {job.keyId && <a className="t-small underline" href={href("/ollopa/developer/api")}>The key that ran it</a>}
+                <p className="t-small text-muted-foreground">Balance now {n(seed.credits.balance)} · cap {n(seed.credits.monthlyCap)} a month at {b.name}.</p>
               </div>
             ),
           },
@@ -251,7 +251,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
           count: job.rows,
           content: (
             <div className="min-w-0 overflow-x-auto">
-              <table className="w-full min-w-[30rem] border-collapse text-xs">
+              <table className="w-full min-w-[30rem] border-collapse t-small">
                 <caption className="sr-only">Every row in the job, with what came back and what it cost.</caption>
                 <thead><tr className="border-b text-left text-muted-foreground">
                   <th scope="col" className="py-1 pr-3 font-medium">Row</th><th scope="col" className="py-1 pr-3 font-medium">Person</th>
@@ -268,7 +268,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                   ))}
                 </tbody>
               </table>
-              {job.rows > 40 && <p className="pt-2 text-xs text-muted-foreground">The first 40 of {n(job.rows)}. Export the report for all of them.</p>}
+              {job.rows > 40 && <p className="pt-2 t-small text-muted-foreground">The first 40 of {n(job.rows)}. Export the report for all of them.</p>}
             </div>
           ),
         }]}

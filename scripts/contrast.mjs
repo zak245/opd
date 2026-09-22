@@ -29,6 +29,14 @@ function oklch(L, C, Hdeg) {
 }
 const lum = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05) }
+/** Alpha compositing happens in sRGB, so mix there and come back. */
+const mix = (fg, bg, a) => {
+  if (!fg || !bg || fg.alias || bg.alias) return fg
+  const toS = (lin) => lin.map(srgb)
+  const back = (v) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
+  const f = toS(fg), b = toS(bg)
+  return f.map((v, i) => back(v * a + b[i] * (1 - a)))
+}
 const hex = (lin) => "#" + lin.map((v) => Math.round(Math.max(0, Math.min(1, srgb(v))) * 255).toString(16).padStart(2, "0")).join("")
 
 /* ----------------------------------------------------------------- the tokens, read from the CSS */
@@ -79,6 +87,8 @@ function pairs(T) {
   }
   text("primary label on the primary fill", T["primary-foreground"], T.primary)
   nontext("primary fill on the page", T.primary, T["surface-page"])
+  // The printed shortcut on a filled primary: the label's colour at 80%, composited on the fill.
+  nontext("shortcut kbd on the primary fill", mix(T["primary-foreground"], T.primary, 0.8), T.primary)
   text("link ink on the page", T["brand-ink"], T["surface-page"])
   text("link ink on the brand tint", T["brand-ink"], T["brand-tint"])
   seen("brand tint on the page", T["brand-tint"], T["surface-page"])

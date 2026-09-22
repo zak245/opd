@@ -7,7 +7,6 @@
 import { useEffect, useRef, useState } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -16,11 +15,20 @@ import {
   DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
+import { Chip } from "../../ui/Identity"
+import { STATUSES, statusOf } from "../../identity"
 import { TODAY, type Deal, type DealStage, type DealWarning, type ForecastCategory } from "../../data/seed"
 import { day, daysBetween } from "../deal/format"
-import { FORECAST_CATEGORIES_UI, WON_STAGE, moneyShort } from "./pipeline"
+import { FORECAST_CATEGORIES_UI, WON_STAGE, moneyShort, warningStatus } from "./pipeline"
 
 /** "No activity · 19d of 14", "Overdue · 3d", "No senior sponsor". The number and its threshold travel together. */
+/**
+ * The ink a state word carries, for the two lines on a card that are a state rather than a chip: a
+ * close date already gone, and a deal with no next step. The registry decides the colour; this only
+ * asks it, so the card holds no hue of its own (DESIGN.md §5).
+ */
+const statusInk = (word: string) => STATUSES[statusOf(word)].ink
+
 export function chipText(w: DealWarning): string {
   if (w.kind === "Overdue") return `Overdue · ${daysBetween(w.observed)}d`
   if (w.kind === "No senior sponsor") return w.kind
@@ -112,7 +120,7 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
   const [due, setDue] = useState(deal.nextStepDue ?? TODAY)
   const ok = text.trim().length > 0 && due.length === 10
   return (
-    <div className="grid gap-1.5 rounded-md border bg-muted/30 p-2" onClick={(e) => e.stopPropagation()}
+    <div className="grid gap-1.5 rounded-md border p-2" onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") onCancel(); if (e.key === "Enter" && ok) onSave(text.trim(), due) }}>
       <Input autoFocus aria-label="Next step" value={text} placeholder="What has to happen next" className="h-7 px-1.5 py-0 text-xs"
         onChange={(e) => setText(e.target.value)} />
@@ -156,7 +164,9 @@ export function DealCard(p: DealCardProps) {
         if (e.key.toLowerCase() === "e") { e.preventDefault(); if (p.canEdit) p.onEditingNextStep(true) }
       }}
       className={cn(
-        "group cursor-pointer rounded-lg border bg-background text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        // Raised: a card sits above the column it is in. The one you are on is raised further by
+        // its border alone — no tint and no shadow, which belong to the overlay level.
+        "surface-raised t-body group cursor-pointer rounded-lg border focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         flags.compact ? "space-y-1 p-2" : "space-y-1.5 p-2.5",
         p.carrying && "ring-2 ring-ring",
         p.selected && "border-foreground",
@@ -175,7 +185,7 @@ export function DealCard(p: DealCardProps) {
             data-item-label={deal.name}
             href={href(`/ollopa/deals/${deal.id}`)}
             onClick={(e) => { e.stopPropagation(); e.preventDefault(); p.onOpen() }}
-            className="font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="t-body font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             {deal.name}
           </a>
@@ -255,7 +265,10 @@ export function DealCard(p: DealCardProps) {
           />
           {deal.currency !== p.currency && <span className="ml-1 font-normal text-muted-foreground">{deal.currency}</span>}
         </span>
-        <span className={cn("tabular-nums", deal.closeDate < TODAY && !closed ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
+        <span
+          className={cn("tabular-nums", !(deal.closeDate < TODAY && !closed) && "text-muted-foreground")}
+          style={deal.closeDate < TODAY && !closed ? { color: statusInk("overdue") } : undefined}
+        >
           <InlineValue
             label={`Closes ${day(deal.closeDate)}`}
             value={deal.closeDate}
@@ -274,7 +287,7 @@ export function DealCard(p: DealCardProps) {
           onSave={(text, due) => { p.onEditingNextStep(false); p.onPatch({ nextStep: text, nextStepDue: due }, `Next step · ${deal.name} · ${text} · ${day(due)}`) }}
         />
       ) : (
-        <div className={cn("text-xs", deal.nextStep ? "text-foreground" : "text-amber-700 dark:text-amber-400")}>
+        <div className="t-small" style={deal.nextStep ? undefined : { color: statusInk("warning") }}>
           <span>{deal.nextStep ? `${deal.nextStep} · ${day(deal.nextStepDue)}` : "No next step"}</span>
           {p.canEdit && (
             <button type="button" className="ml-1 rounded px-1 text-muted-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -289,15 +302,13 @@ export function DealCard(p: DealCardProps) {
       {p.warnings.length > 0 && (
         <ul className="flex flex-wrap gap-1">
           {p.warnings.map((w) => (
-            <li key={w.kind} className="rounded-full border border-amber-300 bg-amber-50 px-1.5 py-px text-[11px] text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-              {chipText(w)}
-            </li>
+            <li key={w.kind}><Chip status={warningStatus(w.kind)}>{chipText(w)}</Chip></li>
           ))}
         </ul>
       )}
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-        {flags.forecast && <Badge variant="secondary" className="px-1.5 py-0 font-normal">{deal.forecast}</Badge>}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 t-small text-muted-foreground">
+        {flags.forecast && <Chip status="none">{deal.forecast}</Chip>}
         {flags.touch && (
           <span>
             Last touch {daysBetween(deal.lastActivity)}d · last reply{" "}
@@ -309,14 +320,14 @@ export function DealCard(p: DealCardProps) {
       </div>
 
       {flags.sync && deal.syncState === "error" && (
-        <p className="text-[11px] text-destructive">Not syncing to the CRM · {deal.crmError ?? "the last push failed"}</p>
+        <p className="t-small" style={{ color: statusInk("failed") }}>Not syncing to the CRM · {deal.crmError ?? "the last push failed"}</p>
       )}
 
-      {p.refusal && <p role="status" className="text-[11px] text-amber-700 dark:text-amber-400">{p.refusal}</p>}
+      {p.refusal && <p role="status" className="t-small" style={{ color: statusInk("warning") }}>{p.refusal}</p>}
 
       {/* Brought back into view by the archived filter, carrying the reason it was lost. */}
       {deal.archivedAt && (
-        <p className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <p className="flex flex-wrap items-center gap-2 t-small text-muted-foreground">
           Archived {day(deal.archivedAt)} · lost on {deal.lostReason ?? "no reason given"}
           {p.canEdit && (
             <button type="button" className="underline underline-offset-2" onClick={(e) => { e.stopPropagation(); p.onReopen() }}>Reopen</button>
@@ -327,7 +338,7 @@ export function DealCard(p: DealCardProps) {
       {/* A proposal waits here for the next time the AE looks at the deal. Nothing interrupts. */}
       {deal.agentProposal && (
         <div className="rounded-md border border-dashed p-2 text-xs" onClick={(e) => e.stopPropagation()}>
-          <div className="text-[11px] font-medium text-muted-foreground">Proposed by the research agent</div>
+          <div className="t-small font-medium text-muted-foreground">Proposed by the research agent</div>
           <p className="pt-0.5">{deal.agentProposal}</p>
           <div className="flex gap-1.5 pt-1.5">
             <Button size="sm" className="h-7 flex-1 px-2 text-xs" disabled={!p.canEdit} onClick={p.onUseProposal}>Use this next step</Button>

@@ -21,6 +21,7 @@ import { openBeside } from "../../beside"
 import { back, follow, routeKey, useTrail } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
+import { StatusLine } from "../../ui/Identity"
 import { Locked } from "../../ui/Locked"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -35,7 +36,8 @@ import { AddToSequencePanel } from "./AddToSequence"
 import { statusOf, totalPeople } from "./Sequences"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
-import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, Pill, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
 const VARIABLES = ["{{first_name}}", "{{company}}", "{{title}}", "{{signal}}", "{{owner}}"]
@@ -167,15 +169,16 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                     onBlur={() => { engage.patchSequence(session.business, seq.id, { name }); setRenaming(false) }}
                   />
                 ) : (
-                  <h2 className="truncate text-lg font-semibold">
+                  <h2 className="t-section flex min-w-0 items-center gap-2 truncate">
+                    <FamilyIcon of="sequences" size="header" />
                     {canEdit
                       ? <button type="button" className="rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => { setName(seq.name); setRenaming(true) }}>{seq.name}<span className="sr-only"> — rename</span></button>
                       : seq.name}
                   </h2>
                 )}
-                <Pill tone={st.tone}>{st.label}</Pill>
+                <Chip status={st.word}>{st.label}</Chip>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="t-small text-muted-foreground">
                 {seq.owner} · {seq.sharedWith === "Everyone" ? "Shared with the workspace" : "Only you"}
                 {seq.archivedAt && <> · archived {day(seq.archivedAt)}</>}
               </p>
@@ -235,14 +238,10 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
           </div>
 
           {/* The health line: the rate, both thresholds, and what to do before it pauses. */}
-          <div
-            role="status"
-            className={cn(
-              "mt-3 rounded-md px-3 py-2 text-sm",
-              seq.guardState === "auto-paused" ? "bg-destructive/10 text-destructive"
-                : seq.guardState === "warning" ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
-                  : "bg-muted",
-            )}
+          <StatusLine
+            className="mt-3"
+            status={seq.guardState === "auto-paused" ? "Auto-paused" : seq.guardState === "warning" ? "Warning" : "None"}
+            word={seq.guardState === "auto-paused" ? "Auto-paused" : seq.guardState === "warning" ? "Close to the limit" : "Sending"}
           >
             Bounce rate {seq.bounceRate7d}% over 7 days · Bounce guard warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%.
             {seq.guardState === "auto-paused" && (
@@ -268,11 +267,11 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               to="/ollopa/settings/email-sending?row=mail.bounce-guard"
               route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.bounce-guard"
             >Bounce guard thresholds (Settings)</FollowLink>
-            {session.role !== "admin" && <span className="text-xs"> · RevOps admins change them</span>}
-          </div>
+            {session.role !== "admin" && <span className="t-small"> · RevOps admins change them</span>}
+          </StatusLine>
 
           {!canEdit && (
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="t-body mt-2 text-muted-foreground">
               Owned by {seq.owner}; only the owner and RevOps admins change the steps and the settings.
             </p>
           )}
@@ -305,11 +304,11 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
           </div>
 
           {/* The five things that decide whether an email goes out today, read-only, with their door. */}
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="t-body mt-3 text-muted-foreground">
             Sends from {seq.mailboxRotation.length ? `${seq.mailboxRotation.length} mailboxes in rotation` : seq.mailbox}
             {mailboxToday(session, seq)} · {seq.schedule} · {seq.ruleset} rules · {seq.priority} priority
           </p>
-          <div className="mt-2 mb-3 rounded-lg border">
+          <div className="surface-raised mt-2 mb-3 rounded-lg border">
             <SendingSettings session={session} seq={seq} canEdit={canEdit} onSaid={say} />
           </div>
 
@@ -328,14 +327,14 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         {/* -------------------------------------------------------------------------- the steps */}
         <section id="seq-steps" className="px-4 pt-5 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">Steps ({steps.length})</h3>
+            <h3 className="t-section">Steps ({steps.length})</h3>
             <div className="flex items-center gap-2" data-print-hide>
               {canEdit && <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} />}
             </div>
           </div>
 
           {adding && canEdit && (
-            <div className="mt-2 flex flex-wrap gap-2 rounded-lg border p-3">
+            <div className="surface-raised mt-2 flex flex-wrap gap-2 rounded-lg border p-3">
               {(["Email", "Call task", "LinkedIn task", "Wait"] as const).map((kind) => (
                 <Button
                   key={kind} size="sm" variant="outline"
@@ -380,7 +379,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
           {steps.length === 0 && <EmptyState title="No steps yet" body="Add an email, a call, a LinkedIn task or a wait." />}
 
           {seq.status === "Draft" && (
-            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border p-3">
+            <div className="surface-raised mt-3 flex flex-wrap items-center gap-3 rounded-lg border p-3">
               <Button
                 size="sm"
                 disabled={stepsOn === 0 || !seq.mailbox}
@@ -390,7 +389,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                   say(`${seq.name} is active. ${n(stepsOn)} steps are on.`)
                 }}
               >Activate</Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="t-small text-muted-foreground">
                 {stepsOn === 0
                   ? "No step is on, so nothing would send. Turn one on first."
                   : !seq.mailbox
@@ -410,7 +409,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
 
         {/* ------------------------------------------------------- results and history, in place */}
         <div className="px-4 pb-10 sm:px-6">
-          <div className="rounded-lg border">
+          <div className="surface-raised rounded-lg border">
             <section id="seq-results">
               <Door id="seq.results" label="Results by step and by audience" defaultOpen={d.level("seq.results.by-step") === 1}>
                 <div className="overflow-x-auto">
@@ -560,22 +559,22 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
   const readOnly = !canEdit
 
   return (
-    <div className={cn("rounded-lg border", step.on === 0 && "opacity-70")}>
+    <div className={cn("surface-raised rounded-lg border", step.on === 0 && "opacity-70")}>
       <div className="flex flex-wrap items-start gap-2 px-3 pt-3">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums">{step.order}</span>
         <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">{title}</span>
+            <span className="t-body font-medium">{title}</span>
             <Badge variant="outline" className="px-1.5 py-0 text-[11px] font-normal">{step.kind}</Badge>
-            {step.on === 0 && <Pill tone="muted">Off · skipped</Pill>}
+            {step.on === 0 && <Chip status="Off · skipped" />}
           </div>
-          {!ab && <p className="text-xs tabular-nums text-muted-foreground">{results}</p>}
+          {!ab && <p className="t-small tabular-nums text-muted-foreground">{results}</p>}
           {ab && (
             <>
               <p className="mt-1 rounded bg-muted px-2 py-1 text-xs">{decisionBar(step.variants)}</p>
               {step.variants.map((v) => (
-                <p key={v.label} className="text-xs tabular-nums text-muted-foreground">
+                <p key={v.label} className="t-small tabular-nums text-muted-foreground">
                   {v.label}: sent {n(v.sent)} · replied {n(v.replied)} · {rate(v.replied, v.sent)}
                 </p>
               ))}
@@ -649,17 +648,17 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
               <p className="text-sm">Waits {step.waitDays} {step.businessDaysOnly ? "business days" : "days"} · {n(step.stats.waitingNow)} people are waiting here now.</p>
             ) : (
               <>
-                {step.kind === "Email" && <p className="text-sm font-medium">{step.subject || "No subject"}</p>}
-                {step.kind === "LinkedIn task" && <p className="text-xs text-muted-foreground">LinkedIn {(step.linkedinKind ?? "Message").toLowerCase()}</p>}
+                {step.kind === "Email" && <p className="t-body font-medium">{step.subject || "No subject"}</p>}
+                {step.kind === "LinkedIn task" && <p className="t-small text-muted-foreground">LinkedIn {(step.linkedinKind ?? "Message").toLowerCase()}</p>}
                 <p className="whitespace-pre-wrap text-sm">{step.variants[0]?.body || step.body || "No copy yet."}</p>
               </>
             )}
-            <p className="text-xs text-muted-foreground">{seq.owner} and RevOps admins change this step.</p>
+            <p className="t-small text-muted-foreground">{seq.owner} and RevOps admins change this step.</p>
           </div>
         ) : step.kind === "Wait" ? (
           <div className="flex flex-wrap items-end gap-3 py-1">
             <div>
-              <Label htmlFor={`wait-${step.id}`} className="text-xs">Wait</Label>
+              <Label htmlFor={`wait-${step.id}`} className="t-label">Wait</Label>
               <Input
                 id={`wait-${step.id}`} type="number" min={1} className="mt-1 h-8 w-24" defaultValue={step.waitDays}
                
@@ -673,35 +672,35 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
               />
               Business days only
             </label>
-            <p className="pb-2 text-xs text-muted-foreground">{n(step.stats.waitingNow)} people are waiting here now.</p>
+            <p className="t-small pb-2 text-muted-foreground">{n(step.stats.waitingNow)} people are waiting here now.</p>
           </div>
         ) : step.kind === "Call task" ? (
           <div className="space-y-2 py-1">
-            <Label htmlFor={`call-${step.id}`} className="text-xs">What the call is for</Label>
+            <Label htmlFor={`call-${step.id}`} className="t-label">What the call is for</Label>
             <Textarea
               id={`call-${step.id}`} rows={3} defaultValue={step.body || "Ask what they tried first, and whether routing is owned by them."}
               onBlur={(e) => engage.patchStep(session.business, step.id, { body: e.target.value })}
             />
             <div className="flex items-end gap-2">
               <div>
-                <Label htmlFor={`due-${step.id}`} className="text-xs">Due within</Label>
+                <Label htmlFor={`due-${step.id}`} className="t-label">Due within</Label>
                 <Input id={`due-${step.id}`} type="number" min={1} className="mt-1 h-8 w-24" defaultValue={2} />
               </div>
-              <span className="pb-2 text-xs text-muted-foreground">days</span>
+              <span className="t-small pb-2 text-muted-foreground">days</span>
             </div>
           </div>
         ) : (
           <div className="space-y-2 py-1">
             {step.kind === "Email" && (
               <>
-                <Label htmlFor={`subj-${step.id}`} className="text-xs">Subject</Label>
+                <Label htmlFor={`subj-${step.id}`} className="t-label">Subject</Label>
                 <Input id={`subj-${step.id}`} value={subject} onChange={(e) => setSubject(e.target.value)} />
               </>
             )}
             {step.kind === "LinkedIn task" && (
               <div className="flex flex-wrap items-end gap-2">
                 <div>
-                  <Label htmlFor={`li-${step.id}`} className="text-xs">LinkedIn action</Label>
+                  <Label htmlFor={`li-${step.id}`} className="t-label">LinkedIn action</Label>
                   <Select
                     value={step.linkedinKind ?? "Message"}
                     onValueChange={(v) => engage.patchStep(session.business, step.id, { linkedinKind: v as SequenceStep["linkedinKind"] })}
@@ -715,19 +714,19 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor={`lidue-${step.id}`} className="text-xs">Due within</Label>
+                  <Label htmlFor={`lidue-${step.id}`} className="t-label">Due within</Label>
                   <Input id={`lidue-${step.id}`} type="number" min={1} className="mt-1 h-8 w-24" defaultValue={2} />
                 </div>
               </div>
             )}
 
-            <Label htmlFor={`body-${step.id}`} className="text-xs">
+            <Label htmlFor={`body-${step.id}`} className="t-label">
               {step.kind === "LinkedIn task" ? "The message the task will show" : "Body"}
             </Label>
             <Textarea id={`body-${step.id}`} ref={bodyRef} rows={6} value={body} onChange={(e) => setBody(e.target.value)} />
 
             {step.templateId && (
-              <p className="text-xs text-muted-foreground">
+              <p className="t-small text-muted-foreground">
                 Linked to template{" "}
                 <BesideLink className="underline" kind="template" id={step.templateId}>{templateName(session, step.templateId)}</BesideLink>
                 {" · "}{n(templateUses(session, step.templateId))} steps use it ·{" "}
@@ -786,8 +785,8 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
             )}
 
             {step.variants.slice(1).map((v, i) => (
-              <div key={v.label} className="rounded-md border p-2">
-                <p className="text-xs font-medium">Variant {v.label}</p>
+              <div key={v.label} className="surface-raised rounded-md border p-2">
+                <p className="t-label">Variant {v.label}</p>
                 <Input aria-label={`Variant ${v.label} subject`} className="mt-1 h-8" defaultValue={v.subject}
                   onBlur={(e) => engage.patchStep(session.business, step.id, { variants: step.variants.map((x, j) => (j === i + 1 ? { ...x, subject: e.target.value } : x)) })} />
                 <Textarea aria-label={`Variant ${v.label} body`} className="mt-1" rows={4} defaultValue={v.body}
@@ -841,7 +840,7 @@ function PreviewBody({ session, subject, body }: { session: Session; subject: st
 
   return (
     <>
-      <Label htmlFor="preview-who" className="text-xs">Preview for</Label>
+      <Label htmlFor="preview-who" className="t-label">Preview for</Label>
       <Select value={who} onValueChange={setWho}>
         <SelectTrigger id="preview-who" className="mt-1 w-full"><SelectValue /></SelectTrigger>
         <SelectContent>
@@ -849,12 +848,12 @@ function PreviewBody({ session, subject, body }: { session: Session; subject: st
         </SelectContent>
       </Select>
       {unfilled.length > 0 && (
-        <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">
+        <p className="t-body mt-3" style={{ color: "var(--warning-ink)" }}>
           {n(unfilled.length)} {unfilled.length === 1 ? "variable has" : "variables have"} no value for {person?.name}: {unfilled.join(", ")}
         </p>
       )}
-      <div className="mt-3 rounded-md border p-3">
-        <p className="text-sm font-medium">{render(subject) || "No subject"}</p>
+      <div className="surface-raised mt-3 rounded-md border p-3">
+        <p className="t-body font-medium">{render(subject) || "No subject"}</p>
         <p className="mt-2 whitespace-pre-wrap text-sm">{render(body)}</p>
       </div>
     </>
@@ -896,19 +895,19 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
       <section id="seq-settings">
         <Door id="seq.settings" label="Sending settings">
           <dl className="grid gap-x-6 gap-y-2 py-1 sm:grid-cols-2">
-            <div><dt className="text-xs text-muted-foreground">Sending mailbox</dt>
-              <dd className="text-sm">{seq.mailbox}{box ? ` · daily limit ${n(box.dailyLimit)}, ${n(box.sentToday)} sent today` : ""}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Emails per day from this sequence</dt>
+            <div><dt className="t-small text-muted-foreground">Sending mailbox</dt>
+              <dd className="t-body">{seq.mailbox}{box ? ` · daily limit ${n(box.dailyLimit)}, ${n(box.sentToday)} sent today` : ""}</dd></div>
+            <div><dt className="t-small text-muted-foreground">Emails per day from this sequence</dt>
               <dd className="text-sm tabular-nums">{seq.dailyCap === 0 ? "No cap" : n(seq.dailyCap)}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Sending schedule</dt>
-              <dd className="text-sm">{seq.schedule}{schedule ? ` · ${schedule.days.join(", ")} · ${schedule.hours}` : ""}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Ruleset</dt>
-              <dd className="text-sm">{seq.ruleset}{ruleset ? ` · stops on reply · skips ${ruleset.excludeStages.join(", ")}` : ""}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Priority among sequences</dt><dd className="text-sm">{seq.priority}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Open and click tracking</dt>
-              <dd className="text-sm">{seq.tracking.opens ? "Opens on" : "Opens off"} · {seq.tracking.clicks ? "clicks on" : "clicks off"}</dd></div>
+            <div><dt className="t-small text-muted-foreground">Sending schedule</dt>
+              <dd className="t-body">{seq.schedule}{schedule ? ` · ${schedule.days.join(", ")} · ${schedule.hours}` : ""}</dd></div>
+            <div><dt className="t-small text-muted-foreground">Ruleset</dt>
+              <dd className="t-body">{seq.ruleset}{ruleset ? ` · stops on reply · skips ${ruleset.excludeStages.join(", ")}` : ""}</dd></div>
+            <div><dt className="t-small text-muted-foreground">Priority among sequences</dt><dd className="t-body">{seq.priority}</dd></div>
+            <div><dt className="t-small text-muted-foreground">Open and click tracking</dt>
+              <dd className="t-body">{seq.tracking.opens ? "Opens on" : "Opens off"} · {seq.tracking.clicks ? "clicks on" : "clicks off"}</dd></div>
           </dl>
-          <p className="pt-2 text-xs text-muted-foreground">{seq.owner} and RevOps admins change these.</p>
+          <p className="t-small pt-2 text-muted-foreground">{seq.owner} and RevOps admins change these.</p>
         </Door>
       </section>
     )
@@ -919,14 +918,14 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
       <Door id="seq.settings" label="Change sending settings">
         <div className="grid gap-4 py-1 sm:grid-cols-2">
           <div>
-            <Label htmlFor="set-mailbox" className="text-xs">Sending mailbox</Label>
+            <Label htmlFor="set-mailbox" className="t-label">Sending mailbox</Label>
             <Select value={draft.mailbox} onValueChange={(v) => setDraft({ ...draft, mailbox: v })}>
               <SelectTrigger id="set-mailbox" className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {seed.mailboxes.slice(0, 10).map((m) => <SelectItem key={m.id} value={m.address}>{m.address}</SelectItem>)}
               </SelectContent>
             </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="t-small mt-1 text-muted-foreground">
               {box ? `Daily limit ${n(box.dailyLimit)}, ${n(box.sentToday)} sent today, ${n(Math.max(0, box.sequences.length - 1))} other sequences share this mailbox.` : "No mailbox linked yet."}
               {" "}<FollowLink
                 className="underline"
@@ -937,23 +936,23 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
           </div>
 
           <div>
-            <Label htmlFor="set-cap" className="text-xs">Emails per day from this sequence</Label>
+            <Label htmlFor="set-cap" className="t-label">Emails per day from this sequence</Label>
             <Input
               id="set-cap" type="number" min={0} className="mt-1 h-9" value={draft.dailyCap}
               onChange={(e) => setDraft({ ...draft, dailyCap: Number(e.target.value) })}
             />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="t-small mt-1 text-muted-foreground">
 {n(box?.dailyLimit ?? 0)} a day from this mailbox, shared
             </p>
           </div>
 
           <div>
-            <Label htmlFor="set-schedule" className="text-xs">Sending schedule</Label>
+            <Label htmlFor="set-schedule" className="t-label">Sending schedule</Label>
             <Select value={draft.schedule} onValueChange={(v) => setDraft({ ...draft, schedule: v })}>
               <SelectTrigger id="set-schedule" className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>{seed.schedules.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
             </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="t-small mt-1 text-muted-foreground">
               {schedule ? `${schedule.days.join(", ")} · ${schedule.hours} · ${schedule.timezone}` : ""}
               {session.role === "admin"
                 ? <> · <FollowLink
@@ -975,12 +974,12 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
             ) : (
               <Button size="sm" variant="outline" onClick={() => onSaid("Saved as a reusable ruleset")}>Save as a reusable ruleset</Button>
             )}
-            <Label htmlFor="set-ruleset" className="mt-2 block text-xs">Ruleset</Label>
+            <Label htmlFor="set-ruleset" className="t-label mt-2 block">Ruleset</Label>
             <Select value={draft.ruleset} onValueChange={(v) => setDraft({ ...draft, ruleset: v })}>
               <SelectTrigger id="set-ruleset" className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>{seed.rulesets.map((r) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}</SelectContent>
             </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="t-small mt-1 text-muted-foreground">
               {ruleset ? `${ruleset.stopOnReply ? "Stops on reply" : "Keeps sending after a reply"} · Skips ${ruleset.excludeStages.join(", ")} · ${ruleset.maxEmailsPerPersonPerDay} email per person per day` : ""}
               {session.role === "admin"
                 ? <> · <FollowLink
@@ -993,7 +992,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
           </div>
 
           <div>
-            <Label htmlFor="set-priority" className="text-xs">Priority among sequences</Label>
+            <Label htmlFor="set-priority" className="t-label">Priority among sequences</Label>
             <Select value={draft.priority} onValueChange={(v) => setDraft({ ...draft, priority: v as Sequence["priority"] })}>
               <SelectTrigger id="set-priority" className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -1096,6 +1095,8 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
         const edit = personEdits[e.contactId]
         return (
           <div className="min-w-0" data-item={e.contactId} data-item-label={c?.name ?? e.contactId}>
+            <span className="flex min-w-0 items-center gap-1.5">
+            <FamilyIcon of="person" />
             <button
               type="button"
               className="font-medium hover:underline"
@@ -1103,7 +1104,8 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
             >
               {c?.name ?? e.contactId}
             </button>
-            <div className="text-xs text-muted-foreground">{c?.title}</div>
+            </span>
+            <div className="t-small text-muted-foreground">{c?.title}</div>
             {edit?.note && <RowNote kind="person" id={e.contactId} note={String(edit.note)} at={edit.at} />}
           </div>
         )
@@ -1114,11 +1116,11 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
       key: "status", header: "Status", phone: true,
       cell: (e) => {
         const moved = movedOut(e.contactId)
-        if (moved !== null) return <Pill tone="muted">{moved ? `Moved to ${moved}` : "Taken out of every sequence"}</Pill>
+        if (moved !== null) return <Chip status="finished">{moved ? `Moved to ${moved}` : "Taken out of every sequence"}</Chip>
         return (
           <div className="min-w-0">
-            <Pill tone={e.status === "Bounced" || e.status === "Not sent" ? "error" : e.status === "Paused" ? "warning" : e.status === "Replied" ? "good" : "muted"}>{e.status}</Pill>
-            {e.notSentReason && <div className="text-xs text-muted-foreground">Not sent · {e.notSentReason.toLowerCase()}</div>}
+            <Chip status={e.status} />
+            {e.notSentReason && <div className="t-small text-muted-foreground">Not sent · {e.notSentReason.toLowerCase()}</div>}
           </div>
         )
       },
@@ -1129,7 +1131,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
       cell: (e) => movedOut(e.contactId) !== null ? "—"
         : e.nextAt ? day(e.nextAt) : e.status === "Replied" ? "Waiting for reply" : e.status === "Paused" ? `Paused by ${seq.owner}` : "—",
     },
-    { key: "added", header: "Added", className: "tabular-nums", sort: (a, b) => a.addedAt.localeCompare(b.addedAt), cell: (e) => <div><div>{day(e.addedAt)}</div><div className="text-xs text-muted-foreground">by {e.addedBy}</div></div> },
+    { key: "added", header: "Added", className: "tabular-nums", sort: (a, b) => a.addedAt.localeCompare(b.addedAt), cell: (e) => <div><div>{day(e.addedAt)}</div><div className="t-small text-muted-foreground">by {e.addedBy}</div></div> },
     { key: "activity", header: "Last activity", className: "tabular-nums", cell: (e) => ago(byId.get(e.contactId)?.lastActivity) },
     ...(showMailbox ? [{ key: "mailbox", header: "Mailbox", cell: (e: Enrollment) => e.mailbox } as Col<Enrollment>] : []),
   ]
@@ -1174,7 +1176,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
     <section id="seq-people" className="px-4 pt-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">People ({n(rows.length)})</h3>
+          <h3 className="t-section">People ({n(rows.length)})</h3>
           <RenderCount label="page" count={pageRenders} />
           <RenderCount label="rows" count={rowRenders} />
         </div>

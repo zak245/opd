@@ -9,7 +9,6 @@
 // business, so one page serves four workspaces and three seats with no mode switch.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -19,6 +18,8 @@ import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
 import { openBeside, openBesideNested } from "../../beside"
 import { Actions, type Action, type ActionKind } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { familyOf } from "../../identity"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { Door, DoorGroup } from "../../ui/Door"
@@ -344,22 +345,24 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           )}
           {/* Waiting is the first column, because reply speed is the whole game. On the phone it
               moves to the right of the name, which is the only thing that changes about the row. */}
-          <span className={cn("hidden w-24 shrink-0 pt-0.5 text-xs tabular-nums sm:block", late ? "font-medium text-destructive" : "text-muted-foreground")}>
+          {/* How long it has waited is a value; overdue is a state, so it is a chip with its
+              word rather than the number turning red (DESIGN.md §5). */}
+          <span className="t-small hidden w-24 shrink-0 pt-0.5 tabular-nums text-muted-foreground sm:block">
             {waiting(r.received)}
-            {late && <span className="block font-normal">overdue</span>}
+            {late && <Chip status="overdue" className="mt-0.5 flex w-fit">overdue</Chip>}
           </span>
           </span>
           <div role="rowheader" className="min-w-0 flex-1">
             <div className="flex items-baseline gap-x-2 gap-y-0.5">
-              <span className="truncate font-medium">{r.contact}</span>
-              <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-[11px] font-normal">{r.outcome}</Badge>
-              <span className={cn("ml-auto shrink-0 text-xs tabular-nums sm:hidden", late ? "text-destructive" : "text-muted-foreground")}>
+              <span className="t-body truncate font-medium">{r.contact}</span>
+              <Chip status={r.outcome} className="shrink-0">{r.outcome}</Chip>
+              <span className="t-small ml-auto shrink-0 tabular-nums text-muted-foreground sm:hidden">
                 {waiting(r.received)}{late && ", overdue"}
               </span>
             </div>
-            <div className="truncate text-xs text-muted-foreground">{c?.title ?? "—"} · {r.company}</div>
+            <div className="t-small truncate text-muted-foreground">{c?.title ?? "—"} · {r.company}</div>
             {showMeantLine && (
-              <div className="pt-0.5 text-xs text-muted-foreground">
+              <div className="t-small pt-0.5 text-muted-foreground">
                 Read as: {r.outcome} · by {changes[r.id]?.meantBy ?? classifier(r)} ·{" "}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -371,18 +374,18 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
                 </DropdownMenu>
               </div>
             )}
-            <div className="truncate pt-0.5 text-sm text-muted-foreground">{r.snippet}</div>
+            <div className="t-body truncate pt-0.5 text-muted-foreground">{r.snippet}</div>
             {/* The same record the composer is reading: for ten seconds the reply can be pulled
                 back from the row it was written on, and after that the row says it has gone. */}
             {acted[r.id]?.sending === true && (
-              <div role="status" aria-live="polite" className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span>Sending</span>
+              <div role="status" aria-live="polite" className="flex flex-wrap items-center gap-2 pt-1">
+                <Chip status="Sending">Sending</Chip>
                 <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); undoSend(r.id) }}>Undo</Button>
               </div>
             )}
-            {acted[r.id]?.sent === true && <div className="pt-1 text-xs text-muted-foreground">Sent</div>}
+            {acted[r.id]?.sent === true && <div className="pt-1"><Chip status="Sent">Sent</Chip></div>}
             {(showSequenceColumn || showOwnerColumn) && (
-              <div className="pt-0.5 text-xs text-muted-foreground">
+              <div className="t-small pt-0.5 text-muted-foreground">
                 {showSequenceColumn && <>{r.sequence} · step {r.step.n} of {r.step.of}</>}
                 {showSequenceColumn && showOwnerColumn && " · "}
                 {showOwnerColumn && <>{r.boxOwner}</>}
@@ -476,7 +479,8 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
     <div className="flex h-full min-h-0 flex-col">
       {/* --------------------------------------------------------------------------- the header */}
       <div className={cn("shrink-0 px-4 pt-4 sm:px-6", onPhoneThread && "hidden md:block")}>
-        <h2 className="text-lg font-semibold">
+        <h2 className="t-title flex items-center gap-2">
+          <FamilyIcon of="inbox" size="header" label={familyOf("inbox").name} />
           Inbox
           {import.meta.env.DEV && (
             <span data-renders="inbox" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
@@ -484,17 +488,17 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
             </span>
           )}
         </h2>
-        <p className="text-sm text-muted-foreground">Replies from your sequences, grouped by what the person meant.</p>
-        <p className="pt-0.5 text-sm tabular-nums">
+        <p className="t-body text-muted-foreground">Replies from your sequences, grouped by what the person meant.</p>
+        <p className="t-body pt-0.5 tabular-nums">
           {waitingCount} waiting{longest > 0 && <> · longest {longest} d</>}
         </p>
         {session.business === "meridian" && (
-          <p className="pt-0.5 text-xs text-muted-foreground">
+          <p className="t-small pt-0.5 text-muted-foreground">
             You see replies to your mailbox. {admin?.user ?? "Your admin"} can widen this in Settings › Team and access.
           </p>
         )}
         {!calendar && (
-          <p className="pt-0.5 text-xs text-muted-foreground">
+          <p className="t-small pt-0.5 text-muted-foreground">
             No calendar is connected.{" "}
             <button type="button" className="underline underline-offset-4"
                     onClick={() => follow("/ollopa/settings/integrations?row=int.calendar", originHere(open?.contactId))}>
@@ -556,7 +560,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
                 Clear {activeFilters.length} {activeFilters.length === 1 ? "filter" : "filters"}
               </Button>
             )}
-            <span className="ml-auto text-xs tabular-nums text-muted-foreground">{filtered.length} shown</span>
+            <span className="ml-auto t-small tabular-nums text-muted-foreground">{filtered.length} shown</span>
           </div>
 
           {doorFilters.length > 0 && (
@@ -588,7 +592,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
 
       {/* ------------------------------------------------------------------------- the bulk bar */}
       {selection.length > 0 && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 text-sm sm:px-6">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 t-body sm:px-6">
           <span className="tabular-nums">{selection.length} selected</span>
           {/* Comparable acts on a bar, so none of them is filled. Confirming an unsubscribe cannot
               be undone, so it asks first and the affirmative carries the verb (DESIGN.md §2). */}
@@ -652,7 +656,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
               }}
               className="hidden w-1 shrink-0 cursor-col-resize bg-border focus-visible:bg-foreground focus-visible:outline-none md:block"
             />
-            <div className={cn("min-h-0 min-w-0 flex-1 border-l md:flex-none", onPhoneThread ? "block" : "hidden md:block")} style={{ width: undefined }}>
+            <div className={cn("surface-raised min-h-0 min-w-0 flex-1 border-l md:flex-none", onPhoneThread ? "block" : "hidden md:block")} style={{ width: undefined }}>
               <div className="h-full md:w-[var(--thread-w)]" style={{ ["--thread-w" as string]: `${width}px` }}>
                 <Thread
                   session={session}

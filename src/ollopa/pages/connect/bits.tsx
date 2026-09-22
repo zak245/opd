@@ -9,6 +9,7 @@ import { ChevronRight, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { useDoorState } from "../../ui/Door"
 import { toast } from "../../templates/TablePage"
 
@@ -38,14 +39,14 @@ export function Radio({ name, checked, onChange, label, hint, disabled }: {
 }) {
   return (
     <label className={cn(
-      "flex min-h-10 items-start gap-2 rounded-lg border bg-background p-3 text-sm",
+      "surface-raised t-body flex min-h-10 items-start gap-2 rounded-lg border p-3",
       checked && "border-foreground",
       disabled && "opacity-60",
     )}>
       <input type="radio" name={name} checked={checked} disabled={disabled} onChange={onChange} className="mt-0.5" />
       <span className="min-w-0">
         <span className="block">{label}</span>
-        {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
+        {hint && <span className="t-small mt-0.5 block text-muted-foreground">{hint}</span>}
       </span>
     </label>
   )
@@ -53,11 +54,11 @@ export function Radio({ name, checked, onChange, label, hint, disabled }: {
 
 export function Check({ checked, onChange, label, hint }: { checked: boolean; onChange: () => void; label: ReactNode; hint?: ReactNode }) {
   return (
-    <label className="flex min-h-10 items-start gap-2 text-sm">
+    <label className="t-body flex min-h-10 items-start gap-2">
       <input type="checkbox" checked={checked} onChange={onChange} className="mt-1" />
       <span className="min-w-0">
         <span className="block">{label}</span>
-        {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
+        {hint && <span className="t-small mt-0.5 block text-muted-foreground">{hint}</span>}
       </span>
     </label>
   )
@@ -67,16 +68,16 @@ export function Picker({ label, value, options, onChange, hint }: {
   label: string; value: string; options: string[]; onChange: (v: string) => void; hint?: ReactNode
 }) {
   return (
-    <label className="block text-sm">
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <label className="t-body block">
+      <span className="t-small text-muted-foreground">{label}</span>
       <select
-        className="mt-1 h-10 w-full rounded-md border bg-background px-2 text-sm"
+        className="mt-1 h-10 w-full rounded-md border bg-background px-2 t-body"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
-      {hint && <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>}
+      {hint && <span className="t-small mt-1 block text-muted-foreground">{hint}</span>}
     </label>
   )
 }
@@ -84,7 +85,8 @@ export function Picker({ label, value, options, onChange, hint }: {
 /** A line that says what a choice will do. Beside the choice, never under a door (rule 7). */
 export function Consequence({ children, tone = "warning" }: { children: ReactNode; tone?: "warning" | "plain" }) {
   return (
-    <p className={cn("text-xs", tone === "warning" ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
+    <p className={cn("t-small", tone === "warning" && "font-medium", tone === "plain" && "text-muted-foreground")}
+      style={tone === "warning" ? { color: "var(--warning-ink)" } : undefined}>
       {children}
     </p>
   )
@@ -94,11 +96,11 @@ export function Consequence({ children, tone = "warning" }: { children: ReactNod
 export function Code({ text, label = "Copy", block }: { text: string; label?: string; block?: boolean }) {
   return (
     <span className={cn("flex min-w-0 flex-wrap items-center gap-2", block && "w-full")}>
-      <code className={cn("min-w-0 rounded bg-muted px-1.5 py-1 font-mono text-xs break-all", block && "block w-full whitespace-pre-wrap p-3")}>{text}</code>
+      <code className={cn("min-w-0 rounded bg-muted px-1.5 py-1 font-mono t-small break-all", block && "block w-full whitespace-pre-wrap p-3")}>{text}</code>
       <Button
         size="sm"
         variant="outline"
-        className="h-7 shrink-0 px-2 text-xs"
+        className="h-7 shrink-0 px-2 t-small"
         onClick={() => { void navigator.clipboard?.writeText(text); toast(`Copied · ${text.slice(0, 40)}${text.length > 40 ? "…" : ""}`) }}
       >
         <Copy className="mr-1 size-3" aria-hidden="true" />{label}
@@ -120,11 +122,15 @@ export interface StepState {
   blocked?: string
 }
 
-function stateWords(s: StepState, current: number): string {
-  if (s.n === current) return "You are here"
-  if (s.done) return `Done: ${s.summary ?? s.name}`
-  if (s.blocked) return s.blocked
-  return "Not started"
+/**
+ * A step's state as the chip that carries it and the words that follow. The words are the ones the
+ * wizard already used; the chip only gives them their status colour (DESIGN.md §5).
+ */
+function stateOf(s: StepState, current: number): { status: string; word: string; rest?: string } {
+  if (s.n === current) return { status: "in progress", word: "You are here" }
+  if (s.done) return { status: "done", word: "Done", rest: s.summary ?? s.name }
+  if (s.blocked) return { status: "pending", word: "Blocked", rest: s.blocked }
+  return { status: "none", word: "Not started" }
 }
 
 /** `tagged` marks the one copy the lesson view measures: the phone copy is the same list again. */
@@ -132,19 +138,25 @@ function StepRows({ steps, current, go, tagged }: { steps: StepState[]; current:
   return (
     <ol data-container={tagged ? "connect.steps" : undefined} data-container-label={tagged ? "the step list" : undefined} className="grid gap-1">
       {steps.map((s) => {
-        const words = stateWords(s, current)
+        const state = stateOf(s, current)
+        const words = (
+          <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+            <Chip status={state.status}>{state.word}</Chip>
+            {state.rest && <span className="t-small min-w-0 text-muted-foreground">{state.rest}</span>}
+          </span>
+        )
         const openable = s.n !== current && (s.done || !s.blocked)
         return (
-          <li key={s.n} className={cn("rounded-md px-2 py-1.5 text-sm", s.n === current && "bg-muted")}>
+          <li key={s.n} className={cn("rounded-md px-2 py-1.5", s.n === current && "surface-raised")}>
             {openable ? (
-              <button type="button" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`} className="text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
-                <span className="font-medium">Step {s.n}: {s.name}</span>
-                <span className="block text-xs text-muted-foreground">{words}</span>
+              <button type="button" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`} className="block text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
+                <span className="t-label hover:underline">Step {s.n}: {s.name}</span>
+                {words}
               </button>
             ) : (
-              <span data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`}>
-                <span className={cn("font-medium", s.n === current && "text-foreground")} aria-current={s.n === current ? "step" : undefined}>Step {s.n}: {s.name}</span>
-                <span className="block text-xs text-muted-foreground">{words}</span>
+              <span className="block" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`}>
+                <span className={cn("t-label", s.n === current && "text-foreground")} aria-current={s.n === current ? "step" : undefined}>Step {s.n}: {s.name}</span>
+                {words}
               </span>
             )}
           </li>
@@ -188,14 +200,14 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
     <div className="mx-auto grid max-w-5xl gap-6 px-4 py-6 lg:grid-cols-[16rem_1fr] lg:px-6">
       {/* The step list: a nav with a heading, states in text, done steps as links. */}
       <nav aria-labelledby="wiz-steps" className="lg:sticky lg:top-4 lg:self-start">
-        <h2 id="wiz-steps" className="px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <h2 id="wiz-steps" className="t-small px-2 font-medium uppercase tracking-wide text-muted-foreground">
           Steps · {steps.filter((s) => s.done).length} of {steps.length} done
         </h2>
         <div className="mt-2 hidden lg:block"><StepRows steps={steps} current={current} go={go} tagged /></div>
         <div className="mt-2 lg:hidden">
           <button
             type="button"
-            className="flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm font-medium"
+            className="t-label flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left"
             aria-expanded={stepsOpen}
             aria-controls="wiz-steps-phone"
             onClick={() => setStepsOpen((v) => !v)}
@@ -210,10 +222,10 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
       </nav>
 
       <div className="min-w-0">
-        <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold focus-visible:outline-none">
+        <h2 ref={heading} tabIndex={-1} className="t-section focus-visible:outline-none">
           Step {current} of {steps.length}: {step.name}
         </h2>
-        {constantLine && <p className="mt-1 text-sm text-muted-foreground">{constantLine}</p>}
+        {constantLine && <p className="t-body mt-1 text-muted-foreground">{constantLine}</p>}
 
         <div className="mt-6 grid gap-6 [&>*]:min-w-0">{children}</div>
 
@@ -246,7 +258,7 @@ export function ExpandDoors({ ids }: { ids: string[] }) {
     return () => window.removeEventListener("keydown", onKey)
   }, [toggle])
   return (
-    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" data-print-hide onClick={toggle}>
+    <Button variant="ghost" size="sm" className="h-7 px-2 t-small" data-print-hide onClick={toggle}>
       {allOpen ? "Collapse all" : "Expand all"} <span className="ml-1.5 text-muted-foreground">⌘⇧E</span>
     </Button>
   )
@@ -267,9 +279,9 @@ export function Confirm({ open, title, body, confirmLabel, onConfirm, onCancel }
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div ref={box} role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-lg border bg-background p-5 shadow-lg">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <div className="mt-2 text-sm text-muted-foreground">{body}</div>
+      <div ref={box} role="dialog" aria-modal="true" aria-label={title} className="surface-overlay shadow-overlay w-full max-w-md rounded-lg border p-5 shadow-lg">
+        <h3 className="t-label">{title}</h3>
+        <div className="t-body mt-2 text-muted-foreground">{body}</div>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button onClick={onConfirm}>{confirmLabel}</Button>
           <Button variant="outline" onClick={onCancel}>Cancel</Button>

@@ -143,12 +143,12 @@ export function Grid<T>(p: GridProps<T>) {
       )}
 
       {/* ---------------------------------------------------------------- the table, from tablet up */}
-      <div className="hidden overflow-x-auto border-t md:block">
+      <div className="surface-raised hidden overflow-x-auto border-t md:block">
         <Table>
-          <TableHeader className="sticky top-0 z-10 bg-background">
+          <TableHeader className="surface-raised sticky top-0 z-10">
             <TableRow>
               {shown.map((c) => (
-                <TableHead key={c.key} className={c.className}>
+                <TableHead key={c.key} className={cn("t-label", c.className)}>
                   {c.sortBy ? (
                     <button
                       type="button"
@@ -182,7 +182,7 @@ export function Grid<T>(p: GridProps<T>) {
               >
                 {/* A column that carries a sentence wraps onto a second line (its className says so);
                     nothing is ever truncated behind a tooltip. */}
-                {shown.map((c) => <TableCell key={c.key} className={cn("py-2", c.className)}>{c.cell(row)}</TableCell>)}
+                {shown.map((c) => <TableCell key={c.key} className={cn("t-body py-2", c.className)}>{c.cell(row)}</TableCell>)}
                 <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
                     {/* The row's own acts, repeated in the menu beside them: nothing is hover-only,
@@ -201,7 +201,7 @@ export function Grid<T>(p: GridProps<T>) {
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <TableRow><TableCell colSpan={shown.length + 1} className="py-10 text-center text-sm text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={shown.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -210,22 +210,22 @@ export function Grid<T>(p: GridProps<T>) {
       {/* -------------------------- the phone: cards carrying every column the desktop row carries */}
       <ul className="space-y-2 border-t px-4 py-3 md:hidden">
         {rows.map((row) => (
-          <li key={p.rowKey(row)} data-item={p.rowKey(row)} data-item-label={p.rowLabel?.(row)} className="rounded-lg border p-3">
+          <li key={p.rowKey(row)} data-item={p.rowKey(row)} data-item-label={p.rowLabel?.(row)} className="surface-raised rounded-lg border p-3">
             <div className="flex items-start gap-2">
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>
               {rowMenu(row)}
             </div>
-            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
               {shown.slice(1).map((c) => (
                 <div key={c.key} className="min-w-0">
-                  <dt className="text-muted-foreground">{c.header}</dt>
-                  <dd className="min-w-0">{c.cell(row)}</dd>
+                  <dt className="t-small text-muted-foreground">{c.header}</dt>
+                  <dd className="t-small min-w-0">{c.cell(row)}</dd>
                 </div>
               ))}
             </dl>
           </li>
         ))}
-        {rows.length === 0 && <li className="py-8 text-center text-sm text-muted-foreground">Nothing matches. Clear the search or a filter.</li>}
+        {rows.length === 0 && <li className="t-body py-8 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</li>}
       </ul>
     </div>
   )

@@ -214,9 +214,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-5 lg:px-6">
-        <h2 className="text-lg font-semibold">
+        <h2 className="t-section">
           {p.title}
-          <span className="pl-2 text-sm font-normal tabular-nums text-muted-foreground">
+          <span className="pl-2 t-body font-normal tabular-nums text-muted-foreground">
             {rows.length.toLocaleString()}{p.total ? ` of ${p.total.toLocaleString()}` : ""}
           </span>
         </h2>
@@ -241,22 +241,22 @@ export function DataTable<T>(p: DataTableProps<T>) {
       {/* While anything is selected the bar replaces the filter row, so the two never fight. */}
       {selected.length > 0 || allMatching ? (
         <div className="flex flex-wrap items-center gap-2 px-5 py-3 lg:px-6">
-          <span className="text-sm font-medium tabular-nums">
+          <span className="t-label tabular-nums">
             {allMatching ? `All ${rows.length.toLocaleString()} matching selected` : `${selected.length} selected`}
           </span>
           {!allMatching && pageSelected && rows.length > shown.length && (
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAllMatching(true)}>
+            <Button size="sm" variant="ghost" className="h-7 t-small" onClick={() => setAllMatching(true)}>
               Select all {rows.length.toLocaleString()} matching
             </Button>
           )}
           {(p.bulk ?? []).map((a) => (
             <Button key={a.label} size="sm" variant={a.destructive ? "ghost" : "outline"}
-              className={cn("h-7 text-xs", a.destructive && "text-destructive hover:bg-destructive/10 hover:text-destructive")}
+              className={cn("h-7 t-small", a.destructive && "text-destructive hover:bg-destructive/10 hover:text-destructive")}
               onClick={() => { a.onClick(selectedRows); clearSelection() }}>
               {a.label}
             </Button>
           ))}
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearSelection}>Clear</Button>
+          <Button size="sm" variant="ghost" className="h-7 t-small" onClick={clearSelection}>Clear</Button>
         </div>
       ) : (
         <div className="px-5 py-3 lg:px-6">
@@ -281,8 +281,8 @@ export function DataTable<T>(p: DataTableProps<T>) {
             <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} />
             {activeFilters.length > 0 && (
               <>
-                <span className="text-xs text-muted-foreground">Matching all of: {activeFilters.map((f) => f.label).join(", ")}</span>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => p.onFiltersChange({})}>Clear</Button>
+                <span className="t-small text-muted-foreground">Matching all of: {activeFilters.map((f) => f.label).join(", ")}</span>
+                <Button size="sm" variant="ghost" className="h-7 t-small" onClick={() => p.onFiltersChange({})}>Clear</Button>
               </>
             )}
           </div>
@@ -365,7 +365,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                       >
                         {c.cell(r)}
                         {i === 0 && p.phoneSummary && (
-                          <div className="pt-0.5 text-xs break-words text-muted-foreground md:hidden">{p.phoneSummary(r)}</div>
+                          <div className="pt-0.5 t-small break-words text-muted-foreground md:hidden">{p.phoneSummary(r)}</div>
                         )}
                       </TableCell>
                     ))}
@@ -380,7 +380,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                             key={a.id}
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-xs"
+                            className="h-7 px-2 t-small"
                             onClick={() => a.onClick(r)}
                           >
                             {a.icon && <a.icon className="size-3.5" aria-hidden="true" />}
@@ -482,7 +482,7 @@ function ColumnsPopover<T>({ columns, chosen, onChange }: { columns: Col<T>[]; c
         <ul className="space-y-0.5">
           {columns.map((c) => (
             <li key={c.id}>
-              <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-muted">
+              <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 t-body hover:bg-muted">
                 <Checkbox
                   checked={chosen.includes(c.id)}
                   disabled={c.always}

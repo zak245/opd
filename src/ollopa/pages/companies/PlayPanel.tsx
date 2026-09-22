@@ -92,9 +92,9 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
         />
       }
     >
-      <div className="space-y-4 text-sm">
+      <div className="space-y-4 t-body">
         <div>
-          <Label htmlFor="play-name" className="text-xs">The play</Label>
+          <Label htmlFor="play-name" className="t-small">The play</Label>
           <Select value={play.name} onValueChange={setName}>
             <SelectTrigger id="play-name" className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>{choices.map((c) => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
@@ -102,18 +102,18 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
         </div>
 
         <div>
-          <Label htmlFor="play-owner" className="text-xs">Owner</Label>
+          <Label htmlFor="play-owner" className="t-small">Owner</Label>
           <Input id="play-owner" className="mt-1" value={owner} onChange={(e) => setOwner(e.target.value)} />
         </div>
 
         <div>
-          <Label htmlFor="play-recheck" className="text-xs">Recheck on</Label>
+          <Label htmlFor="play-recheck" className="t-small">Recheck on</Label>
           <Input id="play-recheck" type="date" className="mt-1" value={recheck} onChange={(e) => setRecheck(e.target.value)} />
         </div>
 
-        <div className="rounded-md border bg-muted/40 p-2">
-          <div className="text-xs font-medium">The agent's draft note <span className="font-normal text-muted-foreground">· draft, logged, not sent</span></div>
-          <p className="mt-1 text-xs text-muted-foreground">
+        <div className="surface-raised rounded-md border p-2">
+          <div className="t-label">The agent's draft note <span className="font-normal text-muted-foreground">· draft, logged, not sent</span></div>
+          <p className="mt-1 t-small text-muted-foreground">
             {play.kind === "expansion"
               ? `${account.name} is at ${Math.round((account.seatsActive / account.seatsBought) * 100)}% seat utilisation. Suggest the next seat block at the ${account.plan} price before renewal on ${day(account.renewal)}.`
               : `${account.name} is in the ${account.band} band. Book a review with ${account.champion} and agree what changes before ${day(account.renewal)}.`}
@@ -131,7 +131,7 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
         </div>
 
         <div>
-          <Label htmlFor="play-note" className="text-xs">Your note on the account</Label>
+          <Label htmlFor="play-note" className="t-small">Your note on the account</Label>
           <Textarea id="play-note" rows={3} className="mt-1" value={note} onChange={(e) => setNote(e.target.value)} placeholder="What you are doing and why" />
         </div>
       </div>

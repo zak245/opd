@@ -222,7 +222,7 @@ export function AgentsPage({ session }: { session: Session }) {
   if (agents.length === 0 || agentsOn === 0) {
     return (
       <div className="mx-auto max-w-5xl p-4 sm:p-6">
-        <p className="text-sm">No agents are on at {b.name}.</p>
+        <p className="t-body">No agents are on at {b.name}.</p>
         <div className="mt-4">
           <EmptyState
             title="Nothing has run"
@@ -289,7 +289,7 @@ export function AgentsPage({ session }: { session: Session }) {
 
         {batch && (
           <p data-item="wait.batch-line" data-item-label="What arrived in this batch, and what it costs together"
-            className="text-xs text-muted-foreground">
+            className="t-small text-muted-foreground">
             {batch.count} arrived while the agents ran, {batch.at}. Together:{" "}
             {[batch.sends && `${batch.sends} ${batch.sends === 1 ? "email" : "emails"} from your mailbox`,
               batch.enrols && `${batch.enrols.toLocaleString()} people added to sequences`,
@@ -310,11 +310,11 @@ export function AgentsPage({ session }: { session: Session }) {
         )}
 
         {queue.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Nothing waiting.</p>
+          <p className="t-body mt-3 text-muted-foreground">Nothing waiting.</p>
         ) : (
           <>
             {bulkAtLevelOne && (
-              <div className="mt-3 flex items-center gap-2 text-xs">
+              <div className="t-small mt-3 flex items-center gap-2">
                 <Checkbox
                   id="agents-select-all"
                   checked={chosen.length === queue.length && queue.length > 0}
@@ -328,7 +328,7 @@ export function AgentsPage({ session }: { session: Session }) {
               <div data-container="waiting" data-container-label="Waiting for you">
               {byAgent(queue).map((group) => (
                 <div key={group.agent} className="mt-4">
-                  <h3 className="pb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <h3 className="t-small pb-1.5 font-medium uppercase tracking-wider text-muted-foreground">
                     {group.agent} · {group.items.length}
                   </h3>
                   <ul className="grid gap-2">
@@ -374,7 +374,7 @@ export function AgentsPage({ session }: { session: Session }) {
         )}
       </section>}
 
-      {result && <p role="status" className="mt-6 rounded-md bg-muted px-2 py-1.5 text-xs">{result}</p>}
+      {result && <p role="status" className="t-small mt-6 rounded-md bg-muted px-2 py-1.5">{result}</p>}
 
       {/* Step 0 and step 1: the assistant's conversation, which is where Apollo keeps the record. */}
       {!rules.r1 && (

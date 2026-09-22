@@ -9,12 +9,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { href } from "@/app/router"
+import { FamilyIcon } from "../../ui/Identity"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { clearEdit, type Edit } from "../../edits"
@@ -62,8 +62,8 @@ export function rate(part: number, whole: number): string {
 export function CountRate({ label, count, of }: { label: string; count: number; of?: number }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm tabular-nums">
+      <div className="t-label text-muted-foreground">{label}</div>
+      <div className="t-body tabular-nums">
         {n(count)}
         {of !== undefined && <span className="text-muted-foreground"> · {rate(count, of)}</span>}
       </div>
@@ -83,33 +83,14 @@ export function CountButton({ label, count, active, onClick, tone }: {
       className={cn(
         "rounded-md border px-2.5 py-1.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         active && "border-foreground bg-muted",
-        tone === "warning" && "border-amber-300 dark:border-amber-800",
-        tone === "error" && "border-destructive/50",
+        tone === "warning" && "border-[color:var(--warning-ink)]",
+        tone === "error" && "border-[color:var(--danger-ink)]",
       )}
     >
-      <span className="block text-xs text-muted-foreground">{label}</span>
-      <span className="block text-sm font-medium tabular-nums">{n(count)}</span>
+      <span className="t-small block text-muted-foreground">{label}</span>
+      <span className="t-body block font-medium tabular-nums">{n(count)}</span>
       <span className="sr-only">filter people by {label.toLowerCase()}</span>
     </button>
-  )
-}
-
-export function Pill({ children, tone }: { children: ReactNode; tone?: "warning" | "error" | "good" | "muted" }) {
-  return (
-    <Badge
-      variant="secondary"
-      className={cn(
-        // The five statuses, from the one token set (DESIGN.md §5). A status chip always carries
-        // its word, so it never leans on colour alone.
-        "t-small px-1.5 py-0 font-medium",
-        tone === "warning" && "[background-color:var(--warning-tint)] [color:var(--warning-ink)]",
-        tone === "error" && "[background-color:var(--danger-tint)] [color:var(--danger-ink)]",
-        tone === "good" && "[background-color:var(--success-tint)] [color:var(--success-ink)]",
-        tone === "muted" && "[background-color:var(--paused-tint)] [color:var(--paused-ink)]",
-      )}
-    >
-      {children}
-    </Badge>
   )
 }
 
@@ -506,7 +487,7 @@ export const undoable = (e?: Edit) => !!e?.at && Date.now() - e.at < UNDO_MS
 export function RowNote({ kind, id, note, at }: { kind: string; id: string; note: string; at?: number }) {
   const fresh = !!at && Date.now() - at < UNDO_MS
   return (
-    <div role="status" className="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
+    <div role="status" className="t-small mt-0.5 flex flex-wrap items-center gap-2">
       <span className="rounded bg-muted px-1.5 py-0.5">{note}</span>
       {fresh && (
         <button

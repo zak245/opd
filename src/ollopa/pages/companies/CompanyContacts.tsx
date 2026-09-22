@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { openBeside, useBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
+import { FamilyIcon } from "../../ui/Identity"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { EmptyState } from "../../ui/EmptyState"
 import { toast } from "../../templates/TablePage"
@@ -193,7 +194,7 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
 
   const chip = (label: string, value: string, key: keyof ListView, options: { value: string; label: string }[]) => (
     <Select value={value} onValueChange={(v) => show({ [key]: v, page: 0 })}>
-      <SelectTrigger className="h-8 w-auto min-w-32 text-xs" aria-label={label}><SelectValue /></SelectTrigger>
+      <SelectTrigger className="h-8 w-auto min-w-32 t-small" aria-label={label}><SelectValue /></SelectTrigger>
       <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
     </Select>
   )
@@ -243,13 +244,16 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                     line that describes the person has the width to itself, so a narrow column —
                     a phone, or the page shrunk to make room for the pane — never overlaps them. */}
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <button
-                    type="button"
-                    className="min-w-0 font-medium break-words hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    onClick={(e) => openPerson(c, e.currentTarget)}
-                  >
-                    {c.name}
-                  </button>
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <FamilyIcon of="person" />
+                    <button
+                      type="button"
+                      className="min-w-0 font-medium break-words hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      onClick={(e) => openPerson(c, e.currentTarget)}
+                    >
+                      {c.name}
+                    </button>
+                  </span>
                   {/* Two comparable acts and, when they are in one, the act that takes them out of
                       it — drawn by kind, never by a variant picked here. Both can be undone, so
                       neither carries a line: what happened is said afterwards, on the row. */}
@@ -263,11 +267,11 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                     ]}
                   />
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="t-small text-muted-foreground">
                   {c.title} · {c.stage} · {seq ? `in ${seq}` : "not in a sequence"} · {ago(c.lastActivity)}
                 </div>
                 {note && (
-                  <div role="status" className="flex flex-wrap items-center gap-2 text-xs">
+                  <div role="status" className="flex flex-wrap items-center gap-2 t-small">
                     <span>Done · {note}</span>
                     <button
                       type="button"
@@ -283,12 +287,12 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
           })}
 
           <div className="flex flex-wrap items-center gap-2 border-t pt-2">
-            <span className="text-xs tabular-nums text-muted-foreground">
+            <span className="t-small tabular-nums text-muted-foreground">
               {at * PAGE + 1}–{at * PAGE + shown.length} of {matching.length}
               {filtered ? ` · ${contacts.length} held here` : ""}
             </span>
-            <Button size="sm" variant="ghost" className="h-7 text-xs" disabled={at === 0} onClick={() => show({ page: at - 1 })}>Previous</Button>
-            <Button size="sm" variant="ghost" className="h-7 text-xs" disabled={at >= pages - 1} onClick={() => show({ page: at + 1 })}>Next</Button>
+            <Button size="sm" variant="ghost" className="h-7 t-small" disabled={at === 0} onClick={() => show({ page: at - 1 })}>Previous</Button>
+            <Button size="sm" variant="ghost" className="h-7 t-small" disabled={at >= pages - 1} onClick={() => show({ page: at + 1 })}>Next</Button>
           </div>
         </div>
       )}

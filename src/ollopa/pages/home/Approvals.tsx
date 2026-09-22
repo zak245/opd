@@ -6,7 +6,7 @@
 // Decline. Rows arrive in the batch their run produced, and a batch is approved only once every item in
 // it has been opened or scrolled past, with the number still unread printed beside the button.
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Badge } from "@/components/ui/badge"
+import { Chip } from "../../ui/Identity"
 import { Button } from "@/components/ui/button"
 import { href } from "@/app/router"
 import { openBeside } from "../../beside"
@@ -112,7 +112,7 @@ function ApprovalRow({ e, canApprove, isAdmin, mine, adminName, adminTitle, seen
       className="flex-col items-stretch"
     >
       <div className="flex w-full flex-wrap items-start gap-x-3 gap-y-1">
-        <Badge variant="outline" className="shrink-0 font-normal">{e.agent.replace(" agent", "")}</Badge>
+        <Chip family="agents" className="shrink-0">{e.agent.replace(" agent", "")}</Chip>
         <span className="min-w-[11rem] flex-1">
           <span className="font-medium">{proposalOf(e)}</span>
           <ConsequenceLine {...consequenceOf(e)} className="mt-0.5" />

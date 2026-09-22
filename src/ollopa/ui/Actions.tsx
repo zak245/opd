@@ -199,9 +199,19 @@ export function Confirm({ open, onOpenChange, title, consequence, confirmLabel, 
   )
 }
 
-function Shortcut({ keys }: { keys?: string }) {
+/**
+ * The printed shortcut. On a filled primary the muted ink is invisible — 1.10:1 on the indigo fill —
+ * so there it takes the label's own colour at 80%, measured at 4.16:1 on that fill (the pair is in
+ * `scripts/contrast.mjs`). Everywhere else it stays quiet, as it should.
+ */
+function Shortcut({ keys, kind }: { keys?: string; kind?: ActionKind }) {
   if (!keys) return null
-  return <kbd className="ml-1.5 rounded border px-1 font-mono text-[10px] text-muted-foreground">{keys}</kbd>
+  return (
+    <kbd className={cn(
+      "ml-1.5 rounded border px-1 font-mono text-[10px]",
+      kind === "primary" ? "border-current/40 text-primary-foreground/80" : "text-muted-foreground",
+    )}>{keys}</kbd>
+  )
 }
 
 function One({ action, surface, layout, onIrreversible }: {
@@ -242,7 +252,7 @@ function One({ action, surface, layout, onIrreversible }: {
       )}
     >
       {action.label}
-      <Shortcut keys={action.keys} />
+      <Shortcut keys={action.keys} kind={action.kind} />
     </a>
   ) : (
     <Button
@@ -268,7 +278,7 @@ function One({ action, surface, layout, onIrreversible }: {
     >
       {spinner}
       {action.label}
-      <Shortcut keys={action.keys} />
+      <Shortcut keys={action.keys} kind={action.kind} />
     </Button>
   )
 

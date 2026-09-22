@@ -18,15 +18,23 @@ import { businessById } from "../../data/businesses"
 import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "../../data/seed"
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
-import { type Col, DataTable, Pill, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
-/** The words the status cell uses. Bounce guard is a state of the sequence, not a separate screen. */
-export function statusOf(s: Sequence): { label: string; tone: "good" | "warning" | "error" | "muted" } {
-  if (s.archivedAt) return { label: "Archived", tone: "muted" }
-  if (s.guardState === "auto-paused") return { label: "Auto-paused by bounce guard", tone: "error" }
-  if (s.status === "Active") return { label: "Active", tone: "good" }
-  if (s.status === "Paused") return { label: s.pausedBy ? `Paused by ${s.pausedBy}` : "Paused", tone: "warning" }
-  return { label: "Draft", tone: "muted" }
+/**
+ * The words the status cell uses, and the bare state word behind each of them. Bounce guard is a
+ * state of the sequence, not a separate screen.
+ *
+ * `word` is what `statusOf` in identity.ts reads to pick the colour, and `label` is what the person
+ * sees — so "Paused by Marcus Adeyemi" is coloured as paused without the page naming a hue.
+ */
+export function statusOf(s: Sequence): { label: string; word: string } {
+  if (s.archivedAt) return { label: "Archived", word: "archived" }
+  if (s.guardState === "auto-paused") return { label: "Auto-paused by bounce guard", word: "auto-paused" }
+  if (s.status === "Active") return { label: "Active", word: "active" }
+  if (s.status === "Paused") return { label: s.pausedBy ? `Paused by ${s.pausedBy}` : "Paused", word: "paused" }
+  return { label: "Draft", word: "draft" }
 }
 
 export const totalPeople = (s: Sequence) => s.active + s.paused + s.finished + s.replied + s.bounced + s.notSent
@@ -107,7 +115,7 @@ export function SequencesPage({ session }: { session: Session }) {
       cell: (s) => (
         <div className="min-w-0">
           <RowOpen to={`/ollopa/sequences/${s.id}`} onOpen={() => open(s)}>{s.name}</RowOpen>
-          <div className="text-xs text-muted-foreground">{s.owner}</div>
+          <div className="t-small text-muted-foreground">{s.owner}</div>
         </div>
       ),
     },
@@ -117,9 +125,9 @@ export function SequencesPage({ session }: { session: Session }) {
         const st = statusOf(s)
         return (
           <div className="min-w-0">
-            <Pill tone={st.tone}>{st.label}</Pill>
+            <Chip status={st.word}>{st.label}</Chip>
             {s.guardState === "warning" && (
-              <div className="text-xs text-amber-700 dark:text-amber-400">Bounce {s.bounceRate7d}% · pauses at {BOUNCE_GUARD.pausePercent}%</div>
+              <div className="t-small" style={{ color: "var(--warning-ink)" }}>Bounce {s.bounceRate7d}% · pauses at {BOUNCE_GUARD.pausePercent}%</div>
             )}
           </div>
         )
@@ -127,17 +135,17 @@ export function SequencesPage({ session }: { session: Session }) {
     },
     {
       key: "people", header: "People", className: "tabular-nums", phone: true, sort: (a, c) => a.active - c.active,
-      cell: (s) => <div>{n(s.active)} <span className="text-xs text-muted-foreground">of {n(totalPeople(s))}</span></div>,
+      cell: (s) => <div>{n(s.active)} <span className="t-small text-muted-foreground">of {n(totalPeople(s))}</span></div>,
     },
     {
       key: "replied", header: "Replied", className: "tabular-nums", phone: true, sort: (a, c) => a.replied - c.replied,
-      cell: (s) => <div>{n(s.replied)} <span className="text-xs text-muted-foreground">· {rate(s.replied, s.sent)}</span></div>,
+      cell: (s) => <div>{n(s.replied)} <span className="t-small text-muted-foreground">· {rate(s.replied, s.sent)}</span></div>,
     },
     {
       key: "bounced", header: "Bounced", className: "tabular-nums", sort: (a, c) => a.bounceRate7d - c.bounceRate7d,
       cell: (s) => (
-        <div className={s.bounceRate7d >= BOUNCE_GUARD.warnPercent ? "text-destructive" : undefined}>
-          {n(s.bounced)} <span className="text-xs">· {s.bounceRate7d}% over 7 days</span>
+        <div style={s.bounceRate7d >= BOUNCE_GUARD.warnPercent ? { color: "var(--danger-ink)" } : undefined}>
+          {n(s.bounced)} <span className="t-small">· {s.bounceRate7d}% over 7 days</span>
         </div>
       ),
     },
@@ -182,7 +190,10 @@ export function SequencesPage({ session }: { session: Session }) {
       <div className="flex h-full flex-col">
         <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
           <div>
-            <h2 className="text-lg font-semibold">Sequences</h2>
+            <h2 className="t-title flex items-center gap-2">
+              <FamilyIcon of="sequences" size="header" />
+              Sequences
+            </h2>
           </div>
           <div className="flex items-center gap-2">
             {duplicateIsVisible && rows[0] && <Button variant="outline" onClick={() => duplicate(rows[0])}>Duplicate “{rows[0].name}”</Button>}
@@ -266,16 +277,28 @@ export function SequencesPage({ session }: { session: Session }) {
               selected, onChange: setSelected,
               bar: (ids) => (
                 <>
-                  <Button size="sm" variant="outline" onClick={() => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Paused", pausedBy: session.user })); setSelected([]); toast(`Paused ${n(ids.length)} sequences. Everyone keeps their place.`) }}>Pause</Button>
-                  <Button size="sm" variant="outline" onClick={() => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Active", pausedBy: null })); setSelected([]); toast(`Resumed ${n(ids.length)} sequences.`) }}>Resume</Button>
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
-                    const people = ids.reduce((sum, id) => sum + (sequences.find((s) => s.id === id)?.active ?? 0), 0)
-                    ids.forEach((id) => engage.patchSequence(session.business, id, { archivedAt: TODAY, status: "Paused" }))
-                    setSelected([])
-                    toast(`Archived ${n(ids.length)} sequences · ${n(people)} people marked finished`)
-                  }}>
-                    Archive {n(ids.length)} · marks their people finished
-                  </Button>
+                  <Actions
+                    surface="card"
+                    items={[
+                      { kind: "secondary", label: "Pause", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Paused", pausedBy: session.user })); setSelected([]); toast(`Paused ${n(ids.length)} sequences. Everyone keeps their place.`) } },
+                      { kind: "secondary", label: "Resume", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Active", pausedBy: null })); setSelected([]); toast(`Resumed ${n(ids.length)} sequences.`) } },
+                      {
+                        kind: "destructive",
+                        label: `Archive ${n(ids.length)}`,
+                        onClick: () => {
+                          const people = ids.reduce((sum, id) => sum + (sequences.find((s) => s.id === id)?.active ?? 0), 0)
+                          ids.forEach((id) => engage.patchSequence(session.business, id, { archivedAt: TODAY, status: "Paused" }))
+                          setSelected([])
+                          toast(`Archived ${n(ids.length)} sequences · ${n(people)} people marked finished`)
+                        },
+                        irreversible: {
+                          title: `Archive ${n(ids.length)} sequences?`,
+                          consequence: "Their people are marked finished and their scheduled emails are deleted. Replies and activity stay on the records.",
+                          confirmLabel: `Archive ${n(ids.length)}`,
+                        },
+                      },
+                    ]}
+                  />
                 </>
               ),
             }}

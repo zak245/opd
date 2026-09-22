@@ -18,6 +18,7 @@ import { useRoute } from "@/app/router"
 import { href } from "@/app/router"
 import { useEdit } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { seedFor } from "../../data/seed"
@@ -146,16 +147,20 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
               </a>
             )}
             <div className="min-w-0 flex-1">
-              <h2 ref={heading} tabIndex={-1} className="text-base font-semibold outline-none">{reply.contact}</h2>
-              <p className="text-sm text-muted-foreground">{contact?.title ?? "—"} · {reply.company}</p>
-              <p className="pt-0.5 text-xs text-muted-foreground">
+              <h2 ref={heading} tabIndex={-1} className="t-section flex items-center gap-2 outline-none">
+                {/* The reply is a Work object, and the thread says so before it is read. */}
+                <FamilyIcon of="reply" size="header" label="Reply" />
+                {reply.contact}
+              </h2>
+              <p className="t-body text-muted-foreground">{contact?.title ?? "—"} · {reply.company}</p>
+              <p className="t-small pt-0.5 text-muted-foreground">
                 <span className="font-mono">{contact?.email}</span>
                 {contact && <> · {contact.emailStatus}</>}
                 {" · "}{reply.sequence} · step {reply.step.n} of {reply.step.of}
                 {" · "}to {reply.box}
               </p>
               {deal && (
-                <p className="pt-0.5 text-xs">
+                <p className="t-small pt-0.5">
                   {/* The deal behind this reply. Read while the contact is already open beside the
                       thread it is the next step of the same look, so the pane swaps and keeps one
                       "‹ back" to them; with nothing open it is simply the deal. Either way the
@@ -171,51 +176,53 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
                 </p>
               )}
               {reply.handedTo && reply.handedTo !== session.user && (
-                <p className="pt-0.5 text-xs text-muted-foreground">Handed to {reply.handedTo}.</p>
+                <p className="t-small pt-0.5 text-muted-foreground">Handed to {reply.handedTo}.</p>
               )}
               {reply.handedTo === session.user && (
-                <p className="pt-0.5 text-xs text-muted-foreground">Handed over by {reply.boxOwner}.</p>
+                <p className="t-small pt-0.5 text-muted-foreground">Handed over by {reply.boxOwner}.</p>
               )}
             </div>
             <ExpandAll className="shrink-0" />
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
           {/* -------------------------------------------------------------------- the reply itself */}
-          <article className="rounded-lg border p-3">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pb-2">
-              <span className="font-medium">{reply.contact}</span>
-              <span className="text-xs text-muted-foreground">{waiting(reply.received)}</span>
-              <span className="text-xs text-muted-foreground">Read as: {reply.outcome} · by {meantBy}</span>
+          <article className="surface-raised rounded-lg border p-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-2">
+              <span className="t-body font-medium">{reply.contact}</span>
+              <span className="t-small tabular-nums text-muted-foreground">{waiting(reply.received)}</span>
+              <span className="t-small flex items-center gap-1.5 text-muted-foreground">
+                Read as <Chip status={reply.outcome}>{reply.outcome}</Chip> by {meantBy}
+              </span>
             </div>
-            <p className="whitespace-pre-line text-sm">{reply.body}</p>
+            <p className="t-body whitespace-pre-line">{reply.body}</p>
             {reply.outcome === "Not now" && reply.followUpOn && (
-              <p className="pt-2 text-xs text-muted-foreground">They named a date: {day(reply.followUpOn)}.</p>
+              <p className="pt-2 t-small text-muted-foreground">They named a date: {day(reply.followUpOn)}.</p>
             )}
             {reply.outcome === "Out of office" && reply.returnsOn && (
-              <p className="pt-2 text-xs text-muted-foreground">Back on {day(reply.returnsOn)}. The sequence resumes then by itself.</p>
+              <p className="pt-2 t-small text-muted-foreground">Back on {day(reply.returnsOn)}. The sequence resumes then by itself.</p>
             )}
           </article>
 
           {/* -------------------------------------------------------------- the doors of the thread */}
-          <div className="pt-3">
+          <div>
             <Door id="inbox.thread.earlier" label="Earlier messages" count={sent.length} defaultOpen={disclosure.level("inbox.thread.earlier-messages") === 1}>
               <ul className="space-y-3">
                 {sent.map((m, i) => (
                   <li key={i}>
-                    <div className="text-xs text-muted-foreground">{day(m.sent)} · {m.subject}</div>
-                    <p className="whitespace-pre-line pt-0.5 text-sm">{m.body}</p>
+                    <div className="t-small text-muted-foreground">{day(m.sent)} · {m.subject}</div>
+                    <p className="whitespace-pre-line pt-0.5 t-body">{m.body}</p>
                   </li>
                 ))}
-                {sent.length === 0 && <li className="text-sm text-muted-foreground">Nothing was sent before this reply.</li>}
+                {sent.length === 0 && <li className="t-body text-muted-foreground">Nothing was sent before this reply.</li>}
               </ul>
             </Door>
 
             <Door id="inbox.thread.contact" label="Contact details" defaultOpen={disclosure.level("inbox.thread.contact-details") === 1}>
-              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+              <dl className="t-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
                 <dt className="text-muted-foreground">Title</dt><dd>{contact?.title ?? "—"}</dd>
-                <dt className="text-muted-foreground">Email</dt><dd className="font-mono text-xs">{contact?.email} · {contact?.emailStatus}</dd>
+                <dt className="text-muted-foreground">Email</dt><dd className="font-mono t-small">{contact?.email} · {contact?.emailStatus}</dd>
                 <dt className="text-muted-foreground">Phone</dt><dd>{contact?.phoneNumber ?? "Not revealed"}</dd>
                 <dt className="text-muted-foreground">Open deal</dt><dd>{deal ? deal.name : "None"}</dd>
                 <dt className="text-muted-foreground">Owner</dt><dd>{contact?.owner ?? reply.boxOwner}</dd>
@@ -235,13 +242,13 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
           </div>
 
           {/* ------------------------------------------------------------------------ the composer */}
-          <div className="pt-4" data-composer>
+          <div className="surface-raised rounded-lg border p-3" data-composer>
             <div className="grid gap-2 sm:grid-cols-2">
-              <label className="text-xs text-muted-foreground">
+              <label className="t-label text-muted-foreground">
                 To
                 <Input className="mt-1 h-8" readOnly value={contact?.email ?? reply.contact} aria-label="Recipient" />
               </label>
-              <label className="text-xs text-muted-foreground">
+              <label className="t-label text-muted-foreground">
                 Subject
                 <Input className="mt-1 h-8" value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" />
               </label>
@@ -268,8 +275,8 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
             {draft && (
               <div className="pt-2">
                 <Door id="inbox.thread.agent-draft" label={`Agent draft · ${words(draft.body)} words`} defaultOpen={disclosure.level("inbox.agent-draft") === 1}>
-                  <p className="text-xs text-muted-foreground">Written by the {draft.by} · {draft.state}</p>
-                  <p className="whitespace-pre-line pt-1 text-sm">{draft.body}</p>
+                  <p className="t-small text-muted-foreground">Written by the {draft.by} · {draft.state}</p>
+                  <p className="whitespace-pre-line pt-1 t-body">{draft.body}</p>
                   <Button size="sm" variant="outline" className="mt-2" onClick={() => {
                     setBody(draft.body)
                     setSubject(draft.subject)
@@ -337,13 +344,17 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
             {/* What the send is doing, where it was caused. For ten seconds it can be pulled back;
                 after that it reads Sent and there is nothing to undo. */}
             {sendState?.sending === true && (
-              <p role="status" aria-live="polite" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-xs">
-                <span className="min-w-0 flex-1">Sending · to {reply.contact} from {mailbox}</span>
+              <p role="status" aria-live="polite" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
+                <Chip status="Sending">Sending</Chip>
+                <span className="t-small min-w-0 flex-1 text-muted-foreground">to {reply.contact} from {mailbox}</span>
                 <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={pullBack}>Undo</Button>
               </p>
             )}
             {sendState?.sent === true && (
-              <p role="status" className="mt-2 rounded-md bg-muted px-2.5 py-1.5 text-xs">Sent · to {reply.contact} from {mailbox}</p>
+              <p role="status" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
+                <Chip status="Sent">Sent</Chip>
+                <span className="t-small text-muted-foreground">to {reply.contact} from {mailbox}</span>
+              </p>
             )}
           </div>
         </div>

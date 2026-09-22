@@ -31,7 +31,8 @@ import { statusOf, totalPeople } from "./Sequences"
 import { copyRows, usedByLine } from "./Templates"
 import { agentWatch, alreadyInASequence, enrolCredits, membersOf, splitForEnrol, touchEstimate } from "./facts"
 import { engage, useEngage } from "./store"
-import { Pill, ago, day, n, rate, toast } from "./shared"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { ago, day, n, rate, toast } from "./shared"
 
 export const nodes: Record<string, PageComponent> = {
   "P-lists": ListsPage,
@@ -82,8 +83,8 @@ function PaneBody({ d, blocks, acts }: { d: Disclosure; blocks: Block[]; acts: A
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="min-w-0">{children}</dd>
+      <dt className="t-label text-muted-foreground">{label}</dt>
+      <dd className="t-body min-w-0">{children}</dd>
     </div>
   )
 }
@@ -172,8 +173,8 @@ const SequenceBeside: BesideComponent = ({ session, id }) => {
       blocks={[
         field("seq.page.health", (
           <Field label="Sending">
-            <Pill tone={st.tone}>{st.label}</Pill>
-            <div className="mt-1 text-xs tabular-nums text-muted-foreground">
+            <Chip status={st.word}>{st.label}</Chip>
+            <div className="t-small mt-1 tabular-nums text-muted-foreground">
               Bounce {seq.bounceRate7d}% · warns {BOUNCE_GUARD.warnPercent}% · pauses {BOUNCE_GUARD.pausePercent}%
             </div>
           </Field>
@@ -286,7 +287,7 @@ const ListBeside: BesideComponent = ({ session, id }) => {
         ) : null),
         field("detail.in-other-sequence", doubled > 0 ? (
           <Field label="Double outreach">
-            <span className="font-medium text-amber-700 tabular-nums dark:text-amber-400">{n(doubled)} already in another sequence</span>
+            <span className="font-medium tabular-nums" style={{ color: "var(--warning-ink)" }}>{n(doubled)} already in another sequence</span>
           </Field>
         ) : null),
         field("lists.touch-estimate", (

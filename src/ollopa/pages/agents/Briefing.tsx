@@ -4,11 +4,12 @@
 // what it never does without a person, and what it has actually done for the person reading it.
 // There is no confidence badge here or anywhere else on the page: no threshold behind one has been
 // calibrated against outcomes, and an uncalibrated number is read as a guarantee.
-import { Bot, Lock } from "lucide-react"
+import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { href } from "@/app/router"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Locked } from "../../ui/Locked"
 import { gate, money as dollars } from "../../ui/gate"
 import type { Disclosure } from "../../ui/useDisclosure"
@@ -60,30 +61,31 @@ export function Briefing(p: BriefingProps) {
       <h2 id="agents-briefing" className="sr-only">Briefing</h2>
 
       {p.workspace && <p data-item="brief.workspace" data-item-label="Which client workspace this page shows"
-        className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{p.workspace}</p>}
+        className="t-small font-medium uppercase tracking-wider text-muted-foreground">{p.workspace}</p>}
 
-      <p data-item="brief.digest" data-item-label="Since you last looked" className="text-sm">{p.sentence}</p>
+      <p data-item="brief.digest" data-item-label="Since you last looked" className="t-body">{p.sentence}</p>
 
       {/* Spend is decision-critical, so it is here at every width and on every role's page. */}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
         <div data-item="brief.credits-week" data-item-label="Credits this week against the cap" className="h-1.5 w-40 overflow-hidden rounded-full bg-muted" role="img"
           aria-label={`${spend.week.toLocaleString()} credits this week of the agents' ${spend.weekCap.toLocaleString()} weekly cap`}>
-          <div className={cn("h-full rounded-full", pct > 85 ? "bg-destructive" : "bg-foreground")} style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: pct > 85 ? "var(--danger)" : "var(--brand)" }} />
         </div>
-        <span className="text-sm tabular-nums">
+        <span className="t-body tabular-nums">
           {spend.week.toLocaleString()} credits this week of {spend.weekCap.toLocaleString()}
         </span>
         {d.atLevelOne("brief.credits-today") && (
           <span data-item="brief.credits-today" data-item-label="Credits spent today"
-            className="text-sm tabular-nums text-muted-foreground">{spend.today.toLocaleString()} today</span>
+            className="t-body tabular-nums text-muted-foreground">{spend.today.toLocaleString()} today</span>
         )}
         <span data-item="credits.balance" data-item-label="Workspace credit balance"
-          className="text-sm tabular-nums text-muted-foreground">Workspace balance {spend.balance.toLocaleString()}</span>
+          className="t-body tabular-nums text-muted-foreground">Workspace balance {spend.balance.toLocaleString()}</span>
       </div>
 
       {/* Exceptions exist only while something is paused or capped. Nothing here when nothing is wrong. */}
       {p.exceptions.length > 0 && (
-        <div role="status" className="mt-3 grid gap-1.5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+        <div role="status" className="t-body mt-3 grid gap-1.5 rounded-lg border p-3"
+          style={{ borderColor: "var(--warning)", backgroundColor: "var(--warning-tint)", color: "var(--warning-ink)" }}>
           {p.exceptions.map((x, i) => (
             <div key={x.id}
               data-item={i === capLine ? "exc.cap-reached" : i === pauseLine ? "exc.paused" : `exc.line.${x.id}`}
@@ -122,43 +124,43 @@ export function Briefing(p: BriefingProps) {
           return (
             <li key={a.id} data-item={`brief.tile.${a.id}`} data-item-label={a.name}
               data-container={`tile.${a.id}`} data-container-label={`the ${a.name} tile`}
-              className={cn("rounded-lg border p-3", selected && "ring-2 ring-ring")}>
+              className={cn("surface-raised rounded-lg border p-3", selected && "ring-2 ring-ring")}>
               <div className="flex items-start gap-2">
-                <Bot className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <FamilyIcon of="agents" className="mt-0.5" />
                 {/* Rule 8: the tile becomes a one-click filter for the ledger below it. */}
                 {rules.r8 ? (
                   <button
-                    className="min-w-0 flex-1 text-left text-sm font-medium hover:underline"
+                    className="t-label min-w-0 flex-1 text-left hover:underline"
                     aria-pressed={selected}
                     onClick={() => p.onFilterAgent(selected ? "all" : a.name)}
                   >
                     {a.name}
                   </button>
                 ) : (
-                  <span className="min-w-0 flex-1 text-sm font-medium">{a.name}</span>
+                  <span className="t-label min-w-0 flex-1">{a.name}</span>
                 )}
-                <span className="shrink-0 text-xs text-muted-foreground">{paused ? "Paused" : "On"}</span>
+                <Chip className="shrink-0" status={paused ? "paused" : "active"}>{paused ? "Paused" : "On"}</Chip>
               </div>
 
-              <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+              <p className="t-small mt-1 tabular-nums text-muted-foreground">
                 {p.runsToday(a)} runs today · {a.spentToday.toLocaleString()} of {a.capPerDay.toLocaleString()} credits today
               </p>
 
               {/* What it can do is education and lives on the library site. What it may never do
                   alone is an approval limit, which is decision-critical and stays (BUILD-BRIEF). */}
               {d.atLevelOne("brief.status") && (
-                <p className="mt-2 text-xs">Never without a person: {a.needsApprovalFor.join(", ").toLowerCase()}</p>
+                <p className="t-small mt-2">Never without a person: {a.needsApprovalFor.join(", ").toLowerCase()}</p>
               )}
 
               {d.atLevelOne("brief.track-record") && track.proposed > 0 && (
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="t-small mt-2 text-muted-foreground">
                   Last 30 days for you: {track.proposed} proposals · you approved {track.approved}, declined {track.declined}, {track.waiting} still waiting.
                 </p>
               )}
 
               {/* The research agent keeps reading a saved list. Its running total, and the switch that stops it. */}
               {a.id === "research" && p.watch && (
-                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2 py-1.5 text-xs">
+                <div className="t-small mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2 py-1.5">
                   <span className="min-w-0 flex-1 tabular-nums">
                     Watching “{p.watch.list}”: {p.watch.done} companies read, {p.watch.credits.toLocaleString()} credits so far
                   </span>
@@ -171,7 +173,7 @@ export function Briefing(p: BriefingProps) {
 
               {/* Rule 4: the link sits on the thing it opens, and is removed rather than left dead. */}
               {a.id === "scoring" && rules.r4 && (
-                <p data-item="set.scoring-link" data-item-label="Scoring rules, or who can change them" className="mt-2 text-xs">
+                <p data-item="set.scoring-link" data-item-label="Scoring rules, or who can change them" className="t-small mt-2">
                   {session.role === "admin" || session.role === "marketer"
                     ? <a className="underline underline-offset-4" href={href("/ollopa/settings/scoring")}>Scoring rules →</a>
                     : <>Scoring rules are changed by {p.admin ? `${p.admin.user}, ${p.admin.title}` : "your admin"}.</>}
@@ -194,21 +196,21 @@ export function Briefing(p: BriefingProps) {
 
         {/* The agent this workspace does not run, in its place, with its description intact. */}
         {missing && (
-          <li className="rounded-lg border border-dashed p-3">
+          <li className="surface-raised rounded-lg border border-dashed p-3">
             <div className="flex items-start gap-2">
               <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-              <span className="min-w-0 flex-1 text-sm font-medium">Scoring agent</span>
+              <span className="t-label min-w-0 flex-1">Scoring agent</span>
             </div>
-            <p className="mt-2 text-xs">Never without a person: changing the primary score model</p>
+            <p className="t-small mt-2">Never without a person: changing the primary score model</p>
             {third.locked ? (
               <div className="mt-3">
                 <Locked feature="A third agent" plan={third.plan} pricePerMonth={third.pricePerMonth} what={third.what}>
                   <Actions surface="card" items={[{ kind: "secondary", label: "Turn the scoring agent on" }]} />
                 </Locked>
-                <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">{third.plan} · {dollars(third.pricePerMonth)} a month for this workspace.</p>
+                <p className="t-small mt-1.5 tabular-nums text-muted-foreground">{third.plan} · {dollars(third.pricePerMonth)} a month for this workspace.</p>
               </div>
             ) : (
-              <p className="mt-3 text-xs">
+              <p className="t-small mt-3">
                 {session.role === "admin"
                   ? <a className="underline underline-offset-4" href={href("/ollopa/settings/agents")}>Turn the scoring agent on</a>
                   : <>{p.admin ? `${p.admin.user}, ${p.admin.title}` : "Your admin"} can turn the scoring agent on.</>}
@@ -218,7 +220,7 @@ export function Briefing(p: BriefingProps) {
         )}
       </ul>
 
-      <p className="mt-3 text-xs text-muted-foreground">
+      <p className="t-small mt-3 text-muted-foreground">
         <span data-item="set.link" data-item-label="Agent settings, or who can change them">{settingsLink}</span>{" "}
         {!rules.r4 && (
           <a data-item="set.scoring-link" data-item-label="Scoring rules, or who can change them"

@@ -6,7 +6,6 @@
 // cap and what it has used, the delivery cell and unsubscribes are on the page whatever the usage
 // number says; everything else is asked of the usage model and never hard-coded.
 import { useMemo, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -19,9 +18,11 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { FAMILY, ink } from "./look"
 import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Door } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -30,28 +31,19 @@ import { businessById } from "../../data/businesses"
 import { BOUNCE_GUARD, CAMPAIGN_CHECKS, TODAY, seedFor, type Audience, type Campaign, type Form } from "../../data/seed"
 import type { Session } from "../../session"
 import type { Business } from "../../usage/model"
+import { familyOf } from "../../identity"
 import { Grid, type GridColumn } from "./grid"
 import { usePref } from "./prefs"
 import { addRow, patchRow, removeRow, useMarketing } from "./store"
 import { netSize, rulesApplied, suppressionCounts, suppressedTotal } from "./derive"
 import { ago, day, num, pct } from "./format"
 
-const STATUS_TONE: Record<string, string> = {
-  Draft: "bg-muted text-muted-foreground",
-  Scheduled: "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200",
-  Sending: "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200",
-  Sent: "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
-  Running: "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
-  Paused: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100",
-  Archived: "bg-muted text-muted-foreground",
-}
-
 /** Status is a word and a colour, never a colour alone; the reason travels with it. */
 export function StatusBadge({ c }: { c: Campaign }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      <Badge variant="secondary" className={STATUS_TONE[c.status] ?? ""}>{c.status}</Badge>
-      {c.pausedBy && <span className="text-xs text-muted-foreground">by {c.pausedBy.toLowerCase()}</span>}
+      <Chip status={c.status}>{c.status}</Chip>
+      {c.pausedBy && <span className="t-small text-muted-foreground">by {c.pausedBy.toLowerCase()}</span>}
     </span>
   )
 }
@@ -63,9 +55,12 @@ export function DeliveryCell({ c }: { c: Campaign }) {
   if (c.sent === 0) return <span className="text-muted-foreground">Nothing sent yet</span>
   return (
     <div className="min-w-0 tabular-nums">
-      <div>{num(c.sent)} sent</div>
-      <div className="text-xs text-muted-foreground">{num(c.delivered)} delivered · {pct(c.delivered, c.sent)}</div>
-      <div className={cn("text-xs", past ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
+      <div className="t-body">{num(c.sent)} sent</div>
+      <div className="t-small text-muted-foreground">{num(c.delivered)} delivered · {pct(c.delivered, c.sent)}</div>
+      <div
+        className={cn("t-small", past ? "font-medium" : "text-muted-foreground")}
+        style={past ? ink(past === "pause" ? "danger" : "warning") : undefined}
+      >
         {num(c.bounced)} bounced · {pct(c.bounced, c.sent)}
         {past === "warn" && ` — past the ${BOUNCE_GUARD.warnPercent}% warn threshold`}
         {past === "pause" && ` — past the ${BOUNCE_GUARD.pausePercent}% pause threshold`}
@@ -84,10 +79,13 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
   // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
   const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
   return (
-    <p id="campaigns-policy" className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b bg-muted/40 px-6 py-2 text-xs">
+    <p id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 border-b bg-muted/40 px-6 py-2">
       <span>Bounce guard: warn {guard.warnPercent}%, pause {guard.pausePercent}%</span>
       <span aria-hidden="true">·</span>
-      <span className={guard.observedPercent >= guard.warnPercent ? "font-medium text-amber-700 dark:text-amber-400" : ""}>
+      <span
+        className={guard.observedPercent >= guard.warnPercent ? "font-medium" : ""}
+        style={guard.observedPercent >= guard.warnPercent ? ink("warning") : undefined}
+      >
         observed {guard.observedPercent}% this week
       </span>
       <span aria-hidden="true">·</span>
@@ -313,7 +311,7 @@ export function CampaignsPage({ session }: { session: Session }) {
     { key: "size", header: "Size", sortBy: (a) => a.size, className: "tabular-nums", cell: (a) => num(a.size) },
     { key: "net", header: "Net size", sortBy: (a) => netSize(a), className: "tabular-nums", cell: (a) => <span className="font-medium">{num(netSize(a))}</span> },
     { key: "suppressed", header: "Suppressed", sortBy: (a) => suppressedTotal(a), cell: (a) => (
-      <ul className="text-xs">
+      <ul className="t-small">
         {suppressionCounts(a).map((s) => (
           <li key={s.key} className={s.on ? "" : "text-muted-foreground"}>
             <span className="tabular-nums">{num(s.count)}</span> {s.label}
@@ -333,19 +331,22 @@ export function CampaignsPage({ session }: { session: Session }) {
         <ActedNote business={session.business} kind="form" id={f.id} edit={formEdits[f.id]} />
       </div>
     ) },
-    { key: "status", header: "Status", sortBy: (f) => f.status, cell: (f) => <Badge variant="secondary" className={f.status === "Live" ? STATUS_TONE.Sent : STATUS_TONE.Draft}>{f.status}</Badge> },
+    { key: "status", header: "Status", sortBy: (f) => f.status, cell: (f) => <Chip status={f.status}>{f.status}</Chip> },
     { key: "submissions", header: "Submissions, 7 days", sortBy: (f) => f.submissions7d, className: "tabular-nums", cell: (f) => num(f.submissions7d) },
     { key: "enrichment", header: "Enrichment spend", sortBy: (f) => f.enrichUsedToday, cell: (f) => (
       <div className="min-w-0 tabular-nums">
-        <div className={f.enrichUsedToday >= f.enrichCapDaily ? "font-medium text-amber-700 dark:text-amber-400" : ""}>
+        <div
+          className={f.enrichUsedToday >= f.enrichCapDaily ? "t-body font-medium" : "t-body"}
+          style={f.enrichUsedToday >= f.enrichCapDaily ? ink("warning") : undefined}
+        >
           {num(f.enrichUsedToday)} of {num(f.enrichCapDaily)} credits today
         </div>
-        <div className="text-xs text-muted-foreground">{num(f.matched)} of {num(f.submissions7d)} matched</div>
+        <div className="t-small text-muted-foreground">{num(f.matched)} of {num(f.submissions7d)} matched</div>
       </div>
     ) },
     { key: "unrouted", header: "Could not route", sortBy: (f) => f.unrouted, className: "tabular-nums", cell: (f) => (
       f.unrouted > 0
-        ? <span className="font-medium text-amber-700 dark:text-amber-400">{num(f.unrouted)} reached nobody</span>
+        ? <span className="font-medium" style={ink("danger")}>{num(f.unrouted)} reached nobody</span>
         : <span className="text-muted-foreground">0</span>
     ) },
     { key: "routes", header: "Routes to", cell: (f) => f.routesTo },
@@ -378,9 +379,12 @@ export function CampaignsPage({ session }: { session: Session }) {
       <PolicyLine business={session.business} admin={admin} from={from} />
 
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-4">
-        <div>
-          <h2 className="text-lg font-semibold">Campaigns</h2>
-          <p className="text-sm text-muted-foreground">One send to an audience, or a lifecycle campaign that runs on a trigger.</p>
+        <div className="min-w-0">
+          <h2 className="t-title inline-flex min-w-0 items-center gap-2" style={{ color: familyOf(FAMILY).ink }}>
+            <FamilyIcon of={FAMILY} size="header" />
+            Campaigns
+          </h2>
+          <p className="t-body text-muted-foreground">One send to an audience, or a lifecycle campaign that runs on a trigger.</p>
         </div>
         <Actions surface="page" items={[
           { kind: "primary", label: "New campaign", onClick: () => setNewPanel(true) },

@@ -13,6 +13,7 @@ import { useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Input } from "@/components/ui/input"
 import { navigate } from "@/app/router"
 import { back, useTrail } from "../../chain"
@@ -134,17 +135,17 @@ function ProfileBlock({ profile, seats }: { profile: Profile; seats: Role[] }) {
   return (
     <div className="grid gap-3">
       {shown.map((r, i) => (
-        <div key={`${r}-${i}`} className="text-sm">
-          <div className="font-medium">{ROLE_LABEL[r]}</div>
+        <div key={`${r}-${i}`} className="t-body">
+          <div className="t-label">{ROLE_LABEL[r]}</div>
           <div className="text-muted-foreground">{sidebarPreview(profile, r).join(" · ")}</div>
         </div>
       ))}
-      <div className="text-sm">
-        <div className="font-medium">Not in the sidebar</div>
+      <div className="t-body">
+        <div className="t-label">Not in the sidebar</div>
         {out.length === 0 ? (
           <div className="text-muted-foreground">Nothing. Every seat exists and every page has a seat that lives in it.</div>
         ) : (
-          <ul className="mt-1 grid gap-1 text-muted-foreground">
+          <ul className="t-body mt-1 grid gap-1 text-muted-foreground">
             {out.map((o) => (
               <li key={o.label}>{o.label} ({o.seats}) — comes back on {o.signal}</li>
             ))}
@@ -182,8 +183,8 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   if (session.role !== "admin") {
     return (
       <div className="mx-auto max-w-xl px-6 py-16">
-        <h1 className="text-lg font-semibold">Your workspace is already set up</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <h1 className="t-section">Your workspace is already set up</h1>
+        <p className="t-body mt-3 text-muted-foreground">
           {declared.user} set it up on {longDate(declared.on)}. They can change how your team works in Settings › How your team works.
         </p>
         <Actions className="mt-6" surface="page" items={[{ label: "Back to Home", kind: "secondary", onClick: () => navigate("/ollopa") }]} />
@@ -215,34 +216,37 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
       {!inShell && (
         <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
-          <span className="text-sm font-semibold">{workspace.name}</span>
-          <span className="text-sm text-muted-foreground">· {session.user}</span>
+          <span className="t-label">{workspace.name}</span>
+          <span className="t-body text-muted-foreground">· {session.user}</span>
         </header>
       )}
 
       <div className="mx-auto max-w-3xl px-6 py-10">
-        <h1 className="text-2xl font-semibold">How your team works</h1>
+        <h1 className="t-title flex items-center gap-2">
+          <FamilyIcon of="settings" size="header" />
+          How your team works
+        </h1>
 
         <section className="mt-8 grid gap-3 sm:grid-cols-3">
-          <label className="text-sm">
+          <label className="t-label">
             <span className="text-muted-foreground">Workspace name</span>
             <Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
           </label>
-          <label className="text-sm">
+          <label className="t-label">
             <span className="text-muted-foreground">Timezone</span>
             <Input className="mt-1" value={zone} onChange={(e) => setZone(e.target.value)} />
           </label>
-          <label className="text-sm">
+          <label className="t-label">
             <span className="text-muted-foreground">Currency</span>
             <Input className="mt-1" value={currency} onChange={(e) => setCurrency(e.target.value)} />
           </label>
         </section>
 
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium">What are you here to do first?</legend>
+          <legend className="t-section">What are you here to do first?</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {JOBS.map((j) => (
-              <label key={j.id} className={cn("flex items-center gap-2 rounded-lg border bg-background p-3 text-sm", firstJob === j.id && "border-foreground")}>
+              <label key={j.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border p-3", firstJob === j.id && "border-foreground")}>
                 <input
                   type="radio"
                   name="firstJob"
@@ -256,23 +260,23 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
         </fieldset>
 
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium">How many people will use it?</legend>
+          <legend className="t-section">How many people will use it?</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {SIZES.map((s) => (
-              <label key={s.id} className={cn("flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm", people === s.id && "border-foreground")}>
+              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border px-3 py-2", people === s.id && "border-foreground")}>
                 <input type="radio" name="people" checked={people === s.id} onChange={() => { setPeople(s.id); save({ people: s.id }) }} />
                 {s.label}
               </label>
             ))}
           </div>
-          <p className="mt-2 text-sm">{priceLine(people)}</p>
+          <p className="mt-2"><Chip status="new">{priceLine(people)}</Chip></p>
         </fieldset>
 
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium">Which of these jobs exist here?</legend>
+          <legend className="t-section">Which of these jobs exist here?</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {SEAT_JOBS.map((s) => (
-              <label key={s.id} className={cn("flex items-center gap-2 rounded-lg border bg-background p-3 text-sm", seats.includes(s.id) && !everything && "border-foreground", everything && "opacity-60")}>
+              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border p-3", seats.includes(s.id) && !everything && "border-foreground", everything && "opacity-60")}>
                 <input
                   type="checkbox"
                   checked={seats.includes(s.id) && !everything}
@@ -284,15 +288,15 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                 {s.label}
               </label>
             ))}
-            <label className={cn("flex items-center gap-2 rounded-lg border bg-background p-3 text-sm sm:col-span-2", everything && "border-foreground")}>
+            <label className={cn("surface-raised t-body flex items-center gap-2 rounded-[10px] border p-3 sm:col-span-2", everything && "border-foreground")}>
               <input type="checkbox" checked={everything} onChange={() => { const v = !everything; setEverything(v); setSeats(v ? [] : seats); save({ everything: v, seats: v ? [] : seats }) }} />
               We all do everything
             </label>
           </div>
         </fieldset>
 
-        <section aria-live="polite" className="mt-8 rounded-lg border bg-background p-4">
-          <h2 className="text-sm font-semibold">
+        <section aria-live="polite" className="surface-raised mt-8 rounded-[10px] border p-4">
+          <h2 className="t-section">
             {answered ? PROFILE_LABEL[profile] : "Answer the three questions and this will say what your team gets"}
             {!answered && (firstJob || people || seats.length) ? ` · ${PROFILE_LABEL[profile]} so far` : ""}
           </h2>
@@ -305,7 +309,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           <div className="mt-4 border-t pt-3">
             <h3>
               <button
-                className="flex items-center gap-1 text-sm font-medium"
+                className="t-label flex items-center gap-1"
                 aria-expanded={doorOpen}
                 onClick={() => setDoorOpen((v) => !v)}
               >
@@ -317,7 +321,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
               <div className="mt-3 grid gap-4">
                 {others.map((p) => (
                   <div key={p}>
-                    <div className="text-sm font-medium">{PROFILE_LABEL[p]}</div>
+                    <div className="t-label">{PROFILE_LABEL[p]}</div>
                     <div className="mt-1"><ProfileBlock profile={p} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} /></div>
                   </div>
                 ))}
@@ -327,7 +331,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
         </section>
 
         <section className="mt-8">
-          <h2 className="text-sm font-medium">Invite the people you counted</h2>
+          <h2 className="t-section">Invite the people you counted</h2>
           <div className="mt-2 grid gap-2">
             {invites.map((row, i) => (
               <div key={i} className="flex flex-wrap gap-2">
@@ -338,7 +342,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
                 />
                 <select
-                  className="rounded-md border bg-background px-2 text-sm"
+                  className="surface-raised t-body rounded-[8px] border px-2"
                   aria-label="Seat"
                   value={row.seat}
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: e.target.value as Role } : r)))}

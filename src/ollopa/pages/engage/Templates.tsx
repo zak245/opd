@@ -16,7 +16,8 @@ import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
-import { type Col, DataTable, Pill, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */
 export interface CopyRow {
@@ -113,9 +114,9 @@ export function TemplatesPage({ session }: { session: Session }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <RowOpen to={`/ollopa/templates/${r.id}`} onOpen={() => open(r)}>{r.name}</RowOpen>
-            <Pill tone="muted">{r.kind}</Pill>
+            <Chip family="templates" icon={false}>{r.kind}</Chip>
           </div>
-          <div className="text-xs text-muted-foreground">{r.folder}</div>
+          <div className="t-small text-muted-foreground">{r.folder}</div>
         </div>
       ),
     },
@@ -135,7 +136,10 @@ export function TemplatesPage({ session }: { session: Session }) {
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
         <div>
-          <h2 className="text-lg font-semibold">Templates and snippets</h2>
+          <h2 className="t-title flex items-center gap-2">
+            <FamilyIcon of="templates" size="header" />
+            Templates and snippets
+          </h2>
         </div>
         <Button onClick={() => toast("New template · name it, then write the subject and body")}>New template</Button>
       </div>

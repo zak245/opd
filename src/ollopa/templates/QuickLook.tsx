@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { FlatProvider } from "../ui/Door"
+import { FamilyIcon } from "../ui/Identity"
+import { familyOf } from "../identity"
 import { Actions } from "../ui/Actions"
 import { type ReactNode } from "react"
 
@@ -36,6 +38,8 @@ export interface QuickLookEditable {
 }
 
 export interface QuickLookProps {
+  /** The family of the record this is level one of: its top bar and its icon (DESIGN.md §5). */
+  family?: string
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
@@ -58,7 +62,7 @@ export interface QuickLookProps {
   list?: { index: number; total: number; onStep: (by: 1 | -1) => void }
 }
 
-export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen, openHref, list }: QuickLookProps) {
+export function QuickLook({ family, open, onOpenChange, title, fields, editable, onOpen, openHref, list }: QuickLookProps) {
   const [draft, setDraft] = useState(editable?.value ?? "")
   const first = useRef<HTMLButtonElement>(null)
   useEffect(() => { setDraft(editable?.value ?? "") }, [editable?.value, open])
@@ -84,7 +88,7 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen,
 
   const editor = editable && (
     <div className="grid gap-1.5">
-      <Label htmlFor="quicklook-edit" className="text-xs text-muted-foreground">{editable.label}</Label>
+      <Label htmlFor="quicklook-edit" className="t-label text-muted-foreground">{editable.label}</Label>
       {editable.options ? (
         <Select value={draft} onValueChange={(v) => { setDraft(v); editable.onChange(v) }}>
           <SelectTrigger id="quicklook-edit" className="w-full"><SelectValue /></SelectTrigger>
@@ -103,14 +107,20 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen,
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-sm">
+      <SheetContent side="right" className="surface-raised w-full gap-0 p-0 sm:max-w-sm">
+        {/* A thin bar in the record's family hue, so the drawer says what it is holding before it is
+            read — the same mark the pane carries (DESIGN.md §5). */}
+        <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />
         <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle className="t-section">{title}</SheetTitle>
+          <SheetTitle className="t-section inline-flex items-center gap-2">
+            <FamilyIcon of={family} size="header" />
+            {title}
+          </SheetTitle>
           <SheetDescription className="sr-only">A glance at this record. Open it for everything else.</SheetDescription>
         </SheetHeader>
         {/* Flat by construction: anything openable rendered in here renders in place instead. */}
         <FlatProvider value={true}>
-          <dl className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 text-sm">
+          <dl className="t-body min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
             {fields.map((f) => (
               editableInline && editable && f.label === editable.label ? (
                 <div key={f.label}>{editor}</div>
@@ -131,7 +141,7 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen,
                 Previous
                 <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">[</kbd>
               </Button>
-              <span className="text-xs tabular-nums text-muted-foreground">{at + 1} of {list.total}</span>
+              <span className="t-small tabular-nums text-muted-foreground">{at + 1} of {list.total}</span>
               <Button size="sm" variant="ghost" className="ml-auto" disabled={at >= list.total - 1} onClick={() => list.onStep(1)}>
                 Next
                 <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">]</kbd>

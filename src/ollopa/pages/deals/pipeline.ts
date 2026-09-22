@@ -9,6 +9,7 @@ import {
 } from "../../data/seed"
 import type { BusinessDef } from "../../data/businesses"
 import { ago, day, money } from "../deal/format"
+import { statusOf } from "../../identity"
 
 /** Five stages. There is no Closed lost: a lost deal is archived with a reason and leaves the board. */
 export const OPEN_STAGES: DealStage[] = ["Qualified", "Discovery", "Proposal", "Negotiation"]
@@ -259,4 +260,13 @@ export function lostConsequenceText(deal: Deal, seed: Seed, _b: BusinessDef, ope
 
 function crmOf(seed: Seed) {
   return seed.integrations.find((i) => /crm|salesforce|hubspot/i.test(`${i.kind} ${i.name}`))
+}
+
+/**
+ * The status word a deal warning carries, so the chip's colour comes from the registry and not from
+ * this file (DESIGN.md §5). Overdue is a date already missed and the registry calls that danger;
+ * the other five are a number against a threshold, which is what "warning" means.
+ */
+export function warningStatus(kind: string): string {
+  return statusOf(kind) === "paused" ? "warning" : kind
 }

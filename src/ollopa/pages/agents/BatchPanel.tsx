@@ -8,6 +8,7 @@
 import { useEffect, useRef } from "react"
 import { Panel } from "../../ui/Panel"
 import { ApproveBar } from "../../ui/ApproveBar"
+import { Chip } from "../../ui/Identity"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import type { AgentEvent, Seed } from "../../data/seed"
 import type { Session } from "../../session"
@@ -52,7 +53,7 @@ export function BatchPanel(p: BatchPanelProps) {
       }
     >
       {held.length > 0 && (
-        <p className="mb-3 rounded-md bg-muted px-2 py-1.5 text-xs">
+        <p className="t-small mb-3 rounded-md bg-muted px-2 py-1.5">
           {held.length} {held.length === 1 ? "item stays" : "items stay"} behind: {held.map((e) => reasonHeld(e, seed, session)).join("; ")}.
         </p>
       )}
@@ -61,10 +62,13 @@ export function BatchPanel(p: BatchPanelProps) {
           <Item key={e.id} e={e} seed={seed} session={session} currency={currency} draft={p.drafts[e.id] ?? ""} read={p.read.has(e.id)} onRead={() => p.onRead(e.id)} />
         ))}
         {held.map((e) => (
-          <li key={e.id} className="rounded-lg border border-dashed p-3 text-sm">
-            <p className="font-medium">{e.agent} · {e.summary}</p>
+          <li key={e.id} className="surface-raised t-body rounded-lg border border-dashed p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="t-label">{e.agent} · {e.summary}</p>
+              <Chip status="paused">Held back</Chip>
+            </div>
             <ConsequenceLine {...consequenceFor(e, seed, currency)} className="mt-1" />
-            <p className="mt-1 text-xs text-muted-foreground">Stays in the queue: {reasonHeld(e, seed, session)}.</p>
+            <p className="t-small mt-1 text-muted-foreground">Stays in the queue: {reasonHeld(e, seed, session)}.</p>
           </li>
         ))}
       </ul>
@@ -94,11 +98,14 @@ function Item({ e, seed, session, currency, draft, read, onRead }: {
   }, [read])
 
   return (
-    <li ref={box} className="rounded-lg border p-3 text-sm">
-      <p className="font-medium">{e.surface === "mcp" || e.surface === "cli" ? e.actorUser : e.agent} · {e.summary}</p>
-      <ConsequenceLine {...consequenceFor(e, seed, currency)} className="mt-1 text-[13px] text-foreground" />
-      <p className="mt-1 text-xs text-muted-foreground">Waiting since {day(e.when)} {e.at} · {read ? "read" : "not read yet"}</p>
-      {draft && <pre className="mt-2 whitespace-pre-wrap rounded-md bg-muted p-2 font-sans text-xs">{draft}</pre>}
+    <li ref={box} className="surface-raised t-body rounded-lg border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="t-label">{e.surface === "mcp" || e.surface === "cli" ? e.actorUser : e.agent} · {e.summary}</p>
+        <Chip status="waiting">Waiting</Chip>
+      </div>
+      <ConsequenceLine {...consequenceFor(e, seed, currency)} className="t-label mt-1 font-normal text-foreground" />
+      <p className="t-small mt-1 text-muted-foreground">Waiting since {day(e.when)} {e.at} · {read ? "read" : "not read yet"}</p>
+      {draft && <pre className="t-small mt-2 whitespace-pre-wrap rounded-md bg-muted p-2 font-sans">{draft}</pre>}
     </li>
   )
 }

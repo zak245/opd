@@ -18,6 +18,7 @@ import { closeBeside, openBeside, openBesideNested, type BesideComponent } from 
 import { follow } from "../../chain"
 import { clearEdit, editOf, recordEdit, useEdit } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { declarePaneFields, useBesideDone } from "../../ui/Beside"
 import { useDisclosure, type Disclosure } from "../../ui/useDisclosure"
 import { seedFor } from "../../data/seed"
@@ -25,7 +26,6 @@ import { Inbox, ThreadRoute } from "./Inbox"
 import { Tasks } from "./Tasks"
 import { originHere } from "./acts"
 import { aeSeats, calendarOf, contactIndex, dealFor, repliesFor, tasksFor } from "./data"
-import { Badge } from "@/components/ui/badge"
 import { day, dueLabel, localTime, tomorrow, waiting } from "./format"
 
 export const nodes: Record<string, PageComponent> = {
@@ -42,8 +42,8 @@ function say(text: string) {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="min-w-0">{children}</dd>
+      <dt className="t-label text-muted-foreground">{label}</dt>
+      <dd className="t-body min-w-0">{children}</dd>
     </div>
   )
 }
@@ -134,22 +134,28 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
       item: "inbox.agent-class",
       label: "Read as",
       value: (
-        <span className="flex flex-wrap items-baseline gap-2">
-          <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-normal">{r.outcome}</Badge>
-          <span className="text-xs text-muted-foreground">by {r.classifiedBy ?? "nobody yet"}</span>
+        <span className="flex flex-wrap items-center gap-2">
+          <Chip status={r.outcome}>{r.outcome}</Chip>
+          <span className="t-small text-muted-foreground">by {r.classifiedBy ?? "nobody yet"}</span>
         </span>
       ),
     },
     { item: "inbox.list.row", label: "Waiting", value: waiting(r.received) },
     { item: "inbox.list.sequence-step", label: "Sequence", value: `${r.sequence} · step ${r.step.n} of ${r.step.of}` },
-    { item: "inbox.filter.mailbox", label: "To", value: <span className="font-mono text-xs">{r.box}</span> },
+    { item: "inbox.filter.mailbox", label: "To", value: <span className="font-mono t-small">{r.box}</span> },
     { item: "inbox.list.owner", label: "Owner", value: r.boxOwner },
     {
       item: "inbox.thread.contact-details",
       label: "Email",
-      value: <span className="font-mono text-xs">{contact?.email}{contact && ` · ${contact.emailStatus}`}</span>,
+      value: <span className="font-mono t-small">{contact?.email}{contact && ` · ${contact.emailStatus}`}</span>,
     },
-    { item: "inbox.thread.contact-details", label: "Open deal", value: deal ? `${deal.name} · ${deal.stage}` : "None" },
+    {
+      item: "inbox.thread.contact-details",
+      label: "Open deal",
+      value: deal
+        ? <span className="flex items-center gap-1.5"><FamilyIcon of="deal" label="Deal" />{deal.name} · {deal.stage}</span>
+        : "None",
+    },
     { item: "inbox.thread.activity", label: "Opens and clicks", value: `${contact?.opens ?? 0} opens · ${contact?.replies ?? 0} replies` },
     { item: "inbox.thread.crm-sync", label: seed.workspace.crm ?? "CRM", value: contact?.crmSyncedAt ? `Synced ${day(contact.crmSyncedAt)}` : "Not synced" },
     { item: "inbox.thread.earlier-messages", label: "Earlier", value: `${sent} message${sent === 1 ? "" : "s"} sent before this reply` },
@@ -165,23 +171,24 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
           the thread panel's own item, so a seat that does not hold the thread does not hold this. */}
       {d.atLevelOne("inbox.thread.panel") && (
       <article className="rounded-lg border p-3">
-        <p className="whitespace-pre-line text-sm">{r.body}</p>
+        <p className="t-body whitespace-pre-line">{r.body}</p>
         {r.outcome === "Not now" && r.followUpOn && (
-          <p className="pt-2 text-xs text-muted-foreground">They named a date: {day(r.followUpOn)}.</p>
+          <p className="t-small pt-2 text-muted-foreground">They named a date: {day(r.followUpOn)}.</p>
         )}
         {r.outcome === "Out of office" && r.returnsOn && (
-          <p className="pt-2 text-xs text-muted-foreground">Back on {day(r.returnsOn)}. The sequence resumes then by itself.</p>
+          <p className="t-small pt-2 text-muted-foreground">Back on {day(r.returnsOn)}. The sequence resumes then by itself.</p>
         )}
       </article>
       )}
 
       {/* The contact, one step in — the record's own Contact line made a destination, because
           navigation in a pane is a link and not an act (DESIGN.md §1). */}
-      <p className="border-t pt-3">
+      <p className="flex items-center gap-1.5 border-t pt-3">
+        <FamilyIcon of="person" label="Person" />
         <a
           href={href(`/ollopa/people/${r.contactId}`)}
           onClick={(e) => { if (!e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); openBesideNested({ kind: "person", id: r.contactId }) } }}
-          className="text-xs font-medium underline decoration-muted-foreground underline-offset-4 hover:decoration-current"
+          className="t-label underline decoration-muted-foreground underline-offset-4 hover:decoration-current"
         >
           {r.contact}
         </a>
@@ -194,7 +201,7 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
       {calendar || acts.length > 0 ? (
         <Actions surface="pane" layout="stack" items={acts} />
       ) : (
-        <p className="text-xs text-muted-foreground">No calendar is connected, so nothing can be booked from here.</p>
+        <p className="t-small text-muted-foreground">No calendar is connected, so nothing can be booked from here.</p>
       )}
     </div>
   )
@@ -275,37 +282,38 @@ const TaskBeside: BesideComponent = ({ session, id, target }) => {
     {
       item: "tasks.rows",
       label: "Due",
-      value: <span className={dueLabel(t.due).startsWith("Overdue") ? "font-medium text-destructive" : undefined}>{dueLabel(t.due)}</span>,
+      value: dueLabel(t.due).startsWith("Overdue")
+        ? <Chip status="overdue" className="tabular-nums">{dueLabel(t.due)}</Chip>
+        : <span className="tabular-nums">{dueLabel(t.due)}</span>,
     },
     { item: "tasks.local-time", label: "Their time", value: contact?.tz ? localTime(contact.tz) : null },
-    { item: "tasks.rows", label: "Type", value: <Badge variant="outline" className="text-xs">{t.kind}</Badge> },
+    { item: "tasks.rows", label: "Type", value: <Chip family="tasks">{t.kind}</Chip> },
     {
       item: "tasks.rows",
       label: "Contact",
       // The one step in. Navigation in a pane is a link, so the record's own Contact line is the
       // destination rather than a fourth control under the acts (DESIGN.md §1).
       value: (
-        <>
+        <span className="flex flex-wrap items-center gap-1.5">
+          <FamilyIcon of="person" label="Person" />
           <a
             href={href(`/ollopa/people/${t.contactId}`)}
             onClick={(e) => { if (!e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); openBesideNested({ kind: "person", id: t.contactId }) } }}
-            className="font-medium underline decoration-muted-foreground underline-offset-4 hover:decoration-current"
+            className="underline decoration-muted-foreground underline-offset-4 hover:decoration-current"
           >
             {t.contact}
           </a>
-          <span className="text-muted-foreground"> · {contact?.title ?? "—"}</span>
-        </>
+          <span className="text-muted-foreground">· {contact?.title ?? "—"}</span>
+        </span>
       ),
     },
     {
       item: "tasks.dnc-badge",
       label: "Phone",
       value: (
-        <span className="flex flex-wrap items-baseline gap-2">
-          <span className="font-mono text-xs">{contact?.phoneNumber ?? "No number"}</span>
-          {contact?.doNotCall && (
-            <span className="rounded border border-destructive px-1 text-xs text-destructive">Do not call · {contact.doNotCallSource}</span>
-          )}
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="font-mono">{contact?.phoneNumber ?? "No number"}</span>
+          {contact?.doNotCall && <Chip status="blocked">Do not call · {contact.doNotCallSource}</Chip>}
         </span>
       ),
     },
@@ -331,7 +339,7 @@ const TaskBeside: BesideComponent = ({ session, id, target }) => {
           waiting. `tasks.summary` is critical, so it is on the surface for every seat that has
           the page — it is never a thing the pane decides for itself. */}
       {d.atLevelOne("tasks.summary") && t.sequence && t.status === "Open" && dueLabel(t.due).startsWith("Overdue") && (
-        <p className="text-xs text-destructive">The sequence waits at this step.</p>
+        <p className="t-small" style={{ color: "var(--danger-ink)" }}>The sequence waits at this step.</p>
       )}
 
       {/* The three acts a task exists for, in the order the queue runs them: Done is the one act

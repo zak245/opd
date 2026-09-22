@@ -14,7 +14,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,6 +22,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { href, useRoute } from "@/app/router"
 import { closeBeside, openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { familyOf } from "../../identity"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -351,12 +352,16 @@ export function Tasks({ session }: { session: Session }) {
             <Checkbox aria-label={`Select the ${t.kind.toLowerCase()} for ${t.contact}`} checked={selected} onCheckedChange={(v) => setSelection((s) => (v === true ? [...s, t.id] : s.filter((x) => x !== t.id)))} />
           </span>
 
-          <span className={cn("w-24 shrink-0 pt-0.5 text-sm tabular-nums", overdue ? "font-medium text-destructive" : "text-muted-foreground")}>
-            {dueLabel(t.due)}
-            {showLocalTime && c?.tz && <span className="block text-xs font-normal text-muted-foreground">{localTime(c.tz)} local</span>}
+          <span className="w-24 shrink-0 pt-0.5">
+            {/* When it is due is a state: overdue carries its word in the danger tint, and
+                anything else is the date itself, neutral (DESIGN.md §5). */}
+            {overdue
+              ? <Chip status="overdue" className="tabular-nums">{dueLabel(t.due)}</Chip>
+              : <span className="t-body tabular-nums text-muted-foreground">{dueLabel(t.due)}</span>}
+            {showLocalTime && c?.tz && <span className="t-small block text-muted-foreground">{localTime(c.tz)} local</span>}
           </span>
 
-          <span className="w-24 shrink-0 pt-0.5"><Badge variant="outline" className="text-xs">{t.kind}</Badge></span>
+          <span className="w-24 shrink-0 pt-0.5"><Chip family="tasks">{t.kind}</Chip></span>
 
           <span className="min-w-[12rem] flex-1 basis-48">
             <button
@@ -369,28 +374,28 @@ export function Tasks({ session }: { session: Session }) {
             >
               {t.contact}
             </button>
-            <span className="block truncate text-xs text-muted-foreground">{c?.title} · {t.company}</span>
+            <span className="t-small block truncate text-muted-foreground">{c?.title} · {t.company}</span>
             {showPhone && t.kind === "Call" && (
-              <span className="flex flex-wrap items-center gap-x-2 pt-0.5 text-xs">
+              <span className="flex flex-wrap items-center gap-x-2 pt-0.5 t-small">
                 <span className="font-mono">{c?.phoneNumber ?? "No number"}</span>
-                {c?.doNotCall && <span className="rounded border border-destructive px-1 text-destructive">Do not call · {c.doNotCallSource}</span>}
+                {c?.doNotCall && <Chip status="blocked">Do not call · {c.doNotCallSource}</Chip>}
               </span>
             )}
             {scores && c && (
-              <span className="block pt-0.5 text-xs">Fit {c.score} {c.score >= c.scorePrevious ? "▲" : "▼"} from {c.scorePrevious}</span>
+              <span className="block pt-0.5 t-small">Fit {c.score} {c.score >= c.scorePrevious ? "▲" : "▼"} from {c.scorePrevious}</span>
             )}
           </span>
 
           <span className="min-w-[12rem] flex-1 basis-48">
-            <span className="block text-sm">{t.step ? `Step ${t.step.n} of ${t.step.of} · ${t.step.title}` : t.title}</span>
-            {waiting && <span className="block text-xs text-destructive">The sequence waits at this step.</span>}
+            <span className="t-body block">{t.step ? `Step ${t.step.n} of ${t.step.of} · ${t.step.title}` : t.title}</span>
+            {waiting && <span className="t-small block" style={{ color: "var(--danger-ink)" }}>The sequence waits at this step.</span>}
           </span>
 
-          <span className="w-36 shrink-0 truncate text-xs text-muted-foreground">
+          <span className="t-small w-36 shrink-0 truncate text-muted-foreground">
             {t.createdBy === "sequence" ? t.sequence : t.createdBy === "agent" ? t.creator : "By hand"}
           </span>
 
-          {showOwnerColumn && <span className="w-32 shrink-0 truncate text-xs text-muted-foreground">{t.owner}</span>}
+          {showOwnerColumn && <span className="t-small w-32 shrink-0 truncate text-muted-foreground">{t.owner}</span>}
 
           <span className="flex w-full min-w-0 flex-wrap items-center gap-1 md:w-auto md:shrink-0 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
             {/* Done is the act a task exists for, so it is the row's one filled control; the rest
@@ -434,7 +439,7 @@ export function Tasks({ session }: { session: Session }) {
                 {t.createdBy === "manual" && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive" onSelect={() => remove(t)}>Delete this task</DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onSelect={() => remove(t)}>Delete this task</DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
@@ -457,11 +462,11 @@ export function Tasks({ session }: { session: Session }) {
         <div className="pt-1">
           <Door id={`tasks.row.${t.id}`} label="History and contact" defaultOpen={false}>
             {scores && contactOf(t.contactId) && (
-              <p className="pb-1 text-sm">
+              <p className="pb-1 t-body">
                 Fit {contactOf(t.contactId)!.score}: {contactOf(t.contactId)!.scoreReasons.join(", ")}
               </p>
             )}
-            <ul className="text-sm">
+            <ul className="t-body">
               {t.history.map((h, k) => (
                 <li key={k} className="flex flex-wrap gap-x-3 py-0.5">
                   <span className="tabular-nums text-muted-foreground">{day(h.when)}</span>
@@ -471,13 +476,13 @@ export function Tasks({ session }: { session: Session }) {
               ))}
               {t.history.length === 0 && <li className="text-muted-foreground">No steps have run yet.</li>}
             </ul>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 pt-2 text-sm">
-              <dt className="text-muted-foreground">Email</dt><dd className="font-mono text-xs">{c?.email} · {c?.emailStatus}</dd>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 pt-2 t-body">
+              <dt className="text-muted-foreground">Email</dt><dd className="font-mono t-small">{c?.email} · {c?.emailStatus}</dd>
               <dt className="text-muted-foreground">Last activity</dt><dd>{day(c?.lastActivity)}</dd>
               <dt className="text-muted-foreground">Owner</dt><dd>{t.owner}</dd>
             </dl>
             {t.notes.length > 0 && (
-              <ul className="pt-2 text-sm">
+              <ul className="pt-2 t-body">
                 {t.notes.map((n, k) => <li key={k}><span className="text-muted-foreground">{day(n.when)} · {n.who}: </span>{n.text}</li>)}
               </ul>
             )}
@@ -496,7 +501,8 @@ export function Tasks({ session }: { session: Session }) {
       <div className="shrink-0 px-4 pt-4 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="t-title flex items-center gap-2">
+              <FamilyIcon of="tasks" size="header" label={familyOf("tasks").name} />
               Tasks
               {import.meta.env.DEV && (
                 <span data-renders="tasks" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
@@ -504,18 +510,23 @@ export function Tasks({ session }: { session: Session }) {
                 </span>
               )}
             </h2>
-            <p className="text-sm tabular-nums">
+            <p className="t-body tabular-nums">
               <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Today" })) }}>{counts.today} due today</button>
               {" · "}
-              <button className={cn("underline underline-offset-4", counts.overdue > 0 && "font-medium text-destructive")} onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Overdue" })) }}>{counts.overdue} overdue</button>
+              <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Overdue" })) }}>
+                {counts.overdue > 0 ? <Chip status="overdue">{counts.overdue} overdue</Chip> : <>{counts.overdue} overdue</>}
+              </button>
               {" · "}
               <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "All open" })) }}>{counts.later} later</button>
             </p>
             {!teamView && admin && (
-              <p className="pt-0.5 text-xs text-muted-foreground">Your tasks. {admin.user} ({admin.title}) can see and reassign everyone's.</p>
+              <p className="t-small pt-0.5 text-muted-foreground">Your tasks. {admin.user} ({admin.title}) can see and reassign everyone's.</p>
             )}
             {counts.overdue > 0 && (
-              <p className="pt-0.5 text-xs text-destructive">{counts.overdue} sequence {counts.overdue === 1 ? "contact is" : "contacts are"} stuck waiting at a step.</p>
+              // A line with its word, in the danger ink, rather than a sentence painted red.
+              <p className="t-small pt-0.5" style={{ color: "var(--danger-ink)" }}>
+                {counts.overdue} sequence {counts.overdue === 1 ? "contact is" : "contacts are"} stuck waiting at a step.
+              </p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -576,7 +587,7 @@ export function Tasks({ session }: { session: Session }) {
                 </Select>
               )}
               <ExpandAll />
-              <span className="ml-auto text-xs tabular-nums text-muted-foreground">{rows.length} shown</span>
+              <span className="ml-auto t-small tabular-nums text-muted-foreground">{rows.length} shown</span>
             </div>
 
             <div className="flex flex-wrap gap-4 pt-1">
@@ -603,7 +614,7 @@ export function Tasks({ session }: { session: Session }) {
               <div className="min-w-64 flex-1">
                 <Door id="tasks.options" label="Table options: columns, export">
                   <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-2 text-sm">
+                    <label className="flex items-center gap-2 t-body">
                       <Checkbox checked={showOwnerColumn} disabled={!teamView} onCheckedChange={() => setOwner((o) => (o === "Everyone" ? session.user : "Everyone"))} />
                       Owner column
                     </label>
@@ -615,7 +626,7 @@ export function Tasks({ session }: { session: Session }) {
           </div>
 
           {selection.length > 0 && (
-            <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 text-sm sm:px-6">
+            <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 t-body sm:px-6">
               <span className="tabular-nums">{selection.length} selected</span>
               <Actions
                 surface="card"
@@ -671,7 +682,7 @@ export function Tasks({ session }: { session: Session }) {
       >
         <div className="space-y-3">
           <label className="block text-xs text-muted-foreground">Contact<Input className="mt-1 h-8" placeholder="Search people" aria-label="Contact" /></label>
-          <label className="block text-xs text-muted-foreground">
+          <label className="block t-label text-muted-foreground">
             Type
             <Select defaultValue="Call">
               <SelectTrigger className="mt-1 h-8" aria-label="Type"><SelectValue /></SelectTrigger>
@@ -682,7 +693,7 @@ export function Tasks({ session }: { session: Session }) {
           <label className="block text-xs text-muted-foreground">Title<Input className="mt-1 h-8" aria-label="Title" /></label>
           <label className="block text-xs text-muted-foreground">Note<Textarea className="mt-1" rows={3} aria-label="Note" /></label>
           {teamView && (
-            <label className="block text-xs text-muted-foreground">
+            <label className="block t-label text-muted-foreground">
               Owner
               <Select defaultValue={session.user}>
                 <SelectTrigger className="mt-1 h-8" aria-label="Owner"><SelectValue /></SelectTrigger>

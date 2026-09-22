@@ -24,6 +24,8 @@ import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { FAMILY, PERSON_FAMILY, ink } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -51,15 +53,18 @@ function Funnel({ c }: { c: Campaign }) {
       <ol className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-6">
         {steps.map((s) => (
           <li key={s.label}>
-            <div className="text-xs text-muted-foreground">{s.label}</div>
-            <div className="text-lg font-semibold tabular-nums">{num(s.n)}</div>
-            <div className="text-xs tabular-nums text-muted-foreground">{s.label === "Sent" ? c.goal : pct(s.n, s.of)}</div>
+            <div className="t-label text-muted-foreground">{s.label}</div>
+            <div className="t-section tabular-nums">{num(s.n)}</div>
+            <div className="t-small tabular-nums text-muted-foreground">{s.label === "Sent" ? c.goal : pct(s.n, s.of)}</div>
           </li>
         ))}
       </ol>
       {/* Bounced and unsubscribed are the cost of the send and sit on the same line as the rest. */}
-      <p className="pt-3 text-sm">
-        <span className={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? "font-medium text-amber-700 dark:text-amber-400" : ""}>
+      <p className="t-body pt-3">
+        <span
+          className={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? "font-medium" : ""}
+          style={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? ink("warning") : undefined}
+        >
           {num(c.bounced)} bounced · {pct(c.bounced, c.sent)}
         </span>
         <span className="text-muted-foreground"> (warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%)</span>
@@ -86,12 +91,12 @@ function Previews({ c }: { c: Campaign }) {
   return (
     <div className="flex flex-wrap items-start gap-4">
       <figure className="min-w-0 flex-1">
-        <figcaption className="pb-1 text-xs text-muted-foreground">Desktop</figcaption>
-        <div className="min-h-40 rounded-md border p-3 text-sm">{body}</div>
+        <figcaption className="t-label pb-1 text-muted-foreground">Desktop</figcaption>
+        <div className="surface-raised t-body min-h-40 rounded-md border p-3">{body}</div>
       </figure>
       <figure>
-        <figcaption className="pb-1 text-xs text-muted-foreground">Phone, 400 px</figcaption>
-        <div className="min-h-40 w-[200px] rounded-md border p-2 text-xs">{body}</div>
+        <figcaption className="t-label pb-1 text-muted-foreground">Phone, 400 px</figcaption>
+        <div className="surface-raised t-small min-h-40 w-[200px] rounded-md border p-2">{body}</div>
       </figure>
     </div>
   )
@@ -363,12 +368,15 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         )}
       </div>
       <table className="w-full text-xs">
-        <thead><tr className="text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
+        <thead><tr className="t-label text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
         <tbody>
           {recipientRows.map((p) => (
             <tr key={p.id} className="border-t" data-item={p.id} data-item-label={p.name}>
               <td className="py-1">
-                <button type="button" className="underline" onClick={(ev) => readPerson(p.id, recipientIds, ev.currentTarget)}>{p.name}</button>
+                <span className="inline-flex items-center gap-1.5">
+                  <FamilyIcon of={PERSON_FAMILY} />
+                  <button type="button" className="underline" onClick={(ev) => readPerson(p.id, recipientIds, ev.currentTarget)}>{p.name}</button>
+                </span>
                 {/* What an action from the pane beside this list did to this person, in place. */}
                 {personEdits[p.id]?.note && <RowNote kind="person" id={p.id} note={String(personEdits[p.id].note)} at={personEdits[p.id].at} />}
               </td>
@@ -462,7 +470,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       {/* The QA line, directly above the button, never disabled and never blocking. */}
       <div className="rounded-md border px-3 py-2">
         <p className="text-sm">
-          <span className={failures.length ? "font-medium text-amber-700 dark:text-amber-400" : ""}>{line}</span>
+          <Chip status={failures.length ? "failed" : "done"}>{line}</Chip>
           {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}</span>}
         </p>
         <div id="camp-run-checks" className="mt-1">
@@ -528,6 +536,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   return (
     <>
       <RecordPage
+        family={FAMILY}
         back={{ label: "Campaigns", href: href("/ollopa/campaigns") }}
         title={{ value: c.name, onRename: isOwner ? (v) => { patch({ name: v }); toast("Saved · Campaign name") } : undefined }}
         chips={<span className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{c.kind}</Badge><StatusBadge c={c} /></span>}
@@ -615,12 +624,12 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           {checks.map((k) => (
             <li key={k.n}>
               <div className="flex items-baseline gap-2">
-                <span className={cn("text-xs font-medium", k.state === "fail" ? "text-amber-700 dark:text-amber-400" : k.state === "pass" ? "text-green-700 dark:text-green-400" : "text-muted-foreground")}>{k.state}</span>
-                <span className="text-sm font-medium">{k.title}</span>
+                <Chip status={k.state === "fail" ? "failed" : k.state === "pass" ? "done" : "none"}>{k.state}</Chip>
+                <span className="t-body font-medium">{k.title}</span>
               </div>
               {/* A check that passed says so in one word. Only a failure earns a sentence, because
                   only a failure is about to go wrong to a few thousand people. */}
-              {k.state === "fail" && <p className="text-xs text-muted-foreground">{k.words}</p>}
+              {k.state === "fail" && <p className="t-small text-muted-foreground">{k.words}</p>}
               {/* A fix is a destination, so it is a real link (DESIGN.md §1) — never a bare one:
                   a page is a `follow`, and a related object opens beside the campaign, which stays
                   exactly where it is. */}

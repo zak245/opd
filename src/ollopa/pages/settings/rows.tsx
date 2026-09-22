@@ -11,6 +11,7 @@ import { useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Actions } from "../../ui/Actions"
+import { Chip as StatusChip, FamilyIcon } from "../../ui/Identity"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { href } from "@/app/router"
@@ -110,13 +111,15 @@ function RowActions({ actions }: { actions: { label: string; onClick: () => void
   )
 }
 
+/**
+ * A state, in the five the product has. The word is always inside the chip, so colour never carries
+ * the meaning on its own (DESIGN.md §5). The tone names stay because the rows read that way; the
+ * shared chip turns each into the one status it means.
+ */
+const TONE_WORD = { warning: "warning", error: "auto-paused", good: "active" } as const
+
 function Chip({ children, tone }: { children: ReactNode; tone?: "warning" | "error" | "good" }) {
-  return (
-    <span className={cn("rounded-full border px-2 py-0.5 text-xs",
-      tone === "warning" && "border-amber-500 text-amber-700 dark:text-amber-400",
-      tone === "error" && "border-destructive text-destructive",
-      tone === "good" && "border-green-600 text-green-700 dark:text-green-400")}>{children}</span>
-  )
+  return <StatusChip status={tone ? TONE_WORD[tone] : "none"}>{children}</StatusChip>
 }
 
 /** A value this seat may read and not change: text with who set it, never a disabled input. */
@@ -550,7 +553,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
     keywords: ["DNC", "national register", "safe harbour", "31 days"],
     value: (
       <span className="flex flex-wrap items-center gap-2">
-        <span className={cn("text-sm", dncOverdue && "text-destructive")}>
+        <span className="t-body">
           Synchronised {longDay(dnc.synchronisedOn)} · next due {longDay(dnc.nextDueOn)}
         </span>
         {dncOverdue && <Chip tone="error">Overdue — calls made now are outside safe harbour</Chip>}
@@ -864,6 +867,7 @@ export function rowsFor(ctx: RowCtx): SettingRow[] {
         <span className="text-sm">{crm.name}</span>
         <Chip tone={crm.errorsToday > 0 ? "error" : "good"}>{crm.errorsToday === 0 ? "No errors today" : `${crm.errorsToday} errors today`}</Chip>
         <span className="text-xs text-muted-foreground">synced {crm.lastSync} · {crm.objects.map((o) => `${o.object} ${o.direction}`).join(", ")}</span>
+        <FamilyIcon of="connect" />
         <Actions surface="card" items={[{ label: "Open", kind: "secondary", onClick: () => leaveSettings(`/ollopa/integrations/${crm.id}`, "int.crm") }]} />
         <CustomObjects business={ctx.business} />
       </span>
@@ -1154,14 +1158,16 @@ export function Row({ row, admin, honest = true, idPrefix = "row-", stacked = fa
       data-row={row.id}
       data-item={row.id}
       data-item-label={row.label}
-      className={cn("border-t border-border/60 px-2 py-2.5 first:border-t-0", lit && "rounded-md bg-amber-100/70 dark:bg-amber-950/40")}
+      className={cn("border-t border-border/60 px-2 py-2.5 first:border-t-0", lit && "rounded-md")}
+      // The row you were sent to: the accent's own tint, the one "you are here" colour.
+      style={lit ? { backgroundColor: "var(--info-tint)" } : undefined}
     >
       {row.block ? (
         <>
           <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5">
-            <h4 className="text-sm font-medium">{row.label}</h4>
+            <h4 className="t-label">{row.label}</h4>
             <span className="flex items-center gap-3">
-              {row.readOnly && <span className="text-xs text-muted-foreground">set by {admin}</span>}
+              {row.readOnly && <span className="t-small text-muted-foreground">set by {admin}</span>}
               {locked && (greyed ? (
                 <Button size="sm" variant="outline" disabled className="h-7 px-2 text-xs">{row.label}</Button>
               ) : (
@@ -1172,14 +1178,14 @@ export function Row({ row, admin, honest = true, idPrefix = "row-", stacked = fa
             </span>
           </div>
           {row.block}
-          {note && <p className="pt-1.5 text-xs text-muted-foreground">{note}</p>}
+          {note && <p className="t-small pt-1.5 text-muted-foreground">{note}</p>}
         </>
       ) : (
         <div className={cn("grid gap-1", !stacked && "sm:grid-cols-[minmax(11rem,16rem)_1fr] sm:items-baseline sm:gap-4")}>
-          <div className="text-sm">{row.label}</div>
-          <div className="min-w-0">
+          <div className="t-label">{row.label}</div>
+          <div className="t-body min-w-0">
             {wrapped}
-            {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
+            {note && <p className="t-small mt-1 text-muted-foreground">{note}</p>}
           </div>
         </div>
       )}

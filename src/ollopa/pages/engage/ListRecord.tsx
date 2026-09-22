@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { href, navigate } from "@/app/router"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
+import { StatusLine } from "../../ui/Identity"
 import { EmptyState } from "../../ui/EmptyState"
 import { SectionHeader } from "../../ui/SectionHeader"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -28,7 +29,8 @@ import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
-import { type Col, BesideLink, DataTable, FollowLink, Pill, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { type Col, BesideLink, DataTable, FollowLink, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
 const SEARCH_OVER = 10
@@ -105,7 +107,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
         return (
           <div className="min-w-0">
             <BesideLink className="font-medium hover:underline" kind="person" id={c.id} list={walkPeople(c.id)}>{c.name}</BesideLink>
-            <div className="text-xs text-muted-foreground">{c.title}</div>
+            <div className="t-small text-muted-foreground">{c.title}</div>
             {edit?.note && <RowNote kind="person" id={c.id} note={String(edit.note)} at={edit.at} />}
           </div>
         )
@@ -116,21 +118,21 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
       key: "email", header: "Email", cell: (c) => (
         <div className="min-w-0">
           <div className="truncate text-xs">{c.email}</div>
-          <Pill tone={c.emailStatus === "Verified" ? "good" : c.emailStatus === "Bounced" ? "error" : "warning"}>{c.emailStatus}</Pill>
+          <Chip status={c.emailStatus} />
         </div>
       ),
     },
-    { key: "stage", header: "Stage", phone: true, cell: (c) => <Pill tone="muted">{c.stage}</Pill> },
+    { key: "stage", header: "Stage", phone: true, cell: (c) => <Chip status={c.stage} /> },
     {
       key: "sequence", header: "Sequence", cell: (c) => {
         const now = personEdits[c.id]?.sequence
         const inSeq = now === undefined ? c.inSequence : String(now)
         return inSeq
-          ? <span className="text-xs">{inSeq} <Pill tone="warning">already in a sequence</Pill></span>
+          ? <span className="t-small">{inSeq} <Chip status="warning">already in a sequence</Chip></span>
           : <span className="text-muted-foreground">—</span>
       },
     },
-    { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => <div><div>{day(c.addedOn)}</div><div className="text-xs text-muted-foreground">by {list.owner}</div></div> },
+    { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => <div><div>{day(c.addedOn)}</div><div className="t-small text-muted-foreground">by {list.owner}</div></div> },
     { key: "activity", header: "Last activity", className: "tabular-nums", sort: (a, c) => a.lastActivity.localeCompare(c.lastActivity), cell: (c) => ago(c.lastActivity) },
   ]
 
@@ -139,7 +141,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
     { key: "industry", header: "Industry", phone: true, cell: (c) => c.industry },
     { key: "employees", header: "Employees", className: "tabular-nums", sort: (a, c) => a.employees - c.employees, cell: (c) => n(c.employees) },
     { key: "contacts", header: "Contacts", className: "tabular-nums", phone: true, sort: (a, c) => a.contacts - c.contacts, cell: (c) => n(c.contacts) },
-    { key: "stage", header: "Stage", cell: (c) => <Pill tone="muted">{c.stage}</Pill> },
+    { key: "stage", header: "Stage", cell: (c) => <Chip status={c.stage} /> },
     { key: "added", header: "Added", className: "tabular-nums", sort: (a, c) => a.addedOn.localeCompare(c.addedOn), cell: (c) => day(c.addedOn) },
   ]
 
@@ -211,22 +213,23 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                     onBlur={() => { engage.patchList(session.business, list.id, { name }); setRenaming(false) }}
                   />
                 ) : (
-                  <h2 className="truncate text-lg font-semibold">
+                  <h2 className="t-section flex min-w-0 items-center gap-2 truncate">
+                    <FamilyIcon of={list.kind === "people" ? "people" : "companies"} size="header" />
                     {isOwner
                       ? <button type="button" className="rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => { setName(list.name); setRenaming(true) }}>{list.name}<span className="sr-only"> — rename</span></button>
                       : list.name}
                   </h2>
                 )}
-                <Pill tone="muted">{list.kind === "people" ? "People" : "Companies"}</Pill>
-                <Pill tone={list.mode === "segment" ? "good" : "muted"}>{list.mode === "segment" ? "Segment" : "Static"}</Pill>
-                {list.archived && <Pill tone="muted">Archived</Pill>}
+                <Chip family={list.kind === "people" ? "people" : "companies"}>{list.kind === "people" ? "People" : "Companies"}</Chip>
+                <Chip family="neutral" icon={false}>{list.mode === "segment" ? "Segment" : "Static"}</Chip>
+                {list.archived && <Chip status="Archived" />}
               </div>
               {/* The count and what it means as work, in one line and as plain text. */}
               <p className="mt-1 text-sm">
                 {n(count)} {list.kind === "people" ? "people" : "companies"} · {touchEstimate(count, session.business)}
                 {list.newThisWeek > 0 && <> · +{n(list.newThisWeek)} this week</>}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="t-small text-muted-foreground">
                 {list.owner} · {list.visibility === "everyone" ? "Everyone can see it" : "Only you can see it"} ·{" "}
                 {list.mode === "segment" && list.lastRefreshed ? `last refreshed ${ago(list.lastRefreshed)}` : `updated ${ago(list.updated)}`}
                 {d.level("detail.new-since") === 1 && list.newThisWeek > 0 && <> · {n(list.newThisWeek)} new since your last visit</>}
@@ -270,14 +273,14 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
           {list.kind === "people" && (
             <p className="mt-3 text-sm tabular-nums" role="status">
               {n(enrolable.length)} can be added · {n(credits)} net-new emails = {n(credits)} credits · balance {n(seed.credits.balance)}
-              {doubled > 0 && <span className="font-medium text-amber-700 dark:text-amber-400"> · {n(doubled)} already in another sequence</span>}
+              {doubled > 0 && <span className="font-medium" style={{ color: "var(--warning-ink)" }}> · {n(doubled)} already in another sequence</span>}
             </p>
           )}
 
           {/* The standing arrangements: one line each, each with its own cost and its own off switch. */}
           <div className="mt-2 space-y-1">
             {list.feeds.filter((f) => f.auto).map((f) => (
-              <p key={f.name} className="flex flex-wrap items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+              <StatusLine key={f.name} status="Running" word="Standing arrangement">
                 New matches added to {f.name} automatically
                 <Actions
                   surface="card"
@@ -290,10 +293,10 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                     },
                   }]}
                 />
-              </p>
+              </StatusLine>
             ))}
             {watch && (
-              <p className="flex flex-wrap items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+              <StatusLine status="Running" word="Standing arrangement">
                 {watch.agent} researches new matches · about {watch.creditsEach} credits each · about {n(watch.perWeek)} credits a week
                 <Actions
                   surface="card"
@@ -303,7 +306,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                     onClick: () => { engage.patchList(session.business, list.id, { source: "manual" }); say(`${watch.agent} no longer watches ${list.name}`) },
                   }]}
                 />
-              </p>
+              </StatusLine>
             )}
           </div>
 
@@ -312,7 +315,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
             <div className="mt-3">
               {editingFilters ? (
                 <div className="rounded-md border p-3">
-                  <h3 className="text-sm font-medium">Filters</h3>
+                  <h3 className="t-body font-medium">Filters</h3>
                   <div className="mt-2 space-y-2">
                     {list.filters.map((f, i) => (
                       <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
@@ -358,7 +361,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="t-small text-muted-foreground">
                       <div className="text-xs text-foreground">Last refreshed</div>
                       {list.lastRefreshed ? `${day(list.lastRefreshed)} · ${ago(list.lastRefreshed)}` : "Never"}
                     </div>

@@ -10,7 +10,6 @@
 // counts filter it in place, directly above it, so a count and the names it stands for are never in
 // two different places. A row opens the person beside this page; the page stays where it is.
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +20,8 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { FAMILY, PERSON_FAMILY } from "./look"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, actOn, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
@@ -268,13 +269,16 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
       </div>
       <ul className="text-sm">
         {people.map((p) => (
-          <li key={p.id} data-item={p.id} data-item-label={p.name} className="flex flex-wrap items-baseline justify-between gap-2 border-t py-1.5 first:border-t-0">
+          <li key={p.id} data-item={p.id} data-item-label={p.name} className="t-body flex flex-wrap items-baseline justify-between gap-2 border-t py-1.5 first:border-t-0">
             <span className="min-w-0">
-              <button type="button" className="underline" onClick={(ev) => readPerson(p.id, peopleIds, ev.currentTarget)}>{p.name}</button>
+              <span className="inline-flex items-center gap-1.5">
+                <FamilyIcon of={PERSON_FAMILY} />
+                <button type="button" className="underline" onClick={(ev) => readPerson(p.id, peopleIds, ev.currentTarget)}>{p.name}</button>
+              </span>
               {/* What an action from the pane beside this list did to this person, in place. */}
               {personEdits[p.id]?.note && <RowNote kind="person" id={p.id} note={String(personEdits[p.id].note)} at={personEdits[p.id].at} />}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="t-small text-muted-foreground">
               {p.title} · {p.company}
               {personEdits[p.id]?.sequence !== undefined && (
                 <span className="block">{String(personEdits[p.id].sequence) || "Not in a sequence"}</span>
@@ -292,9 +296,10 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   return (
     <>
       <RecordPage
+        family={FAMILY}
         back={{ label: "Campaigns", href: href("/ollopa/campaigns") }}
         title={{ value: a.name, onRename: (v) => { patch({ name: v }); toast("Saved · Audience name") } }}
-        chips={<Badge variant="secondary">{a.mode === "live" ? "Live" : "Frozen"}</Badge>}
+        chips={<Chip status={a.mode === "live" ? "live" : "paused"}>{a.mode === "live" ? "Live" : "Frozen"}</Chip>}
         fields={fields}
         actions={{ primary: [], secondary: [] }}
         headerActions={

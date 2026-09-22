@@ -10,7 +10,6 @@
 //
 // `/ollopa/accounts/:id` redirects here. There is no second record.
 import { useMemo, useRef, useState, type ReactNode } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { href, navigate } from "@/app/router"
 import { openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip, FamilyIcon } from "../../ui/Identity"
 import { follow, routeKey, useTrail } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { CardRow, RecordPage, type RecordCard, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
@@ -30,7 +30,7 @@ import { businessById } from "../../data/businesses"
 import { ACCOUNT_STAGES, CREDITS, TODAY, seedFor, type AccountStage } from "../../data/seed"
 import type { Session } from "../../session"
 import { activityOf, isCustomer, viewOf } from "./data"
-import { companyFields, healthLine, quickLookFields, riskLine } from "./quickLook"
+import { bandChip, companyFields, healthLine, quickLookFields, riskLine, stageChip } from "./quickLook"
 import { ago, day, money, renewalText } from "./format"
 import { applyChange, changeFor, useChanges } from "./changes"
 import { PlayPanel } from "./PlayPanel"
@@ -64,8 +64,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   if (!company) {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
-        <h2 className="text-lg font-semibold">This company was removed or merged.</h2>
-        <p className="mt-2"><a className="text-sm underline" href={href("/ollopa/companies")}>Back to Companies</a></p>
+        <h2 className="t-section">This company was removed or merged.</h2>
+        <p className="mt-2"><a className="t-body underline" href={href("/ollopa/companies")}>Back to Companies</a></p>
       </div>
     )
   }
@@ -214,7 +214,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             <span key={i} className="min-w-0 flex-1 rounded-t bg-foreground/70" style={{ height: `${Math.max(4, n)}%` }} />
           ))}
         </div>
-        <p className="pt-2 text-sm">
+        <p className="pt-2 t-body">
           Index <span className="tabular-nums font-medium">{account!.usage30}</span> · {account!.usageDelta30 >= 0 ? "up" : "down"} {Math.abs(account!.usageDelta30)}% over 30 days
         </p>
       </div>
@@ -225,7 +225,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     id: "seats", title: "Seats and last sign-in", count: account!.seats.length,
     children: (
       <div>
-        <p className="pb-2 text-sm">
+        <p className="pb-2 t-body">
           <span className="tabular-nums font-medium">{account!.seatsActive}</span> of {account!.seatsBought} seats active
           <span className="text-muted-foreground"> · {Math.round((account!.seatsActive / account!.seatsBought) * 100)}% utilisation</span>
         </p>
@@ -242,8 +242,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       id: "health-drivers", title: "What makes up the score",
       children: (
         <div>
-          <p className="pb-2 text-sm">{healthLine(account.health, account.band, account.healthDelta30)}</p>
-          <ul className="space-y-1 text-sm">
+          <p className="t-body pb-2">{healthLine(account.health, account.band, account.healthDelta30)}</p>
+          <ul className="t-body space-y-1">
             {account.drivers.map((x) => (
               <li key={x.label} className="flex justify-between gap-3 border-t py-1 first:border-t-0">
                 <span className="min-w-0">{x.label}</span>
@@ -271,7 +271,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       id: "renewal", title: "Renewal terms",
       action: <Actions surface="card" items={[{ kind: "secondary", label: "Create renewal deal", onClick: () => { toast(`Renewal deal created on ${account.name} · ${money(account.value, b.currency)}`); follow("/ollopa/deals", origin("renewal")) } }]} />,
       children: (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 t-body sm:grid-cols-3">
           {[
             ["Renewal date", renewalText(account.renewal)],
             ["Contract value", `${money(account.value, b.currency)} a year`],
@@ -280,7 +280,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             ["Auto-renew", account.autoRenew ? "Yes" : "No"],
             ["Forecast", account.forecast],
           ].map(([label, value]) => (
-            <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd>{value}</dd></div>
+            <div key={label}><dt className="t-small text-muted-foreground">{label}</dt><dd>{value}</dd></div>
           ))}
         </dl>
       ),
@@ -289,12 +289,12 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     if (used("rec.first-value")) sections.push({
       id: "first-value", title: "First value, and the goals agreed at the start",
       children: (
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 t-body">
           <p>
             <span className="font-medium">{account.firstValue.definition}</span>
             <span className="text-muted-foreground"> · {account.firstValue.target}</span>
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="t-small text-muted-foreground">
             {account.firstValue.confirmedOn
               ? `Confirmed ${day(account.firstValue.confirmedOn)} by ${account.firstValue.confirmedBy}`
               : "Not confirmed yet. Ninety days without it raises an Onboarding stalled risk."}
@@ -303,7 +303,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             {account.goals.map((g) => (
               <li key={g.text} className="border-t pt-1">
                 {g.text}
-                <span className="block text-xs text-muted-foreground">Agreed {day(g.agreedOn)} · {g.source}</span>
+                <span className="block t-small text-muted-foreground">Agreed {day(g.agreedOn)} · {g.source}</span>
               </li>
             ))}
           </ul>
@@ -320,7 +320,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             {account.risks.filter((r) => !r.resolved).map((r) => (
               <CardRow
                 key={r.id}
-                title={<span className={cn(r.type === "Churn notice" && "font-medium text-destructive")}>{r.type}</span>}
+                title={<Chip status={r.type === "Churn notice" ? "blocked" : "warning"}>{r.type}</Chip>}
                 meta={`${r.owner} · opened ${day(r.opened)}`}
                 actions={canEdit ? [{
                   label: "Resolve",
@@ -330,7 +330,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
                   },
                 }] : undefined}
               >
-                <p className="pt-1 text-xs text-muted-foreground">{r.note}</p>
+                <p className="pt-1 t-small text-muted-foreground">{r.note}</p>
               </CardRow>
             ))}
           </div>
@@ -353,7 +353,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
                   { label: "Dismiss", onClick: () => { applyChange(merged.id, { dismissedSignals: [...(change.dismissedSignals ?? []), s.id] }); toast(`“${s.kind}” dismissed`) } },
                 ]}
               >
-                <p className="pt-1 text-xs text-muted-foreground">{s.detail}</p>
+                <p className="pt-1 t-small text-muted-foreground">{s.detail}</p>
               </CardRow>
             ))}
           </div>
@@ -386,20 +386,21 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           }]} />
         ),
         children: (
-          <div className="space-y-2 text-sm">
-            <p className="text-xs text-muted-foreground">
-              From {h.from} · sent {day(h.sent)} · {h.accepted ? `accepted ${day(h.accepted)}` : "not accepted yet"}
+          <div className="space-y-2 t-body">
+            <p className="t-small flex flex-wrap items-center gap-1.5 text-muted-foreground">
+              From {h.from} · sent {day(h.sent)} ·
+              <Chip status={h.accepted ? "approved" : "waiting"}>{h.accepted ? `accepted ${day(h.accepted)}` : "not accepted yet"}</Chip>
             </p>
             {parts.map(([label, value]) => (
               <div key={label} className="border-t pt-2">
-                <div className="text-xs font-medium">{label}
+                <div className="t-label">{label}
                   {wrote(label) && <span className="pl-1 font-normal text-muted-foreground">· {wrote(label)}</span>}
                 </div>
                 <div>{value}</div>
               </div>
             ))}
             <div className="border-t pt-2">
-              <div className="text-xs font-medium">Checklist</div>
+              <div className="t-label">Checklist</div>
               <ul>{h.checklist.map((c) => <li key={c.item}>{c.done ? "Done" : "Not done"} · {c.item}</li>)}</ul>
             </div>
           </div>
@@ -411,7 +412,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       id: "touches", title: "Touches", count: localTouches.length + v.contacts.filter((c) => c.lastContacted).length,
       children: (
         <div>
-          {localTouches.map((t, i) => <CardRow key={`local-${i}`} title={`${t.kind} · ${t.by}`} meta={day(t.at)}><p className="pt-1 text-xs text-muted-foreground">{t.note}</p></CardRow>)}
+          {localTouches.map((t, i) => <CardRow key={`local-${i}`} title={`${t.kind} · ${t.by}`} meta={day(t.at)}><p className="pt-1 t-small text-muted-foreground">{t.note}</p></CardRow>)}
           {v.contacts.filter((c) => c.lastContacted).slice(0, 6).map((c) => (
             <CardRow key={c.id} title={`Contacted ${c.name}`} meta={`${c.owner} · ${day(c.lastContacted!)}`} />
           ))}
@@ -454,10 +455,13 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           <div key={deal.id} data-item={deal.id} data-item-label={deal.name}>
             <CardRow
               title={
-                <button type="button" className="font-medium hover:underline"
-                        onClick={(e) => lookBeside("deal", deal.id, v.openDeals.map((x) => x.id), e.currentTarget)}>
-                  {deal.name}
-                </button>
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <FamilyIcon of="deal" />
+                  <button type="button" className="min-w-0 truncate font-medium hover:underline"
+                          onClick={(e) => lookBeside("deal", deal.id, v.openDeals.map((x) => x.id), e.currentTarget)}>
+                    {deal.name}
+                  </button>
+                </span>
               }
               meta={`${money(deal.amount, deal.currency)} · ${deal.stage} · closes ${day(deal.closeDate)} · ${deal.owner}`} />
           </div>
@@ -480,7 +484,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         {notes.map((n, i) => <CardRow key={i} title={n.text} meta={`${n.by} · ${day(n.on)}`} />)}
         {canEdit && (
           <div className="pt-2">
-            <Label htmlFor="company-note" className="text-xs text-muted-foreground">Add a note</Label>
+            <Label htmlFor="company-note" className="t-small text-muted-foreground">Add a note</Label>
             <Textarea id="company-note" rows={2} className="mt-1" value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Anything the next person reading this company should know" />
             <Actions
               className="mt-2"
@@ -528,9 +532,9 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     cards.push({
       id: "champion", title: "Champion",
       children: (
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 t-body">
           <div className="font-medium">{account.champion}</div>
-          <div className="text-xs text-muted-foreground">Last touch {ago(localTouches[0]?.at ?? account.lastTouch)}</div>
+          <div className="t-small text-muted-foreground">Last touch {ago(localTouches[0]?.at ?? account.lastTouch)}</div>
           {/* Two comparable acts on this card, so neither is filled. */}
           <Actions
             surface="card"
@@ -576,7 +580,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           {runs.map((run, i) => (
             <li key={run.id} className="border-t pt-2 first:border-t-0 first:pt-0">
               {/* Provenance in words, not an icon: which agent, when, how many sources, how much. */}
-              <div className="text-xs text-muted-foreground">{run.agent} · {day(run.at)} · {run.sources} sources · {run.credits} credits</div>
+              <div className="t-small text-muted-foreground">{run.agent} · {day(run.at)} · {run.sources} sources · {run.credits} credits</div>
               {i === 0 && briefHref && (
                 <Actions
                   className="pt-1"
@@ -602,7 +606,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           {(account?.signals ?? []).map((s) => (
             <li key={s.id} className="border-t py-1">
               <div>{s.kind}</div>
-              <div className="text-xs text-muted-foreground">{s.detail} · {s.source} · {day(s.fired)} · routed to {s.routedTo}</div>
+              <div className="t-small text-muted-foreground">{s.detail} · {s.source} · {day(s.fired)} · routed to {s.routedTo}</div>
             </li>
           ))}
         </ul>
@@ -617,7 +621,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
       content: (
         <div className="space-y-2">
           <p>{crmName} · {merged.crm?.synced ? "in sync" : "not in sync"}{synced ? ` · last ${day(synced)}` : ""}</p>
-          {merged.crm?.lastError && <p className="text-destructive">{merged.crm.lastError}</p>}
+          {merged.crm?.lastError && <p><Chip status="failed">{merged.crm.lastError}</Chip></p>}
           <Actions surface="card" items={[{
             kind: "secondary", label: `Push to ${crmName}`,
             onClick: () => { applyChange(merged.id, { pushedToCrmAt: TODAY }); toast(`${merged.name} pushed to ${crmName} · 3 fields updated, nothing deleted`) },
@@ -627,7 +631,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               confirmLabel: `Push to ${crmName}`,
             },
           }]} />
-          <ul className="space-y-1 text-xs">
+          <ul className="space-y-1 t-small">
             {seed.syncRuns.slice(0, 5).map((s) => (
               <li key={s.id} className="flex justify-between gap-2 text-muted-foreground">
                 <span>{s.object} · {s.direction} · {s.pulled + s.pushed} records{s.failed ? `, ${s.failed} failed` : ""}</span>
@@ -649,7 +653,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         <ul className="space-y-1">
           {merged.parent && <li>Parent · {merged.parent}</li>}
           {children.map((c) => (
-            <li key={c.id} data-item={c.id} data-item-label={c.name}>
+            <li key={c.id} data-item={c.id} data-item-label={c.name} className="flex items-center gap-1.5">
+              <FamilyIcon of="company" />
               Subsidiary · <button type="button" className="underline"
                 onClick={(e) => lookBeside("company", c.id, children.map((x) => x.id), e.currentTarget)}>{c.name}</button>
             </li>
@@ -665,28 +670,28 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     content: (
       <div className="space-y-3">
         <div>
-          <div className="pb-1 text-xs font-medium">Custom fields</div>
+          <div className="pb-1 t-label">Custom fields</div>
           <dl className="grid grid-cols-[10rem_1fr] gap-x-4 gap-y-1">
             {Object.entries(merged.custom).map(([k, val]) => (
-              <div key={k} className="contents"><dt className="text-xs text-muted-foreground">{k}</dt><dd>{val}</dd></div>
+              <div key={k} className="contents"><dt className="t-small text-muted-foreground">{k}</dt><dd>{val}</dd></div>
             ))}
             {fieldDefs.filter((f) => !(f.label in merged.custom)).map((f) => (
-              <div key={f.id} className="contents"><dt className="text-xs text-muted-foreground">{f.label}</dt><dd className="text-muted-foreground">—</dd></div>
+              <div key={f.id} className="contents"><dt className="t-small text-muted-foreground">{f.label}</dt><dd className="text-muted-foreground">—</dd></div>
             ))}
             {Object.keys(merged.custom).length === 0 && fieldDefs.length === 0 && (
-              <div className="contents"><dt className="text-xs text-muted-foreground">None</dt><dd className="text-muted-foreground">This workspace keeps no custom fields on a company.</dd></div>
+              <div className="contents"><dt className="t-small text-muted-foreground">None</dt><dd className="text-muted-foreground">This workspace keeps no custom fields on a company.</dd></div>
             )}
           </dl>
         </div>
         <div>
-          <div className="pb-1 text-xs font-medium">Lists this company is in</div>
+          <div className="pb-1 t-label">Lists this company is in</div>
           {[...(change.lists ?? merged.lists)].length === 0
             ? <p className="text-muted-foreground">None.</p>
             : <ul>{[...(change.lists ?? merged.lists)].map((l) => <li key={l}>{l}</li>)}</ul>}
         </div>
         <div>
-          <div className="pb-1 text-xs font-medium">History</div>
-          <ul className="space-y-1 text-xs text-muted-foreground">
+          <div className="pb-1 t-label">History</div>
+          <ul className="space-y-1 t-small text-muted-foreground">
             <li>Added {day(merged.addedOn)} · {merged.source}</li>
             {merged.enrichedOn && <li>Enriched {day(merged.enrichedOn)}</li>}
             {notes.map((n, i) => <li key={i}>Note by {n.by} · {day(n.on)}</li>)}
@@ -694,7 +699,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           </ul>
         </div>
         <div>
-          <div className="pb-1 text-xs font-medium">Files</div>
+          <div className="pb-1 t-label">Files</div>
           <p className="text-muted-foreground">No files yet.</p>
           <Actions className="mt-1" surface="card" items={[{ kind: "secondary", label: "Upload a file", onClick: () => toast("Files stay with the company and are visible to everyone who can open it.") }]} />
         </div>
@@ -707,8 +712,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     count: 6,
     content: (
       <div className="space-y-3">
-        <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1">Field</th><th>Value</th><th>Where it came from</th><th>When</th></tr></thead>
+        <table className="w-full t-body">
+          <thead><tr className="text-left t-small text-muted-foreground"><th className="py-1">Field</th><th>Value</th><th>Where it came from</th><th>When</th></tr></thead>
           <tbody>
             {[
               ["Industry", merged.industry],
@@ -719,10 +724,10 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               ["Technology", merged.technologies.join(", ") || "—"],
             ].map(([label, value]) => (
               <tr key={label} className="border-t">
-                <td className="py-1 text-xs text-muted-foreground">{label}</td>
+                <td className="py-1 t-small text-muted-foreground">{label}</td>
                 <td>{value}</td>
-                <td className="text-xs text-muted-foreground">{merged.source === "CRM" ? crmName || "the CRM" : merged.source === "Imported" ? "A CSV import" : "The enrichment provider"}</td>
-                <td className="text-xs tabular-nums text-muted-foreground">{merged.enrichedOn ? day(merged.enrichedOn) : day(merged.addedOn)}</td>
+                <td className="t-small text-muted-foreground">{merged.source === "CRM" ? crmName || "the CRM" : merged.source === "Imported" ? "A CSV import" : "The enrichment provider"}</td>
+                <td className="t-small tabular-nums text-muted-foreground">{merged.enrichedOn ? day(merged.enrichedOn) : day(merged.addedOn)}</td>
               </tr>
             ))}
           </tbody>
@@ -821,14 +826,16 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   return (
     <>
       <RecordPage
+        family="companies"
         back={backTo}
         title={{ value: merged.name, onRename: canEdit ? (value) => { applyChange(merged.id, { name: value }); toast(`Saved · ${value}`) } : undefined }}
         subtitle={{ label: merged.domain, href: `https://${merged.domain}` }}
         chips={
           <span className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{merged.stage}</Badge>
+            {stageChip(merged.stage)}
+            {customer && account && bandChip(account.band)}
             {!canEdit && (
-              <span className="text-xs text-muted-foreground">{merged.owner} owns this company — you can read it</span>
+              <span className="t-small text-muted-foreground">{merged.owner} owns this company — you can read it</span>
             )}
           </span>
         }
@@ -883,14 +890,14 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         footer={<Actions surface="dialog" layout="stack" items={[{ kind: "primary", label: "Send the request", onClick: () => { setFlagOpen(false); toast(`Request sent. ${admin?.user ?? "Your admin"} sees it on Requests with the account, the input and your reason.`) } }]} />}>
         <div className="space-y-3">
           <div>
-            <Label htmlFor="flag-input" className="text-xs">The input</Label>
+            <Label htmlFor="flag-input" className="t-small">The input</Label>
             <Select defaultValue={account?.drivers[1]?.label ?? "Base"}>
               <SelectTrigger id="flag-input" className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>{(account?.drivers ?? []).map((x) => <SelectItem key={x.label} value={x.label}>{x.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="flag-why" className="text-xs">Why it is wrong</Label>
+            <Label htmlFor="flag-why" className="t-small">Why it is wrong</Label>
             <Textarea id="flag-why" rows={3} className="mt-1" placeholder="What the number should be, and how you know" />
           </div>
         </div>
@@ -911,14 +918,14 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         }>
         <div className="space-y-3">
           <div>
-            <Label htmlFor="pick-list" className="text-xs">Pick a list</Label>
+            <Label htmlFor="pick-list" className="t-small">Pick a list</Label>
             <Select value={listName} onValueChange={setListName}>
               <SelectTrigger id="pick-list" className="mt-1"><SelectValue placeholder="A list of companies" /></SelectTrigger>
               <SelectContent>{seed.lists.filter((l) => l.kind === "companies").map((l) => <SelectItem key={l.id} value={l.name}>{l.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="new-list" className="text-xs">Or type a new name</Label>
+            <Label htmlFor="new-list" className="t-small">Or type a new name</Label>
             <Input id="new-list" className="mt-1" value={listName} onChange={(e) => setListName(e.target.value)} />
           </div>
         </div>

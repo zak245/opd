@@ -31,26 +31,26 @@ export function RecordsPanel({ request, onOpenChange }: { request: RecordsReques
   const max = Math.max(1, ...request.weekly.map((w) => w.n))
   return (
     <Panel id="report-records" title={request.title} open onOpenChange={onOpenChange}>
-      {request.subtitle && <p className="pb-3 text-xs text-muted-foreground">{request.subtitle}</p>}
+      {request.subtitle && <p className="pb-3 t-small text-muted-foreground">{request.subtitle}</p>}
 
       <section>
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Week by week</h3>
+        <h3 className="t-small font-medium uppercase tracking-wide text-muted-foreground">Week by week</h3>
         <ul className="mt-2 space-y-1">
           {request.weekly.map((w) => (
-            <li key={w.week} className="flex items-center gap-2 text-xs">
+            <li key={w.week} className="flex items-center gap-2 t-small">
               <span className="w-14 shrink-0 text-muted-foreground">{shortDay(w.week)}</span>
               {/* A bar and the number: the bar is the shape, the number is the value. */}
               <span aria-hidden="true" className="h-1.5 rounded-full bg-foreground/70" style={{ width: `${Math.round((w.n / max) * 70)}%` }} />
               <span className="tabular-nums">{w.n.toLocaleString("en-US")}</span>
             </li>
           ))}
-          {request.weekly.length === 0 && <li className="text-xs text-muted-foreground">No weeks in this range.</li>}
+          {request.weekly.length === 0 && <li className="t-small text-muted-foreground">No weeks in this range.</li>}
         </ul>
       </section>
 
       <section className="mt-5 border-t pt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h3 className="t-small font-medium uppercase tracking-wide text-muted-foreground">
             The records ({request.rows.length.toLocaleString("en-US")})
           </h3>
           <Actions surface="pane" items={[{
@@ -67,7 +67,7 @@ export function RecordsPanel({ request, onOpenChange }: { request: RecordsReques
         {/* The panel is narrow, so the columns wrap rather than scroll sideways: every column the
             spec names stays on screen. */}
         <div className="mt-2">
-          <table className="w-full table-fixed text-xs">
+          <table className="w-full table-fixed t-small">
             <thead>
               <tr className="border-b text-muted-foreground">
                 {request.headers.map((h) => (
@@ -92,9 +92,9 @@ export function RecordsPanel({ request, onOpenChange }: { request: RecordsReques
             </tbody>
           </table>
           {request.rows.length > 60 && (
-            <p className="pt-2 text-xs text-muted-foreground">Showing the first 60 of {request.rows.length.toLocaleString("en-US")}. The export carries all of them.</p>
+            <p className="pt-2 t-small text-muted-foreground">Showing the first 60 of {request.rows.length.toLocaleString("en-US")}. The export carries all of them.</p>
           )}
-          {request.rows.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Nothing in this range.</p>}
+          {request.rows.length === 0 && <p className="py-6 text-center t-small text-muted-foreground">Nothing in this range.</p>}
         </div>
       </section>
     </Panel>

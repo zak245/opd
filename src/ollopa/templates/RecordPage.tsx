@@ -45,8 +45,8 @@ function BackToIndex({ label, to, compact }: { label: string; to: string; compac
   const at = trail.length - 1
   const returns = at >= 0 && routeKey(trail[at].route) === routeKey(to)
   const className = compact
-    ? "inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
-    : "text-sm text-muted-foreground hover:underline"
+    ? "t-small inline-flex items-center gap-1 text-muted-foreground hover:underline"
+    : "t-body text-muted-foreground hover:underline"
   const body = <>{compact && <ArrowLeft className="size-3" aria-hidden="true" />}{label}</>
   return returns
     ? <button type="button" className={className} onClick={() => back(at)}>{body}</button>
@@ -261,11 +261,11 @@ function InlineValue({ field }: { field: RecordField }) {
 function FieldCell({ field }: { field: RecordField }) {
   return (
     <div className={cn("min-w-0", field.wide && "col-span-full", field.span === 2 && "col-span-2")}>
-      <div className="text-xs text-muted-foreground">{field.label}</div>
-      <div className={cn("mt-0.5 text-sm", field.tone === "warning" && "font-medium [color:var(--warning-ink)]", field.tone === "muted" && "text-muted-foreground")}>
+      <div className="t-label text-muted-foreground">{field.label}</div>
+      <div className={cn("t-body mt-0.5", field.tone === "warning" && "font-medium [color:var(--warning-ink)]", field.tone === "muted" && "text-muted-foreground")}>
         <InlineValue field={field} />
       </div>
-      {field.under && <div className="mt-1 text-xs text-muted-foreground">{field.under}</div>}
+      {field.under && <div className="t-small mt-1 text-muted-foreground">{field.under}</div>}
     </div>
   )
 }
@@ -274,7 +274,7 @@ function Card({ card }: { card: RecordCard }) {
   return (
     <section data-record-card className={cn("rounded-lg border p-3", card.tone === "attention" && "[border-color:var(--warning)]")}>
       <SectionHeader title={card.title} count={card.count} action={card.action} />
-      {card.subtitle && <p className="-mt-1 pb-2 text-xs text-muted-foreground">{card.subtitle}</p>}
+      {card.subtitle && <p className="t-small -mt-1 pb-2 text-muted-foreground">{card.subtitle}</p>}
       {card.children}
     </section>
   )
@@ -290,14 +290,14 @@ export function CardRow({ title, meta, actions, children }: {
   return (
     <div className="group flex items-start gap-2 border-t py-2 first:border-t-0">
       <div className="min-w-0 flex-1">
-        <div className="text-sm">{title}</div>
-        {meta && <div className="text-xs text-muted-foreground">{meta}</div>}
+        <div className="t-body">{title}</div>
+        {meta && <div className="t-small text-muted-foreground">{meta}</div>}
         {children}
       </div>
       {actions && actions.length > 0 && (
         <div className="flex shrink-0 items-center gap-1">
           {actions.slice(0, 1).map((a) => (
-            <Button key={a.label} size="sm" variant="ghost" className="h-7 px-2 text-xs opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100" onClick={a.onClick}>{a.label}</Button>
+            <Button key={a.label} size="sm" variant="ghost" className="t-small h-7 px-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100" onClick={a.onClick}>{a.label}</Button>
           ))}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -320,7 +320,7 @@ function Section({ section }: { section: RecordSection }) {
     <section id={section.id} className="border-t py-4 first:border-t-0 first:pt-0">
       <SectionHeader title={section.title} count={section.count} action={section.action} />
       {section.authored && (
-        <p className="pb-2 text-xs text-muted-foreground">
+        <p className="t-small pb-2 text-muted-foreground">
           {section.authored === "generated" ? "Written by an agent" : "Written by a person"}
           {section.approved === false && " · Not yet approved"}
         </p>
@@ -341,7 +341,7 @@ function DrawerDoor({ door }: { door: RecordDoor }) {
           aria-expanded={open}
           aria-controls={`drawer-${door.id}`}
           onClick={() => setOpen(true)}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="t-label flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ChevronRight data-door-chevron aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0">{door.label}</span>
@@ -350,7 +350,7 @@ function DrawerDoor({ door }: { door: RecordDoor }) {
       </h3>
       <Panel id={`drawer-${door.id}`} title={door.label} open={open} onOpenChange={setOpen}>{door.content}</Panel>
       {/* Print expands every door, and a drawer has nothing on the page to expand: this is its copy. */}
-      <div className="hidden px-2 pb-3 text-sm print:block">{door.content}</div>
+      <div className="t-body hidden px-2 pb-3 print:block">{door.content}</div>
     </section>
   )
 }
@@ -387,7 +387,7 @@ export function RecordPage(p: RecordPageProps) {
       <div className="mx-auto max-w-md p-10 text-center">
         <BackToIndex label={p.back.label} to={p.back.href} />
         <h2 className="t-section mt-6">{p.noAccess.message}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Who works here: {p.noAccess.who.join(", ")}.</p>
+        <p className="t-body mt-2 text-muted-foreground">Who works here: {p.noAccess.who.join(", ")}.</p>
       </div>
     )
   }
@@ -411,8 +411,8 @@ export function RecordPage(p: RecordPageProps) {
               <dl className="grid grid-cols-[10rem_1fr] gap-x-4 gap-y-1.5">
                 {behind.map((f) => (
                   <div key={f.key} className="contents">
-                    <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                    <dd className="min-w-0 text-sm"><InlineValue field={f} /></dd>
+                    <dt className="t-label text-muted-foreground">{f.label}</dt>
+                    <dd className="t-body min-w-0"><InlineValue field={f} /></dd>
                   </div>
                 ))}
               </dl>
@@ -455,7 +455,7 @@ export function RecordPage(p: RecordPageProps) {
                   <Input
                     autoFocus
                     aria-label="Deal name"
-                    className="h-9 w-72 text-lg font-semibold"
+                    className="t-title h-9 w-72"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => {
@@ -483,7 +483,7 @@ export function RecordPage(p: RecordPageProps) {
                   href={p.subtitle.href}
                   data-item={SUBTITLE_ANCHOR}
                   data-item-label={p.subtitle.label}
-                  className="text-sm text-muted-foreground hover:underline"
+                  className="t-body text-muted-foreground hover:underline"
                   onClick={p.subtitle.onOpen ? (e) => { e.preventDefault(); p.subtitle!.onOpen!(e.currentTarget) } : undefined}
                 >
                   {p.subtitle.label}
@@ -497,14 +497,14 @@ export function RecordPage(p: RecordPageProps) {
           </div>
 
           {p.ribbon && (
-            <div role="status" aria-live="polite" className={cn("mt-3 flex flex-wrap items-center gap-3 rounded-md px-3 py-2 text-sm", RIBBON[p.ribbon.tone])}>
+            <div role="status" aria-live="polite" className={cn("mt-3 flex flex-wrap items-center gap-3 rounded-md px-3 py-2 t-body", RIBBON[p.ribbon.tone])}>
               <span>{p.ribbon.text}</span>
               {p.ribbon.action && <span className="ml-auto">{p.ribbon.action}</span>}
             </div>
           )}
 
           {p.brief && (
-            <dl className="mt-3 grid gap-x-6 gap-y-1 rounded-md border bg-muted/40 px-3 py-2 text-xs sm:grid-cols-2">
+            <dl className="mt-3 grid gap-x-6 gap-y-1 rounded-md border bg-muted/40 px-3 py-2 t-small sm:grid-cols-2">
               <div className="sm:col-span-2"><dt className="inline text-muted-foreground">About </dt><dd className="inline font-medium">{p.brief.about}</dd></div>
               <div><dt className="inline text-muted-foreground">Assembled by </dt><dd className="inline">{p.brief.author}</dd></div>
               <div><dt className="inline text-muted-foreground">On </dt><dd className="inline">{p.brief.assembledOn}</dd></div>
@@ -520,7 +520,7 @@ export function RecordPage(p: RecordPageProps) {
         </header>
 
         {/* --------------------------------------------- phone: the actions sit under the header */}
-        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 border-t bg-background/95 px-5 py-2 backdrop-blur lg:hidden" data-print-hide>
+        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 surface-raised border-t px-5 py-2 lg:hidden" data-print-hide>
           {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
         </div>
 
@@ -575,7 +575,7 @@ function Actions({ actions, confirming, setConfirming, compact }: {
   const ask = (a: RecordAction, variant: "default" | "outline") =>
     confirming === a.label ? (
       <span key={a.label} className="flex flex-wrap items-center gap-2 rounded-md border px-2 py-1">
-        <span className="max-w-[28rem] text-xs text-muted-foreground">{a.confirm}</span>
+        <span className="t-small max-w-[28rem] text-muted-foreground">{a.confirm}</span>
         <Button size="sm" onClick={() => { a.onClick(); setConfirming(null) }}>{a.label}</Button>
         <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Cancel</Button>
       </span>
@@ -593,7 +593,7 @@ function Actions({ actions, confirming, setConfirming, compact }: {
       {actions.destructive && (
         confirming === "__destructive" ? (
           <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
-            <span className="text-xs text-destructive">{actions.destructive.consequence}</span>
+            <span className="t-small [color:var(--danger-ink)]">{actions.destructive.consequence}</span>
             <Button size="sm" variant="destructive" onClick={() => { actions.destructive!.onConfirm(); setConfirming(null) }}>{actions.destructive.label}</Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>
           </span>
@@ -602,7 +602,7 @@ function Actions({ actions, confirming, setConfirming, compact }: {
             <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirming("__destructive")}>
               {actions.destructive.label}
             </Button>
-            <span className={cn("text-xs text-muted-foreground", compact ? "order-first w-full" : "max-w-[22rem]")}>{actions.destructive.consequence}</span>
+            <span className={cn("t-small text-muted-foreground", compact ? "order-first w-full" : "max-w-[22rem]")}>{actions.destructive.consequence}</span>
           </span>
         )
       )}

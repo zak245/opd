@@ -7,12 +7,12 @@
 //
 // A decision taken in here is written to the shared store (src/ollopa/edits.ts), which is where the
 // row behind reads it from: one source, so the pane and the section cannot disagree.
-import { Badge } from "@/components/ui/badge"
 import type { PageComponent } from "../../Product"
 import { closeBeside, openBeside, type BesideComponent } from "../../beside"
 import { clearEdit, editOf, recordEdit, useEdit } from "../../edits"
 import { consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { declarePaneFields, useBesideDone } from "../../ui/Beside"
 import { seedFor } from "../../data/seed"
 import { HomePage } from "./HomePage"
@@ -64,7 +64,7 @@ const ApprovalBeside: BesideComponent = ({ session, id, target }) => {
       <dl className="space-y-2.5">
         <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
           <dt className="text-xs text-muted-foreground">Agent</dt>
-          <dd><Badge variant="outline" className="font-normal">{e.agent}</Badge></dd>
+          <dd><Chip family="agents">{e.agent}</Chip></dd>
         </div>
         <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
           <dt className="text-xs text-muted-foreground">Proposed</dt>

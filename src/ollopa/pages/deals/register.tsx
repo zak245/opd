@@ -69,22 +69,22 @@ const DealBeside: BesideComponent = ({ session, id }) => {
       <dl className="space-y-2.5">
         {dealGlanceFields(deal, seed.workspace.currency, dealLevel.atLevelOne).map((f) => (
           <div key={f.label} className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
-            <dt className="text-xs text-muted-foreground">{f.label}</dt>
-            <dd className="min-w-0">{f.value}</dd>
+            <dt className="t-label text-muted-foreground">{f.label}</dt>
+            <dd className="t-body min-w-0 tabular-nums">{f.value}</dd>
           </div>
         ))}
       </dl>
 
       {/* What the last action did, where it was caused. */}
       {edit?.note && (
-        <p role="status" aria-live="polite" className="rounded-md bg-muted px-2.5 py-1.5 text-xs">{edit.note}</p>
+        <p role="status" aria-live="polite" className="t-small rounded-md bg-muted px-2.5 py-1.5">{edit.note}</p>
       )}
 
       {/* A seat that may not change this deal gets the sentence naming who can, not a disabled
           control (RULES.md rule 4). A control is disabled only for state this person can change —
           here, an empty next step. */}
       {!canEdit ? (
-        <p className="border-t pt-3 text-xs text-muted-foreground">
+        <p className="t-small border-t pt-3 text-muted-foreground">
           Owned by {deal.owner}; only the owner or an admin can change this deal.
         </p>
       ) : (
@@ -95,7 +95,7 @@ const DealBeside: BesideComponent = ({ session, id }) => {
             onKeyDown={(e) => { if (e.key === "Enter") setNextStep() }}
             aria-label={`The next step on ${deal.name}`}
             placeholder="What happens next"
-            className="mb-3 h-8 text-xs"
+            className="t-small mb-3 h-8"
           />
           <Actions
             surface="pane"

@@ -5,11 +5,28 @@
 // legend names every series so identity is never colour alone.
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
-import type { Trend } from "./compute"
+import { familyOf } from "../../identity"
+import type { Series, Trend } from "./compute"
 import { shortDay } from "./format"
 import "./chart.css"
 
+/**
+ * Four slots in a fixed order, never cycled. They are the neutral ramp, because none of this page's
+ * series is an object family: an activity kind and a pipeline stage are not families, and DESIGN.md
+ * §5 gives colour five jobs, none of which is telling four lines apart. A series that really is a
+ * family says so and gets that family's ink instead.
+ */
 const SLOT = ["var(--viz-1)", "var(--viz-2)", "var(--viz-3)", "var(--viz-4)"]
+
+const inkOf = (s: Series, i: number) => (s.family ? familyOf(s.family).ink : SLOT[i])
+
+/**
+ * A second channel, because the ramp is one hue: each slot also has its own stroke pattern, so two
+ * lines that cross are told apart by shape as well as by lightness — and by the legend, which draws
+ * the same pattern beside the name. A family-inked series keeps the solid stroke its ink earns.
+ */
+const DASH = ["", "7 3", "2 3", "10 3 2 3"]
+const dashOf = (s: Series, i: number) => (s.family ? undefined : DASH[i] || undefined)
 
 /** The chart draws in real pixels, so a label is the same size at 400 wide as at 1440. */
 function useWidth() {
@@ -80,13 +97,15 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {series.map((s, i) => (
-            <li key={s.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span aria-hidden="true" className="inline-block h-0.5 w-4 rounded-full" style={{ background: SLOT[i] }} />
+            <li key={s.id} className="flex items-center gap-1.5 t-small text-muted-foreground">
+              <svg aria-hidden="true" width="18" height="8" viewBox="0 0 18 8" className="shrink-0">
+                <line x1="0" x2="18" y1="4" y2="4" stroke={inkOf(s, i)} strokeWidth={2} strokeDasharray={dashOf(s, i)} strokeLinecap="round" />
+              </svg>
               {s.label}
             </li>
           ))}
           {compare && (
-            <li className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <li className="flex items-center gap-1.5 t-small text-muted-foreground">
               <span aria-hidden="true" className="inline-block h-0 w-4 border-t-2 border-dashed border-muted-foreground" />
               Previous period
             </li>
@@ -100,7 +119,7 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
               aria-pressed={view === v}
               onClick={() => onViewChange(v)}
               className={cn(
-                "rounded-md px-2 py-0.5 text-xs capitalize focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                "rounded-md px-2 py-0.5 t-small capitalize focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                 view === v ? "bg-foreground text-background" : "hover:bg-muted",
               )}
             >
@@ -112,10 +131,10 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
 
       {view === "table" ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full t-body">
             <caption className="sr-only">{trend.summary}</caption>
             <thead>
-              <tr className="border-b text-xs text-muted-foreground">
+              <tr className="border-b t-small text-muted-foreground">
                 <th scope="col" className="px-3 py-1.5 text-left font-medium">Week of</th>
                 {series.map((s) => <th key={s.id} scope="col" className="px-3 py-1.5 text-right font-medium">{s.label}</th>)}
               </tr>
@@ -160,24 +179,24 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
             ) : null))}
 
             {compare?.series.slice(0, SLOT.length).map((s, i) => (
-              <path key={`c-${s.id}`} d={path(s.points)} fill="none" stroke={SLOT[i]} strokeWidth={2} strokeDasharray="4 4" strokeLinejoin="round" strokeLinecap="round" opacity={0.55} />
+              <path key={`c-${s.id}`} d={path(s.points)} fill="none" stroke={inkOf(s, i)} strokeWidth={2} strokeDasharray="4 4" strokeLinejoin="round" strokeLinecap="round" opacity={0.55} />
             ))}
 
             {series.map((s, i) => (
-              <path key={s.id} d={path(s.points)} fill="none" stroke={SLOT[i]} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              <path key={s.id} d={path(s.points)} fill="none" stroke={inkOf(s, i)} strokeWidth={2} strokeDasharray={dashOf(s, i)} strokeLinejoin="round" strokeLinecap="round" />
             ))}
 
             {/* End markers, with a 2px ring in the surface colour so crossings stay legible. */}
             {series.map((s, i) => (
               <circle key={`e-${s.id}`} cx={x(weeks.length - 1)} cy={y(s.points[weeks.length - 1] ?? 0)} r={4}
-                fill={SLOT[i]} stroke="var(--viz-surface)" strokeWidth={2} />
+                fill={inkOf(s, i)} stroke="var(--viz-surface)" strokeWidth={2} />
             ))}
 
             {at !== null && (
               <g>
                 <line x1={x(at)} x2={x(at)} y1={padTop} y2={padTop + plotH} stroke="var(--viz-axis)" strokeWidth={1} />
                 {series.map((s, i) => (
-                  <circle key={`h-${s.id}`} cx={x(at)} cy={y(s.points[at] ?? 0)} r={4} fill={SLOT[i]} stroke="var(--viz-surface)" strokeWidth={2} />
+                  <circle key={`h-${s.id}`} cx={x(at)} cy={y(s.points[at] ?? 0)} r={4} fill={inkOf(s, i)} stroke="var(--viz-surface)" strokeWidth={2} />
                 ))}
               </g>
             )}
@@ -185,14 +204,14 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
 
           {at !== null && (
             <div
-              className="pointer-events-none absolute top-3 rounded-md border bg-background px-2 py-1.5 text-xs shadow-sm"
+              className="pointer-events-none absolute top-3 rounded-md border bg-background px-2 py-1.5 t-small shadow-sm"
               style={{ left: Math.min(Math.max(x(at) - 60, 8), Math.max(8, width - 140)) }}
             >
               <div className="font-medium">Week of {shortDay(weeks[at])}</div>
               <ul className="mt-0.5">
                 {series.map((s, i) => (
                   <li key={s.id} className="flex items-center gap-1.5">
-                    <span aria-hidden="true" className="inline-block size-2 rounded-full" style={{ background: SLOT[i] }} />
+                    <span aria-hidden="true" className="inline-block size-2 rounded-full" style={{ background: inkOf(s, i) }} />
                     <span className="text-muted-foreground">{s.label}</span>
                     <span className="ml-auto tabular-nums">{format(s.points[at] ?? 0)}</span>
                   </li>
@@ -203,7 +222,7 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
         </div>
       )}
 
-      <p id={describedById} className="border-t px-3 py-1.5 text-xs text-muted-foreground">{trend.summary}</p>
+      <p id={describedById} className="border-t px-3 py-1.5 t-small text-muted-foreground">{trend.summary}</p>
     </section>
   )
 }

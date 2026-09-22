@@ -20,7 +20,8 @@ import { seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import { copyRows, usedByLine } from "./Templates"
 import { engage } from "./store"
-import { BesideLink, FollowLink, Pill, ago, day, h1Of, n, toast } from "./shared"
+import { Chip, FamilyIcon } from "../../ui/Identity"
+import { BesideLink, FollowLink, ago, day, h1Of, n, toast } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
 const SEARCH_OVER = 10
@@ -88,9 +89,10 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
           <ArrowLeft className="size-3" aria-hidden="true" />Templates and snippets
         </a>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">{row.name}</h2>
-          <Pill tone="muted">{row.kind}</Pill>
-          <Pill tone="muted">{row.folder}</Pill>
+          <FamilyIcon of="templates" size="header" />
+          <h2 className="t-section">{row.name}</h2>
+          <Chip family="templates" icon={false}>{row.kind}</Chip>
+          <Chip family="neutral" icon={false}>{row.folder}</Chip>
         </div>
         <p className="pb-4 text-xs text-muted-foreground">
           {row.owner} · updated {row.updated ? day(row.updated) : "—"} · last used {row.lastUsed ? ago(row.lastUsed) : "never"}
@@ -115,14 +117,14 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
             ) : (
               /* Not yours to change: the copy is readable and the edit controls are absent, not greyed. */
               <div className="rounded-md border p-3">
-                {row.kind === "Template" && <p className="text-sm font-medium">{subject || "No subject"}</p>}
+                {row.kind === "Template" && <p className="t-body font-medium">{subject || "No subject"}</p>}
                 <p className="mt-1 whitespace-pre-wrap text-sm">{body}</p>
               </div>
             )}
 
             {row.snippetIds.length > 0 && (
               <div className="rounded-md border p-3">
-                <p className="text-xs font-medium">Snippets this template nests</p>
+                <p className="t-label">Snippets this template nests</p>
                 <ul className="mt-1 space-y-1 text-xs">
                   {row.snippetIds.map((sid) => {
                     const s = seed.snippets.find((x) => x.id === sid)
@@ -169,7 +171,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                 />
               </div>
             )}
-            {!isOwner && <p className="text-xs text-muted-foreground">Owned by {row.owner}; only the owner and RevOps admins change it.</p>}
+            {!isOwner && <p className="t-small text-muted-foreground">Owned by {row.owner}; only the owner and RevOps admins change it.</p>}
           </div>
 
           {/* A section, never a door: who else receives this edit. */}
@@ -184,9 +186,9 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                 : undefined}
             />
             {uses.length === 0
-              ? <p className="text-sm text-muted-foreground">Nothing uses this yet.</p>
+              ? <p className="t-body text-muted-foreground">Nothing uses this yet.</p>
               : shownUses.length === 0
-                ? <p className="text-sm text-muted-foreground">Nothing that uses this matches "{usesQ}".</p>
+                ? <p className="t-body text-muted-foreground">Nothing that uses this matches "{usesQ}".</p>
                 : (
                   <ul className="divide-y border-t text-sm">
                     {shownUses.map((u) => (
@@ -214,12 +216,12 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
               </SelectContent>
             </Select>
             {unfilled.length > 0 && (
-              <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+              <p className="t-small mt-2" style={{ color: "var(--warning-ink)" }}>
                 {n(unfilled.length)} {unfilled.length === 1 ? "variable has" : "variables have"} no value for {person?.name}: {unfilled.join(", ")}
               </p>
             )}
             <div className="mt-2 rounded-md border p-2">
-              {row.kind === "Template" && <p className="text-sm font-medium">{render(subject) || "No subject"}</p>}
+              {row.kind === "Template" && <p className="t-body font-medium">{render(subject) || "No subject"}</p>}
               <p className="mt-1 whitespace-pre-wrap text-sm">{render(body)}</p>
             </div>
           </section>

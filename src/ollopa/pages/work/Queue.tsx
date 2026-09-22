@@ -10,11 +10,11 @@
 import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { follow } from "../../chain"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { EmptyState } from "../../ui/EmptyState"
 import type { Task } from "../../data/seed"
 import type { Session } from "../../session"
@@ -87,9 +87,9 @@ export function Queue(p: QueueProps) {
     <div className="flex min-h-0 flex-1 flex-col">
       {/* ------------------------------------------------------------------- where you are */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2 sm:px-6">
-        <span className="text-sm font-medium tabular-nums">Task {i + 1} of {p.tasks.length}</span>
-        <Badge variant="outline">{task.kind}</Badge>
-        <span className="min-w-0 truncate text-sm">{task.contact}, {task.company}</span>
+        <span className="t-body font-medium tabular-nums">Task {i + 1} of {p.tasks.length}</span>
+        <Chip family="tasks">{task.kind}</Chip>
+        <span className="t-body min-w-0 truncate">{task.contact}, {task.company}</span>
         <div className="ml-auto flex items-center gap-1">
           <Button size="icon-sm" variant="ghost" aria-label="Previous task" disabled={i === 0} onClick={() => setI((n) => n - 1)}><ChevronLeft className="size-4" /></Button>
           <Button size="icon-sm" variant="ghost" aria-label="Next task" disabled={i >= p.tasks.length - 1} onClick={() => setI((n) => n + 1)}><ChevronRight className="size-4" /></Button>
@@ -98,7 +98,7 @@ export function Queue(p: QueueProps) {
 
       {/* The count is never left to be read as a lie: the queue shows one task and says where the
           rest are, names the one that comes next, and carries the control that shows them all. */}
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b px-4 py-1.5 text-xs sm:px-6">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b px-4 py-1.5 t-small sm:px-6">
         <span className="text-muted-foreground">
           {p.tasks.length === 1
             ? "The last one; nothing else is waiting behind it."
@@ -111,7 +111,7 @@ export function Queue(p: QueueProps) {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-1.5 text-xs sm:px-6">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-1.5 t-small sm:px-6">
         {p.scores ? (
           <span className="flex items-center gap-2">
             Sort:
@@ -128,13 +128,17 @@ export function Queue(p: QueueProps) {
 
       {/* -------------------------------------------------------------------------- the task */}
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-        <div className="mx-auto max-w-3xl space-y-5">
+        {/* The one task the queue is on is the raised card: the thing you are working sits above
+            the page it is on (DESIGN.md §5). */}
+        <div className="surface-raised mx-auto max-w-3xl space-y-5 rounded-lg border p-4">
           <div>
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h3 className="text-base font-semibold">{task.step ? `Step ${task.step.n} of ${task.step.of} · ${task.title}` : task.title}</h3>
-              <span className={dueLabel(task.due).startsWith("Overdue") ? "text-sm font-medium text-destructive" : "text-sm text-muted-foreground"}>{dueLabel(task.due)}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h3 className="t-section">{task.step ? `Step ${task.step.n} of ${task.step.of} · ${task.title}` : task.title}</h3>
+              {dueLabel(task.due).startsWith("Overdue")
+                ? <Chip status="overdue" className="tabular-nums">{dueLabel(task.due)}</Chip>
+                : <span className="t-body tabular-nums text-muted-foreground">{dueLabel(task.due)}</span>}
             </div>
-            <p className="pt-0.5 text-sm text-muted-foreground">
+            <p className="t-small pt-0.5 text-muted-foreground">
               From {task.createdBy === "sequence" ? `“${task.sequence}”` : task.createdBy === "agent" ? task.creator : `${task.creator}, by hand`}
               {sequenceWaiting && <> · the sequence waits at this step</>}
             </p>
@@ -150,7 +154,7 @@ export function Queue(p: QueueProps) {
               >
                 {task.contact}
               </button>
-              <span className="text-sm text-muted-foreground">{contact?.title} · {task.company}</span>
+              <span className="t-body text-muted-foreground">{contact?.title} · {task.company}</span>
               {task.dealId && (
                 <span data-item={task.dealId}>
                   <button
@@ -163,16 +167,16 @@ export function Queue(p: QueueProps) {
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 t-body">
               {contact?.phoneNumber && <span className="font-mono">{contact.phoneNumber}</span>}
               {contact?.doNotCall && (
-                <span className="rounded border border-destructive px-1.5 py-0.5 text-xs text-destructive">Do not call · {contact.doNotCallSource}</span>
+                <Chip status="blocked">Do not call · {contact.doNotCallSource}</Chip>
               )}
               {contact?.tz && <span className="text-muted-foreground">{localTime(contact.tz)} their time</span>}
-              <span className="font-mono text-xs text-muted-foreground">{contact?.email} · {contact?.emailStatus}</span>
+              <span className="font-mono t-small text-muted-foreground">{contact?.email} · {contact?.emailStatus}</span>
             </div>
             {p.scores && contact && (
-              <p className="pt-1 text-sm">
+              <p className="pt-1 t-body">
                 Fit {contact.score} {contact.score >= contact.scorePrevious ? "▲" : "▼"} from {contact.scorePrevious}
                 <span className="text-muted-foreground"> — {contact.scoreReasons.join(", ")}</span>
               </p>
@@ -181,8 +185,8 @@ export function Queue(p: QueueProps) {
 
           {task.history.length > 0 && (
             <div>
-              <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">What has happened</h4>
-              <ul className="pt-1 text-sm">
+              <h4 className="t-label text-muted-foreground">What has happened</h4>
+              <ul className="pt-1 t-body">
                 {task.history.map((h, k) => (
                   <li key={k} className="flex flex-wrap gap-x-3 py-0.5">
                     <span className="tabular-nums text-muted-foreground">{day(h.when)}</span>
@@ -208,7 +212,7 @@ export function Queue(p: QueueProps) {
           )}
           {(task.kind === "Email" || task.kind === "Follow-up") && (
             <div>
-              <label className="text-xs text-muted-foreground" htmlFor="queue-email">Write to {task.contact.split(" ")[0]}</label>
+              <label className="t-label text-muted-foreground" htmlFor="queue-email">Write to {task.contact.split(" ")[0]}</label>
               <Textarea id="queue-email" rows={5} className="mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Actions
@@ -227,8 +231,8 @@ export function Queue(p: QueueProps) {
           )}
 
           <div>
-            <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Notes on this task</h4>
-            <ul className="pt-1 text-sm">
+            <h4 className="t-label text-muted-foreground">Notes on this task</h4>
+            <ul className="pt-1 t-body">
               {task.notes.map((n, k) => (
                 <li key={k} className="py-0.5"><span className="text-muted-foreground">{day(n.when)} · {n.who}: </span>{n.text}</li>
               ))}
@@ -249,7 +253,7 @@ export function Queue(p: QueueProps) {
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
           {task.kind === "Call" ? (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Done:</span>
+              <span className="t-small text-muted-foreground">Done:</span>
               <Actions
                 surface="card"
                 items={CALL_OUTCOMES.map((o) => ({ kind: "secondary" as const, label: o, onClick: () => { p.onDone(task, o); advance() } }))}

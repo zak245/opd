@@ -11,6 +11,7 @@
 import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { Door, DoorGroup } from "../../ui/Door"
@@ -32,6 +33,20 @@ export const STATE_LABEL: Record<Request["state"], string> = {
 }
 
 const CHIP_ORDER: Request["state"][] = ["captured", "investigating", "approved", "shipped", "verified", "declined"]
+
+/**
+ * The six states, said in the five the product has (DESIGN.md §5). The word on screen stays the
+ * queue's own; `statusOf` reads the word below it and picks the one colour that state means, so a
+ * request looks the same here, on its record and in a chip.
+ */
+export const STATE_STATUS: Record<Request["state"], string> = {
+  captured: "waiting",
+  investigating: "in progress",
+  approved: "approved",
+  shipped: "done",
+  verified: "running",
+  declined: "declined",
+}
 
 /** Waiting time, in words, against the two-business-day answer target. Never colour alone. */
 export function waitingOf(r: Request, targetDays: number) {
@@ -91,7 +106,9 @@ export function RequestsPage({ session }: { session: Session }) {
       key: "waiting", header: "Waiting",
       cell: (r) => {
         const w = waitingOf(r, target)
-        return <span className={cn("whitespace-nowrap tabular-nums", w.past > 0 && "text-destructive")}>{w.text}</span>
+        return w.past > 0
+          ? <Chip status="overdue">{w.text}</Chip>
+          : <span className="whitespace-nowrap tabular-nums">{w.text}</span>
       },
     },
     {
@@ -109,7 +126,7 @@ export function RequestsPage({ session }: { session: Session }) {
       className: "text-right",
     }] : []),
     { key: "owner", header: "Decides", cell: (r) => <span className="whitespace-nowrap">{r.decisionOwner}</span> },
-    { key: "state", header: "State", cell: (r) => <span className="whitespace-nowrap">{STATE_LABEL[r.state]}</span> },
+    { key: "state", header: "State", cell: (r) => <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip> },
   ]
 
   if (all.length === 0) {
@@ -130,9 +147,9 @@ export function RequestsPage({ session }: { session: Session }) {
           <p className="text-sm">
             <strong className="font-semibold">{plural(open.length, "waiting", "waiting")}</strong>
             {" · "}
-            <span className={cn(past.length > 0 && "text-destructive")}>
-              {past.length === 0 ? `none past ${target} business days` : `${past.length} past ${target} business days`}
-            </span>
+            {past.length === 0
+              ? <span>none past {target} business days</span>
+              : <Chip status="overdue">{past.length} past {target} business days</Chip>}
             {oldest && <> · oldest {businessDaysBetween(oldest.raisedOn)} days ({oldest.requester.user})</>}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">Nothing here closes on its own.</p>
@@ -218,17 +235,20 @@ export function RequestsPage({ session }: { session: Session }) {
           {rows.map((r) => {
             const w = waitingOf(r, target)
             return (
-              <li key={r.id} className="rounded-md border p-3">
+              <li key={r.id} className="surface-raised rounded-[10px] border p-3">
                 <a className="text-sm font-medium underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}
                 </p>
-                <p className={cn("mt-1 text-sm", w.past > 0 && "text-destructive")}>{w.text}</p>
+                <p className="t-body mt-1">{w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : w.text}</p>
                 <p className="text-sm">
                   {plural(r.affected.count, "person", "people")} feel it
                   {r.upgrade && <> · {money(r.upgrade.monthlyTotal)} a month</>}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{STATE_LABEL[r.state]} · {r.decisionOwner} decides</p>
+                <p className="t-small mt-1 flex items-center gap-1.5 text-muted-foreground">
+                  <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip>
+                  {r.decisionOwner} decides
+                </p>
               </li>
             )
           })}
@@ -236,6 +256,7 @@ export function RequestsPage({ session }: { session: Session }) {
 
         <div className="hidden min-h-0 flex-1 sm:block">
           <TablePage<Request>
+            family="requests"
             title="The queue"
             description={`Sorted by what is past the ${target}-business-day answer target, then by how long it has waited.`}
             rows={rows}

@@ -124,8 +124,8 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
       <dl className="space-y-2.5">
         {quickLookFields(v, business.currency, d.level).map((f) => (
           <div key={f.label} className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
-            <dt className="text-xs text-muted-foreground">{f.label}</dt>
-            <dd className="min-w-0">{f.value}</dd>
+            <dt className="t-label text-muted-foreground">{f.label}</dt>
+            <dd className="t-body min-w-0">{f.value}</dd>
           </div>
         ))}
       </dl>
@@ -150,7 +150,7 @@ const CompanyBeside: BesideComponent = ({ session, id }) => {
           ]}
         />
         {!canEdit && (
-          <p className="text-xs text-muted-foreground">
+          <p className="t-small text-muted-foreground">
             {company.owner} owns {company.name}; only the owner, customer success or an admin can change it.
           </p>
         )}

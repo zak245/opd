@@ -6,7 +6,6 @@
 // asked of the usage model for this seat at this business and never hard-coded, which is how one
 // page serves four businesses and four seats with no mode switch.
 import { useMemo, useState, type ReactNode } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -25,7 +24,7 @@ import { ACCOUNT_STAGES, CREDITS, TODAY, seedFor, type AccountStage } from "../.
 import type { Session } from "../../session"
 import { DataTable, type Col, type FilterDef, type MenuAction, type RowAction } from "./Table"
 import { viewsOf, type CompanyView } from "./data"
-import { quickLookFields } from "./quickLook"
+import { quickLookFields, stageChip } from "./quickLook"
 import { ago, day } from "./format"
 import { usePageState } from "./persist"
 import { applyChange, changeFor, undoChange, useChanges } from "./changes"
@@ -129,15 +128,15 @@ export function CompaniesPage({ session }: { session: Session }) {
               {v.company.name}
             </button>
             {/* Safety state stays on the row whatever the columns say. */}
-            {v.company.stage === "Do not prospect" && <Badge variant="secondary" className="text-[11px]">Do not prospect</Badge>}
+            {v.company.stage === "Do not prospect" && stageChip(v.company.stage)}
           </div>
-          <div className="truncate font-mono text-xs text-muted-foreground">{v.company.domain}</div>
+          <div className="truncate font-mono t-small text-muted-foreground">{v.company.domain}</div>
         </div>
       ),
     },
     { id: "co.col.contacts", header: "Contacts held", className: "tabular-nums", sortValue: (v) => v.contacts.length, cell: (v) => v.contacts.length },
     { id: "co.col.in-sequence", header: "In a sequence", className: "tabular-nums", sortValue: (v) => v.inSequence.length, cell: (v) => (v.inSequence.length === 0 ? <span className="text-muted-foreground">—</span> : v.inSequence.length) },
-    { id: "co.col.stage", header: "Stage", phone: true, sortValue: (v) => v.company.stage, cell: (v) => <Badge variant="secondary">{v.company.stage}</Badge> },
+    { id: "co.col.stage", header: "Stage", phone: true, sortValue: (v) => v.company.stage, cell: (v) => stageChip(v.company.stage) },
     // The column is the company's own last activity; the record header widens it to the newest of
     // the company, its contacts, its replies and its deals.
     { id: "co.col.last-activity", header: "Last activity", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.company.lastActivity, cell: (v) => <span title={day(v.company.lastActivity)}>{ago(v.company.lastActivity)}</span> },
@@ -473,7 +472,7 @@ export function CompaniesPage({ session }: { session: Session }) {
 
       {/* One line in body contrast where the seat cannot do something, naming who can (rule 4). */}
       {(!canChangeOwner || (Boolean(b.crm) && !canPushCrm)) && admin && (
-        <p className="px-5 pb-3 text-xs text-muted-foreground lg:px-6">
+        <p className="px-5 pb-3 t-small text-muted-foreground lg:px-6">
           {!canChangeOwner ? "Owner changes" : `Pushes to ${crmName}`}: ask {admin.user} ({admin.title}).
         </p>
       )}
@@ -493,19 +492,19 @@ export function CompaniesPage({ session }: { session: Session }) {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="flex items-start gap-2 text-sm">
+            <label className="flex items-start gap-2 t-body">
               <Checkbox className="mt-0.5" checked={state.exclusions.owned} onCheckedChange={(x) => setState({ exclusions: { ...state.exclusions, owned: Boolean(x) } })} />
               <span>Exclude companies I already own
-                <span className="block text-xs text-muted-foreground">{excluded.owned} companies are yours</span>
+                <span className="block t-small text-muted-foreground">{excluded.owned} companies are yours</span>
               </span>
             </label>
-            <label className="flex items-start gap-2 text-sm">
+            <label className="flex items-start gap-2 t-body">
               <Checkbox className="mt-0.5" checked={state.exclusions.inSequence} onCheckedChange={(x) => setState({ exclusions: { ...state.exclusions, inSequence: Boolean(x) } })} />
               <span>Exclude companies with a contact in a sequence
-                <span className="block text-xs text-muted-foreground">{excluded.inSequence} companies have someone in a sequence</span>
+                <span className="block t-small text-muted-foreground">{excluded.inSequence} companies have someone in a sequence</span>
               </span>
             </label>
-            <p className="text-sm font-medium tabular-nums">
+            <p className="t-label tabular-nums">
               {findRows.length.toLocaleString()} matching · {findRemoved.toLocaleString()} excluded
             </p>
           </div>
@@ -514,7 +513,7 @@ export function CompaniesPage({ session }: { session: Session }) {
             {filterDefs
               .filter((f) => ["co.filter.industry", "co.filter.employees", "co.filter.location", "co.filter.revenue", "co.filter.funding", "co.filter.technology", "co.filter.signals"].includes(f.id))
               .map((f) => (
-                <label key={f.id} className="text-xs text-muted-foreground">
+                <label key={f.id} className="t-small text-muted-foreground">
                   {f.label}
                   <Select value={state.findFilters[f.id] ?? "all"} onValueChange={(x) => setState({ findFilters: { ...state.findFilters, [f.id]: x } })}>
                     <SelectTrigger className="mt-1 h-8" aria-label={f.label}><SelectValue /></SelectTrigger>
@@ -531,8 +530,8 @@ export function CompaniesPage({ session }: { session: Session }) {
             {findRows.slice(0, 12).map((v) => (
               <li key={v.company.id} className="flex flex-wrap items-center gap-2 p-2">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{v.company.name}</div>
-                  <div className="text-xs text-muted-foreground">{v.company.industry} · {v.company.employees.toLocaleString()} people · {v.company.location.country}</div>
+                  <div className="truncate t-label">{v.company.name}</div>
+                  <div className="t-small text-muted-foreground">{v.company.industry} · {v.company.employees.toLocaleString()} people · {v.company.location.country}</div>
                 </div>
                 <Actions
                   surface="card"
@@ -548,7 +547,7 @@ export function CompaniesPage({ session }: { session: Session }) {
                 />
               </li>
             ))}
-            {findRows.length === 0 && <li className="p-3 text-sm text-muted-foreground">Nothing matches. Turn an exclusion off, or clear a filter.</li>}
+            {findRows.length === 0 && <li className="p-3 t-body text-muted-foreground">Nothing matches. Turn an exclusion off, or clear a filter.</li>}
           </ul>
         </div>
       </Panel>
@@ -566,15 +565,15 @@ export function CompaniesPage({ session }: { session: Session }) {
           },
         }]} />}>
         {merging && (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 t-body">
             <Select defaultValue={rows.find((v) => v.company.id !== merging.company.id)?.company.id}>
               <SelectTrigger aria-label="The other record"><SelectValue /></SelectTrigger>
               <SelectContent>{rows.slice(0, 20).filter((v) => v.company.id !== merging.company.id).map((v) => <SelectItem key={v.company.id} value={v.company.id}>{v.company.name}</SelectItem>)}</SelectContent>
             </Select>
             <fieldset className="space-y-1">
-              <legend className="text-xs text-muted-foreground">Which values win</legend>
+              <legend className="t-small text-muted-foreground">Which values win</legend>
               {["Name", "Domain", "Industry", "Owner"].map((f) => (
-                <label key={f} className="flex items-center gap-2 text-sm"><Checkbox defaultChecked /> Keep {merging.company.name}'s {f.toLowerCase()}</label>
+                <label key={f} className="flex items-center gap-2 t-body"><Checkbox defaultChecked /> Keep {merging.company.name}'s {f.toLowerCase()}</label>
               ))}
             </fieldset>
           </div>
@@ -588,14 +587,14 @@ export function CompaniesPage({ session }: { session: Session }) {
         }]} />}>
         {flagging && (
           <div className="space-y-3">
-            <label className="block text-xs text-muted-foreground">
+            <label className="block t-small text-muted-foreground">
               Field
               <Select defaultValue="Industry">
                 <SelectTrigger className="mt-1" aria-label="Field"><SelectValue /></SelectTrigger>
                 <SelectContent>{["Name", "Domain", "Industry", "Employees", "Location", "Revenue"].map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
               </Select>
             </label>
-            <label className="block text-xs text-muted-foreground">
+            <label className="block t-small text-muted-foreground">
               What is wrong
               <Textarea className="mt-1" rows={3} placeholder={`What ${flagging.company.name} should say instead`} />
             </label>
@@ -618,8 +617,8 @@ function ViewsPopover({ name, views, onPick }: { name: string; views: string[]; 
         <ul className="space-y-0.5">
           {["All companies", ...views].map((v) => (
             <li key={v} className="flex items-center gap-1">
-              <button type="button" className="min-w-0 flex-1 truncate rounded px-1.5 py-1 text-left text-sm hover:bg-muted" onClick={() => onPick(v)}>{v}</button>
-              <button type="button" className="rounded px-1 text-xs text-muted-foreground underline" onClick={() => toast(`“${v}” is your default view`)}>Set as default</button>
+              <button type="button" className="min-w-0 flex-1 truncate rounded px-1.5 py-1 text-left t-body hover:bg-muted" onClick={() => onPick(v)}>{v}</button>
+              <button type="button" className="rounded px-1 t-small text-muted-foreground underline" onClick={() => toast(`“${v}” is your default view`)}>Set as default</button>
             </li>
           ))}
         </ul>
@@ -656,13 +655,13 @@ function EditPanel({ row, onClose, onSaved }: { row: CompanyView; onClose: () =>
           { id: "city", label: "City", value: city, set: setCity },
         ].map((f) => (
           <div key={f.id}>
-            <Label htmlFor={`edit-${f.id}`} className="text-xs">{f.label}</Label>
+            <Label htmlFor={`edit-${f.id}`} className="t-small">{f.label}</Label>
             <Input id={`edit-${f.id}`} className="mt-1" value={f.value} onChange={(e) => f.set(e.target.value)} />
           </div>
         ))}
         {Object.entries(row.company.custom).map(([k, v]) => (
           <div key={k}>
-            <Label htmlFor={`edit-${k}`} className="text-xs">{k}</Label>
+            <Label htmlFor={`edit-${k}`} className="t-small">{k}</Label>
             <Input id={`edit-${k}`} className="mt-1" defaultValue={v} />
           </div>
         ))}

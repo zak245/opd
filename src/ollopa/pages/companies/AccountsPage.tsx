@@ -7,7 +7,6 @@
 //
 // The record behind a row is the company record. This page builds no second one.
 import { useMemo, useState, type ReactNode } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +18,7 @@ import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
@@ -26,7 +26,7 @@ import { TODAY, seedFor, type AccountRisk } from "../../data/seed"
 import type { Session } from "../../session"
 import { DataTable, type Col, type FilterDef, type MenuAction, type RowAction } from "./Table"
 import { viewsOf, type CompanyView } from "./data"
-import { quickLookFields } from "./quickLook"
+import { bandChip, quickLookFields, stageChip } from "./quickLook"
 import { ago, day, daysLeft, delta, money, renewalText } from "./format"
 import { usePageState } from "./persist"
 import { applyChange, changeFor, undoChange, useChanges } from "./changes"
@@ -132,7 +132,7 @@ export function AccountsPage({ session }: { session: Session }) {
   const strip: ReactNode = (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">Renewals due</span>
+        <span className="t-small text-muted-foreground">Renewals due</span>
         {[30, 60, 90].map((days) => {
           const { n, value } = windowCount(days)
           const on = state.windows.includes(days)
@@ -142,7 +142,7 @@ export function AccountsPage({ session }: { session: Session }) {
               type="button"
               aria-pressed={on}
               onClick={() => toggleWindow(days)}
-              className={cn("rounded-md border px-2.5 py-1 text-left text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+              className={cn("rounded-md border px-2.5 py-1 text-left t-small focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                 on ? "bg-foreground text-background" : "hover:bg-muted")}
             >
               <span className="font-medium tabular-nums">{days} days · {n}</span>
@@ -150,7 +150,7 @@ export function AccountsPage({ session }: { session: Session }) {
             </button>
           )
         })}
-        <span className="rounded-md border border-amber-300 px-2.5 py-1 text-xs dark:border-amber-800">
+        <span className="rounded-md border px-2.5 py-1 t-small [border-color:var(--warning)]">
           <span className="font-medium">Value at risk</span>
           <span className="block tabular-nums">{money(valueAtRisk, b.currency)} · {atRisk.length} account{atRisk.length === 1 ? "" : "s"}</span>
         </span>
@@ -167,9 +167,9 @@ export function AccountsPage({ session }: { session: Session }) {
               const h = v.account!.handoff!
               return (
                 <li key={v.company.id} className="rounded-md border p-2">
-                  <div className="text-sm font-medium">{v.account!.name}</div>
-                  <div className="text-xs text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
-                  <p className="pt-1 text-xs">Why they bought: {h.whyTheyBought}</p>
+                  <div className="t-label">{v.account!.name}</div>
+                  <div className="t-small text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
+                  <p className="pt-1 t-small">Why they bought: {h.whyTheyBought}</p>
                   <Actions className="mt-2" surface="card" items={[{ kind: "secondary", label: "Accept the hand-off", onClick: () => setPending({ kind: "accept", row: v }) }]} />
                 </li>
               )
@@ -241,20 +241,25 @@ export function AccountsPage({ session }: { session: Session }) {
           >
             {v.account!.name}
           </button>
-          <div className="truncate font-mono text-xs text-muted-foreground">{v.account!.domain}</div>
+          <div className="truncate font-mono t-small text-muted-foreground">{v.account!.domain}</div>
         </div>
       ),
     },
     {
       id: "acct.health", header: "Health", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.account!.health,
-      cell: (v) => <span><span className="font-medium tabular-nums">{v.account!.health}</span> · {v.account!.band}</span>,
+      cell: (v) => (
+        <span className="inline-flex items-baseline gap-1.5">
+          <span className="font-medium tabular-nums">{v.account!.health}</span>
+          {bandChip(v.account!.band)}
+        </span>
+      ),
     },
     { id: "acct.health-trend", header: "30-day change", className: "whitespace-nowrap", sortValue: (v) => v.account!.healthDelta30, cell: (v) => delta(v.account!.healthDelta30) },
     {
       id: "acct.renewal", header: "Renewal", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.account!.renewal,
       cell: (v) => {
         const n = daysLeft(v.account!.renewal)
-        return <span className={cn(n >= 0 && n < 30 && "font-medium text-amber-700 dark:text-amber-400")}>{renewalText(v.account!.renewal)}</span>
+        return <span className={cn(n >= 0 && n < 30 && "font-medium [color:var(--warning-ink)]")}>{renewalText(v.account!.renewal)}</span>
       },
     },
     { id: "acct.value", header: "Contract value", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.value, cell: (v) => money(v.account!.value, b.currency) },
@@ -265,7 +270,7 @@ export function AccountsPage({ session }: { session: Session }) {
         if (open.length === 0) return <span className="text-muted-foreground">None</span>
         const churn = open.find((r) => r.type === "Churn notice")
         // A churn notice is written out, never a count or a colour on its own (rule 7).
-        return <span className={cn("whitespace-nowrap", churn && "font-medium text-destructive")}>{open.length} · {(churn ?? open[0]).type}</span>
+        return <Chip status={churn ? "blocked" : "warning"}>{open.length} · {(churn ?? open[0]).type}</Chip>
       },
     },
     { id: "acct.last-touch", header: "Last touch", className: "whitespace-nowrap", sortValue: (v) => v.account!.lastTouch, cell: (v) => ago(v.account!.lastTouch) },
@@ -294,7 +299,7 @@ export function AccountsPage({ session }: { session: Session }) {
     { id: "acct.forecast", header: "Forecast", sortValue: (v) => v.account!.forecast, cell: (v) => v.account!.forecast },
     { id: "acct.terms", header: "Notice and auto-renew", className: "whitespace-nowrap", cell: (v) => `${v.account!.noticeDays} days · ${v.account!.autoRenew ? "auto-renews" : "does not auto-renew"}` },
     { id: "acct.ae", header: "Account executive", sortValue: (v) => v.account!.ae, cell: (v) => v.account!.ae },
-    { id: "acct.stage", header: "Stage", sortValue: (v) => v.account!.stage, cell: (v) => <Badge variant="secondary">{v.account!.stage}</Badge> },
+    { id: "acct.stage", header: "Stage", sortValue: (v) => v.account!.stage, cell: (v) => stageChip(v.account!.stage) },
     { id: "acct.contacts-held", header: "Contacts held", className: "tabular-nums", sortValue: (v) => v.contacts.length, cell: (v) => v.contacts.length },
     { id: "acct.industry-size", header: "Industry and employees", cell: (v) => `${v.company.industry} · ${v.company.employees.toLocaleString()}` },
     { id: "acct.parent", header: "Parent account", sortValue: (v) => v.company.parent ?? "", cell: (v) => v.company.parent ?? <span className="text-muted-foreground">—</span> },
@@ -426,7 +431,7 @@ export function AccountsPage({ session }: { session: Session }) {
               {v.account!.signals.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-medium">{s.kind}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="t-small text-muted-foreground">
                     {s.detail} · {s.source} · fired {day(s.fired)} · routed to {s.routedTo} · due {day(s.dueBy)}
                     {s.outcome ? ` · ${s.outcome}` : " · no outcome yet"}
                   </span>
@@ -499,7 +504,7 @@ function NextStepCell({ value, onSave }: { value: { text: string; due: string };
         <Input
           autoFocus
           aria-label="Next step"
-          className="h-7 w-44 text-xs"
+          className="h-7 w-44 t-small"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -536,14 +541,14 @@ function TouchPanel({ row, onClose, onLog }: { row: CompanyView | null; onClose:
       }]} />}>
       <div className="space-y-3">
         <div>
-          <Label htmlFor="touch-kind" className="text-xs">Kind</Label>
+          <Label htmlFor="touch-kind" className="t-small">Kind</Label>
           <Select value={kind} onValueChange={setKind}>
             <SelectTrigger id="touch-kind" className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>{["Call", "Email", "Meeting"].map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label htmlFor="touch-note" className="text-xs">What happened</Label>
+          <Label htmlFor="touch-note" className="t-small">What happened</Label>
           <Textarea id="touch-note" rows={3} className="mt-1" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
@@ -565,18 +570,18 @@ function RiskPanel({ row, owner, onClose, onAdd }: { row: CompanyView | null; ow
       }]} />}>
       <div className="space-y-3">
         <div>
-          <Label htmlFor="risk-type" className="text-xs">Type</Label>
+          <Label htmlFor="risk-type" className="t-small">Type</Label>
           <Select value={type} onValueChange={setType}>
             <SelectTrigger id="risk-type" className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>{RISK_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label htmlFor="risk-note" className="text-xs">What is happening</Label>
+          <Label htmlFor="risk-note" className="t-small">What is happening</Label>
           <Textarea id="risk-note" rows={3} className="mt-1" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <div>
-          <Label htmlFor="risk-owner" className="text-xs">Owner</Label>
+          <Label htmlFor="risk-owner" className="t-small">Owner</Label>
           <Input id="risk-owner" className="mt-1" value={who} onChange={(e) => setWho(e.target.value)} />
         </div>
       </div>

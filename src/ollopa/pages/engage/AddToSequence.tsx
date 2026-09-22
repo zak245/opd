@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Panel } from "../../ui/Panel"
+import { StatusLine } from "../../ui/Identity"
 import { Actions } from "../../ui/Actions"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
 import { seedFor, TODAY, type Contact, type Enrollment, type Sequence } from "../../data/seed"
@@ -114,9 +115,9 @@ export function AddToSequencePanel(p: AddToSequenceProps) {
           {n(credits)} net-new emails = {n(credits)} credits · balance {n(seed.credits.balance)}
         </p>
         {doubled > 0 && (
-          <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400" role="status">
-            {n(doubled)} already in another sequence
-          </p>
+          <StatusLine className="mt-1" status="Warning" word={`${n(doubled)} of them`}>
+            are already in another sequence
+          </StatusLine>
         )}
       </div>
 

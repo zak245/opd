@@ -10,6 +10,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { toast } from "../../templates/TablePage"
 import type { RecordDoor } from "../../templates/RecordPage"
 import { Door, DoorGroup } from "../../ui/Door"
+import { Chip } from "../../ui/Identity"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Integration, type IntegrationError } from "../../data/seed"
 import type { Session } from "../../session"
@@ -63,8 +64,8 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
   if (!live && draft.seededFrom === "nothing" && !draft.started) {
     return (
       <div className="mx-auto max-w-lg p-10 text-center">
-        <a href={href("/ollopa/settings/integrations")} className="text-sm text-muted-foreground hover:underline">Settings › Integrations</a>
-        <h2 className="mt-6 text-lg font-semibold">This integration is not connected</h2>
+        <a href={href("/ollopa/settings/integrations")} className="t-body text-muted-foreground hover:underline">Settings › Integrations</a>
+        <h2 className="t-section mt-6">This integration is not connected</h2>
         <Actions className="mt-5 justify-center" surface="page" items={[{ kind: "primary", label: "Connect an integration", onClick: () => navigate("/ollopa/connect/new?step=1") }]} />
       </div>
     )
@@ -167,7 +168,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     id: `int.auth.${id}`,
     label: `Authorisation — connected as ${draft.authUser || live?.auth?.user || "nobody yet"}${(live?.auth?.validUntil ?? draft.validUntil) ? ` · valid until ${day(live?.auth?.validUntil ?? draft.validUntil)}` : ""}`,
     content: (
-      <div className="grid gap-3 text-sm">
+      <div className="t-body grid gap-3">
         <div>Sync user: {draft.authUser || live?.auth?.user || "—"}</div>
         {kind === "Salesforce" && <div>Environment: {draft.environment}</div>}
         <div>Token: {(live?.auth?.validUntil ?? draft.validUntil) ? `valid until ${day(live?.auth?.validUntil ?? draft.validUntil)}` : `valid until it is revoked in ${kind}`}</div>
@@ -186,9 +187,9 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
       <div className="grid gap-3">
         <Actions surface="card" items={[pullNow, pushNow]} />
         <div className="min-w-0 overflow-x-auto">
-          <table className="w-full min-w-[34rem] border-collapse text-sm">
+          <table className="w-full min-w-[34rem] border-collapse t-body">
             <caption className="sr-only">The last {runs.length} sync runs, newest first.</caption>
-            <thead><tr className="border-b text-left text-xs text-muted-foreground">
+            <thead><tr className="border-b text-left t-small text-muted-foreground">
               <th scope="col" className="py-1 pr-3 font-medium">Started</th><th scope="col" className="py-1 pr-3 font-medium">Object</th>
               <th scope="col" className="py-1 pr-3 font-medium">Direction</th><th scope="col" className="py-1 pr-3 font-medium">Pulled</th>
               <th scope="col" className="py-1 pr-3 font-medium">Pushed</th><th scope="col" className="py-1 font-medium">Failed</th>
@@ -244,16 +245,16 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
           read the CRM's page cannot change it by any route, and the sentence above names who can. */}
       <fieldset disabled={readOnly} className="flex min-h-full min-w-0 flex-col border-0 p-0">
         {readOnly && (
-          <div role="note" className="border-b bg-muted/40 px-5 py-2 text-sm lg:px-6">
+          <div role="note" className="t-body border-b bg-muted/40 px-5 py-2 lg:px-6">
             You can read this page. Changes to {kind} are made by {admin ? `${admin.user} (${admin.title})` : "the admin"}.
           </div>
         )}
         <header className="border-b px-5 pt-4 lg:px-6">
-          <a href={href("/ollopa/settings/integrations")} className="text-xs text-muted-foreground hover:underline">← Settings › Integrations</a>
+          <a href={href("/ollopa/settings/integrations")} className="t-small text-muted-foreground hover:underline">← Settings › Integrations</a>
           <div className="mt-2 flex flex-wrap items-start gap-x-4 gap-y-2">
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold">{live?.name ?? `${kind}${kind === "Salesforce" ? ` (${draft.environment})` : ""}`}</h2>
-              <p className="text-sm text-muted-foreground">{kind}{live?.environment ? ` · ${live.environment}` : ""}</p>
+              <h2 className="t-section">{live?.name ?? `${kind}${kind === "Salesforce" ? ` (${draft.environment})` : ""}`}</h2>
+              <p className="t-body text-muted-foreground">{kind}{live?.environment ? ` · ${live.environment}` : ""}</p>
             </div>
             {/* A seat that may not change this connection is shown no controls at all; the line
                 above the header names who does (RULES.md rule 4). */}
@@ -261,20 +262,20 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
           </div>
 
           {ribbon && (
-            <div role="status" aria-live="polite" className="mt-3 rounded-md bg-muted px-3 py-2 text-sm">{ribbon}</div>
+            <div role="status" aria-live="polite" className="surface-raised t-body mt-3 rounded-md border px-3 py-2">{ribbon}</div>
           )}
 
           <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 pb-4 sm:grid-cols-3 xl:grid-cols-5">
             {[
-              { label: "Status", value: status },
+              { label: "Status", value: <Chip status={status}>{status}</Chip> },
               { label: "Last sync", value: live ? `${day(live.lastSync)} ${live.lastSync.slice(11)}` : "not yet" },
               { label: "Next sync", value: paused ? "—, while paused" : live ? `every ${live.pollMinutes} minutes` : "every 15 minutes" },
               { label: "Records synced today", value: n(live?.recordsToday ?? 0) },
               { label: "Errors today", value: n(live?.errorsToday ?? 0) },
             ].map((f) => (
               <div key={f.label} className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                <dd className="mt-0.5 text-sm">{f.value}</dd>
+                <dt className="t-small text-muted-foreground">{f.label}</dt>
+                <dd className="t-body mt-0.5">{f.value}</dd>
               </div>
             ))}
           </dl>
@@ -284,11 +285,11 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
           <div className="grid max-w-5xl gap-8 px-5 py-6 lg:px-6">
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold">{groups.length ? `Errors, grouped by cause · ${filtered.length}` : "Errors"}</h3>
+                <h3 className="t-section">{groups.length ? `Errors, grouped by cause · ${filtered.length}` : "Errors"}</h3>
                 {groups.length > 0 && <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} />}
               </div>
               {groups.length === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">No errors held.</p>
+                <p className="t-body mt-2 text-muted-foreground">No errors held.</p>
               ) : (
                 <div className="mt-3 grid gap-3">
                   <div className="grid gap-2 sm:grid-cols-[14rem_14rem_1fr]">
@@ -306,11 +307,14 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                   {groups.map((group) => {
                     const busy = group.rows.some((r) => retrying.includes(r.id))
                     return (
-                      <div key={group.cause} className="rounded-lg border p-3">
+                      <div key={group.cause} className="surface-raised rounded-lg border p-3">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium">{group.cause} · {group.rows.length}</p>
-                            <p className="text-xs text-muted-foreground">Fix: {group.fix}</p>
+                            <p className="t-label flex flex-wrap items-center gap-2">
+                              <Chip status={busy ? "running" : "failed"}>{busy ? "Retrying" : "Failing"}</Chip>
+                              {group.cause} · {group.rows.length}
+                            </p>
+                            <p className="t-small text-muted-foreground">Fix: {group.fix}</p>
                           </div>
                           <Actions surface="card" items={[{
                             kind: "secondary",
@@ -322,7 +326,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                         <div className="mt-2 border-t">
                           <Door id={`int.error.${id}.${group.cause.slice(0, 24)}`} label={`The ${group.rows.length} records this happened to`} count={group.rows.length}>
                             <div className="min-w-0 overflow-x-auto">
-                              <table className="w-full min-w-[40rem] border-collapse text-xs">
+                              <table className="w-full min-w-[40rem] border-collapse t-small">
                                 <caption className="sr-only">{group.cause}: the records it happened to, with the message, the fix and the number of attempts.</caption>
                                 <thead><tr className="border-b text-left text-muted-foreground">
                                   <th scope="col" className="py-1 pr-3 font-medium">When</th><th scope="col" className="py-1 pr-3 font-medium">Object</th>
@@ -356,7 +360,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
 
             <section>
               <div className="flex items-center justify-between pb-1">
-                <h3 className="text-sm font-semibold">Everything this connection is set to do</h3>
+                <h3 className="t-section">Everything this connection is set to do</h3>
                 <ExpandDoors ids={doorIds} />
               </div>
               <div className="rounded-lg border">

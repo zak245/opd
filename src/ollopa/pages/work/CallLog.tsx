@@ -9,11 +9,11 @@
 // records what happened.
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { follow } from "../../chain"
+import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
 import { CALL_PURPOSES, DISPOSITIONS, seedFor, TODAY, type Call, type Disposition, type Task } from "../../data/seed"
 import type { Session } from "../../session"
@@ -51,7 +51,7 @@ function CoachingNote({ session, call }: { session: Session; call: Call | null }
     <section className="rounded-md border p-3">
       <h4 className="flex flex-wrap items-center gap-2 text-sm font-medium">
         Coaching note
-        {note && <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-normal">{state}</Badge>}
+        {note && <Chip status={state}>{state}</Chip>}
         {note && <span className="text-xs font-normal text-muted-foreground">{note.author} · {day(note.at)}</span>}
       </h4>
       <div className="space-y-2 pt-2">
@@ -150,9 +150,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm">
           <span className="font-mono">{contact?.phoneNumber ?? "No number on file"}</span>
           {contact?.doNotCall && (
-            <span className="rounded border border-destructive px-1.5 py-0.5 text-xs text-destructive">
-              Do not call · {contact.doNotCallSource} · checked {day(contact.dncCheckedOn)}
-            </span>
+            <Chip status="blocked">Do not call · {contact.doNotCallSource} · checked {day(contact.dncCheckedOn)}</Chip>
           )}
           {contact?.tz && <span className="text-muted-foreground">{localTime(contact.tz)} their time</span>}
         </div>

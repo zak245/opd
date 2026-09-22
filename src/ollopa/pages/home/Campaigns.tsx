@@ -3,7 +3,7 @@
 // Routing and forms sit beside the campaigns because they are the same day's work: leads that missed
 // the SLA window and submissions nobody could route are the things nobody else will notice. The
 // enrichment spend is on the surface because at the cap enrichment stops while submissions keep arriving.
-import { Badge } from "@/components/ui/badge"
+import { Chip } from "../../ui/Identity"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
@@ -45,7 +45,7 @@ export function Campaigns({ data, d, order }: { data: HomeData; d: Disclosure; o
                   {results && <> · sent {count(camp.sent)} · opened {count(camp.opened)} · converted {count(camp.converted)}</>}
                 </span>
               </span>
-              <Badge variant="secondary" className="shrink-0 font-normal">{camp.status}</Badge>
+              <Chip status={camp.status} className="shrink-0">{camp.status}</Chip>
             </Row>
           ))}
         </RowList>

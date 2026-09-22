@@ -84,7 +84,9 @@ export function SaveBar() {
       role="region"
       aria-label="Unsaved changes"
       data-print-hide
-      className="sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-t bg-background/95 px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur sm:px-6"
+      /* The bar floats over the page, so it sits on the overlay surface — the one level that
+         carries a shadow (DESIGN.md §5). */
+      className="surface-overlay sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-4 py-3 shadow-lg backdrop-blur sm:px-6"
     >
       {/* A Save bar is a form: Save at the leading edge, Discard after it (DESIGN.md §4). It is the
           page's one filled control — nothing else on Settings is a primary. */}
@@ -92,7 +94,7 @@ export function SaveBar() {
         { label: s.changes.length === 1 ? "Save the change" : `Save ${s.changes.length} changes`, kind: "primary", onClick: s.save },
         { label: "Discard", kind: "secondary", onClick: s.discard },
       ]} />
-      <p className="min-w-0 flex-1 text-sm">
+      <p className="t-body min-w-0 flex-1">
         <span className="font-medium">{s.changes.length === 1 ? "1 unsaved change" : `${s.changes.length} unsaved changes`}:</span>{" "}
         <span className="text-muted-foreground">{s.changes.map((c) => c.label).join(", ")}</span>
       </p>
@@ -111,7 +113,7 @@ export function Toggle({ id, change, label, on, onLabel = "On", offLabel = "Off"
   return (
     <span className="flex items-center gap-2">
       <Switch id={id} checked={value} aria-label={label} onCheckedChange={(v) => s.set(id, change, v)} />
-      <span className="text-sm text-muted-foreground">{value ? onLabel : offLabel}</span>
+      <span className="t-body text-muted-foreground">{value ? onLabel : offLabel}</span>
     </span>
   )
 }
@@ -146,7 +148,7 @@ export function Num({ id, change, label, value, width = "w-24", suffix }: {
         value={String(s.valueOf(id, value))}
         onChange={(e) => s.set(id, change, Number(e.target.value))}
       />
-      {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+      {suffix && <span className="t-body text-muted-foreground">{suffix}</span>}
     </span>
   )
 }

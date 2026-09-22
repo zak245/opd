@@ -114,7 +114,17 @@ export interface Tile {
 
 export type RecordKind = "deals" | "people" | "calls" | "sequences" | "campaigns"
 
-export interface Series { id: string; label: string; points: number[] }
+export interface Series {
+  id: string
+  label: string
+  points: number[]
+  /**
+   * The object family this series *is* — "deals", "work" — where a series is one. Only then may the
+   * chart draw it in a family ink (DESIGN.md §5); everything else is the neutral ramp, because a
+   * stage or an activity kind is not a family and a hue would be decoration.
+   */
+  family?: string
+}
 export interface Trend {
   /** The Monday each bucket starts on, which is also how a date is bucketed. */
   weeks: string[]

@@ -176,7 +176,7 @@ export function ImportWizard({ session }: { session: Session }) {
   const dncRows = Math.round(draft.rows * dncRate)
   const mobileCost = rates.find((r) => r.field === "Mobile")?.typicalCost ?? 9
   const dncLine = draft.fields.includes("Mobile") ? (
-    <div className="grid gap-1 rounded-md border border-amber-300 p-3 dark:border-amber-800">
+    <div className="grid gap-1 rounded-md border border-[color:var(--warning)] p-3 ">
       <Consequence>
         About {n(dncRows)} of the {n(draft.rows)} rows will be numbers you cannot call: {pct(dncRate)} of the people in this workspace carry a do-not-call flag{matched > 0 ? `, and ${n(dnc)} of the ${n(matched)} rows ollopA already holds carry one today` : ""}. A mobile for those is charged and cannot be called, and it is not refunded.
       </Consequence>
@@ -230,26 +230,26 @@ export function ImportWizard({ session }: { session: Session }) {
           <>
             {!draft.file && (
               <section className="rounded-lg border p-4">
-                <h3 className="text-sm font-medium">Choose a CSV file</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <h3 className="t-body font-medium">Choose a CSV file</h3>
+                <p className="mt-1 t-body text-muted-foreground">
                   Enrichment is charged when a source returns data. A row that returns nothing is free.
                 </p>
                 <input
                   type="file"
                   accept=".csv,text/csv"
-                  className="mt-3 block text-sm"
+                  className="mt-3 block t-body"
                   aria-label="Choose a CSV file"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) readFile(f) }}
                 />
-                <p className="mt-2 text-xs text-muted-foreground">CSV, comma separated, with a header row. Your balance is {n(seed.credits.balance)} credits.</p>
+                <p className="mt-2 t-small text-muted-foreground">CSV, comma separated, with a header row. Your balance is {n(seed.credits.balance)} credits.</p>
               </section>
             )}
 
             {draft.file && (
               <>
-                <section className="rounded-lg border p-3 text-sm">
+                <section className="rounded-lg border p-3 t-body">
                   <div className="font-medium">{draft.file}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="t-small text-muted-foreground">
                     {n(draft.rows)} rows · {draft.headers.length} columns · uploaded by {draft.uploadedBy}{draft.uploadedAt ? ` on ${day(draft.uploadedAt)}` : ""}
                   </div>
                 </section>
@@ -272,7 +272,7 @@ export function ImportWizard({ session }: { session: Session }) {
                 )}
 
                 <section>
-                  <h3 className="text-sm font-medium">Each column, and the field it becomes</h3>
+                  <h3 className="t-body font-medium">Each column, and the field it becomes</h3>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     {draft.headers.map((h) => (
                       <Picker
@@ -286,9 +286,9 @@ export function ImportWizard({ session }: { session: Session }) {
                   </div>
                   {draft.preview.length > 0 && (
                     <>
-                    <p className="mt-3 text-xs text-muted-foreground">The first {draft.preview.length} rows, as the mapping above reads them.</p>
+                    <p className="mt-3 t-small text-muted-foreground">The first {draft.preview.length} rows, as the mapping above reads them.</p>
                     <div className="mt-1 min-w-0 overflow-x-auto">
-                      <table className="w-full min-w-[34rem] border-collapse text-xs">
+                      <table className="w-full min-w-[34rem] border-collapse t-small">
                         <caption className="sr-only">The first {draft.preview.length} rows of the file, as the mapping above reads them.</caption>
                         <thead><tr className="border-b text-left text-muted-foreground">
                           {draft.headers.map((h) => <th scope="col" key={h} className="py-1 pr-3 font-medium">{h} → {FIELD_LABELS[draft.mapping[h] ?? ""]}</th>)}
@@ -321,7 +321,7 @@ export function ImportWizard({ session }: { session: Session }) {
         {current === 2 && (
           <>
             <fieldset>
-              <legend className="text-sm font-medium">{n(matched)} of the {n(draft.rows)} rows are already in ollopA</legend>
+              <legend className="t-body font-medium">{n(matched)} of the {n(draft.rows)} rows are already in ollopA</legend>
               <div className="mt-2 grid gap-2">
                 <Radio name="dup" checked={draft.duplicates === "update"} onChange={() => save({ duplicates: "update" })}
                   label="Update existing"
@@ -333,13 +333,13 @@ export function ImportWizard({ session }: { session: Session }) {
                   label="Create anyway"
                   hint={`Creates ${n(matched)} second records. Your duplicate rule says "prompt", so this is the one place it is overridden.`} />
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 t-small text-muted-foreground">
                 Workspace rule: prompt on duplicate · <a className="underline" href={href("/ollopa/settings/prospecting")}>Settings › Prospecting rules</a>
               </p>
             </fieldset>
 
             <fieldset>
-              <legend className="text-sm font-medium">What the new rows get</legend>
+              <legend className="t-body font-medium">What the new rows get</legend>
               <div className="mt-2 grid gap-2 sm:grid-cols-3">
                 <Picker label="Owner" value={draft.owner} options={b.roles.map((r) => r.user)} onChange={(v) => save({ owner: v })} />
                 <Picker label="List" value={draft.list} options={seed.lists.map((l) => l.name)} onChange={(v) => save({ list: v })} />
@@ -348,7 +348,7 @@ export function ImportWizard({ session }: { session: Session }) {
             </fieldset>
 
             {restricted > 0 && (
-              <p className="text-sm">
+              <p className="t-body">
                 {n(restricted)} of the matched people are restricted: EU region rule · <a className="underline" href={href("/ollopa/settings/prospecting")}>Prospecting rules</a>. They keep their rows and their place in the count; the rule replaces the action.
               </p>
             )}
@@ -359,7 +359,7 @@ export function ImportWizard({ session }: { session: Session }) {
         {current === 3 && (
           <>
             <fieldset>
-              <legend className="text-sm font-medium">Which fields enrichment may fill</legend>
+              <legend className="t-body font-medium">Which fields enrichment may fill</legend>
               <div className="mt-2 grid gap-1 sm:grid-cols-2">
                 {rates.map((r) => (
                   <Check
@@ -374,9 +374,9 @@ export function ImportWizard({ session }: { session: Session }) {
             </fieldset>
 
             <section>
-              <h3 className="text-sm font-medium">The provider lineup, in order</h3>
-              <p className="mt-1 text-sm">{draft.order.join(" → ")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <h3 className="t-body font-medium">The provider lineup, in order</h3>
+              <p className="mt-1 t-body">{draft.order.join(" → ")}</p>
+              <p className="mt-1 t-small text-muted-foreground">
                 Workspace default: {seed.workspace.waterfall.order.join(" → ")} · <a className="underline" href={href("/ollopa/settings/pipeline")}>Settings › Pipeline and data › Enrichment provider order</a>. Change it for this run only.
               </p>
               <Actions className="mt-2" surface="card" items={draft.order.map((p, i) => ({
@@ -388,21 +388,21 @@ export function ImportWizard({ session }: { session: Session }) {
             </section>
 
             <fieldset>
-              <legend className="text-sm font-medium">What this run may spend</legend>
+              <legend className="t-body font-medium">What this run may spend</legend>
               <div className="mt-2 grid gap-2">
                 <Radio name="stop" checked={draft.stopAtFirstVerified} onChange={() => save({ stopAtFirstVerified: true })}
                   label="Stop at the first verified result" hint="One source answers and the row is done." />
                 <Radio name="stop" checked={!draft.stopAtFirstVerified} onChange={() => save({ stopAtFirstVerified: false })}
                   label="Continue down the waterfall" hint="Every provider is asked. On a phone waterfall that is the difference between 8 credits and 45." />
-                <label className="block max-w-xs text-sm">
-                  <span className="text-xs text-muted-foreground">The most this run may spend on one row</span>
+                <label className="block max-w-xs t-body">
+                  <span className="t-small text-muted-foreground">The most this run may spend on one row</span>
                   <Input className="mt-1" type="number" min={1} value={draft.ceilingPerRow} onChange={(e) => save({ ceilingPerRow: Number(e.target.value) || 1 })} />
                 </label>
               </div>
             </fieldset>
 
             <Door id={`import.providers.${session.business}`} label="Per-provider settings" count={draft.order.length}>
-              <ul className="grid gap-1 text-sm">
+              <ul className="grid gap-1 t-body">
                 {draft.order.map((p) => (
                   <li key={p} className="text-muted-foreground">{p} · uses the workspace key · retries once · skips rows already verified in the last 90 days</li>
                 ))}
@@ -415,16 +415,16 @@ export function ImportWizard({ session }: { session: Session }) {
         {current === 4 && (
           <>
             {!draft.trialDone ? (
-              <p className="text-sm">
+              <p className="t-body">
                 Ten rows are run and charged, and the table prints what they cost per useful result. The other {n(remaining)} rows are not touched until you say so.
               </p>
             ) : (
               <>
-                <p className="text-xs text-muted-foreground">Ten rows, charged: {n(trialCredits)} credits.</p>
+                <p className="t-small text-muted-foreground">Ten rows, charged: {n(trialCredits)} credits.</p>
                 <div className="min-w-0 overflow-x-auto">
-                  <table className="w-full min-w-[34rem] border-collapse text-sm">
+                  <table className="w-full min-w-[34rem] border-collapse t-body">
                     <caption className="sr-only">The ten rows of the trial: the hit rate, the credits spent and the cost per hit for each field.</caption>
-                    <thead><tr className="border-b text-left text-xs text-muted-foreground">
+                    <thead><tr className="border-b text-left t-small text-muted-foreground">
                       <th scope="col" className="py-2 pr-3 font-medium">Field</th>
                       <th scope="col" className="py-2 pr-3 font-medium">Hit rate</th>
                       <th scope="col" className="py-2 pr-3 font-medium">Credits spent</th>
@@ -444,7 +444,7 @@ export function ImportWizard({ session }: { session: Session }) {
                 </div>
 
                 <section className="grid gap-2 rounded-lg border bg-muted/40 p-4">
-                  <p className="text-sm">
+                  <p className="t-body">
                     At this rate, {n(draft.rows)} rows will cost about {n(projected)} credits — {n(balanceAfter)} of your balance after this run.
                     {chosen.map((r) => ` ${r.field} lands on ${inTen(r.hitRate)}.`).join("")}
                   </p>
@@ -454,7 +454,7 @@ export function ImportWizard({ session }: { session: Session }) {
                     </Consequence>
                   )}
                   {dncLine}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="t-small text-muted-foreground">
                     A row that returns nothing is not charged. A mobile that returns for a do-not-call number is charged and cannot be called. Nothing here is refunded.
                   </p>
                 </section>
@@ -467,14 +467,14 @@ export function ImportWizard({ session }: { session: Session }) {
         {current === 5 && (
           <section className="grid gap-3">
             <div role="status" aria-live="polite" className="rounded-lg border p-4">
-              <p className="text-sm font-medium">
+              <p className="t-body font-medium">
                 {n(draft.done)} of {n(draft.rows)} rows · {n(draft.credits)} credits spent
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 t-body text-muted-foreground">
                 {running ? "Running." : draft.stoppedAt ? `Stopped at ${draft.stoppedAt}. What is done is kept.` : draft.done >= draft.rows && draft.rows > 0 ? "Finished." : "Not started."}
                 {" "}You can close this tab. The run continues and you will find it under Past imports.
               </p>
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 t-small text-muted-foreground">
                 A row that hits the {draft.ceilingPerRow}-credit ceiling stops there, is marked, and the run carries on; the job report counts them.
                 At the monthly cap the run stops and says so: {n(seed.credits.monthlyCap)} a month, resets {day(seed.credits.cycleEnds)}.
               </p>

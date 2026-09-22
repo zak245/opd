@@ -23,8 +23,8 @@ import { Code, Consequence, n } from "./bits"
 /** The three shapes of "cannot see it", as spec 17 §3.7 states them for a surface with no screen. */
 function Shapes({ lines }: { lines: [string, string, string] }) {
   return (
-    <div className="grid gap-1 rounded-md border p-3 text-sm">
-      <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">The three shapes of “you cannot see it”</h4>
+    <div className="grid gap-1 rounded-md border p-3 t-body">
+      <h4 className="t-small font-medium uppercase tracking-wide text-muted-foreground">The three shapes of “you cannot see it”</h4>
       <p><span className="font-medium">An object you do not own.</span> {lines[0]}</p>
       <p><span className="font-medium">An area your seat does not hold.</span> {lines[1]}</p>
       <p><span className="font-medium">A page the profile left out.</span> {lines[2]}</p>
@@ -44,7 +44,7 @@ function Surface({ id, title, promise, children, current }: {
   return (
     <section ref={box} id={id} className={cn("scroll-mt-4 rounded-lg border p-4", current && "border-foreground")}>
       <h2 className="text-base font-semibold">{title}</h2>
-      <p className="mt-1 text-sm">{promise}</p>
+      <p className="mt-1 t-body">{promise}</p>
       <div className="mt-4 grid gap-4 [&>*]:min-w-0">{children}</div>
     </section>
   )
@@ -124,11 +124,11 @@ Interrupted, resume with the token printed.                                exit 
   return (
     <DoorGroup>
       <div className="mx-auto max-w-4xl px-4 py-6 lg:px-6">
-        <a href={href("/ollopa/settings/developer")} className="text-xs text-muted-foreground hover:underline">Settings › API, webhooks, MCP and CLI</a>
+        <a href={href("/ollopa/settings/developer")} className="t-small text-muted-foreground hover:underline">Settings › API, webhooks, MCP and CLI</a>
         <div className="mt-2 flex flex-wrap items-start gap-3">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold">What each surface returns</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h2 className="t-title">What each surface returns</h2>
+            <p className="mt-1 t-body text-muted-foreground">
               Written from this workspace: {b.name}, {b.plan.name}, {n(b.plan.seats)} seats. A response has no second level, so everything a caller needs is on the response.
             </p>
           </div>
@@ -147,18 +147,18 @@ Interrupted, resume with the token printed.                                exit 
         {/* Level one, above every surface: the facts that decide a design before a key exists. */}
         <section className="mt-6 grid gap-4 rounded-lg border p-4 [&>*]:min-w-0">
           <div>
-            <h2 className="text-sm font-semibold">Limits are per workspace, not per key</h2>
-            <p className="mt-1 text-sm">{n(API_LIMITS.perMinute)} a minute · {n(API_LIMITS.perHour)} an hour · {n(API_LIMITS.perDay)} a day. Every plan.</p>
-            <p className="mt-1 text-xs text-muted-foreground">Minting a second key buys nothing. There are no per-key rate limits, and saying so is the feature.</p>
+            <h2 className="t-body font-semibold">Limits are per workspace, not per key</h2>
+            <p className="mt-1 t-body">{n(API_LIMITS.perMinute)} a minute · {n(API_LIMITS.perHour)} an hour · {n(API_LIMITS.perDay)} a day. Every plan.</p>
+            <p className="mt-1 t-small text-muted-foreground">Minting a second key buys nothing. There are no per-key rate limits, and saying so is the feature.</p>
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold">What each endpoint costs</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Reads and writes cost nothing. Enrichment costs, and the maximum is not the average.</p>
+            <h2 className="t-body font-semibold">What each endpoint costs</h2>
+            <p className="mt-1 t-small text-muted-foreground">Reads and writes cost nothing. Enrichment costs, and the maximum is not the average.</p>
             <div className="mt-2 min-w-0 overflow-x-auto">
-              <table className="w-full min-w-[30rem] border-collapse text-sm">
+              <table className="w-full min-w-[30rem] border-collapse t-body">
                 <caption className="sr-only">What each endpoint costs: reads and writes cost nothing; enrichment costs, and the maximum is not the average.</caption>
-                <thead><tr className="border-b text-left text-xs text-muted-foreground">
+                <thead><tr className="border-b text-left t-small text-muted-foreground">
                   <th scope="col" className="py-2 pr-3 font-medium">Endpoint</th>
                   <th scope="col" className="py-2 pr-3 font-medium">Typical</th>
                   <th scope="col" className="py-2 font-medium">Maximum</th>
@@ -166,7 +166,7 @@ Interrupted, resume with the token printed.                                exit 
                 <tbody>
                   {ENDPOINT_COSTS.slice(0, 6).map((e) => (
                     <tr key={e.endpoint} className="border-b">
-                      <th scope="row" className="py-2 pr-3 text-left font-normal"><code className="font-mono text-xs">{e.endpoint}</code></th>
+                      <th scope="row" className="py-2 pr-3 text-left font-normal"><code className="font-mono t-small">{e.endpoint}</code></th>
                       <td className="py-2 pr-3 tabular-nums">{e.typical}</td>
                       <td className="py-2">{e.maximum}</td>
                     </tr>
@@ -177,8 +177,8 @@ Interrupted, resume with the token printed.                                exit 
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold">The 80% alert</h2>
-            <p className="mt-1 text-sm">
+            <h2 className="t-body font-semibold">The 80% alert</h2>
+            <p className="mt-1 t-body">
               On. {key ? `${key.alertOwner} is told when "${key.name}" reaches 80% of the allocation.` : `The key's owner is told at 80% of the allocation.`}
             </p>
             <Consequence tone="plain">Turned off, nobody is told before the allocation runs out.</Consequence>
@@ -197,20 +197,20 @@ Interrupted, resume with the token printed.                                exit 
               </Locked>
             )}
             <div>
-              <h3 className="text-sm font-medium">Every response that spends credits</h3>
+              <h3 className="t-body font-medium">Every response that spends credits</h3>
               <Code block label="Copy the headers" text={`HTTP/1.1 200 OK\nX-RateLimit-Remaining: ${API_LIMITS.perMinute - 12}\nX-RateLimit-Reset: 41\nX-Credits-Remaining: ${seed.credits.balance}\nX-Credits-Cap: ${seed.credits.monthlyCap}`} />
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 t-small text-muted-foreground">
                 A rate limit is not a budget: a nightly job that stops when it runs out of requests still burns credits until it does. Both numbers are on every response for that reason.
               </p>
             </div>
             <div>
-              <h3 className="text-sm font-medium">At the credit cap — a refusal, never a partial result</h3>
+              <h3 className="t-body font-medium">At the credit cap — a refusal, never a partial result</h3>
               <Code block label="Copy the refusal" text={capRefusal} />
             </div>
             <div>
-              <h3 className="text-sm font-medium">Over the second-approval threshold</h3>
+              <h3 className="t-body font-medium">Over the second-approval threshold</h3>
               <Code block label="Copy the object" text={pendingApproval} />
-              <p className="mt-1 text-xs text-muted-foreground">The same item is in the app's queue and is decided once, in either place. The ledger records which surface decided it.</p>
+              <p className="mt-1 t-small text-muted-foreground">The same item is in the app's queue and is decided once, in either place. The ledger records which surface decided it.</p>
             </div>
             <Shapes lines={[
               `The object comes back with its readable fields and an "owner" line. Edit fields are absent, not empty: ${key ? `"${key.name}" carries ${key.scopes.join(", ")}.` : "a key carries the scopes it was given."}`,
@@ -233,22 +233,22 @@ Interrupted, resume with the token printed.                                exit 
               </Locked>
             )}
             <div>
-              <h3 className="text-sm font-medium">One delivery, as it arrives</h3>
+              <h3 className="t-body font-medium">One delivery, as it arrives</h3>
               <Code
                 block label="Copy the delivery"
                 text={`POST ${hook?.url ?? "https://hooks.example.com/ollopa/1"}\nollopA-Event: ${deliveries[0]?.event ?? "deal.updated"}\nollopA-Delivery: ${deliveries[0]?.id ?? "del-1"}\nollopA-Attempt: ${deliveries[0]?.attemptNumber ?? 1}\nollopA-Signature: t=1789012345,v1=<HMAC-SHA256 of the raw body with your secret>\nContent-Type: application/json\n\n{ "event": "${deliveries[0]?.event ?? "deal.updated"}", "id": "${deliveries[0]?.recordId ?? "deal-1"}", "at": "${deliveries[0]?.at ?? ""}" }`}
               />
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 t-small text-muted-foreground">
                 Verify the signature over the raw body before you parse it. The attempt number is how you tell a retry from a second event.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium">The delivery contract</h3>
-              <ol className="mt-1 grid gap-1 text-sm">
+              <h3 className="t-body font-medium">The delivery contract</h3>
+              <ol className="mt-1 grid gap-1 t-body">
                 <li>1. At-least-once: the same event can arrive twice.</li>
-                <li>2. Signed: every body carries <code className="font-mono text-xs">ollopA-Signature</code>.</li>
-                <li>3. Attempt-numbered: <code className="font-mono text-xs">ollopA-Attempt</code> counts from 1.</li>
+                <li>2. Signed: every body carries <code className="font-mono t-small">ollopA-Signature</code>.</li>
+                <li>3. Attempt-numbered: <code className="font-mono t-small">ollopA-Attempt</code> counts from 1.</li>
                 <li>4. Retried for 24 hours, with a widening gap.</li>
                 <li>5. Never silently disabled: a failing subscription keeps its place and says how long it has been failing.</li>
                 <li className="flex flex-wrap items-center gap-2">6. Reconcile nightly: <Code text="GET /v1/changes?since=<cursor>" label="Copy the endpoint" /></li>
@@ -257,19 +257,19 @@ Interrupted, resume with the token printed.                                exit 
 
             {hook && (
               <div>
-                <h3 className="text-sm font-medium">
+                <h3 className="t-body font-medium">
                   {hook.url} · {hook.state === "failing" ? `Failing since ${day(hook.failingSince ?? "")} · ${failing.length} deliveries` : "Delivering"}
                 </h3>
-                <p className="mt-1 text-xs text-muted-foreground">Events: {hook.events.join(", ")} · secret set on {day(hook.secretSetOn)}.</p>
+                <p className="mt-1 t-small text-muted-foreground">Events: {hook.events.join(", ")} · secret set on {day(hook.secretSetOn)}.</p>
                 {failing.length > 0 && (
                   <div className="mt-2 rounded-md border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-medium">{failing[0].cause} · {failing.length}</p>
+                      <p className="t-body font-medium">{failing[0].cause} · {failing.length}</p>
                       <Actions surface="card" items={[{ kind: "secondary", label: `Replay these ${failing.length}`, onClick: () => toast(`Replaying ${failing.length} deliveries · the group leaves or comes back with a new cause`) }]} />
                     </div>
                     <div className="mt-2 border-t">
                       <Door id={`dev.hook.${hook.id}`} label={`${failing[0].cause} · the ${failing.length} deliveries`} count={failing.length}>
-                        <ul className="grid gap-1 text-xs text-muted-foreground">
+                        <ul className="grid gap-1 t-small text-muted-foreground">
                           {failing.slice(0, 10).map((f) => (
                             <li key={f.id}>{day(f.at)} {f.at.slice(11)} · {f.event} · {f.recordId} · attempt {f.attemptNumber} · {f.cause}</li>
                           ))}
@@ -281,7 +281,7 @@ Interrupted, resume with the token printed.                                exit 
               </div>
             )}
 
-            <p className="text-sm">Approvals are not webhook events. A webhook fires on what happened, never on what needs deciding.</p>
+            <p className="t-body">Approvals are not webhook events. A webhook fires on what happened, never on what needs deciding.</p>
             <Shapes lines={[
               "A record you do not own still fires its event; the body carries the readable fields and an owner.",
               `An event from an area the subscription's seat does not hold is not sent at all, and the subscription says so rather than dropping it quietly.`,
@@ -298,61 +298,61 @@ Interrupted, resume with the token printed.                                exit 
             promise="Authorised as the person, carrying their permissions, their credit limit and this workspace's compliance restrictions. Every credit-consuming result states what is left; at the cap it refuses rather than writing part of a batch."
           >
             <div className="grid gap-2">
-              <h3 className="text-sm font-medium">The three tiers</h3>
+              <h3 className="t-body font-medium">The three tiers</h3>
               {[
                 { tier: "read", label: "Read", what: "search, open, list", locked: false },
                 { tier: "write_safe", label: "Safe writes", what: "create a draft, create a task, create a record", locked: mcpWrite.locked },
                 { tier: "write_destructive", label: "Destructive writes", what: "update, delete, enrol, send, enrich", locked: mcpWrite.locked },
               ].map((row) => {
                 const body = (
-                  <div className={cn("rounded-lg border p-3 text-sm", mine?.tier === row.tier && "border-foreground")}>
+                  <div className={cn("rounded-lg border p-3 t-body", mine?.tier === row.tier && "border-foreground")}>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{row.label}</span>
-                      {mine?.tier === row.tier && <span className="text-xs">· this workspace's tier</span>}
-                      {row.locked && <span className="text-xs text-muted-foreground">· {mcpWrite.plan} · {money(mcpWrite.pricePerMonth)} a month for {b.plan.seats} seats</span>}
+                      {mine?.tier === row.tier && <span className="t-small">· this workspace's tier</span>}
+                      {row.locked && <span className="t-small text-muted-foreground">· {mcpWrite.plan} · {money(mcpWrite.pricePerMonth)} a month for {b.plan.seats} seats</span>}
                     </div>
-                    <p className="text-xs text-muted-foreground">{row.what}</p>
+                    <p className="t-small text-muted-foreground">{row.what}</p>
                   </div>
                 )
                 return row.locked
                   ? <Locked key={row.tier} feature={`MCP ${row.label.toLowerCase()}`} plan={mcpWrite.plan} pricePerMonth={mcpWrite.pricePerMonth} what={mcpWrite.what}>{body}</Locked>
                   : <div key={row.tier}>{body}</div>
               })}
-              <p className="text-xs text-muted-foreground">Read is on every plan. The lock sits on the tier, before any work exists — there is no gate at the moment a write fails.</p>
+              <p className="t-small text-muted-foreground">Read is on every plan. The lock sits on the tier, before any work exists — there is no gate at the moment a write fails.</p>
             </div>
 
             {mine && (
               <div>
-                <h3 className="text-sm font-medium">Each action inside the tier</h3>
-                <ul className="mt-1 grid gap-1 text-sm">
+                <h3 className="t-body font-medium">Each action inside the tier</h3>
+                <ul className="mt-1 grid gap-1 t-body">
                   {Object.entries(mine.actions).map(([action, state]) => (
                     <li key={action} className="flex flex-wrap items-center gap-2 border-b py-1 last:border-b-0">
                       <span className="min-w-0 flex-1">{action}</span>
-                      <span className="text-xs">{state === "allow" ? "Allowed" : state === "approve" ? "Approval required" : "Blocked"}</span>
+                      <span className="t-small">{state === "allow" ? "Allowed" : state === "approve" ? "Approval required" : "Blocked"}</span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 t-small text-muted-foreground">
                   Your limit: {b.roles.find((r) => r.user === session.user)?.creditLimit ? `${n(b.roles.find((r) => r.user === session.user)!.creditLimit!)} a month` : "none"} · workspace cap {n(seed.credits.monthlyCap)} a month, {n(seed.credits.balance)} left. This workspace requires model training to be off in your client ({seed.workspace.modelTraining}).
                 </p>
               </div>
             )}
 
             <div>
-              <h3 className="text-sm font-medium">The card at the end of the client's turn</h3>
+              <h3 className="t-body font-medium">The card at the end of the client's turn</h3>
               <Code block label="Copy the card" text={approvalCard} />
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 t-small text-muted-foreground">
                 One card for the whole turn, never one per tool call. It is returned as content the client must render, not as a string the model may paraphrase, and it is not collapsible.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium">Your connections</h3>
-              <ul className="mt-1 grid gap-1 text-sm">
+              <h3 className="t-body font-medium">Your connections</h3>
+              <ul className="mt-1 grid gap-1 t-body">
                 {seed.mcpTokens.map((t) => (
                   <li key={t.id} className="flex flex-wrap items-center gap-2 border-b py-1 last:border-b-0">
                     <span className="min-w-0 flex-1">{t.user} · {t.client} · authorised {day(t.authorisedOn)} · last used {t.lastUsedAt ? day(t.lastUsedAt) : "never"}</span>
-                    <span className="text-xs">{t.tier === "read" ? "Read" : t.tier === "write_safe" ? "Safe writes" : "Destructive writes"}</span>
+                    <span className="t-small">{t.tier === "read" ? "Read" : t.tier === "write_safe" ? "Safe writes" : "Destructive writes"}</span>
                     <Actions surface="card" items={[{
                       kind: "destructive", label: "Revoke",
                       onClick: () => toast(`${t.client} stops working at its next call · runs already approved finish`),
@@ -383,19 +383,19 @@ Interrupted, resume with the token printed.                                exit 
             promise="Narrow on purpose: authenticate, search, export, bulk update with --resume, allocation check, analytics. Every command takes --workspace and echoes the workspace name in every confirmation."
           >
             <div>
-              <h3 className="text-sm font-medium">A session, as it reads</h3>
+              <h3 className="t-body font-medium">A session, as it reads</h3>
               <Code block label="Copy the session" text={cliSession} />
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 t-small text-muted-foreground">
                 Before any bulk write it prints what will change, how many records and how many credits, and checks the allocation first rather than failing halfway. A destructive bulk write asks for the workspace name to be typed back, exactly as Delete workspace does in Settings.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium">The published exit codes</h3>
+              <h3 className="t-body font-medium">The published exit codes</h3>
               <div className="mt-1 min-w-0 overflow-x-auto">
-                <table className="w-full min-w-[22rem] border-collapse text-sm">
+                <table className="w-full min-w-[22rem] border-collapse t-body">
                   <caption className="sr-only">The seven exit codes the CLI publishes.</caption>
-                  <thead><tr className="border-b text-left text-xs text-muted-foreground"><th scope="col" className="py-1 pr-4 font-medium">Code</th><th scope="col" className="py-1 font-medium">Meaning</th></tr></thead>
+                  <thead><tr className="border-b text-left t-small text-muted-foreground"><th scope="col" className="py-1 pr-4 font-medium">Code</th><th scope="col" className="py-1 font-medium">Meaning</th></tr></thead>
                   <tbody>
                     {CLI_EXIT_CODES.map((e) => (
                       <tr key={e.code} className="border-b">
@@ -406,15 +406,15 @@ Interrupted, resume with the token printed.                                exit 
                   </tbody>
                 </table>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">A locked capability prints the plan name and the monthly total, not a 403.</p>
+              <p className="mt-1 t-small text-muted-foreground">A locked capability prints the plan name and the monthly total, not a 403.</p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium">Device authorisations</h3>
+              <h3 className="t-body font-medium">Device authorisations</h3>
               {devices.length === 0 ? (
-                <p className="mt-1 text-sm text-muted-foreground">No devices authorised.</p>
+                <p className="mt-1 t-body text-muted-foreground">No devices authorised.</p>
               ) : (
-                <ul className="mt-1 grid gap-1 text-sm">
+                <ul className="mt-1 grid gap-1 t-body">
                   {devices.map((dv) => (
                     <li key={dv.id} className="flex flex-wrap items-center gap-2 border-b py-1 last:border-b-0">
                       <span className="min-w-0 flex-1">{dv.label} · {dv.user} · {dv.workspace} · authorised {day(dv.authorisedOn)} · last used {dv.lastUsedAt ? day(dv.lastUsedAt) : "never"}</span>
@@ -432,7 +432,7 @@ Interrupted, resume with the token printed.                                exit 
                 </ul>
               )}
               {session.business === "halyard" && (
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 t-small text-muted-foreground">
                   Credits are per workspace. <code className="font-mono">ollopa credits --all-workspaces</code> reports across all ten — the accelerator this page cannot give.
                 </p>
               )}
@@ -453,7 +453,7 @@ Interrupted, resume with the token printed.                                exit 
             id="slack" current={here === "slack"} title="Slack messages"
             promise="Five events, each to a channel you chose. The message never holds a control; it carries the deep link to the place the decision is made."
           >
-            <ul className="grid gap-1 text-sm">
+            <ul className="grid gap-1 t-body">
               {(slack?.channels.length ? slack.channels : [{ event: "A reply lands", channel: "not connected" }]).map((c) => (
                 <li key={c.event} className="border-b py-1 last:border-b-0">{c.event} → {c.channel}</li>
               ))}

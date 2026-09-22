@@ -23,6 +23,7 @@ import { day } from "../deal/format"
 import { ruleOn, useLesson } from "../../../learn/context"
 import { Check, Code, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
 import { Actions, type Action } from "../../ui/Actions"
+import { Chip } from "../../ui/Identity"
 import { CONNECT_RULES, ConnectLesson } from "./lesson"
 import { discardDraft, peekDraft, useDraft, writeDraft } from "./drafts"
 import {
@@ -100,14 +101,14 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
       )}
 
       {!isAdmin && (
-        <p className="text-sm text-muted-foreground">
+        <p className="t-body text-muted-foreground">
           Your seat connects your own calendar. The CRM, Slack, enrichment providers and webhooks are workspace integrations, set up by {admin ? `${admin.user} (${admin.title})` : "the admin"}.
         </p>
       )}
 
       {groups.map((group) => (
         <section key={group.name}>
-          <h3 className="text-sm font-medium">{group.name}</h3>
+          <h3 className="t-body font-medium">{group.name}</h3>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {group.kinds.map((k) => {
               const live = seed.integrations.find((i) => i.kind === k.kind || (k.kind === "Webhook" && i.webhook !== null))
@@ -120,7 +121,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
                   disabled={blocked}
                   onClick={() => (blocked ? undefined : go(k.slug))}
                   className={cn(
-                    "flex h-full w-full flex-col items-start gap-1 rounded-lg border bg-background p-3 text-left text-sm",
+                    "flex h-full w-full flex-col items-start gap-1 rounded-lg border bg-background p-3 text-left t-body",
                     slug === k.slug && "border-foreground",
                     blocked ? "cursor-not-allowed opacity-70" : "hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                   )}
@@ -128,13 +129,13 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
                   <span className="flex w-full items-center gap-2 font-medium">
                     {k.kind === "Northlight Data" ? "Enrichment provider" : k.kind}
                     {locked && <Lock className="size-3.5 text-muted-foreground" aria-hidden="true" />}
-                    {locked && <span className="text-xs font-normal text-muted-foreground">{hooks.plan} · {money(hooks.pricePerMonth)} a month for {b.plan.seats} seats</span>}
+                    {locked && <span className="t-small font-normal text-muted-foreground">{hooks.plan} · {money(hooks.pricePerMonth)} a month for {b.plan.seats} seats</span>}
                   </span>
-                  <span className="text-xs text-muted-foreground">{k.what}</span>
-                  {live && <span className="text-xs">Connected{live.environment ? ` · ${live.environment}` : ""} · {live.status}</span>}
-                  {saved && <span className="text-xs">Setting up · {saved.step} of {saved.of} steps done</span>}
-                  {blocked && <span className="text-xs font-medium">Disconnect {crm?.kind} first</span>}
-                  {k.crm && !blocked && <span className="text-xs text-muted-foreground">{planLine}</span>}
+                  <span className="t-small text-muted-foreground">{k.what}</span>
+                  {live && <span className="t-small">Connected{live.environment ? ` · ${live.environment}` : ""} · {live.status}</span>}
+                  {saved && <span className="t-small">Setting up · {saved.step} of {saved.of} steps done</span>}
+                  {blocked && <span className="t-small font-medium">Disconnect {crm?.kind} first</span>}
+                  {k.crm && !blocked && <span className="t-small text-muted-foreground">{planLine}</span>}
                 </button>
               )
               return (
@@ -143,7 +144,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
                     ? <Locked feature="Webhooks" plan={hooks.plan} pricePerMonth={hooks.pricePerMonth} what={hooks.what}>{card}</Locked>
                     : card}
                   {(live || saved) && (
-                    <div className="flex flex-wrap gap-3 px-1 text-xs">
+                    <div className="flex flex-wrap gap-3 px-1 t-small">
                       {live && <a className="underline" href={href(`/ollopa/integrations/${live.id}`)}>Open the {live.kind} page</a>}
                       {saved && <button type="button" className="underline" onClick={() => go(k.slug)}>Resume setup</button>}
                       {saved && (
@@ -161,7 +162,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
               )
             })}
             {group.name === "CRM" && (
-              <div data-item="wiz.declare-no-crm" data-item-label="ollopA is our CRM" className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
+              <div data-item="wiz.declare-no-crm" data-item-label="ollopA is our CRM" className="rounded-lg border bg-muted/40 p-3 t-body sm:col-span-2">
                 <Check
                   checked={noCrm.declared}
                   onChange={() => { saveNoCrm({ declared: !noCrm.declared }); toast(noCrm.declared ? "ollopA is no longer marked as your CRM · the CRM row is back in the set-up list" : "ollopA is your CRM · the CRM row has left the set-up list") }}
@@ -169,7 +170,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
                   hint="A decision, not an absence. It takes the CRM row out of the set-up list on Home, and it is reversible here."
                 />
                 {noCrm.declared && (
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-2 t-small text-muted-foreground">
                     ollopA is your CRM. It is holding your {n(b.counts.contacts)} contacts, {n(b.counts.companies)} companies and {n(b.counts.openDeals)} open deals. Connect Salesforce or HubSpot if that changes.
                   </p>
                 )}
@@ -198,15 +199,15 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
   if (draft.kind === "Northlight Data") {
     return (
       <section className="grid gap-3">
-        <label className="block max-w-md text-sm">
-          <span className="text-xs text-muted-foreground">Provider key</span>
+        <label className="block max-w-md t-body">
+          <span className="t-small text-muted-foreground">Provider key</span>
           <Input className="mt-1" value={draft.enrichKey} placeholder="nl_live_…" onChange={(e) => save({ enrichKey: e.target.value })} />
         </label>
         <Actions surface="page" items={[{
           kind: "secondary", label: "Check the key",
           onClick: () => { save({ enrichKeyChecked: true, authorised: true, stepsDone: [...new Set([...draft.stepsDone, 1, 2])] }); toast("Key accepted by Northlight Data") },
         }]} />
-        {draft.enrichKeyChecked && <p className="text-sm">Key accepted.</p>}
+        {draft.enrichKeyChecked && <p className="t-body">Key accepted.</p>}
       </section>
     )
   }
@@ -214,12 +215,12 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
   if (draft.kind === "Webhook") {
     return (
       <section className="grid gap-3">
-        <label className="block max-w-xl text-sm">
-          <span className="text-xs text-muted-foreground">Endpoint URL</span>
+        <label className="block max-w-xl t-body">
+          <span className="t-small text-muted-foreground">Endpoint URL</span>
           <Input className="mt-1" value={draft.webhookUrl} placeholder="https://example.com/hooks/ollopa" onChange={(e) => save({ webhookUrl: e.target.value })} />
         </label>
-        <label className="block max-w-xl text-sm">
-          <span className="text-xs text-muted-foreground">Signing secret</span>
+        <label className="block max-w-xl t-body">
+          <span className="t-small text-muted-foreground">Signing secret</span>
           <Input className="mt-1" value={draft.webhookSecret} placeholder="whsec_…" onChange={(e) => save({ webhookSecret: e.target.value })} />
         </label>
         <Actions surface="page" items={[{
@@ -228,7 +229,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
           disabledBecause: draft.webhookUrl ? undefined : "Give the endpoint URL above",
         }]} />
         {draft.webhookTest && (
-          <div className="grid gap-2 rounded-md border p-3 text-sm">
+          <div className="grid gap-2 rounded-md border p-3 t-body">
             <div>Sent to {draft.webhookUrl || "your endpoint"} on {day(draft.webhookTest)}.</div>
             <Code block text={`POST ${draft.webhookUrl || "https://example.com/hooks/ollopa"}\nollopA-Event: connection.test\nollopA-Attempt: 1\nollopA-Signature: t=1789012345,v1=<HMAC-SHA256 of the body with your secret>`} label="Copy the request" />
           </div>
@@ -241,7 +242,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
     <section className="grid gap-4">
       {isSalesforce && (
         <fieldset data-item="wiz.sandbox" data-item-label="production or sandbox">
-          <legend className="text-sm font-medium">Which Salesforce</legend>
+          <legend className="t-body font-medium">Which Salesforce</legend>
           <div className="mt-2 grid max-w-md gap-2 sm:grid-cols-2">
             <Radio name="env" checked={draft.environment === "production"} onChange={() => save({ environment: "production" })} label="Production" />
             <Radio name="env" checked={draft.environment === "sandbox"} onChange={() => save({ environment: "sandbox" })} label="Sandbox" />
@@ -250,7 +251,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
       )}
 
       {isSalesforce && (
-        <div data-item="wiz.sf-permissions" data-item-label="what the sync user must be able to do" className="rounded-md border bg-muted/40 p-3 text-sm">
+        <div data-item="wiz.sf-permissions" data-item-label="what the sync user must be able to do" className="rounded-md border bg-muted/40 p-3 t-body">
           <p className="font-medium">What the sync user must be able to do</p>
           <p className="mt-1">
             The sync user needs create, read and edit on Accounts, Contacts, Leads, Opportunities and User Roles, and API Enabled under System Permissions. Salesforce Essentials cannot connect.
@@ -263,7 +264,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
       </div>
 
       {draft.authorised && (
-        <p className="text-sm">
+        <p className="t-body">
           Connected as {syncUser}.{" "}
           {draft.validUntil ? `Token valid until ${day(draft.validUntil)}.` : `The token stays valid until it is revoked in ${draft.kind}.`}
         </p>
@@ -296,8 +297,8 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
         {draft.objects.map((row) => (
           <div key={row.object} className="rounded-lg border p-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="text-sm font-medium">{row.object}</h3>
-              <span className="text-xs text-muted-foreground">{draft.kind} {remoteObject(draft.kind, row.object)}</span>
+              <h3 className="t-body font-medium">{row.object}</h3>
+              <span className="t-small text-muted-foreground">{draft.kind} {remoteObject(draft.kind, row.object)}</span>
             </div>
 
             {/* Radios on a wide screen; one select per object on a phone. Same choices, same words. */}
@@ -326,16 +327,16 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
                 options={(["both", "pull", "push", "off"] as Direction[]).filter((dir) => !(dir === "both" && twoWay.locked)).map((dir) => DIRECTION_WORDS[dir])}
                 onChange={(v) => setDirection(row.object, (Object.keys(DIRECTION_WORDS) as Direction[]).find((k) => DIRECTION_WORDS[k] === v) ?? "off")}
               />
-              {twoWay.locked && <p className="mt-1 text-xs text-muted-foreground">Both ways is on {twoWay.plan}: {money(twoWay.pricePerMonth)} a month for {b.plan.seats} seats.</p>}
+              {twoWay.locked && <p className="mt-1 t-small text-muted-foreground">Both ways is on {twoWay.plan}: {money(twoWay.pricePerMonth)} a month for {b.plan.seats} seats.</p>}
             </div>
 
-            <p className="mt-2 text-xs text-muted-foreground">{directionSentence(draft.kind, row.object, row.direction)}</p>
+            <p className="mt-2 t-small text-muted-foreground">{directionSentence(draft.kind, row.object, row.direction)}</p>
 
             {row.object === "Activities" && row.direction !== "off" && (
               <div className="mt-2 border-t">
                 {flat ? (
                   <div className="pt-2">
-                    <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Which activities to push</h4>
+                    <h4 className="t-small font-medium uppercase tracking-wide text-muted-foreground">Which activities to push</h4>
                     <div className="mt-1 grid gap-1">{activityChecks}</div>
                   </div>
                 ) : (
@@ -351,7 +352,7 @@ export function SyncStep({ session, draft, save }: { session: Session; draft: Co
         {/* Custom objects keep their place in the object list, with the lock where the choice is made. */}
         <div data-item="wiz.custom-objects" data-item-label="custom CRM objects" className="rounded-lg border p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="flex items-center gap-1 text-sm font-medium">Custom {draft.kind} objects {custom.locked && <Lock className="size-3.5 text-muted-foreground" aria-hidden="true" />}</h3>
+            <h3 className="flex items-center gap-1 t-body font-medium">Custom {draft.kind} objects {custom.locked && <Lock className="size-3.5 text-muted-foreground" aria-hidden="true" />}</h3>
             {custom.locked
               ? <Locked feature="Custom CRM objects" plan={custom.plan} pricePerMonth={custom.pricePerMonth} what={custom.what}>
                   <Actions surface="card" items={[{ kind: "secondary", label: `${custom.plan} · ${money(custom.pricePerMonth)} a month` }]} />
@@ -394,7 +395,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
         {objects.map((o) => {
           const c = counts(o)
           return (
-            <TabsTrigger key={o} value={o} data-item={o === objects[0] ? "wiz.suggested-mappings" : undefined} data-item-label="mapped, suggested, required unmapped" className="text-xs">
+            <TabsTrigger key={o} value={o} data-item={o === objects[0] ? "wiz.suggested-mappings" : undefined} data-item-label="mapped, suggested, required unmapped" className="t-small">
               {o} · {c.mapped} mapped, {c.suggested} suggested{c.requiredUnmapped.length ? `, ${c.requiredUnmapped.length} required unmapped` : ""}
             </TabsTrigger>
           )
@@ -410,8 +411,11 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
         return (
           <TabsContent key={object} value={object} className="mt-4 grid min-w-0 gap-4 [&>*]:min-w-0">
             {c.requiredUnmapped.length > 0 && (
-              <div className="rounded-md border border-amber-300 p-3 text-sm dark:border-amber-800">
-                <p className="font-medium">Required in {draft.kind}, not mapped yet ({c.requiredUnmapped.length})</p>
+              <div className="surface-raised t-body rounded-md border p-3" style={{ borderColor: "var(--warning)" }}>
+                <p className="t-label flex flex-wrap items-center gap-2">
+                  <Chip status="pending">Not mapped</Chip>
+                  Required in {draft.kind}, not mapped yet ({c.requiredUnmapped.length})
+                </p>
                 <ul className="mt-1 grid gap-1">
                   {c.requiredUnmapped.map((f) => (
                     <li key={f.name} className="flex flex-wrap items-center gap-2">
@@ -426,16 +430,16 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
               </div>
             )}
 
-            <label className="block max-w-sm text-sm">
-              <span className="text-xs text-muted-foreground">Find a field in either column</span>
+            <label className="block max-w-sm t-body">
+              <span className="t-small text-muted-foreground">Find a field in either column</span>
               <Input className="mt-1" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="email, owner, amount…" />
             </label>
 
             <div data-item="wiz.mapping" data-item-label="the field pairs" className="min-w-0 overflow-x-auto">
-              <table data-container="connect.pairs" data-container-label="the field pair table" data-open="true" className="w-full min-w-[40rem] border-collapse text-sm">
+              <table data-container="connect.pairs" data-container-label="the field pair table" data-open="true" className="w-full min-w-[40rem] border-collapse t-body">
                 <caption className="sr-only">Field pairs for {object}: the ollopA field, the direction, the {draft.kind} field, the write rule and the state of each pair.</caption>
                 <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
+                  <tr className="border-b text-left t-small text-muted-foreground">
                     <th scope="col" className="py-2 pr-3 font-medium">ollopA field</th>
                     <th scope="col" className="py-2 pr-3 font-medium">Direction</th>
                     <th scope="col" className="py-2 pr-3 font-medium">{draft.kind} field</th>
@@ -448,21 +452,21 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                     <tr key={p.id} className="border-b align-top">
                       <td className="py-2 pr-3">{p.ollopa}</td>
                       <td className="py-2 pr-3">
-                        <select aria-label={`Direction for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 text-xs" value={p.direction} onChange={(e) => setPair(p.id, { direction: e.target.value as FieldPair["direction"] })}>
+                        <select aria-label={`Direction for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 t-small" value={p.direction} onChange={(e) => setPair(p.id, { direction: e.target.value as FieldPair["direction"] })}>
                           <option value="both">Both ways</option><option value="pull">Pull only</option><option value="push">Push only</option>
                         </select>
                       </td>
                       <td className="py-2 pr-3">
-                        <select aria-label={`${draft.kind} field for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 text-xs" value={p.remote} onChange={(e) => setPair(p.id, { remote: e.target.value })}>
+                        <select aria-label={`${draft.kind} field for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 t-small" value={p.remote} onChange={(e) => setPair(p.id, { remote: e.target.value })}>
                           {remoteFields.map((f) => <option key={f.name} value={f.name}>{f.name}{f.required ? " (required)" : ""}</option>)}
                         </select>
                       </td>
                       <td className="py-2 pr-3">
-                        <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 text-xs" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
+                        <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-background px-1 t-small" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
                           {WRITE_RULES.map((w) => <option key={w} value={w}>{w}</option>)}
                         </select>
                       </td>
-                      <td className="py-2 text-xs">
+                      <td className="py-2 t-small">
                         <div className="flex flex-wrap items-center gap-2">
                           <span>{p.state === "suggested" ? "Suggested" : p.state === "edited" ? "Edited" : "Mapped"}</span>
                           <Actions surface="card" items={[{ kind: "destructive", label: "Remove", onClick: () => setRemoving(removing === p.id ? null : p.id) }]} />
@@ -491,7 +495,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
             {object === "Deals" && (
               <section data-item="wiz.stage-mapping" data-item-label="stage mapping">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-medium">Stages, one to one</h3>
+                  <h3 className="t-body font-medium">Stages, one to one</h3>
                   <Actions surface="card" items={[{
                     kind: "secondary", label: "Match stages by name",
                     onClick: () => {
@@ -512,16 +516,16 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                     />
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Push by stage is set on the previous step; the stages it names are these.</p>
+                <p className="mt-2 t-small text-muted-foreground">Push by stage is set on the previous step; the stages it names are these.</p>
               </section>
             )}
 
             {flat ? (
               <div>
-                <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{unmappedRemote.length} unmapped {draft.kind} fields</h4>
+                <h4 className="t-small font-medium uppercase tracking-wide text-muted-foreground">{unmappedRemote.length} unmapped {draft.kind} fields</h4>
                 <ul className="mt-1 grid gap-1 sm:grid-cols-2">
                   {unmappedRemote.map((f) => (
-                    <li key={f.name} className="text-xs text-muted-foreground">{f.name} · {f.kind}{f.required ? " · required" : ""}</li>
+                    <li key={f.name} className="t-small text-muted-foreground">{f.name} · {f.kind}{f.required ? " · required" : ""}</li>
                   ))}
                 </ul>
               </div>
@@ -529,7 +533,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
               <Door id={`connect.unmapped.${draft.slug}.${object}`} label={`Show ${unmappedRemote.length} unmapped ${draft.kind} fields`} count={unmappedRemote.length}>
                 <ul className="grid gap-1 sm:grid-cols-2">
                   {unmappedRemote.map((f) => (
-                    <li key={f.name} className="text-xs text-muted-foreground">{f.name} · {f.kind}{f.required ? " · required" : ""}</li>
+                    <li key={f.name} className="t-small text-muted-foreground">{f.name} · {f.kind}{f.required ? " · required" : ""}</li>
                   ))}
                 </ul>
               </Door>
@@ -548,19 +552,19 @@ function ConditionBuilder({ rows, onChange, label }: {
 }) {
   return (
     <div className="mt-2 grid gap-2 rounded-md border p-3" role="group" aria-label={label}>
-      {rows.length === 0 && <p className="text-xs text-muted-foreground">No condition yet. Add one and the rule applies only to records that match it.</p>}
+      {rows.length === 0 && <p className="t-small text-muted-foreground">No condition yet. Add one and the rule applies only to records that match it.</p>}
       {rows.map((row, i) => (
         <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
           <Picker label="Field" value={row.field} options={CONDITION_FIELDS} onChange={(v) => onChange(rows.map((r, j) => (j === i ? { ...r, field: v } : r)))} />
           <Picker label="Is" value={row.op} options={OPERATORS} onChange={(v) => onChange(rows.map((r, j) => (j === i ? { ...r, op: v } : r)))} />
-          <label className="block text-sm">
-            <span className="text-xs text-muted-foreground">Value</span>
+          <label className="block t-body">
+            <span className="t-small text-muted-foreground">Value</span>
             <Input className="mt-1 h-10" value={row.value} onChange={(e) => onChange(rows.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))} />
           </label>
           <Actions className="self-end" surface="card" items={[{ kind: "secondary", label: "Remove", onClick: () => onChange(rows.filter((_, j) => j !== i)) }]} />
         </div>
       ))}
-      <div aria-live="polite" className="text-xs text-muted-foreground">{rows.length} condition{rows.length === 1 ? "" : "s"}.</div>
+      <div aria-live="polite" className="t-small text-muted-foreground">{rows.length} condition{rows.length === 1 ? "" : "s"}.</div>
       <Actions surface="card" items={[{ kind: "secondary", label: "Add a condition", onClick: () => onChange([...rows, { field: CONDITION_FIELDS[0], op: OPERATORS[0], value: "" }]) }]} />
     </div>
   )
@@ -570,7 +574,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
   return (
     <div className="grid gap-6">
       <fieldset data-item="wiz.pull-conditions" data-item-label="pull conditions">
-        <legend className="text-sm font-medium">Pull: what comes into ollopA</legend>
+        <legend className="t-body font-medium">Pull: what comes into ollopA</legend>
         <div className="mt-2 grid gap-2">
           <Radio name="pull" checked={draft.pullAll} onChange={() => save({ pullAll: true })} label={`Pull every record from ${draft.kind}`} />
           <Radio name="pull" checked={!draft.pullAll} onChange={() => save({ pullAll: false })} label="Pull only records that match" />
@@ -579,7 +583,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
       </fieldset>
 
       <fieldset data-item="wiz.push-conditions" data-item-label="push conditions">
-        <legend className="text-sm font-medium">Push: what goes out to {draft.kind}</legend>
+        <legend className="t-body font-medium">Push: what goes out to {draft.kind}</legend>
         <div className="mt-2 grid gap-2">
           <Radio name="push" checked={draft.pushAll} onChange={() => save({ pushAll: true })} label={`Push every record to ${draft.kind}`} />
           <Radio name="push" checked={!draft.pushAll} onChange={() => save({ pushAll: false })} label="Push only records that match" />
@@ -590,18 +594,18 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
             label="Push contacts whose email is unverified"
             hint="Off by default. An unverified address in the CRM is one somebody will send to."
           />
-          <label className="block max-w-sm text-sm">
-            <span className="text-xs text-muted-foreground">Value written to {draft.kind}'s source field</span>
+          <label className="block max-w-sm t-body">
+            <span className="t-small text-muted-foreground">Value written to {draft.kind}'s source field</span>
             <Input className="mt-1" value={draft.sourceValue} onChange={(e) => save({ sourceValue: e.target.value })} />
           </label>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className="text-sm font-medium">Deletions and merges</legend>
+        <legend className="t-body font-medium">Deletions and merges</legend>
         <div className="mt-2 grid gap-3">
           <div data-item="wiz.deletion" data-item-label="deletion sync">
-            <h4 className="text-sm">When a record is deleted in {draft.kind}</h4>
+            <h4 className="t-body">When a record is deleted in {draft.kind}</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="crmdel" checked={draft.onCrmDelete === "unlink"} onChange={() => save({ onCrmDelete: "unlink" })} label="Unlink it in ollopA" hint="The record stays and loses its link." />
               <div className="grid gap-1">
@@ -611,7 +615,7 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
             </div>
           </div>
           <div>
-            <h4 className="text-sm">When a record is deleted in ollopA</h4>
+            <h4 className="t-body">When a record is deleted in ollopA</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="olldel" checked={draft.onOllopaDelete === "nothing"} onChange={() => save({ onOllopaDelete: "nothing" })} label={`Do nothing in ${draft.kind}`} />
               <div className="grid gap-1">
@@ -621,14 +625,14 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
             </div>
           </div>
           <div>
-            <h4 className="text-sm">When two records are merged in {draft.kind}</h4>
+            <h4 className="t-body">When two records are merged in {draft.kind}</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="crmmerge" checked={draft.onCrmMerge === "mirror"} onChange={() => save({ onCrmMerge: "mirror" })} label="Mirror the merge in ollopA" hint="The loser's activity moves onto the winner." />
               <Radio name="crmmerge" checked={draft.onCrmMerge === "nothing"} onChange={() => save({ onCrmMerge: "nothing" })} label="Do nothing in ollopA" />
             </div>
           </div>
           <div data-item="wiz.merge" data-item-label="merge sync">
-            <h4 className="text-sm">When two records are merged in ollopA</h4>
+            <h4 className="t-body">When two records are merged in ollopA</h4>
             <div className="mt-1 grid gap-2 sm:grid-cols-2">
               <Radio name="ollmerge" checked={draft.onOllopaMerge === "nothing"} onChange={() => save({ onOllopaMerge: "nothing" })} label={`Do nothing in ${draft.kind}`} />
               <div className="grid gap-1">
@@ -641,12 +645,12 @@ export function RulesStep({ draft, save }: { draft: ConnectDraft; save: (p: Part
       </fieldset>
 
       <fieldset data-item="wiz.matching-key" data-item-label="the matching key">
-        <legend className="text-sm font-medium">Matching: which key says two records are the same person</legend>
+        <legend className="t-body font-medium">Matching: which key says two records are the same person</legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <Radio name="match" checked={draft.matchKey === "Email, then CRM id"} onChange={() => save({ matchKey: "Email, then CRM id" })} label="Email, then CRM id" hint="Catches the same person added twice." />
           <Radio name="match" checked={draft.matchKey === "CRM id only"} onChange={() => save({ matchKey: "CRM id only" })} label="CRM id only" hint="Two records with one address stay two records." />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Contact stages ollopA can push: {CONTACT_STAGES.join(" · ")}.</p>
+        <p className="mt-2 t-small text-muted-foreground">Contact stages ollopA can push: {CONTACT_STAGES.join(" · ")}.</p>
       </fieldset>
     </div>
   )
@@ -665,7 +669,7 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
     return (
       <div className="grid gap-4">
         <fieldset>
-          <legend className="text-sm font-medium">Which calendars</legend>
+          <legend className="t-body font-medium">Which calendars</legend>
           <div className="mt-2 grid gap-1">
             {mine.map((c) => (
               <Check key={c} checked={draft.calendars.includes(c)} onChange={() => save({ calendars: draft.calendars.includes(c) ? draft.calendars.filter((x) => x !== c) : [...draft.calendars, c] })} label={c} />
@@ -673,7 +677,7 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
           </div>
         </fieldset>
         <fieldset>
-          <legend className="text-sm font-medium">What ollopA reads</legend>
+          <legend className="t-body font-medium">What ollopA reads</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <Radio name="detail" checked={draft.busyOnly} onChange={() => save({ busyOnly: true })} label="Busy time only" hint="Enough to stop a double-booking. No titles, no attendees." />
             <Radio name="detail" checked={!draft.busyOnly} onChange={() => save({ busyOnly: false })} label="Event detail" hint="Titles and attendees, so a meeting matches itself to a deal." />
@@ -687,13 +691,13 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
     const channels = ["#revenue", "#wins", "#revops", "#sales", "#alerts", ""]
     return (
       <fieldset>
-        <legend className="text-sm font-medium">Which events, and where each one posts</legend>
+        <legend className="t-body font-medium">Which events, and where each one posts</legend>
         <div className="mt-2 grid gap-2">
           {SLACK_EVENTS.map((event) => {
             const row = draft.channels.find((c) => c.event === event)
             return (
               <div key={event} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_16rem]">
-                <span className="text-sm">{event}</span>
+                <span className="t-body">{event}</span>
                 <Picker
                   label="Channel"
                   value={row?.channel ?? ""}
@@ -704,7 +708,7 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
             )
           })}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">An event with no channel does not post. Approvals do post here, and the message carries a link back.</p>
+        <p className="mt-2 t-small text-muted-foreground">An event with no channel does not post. Approvals do post here, and the message carries a link back.</p>
       </fieldset>
     )
   }
@@ -713,7 +717,7 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
     return (
       <div className="grid gap-4">
         <fieldset>
-          <legend className="text-sm font-medium">Which fields it may fill</legend>
+          <legend className="t-body font-medium">Which fields it may fill</legend>
           <div className="mt-2 grid gap-1">
             {ENRICH_FIELDS.map((f) => (
               <Check key={f} checked={draft.enrichFields.includes(f)} onChange={() => save({ enrichFields: draft.enrichFields.includes(f) ? draft.enrichFields.filter((x) => x !== f) : [...draft.enrichFields, f] })} label={f} />
@@ -721,9 +725,9 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
           </div>
         </fieldset>
         <section>
-          <h3 className="text-sm font-medium">Its place in the provider order</h3>
-          <p className="mt-1 text-sm">{order.join(" → ")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <h3 className="t-body font-medium">Its place in the provider order</h3>
+          <p className="mt-1 t-body">{order.join(" → ")}</p>
+          <p className="mt-1 t-small text-muted-foreground">
             This is the workspace default, set in Settings › Pipeline and data › Enrichment provider order. The waterfall stops at the first verified result{seed.workspace.waterfall.stopAtFirstVerified ? "" : " only when you say so"}, and one row may not cost more than {seed.workspace.waterfall.ceilingPerRow} credits.
           </p>
         </section>
@@ -735,17 +739,17 @@ function ThirdStep({ session, draft, save }: { session: Session; draft: ConnectD
   return (
     <div className="grid gap-4">
       <fieldset>
-        <legend className="text-sm font-medium">Which events this endpoint receives</legend>
+        <legend className="t-body font-medium">Which events this endpoint receives</legend>
         <div className="mt-2 grid gap-1 sm:grid-cols-2">
           {WEBHOOK_EVENTS.map((e) => (
-            <Check key={e} checked={draft.webhookEvents.includes(e)} onChange={() => save({ webhookEvents: draft.webhookEvents.includes(e) ? draft.webhookEvents.filter((x) => x !== e) : [...draft.webhookEvents, e] })} label={<code className="font-mono text-xs">{e}</code>} />
+            <Check key={e} checked={draft.webhookEvents.includes(e)} onChange={() => save({ webhookEvents: draft.webhookEvents.includes(e) ? draft.webhookEvents.filter((x) => x !== e) : [...draft.webhookEvents, e] })} label={<code className="font-mono t-small">{e}</code>} />
           ))}
         </div>
       </fieldset>
-      <p className="text-sm">
+      <p className="t-body">
         Approvals are not webhook events. A webhook fires on what happened, never on what needs deciding; approvals arrive in the app's queue, in the daily digest, and in Slack, which carries a link.
       </p>
-      <p className="text-xs text-muted-foreground">
+      <p className="t-small text-muted-foreground">
         Delivery is at-least-once and out of order, signed, attempt-numbered and retried for 24 hours. Reconcile nightly from <code className="font-mono">GET /v1/changes?since=&lt;cursor&gt;</code>.
       </p>
     </div>
@@ -806,19 +810,19 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
 
   return (
     <div className="grid gap-5">
-      <section data-item="wiz.first-sync" data-item-label="what the first sync will do" className="rounded-lg border bg-muted/40 p-4">
-        <h3 className="text-sm font-semibold">What the first sync will do</h3>
-        <p className="mt-2 text-sm">{firstSyncConsequence(session, draft)}</p>
+      <section data-item="wiz.first-sync" data-item-label="what the first sync will do" className="surface-raised rounded-lg border p-4">
+        <h3 className="t-section">What the first sync will do</h3>
+        <p className="t-body mt-2">{firstSyncConsequence(session, draft)}</p>
       </section>
 
       <div data-item="wiz.review" data-item-label="the review" className="grid gap-3 sm:grid-cols-2">
         {blocks.map((block) => (
-          <section key={block.title} className="rounded-lg border p-3">
+          <section key={block.title} className="surface-raised rounded-lg border p-3">
             <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-sm font-medium">{block.title}</h3>
-              <button type="button" className="text-xs underline" onClick={() => go(block.step)}>Change</button>
+              <h3 className="t-label">{block.title}</h3>
+              <button type="button" className="t-small underline" onClick={() => go(block.step)}>Change</button>
             </div>
-            <ul className="mt-1 grid gap-1 text-xs text-muted-foreground">
+            <ul className="t-small mt-1 grid gap-1 text-muted-foreground">
               {block.lines.map((l) => <li key={l}>{l}</li>)}
             </ul>
           </section>
@@ -860,9 +864,9 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
   if (kindDef?.kind === "Webhook" && hooksGate.locked) {
     return (
       <div className="mx-auto max-w-xl px-4 py-10 lg:px-6">
-        <h2 className="text-xl font-semibold">Webhooks are on {hooksGate.plan}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{hooksGate.what}</p>
-        <p className="mt-2 text-sm">{money(hooksGate.pricePerMonth)} a month for {businessById(session.business).plan.seats} seats, the whole bill at {hooksGate.plan}.</p>
+        <h2 className="t-title">Webhooks are on {hooksGate.plan}</h2>
+        <p className="mt-2 t-body text-muted-foreground">{hooksGate.what}</p>
+        <p className="mt-2 t-body">{money(hooksGate.pricePerMonth)} a month for {businessById(session.business).plan.seats} seats, the whole bill at {hooksGate.plan}.</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Locked feature="Webhooks" plan={hooksGate.plan} pricePerMonth={hooksGate.pricePerMonth} what={hooksGate.what}>
             <Actions surface="page" items={[{ kind: "primary", label: `See what changes on ${hooksGate.plan}` }]} />
