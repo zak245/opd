@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Chip } from "../../ui/Identity"
-import { STATUSES, statusOf } from "../../identity"
+import { inkOf } from "../../ui/Identity"
 import { TODAY, type Deal, type DealStage, type DealWarning, type ForecastCategory } from "../../data/seed"
 import { day, daysBetween } from "../deal/format"
 import { FORECAST_CATEGORIES_UI, WON_STAGE, moneyShort, warningStatus } from "./pipeline"
@@ -27,7 +27,7 @@ import { FORECAST_CATEGORIES_UI, WON_STAGE, moneyShort, warningStatus } from "./
  * close date already gone, and a deal with no next step. The registry decides the colour; this only
  * asks it, so the card holds no hue of its own (DESIGN.md §5).
  */
-const statusInk = (word: string) => STATUSES[statusOf(word)].ink
+const statusInk = (word: string) => inkOf(word)
 
 export function chipText(w: DealWarning): string {
   if (w.kind === "Overdue") return `Overdue · ${daysBetween(w.observed)}d`

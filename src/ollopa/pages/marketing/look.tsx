@@ -4,13 +4,15 @@
 // `Chip`; every number that has passed a threshold takes its ink from the status set, with the word
 // that explains it always beside it — a bounce rate is amber because the guard warns, not because
 // amber looked right.
-import { STATUSES, statusOf, type Status } from "../../identity"
+import { STATUSES, type Status } from "../../identity"
+import { inkOf } from "../../ui/Identity"
 
 /** The ink of a status, for a number whose word sits beside it. */
 export const ink = (status: Status) => ({ color: STATUSES[status].ink })
 
 /** The same, from one of the words the product already shows. */
-export const inkFor = (word: string | undefined | null) => ink(statusOf(word))
+// A word that is not a state gets the muted category ink, never a status colour.
+export const inkFor = (word: string | undefined | null) => ({ color: inkOf(word) })
 
 /**
  * The family every object in this folder belongs to: campaigns, audiences, forms and workflows are

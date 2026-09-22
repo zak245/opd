@@ -204,7 +204,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
               <div className="flex flex-wrap items-center gap-2">
                 {renaming && isOwner ? (
                   <Input
-                    autoFocus aria-label="List name" className="h-9 w-72 text-lg font-semibold"
+                    autoFocus aria-label="List name" className="t-title h-9 w-72"
                     value={name} onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") { engage.patchList(session.business, list.id, { name }); setRenaming(false); say(`Renamed to ${name}`) }

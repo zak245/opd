@@ -25,7 +25,8 @@ import { follow } from "../../chain"
 import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { STATUSES, statusOf } from "../../identity"
+import { FamilyIcon, inkOf } from "../../ui/Identity"
+import { familyOf } from "../../identity"
 import { useEdits } from "../../edits"
 import { TablePage, toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
@@ -48,7 +49,7 @@ import {
 } from "./pipeline"
 
 /** The ink a state word carries, asked of the registry so this page holds no hue (DESIGN.md §5). */
-const statusInk = (word: string) => STATUSES[statusOf(word)].ink
+const statusInk = (word: string) => inkOf(word)
 
 /* --------------------------------------------------------------------------------- page state */
 
@@ -697,6 +698,17 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         <div aria-live="polite" className="sr-only">{say}</div>
 
         <div className="space-y-2 px-4 pt-4 sm:px-6">
+          {/* The page says what it is before any filter does: the title, its family glyph and its
+              family ink, at the top of the scale (DESIGN.md §5). Without it the board opened flat
+              and the only "where am I" was the 14 px strip in the shell. */}
+          <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("deals").ink }}>
+            <FamilyIcon of="deals" size="header" />
+            Deals
+            <span className="t-body font-normal tabular-nums text-muted-foreground">
+              {SCOPE_LABEL[scope]} · closing {period_.words}
+            </span>
+          </h2>
+
           <div className="flex flex-wrap items-center gap-2">
             {pipelines.length > 1 && (
               <Select value={pipelineName} onValueChange={setPipelineName}>

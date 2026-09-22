@@ -89,7 +89,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
     return (
       <div className="flex h-full flex-col">
         <div className="px-6 pt-5">
-          <h2 className="text-lg font-semibold">Workflows</h2>
+          <h2 className="t-title">Workflows</h2>
           <p className="text-sm text-muted-foreground">Route what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 px-6 py-3">

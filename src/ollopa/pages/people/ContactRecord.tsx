@@ -84,7 +84,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
   if (!person) {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
-        <h2 className="text-lg font-semibold">This contact was removed or merged.</h2>
+        <h2 className="t-section">This contact was removed or merged.</h2>
         <p className="mt-2"><a className="text-sm underline" href={href("/ollopa/people")}>Back to People</a></p>
       </div>
     )

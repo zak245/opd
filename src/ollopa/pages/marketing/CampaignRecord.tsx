@@ -80,12 +80,12 @@ function Funnel({ c }: { c: Campaign }) {
 function Previews({ c }: { c: Campaign }) {
   const body = (
     <>
-      <p className="text-[11px] text-muted-foreground">{c.fromName} &lt;{c.fromMailbox}&gt;</p>
+      <p className="t-small text-muted-foreground">{c.fromName} &lt;{c.fromMailbox}&gt;</p>
       <p className="font-medium">{c.subject || "No subject yet"}</p>
-      <p className="text-[11px] text-muted-foreground">{c.previewText || "No preview text yet"}</p>
+      <p className="t-small text-muted-foreground">{c.previewText || "No preview text yet"}</p>
       <p className="pt-2">Hi {"{{first_name}}"},</p>
       <p className="pt-1">{c.kind === "Lifecycle" ? "You are a week into your trial. Here is the one thing most teams set up next." : "Here is what changed this quarter, in two minutes and one number."}</p>
-      <p className="pt-2 text-[11px] text-muted-foreground">Unsubscribe · {c.fromMailbox}</p>
+      <p className="pt-2 t-small text-muted-foreground">Unsubscribe · {c.fromMailbox}</p>
     </>
   )
   return (

@@ -55,12 +55,33 @@ export function Chip({ family, status, children, icon = true, className }: {
 }) {
   const word = children ?? status
   if (status !== undefined && status !== null) {
-    const look = STATUSES[statusOf(status)]
+    const id = statusOf(status)
+    if (!id) {
+      // Not a state: a forecast category, a reply outcome, a persona, a sentence. It gets a neutral
+      // category chip — a border and the word — because a status colour on a thing that is not a
+      // status is decoration, and §5 has no room for that.
+      warnCategory(status)
+      return (
+        <span className={cn("t-small inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium text-muted-foreground", className)}>
+          {word}
+        </span>
+      )
+    }
+    const look = STATUSES[id]
     return (
       <span
         className={cn("t-small inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium", className)}
         style={{ backgroundColor: look.tint, color: look.ink }}
       >
+        {word}
+      </span>
+    )
+  }
+  if (!family) {
+    // Neither a state nor a family: a category. A border and the word, and no colour that would
+    // mean something it does not (DESIGN.md §5).
+    return (
+      <span className={cn("t-small inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium text-muted-foreground", className)}>
         {word}
       </span>
     )
@@ -74,6 +95,19 @@ export function Chip({ family, status, children, icon = true, className }: {
       {icon && <FamilyIcon of={family} tone="current" className="size-3" />}
       {word ?? look.name}
     </span>
+  )
+}
+
+/** Said once per word, in development only: a `status` the registry does not know as a state. */
+const saidCategory = new Set<string>()
+function warnCategory(word: string) {
+  if (!import.meta.env.DEV) return
+  const key = word.trim().toLowerCase()
+  if (saidCategory.has(key)) return
+  saidCategory.add(key)
+  console.warn(
+    `[ollopa/Chip] "${word}" is not one of the five states, so it is drawn as a neutral category ` +
+    "chip. If it is a state, add the word to WORDS in identity.ts; if it is a category, this is right.",
   )
 }
 
@@ -95,7 +129,7 @@ export function StatusLine({ status, word, children, className, role = "status" 
   className?: string
   role?: "status" | "alert"
 }) {
-  const look = STATUSES[statusOf(status)]
+  const look = STATUSES[statusOf(status) ?? "paused"]
   const lead = word ?? status
   return (
     <p
@@ -109,7 +143,16 @@ export function StatusLine({ status, word, children, className, role = "status" 
   )
 }
 
-/** The tone a status word maps to, for a page that draws its own row rather than a chip. */
-export function statusTone(word: string | undefined | null): Status {
+/** The tone a status word maps to, or nothing where the word is not a state. */
+export function statusTone(word: string | undefined | null): Status | undefined {
   return statusOf(word)
+}
+
+/**
+ * The ink for a state word, and the muted category ink for anything that is not a state. Pages that
+ * colour their own text rather than drawing a chip ask this, so they cannot paint a category.
+ */
+export function inkOf(word: string | undefined | null): string {
+  const id = statusOf(word)
+  return id ? STATUSES[id].ink : "var(--muted-foreground)"
 }

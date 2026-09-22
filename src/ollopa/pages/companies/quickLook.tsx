@@ -100,7 +100,7 @@ export function companyFields(v: CompanyView, currency: string, user?: string): 
       key: "health", usage: "rec.health", label: "Health",
       value: (
         <span className="inline-flex flex-wrap items-baseline gap-1.5">
-          <span className="text-lg font-semibold tabular-nums">{a.health}</span>
+          <span className="t-section tabular-nums">{a.health}</span>
           {bandChip(a.band)}
           <span className="t-small text-muted-foreground">{delta(a.healthDelta30)}</span>
         </span>

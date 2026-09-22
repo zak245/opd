@@ -44,7 +44,7 @@ export function Controls(p: ControlProps) {
 
       {!p.compact && (
         <>
-          <p className="text-[11px] text-muted-foreground">← → to step · space to play</p>
+          <p className="t-small text-muted-foreground">← → to step · space to play</p>
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs">
               <Switch checked={p.trace} onCheckedChange={p.onTrace} aria-label="Trace changes" />
@@ -55,7 +55,7 @@ export function Controls(p: ControlProps) {
               Slow motion (2×)
             </label>
           </div>
-          <div className="space-y-0.5 text-[11px] text-muted-foreground">
+          <div className="space-y-0.5 t-small text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <span aria-hidden="true" className="inline-block h-2 w-3.5 rounded-xs border border-dashed" style={{ borderColor: "var(--lesson-ghost)", background: "var(--lesson-ghost-soft)" }} />
               <span>where it was, and where it went</span>

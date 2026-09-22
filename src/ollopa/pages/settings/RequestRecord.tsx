@@ -144,7 +144,7 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
       id: "ask", title: "The ask",
       children: (
         <div className="grid gap-3 text-sm">
-          <p className="text-base">{request.outcome}</p>
+          <p className="t-section">{request.outcome}</p>
           <p><span className="text-muted-foreground">Reason:</span> {request.reason} — {request.reasonText}</p>
           <p>
             <span className="text-muted-foreground">Where it came from:</span> {request.originLabel}{" "}

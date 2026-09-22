@@ -355,7 +355,9 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           <div role="rowheader" className="min-w-0 flex-1">
             <div className="flex items-baseline gap-x-2 gap-y-0.5">
               <span className="t-body truncate font-medium">{r.contact}</span>
-              <Chip status={r.outcome} className="shrink-0">{r.outcome}</Chip>
+              {/* What the reply means is a category, not a state: a neutral chip with the word,
+                  never a status colour. Overdue, Sending and Sent below are the states. */}
+              <Chip icon={false} className="shrink-0">{r.outcome}</Chip>
               <span className="t-small ml-auto shrink-0 tabular-nums text-muted-foreground sm:hidden">
                 {waiting(r.received)}{late && ", overdue"}
               </span>
@@ -483,7 +485,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           <FamilyIcon of="inbox" size="header" label={familyOf("inbox").name} />
           Inbox
           {import.meta.env.DEV && (
-            <span data-renders="inbox" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
+            <span data-renders="inbox" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
               inbox renders: {renders}
             </span>
           )}

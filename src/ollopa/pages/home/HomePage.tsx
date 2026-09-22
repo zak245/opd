@@ -85,10 +85,10 @@ export function HomePage({ session }: { session: Session }) {
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
         <header className="flex flex-wrap items-end gap-x-4 gap-y-1 pb-4">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold">
+            <h2 className="t-title">
               {greeting()}, {firstName(session.user)}
               {import.meta.env.DEV && (
-                <span data-renders="home" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
+                <span data-renders="home" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
                   home renders: {renders}
                 </span>
               )}

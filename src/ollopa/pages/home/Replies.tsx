@@ -55,7 +55,7 @@ function ReplyRow({ r, canBook, confirming, ids, onNotInterested, onAsk, onUnsub
         <span className="flex flex-wrap items-center gap-x-2">
           <span className="font-medium">{r.contact}</span>
           <span className="text-muted-foreground">· {r.company}</span>
-          <Chip status={r.outcome}>{r.outcome}</Chip>
+          <Chip icon={false}>{r.outcome}</Chip>
           <span className="text-xs text-muted-foreground">{when(r.received)}</span>
         </span>
         <span className="block truncate text-xs text-muted-foreground">{r.snippet}</span>

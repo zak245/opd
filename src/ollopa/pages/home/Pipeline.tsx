@@ -18,7 +18,7 @@ function Stat({ label, value, sub, to }: { label: string; value: string; sub?: s
   const body = (
     <>
       <span className="block text-xs text-muted-foreground">{label}</span>
-      <span className="block text-base font-semibold tabular-nums">{value}</span>
+      <span className="t-section block tabular-nums">{value}</span>
       {sub && <span className="block text-xs text-muted-foreground">{sub}</span>}
     </>
   )

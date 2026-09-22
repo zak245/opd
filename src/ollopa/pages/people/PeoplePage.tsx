@@ -13,6 +13,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronsUpDown, ListPlus, MoreHorizontal, Phone, Send, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { FamilyIcon } from "../../ui/Identity"
+import { familyOf } from "../../identity"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -755,7 +757,8 @@ export function PeoplePage({ session }: { session: Session }) {
     <div className="flex h-full min-h-0 flex-col">
       {/* --------------------------------------------------------------------------- 1. header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-6">
-        <h2 className="text-lg font-semibold">
+        <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("people").ink }}>
+          <FamilyIcon of="people" size="header" />
           People <span className="font-normal tabular-nums text-muted-foreground">· {total.toLocaleString()}</span>
         </h2>
         <div data-print-hide>{addPeople}</div>
@@ -1105,7 +1108,7 @@ export function PeoplePage({ session }: { session: Session }) {
                   <td className={cn("sticky right-0 w-10 border-l bg-background px-2 group-hover:bg-muted", pad)} onClick={(e) => e.stopPropagation()}>
                     <div className="relative flex items-center justify-end">
                       <div
-                        className="absolute right-7 flex items-center gap-1 rounded-md bg-background opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                        className="surface-overlay absolute right-7 flex items-center gap-1 rounded-md border opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
                         data-container="people.row.actions"
                         data-container-label="the row's buttons"
                       >

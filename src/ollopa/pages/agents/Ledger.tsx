@@ -257,7 +257,7 @@ export function Ledger(p: LedgerProps) {
       </div>
 
       {/* The columns, at the widths that fit. Below `sm` every row is two lines and the header goes. */}
-      <div className="mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-b px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:grid"
+      <div className="mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-b px-2 pb-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
         style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
         <span>When</span>
         {rules.r4 && <span data-item="act.actor" data-item-label="Actor">Actor</span>}

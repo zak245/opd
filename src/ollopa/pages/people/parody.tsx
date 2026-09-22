@@ -142,7 +142,7 @@ export function ParodySidebar({ popular, rest, active, values, count, onChange, 
       className={cn("w-60 shrink-0 overflow-y-auto border-r px-3 py-3", !open && "hidden")}
     >
       <section data-container="people.parody.popular" data-container-label="Most Popular Filters" data-open={open ? "true" : "false"}>
-        <h4 className="pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <h4 className="pb-1 t-small font-medium uppercase tracking-wide text-muted-foreground">
           Most Popular Filters ({popular.length})
         </h4>
         {popular.map((f) => (
@@ -187,7 +187,7 @@ export function ParodySidebar({ popular, rest, active, values, count, onChange, 
         ))}
       </section>
 
-      <p className="pt-3 text-[11px] text-muted-foreground">{all} filters in this sidebar.</p>
+      <p className="pt-3 t-small text-muted-foreground">{all} filters in this sidebar.</p>
       <Button
         size="sm"
         variant="outline"

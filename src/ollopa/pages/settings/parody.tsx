@@ -167,7 +167,7 @@ function Ring({ label, done, of }: { label: string; done: number; of: number }) 
         />
       </svg>
       <span className="text-xs font-medium">{label}</span>
-      <span className="text-[11px] text-muted-foreground">{done}/{of} complete</span>
+      <span className="t-small text-muted-foreground">{done}/{of} complete</span>
     </div>
   )
 }
@@ -426,10 +426,10 @@ export function ParodyShell({ ctx, rows, present, strip }: {
             </div>
             <ul className="grid gap-0.5">{nav.filter((p) => p.group === null).map((p) => entry(p))}</ul>
 
-            <p className="px-2 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Personal settings</p>
+            <p className="px-2 pb-1 pt-4 t-small font-medium uppercase tracking-wider text-muted-foreground">Personal settings</p>
             <ul className="grid gap-0.5">{PAGES.filter((p) => p.group === "personal").map((p) => entry(p))}</ul>
 
-            <p className="px-2 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Workspace settings</p>
+            <p className="px-2 pb-1 pt-4 t-small font-medium uppercase tracking-wider text-muted-foreground">Workspace settings</p>
             <ul className="grid gap-0.5">
               {PAGES.filter((p) => p.group === "workspace" && !p.under && GROUP_ORDER.every((g) => g !== p.id)).slice(0, 1).map((p) => entry(p))}
               {GROUP_ORDER.map((g) => (
@@ -451,7 +451,7 @@ export function ParodyShell({ ctx, rows, present, strip }: {
               {PAGES.filter((p) => p.group === "workspace" && !p.under && p.id !== "workspace-overview").map((p) => entry(p))}
             </ul>
 
-            <p data-item="parody.flyout" data-item-label="The Admin Settings flyout" className="mt-4 rounded border px-2 py-1.5 text-[11px] text-muted-foreground">
+            <p data-item="parody.flyout" data-item-label="The Admin Settings flyout" className="mt-4 rounded border px-2 py-1.5 t-small text-muted-foreground">
               Admin Settings ▸ · Team &amp; Workspace setup 86% completed · Users and teams · System activity · Security · Plan overview · Integrations · All settings
             </p>
           </div>

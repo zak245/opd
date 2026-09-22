@@ -279,7 +279,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           {groups.map((g) => (
             <div key={g} className={g === "bottom" ? "mt-2 border-t pt-3" : "mb-3"}>
               {g !== "top" && g !== "bottom" && !collapsed && (
-                <div className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{g}</div>
+                <div className="px-2 pb-1 t-small font-medium uppercase tracking-wider text-muted-foreground">{g}</div>
               )}
               {entries.filter((e) => e.item.group === g).map((e) => (
                 <SidebarRow
@@ -329,7 +329,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           <Button variant="outline" size="sm" className="hidden w-64 justify-start text-muted-foreground lg:flex" onClick={() => setPalette(true)}>
             <Search className="size-4" aria-hidden="true" />
             Search or jump to…
-            <kbd className="ml-auto rounded border px-1 font-mono text-[10px]">⌘K</kbd>
+            <kbd className="ml-auto rounded border px-1 font-mono t-small">⌘K</kbd>
           </Button>
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Search or jump to" onClick={() => setPalette(true)}>
             <Search className="size-4" aria-hidden="true" />
@@ -349,7 +349,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
         {alerts.length > 0 && (
           <div role="alert" className="t-body border-b px-4 py-1.5" style={{ backgroundColor: "var(--warning-tint)" }}>
-            <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Needs you now</div>
+            <div className="t-small font-medium uppercase tracking-wider text-muted-foreground">Needs you now</div>
             {alerts.map((n) => (
               <div key={n.id} className="flex flex-wrap items-baseline gap-x-3 py-0.5">
                 <span className="min-w-0 flex-1">{n.title}</span>
@@ -376,7 +376,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                 href={href(`/ollopa/${p === "home" ? "" : p}`)}
                 onClick={clearTrail}
                 aria-current={p === page ? "page" : undefined}
-                className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]", p === page ? "font-medium" : "text-muted-foreground")}
+                className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2 t-small", p === page ? "font-medium" : "text-muted-foreground")}
                 style={p === page ? { backgroundColor: "var(--brand-tint)", color: "var(--brand-ink)" } : undefined}
               >
                 {p === page && <span aria-hidden="true" className="absolute inset-x-3 top-0 h-[3px] rounded-full" style={{ backgroundColor: "var(--brand)" }} />}
@@ -385,7 +385,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
               </a>
             )
           })}
-          <button className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] text-muted-foreground" onClick={() => setAllPages(true)}>
+          <button className="flex flex-1 flex-col items-center gap-0.5 py-2 t-small text-muted-foreground" onClick={() => setAllPages(true)}>
             <Grid3x3 className="size-4" aria-hidden="true" />
             All pages
           </button>

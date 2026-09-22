@@ -193,7 +193,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
               <span className="t-body font-medium">{reply.contact}</span>
               <span className="t-small tabular-nums text-muted-foreground">{waiting(reply.received)}</span>
               <span className="t-small flex items-center gap-1.5 text-muted-foreground">
-                Read as <Chip status={reply.outcome}>{reply.outcome}</Chip> by {meantBy}
+                Read as <Chip icon={false}>{reply.outcome}</Chip> by {meantBy}
               </span>
             </div>
             <p className="t-body whitespace-pre-line">{reply.body}</p>

@@ -268,5 +268,7 @@ function crmOf(seed: Seed) {
  * the other five are a number against a threshold, which is what "warning" means.
  */
 export function warningStatus(kind: string): string {
-  return statusOf(kind) === "paused" ? "warning" : kind
+  // A warning the registry has no word for is still a number against a threshold, which is what
+  // "warning" means; only "Ghosted" and the like carry their own state word.
+  return statusOf(kind) ? kind : "warning"
 }

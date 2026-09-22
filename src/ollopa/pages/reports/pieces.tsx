@@ -284,7 +284,7 @@ export function InlineGate({ feature, plan, pricePerMonth, what, seats, isAdmin,
     <div className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="t-body font-medium">{feature}</span>
-        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 t-small text-muted-foreground">
           <Lock className="size-3" aria-hidden="true" />{plan}
         </span>
       </div>

@@ -139,12 +139,12 @@ export function QuickLook({ family, open, onOpenChange, title, fields, editable,
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" disabled={at === 0} onClick={() => list.onStep(-1)}>
                 Previous
-                <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">[</kbd>
+                <kbd className="ml-1 rounded border px-1 font-mono t-small">[</kbd>
               </Button>
               <span className="t-small tabular-nums text-muted-foreground">{at + 1} of {list.total}</span>
               <Button size="sm" variant="ghost" className="ml-auto" disabled={at >= list.total - 1} onClick={() => list.onStep(1)}>
                 Next
-                <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">]</kbd>
+                <kbd className="ml-1 rounded border px-1 font-mono t-small">]</kbd>
               </Button>
             </div>
           )}

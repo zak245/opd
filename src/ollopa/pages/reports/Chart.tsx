@@ -11,9 +11,9 @@ import { shortDay } from "./format"
 import "./chart.css"
 
 /**
- * Four slots in a fixed order, never cycled. They are the neutral ramp, because none of this page's
- * series is an object family: an activity kind and a pipeline stage are not families, and DESIGN.md
- * §5 gives colour five jobs, none of which is telling four lines apart. A series that really is a
+ * Four slots in a fixed order, never cycled. The first is the accent — the report exists for that
+ * series — and the rest are a neutral ramp, because an activity kind is not an object family and
+ * DESIGN.md §5 gives colour no job called "telling four lines apart". A series that really is a
  * family says so and gets that family's ink instead.
  */
 const SLOT = ["var(--viz-1)", "var(--viz-2)", "var(--viz-3)", "var(--viz-4)"]
@@ -21,12 +21,24 @@ const SLOT = ["var(--viz-1)", "var(--viz-2)", "var(--viz-3)", "var(--viz-4)"]
 const inkOf = (s: Series, i: number) => (s.family ? familyOf(s.family).ink : SLOT[i])
 
 /**
- * A second channel, because the ramp is one hue: each slot also has its own stroke pattern, so two
- * lines that cross are told apart by shape as well as by lightness — and by the legend, which draws
- * the same pattern beside the name. A family-inked series keeps the solid stroke its ink earns.
+ * Two more channels, so three lines that run together are still three lines: a stroke width, and a
+ * marker shape drawn at every point and repeated in the legend. Every line is solid — a dashed grey
+ * line is harder to follow, not easier, and dashes are kept for one thing only: the previous period.
  */
-const DASH = ["", "7 3", "2 3", "10 3 2 3"]
-const dashOf = (s: Series, i: number) => (s.family ? undefined : DASH[i] || undefined)
+const WIDTH = [2.75, 2.25, 1.75, 1.5]
+type Shape = "circle" | "square" | "triangle" | "diamond"
+const SHAPE: Shape[] = ["circle", "square", "triangle", "diamond"]
+
+/** One marker, centred on the point. `r` is the half-size, so every shape reads the same weight. */
+function Marker({ shape, cx, cy, r, fill, ring = true }: {
+  shape: Shape; cx: number; cy: number; r: number; fill: string; ring?: boolean
+}) {
+  const common = { fill, stroke: ring ? "var(--viz-surface)" : "none", strokeWidth: ring ? 2 : 0 }
+  if (shape === "square") return <rect x={cx - r} y={cy - r} width={r * 2} height={r * 2} rx={0.5} {...common} />
+  if (shape === "triangle") return <polygon points={`${cx},${cy - r * 1.15} ${cx + r * 1.15},${cy + r * 0.85} ${cx - r * 1.15},${cy + r * 0.85}`} {...common} />
+  if (shape === "diamond") return <polygon points={`${cx},${cy - r * 1.25} ${cx + r * 1.15},${cy} ${cx},${cy + r * 1.25} ${cx - r * 1.15},${cy}`} {...common} />
+  return <circle cx={cx} cy={cy} r={r} {...common} />
+}
 
 /** The chart draws in real pixels, so a label is the same size at 400 wide as at 1440. */
 function useWidth() {
@@ -98,8 +110,9 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {series.map((s, i) => (
             <li key={s.id} className="flex items-center gap-1.5 t-small text-muted-foreground">
-              <svg aria-hidden="true" width="18" height="8" viewBox="0 0 18 8" className="shrink-0">
-                <line x1="0" x2="18" y1="4" y2="4" stroke={inkOf(s, i)} strokeWidth={2} strokeDasharray={dashOf(s, i)} strokeLinecap="round" />
+              <svg aria-hidden="true" width="22" height="10" viewBox="0 0 22 10" className="shrink-0">
+                <line x1="0" x2="22" y1="5" y2="5" stroke={inkOf(s, i)} strokeWidth={WIDTH[i]} strokeLinecap="round" />
+                <Marker shape={SHAPE[i]} cx={11} cy={5} r={3} fill={inkOf(s, i)} />
               </svg>
               {s.label}
             </li>
@@ -169,34 +182,38 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
             {ticks.map((t) => (
               <g key={t}>
                 <line x1={padLeft} x2={padLeft + plotW} y1={y(t)} y2={y(t)} stroke="var(--viz-grid)" strokeWidth={1} />
-                <text x={padLeft - 8} y={y(t) + 4} textAnchor="end" className="fill-muted-foreground text-[10px] tabular-nums">{format(t)}</text>
+                <text x={padLeft - 8} y={y(t) + 4} textAnchor="end" className="fill-muted-foreground t-small tabular-nums">{format(t)}</text>
               </g>
             ))}
             <line x1={padLeft} x2={padLeft + plotW} y1={y(0)} y2={y(0)} stroke="var(--viz-axis)" strokeWidth={1} />
 
             {weeks.map((w, i) => (i % every === 0 ? (
-              <text key={w} x={x(i)} y={padTop + plotH + 15} textAnchor="middle" className="fill-muted-foreground text-[10px]">{shortDay(labels[i] ?? w)}</text>
+              <text key={w} x={x(i)} y={padTop + plotH + 15} textAnchor="middle" className="fill-muted-foreground t-small">{shortDay(labels[i] ?? w)}</text>
             ) : null))}
 
             {compare?.series.slice(0, SLOT.length).map((s, i) => (
-              <path key={`c-${s.id}`} d={path(s.points)} fill="none" stroke={inkOf(s, i)} strokeWidth={2} strokeDasharray="4 4" strokeLinejoin="round" strokeLinecap="round" opacity={0.55} />
+              <path key={`c-${s.id}`} d={path(s.points)} fill="none" stroke={inkOf(s, i)} strokeWidth={WIDTH[i]} strokeDasharray="4 4" strokeLinejoin="round" strokeLinecap="round" opacity={0.5} />
             ))}
 
             {series.map((s, i) => (
-              <path key={s.id} d={path(s.points)} fill="none" stroke={inkOf(s, i)} strokeWidth={2} strokeDasharray={dashOf(s, i)} strokeLinejoin="round" strokeLinecap="round" />
+              <path key={s.id} d={path(s.points)} fill="none" stroke={inkOf(s, i)} strokeWidth={WIDTH[i]} strokeLinejoin="round" strokeLinecap="round" />
             ))}
 
-            {/* End markers, with a 2px ring in the surface colour so crossings stay legible. */}
+            {/* The marker at every point, ringed in the surface colour so a crossing stays legible.
+                This is what separates three lines that run together at the foot of the plot. */}
             {series.map((s, i) => (
-              <circle key={`e-${s.id}`} cx={x(weeks.length - 1)} cy={y(s.points[weeks.length - 1] ?? 0)} r={4}
-                fill={inkOf(s, i)} stroke="var(--viz-surface)" strokeWidth={2} />
+              <g key={`m-${s.id}`}>
+                {weeks.map((w, j) => (
+                  <Marker key={w} shape={SHAPE[i]} cx={x(j)} cy={y(s.points[j] ?? 0)} r={4} fill={inkOf(s, i)} />
+                ))}
+              </g>
             ))}
 
             {at !== null && (
               <g>
                 <line x1={x(at)} x2={x(at)} y1={padTop} y2={padTop + plotH} stroke="var(--viz-axis)" strokeWidth={1} />
                 {series.map((s, i) => (
-                  <circle key={`h-${s.id}`} cx={x(at)} cy={y(s.points[at] ?? 0)} r={4} fill={inkOf(s, i)} stroke="var(--viz-surface)" strokeWidth={2} />
+                  <Marker key={`h-${s.id}`} shape={SHAPE[i]} cx={x(at)} cy={y(s.points[at] ?? 0)} r={5} fill={inkOf(s, i)} />
                 ))}
               </g>
             )}
@@ -211,7 +228,9 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
               <ul className="mt-0.5">
                 {series.map((s, i) => (
                   <li key={s.id} className="flex items-center gap-1.5">
-                    <span aria-hidden="true" className="inline-block size-2 rounded-full" style={{ background: inkOf(s, i) }} />
+                    <svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10" className="shrink-0">
+                      <Marker shape={SHAPE[i]} cx={5} cy={5} r={3.5} fill={inkOf(s, i)} ring={false} />
+                    </svg>
                     <span className="text-muted-foreground">{s.label}</span>
                     <span className="ml-auto tabular-nums">{format(s.points[at] ?? 0)}</span>
                   </li>

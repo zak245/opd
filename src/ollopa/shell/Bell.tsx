@@ -23,7 +23,7 @@ export function BellButton({ count, onOpen }: { count: number; onOpen: () => voi
     <Button variant="ghost" size="icon" aria-label={`Notifications, ${count} unread`} onClick={onOpen} className="relative">
       <BellIcon className="size-4" aria-hidden="true" />
       {count > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-foreground px-1 text-[10px] font-medium leading-4 text-background">
+        <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-foreground px-1 t-small font-medium leading-4 text-background">
           {count > 9 ? "9+" : count}
         </span>
       )}
@@ -40,8 +40,8 @@ function Row({ note, unread, onOpen, onRead, onSnooze }: { note: Note; unread: b
         className="min-w-0 flex-1 text-sm"
       >
         <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{KIND_LABEL[note.kind]}</span>
-          <span className="text-[11px] text-muted-foreground">{note.on > TODAY ? `for ${shortDate(note.on)}` : shortDate(note.on)}</span>
+          <span className="t-small uppercase tracking-wider text-muted-foreground">{KIND_LABEL[note.kind]}</span>
+          <span className="t-small text-muted-foreground">{note.on > TODAY ? `for ${shortDate(note.on)}` : shortDate(note.on)}</span>
           {unread && <span className="size-1.5 rounded-full bg-foreground" aria-label="Unread" />}
         </div>
         <div className={cn("mt-0.5", unread && "font-medium")}>{note.title}</div>

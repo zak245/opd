@@ -78,6 +78,12 @@ function pairs(T) {
   // not to a contrast ratio a tint could never reach and still be a tint.
   const seen = (name, fg, bg) => p.push({ name, fg, bg, floor: 0.015, kind: "seen" })
 
+  // The three depths must be three: each step perceptibly above the one below it.
+  seen("raised above the page", T["surface-raised"], T["surface-page"])
+  seen("overlay above raised", T["surface-overlay"], T["surface-raised"])
+  // Paused is a state and the neutral family is not; they must never read as the same ink.
+  seen("paused ink against the neutral family ink", T["paused-ink"], T["family-neutral-ink"])
+
   for (const surface of ["surface-page", "surface-raised", "surface-overlay"]) {
     text(`body text on ${surface}`, T.foreground, T[surface])
     text(`muted text on ${surface}`, T["muted-foreground"], T[surface])

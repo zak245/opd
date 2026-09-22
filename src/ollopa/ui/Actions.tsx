@@ -208,7 +208,7 @@ function Shortcut({ keys, kind }: { keys?: string; kind?: ActionKind }) {
   if (!keys) return null
   return (
     <kbd className={cn(
-      "ml-1.5 rounded border px-1 font-mono text-[10px]",
+      "ml-1.5 rounded border px-1 font-mono t-small",
       kind === "primary" ? "border-current/40 text-primary-foreground/80" : "text-muted-foreground",
     )}>{keys}</kbd>
   )

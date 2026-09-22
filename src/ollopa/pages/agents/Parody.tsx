@@ -253,7 +253,7 @@ function RunTable(p: ParodyWorkflowProps) {
   const pause = p.exceptions.find((x) => !x.id.startsWith("cap-"))
   return (
     <div className="text-sm">
-      <div className="grid grid-cols-[7rem_minmax(0,1fr)_6rem_6rem] gap-2 border-b pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="grid grid-cols-[7rem_minmax(0,1fr)_6rem_6rem] gap-2 border-b pb-1 t-small font-medium uppercase tracking-wider text-muted-foreground">
         <span>When</span><span>Run</span><span>Completed</span><span>Failed</span>
       </div>
       <ul className="divide-y">

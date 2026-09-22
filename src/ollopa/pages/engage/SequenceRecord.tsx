@@ -59,7 +59,7 @@ function useRenderCount() {
 function RenderCount({ label, count }: { label: string; count: number }) {
   if (!import.meta.env.DEV) return null
   return (
-    <span data-renders={label} className="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+    <span data-renders={label} className="shrink-0 rounded border px-1.5 py-0.5 font-mono t-small tabular-nums text-muted-foreground">
       {label} renders: {count}
     </span>
   )
@@ -160,7 +160,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               <div className="flex flex-wrap items-center gap-2">
                 {renaming && canEdit ? (
                   <Input
-                    autoFocus aria-label="Sequence name" className="h-9 w-72 text-lg font-semibold"
+                    autoFocus aria-label="Sequence name" className="t-title h-9 w-72"
                     value={name} onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") { engage.patchSequence(session.business, seq.id, { name }); engage.logChange(session.business, seq.id, session.user, `Renamed the sequence to ${name}`); setRenaming(false); say(`Renamed to ${name}`) }
@@ -566,7 +566,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="t-body font-medium">{title}</span>
-            <Badge variant="outline" className="px-1.5 py-0 text-[11px] font-normal">{step.kind}</Badge>
+            <Badge variant="outline" className="px-1.5 py-0 t-small font-normal">{step.kind}</Badge>
             {step.on === 0 && <Chip status="Off · skipped" />}
           </div>
           {!ab && <p className="t-small tabular-nums text-muted-foreground">{results}</p>}

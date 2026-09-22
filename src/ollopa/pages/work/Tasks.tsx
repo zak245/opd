@@ -424,14 +424,14 @@ export function Tasks({ session }: { session: Session }) {
                 <Button size="icon-sm" variant="ghost" aria-label={`The task and the contact beside, snooze until, note, edit${teamView ? ", reassign" : ""}, delete — for ${t.contact}`}><MoreHorizontal className="size-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => done(t)}>Done<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">d</span></DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => primary.onClick?.()}>{primary.label}<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">{t.kind === "Call" ? "l" : t.kind === "Email" ? "e" : ""}</span></DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => snooze(t)}>Snooze to tomorrow<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">s</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => done(t)}>Done<span className="ml-auto pl-4 font-mono t-small text-muted-foreground">d</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => primary.onClick?.()}>{primary.label}<span className="ml-auto pl-4 font-mono t-small text-muted-foreground">{t.kind === "Call" ? "l" : t.kind === "Email" ? "e" : ""}</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => snooze(t)}>Snooze to tomorrow<span className="ml-auto pl-4 font-mono t-small text-muted-foreground">s</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Snooze until…</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => skip(t)}>Skip<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">x</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => skip(t)}>Skip<span className="ml-auto pl-4 font-mono t-small text-muted-foreground">x</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => say(`Note added to ${t.contact}'s task.`)}>Add note</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setEditing(t.id)}>Edit the due date</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => openTask(t)}>Open the task beside the list<span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">o</span></DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openTask(t)}>Open the task beside the list<span className="ml-auto pl-4 font-mono t-small text-muted-foreground">o</span></DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => openContact(t)}>Open {t.contact} beside the list</DropdownMenuItem>
                 {teamView && seatsOf(session.business).filter((s) => s.user !== t.owner && s.role !== "marketer").map((s) => (
                   <DropdownMenuItem key={s.user} onSelect={() => reassign(t, s.user)}>Reassign to {s.user}</DropdownMenuItem>
@@ -505,7 +505,7 @@ export function Tasks({ session }: { session: Session }) {
               <FamilyIcon of="tasks" size="header" label={familyOf("tasks").name} />
               Tasks
               {import.meta.env.DEV && (
-                <span data-renders="tasks" className="ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-muted-foreground">
+                <span data-renders="tasks" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
                   tasks renders: {renders}
                 </span>
               )}

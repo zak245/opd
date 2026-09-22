@@ -422,7 +422,7 @@ function SettingsSearch({ rows, onJump, inputRef, accelerators = true }: {
           if (e.key === "Escape") { setQ(""); (e.target as HTMLInputElement).blur() }
         }}
       />
-      {accelerators && <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono text-[10px] text-muted-foreground">/</kbd>}
+      {accelerators && <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono t-small text-muted-foreground">/</kbd>}
       {hits.length > 0 && (
         <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-md" role="listbox">
           {hits.map((h, i) => (

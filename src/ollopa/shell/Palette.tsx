@@ -346,7 +346,7 @@ export function Palette({ session, open, onOpenChange }: { session: Session; ope
         <ul id="palette-list" role="listbox" aria-label="Results" className="max-h-[60vh] overflow-y-auto py-1 max-sm:max-h-[calc(100vh-3.5rem)]">
           {groups.map((g) => (
             <li key={g} role="presentation">
-              <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{g}</div>
+              <div className="px-3 pb-1 pt-2 t-small font-medium uppercase tracking-wider text-muted-foreground">{g}</div>
               <ul role="presentation">
                 {rows.filter((r) => r.group === g).map((r) => {
                   if (!r.explanation) cursor++
@@ -366,9 +366,9 @@ export function Palette({ session, open, onOpenChange }: { session: Session; ope
                       )}
                     >
                       <span className={cn(!r.explanation && "truncate font-medium")}>{r.label}</span>
-                      {r.note && <span className="shrink-0 rounded border px-1 text-[10px] text-muted-foreground">{r.note}</span>}
+                      {r.note && <span className="shrink-0 rounded border px-1 t-small text-muted-foreground">{r.note}</span>}
                       <span className={cn("min-w-0 flex-1 text-xs text-muted-foreground", !r.explanation && "truncate")}>{r.path}</span>
-                      {r.shortcut && <kbd className="shrink-0 rounded border px-1 font-mono text-[10px] text-muted-foreground">{r.shortcut}</kbd>}
+                      {r.shortcut && <kbd className="shrink-0 rounded border px-1 font-mono t-small text-muted-foreground">{r.shortcut}</kbd>}
                     </li>
                   )
                 })}

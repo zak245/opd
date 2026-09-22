@@ -62,9 +62,11 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
       <div>
         <label className="text-xs text-muted-foreground" htmlFor="li-message">
           The message{" "}
-          <Chip status={edited ? "edited" : "from the sequence step"}>
-            {edited ? "personalised for this send" : "from the sequence step"}
-          </Chip>
+          {/* Edited for this send is a state; coming from the step is where the words are from,
+              which is a category and takes the neutral chip. */}
+          {edited
+            ? <Chip status="edited">personalised for this send</Chip>
+            : <Chip icon={false}>from the sequence step</Chip>}
         </label>
         <Textarea
           id="li-message" rows={5} className="mt-1" value={message}

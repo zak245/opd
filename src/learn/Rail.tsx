@@ -54,7 +54,7 @@ export function Rail({ steps, step, onGo }: { steps: LessonStep[]; step: number;
                 onKeyDown={(e) => onKeyDown(e, i)}
                 className="block w-full rounded-md px-2 py-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">{stepLabel(s, i)}</span>
+                <span className="block t-small uppercase tracking-wider text-muted-foreground">{stepLabel(s, i)}</span>
                 <span className={cn("block text-sm leading-tight", state === "current" ? "font-medium text-foreground" : state === "todo" ? "text-muted-foreground" : "text-foreground/80")}>
                   {s.title}
                 </span>

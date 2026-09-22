@@ -135,7 +135,8 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
       label: "Read as",
       value: (
         <span className="flex flex-wrap items-center gap-2">
-          <Chip status={r.outcome}>{r.outcome}</Chip>
+          {/* A category, not a state: the reply agent read it as this. */}
+          <Chip icon={false}>{r.outcome}</Chip>
           <span className="t-small text-muted-foreground">by {r.classifiedBy ?? "nobody yet"}</span>
         </span>
       ),

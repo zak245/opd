@@ -9,7 +9,7 @@ export function Score({ row, previous }: { row?: StepScores; previous?: StepScor
   const sum = total(row)
   return (
     <section aria-label="Review score">
-      <h2 className="text-[11px] uppercase tracking-wider text-muted-foreground">Review score</h2>
+      <h2 className="t-small uppercase tracking-wider text-muted-foreground">Review score</h2>
       <p className="mt-0.5 mb-1 text-2xl font-semibold tabular-nums leading-none">
         {row ? sum : "—"}
         <span className="ml-1 text-xs font-normal text-muted-foreground">/ 18{row && sum >= 16 ? " · passes" : ""}</span>
@@ -18,7 +18,7 @@ export function Score({ row, previous }: { row?: StepScores; previous?: StepScor
         {RUBRIC.map((question, i) => {
           const changed = !!row && !!previous && previous[i] !== now[i]
           return (
-            <li key={i} className={cn("grid grid-cols-[26px_1fr] items-center gap-1.5 text-[11px] leading-tight", changed ? "font-medium text-foreground" : "text-muted-foreground")}>
+            <li key={i} className={cn("grid grid-cols-[26px_1fr] items-center gap-1.5 t-small leading-tight", changed ? "font-medium text-foreground" : "text-muted-foreground")}>
               <span className="flex gap-0.5" aria-hidden="true">
                 <span className={cn("h-1.5 w-2.5 rounded-xs", now[i] >= 1 ? "bg-foreground" : "bg-border")} />
                 <span className={cn("h-1.5 w-2.5 rounded-xs", now[i] >= 2 ? "bg-foreground" : "bg-border")} />
@@ -32,7 +32,7 @@ export function Score({ row, previous }: { row?: StepScores; previous?: StepScor
           )
         })}
       </ul>
-      {!row && <p className="mt-1 text-[11px] text-muted-foreground">This case has no scores.ts row for this step yet.</p>}
+      {!row && <p className="mt-1 t-small text-muted-foreground">This case has no scores.ts row for this step yet.</p>}
     </section>
   )
 }

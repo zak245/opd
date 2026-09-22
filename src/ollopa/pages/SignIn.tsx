@@ -56,10 +56,10 @@ export function SignIn() {
         className="mx-auto max-w-3xl px-4 pb-32 pt-10 sm:px-6 sm:pb-14 sm:pt-14"
         onSubmit={(e) => { e.preventDefault(); submit() }}
       >
-        <div className="mb-8 flex items-center gap-2 text-lg font-semibold tracking-tight sm:mb-10">
+        <div className="t-section mb-8 flex items-center gap-2 sm:mb-10">
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" /> ollopA
         </div>
-        <h1 className="text-2xl font-semibold">Sign in</h1>
+        <h1 className="t-title">Sign in</h1>
         <p className="mt-1 text-sm text-muted-foreground">Choose the workspace and the seat you are signing in to. The seat decides what you see.</p>
 
         <h2 id="workspace-label" className="mt-8 text-xs font-medium uppercase tracking-wider text-muted-foreground">Workspace</h2>

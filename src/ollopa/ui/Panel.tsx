@@ -28,7 +28,7 @@ export function Panel({ id, title, open, onOpenChange, side = "right", children,
         className={cn("gap-0 p-0", side === "right" ? "w-full sm:max-w-lg" : "max-h-[85vh]")}
       >
         <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle className="text-base">{title}</SheetTitle>
+          <SheetTitle className="t-section">{title}</SheetTitle>
           <SheetDescription className="sr-only">Press Escape to close and return to the page.</SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm">

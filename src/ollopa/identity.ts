@@ -10,8 +10,8 @@
 //
 // One registry, read by the shell, the pane frame and the primitives, so no page picks a hue.
 import {
-  Bot, Building2, Columns3, Inbox, LayoutDashboard, LineChart, Send, Settings as SettingsIcon, Users,
-  type LucideIcon,
+  Bot, Building2, Cable, Columns3, Inbox, LayoutDashboard, LineChart, Plug, Send,
+  Settings as SettingsIcon, Terminal, Users, type LucideIcon,
 } from "lucide-react"
 import type { Page } from "./usage/model"
 
@@ -114,6 +114,11 @@ export const PAGE_ICON: Partial<Record<Page, LucideIcon>> = {
   home: LayoutDashboard,
   reports: LineChart,
   settings: SettingsIcon,
+  // Neutral pages with something of their own to say. Without these they would wear the neutral
+  // family's glyph, which is Home's — and then two different places answer "where am I" the same way.
+  connect: Plug,
+  enrichment: Cable,
+  developer: Terminal,
 }
 
 /** The icon a page shows in its title and its crumb: its own where it has one, else its family's. */
@@ -136,9 +141,12 @@ export const STATUSES: Record<Status, StatusLook> = {
 }
 
 /**
- * The words the product already uses for a state, mapped to the five. A page passes the word it
- * shows and gets the right colour; it never picks one. Anything unknown is paused-neutral, which is
- * the honest answer for "a state we have no opinion about".
+ * The words the product already uses for a *state*, mapped to the five.
+ *
+ * A word that is not here is not a state — a forecast category, a reply outcome, a persona, a whole
+ * sentence — and it gets no status colour at all. Sending every unknown word to `paused` painted
+ * categories as states and made the swap test pass on things that mean nothing, which is exactly
+ * what §5 forbids. `Chip` draws those as neutral category chips instead: a border and a word.
  */
 const WORDS: Record<string, Status> = {
   // stopped, blocked, failed, gone
@@ -160,7 +168,12 @@ const WORDS: Record<string, Status> = {
   off: "paused", inactive: "paused", none: "paused",
 }
 
-export function statusOf(word: string | undefined | null): Status {
-  if (!word) return "paused"
-  return WORDS[word.trim().toLowerCase()] ?? "paused"
+export function statusOf(word: string | undefined | null): Status | undefined {
+  if (!word) return undefined
+  return WORDS[word.trim().toLowerCase()]
+}
+
+/** Is this word one the product treats as a state at all? */
+export function isStatusWord(word: string | undefined | null): boolean {
+  return statusOf(word) !== undefined
 }

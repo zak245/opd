@@ -18,7 +18,7 @@ export function Shortcuts({ open, onOpenChange }: { open: boolean; onOpenChange:
         <ul className="mt-2 grid gap-1.5">
           {GENERAL.map((g) => (
             <li key={g.keys} className="flex items-baseline gap-3 text-sm">
-              <kbd className="rounded border px-1.5 py-0.5 font-mono text-[11px]">{g.keys}</kbd>
+              <kbd className="rounded border px-1.5 py-0.5 font-mono t-small">{g.keys}</kbd>
               <span className="text-muted-foreground">{g.what}</span>
             </li>
           ))}
@@ -29,7 +29,7 @@ export function Shortcuts({ open, onOpenChange }: { open: boolean; onOpenChange:
         <ul className="mt-2 grid gap-1.5">
           {NAV.map((n) => (
             <li key={n.page} className="flex items-baseline gap-3 text-sm">
-              <kbd className="rounded border px-1.5 py-0.5 font-mono text-[11px]">g {n.key}</kbd>
+              <kbd className="rounded border px-1.5 py-0.5 font-mono t-small">g {n.key}</kbd>
               <span className="text-muted-foreground">{n.label}</span>
             </li>
           ))}

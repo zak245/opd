@@ -359,7 +359,7 @@ export function ForecastPanel({ open, onOpenChange, report, session, mine, onSub
               <tr key={c.name} className="border-b last:border-b-0 align-top">
                 <th scope="row" className="py-2 text-left font-normal">
                   <span className="block">{c.name}</span>
-                  {!c.counted && <span className="block text-[11px] text-muted-foreground">not counted</span>}
+                  {!c.counted && <span className="block t-small text-muted-foreground">not counted</span>}
                 </th>
                 <td className="py-2 text-right tabular-nums text-muted-foreground">{money(c.amount, cur)}</td>
                 <td className="py-2 text-right">

@@ -41,7 +41,7 @@ function useRenderCount() {
 function RenderCount({ label, count }: { label: string; count: number }) {
   if (!import.meta.env.DEV) return null
   return (
-    <span data-renders={label} className="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+    <span data-renders={label} className="shrink-0 rounded border px-1.5 py-0.5 font-mono t-small tabular-nums text-muted-foreground">
       {label} renders: {count}
     </span>
   )

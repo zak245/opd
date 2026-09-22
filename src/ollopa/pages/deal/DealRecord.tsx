@@ -24,7 +24,7 @@ import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { STATUSES, statusOf } from "../../identity"
+import { inkOf } from "../../ui/Identity"
 import { warningStatus } from "../deals/pipeline"
 import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
 import { ConsequenceLine } from "../../ui/ConsequenceLine"
@@ -61,7 +61,7 @@ const STATE_WORD: Record<string, string> = {
 }
 
 /** The ink a state word carries, for the lines on this page that are a state rather than a chip. */
-const statusInk = (word: string) => STATUSES[statusOf(word)].ink
+const statusInk = (word: string) => inkOf(word)
 
 /** Warnings carry raw numbers and dates; a date is read the way the rest of the page reads dates. */
 function readable(v: string): string {
@@ -357,7 +357,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   if (!deal) {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
-        <h2 className="text-lg font-semibold">This deal was deleted or moved.</h2>
+        <h2 className="t-section">This deal was deleted or moved.</h2>
         <p className="mt-2"><a className="text-sm underline" href={href("/ollopa/deals")}>Back to Deals</a></p>
       </div>
     )
@@ -917,7 +917,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
       children: (
         <div data-item="company.account-health" data-item-label="Account health" className="space-y-1 text-sm">
           <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold tabular-nums">{account.health}</span>
+            <span className="t-section tabular-nums">{account.health}</span>
             {/* The band is a state, so it is a chip with its word and the registry's ink. */}
             <Chip status={account.band} />
             {/* One object: the account and the company are the same record, and it opens beside the
@@ -1300,7 +1300,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             Win deals › <a className="hover:underline" href={href("/ollopa/deals")}>Deals</a> › {deal.name}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold">{deal.name}</h2>
+            <h2 className="t-section">{deal.name}</h2>
             {gear}
             <Place id="parody.actions" label="the actions row" className="ml-auto flex flex-wrap items-center gap-2">
               <Button size="sm" variant="outline" data-item="timeline.email" data-item-label="Email all contacts"

@@ -54,7 +54,7 @@ export function Locked({ feature, plan, pricePerMonth, what, children }: LockedP
         onKeyDownCapture={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setOpen(true) } }}
       >
         {children}
-        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 t-small text-muted-foreground">
           <Lock className="size-3" aria-hidden="true" />
           {plan}
         </span>
