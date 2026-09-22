@@ -52,25 +52,18 @@ Everything else is education, and education lives on the library site, never in 
 
 **The test.** Cover every sentence on the surface with your hand. If the person can still do the task, delete the sentence.
 
-## 4. The visual grammar of controls
+## 4. The look comes from shadcn, as shipped
 
-The same act must look the same and sit in the same place everywhere, because the measured memory people have for controls is memory for position and for colour meaning, not for shape (memo 21: locations known to within 92 px; a known location worth about a 37% time saving; [memo 27](knowledge-base/sources/27-button-anatomy-states-and-placement.md) for the anatomy and state rules). Values are for our tokens in `src/index.css` and `src/components/ui/button.tsx`; the `Actions` primitive applies them by surface so a page never sets a size or a variant.
+Decided by the owner on 23 September 2026 after three failed attempts to invent a surface and elevation system. The library already solves the visual problems: the sidebar, cards, tables in cards, sheets, dialogs, menus, their shadows, radii, spacing and type. We use those components as their documentation shows them and do not override their internals. Nothing in this repository defines its own surface levels, shadow scale, radius scale or spacing scale.
 
-**Size, one per surface.** Page header and dialog: the default height (36 px). Pane, card, row, bulk bar, queue footer: the small height (32 px). The extra-small size is for chips and pagers, never for an act. Emphasis never comes from size. On a phone every act has a hit region of at least 44 px whatever its drawn height (Apple 44 pt, Material 48 dp; WCAG 2.5.8 sets a floor of 24 px, which is too small for a lap).
+What we keep on top of the library, because it carries meaning rather than looks:
 
-**Shape.** Two radii and no others: 8 px on controls (buttons, inputs, chips), 10 px on containers (cards, panes, dialogs). No pills. The label sets the width; a label is never truncated. Full width only on a phone sheet (section 1).
+- The action kinds and their rules (sections 1 to 3), applied through `Actions`, which draws with shadcn's `Button` variants.
+- The colour jobs of section 5: shadcn's own variables carry the neutrals and the accent; our additions are the six family colours, the five statuses and success, each with one meaning.
+- Five type sizes as utilities, used for hierarchy; nothing else sets a size.
+- Disclosure (`RULES.md`) and the chain mechanics (`BUILD-CHAINS.md`): the door, the pane, the trail, the edits store. They decide what is on a surface and how a person moves; the library decides what the surface looks like.
 
-**Labels.** Verb first, sentence case, no end punctuation, the object named when it is not obvious: "Add to list", "Mark won", "Set the next step". The same verb for the same act on every surface. A count travels in the label ("Approve 6 · 156 credits"); a sentence never does.
-
-**Icons.** No icon inside an act's button; the label is the icon. Icon-only controls are allowed for exactly three things, the "…" menu trigger, close, and the pane's previous and next, and each carries an accessible name and a tooltip. (Chosen: Pajamas forbids icon plus label; Carbon puts icons right; we avoid the question.)
-
-**States, and how each looks.** Rest: as the kind draws it. Hover: the fill or outline one step darker, nothing moves. Focus-visible: a 3 px ring that reaches 3:1 against both themes (WCAG 1.4.11), so the ring token gets a hue of its own rather than the grey it has today. Pressed: one step darker again, no scale. Loading: the label stays, a spinner joins it at the leading edge, the width does not change, and the control accepts no second press. Disabled: only for object state the person can change here, with the reason beside it, never a tooltip on a disabled control (chosen against Fluent, with Atlassian).
-
-**Colour has one meaning each.** The primary fill is neutral (near-black on light, near-white on dark) and belongs to the one primary act. The destructive hue belongs to destructive acts and their confirmations and to nothing else. Success is a text colour for "Done · Undo" feedback and is never a button (chosen: only Pajamas ships a success button). Warning belongs to ribbons and the health strip. No other element may borrow any of the four.
-
-**Placement, one place per surface type.** Page header: the acts row sits at the right of the title, primary first (leftmost in the row), then secondaries, then the destructive act in the "…" menu. Pane: a stack under the fields, primary first, destructive absent by rule. Card and row: the acts at the trailing edge of the card or row, primary first. Dialog: the affirmative at the trailing edge, Cancel before it. Bulk bar and queue footer: primary first at the leading edge. Form and settings panel: the Save bar at the bottom, Save at the leading edge (GOV.UK and Polaris left-align full-page forms). This map does not change by page or by seat; it is what the eye learns.
-
-**Motion.** Hover and press change colour in about 100 ms. "Done · Undo" fades in over 150 ms where the act was caused. Nothing slides, scales or bounces on a control, and all of it stops under `prefers-reduced-motion`.
+Containers are shadcn `Card`s, with the toolbar in the card header and the pager in the footer for a table, one card per section on a page like Home, a card per thing only where each thing is read on its own. The nav is the shadcn `Sidebar`. The pane, quick look, dialogs, sheets, popovers and menus are the library's, with the library's elevation.
 
 ## 5. Visual identity: colour, place, depth and type
 
@@ -98,32 +91,6 @@ Agreed with the owner on 22 September 2026 from [memo 28](knowledge-base/sources
 **Colour never works alone.** A family always has its icon; a status always has its word. Text 4.5:1, icons and borders 3:1, checked with a colour-vision simulation before shipping.
 
 **You know where you are three ways at once.** The page title carries its family icon and hue. The active sidebar item is filled with the accent tint and a leading bar. The trail crumb carries the family icon of the page you left. A pane carries its object's icon and a thin top bar in its family hue.
-
-**Containment, not depth.** Replaced twice; this version follows Material 3 as it stands in September 2026 ([memo 29](knowledge-base/sources/29-elevation-paper-and-containment.md)): "tone-based surface color roles have replaced the previous approach of surfaces at +1 to +5 elevation", and surface tint is deprecated. Grouping is done by putting things in containers with a colour role; elevation (shadow) is only for what floats over the page. The perception behind it is common region (Palmer 1992): an enclosure beats proximity and similarity, and the smallest enclosing box wins, which is why a card inside a card reads as two groups and is forbidden.
-
-*Roles.* Five surface colour roles per theme, in `src/theme/theme.css`:
-
-| Role | Light | Dark | Used for |
-|---|---|---|---|
-| canvas | warm, very light | darkest | the page behind everything |
-| container | white, outlined with the strong border | one step lighter than canvas, outlined | every content container: a table, a form, a section, a list, a card |
-| container-low | one step below container | one step above container | a region inside a container that must read as a group: a card header, a summary strip, the row you are on |
-| chrome | a step below canvas | a step below canvas | sidebar, header, bottom bar, with a strong edge to the content |
-| overlay | white | lightest | the pane, menus, popovers, dialogs, sheets |
-
-*Elevation.* Only what floats casts a shadow: the pane and popovers and menus the small shadow, dialogs and sheets the large one over a scrim. A container on the page never casts a shadow on desktop; it is flat and outlined. Hover and drag may lift a card by one small shadow and put it back.
-
-*What must be contained.* Nothing sits naked on the canvas except the page title, the tabs and the top filter bar. A table lives in a container with its toolbar and its count in the container's header and its pager in its footer. A form lives in a container. A section of a record lives in a container with its heading. A page like Home is a set of containers, one per section, each with a heading. A list of similar things is one container with dividers between rows, never a card per row; a card per thing is used only where each thing is read on its own (the Deals board, the agent tiles), and then every card in the set has the same structure and padding.
-
-*Nesting.* Canvas → container → row. At most one container-low region inside a container. Never a container inside a container. If a group inside a container needs a boundary, a divider or a container-low band, not a second box.
-
-*Quiet boundaries.* The strong border only on container edges; the soft border for dividers inside. One container radius. One inner padding scale (the theme's spacing tokens). A container nearly the size of the page stops reading as one and should be sections instead.
-
-*Ration.* Containment is for grouping. Where there is one thing on the page, do not box it. A set of containers with uniform structure does more than any single box.
-
-*Dark.* The same roles by tone, lighter as things rise above the canvas; shadows are weaker and the outline does the work.
-
-*Level map.* `src/theme/levels.ts` maps every component to a role and a shadow: page → canvas; section, card, table, form, list → container, no shadow; row-on, card header, summary strip → container-low; pane → overlay + small shadow; menu, popover → overlay + small shadow; dialog, sheet → overlay + large shadow + scrim; sidebar, header, bottom bar → chrome. Changing any of this is an edit to that file and to the theme file, nowhere else.
 
 **Type has five sizes and uses them.** Title 24, section and record title 18, body 14, label 13, small 12; one declared typeface (Inter, system fallback); tabular numbers in columns; hierarchy from size and weight, not from more space. Density unchanged.
 
