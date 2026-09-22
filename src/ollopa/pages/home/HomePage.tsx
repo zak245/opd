@@ -76,7 +76,7 @@ export function HomePage({ session }: { session: Session }) {
 
   return (
     <DoorGroup>
-      <div className={strip ? "border-b-2 border-amber-600/60 dark:border-amber-500/60" : undefined}>
+      <div className={strip ? "border-b-2 border-[var(--warning-ink)]" : undefined}>
         <HealthStrip lines={lines} />
       </div>
       {data.announcement && <Announcement text={data.announcement.text} href={data.announcement.href} />}

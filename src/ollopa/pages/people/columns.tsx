@@ -41,8 +41,8 @@ export const STAGE_TONE: Record<string, string> = {
 
 const EMAIL_TONE: Record<string, string> = {
   Verified: "text-muted-foreground",
-  Guessed: "text-amber-700 dark:text-amber-400",
-  Unverified: "text-amber-700 dark:text-amber-400",
+  Guessed: "text-[var(--warning-ink)]",
+  Unverified: "text-[var(--warning-ink)]",
   Bounced: "text-destructive",
 }
 

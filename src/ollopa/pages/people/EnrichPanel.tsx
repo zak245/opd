@@ -162,7 +162,7 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
         {/* The exclusion is stated with its count and can be overridden on purpose, never applied
             silently: a mobile for a do-not-call record is charged and cannot be called. */}
         {choice === "email-mobile" && plan.dnc.length > 0 && (
-          <div className="rounded-md border border-amber-300 p-3 dark:border-amber-800">
+          <div className="rounded-md border border-[var(--warning-ink)] p-3">
             <p>
               {plan.dnc.length} of {rows.length} carry a do-not-call flag; a mobile for those is charged and
               cannot be called — {includeDnc ? "included" : "excluded"}.
