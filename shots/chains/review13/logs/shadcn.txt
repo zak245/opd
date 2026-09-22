@@ -1,0 +1,160 @@
+
+== home (meridian:sdr) light 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 195px, 2 band(s): header h=56 "Toggle Sidebar Home Search or " / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 4 · nested none · sections without a card none
+   D type 12px×88 13px×14 14px×86 18px×4 24px×1
+   E slots button×32 badge×26 kbd×25 separator×11 sidebar-menu-item×10 sidebar-menu-button×10 dropdown-menu-trigger×10 sidebar-menu×5 sidebar-group×4 sidebar-group-content×4 · h-scroll 1440
+  [console home light 1440] nothing — no warning, no error, no failed request
+
+== home (meridian:sdr) dark 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 195px, 2 band(s): header h=56 "Toggle Sidebar Home Search or " / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 4 · nested none · sections without a card none
+   D type 12px×88 13px×14 14px×86 18px×4 24px×1
+   E slots button×32 badge×26 kbd×25 separator×11 sidebar-menu-item×10 sidebar-menu-button×10 dropdown-menu-trigger×10 sidebar-menu×5 sidebar-group×4 sidebar-group-content×4 · h-scroll 1440
+  [console home dark 1440] nothing — no warning, no error, no failed request
+
+== home (meridian:sdr) light 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home People Inbox Tasks Al"
+   B chrome 270px, 2 band(s): header h=56 "Toggle Sidebar Home 1.84M · 41" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 4 · nested none · sections without a card none
+   D type 12px×90 13px×14 14px×74 18px×4 24px×1
+   E slots button×37 badge×26 kbd×24 dropdown-menu-trigger×10 separator×10 card×4 card-header×4 card-title×4 card-action×4 card-content×4 · h-scroll 400
+  [console home light 400] nothing — no warning, no error, no failed request
+
+== home (meridian:sdr) dark 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home People Inbox Tasks Al"
+   B chrome 270px, 2 band(s): header h=56 "Toggle Sidebar Home 1.84M · 41" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 4 · nested none · sections without a card none
+   D type 12px×90 13px×14 14px×74 18px×4 24px×1
+   E slots button×37 badge×26 kbd×24 dropdown-menu-trigger×10 separator×10 card×4 card-header×4 card-title×4 card-action×4 card-content×4 · h-scroll 400
+  [console home dark 400] nothing — no warning, no error, no failed request
+
+== sequence-record (meridian:sdr) light 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 184px, 2 band(s): header h=56 "Toggle Sidebar Q4 enterprise o" / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 1 (outside a card: none) · cards 5 · nested none · sections without a card none
+   D type 12px×142 13px×15 14px×342 18px×2
+   E slots table-cell×306 button×93 badge×44 dropdown-menu-trigger×38 table-row×35 checkbox×35 sidebar-menu-item×10 sidebar-menu-button×10 separator×9 table-head×9 · h-scroll 1440
+  [console sequence-record light 1440] nothing — no warning, no error, no failed request
+
+== sequence-record (meridian:sdr) dark 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 184px, 2 band(s): header h=56 "Toggle Sidebar Q4 enterprise o" / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 1 (outside a card: none) · cards 5 · nested none · sections without a card none
+   D type 12px×142 13px×15 14px×342 18px×2
+   E slots table-cell×306 button×93 badge×44 dropdown-menu-trigger×38 table-row×35 checkbox×35 sidebar-menu-item×10 sidebar-menu-button×10 separator×9 table-head×9 · h-scroll 1440
+  [console sequence-record dark 1440] nothing — no warning, no error, no failed request
+
+== sequence-record (meridian:sdr) light 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home People Inbox Tasks Al"
+   B chrome 207px, 2 band(s): header h=56 "Toggle Sidebar Q4 enterprise o" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 5 · nested none · sections without a card none
+   D type 12px×206 13px×15 14px×119 18px×2
+   E slots badge×44 separator×43 dropdown-menu-trigger×38 button×24 card×5 card-content×5 tooltip-trigger×2 card-header×2 card-title×2 card-action×2 · h-scroll 400
+  [console sequence-record light 400] nothing — no warning, no error, no failed request
+
+== sequence-record (meridian:sdr) dark 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home People Inbox Tasks Al"
+   B chrome 207px, 2 band(s): header h=56 "Toggle Sidebar Q4 enterprise o" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 5 · nested none · sections without a card none
+   D type 12px×206 13px×15 14px×119 18px×2
+   E slots badge×44 separator×43 dropdown-menu-trigger×38 button×24 card×5 card-content×5 tooltip-trigger×2 card-header×2 card-title×2 card-action×2 · h-scroll 400
+  [console sequence-record dark 400] nothing — no warning, no error, no failed request
+
+== deal-record (meridian:ae) light 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 187px, 2 band(s): header h=56 "Toggle Sidebar Gatehouse Syste" / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×56 13px×23 14px×84 18px×5 24px×2
+   E slots separator×26 button×17 sidebar-menu-item×12 sidebar-menu-button×12 tabs-trigger×11 card×7 card-content×7 sidebar-menu×6 card-header×6 card-title×6 · h-scroll 1440
+  [console deal-record light 1440] nothing — no warning, no error, no failed request
+
+== deal-record (meridian:ae) dark 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 187px, 2 band(s): header h=56 "Toggle Sidebar Gatehouse Syste" / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×56 13px×23 14px×84 18px×5 24px×2
+   E slots separator×26 button×17 sidebar-menu-item×12 sidebar-menu-button×12 tabs-trigger×11 card×7 card-content×7 sidebar-menu×6 card-header×6 card-title×6 · h-scroll 1440
+  [console deal-record dark 1440] nothing — no warning, no error, no failed request
+
+== deal-record (meridian:ae) light 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home Deals Inbox Tasks All"
+   B chrome 210px, 2 band(s): header h=56 "Toggle Sidebar Gatehouse Syste" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×57 13px×23 14px×70 18px×5 24px×2
+   E slots separator×26 button×22 tabs-trigger×11 card×7 card-content×7 card-header×6 card-title×6 dropdown-menu-trigger×5 toggle-group-item×5 card-action×4 · h-scroll 400
+  [console deal-record light 400] nothing — no warning, no error, no failed request
+
+== deal-record (meridian:ae) dark 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home Deals Inbox Tasks All"
+   B chrome 210px, 2 band(s): header h=56 "Toggle Sidebar Gatehouse Syste" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×57 13px×23 14px×70 18px×5 24px×2
+   E slots separator×26 button×22 tabs-trigger×11 card×7 card-content×7 card-header×6 card-title×6 dropdown-menu-trigger×5 toggle-group-item×5 card-action×4 · h-scroll 400
+  [console deal-record dark 400] nothing — no warning, no error, no failed request
+
+== contact-record (meridian:sdr) light 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 187px, 2 band(s): header h=56 "Toggle Sidebar Mateo Okonkwo ·" / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×23 13px×16 14px×55 18px×5 24px×1
+   E slots button×13 sidebar-menu-item×10 sidebar-menu-button×10 separator×7 card×7 card-content×7 card-header×6 card-title×6 tabs-trigger×6 sidebar-menu×5 · h-scroll 1440
+  [console contact-record light 1440] nothing — no warning, no error, no failed request
+
+== contact-record (meridian:sdr) dark 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 187px, 2 band(s): header h=56 "Toggle Sidebar Mateo Okonkwo ·" / div[alert] h=63 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×23 13px×16 14px×55 18px×5 24px×1
+   E slots button×13 sidebar-menu-item×10 sidebar-menu-button×10 separator×7 card×7 card-content×7 card-header×6 card-title×6 tabs-trigger×6 sidebar-menu×5 · h-scroll 1440
+  [console contact-record dark 1440] nothing — no warning, no error, no failed request
+
+== contact-record (meridian:sdr) light 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home People Inbox Tasks Al"
+   B chrome 210px, 2 band(s): header h=56 "Toggle Sidebar Mateo Okonkwo ·" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×25 13px×16 14px×43 18px×5 24px×1
+   E slots button×18 card×7 card-content×7 separator×7 card-header×6 card-title×6 tabs-trigger×6 badge×4 dropdown-menu-trigger×3 kbd×3 · h-scroll 400
+  [console contact-record light 400] nothing — no warning, no error, no failed request
+
+== contact-record (meridian:sdr) dark 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home People Inbox Tasks Al"
+   B chrome 210px, 2 band(s): header h=56 "Toggle Sidebar Mateo Okonkwo ·" / div[alert] h=86 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 7 · nested none · sections without a card none
+   D type 12px×25 13px×16 14px×43 18px×5 24px×1
+   E slots button×18 card×7 card-content×7 separator×7 card-header×6 card-title×6 tabs-trigger×6 badge×4 dropdown-menu-trigger×3 kbd×3 · h-scroll 400
+  [console contact-record dark 400] nothing — no warning, no error, no failed request
+
+== connect (meridian:admin) light 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 194px, 2 band(s): header h=56 "Toggle Sidebar Salesforce · Co" / div[alert] h=90 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 1 · nested none · sections without a card none
+   D type 12px×36 13px×13 14px×32 18px×1
+   E slots sidebar-menu-item×14 sidebar-menu-button×14 separator×11 badge×7 sidebar-menu×6 button×6 sidebar-group×5 sidebar-group-content×5 sidebar-group-label×3 kbd×2 · h-scroll 1440
+  [console connect light 1440] nothing — no warning, no error, no failed request
+
+== connect (meridian:admin) dark 1440
+   A hand-drawn 2: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg ""
+   B chrome 194px, 2 band(s): header h=56 "Toggle Sidebar Salesforce · Co" / div[alert] h=90 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 1 · nested none · sections without a card none
+   D type 12px×36 13px×13 14px×32 18px×1
+   E slots sidebar-menu-item×14 sidebar-menu-button×14 separator×11 badge×7 sidebar-menu×6 button×6 sidebar-group×5 sidebar-group-content×5 sidebar-group-label×3 kbd×2 · h-scroll 1440
+  [console connect dark 1440] nothing — no warning, no error, no failed request
+
+== connect (meridian:admin) light 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home Settings Agents Repor"
+   B chrome 262px, 2 band(s): header h=56 "Toggle Sidebar Salesforce · Co" / div[alert] h=158 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 1 · nested none · sections without a card none
+   D type 12px×27 13px×7 14px×17 18px×1
+   E slots button×12 separator×10 badge×2 alert×2 alert-title×2 alert-description×2 sidebar-wrapper×1 sidebar-inset×1 sidebar-trigger×1 tooltip-trigger×1 · h-scroll 400
+  [console connect light 400] nothing — no warning, no error, no failed request
+
+== connect (meridian:admin) dark 400
+   A hand-drawn 3: a.rounded-md.bg-foreground "Skip to content" | div.rounded-md.bg-foreground.shadow-lg "" | nav.bg-background.border-t "Home Settings Agents Repor"
+   B chrome 262px, 2 band(s): header h=56 "Toggle Sidebar Salesforce · Co" / div[alert] h=158 "Needs you now Bounce rate 4.3%"
+   C tables 0 (outside a card: none) · cards 1 · nested none · sections without a card none
+   D type 12px×27 13px×7 14px×17 18px×1
+   E slots button×12 separator×10 badge×2 alert×2 alert-title×2 alert-description×2 sidebar-wrapper×1 sidebar-inset×1 sidebar-trigger×1 tooltip-trigger×1 · h-scroll 400
+  [console connect dark 400] nothing — no warning, no error, no failed request

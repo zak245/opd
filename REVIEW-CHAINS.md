@@ -1,11 +1,79 @@
 # Stage 3 review: the chains
 
-Round 12 is the current review — the confirmation of the shadcn pass. Rounds 11 through 1 are kept
-below, in order.
+Round 13 is the current review — the last confirmation of the shadcn pass. Rounds 12 through 1 are
+kept below, in order.
 
 ---
 
-# Round 12 — the library's look, confirmed
+# Round 13 — the last confirmation of the shadcn pass
+
+Home, the sequence record, the deal record, the contact record and the connect wizard, at 1440 and
+400 in both themes, on my own `npx vite preview --port 4180`. **20 screenshots** under
+`shots/chains/review13/`, the same hand-drawn probe, consoles silent on all twenty loads.
+
+## The hand-drawn count on these five pages
+
+**2 at 1440 and 3 at 400 — every one of them the shell's, and none of them a page's.**
+
+| Page | 1440 | 400 | What is left |
+|---|---|---|---|
+| Home | 2 | 3 | skip link · live region · (400) phone bottom bar |
+| Sequence record | 2 (was 5) | 3 (was 6) | the same three |
+| Deal record | 2 (was 4) | 3 (was 6) | the same three |
+| Contact record | 2 (was 3) | 3 (was 5) | the same three |
+| Connect wizard | 2 | 3 (was 4) | the same three |
+
+Round 12's thirty page-level instances are **zero**. And containment closed with them: the two
+sections that sat outside a Card are now inside one, so **no page in this set has a section, a
+table or a box outside the library's containers**.
+
+## The five items
+
+**1 · The health badges left the destructive Alert — fixed, and placed differently from the
+description.** They are plain outline `Badge`s now, not tinted blocks, and the red Alert holds only
+the two things that need acting on. The register problem is gone: "Credits on track" and "Sending
+healthy · bounce 1.9%" no longer live in a box that exists to say something is wrong. But they sit
+**above** the Alert, between it and the header, not under the page title — and the fourth item, the
+workspace-change line with its own Open and ×, sits in that row too. At 1440 this reads well and
+Home's chrome measures **195 px**, down from 216. At **400 the row wraps to three lines**, and Home's
+chrome goes from 223 px to **270 px** — about a third of the viewport before "Good morning, Marcus".
+`light/home-400.png`.
+
+**2 · The record pages' phone action bar and EmptyState from the library — half fixed.** The
+EmptyState is: the deal record's "No open tasks · Create one" now sits in `card-content` with no box
+of its own, and the probe no longer flags it. **The phone action bar does not come from the
+library**: it is still
+`<div class="fixed inset-x-0 bottom-16 z-30 order-last bg-background …">` with **no `data-slot`**,
+on both records. It stopped being *flagged* only because its `border-t` was dropped, so it no longer
+carries a border, a radius or a shadow — the idiom is gone, the bespoke element is not.
+
+**3 · The sequence step numbers are Badges — fixed.** `<span data-slot="badge">` for 1, 2 and 3,
+where three `span.rounded-full.border` circles stood.
+
+**4 · The two `rounded-lg` blocks are Cards — fixed.** The deal record's "Evidence and source
+quotes" and the contact record's "Enrichment data and sources" both report `inside a Card`, and the
+record's card count went from 6 to 7 on each as the doors wrapper became one.
+
+**5 · The wizard's phone step header is a ghost Button with a Badge — fixed.**
+`<button data-slot="button" data-variant="ghost">` reading "6 of 6 · Review and start · Show steps",
+carrying one `data-slot="badge"`, where a hand-drawn bordered button stood.
+
+## Verdict
+
+Four of five fixed, one half. On these five pages the product is the library's, with nothing drawn
+by hand except three shell parts that have no shadcn equivalent in this repo's set: the skip link,
+the `aria-live` region, and the phone bottom bar. Two things I would still hand back, neither ugly
+and neither a rule break:
+
+1. **The phone action bar is bespoke**, and it was reported as fixed. It looks right; it is not the
+   library.
+2. **Home at 400 is 270 px of chrome.** Moving the badge row out of the Alert fixed the register and
+   cost 47 px at phone width, where it can least afford them. Either the row belongs under the title
+   as the note said, or it belongs behind the bell.
+
+---
+
+# Round 12 — the library's look, confirmed (superseded)
 
 Same walk as round 11: all 21 pages as a seat that holds each, 1440 and 400, light and dark, on my
 own `npx vite preview --port 4180` with the dev server on 4181. **84 screenshots** under
