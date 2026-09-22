@@ -99,7 +99,14 @@ Agreed with the owner on 22 September 2026 from [memo 28](knowledge-base/sources
 
 **You know where you are three ways at once.** The page title carries its family icon and hue. The active sidebar item is filled with the accent tint and a leading bar. The trail crumb carries the family icon of the page you left. A pane carries its object's icon and a thin top bar in its family hue.
 
-**Depth has three levels.** The page; raised (cards, panes, the row you are on); overlay (dialogs, menus). Group with space first, then a border, then a tint; shadow only on the overlay level. In dark, higher is lighter.
+**Depth has four levels, and each is visible.** The first version of this rule set three levels so close together that they read as one sheet; replaced on 22 September 2026.
+
+1. *Page*: the base.
+2. *Raised* (cards, sections, the row you are on): a tone step the eye can see plus a border that reads.
+3. *Floating* (the pane, popovers, menus): the raised look plus a small soft shadow.
+4. *Overlay* (dialogs): a large shadow and a dimmed page behind.
+
+The chrome (sidebar, header, bottom bar) is its own surface, one step off the page with a clear edge, so the frame separates from the work. Tone steps are at least 0.03 apart in light and 0.05 in dark, measured, and `scripts/contrast.mjs` fails below that. Borders: one token for edges that carry meaning (3:1 against every surface it sits on), a lighter one for dividers inside a card. Exactly two shadows exist, small and large; nothing else casts one. In dark, the same four levels by tone, lighter as they rise, with the same borders.
 
 **Type has five sizes and uses them.** Title 24, section and record title 18, body 14, label 13, small 12; one declared typeface (Inter, system fallback); tabular numbers in columns; hierarchy from size and weight, not from more space. Density unchanged.
 
