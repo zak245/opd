@@ -99,14 +99,31 @@ Agreed with the owner on 22 September 2026 from [memo 28](knowledge-base/sources
 
 **You know where you are three ways at once.** The page title carries its family icon and hue. The active sidebar item is filled with the accent tint and a leading bar. The trail crumb carries the family icon of the page you left. A pane carries its object's icon and a thin top bar in its family hue.
 
-**Depth has four levels, and each is visible.** The first version of this rule set three levels so close together that they read as one sheet; replaced on 22 September 2026.
+**Containment, not depth.** Replaced twice; this version follows Material 3 as it stands in September 2026 ([memo 29](knowledge-base/sources/29-elevation-paper-and-containment.md)): "tone-based surface color roles have replaced the previous approach of surfaces at +1 to +5 elevation", and surface tint is deprecated. Grouping is done by putting things in containers with a colour role; elevation (shadow) is only for what floats over the page. The perception behind it is common region (Palmer 1992): an enclosure beats proximity and similarity, and the smallest enclosing box wins, which is why a card inside a card reads as two groups and is forbidden.
 
-1. *Page*: the base.
-2. *Raised* (cards, sections, the row you are on): a tone step the eye can see plus a border that reads.
-3. *Floating* (the pane, popovers, menus): the raised look plus a small soft shadow.
-4. *Overlay* (dialogs): a large shadow and a dimmed page behind.
+*Roles.* Five surface colour roles per theme, in `src/theme/theme.css`:
 
-The chrome (sidebar, header, bottom bar) is its own surface, one step off the page with a clear edge, so the frame separates from the work. Tone steps are at least 0.03 apart in light and 0.05 in dark, measured, and `scripts/contrast.mjs` fails below that. Borders: one token for edges that carry meaning (3:1 against every surface it sits on), a lighter one for dividers inside a card. Exactly two shadows exist, small and large; nothing else casts one. In dark, the same four levels by tone, lighter as they rise, with the same borders.
+| Role | Light | Dark | Used for |
+|---|---|---|---|
+| canvas | warm, very light | darkest | the page behind everything |
+| container | white, outlined with the strong border | one step lighter than canvas, outlined | every content container: a table, a form, a section, a list, a card |
+| container-low | one step below container | one step above container | a region inside a container that must read as a group: a card header, a summary strip, the row you are on |
+| chrome | a step below canvas | a step below canvas | sidebar, header, bottom bar, with a strong edge to the content |
+| overlay | white | lightest | the pane, menus, popovers, dialogs, sheets |
+
+*Elevation.* Only what floats casts a shadow: the pane and popovers and menus the small shadow, dialogs and sheets the large one over a scrim. A container on the page never casts a shadow on desktop; it is flat and outlined. Hover and drag may lift a card by one small shadow and put it back.
+
+*What must be contained.* Nothing sits naked on the canvas except the page title, the tabs and the top filter bar. A table lives in a container with its toolbar and its count in the container's header and its pager in its footer. A form lives in a container. A section of a record lives in a container with its heading. A page like Home is a set of containers, one per section, each with a heading. A list of similar things is one container with dividers between rows, never a card per row; a card per thing is used only where each thing is read on its own (the Deals board, the agent tiles), and then every card in the set has the same structure and padding.
+
+*Nesting.* Canvas → container → row. At most one container-low region inside a container. Never a container inside a container. If a group inside a container needs a boundary, a divider or a container-low band, not a second box.
+
+*Quiet boundaries.* The strong border only on container edges; the soft border for dividers inside. One container radius. One inner padding scale (the theme's spacing tokens). A container nearly the size of the page stops reading as one and should be sections instead.
+
+*Ration.* Containment is for grouping. Where there is one thing on the page, do not box it. A set of containers with uniform structure does more than any single box.
+
+*Dark.* The same roles by tone, lighter as things rise above the canvas; shadows are weaker and the outline does the work.
+
+*Level map.* `src/theme/levels.ts` maps every component to a role and a shadow: page → canvas; section, card, table, form, list → container, no shadow; row-on, card header, summary strip → container-low; pane → overlay + small shadow; menu, popover → overlay + small shadow; dialog, sheet → overlay + large shadow + scrim; sidebar, header, bottom bar → chrome. Changing any of this is an edit to that file and to the theme file, nowhere else.
 
 **Type has five sizes and uses them.** Title 24, section and record title 18, body 14, label 13, small 12; one declared typeface (Inter, system fallback); tabular numbers in columns; hierarchy from size and weight, not from more space. Density unchanged.
 
