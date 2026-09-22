@@ -1,0 +1,5782 @@
+[
+  {
+    "scene": "home",
+    "page": "Home",
+    "caption": "Home at rest",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "home-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "home",
+    "page": "Home",
+    "caption": "Home at rest",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "home-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "home",
+    "page": "Home",
+    "caption": "Home at rest",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "home-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "home",
+    "page": "Home",
+    "caption": "Home at rest",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "home-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "home",
+    "page": "Home",
+    "caption": "Home at rest",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "home-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 178,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "home",
+    "page": "Home",
+    "caption": "Home at rest",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "home-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 178,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "people",
+    "page": "People",
+    "caption": "People at rest",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "people-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "people",
+    "page": "People",
+    "caption": "People at rest",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "people-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "people",
+    "page": "People",
+    "caption": "People at rest",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "people-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "people",
+    "page": "People",
+    "caption": "People at rest",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "people-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "people",
+    "page": "People",
+    "caption": "People at rest",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "people-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "people",
+    "page": "People",
+    "caption": "People at rest",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "people-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "person",
+    "page": "People",
+    "caption": "A contact record",
+    "route": "/ollopa/people/c-13",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "person-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "person",
+    "page": "People",
+    "caption": "A contact record",
+    "route": "/ollopa/people/c-13",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "person-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "person",
+    "page": "People",
+    "caption": "A contact record",
+    "route": "/ollopa/people/c-13",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "person-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "person",
+    "page": "People",
+    "caption": "A contact record",
+    "route": "/ollopa/people/c-13",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "person-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "person",
+    "page": "People",
+    "caption": "A contact record",
+    "route": "/ollopa/people/c-13",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "person-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "person",
+    "page": "People",
+    "caption": "A contact record",
+    "route": "/ollopa/people/c-13",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "person-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "companies",
+    "page": "Companies",
+    "caption": "Companies at rest",
+    "route": "/ollopa/companies",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "companies-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "companies",
+    "page": "Companies",
+    "caption": "Companies at rest",
+    "route": "/ollopa/companies",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "companies-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "companies",
+    "page": "Companies",
+    "caption": "Companies at rest",
+    "route": "/ollopa/companies",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "companies-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "companies",
+    "page": "Companies",
+    "caption": "Companies at rest",
+    "route": "/ollopa/companies",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "companies-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "companies",
+    "page": "Companies",
+    "caption": "Companies at rest",
+    "route": "/ollopa/companies",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "companies-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 37,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "companies",
+    "page": "Companies",
+    "caption": "Companies at rest",
+    "route": "/ollopa/companies",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "companies-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 37,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "company",
+    "page": "Companies",
+    "caption": "A company record",
+    "route": "/ollopa/companies/co-1",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "company-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 18,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "company",
+    "page": "Companies",
+    "caption": "A company record",
+    "route": "/ollopa/companies/co-1",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "company-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 18,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "company",
+    "page": "Companies",
+    "caption": "A company record",
+    "route": "/ollopa/companies/co-1",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "company-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 18,
+      "nestedCards": 0,
+      "clipped": 7,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "company",
+    "page": "Companies",
+    "caption": "A company record",
+    "route": "/ollopa/companies/co-1",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "company-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 18,
+      "nestedCards": 0,
+      "clipped": 7,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "company",
+    "page": "Companies",
+    "caption": "A company record",
+    "route": "/ollopa/companies/co-1",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "company-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 18,
+      "nestedCards": 0,
+      "clipped": 7,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "company",
+    "page": "Companies",
+    "caption": "A company record",
+    "route": "/ollopa/companies/co-1",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "company-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 18,
+      "nestedCards": 0,
+      "clipped": 7,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "lists",
+    "page": "Lists",
+    "caption": "Lists at rest",
+    "route": "/ollopa/lists",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "lists-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "lists",
+    "page": "Lists",
+    "caption": "Lists at rest",
+    "route": "/ollopa/lists",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "lists-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "lists",
+    "page": "Lists",
+    "caption": "Lists at rest",
+    "route": "/ollopa/lists",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "lists-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "lists",
+    "page": "Lists",
+    "caption": "Lists at rest",
+    "route": "/ollopa/lists",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "lists-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "lists",
+    "page": "Lists",
+    "caption": "Lists at rest",
+    "route": "/ollopa/lists",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "lists-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 15,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "lists",
+    "page": "Lists",
+    "caption": "Lists at rest",
+    "route": "/ollopa/lists",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "lists-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 15,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequences",
+    "page": "Sequences",
+    "caption": "Sequences at rest",
+    "route": "/ollopa/sequences",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "sequences-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequences",
+    "page": "Sequences",
+    "caption": "Sequences at rest",
+    "route": "/ollopa/sequences",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "sequences-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequences",
+    "page": "Sequences",
+    "caption": "Sequences at rest",
+    "route": "/ollopa/sequences",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "sequences-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequences",
+    "page": "Sequences",
+    "caption": "Sequences at rest",
+    "route": "/ollopa/sequences",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "sequences-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequences",
+    "page": "Sequences",
+    "caption": "Sequences at rest",
+    "route": "/ollopa/sequences",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "sequences-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 15,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequences",
+    "page": "Sequences",
+    "caption": "Sequences at rest",
+    "route": "/ollopa/sequences",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "sequences-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 15,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequence",
+    "page": "Sequences",
+    "caption": "A sequence record",
+    "route": "/ollopa/sequences/seq-1",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "sequence-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequence",
+    "page": "Sequences",
+    "caption": "A sequence record",
+    "route": "/ollopa/sequences/seq-1",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "sequence-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequence",
+    "page": "Sequences",
+    "caption": "A sequence record",
+    "route": "/ollopa/sequences/seq-1",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "sequence-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequence",
+    "page": "Sequences",
+    "caption": "A sequence record",
+    "route": "/ollopa/sequences/seq-1",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "sequence-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequence",
+    "page": "Sequences",
+    "caption": "A sequence record",
+    "route": "/ollopa/sequences/seq-1",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "sequence-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 44,
+      "sideways": 3,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "sequence",
+    "page": "Sequences",
+    "caption": "A sequence record",
+    "route": "/ollopa/sequences/seq-1",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "sequence-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 44,
+      "sideways": 3,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "templates",
+    "page": "Templates",
+    "caption": "Templates at rest",
+    "route": "/ollopa/templates",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "templates-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "templates",
+    "page": "Templates",
+    "caption": "Templates at rest",
+    "route": "/ollopa/templates",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "templates-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "templates",
+    "page": "Templates",
+    "caption": "Templates at rest",
+    "route": "/ollopa/templates",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "templates-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": true,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "templates",
+    "page": "Templates",
+    "caption": "Templates at rest",
+    "route": "/ollopa/templates",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "templates-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": true,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "templates",
+    "page": "Templates",
+    "caption": "Templates at rest",
+    "route": "/ollopa/templates",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "templates-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 185,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "templates",
+    "page": "Templates",
+    "caption": "Templates at rest",
+    "route": "/ollopa/templates",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "templates-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 185,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "inbox",
+    "page": "Inbox",
+    "caption": "Inbox at rest, reading pane open",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "inbox-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "h2 \"Cyrus Rossi\""
+    }
+  },
+  {
+    "scene": "inbox",
+    "page": "Inbox",
+    "caption": "Inbox at rest, reading pane open",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "inbox-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "h2 \"Cyrus Rossi\""
+    }
+  },
+  {
+    "scene": "inbox",
+    "page": "Inbox",
+    "caption": "Inbox at rest, reading pane open",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "inbox-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 14,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "h2 \"Cyrus Rossi\""
+    }
+  },
+  {
+    "scene": "inbox",
+    "page": "Inbox",
+    "caption": "Inbox at rest, reading pane open",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "inbox-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 14,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "h2 \"Cyrus Rossi\""
+    }
+  },
+  {
+    "scene": "inbox",
+    "page": "Inbox",
+    "caption": "Inbox at rest, reading pane open",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "inbox-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "inbox",
+    "page": "Inbox",
+    "caption": "Inbox at rest, reading pane open",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "inbox-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-queue",
+    "page": "Tasks",
+    "caption": "Tasks, the queue body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "tasks-queue-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-queue",
+    "page": "Tasks",
+    "caption": "Tasks, the queue body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "tasks-queue-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-queue",
+    "page": "Tasks",
+    "caption": "Tasks, the queue body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "tasks-queue-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-queue",
+    "page": "Tasks",
+    "caption": "Tasks, the queue body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "tasks-queue-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-queue",
+    "page": "Tasks",
+    "caption": "Tasks, the queue body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "tasks-queue-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-queue",
+    "page": "Tasks",
+    "caption": "Tasks, the queue body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "tasks-queue-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-list",
+    "page": "Tasks",
+    "caption": "Tasks, the list body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "tasks-list-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-list",
+    "page": "Tasks",
+    "caption": "Tasks, the list body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "tasks-list-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-list",
+    "page": "Tasks",
+    "caption": "Tasks, the list body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "tasks-list-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-list",
+    "page": "Tasks",
+    "caption": "Tasks, the list body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "tasks-list-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-list",
+    "page": "Tasks",
+    "caption": "Tasks, the list body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "tasks-list-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "tasks-list",
+    "page": "Tasks",
+    "caption": "Tasks, the list body",
+    "route": "/ollopa/tasks",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "tasks-list-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-board",
+    "page": "Deals",
+    "caption": "The deals board",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "light",
+    "file": "deals-board-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 16,
+      "nestedCards": 11,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-board",
+    "page": "Deals",
+    "caption": "The deals board",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "dark",
+    "file": "deals-board-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 16,
+      "nestedCards": 11,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-board",
+    "page": "Deals",
+    "caption": "The deals board",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1024,
+    "theme": "light",
+    "file": "deals-board-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 16,
+      "nestedCards": 11,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-board",
+    "page": "Deals",
+    "caption": "The deals board",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1024,
+    "theme": "dark",
+    "file": "deals-board-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 16,
+      "nestedCards": 11,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-board",
+    "page": "Deals",
+    "caption": "The deals board",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "light",
+    "file": "deals-board-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 4,
+      "nestedCards": 2,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-board",
+    "page": "Deals",
+    "caption": "The deals board",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "dark",
+    "file": "deals-board-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 4,
+      "nestedCards": 2,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deals-table",
+    "page": "Deals",
+    "caption": "The deals table",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "light",
+    "file": "deals-table-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"Table\""
+    }
+  },
+  {
+    "scene": "deals-table",
+    "page": "Deals",
+    "caption": "The deals table",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "dark",
+    "file": "deals-table-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"Table\""
+    }
+  },
+  {
+    "scene": "deals-table",
+    "page": "Deals",
+    "caption": "The deals table",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1024,
+    "theme": "light",
+    "file": "deals-table-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"Table\""
+    }
+  },
+  {
+    "scene": "deals-table",
+    "page": "Deals",
+    "caption": "The deals table",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1024,
+    "theme": "dark",
+    "file": "deals-table-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"Table\""
+    }
+  },
+  {
+    "scene": "deals-table",
+    "page": "Deals",
+    "caption": "The deals table",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "light",
+    "file": "deals-table-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"Table\""
+    }
+  },
+  {
+    "scene": "deals-table",
+    "page": "Deals",
+    "caption": "The deals table",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "dark",
+    "file": "deals-table-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"Table\""
+    }
+  },
+  {
+    "scene": "deal",
+    "page": "Deals",
+    "caption": "A deal record",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "light",
+    "file": "deal-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 7,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deal",
+    "page": "Deals",
+    "caption": "A deal record",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "dark",
+    "file": "deal-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 7,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deal",
+    "page": "Deals",
+    "caption": "A deal record",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 1024,
+    "theme": "light",
+    "file": "deal-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 8,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deal",
+    "page": "Deals",
+    "caption": "A deal record",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 1024,
+    "theme": "dark",
+    "file": "deal-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 8,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deal",
+    "page": "Deals",
+    "caption": "A deal record",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "light",
+    "file": "deal-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "deal",
+    "page": "Deals",
+    "caption": "A deal record",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "dark",
+    "file": "deal-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaigns",
+    "page": "Campaigns",
+    "caption": "Campaigns at rest",
+    "route": "/ollopa/campaigns",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "light",
+    "file": "campaigns-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaigns",
+    "page": "Campaigns",
+    "caption": "Campaigns at rest",
+    "route": "/ollopa/campaigns",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "dark",
+    "file": "campaigns-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaigns",
+    "page": "Campaigns",
+    "caption": "Campaigns at rest",
+    "route": "/ollopa/campaigns",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "light",
+    "file": "campaigns-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaigns",
+    "page": "Campaigns",
+    "caption": "Campaigns at rest",
+    "route": "/ollopa/campaigns",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "dark",
+    "file": "campaigns-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaigns",
+    "page": "Campaigns",
+    "caption": "Campaigns at rest",
+    "route": "/ollopa/campaigns",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "light",
+    "file": "campaigns-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaigns",
+    "page": "Campaigns",
+    "caption": "Campaigns at rest",
+    "route": "/ollopa/campaigns",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "dark",
+    "file": "campaigns-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaign",
+    "page": "Campaigns",
+    "caption": "A campaign record",
+    "route": "/ollopa/campaigns/camp-4",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "light",
+    "file": "campaign-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaign",
+    "page": "Campaigns",
+    "caption": "A campaign record",
+    "route": "/ollopa/campaigns/camp-4",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "dark",
+    "file": "campaign-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaign",
+    "page": "Campaigns",
+    "caption": "A campaign record",
+    "route": "/ollopa/campaigns/camp-4",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "light",
+    "file": "campaign-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaign",
+    "page": "Campaigns",
+    "caption": "A campaign record",
+    "route": "/ollopa/campaigns/camp-4",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "dark",
+    "file": "campaign-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaign",
+    "page": "Campaigns",
+    "caption": "A campaign record",
+    "route": "/ollopa/campaigns/camp-4",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "light",
+    "file": "campaign-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "campaign",
+    "page": "Campaigns",
+    "caption": "A campaign record",
+    "route": "/ollopa/campaigns/camp-4",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "dark",
+    "file": "campaign-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "accounts",
+    "page": "Accounts",
+    "caption": "Accounts at rest",
+    "route": "/ollopa/accounts",
+    "seat": "meridian:cs",
+    "width": 1440,
+    "theme": "light",
+    "file": "accounts-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 29,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "accounts",
+    "page": "Accounts",
+    "caption": "Accounts at rest",
+    "route": "/ollopa/accounts",
+    "seat": "meridian:cs",
+    "width": 1440,
+    "theme": "dark",
+    "file": "accounts-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 29,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "accounts",
+    "page": "Accounts",
+    "caption": "Accounts at rest",
+    "route": "/ollopa/accounts",
+    "seat": "meridian:cs",
+    "width": 1024,
+    "theme": "light",
+    "file": "accounts-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 29,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "accounts",
+    "page": "Accounts",
+    "caption": "Accounts at rest",
+    "route": "/ollopa/accounts",
+    "seat": "meridian:cs",
+    "width": 1024,
+    "theme": "dark",
+    "file": "accounts-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 29,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "accounts",
+    "page": "Accounts",
+    "caption": "Accounts at rest",
+    "route": "/ollopa/accounts",
+    "seat": "meridian:cs",
+    "width": 400,
+    "theme": "light",
+    "file": "accounts-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 17,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "accounts",
+    "page": "Accounts",
+    "caption": "Accounts at rest",
+    "route": "/ollopa/accounts",
+    "seat": "meridian:cs",
+    "width": 400,
+    "theme": "dark",
+    "file": "accounts-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 17,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflows",
+    "page": "Workflows",
+    "caption": "Workflows at rest",
+    "route": "/ollopa/workflows",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "light",
+    "file": "workflows-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflows",
+    "page": "Workflows",
+    "caption": "Workflows at rest",
+    "route": "/ollopa/workflows",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "dark",
+    "file": "workflows-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflows",
+    "page": "Workflows",
+    "caption": "Workflows at rest",
+    "route": "/ollopa/workflows",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "light",
+    "file": "workflows-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflows",
+    "page": "Workflows",
+    "caption": "Workflows at rest",
+    "route": "/ollopa/workflows",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "dark",
+    "file": "workflows-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflows",
+    "page": "Workflows",
+    "caption": "Workflows at rest",
+    "route": "/ollopa/workflows",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "light",
+    "file": "workflows-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflows",
+    "page": "Workflows",
+    "caption": "Workflows at rest",
+    "route": "/ollopa/workflows",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "dark",
+    "file": "workflows-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "requests",
+    "page": "Requests",
+    "caption": "Requests at rest",
+    "route": "/ollopa/requests",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "requests-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 3,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "requests",
+    "page": "Requests",
+    "caption": "Requests at rest",
+    "route": "/ollopa/requests",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "requests-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 3,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "requests",
+    "page": "Requests",
+    "caption": "Requests at rest",
+    "route": "/ollopa/requests",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "requests-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 3,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "requests",
+    "page": "Requests",
+    "caption": "Requests at rest",
+    "route": "/ollopa/requests",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "requests-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 3,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "requests",
+    "page": "Requests",
+    "caption": "Requests at rest",
+    "route": "/ollopa/requests",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "requests-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 3,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "requests",
+    "page": "Requests",
+    "caption": "Requests at rest",
+    "route": "/ollopa/requests",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "requests-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 3,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "reports",
+    "page": "Reports",
+    "caption": "Reports at rest",
+    "route": "/ollopa/reports",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "reports-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "reports",
+    "page": "Reports",
+    "caption": "Reports at rest",
+    "route": "/ollopa/reports",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "reports-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "reports",
+    "page": "Reports",
+    "caption": "Reports at rest",
+    "route": "/ollopa/reports",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "reports-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "reports",
+    "page": "Reports",
+    "caption": "Reports at rest",
+    "route": "/ollopa/reports",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "reports-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "reports",
+    "page": "Reports",
+    "caption": "Reports at rest",
+    "route": "/ollopa/reports",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "reports-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "reports",
+    "page": "Reports",
+    "caption": "Reports at rest",
+    "route": "/ollopa/reports",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "reports-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "agents",
+    "page": "Agents",
+    "caption": "Agents at rest",
+    "route": "/ollopa/agents",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "agents-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 47,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "agents",
+    "page": "Agents",
+    "caption": "Agents at rest",
+    "route": "/ollopa/agents",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "agents-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 47,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "agents",
+    "page": "Agents",
+    "caption": "Agents at rest",
+    "route": "/ollopa/agents",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "agents-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 47,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "agents",
+    "page": "Agents",
+    "caption": "Agents at rest",
+    "route": "/ollopa/agents",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "agents-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 47,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "agents",
+    "page": "Agents",
+    "caption": "Agents at rest",
+    "route": "/ollopa/agents",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "agents-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 46,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "agents",
+    "page": "Agents",
+    "caption": "Agents at rest",
+    "route": "/ollopa/agents",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "agents-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 46,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings",
+    "page": "Settings",
+    "caption": "Settings at rest",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings",
+    "page": "Settings",
+    "caption": "Settings at rest",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings",
+    "page": "Settings",
+    "caption": "Settings at rest",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings",
+    "page": "Settings",
+    "caption": "Settings at rest",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings",
+    "page": "Settings",
+    "caption": "Settings at rest",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings",
+    "page": "Settings",
+    "caption": "Settings at rest",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-you",
+    "page": "Settings",
+    "caption": "Settings · You",
+    "route": "/ollopa/settings/you",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-you-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-you",
+    "page": "Settings",
+    "caption": "Settings · You",
+    "route": "/ollopa/settings/you",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-you-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-you",
+    "page": "Settings",
+    "caption": "Settings · You",
+    "route": "/ollopa/settings/you",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-you-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-you",
+    "page": "Settings",
+    "caption": "Settings · You",
+    "route": "/ollopa/settings/you",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-you-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-you",
+    "page": "Settings",
+    "caption": "Settings · You",
+    "route": "/ollopa/settings/you",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-you-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-you",
+    "page": "Settings",
+    "caption": "Settings · You",
+    "route": "/ollopa/settings/you",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-you-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-workspace",
+    "page": "Settings",
+    "caption": "Settings · Workspace",
+    "route": "/ollopa/settings/workspace",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-workspace-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-workspace",
+    "page": "Settings",
+    "caption": "Settings · Workspace",
+    "route": "/ollopa/settings/workspace",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-workspace-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-workspace",
+    "page": "Settings",
+    "caption": "Settings · Workspace",
+    "route": "/ollopa/settings/workspace",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-workspace-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-workspace",
+    "page": "Settings",
+    "caption": "Settings · Workspace",
+    "route": "/ollopa/settings/workspace",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-workspace-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-workspace",
+    "page": "Settings",
+    "caption": "Settings · Workspace",
+    "route": "/ollopa/settings/workspace",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-workspace-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-workspace",
+    "page": "Settings",
+    "caption": "Settings · Workspace",
+    "route": "/ollopa/settings/workspace",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-workspace-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-how-your-team-works",
+    "page": "Settings",
+    "caption": "Settings · How your team works",
+    "route": "/ollopa/settings/how-your-team-works",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-how-your-team-works-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-how-your-team-works",
+    "page": "Settings",
+    "caption": "Settings · How your team works",
+    "route": "/ollopa/settings/how-your-team-works",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-how-your-team-works-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-how-your-team-works",
+    "page": "Settings",
+    "caption": "Settings · How your team works",
+    "route": "/ollopa/settings/how-your-team-works",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-how-your-team-works-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-how-your-team-works",
+    "page": "Settings",
+    "caption": "Settings · How your team works",
+    "route": "/ollopa/settings/how-your-team-works",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-how-your-team-works-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-how-your-team-works",
+    "page": "Settings",
+    "caption": "Settings · How your team works",
+    "route": "/ollopa/settings/how-your-team-works",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-how-your-team-works-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-how-your-team-works",
+    "page": "Settings",
+    "caption": "Settings · How your team works",
+    "route": "/ollopa/settings/how-your-team-works",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-how-your-team-works-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-team",
+    "page": "Settings",
+    "caption": "Settings · Team and access",
+    "route": "/ollopa/settings/team",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-team-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-team",
+    "page": "Settings",
+    "caption": "Settings · Team and access",
+    "route": "/ollopa/settings/team",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-team-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-team",
+    "page": "Settings",
+    "caption": "Settings · Team and access",
+    "route": "/ollopa/settings/team",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-team-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-team",
+    "page": "Settings",
+    "caption": "Settings · Team and access",
+    "route": "/ollopa/settings/team",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-team-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-team",
+    "page": "Settings",
+    "caption": "Settings · Team and access",
+    "route": "/ollopa/settings/team",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-team-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-team",
+    "page": "Settings",
+    "caption": "Settings · Team and access",
+    "route": "/ollopa/settings/team",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-team-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-email-sending",
+    "page": "Settings",
+    "caption": "Settings · Email sending",
+    "route": "/ollopa/settings/email-sending",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-email-sending-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-email-sending",
+    "page": "Settings",
+    "caption": "Settings · Email sending",
+    "route": "/ollopa/settings/email-sending",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-email-sending-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-email-sending",
+    "page": "Settings",
+    "caption": "Settings · Email sending",
+    "route": "/ollopa/settings/email-sending",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-email-sending-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-email-sending",
+    "page": "Settings",
+    "caption": "Settings · Email sending",
+    "route": "/ollopa/settings/email-sending",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-email-sending-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-email-sending",
+    "page": "Settings",
+    "caption": "Settings · Email sending",
+    "route": "/ollopa/settings/email-sending",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-email-sending-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-email-sending",
+    "page": "Settings",
+    "caption": "Settings · Email sending",
+    "route": "/ollopa/settings/email-sending",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-email-sending-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-prospecting",
+    "page": "Settings",
+    "caption": "Settings · Prospecting rules",
+    "route": "/ollopa/settings/prospecting",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-prospecting-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-prospecting",
+    "page": "Settings",
+    "caption": "Settings · Prospecting rules",
+    "route": "/ollopa/settings/prospecting",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-prospecting-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-prospecting",
+    "page": "Settings",
+    "caption": "Settings · Prospecting rules",
+    "route": "/ollopa/settings/prospecting",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-prospecting-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-prospecting",
+    "page": "Settings",
+    "caption": "Settings · Prospecting rules",
+    "route": "/ollopa/settings/prospecting",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-prospecting-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-prospecting",
+    "page": "Settings",
+    "caption": "Settings · Prospecting rules",
+    "route": "/ollopa/settings/prospecting",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-prospecting-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-prospecting",
+    "page": "Settings",
+    "caption": "Settings · Prospecting rules",
+    "route": "/ollopa/settings/prospecting",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-prospecting-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-pipeline",
+    "page": "Settings",
+    "caption": "Settings · Pipeline and data",
+    "route": "/ollopa/settings/pipeline",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-pipeline-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-pipeline",
+    "page": "Settings",
+    "caption": "Settings · Pipeline and data",
+    "route": "/ollopa/settings/pipeline",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-pipeline-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-pipeline",
+    "page": "Settings",
+    "caption": "Settings · Pipeline and data",
+    "route": "/ollopa/settings/pipeline",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-pipeline-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-pipeline",
+    "page": "Settings",
+    "caption": "Settings · Pipeline and data",
+    "route": "/ollopa/settings/pipeline",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-pipeline-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-pipeline",
+    "page": "Settings",
+    "caption": "Settings · Pipeline and data",
+    "route": "/ollopa/settings/pipeline",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-pipeline-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-pipeline",
+    "page": "Settings",
+    "caption": "Settings · Pipeline and data",
+    "route": "/ollopa/settings/pipeline",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-pipeline-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-sequences",
+    "page": "Settings",
+    "caption": "Settings · Sequences",
+    "route": "/ollopa/settings/sequences",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-sequences-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-sequences",
+    "page": "Settings",
+    "caption": "Settings · Sequences",
+    "route": "/ollopa/settings/sequences",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-sequences-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-sequences",
+    "page": "Settings",
+    "caption": "Settings · Sequences",
+    "route": "/ollopa/settings/sequences",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-sequences-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-sequences",
+    "page": "Settings",
+    "caption": "Settings · Sequences",
+    "route": "/ollopa/settings/sequences",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-sequences-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-sequences",
+    "page": "Settings",
+    "caption": "Settings · Sequences",
+    "route": "/ollopa/settings/sequences",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-sequences-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-sequences",
+    "page": "Settings",
+    "caption": "Settings · Sequences",
+    "route": "/ollopa/settings/sequences",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-sequences-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-scoring",
+    "page": "Settings",
+    "caption": "Settings · Signals, scoring and personas",
+    "route": "/ollopa/settings/scoring",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-scoring-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-scoring",
+    "page": "Settings",
+    "caption": "Settings · Signals, scoring and personas",
+    "route": "/ollopa/settings/scoring",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-scoring-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-scoring",
+    "page": "Settings",
+    "caption": "Settings · Signals, scoring and personas",
+    "route": "/ollopa/settings/scoring",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-scoring-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-scoring",
+    "page": "Settings",
+    "caption": "Settings · Signals, scoring and personas",
+    "route": "/ollopa/settings/scoring",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-scoring-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-scoring",
+    "page": "Settings",
+    "caption": "Settings · Signals, scoring and personas",
+    "route": "/ollopa/settings/scoring",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-scoring-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-scoring",
+    "page": "Settings",
+    "caption": "Settings · Signals, scoring and personas",
+    "route": "/ollopa/settings/scoring",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-scoring-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-agents",
+    "page": "Settings",
+    "caption": "Settings · Agents and AI",
+    "route": "/ollopa/settings/agents",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-agents-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-agents",
+    "page": "Settings",
+    "caption": "Settings · Agents and AI",
+    "route": "/ollopa/settings/agents",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-agents-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-agents",
+    "page": "Settings",
+    "caption": "Settings · Agents and AI",
+    "route": "/ollopa/settings/agents",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-agents-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-agents",
+    "page": "Settings",
+    "caption": "Settings · Agents and AI",
+    "route": "/ollopa/settings/agents",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-agents-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-agents",
+    "page": "Settings",
+    "caption": "Settings · Agents and AI",
+    "route": "/ollopa/settings/agents",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-agents-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-agents",
+    "page": "Settings",
+    "caption": "Settings · Agents and AI",
+    "route": "/ollopa/settings/agents",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-agents-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-integrations",
+    "page": "Settings",
+    "caption": "Settings · Integrations",
+    "route": "/ollopa/settings/integrations",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-integrations-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-integrations",
+    "page": "Settings",
+    "caption": "Settings · Integrations",
+    "route": "/ollopa/settings/integrations",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-integrations-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-integrations",
+    "page": "Settings",
+    "caption": "Settings · Integrations",
+    "route": "/ollopa/settings/integrations",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-integrations-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-integrations",
+    "page": "Settings",
+    "caption": "Settings · Integrations",
+    "route": "/ollopa/settings/integrations",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-integrations-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-integrations",
+    "page": "Settings",
+    "caption": "Settings · Integrations",
+    "route": "/ollopa/settings/integrations",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-integrations-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-integrations",
+    "page": "Settings",
+    "caption": "Settings · Integrations",
+    "route": "/ollopa/settings/integrations",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-integrations-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-developer",
+    "page": "Settings",
+    "caption": "Settings · API, webhooks, MCP and CLI",
+    "route": "/ollopa/settings/developer",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-developer-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-developer",
+    "page": "Settings",
+    "caption": "Settings · API, webhooks, MCP and CLI",
+    "route": "/ollopa/settings/developer",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-developer-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-developer",
+    "page": "Settings",
+    "caption": "Settings · API, webhooks, MCP and CLI",
+    "route": "/ollopa/settings/developer",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-developer-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-developer",
+    "page": "Settings",
+    "caption": "Settings · API, webhooks, MCP and CLI",
+    "route": "/ollopa/settings/developer",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-developer-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-developer",
+    "page": "Settings",
+    "caption": "Settings · API, webhooks, MCP and CLI",
+    "route": "/ollopa/settings/developer",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-developer-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-developer",
+    "page": "Settings",
+    "caption": "Settings · API, webhooks, MCP and CLI",
+    "route": "/ollopa/settings/developer",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-developer-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-plan",
+    "page": "Settings",
+    "caption": "Settings · Plan, billing and usage",
+    "route": "/ollopa/settings/plan",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "settings-plan-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-plan",
+    "page": "Settings",
+    "caption": "Settings · Plan, billing and usage",
+    "route": "/ollopa/settings/plan",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "settings-plan-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-plan",
+    "page": "Settings",
+    "caption": "Settings · Plan, billing and usage",
+    "route": "/ollopa/settings/plan",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "settings-plan-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-plan",
+    "page": "Settings",
+    "caption": "Settings · Plan, billing and usage",
+    "route": "/ollopa/settings/plan",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "settings-plan-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-plan",
+    "page": "Settings",
+    "caption": "Settings · Plan, billing and usage",
+    "route": "/ollopa/settings/plan",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "settings-plan-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "settings-plan",
+    "page": "Settings",
+    "caption": "Settings · Plan, billing and usage",
+    "route": "/ollopa/settings/plan",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "settings-plan-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "connect-1",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, step 1",
+    "route": "/ollopa/connect/salesforce?step=1",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "connect-1-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 6: Choose what to connect\""
+    }
+  },
+  {
+    "scene": "connect-1",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, step 1",
+    "route": "/ollopa/connect/salesforce?step=1",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "connect-1-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 6: Choose what to connect\""
+    }
+  },
+  {
+    "scene": "connect-1",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, step 1",
+    "route": "/ollopa/connect/salesforce?step=1",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "connect-1-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 6: Choose what to connect\""
+    }
+  },
+  {
+    "scene": "connect-1",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, step 1",
+    "route": "/ollopa/connect/salesforce?step=1",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "connect-1-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 6: Choose what to connect\""
+    }
+  },
+  {
+    "scene": "connect-1",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, step 1",
+    "route": "/ollopa/connect/salesforce?step=1",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "connect-1-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 6: Choose what to connect\""
+    }
+  },
+  {
+    "scene": "connect-1",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, step 1",
+    "route": "/ollopa/connect/salesforce?step=1",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "connect-1-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 6: Choose what to connect\""
+    }
+  },
+  {
+    "scene": "connect-5",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, the last step",
+    "route": "/ollopa/connect/salesforce?step=5",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "connect-5-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 5 of 6: Set sync rules\""
+    }
+  },
+  {
+    "scene": "connect-5",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, the last step",
+    "route": "/ollopa/connect/salesforce?step=5",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "connect-5-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 5 of 6: Set sync rules\""
+    }
+  },
+  {
+    "scene": "connect-5",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, the last step",
+    "route": "/ollopa/connect/salesforce?step=5",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "connect-5-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 5 of 6: Set sync rules\""
+    }
+  },
+  {
+    "scene": "connect-5",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, the last step",
+    "route": "/ollopa/connect/salesforce?step=5",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "connect-5-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 5 of 6: Set sync rules\""
+    }
+  },
+  {
+    "scene": "connect-5",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, the last step",
+    "route": "/ollopa/connect/salesforce?step=5",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "connect-5-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 5 of 6: Set sync rules\""
+    }
+  },
+  {
+    "scene": "connect-5",
+    "page": "Connect wizard",
+    "caption": "Connect an integration, the last step",
+    "route": "/ollopa/connect/salesforce?step=5",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "connect-5-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 5 of 6: Set sync rules\""
+    }
+  },
+  {
+    "scene": "import",
+    "page": "Import wizard",
+    "caption": "Import and enrich",
+    "route": "/ollopa/import",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "import-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 5: File and columns\""
+    }
+  },
+  {
+    "scene": "import",
+    "page": "Import wizard",
+    "caption": "Import and enrich",
+    "route": "/ollopa/import",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "import-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 5: File and columns\""
+    }
+  },
+  {
+    "scene": "import",
+    "page": "Import wizard",
+    "caption": "Import and enrich",
+    "route": "/ollopa/import",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "import-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 5: File and columns\""
+    }
+  },
+  {
+    "scene": "import",
+    "page": "Import wizard",
+    "caption": "Import and enrich",
+    "route": "/ollopa/import",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "import-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 5: File and columns\""
+    }
+  },
+  {
+    "scene": "import",
+    "page": "Import wizard",
+    "caption": "Import and enrich",
+    "route": "/ollopa/import",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "import-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 5: File and columns\""
+    }
+  },
+  {
+    "scene": "import",
+    "page": "Import wizard",
+    "caption": "Import and enrich",
+    "route": "/ollopa/import",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "import-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "span \"Step 1 of 5: File and columns\""
+    }
+  },
+  {
+    "scene": "developer",
+    "page": "Developer",
+    "caption": "The developer page",
+    "route": "/ollopa/developer/api",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "developer-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "developer",
+    "page": "Developer",
+    "caption": "The developer page",
+    "route": "/ollopa/developer/api",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "developer-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "developer",
+    "page": "Developer",
+    "caption": "The developer page",
+    "route": "/ollopa/developer/api",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "developer-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "developer",
+    "page": "Developer",
+    "caption": "The developer page",
+    "route": "/ollopa/developer/api",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "developer-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "developer",
+    "page": "Developer",
+    "caption": "The developer page",
+    "route": "/ollopa/developer/api",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "developer-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "developer",
+    "page": "Developer",
+    "caption": "The developer page",
+    "route": "/ollopa/developer/api",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "developer-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "setup",
+    "page": "Set-up",
+    "caption": "Workspace set-up",
+    "route": "/ollopa/setup",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "setup-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "setup",
+    "page": "Set-up",
+    "caption": "Workspace set-up",
+    "route": "/ollopa/setup",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "setup-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "setup",
+    "page": "Set-up",
+    "caption": "Workspace set-up",
+    "route": "/ollopa/setup",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "setup-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "setup",
+    "page": "Set-up",
+    "caption": "Workspace set-up",
+    "route": "/ollopa/setup",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "setup-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "setup",
+    "page": "Set-up",
+    "caption": "Workspace set-up",
+    "route": "/ollopa/setup",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "setup-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": true,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "setup",
+    "page": "Set-up",
+    "caption": "Workspace set-up",
+    "route": "/ollopa/setup",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "setup-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 6,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": true,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "signin",
+    "page": "Sign in",
+    "caption": "The sign-in page",
+    "route": "/ollopa/signin",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "signin-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "signin",
+    "page": "Sign in",
+    "caption": "The sign-in page",
+    "route": "/ollopa/signin",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "dark",
+    "file": "signin-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "signin",
+    "page": "Sign in",
+    "caption": "The sign-in page",
+    "route": "/ollopa/signin",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "light",
+    "file": "signin-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "signin",
+    "page": "Sign in",
+    "caption": "The sign-in page",
+    "route": "/ollopa/signin",
+    "seat": "meridian:admin",
+    "width": 1024,
+    "theme": "dark",
+    "file": "signin-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "signin",
+    "page": "Sign in",
+    "caption": "The sign-in page",
+    "route": "/ollopa/signin",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "signin-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "signin",
+    "page": "Sign in",
+    "caption": "The sign-in page",
+    "route": "/ollopa/signin",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "dark",
+    "file": "signin-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": null,
+      "cards": 0,
+      "nestedCards": 0,
+      "clipped": 0,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-row-hover",
+    "page": "People",
+    "caption": "A row under the pointer",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-row-hover-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-row-hover",
+    "page": "People",
+    "caption": "A row under the pointer",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-row-hover-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-row-focus",
+    "page": "People",
+    "caption": "A row with the focus ring",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-row-focus-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "button \"My prospects to work\""
+    }
+  },
+  {
+    "scene": "act-row-focus",
+    "page": "People",
+    "caption": "A row with the focus ring",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-row-focus-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button \"My prospects to work\""
+    }
+  },
+  {
+    "scene": "act-pane-open",
+    "page": "People",
+    "caption": "The beside pane, open on a row",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-pane-open-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+    }
+  },
+  {
+    "scene": "act-pane-open",
+    "page": "People",
+    "caption": "The beside pane, open on a row",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-pane-open-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+    }
+  },
+  {
+    "scene": "act-pane-next",
+    "page": "People",
+    "caption": "The pane, stepped to the next in the list",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-pane-next-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+    }
+  },
+  {
+    "scene": "act-pane-next",
+    "page": "People",
+    "caption": "The pane, stepped to the next in the list",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-pane-next-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+    }
+  },
+  {
+    "scene": "act-pane-step",
+    "page": "People",
+    "caption": "A level deeper inside the pane",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-pane-step-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+    }
+  },
+  {
+    "scene": "act-pane-step",
+    "page": "People",
+    "caption": "A level deeper inside the pane",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-pane-step-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+    }
+  },
+  {
+    "scene": "act-row-menu",
+    "page": "People",
+    "caption": "A row's menu, open",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-row-menu-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div#radix-_r_1g_ \"Quick lookEnterOpen the full recordoSequ\""
+    }
+  },
+  {
+    "scene": "act-row-menu",
+    "page": "People",
+    "caption": "A row's menu, open",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-row-menu-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "div#radix-_r_s_ \"Quick lookEnterOpen the full recordoSequ\""
+    }
+  },
+  {
+    "scene": "act-dialog",
+    "page": "Deals",
+    "caption": "An irreversible act asking first",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-dialog-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 8,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button \"Cancel\""
+    }
+  },
+  {
+    "scene": "act-dialog",
+    "page": "Deals",
+    "caption": "An irreversible act asking first",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "light",
+    "file": "act-dialog-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button \"Cancel\""
+    }
+  },
+  {
+    "scene": "act-door",
+    "page": "Settings",
+    "caption": "A door, open",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-door-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-door",
+    "page": "Settings",
+    "caption": "A door, open",
+    "route": "/ollopa/settings",
+    "seat": "meridian:admin",
+    "width": 400,
+    "theme": "light",
+    "file": "act-door-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-expand-all",
+    "page": "Home",
+    "caption": "Home with every door open",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-expand-all-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button \"Collapse all\""
+    }
+  },
+  {
+    "scene": "act-expand-all",
+    "page": "Home",
+    "caption": "Home with every door open",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-expand-all-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 178,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "button \"Collapse all\""
+    }
+  },
+  {
+    "scene": "act-palette",
+    "page": "Home",
+    "caption": "The command palette",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-palette-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "input[Search or jump to] \"\""
+    }
+  },
+  {
+    "scene": "act-palette",
+    "page": "Home",
+    "caption": "The command palette",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-palette-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 178,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "input[Search or jump to] \"\""
+    }
+  },
+  {
+    "scene": "act-bell",
+    "page": "Home",
+    "caption": "The notification channel",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-bell-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button \"Unread only\""
+    }
+  },
+  {
+    "scene": "act-bell",
+    "page": "Home",
+    "caption": "The notification channel",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-bell-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 178,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "button \"Unread only\""
+    }
+  },
+  {
+    "scene": "act-quick-look",
+    "page": "People",
+    "caption": "The quick look over the table",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-quick-look-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "button#quicklook-edit \"Approaching\""
+    }
+  },
+  {
+    "scene": "act-quick-look",
+    "page": "People",
+    "caption": "The quick look over the table",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-quick-look-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button \"My prospects to work\""
+    }
+  },
+  {
+    "scene": "act-divider-left",
+    "page": "Inbox",
+    "caption": "The inbox split, dragged 200 px left",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-divider-left-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div[Thread width] \"\""
+    }
+  },
+  {
+    "scene": "act-divider-left",
+    "page": "Inbox",
+    "caption": "The inbox split, dragged 200 px left",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-divider-left-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-divider-right",
+    "page": "Inbox",
+    "caption": "The inbox split, dragged 200 px right",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-divider-right-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "div[Thread width] \"\""
+    }
+  },
+  {
+    "scene": "act-divider-right",
+    "page": "Inbox",
+    "caption": "The inbox split, dragged 200 px right",
+    "route": "/ollopa/inbox",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-divider-right-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-card-drag",
+    "page": "Deals",
+    "caption": "A deal card mid-drag",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-card-drag-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 16,
+      "nestedCards": 11,
+      "clipped": 2,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "a \"Gatehouse Systems · Platform\""
+    }
+  },
+  {
+    "scene": "act-card-drag",
+    "page": "Deals",
+    "caption": "A deal card mid-drag",
+    "route": "/ollopa/deals",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "light",
+    "file": "act-card-drag-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 4,
+      "nestedCards": 2,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-trail",
+    "page": "People",
+    "caption": "The trail, after following a row",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-trail-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "h1 \"Mateo Novak\""
+    }
+  },
+  {
+    "scene": "act-trail",
+    "page": "People",
+    "caption": "The trail, after following a row",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-trail-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 8,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "h1 \"Mateo Novak\""
+    }
+  },
+  {
+    "scene": "act-return-cue",
+    "page": "People",
+    "caption": "The return cue, lit on the row that was left",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-return-cue-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "tr \"Mateo NovakVP SalesChanged jobWayfare Sy\""
+    }
+  },
+  {
+    "scene": "act-return-cue",
+    "page": "People",
+    "caption": "The return cue, lit on the row that was left",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-return-cue-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "a \"Mateo Novak\""
+    }
+  },
+  {
+    "scene": "act-phone-sheet",
+    "page": "Shell",
+    "caption": "The phone's navigation sheet",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-phone-sheet-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 178,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 10,
+      "sideways": 2,
+      "pageScrollsSideways": false,
+      "focused": "div#radix-_r_1k_ \"SidebarDisplays the mobile sidebar.ollop\""
+    }
+  },
+  {
+    "scene": "act-phone-bar",
+    "page": "Deals",
+    "caption": "The record's phone action bar",
+    "route": "/ollopa/deals/d-118",
+    "seat": "meridian:ae",
+    "width": 400,
+    "theme": "light",
+    "file": "act-phone-bar-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 9,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "act-sidebar-collapsed",
+    "page": "Shell",
+    "caption": "The sidebar collapsed to its rail",
+    "route": "/ollopa",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-sidebar-collapsed-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 155,
+      "cards": 4,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "button[Toggle Sidebar] \"\""
+    }
+  }
+]
