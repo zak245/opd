@@ -14,6 +14,7 @@ import { href } from "@/app/router"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Group } from "../../ui/Surface"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
@@ -28,7 +29,8 @@ import { toast } from "./state"
 
 export function Fields({ rows }: { rows: { label: string; value: ReactNode; note?: string }[] }) {
   return (
-    <dl className="surface-raised grid gap-3 rounded-[var(--radius-container)] border px-3 py-2.5">
+    // The sheet around this is the container; inside it a group is a divider, never a second box.
+    <dl className="grid gap-3">
       {rows.map((r) => (
         <div key={r.label} className="grid gap-1 border-b pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-3">
           <dt className="t-label text-muted-foreground">{r.label}</dt>
@@ -284,7 +286,7 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
   return (
     <Panel id="x-removal" title="Removal list" {...p}
       footer={<Actions surface="dialog" items={[{ label: "Export as CSV", kind: "secondary", onClick: () => toast("Exported the removal list as CSV.") }]} />}>
-      <div className="surface-raised rounded-[var(--radius-container)] border p-3">
+      <Group className="rounded-[var(--radius-container)] p-3">
         <p className="t-label flex items-center gap-2">
           Delete everywhere
           <Chip status="do not contact">Cannot be undone</Chip>
@@ -300,7 +302,7 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
             consequence: `Deletes ${removal.people} people here, unlinks them in ${b.crm?.split(" ")[0] ?? "the CRM"}, removes them from ${plural(removal.lists, "list")} and ${plural(removal.sequences, "sequence")}, and stops ${plural(removal.jobs, "enrichment job")} from re-importing them.`,
             confirmLabel: `Delete ${removal.people} people` },
         }]} />
-      </div>
+      </Group>
       <dl className="mt-4 grid gap-2 border-t pt-4 text-sm">
         {([
           { label: "Sequences that still hold them", n: removal.sequences, to: "/ollopa/sequences" },

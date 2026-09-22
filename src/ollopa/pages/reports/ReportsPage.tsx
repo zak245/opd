@@ -25,6 +25,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor, TODAY, type Deal } from "../../data/seed"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
+import { Container } from "../../ui/Surface"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -490,9 +491,8 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             now. The overview is the content, so it is never behind a tab or a Run button — what is
             disclosed is the record-level detail behind the numbers, never the numbers. */}
         {one("rep.overview") && strip.length > 1 && (
-          <section className="rounded-lg border" data-print-hide>
-            <h2 className="border-b px-3 py-1.5 t-small font-medium uppercase tracking-wide text-muted-foreground">Overview</h2>
-            <ul>
+          <Container component="section" padded={false} heading="Overview" data-print-hide>
+            <ul className="border-t">
               {strip.map((t) => {
                 const locked = lockedTab(t.key)
                 return (
@@ -515,7 +515,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
                 )
               })}
             </ul>
-          </section>
+          </Container>
         )}
 
         {/* The report. */}

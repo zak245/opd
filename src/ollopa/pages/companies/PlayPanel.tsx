@@ -111,7 +111,7 @@ export function PlayPanel({ open, onOpenChange, view, user, currency, onRun }: {
           <Input id="play-recheck" type="date" className="mt-1" value={recheck} onChange={(e) => setRecheck(e.target.value)} />
         </div>
 
-        <div className="surface-raised rounded-md border p-2">
+        <div className="border-t pt-2">
           <div className="t-label">The agent's draft note <span className="font-normal text-muted-foreground">· draft, logged, not sent</span></div>
           <p className="mt-1 t-small text-muted-foreground">
             {play.kind === "expansion"

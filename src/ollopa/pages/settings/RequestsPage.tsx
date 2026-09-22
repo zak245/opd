@@ -12,6 +12,7 @@ import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { Door, DoorGroup } from "../../ui/Door"
@@ -144,7 +145,8 @@ export function RequestsPage({ session }: { session: Session }) {
     <div className="block sm:flex sm:h-full sm:flex-col">
       <DoorGroup>
         <div className="shrink-0 px-4 pt-5 sm:px-6">
-          <p className="text-sm">
+          <Group className="rounded-[var(--radius-container)] px-3 py-2">
+          <p className="t-body">
             <strong className="font-semibold">{plural(open.length, "waiting", "waiting")}</strong>
             {" · "}
             {past.length === 0
@@ -152,7 +154,8 @@ export function RequestsPage({ session }: { session: Session }) {
               : <Chip status="overdue">{past.length} past {target} business days</Chip>}
             {oldest && <> · oldest {businessDaysBetween(oldest.raisedOn)} days ({oldest.requester.user})</>}
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Nothing here closes on its own.</p>
+          <p className="t-small mt-0.5 text-muted-foreground">Nothing here closes on its own.</p>
+          </Group>
 
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <button
@@ -231,11 +234,13 @@ export function RequestsPage({ session }: { session: Session }) {
 
         {/* At phone width the table becomes cards carrying the outcome, the waiting time, the
             affected count, the cost where there is one, and the state. Nothing changes level. */}
-        <ul className="grid gap-2 px-4 pb-6 pt-4 sm:hidden">
+        <div className="px-4 pb-6 pt-4 sm:hidden">
+        <Container component="list" heading="The queue" count={`${rows.length} shown of ${all.length}`} padded={false} bodyClassName="px-0">
+        <ul>
           {rows.map((r) => {
             const w = waitingOf(r, target)
             return (
-              <li key={r.id} className="surface-raised rounded-[var(--radius-container)] border p-3">
+              <li key={r.id} className="border-t px-4 py-3 first:border-t-0">
                 <a className="text-sm font-medium underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}
@@ -253,6 +258,8 @@ export function RequestsPage({ session }: { session: Session }) {
             )
           })}
         </ul>
+        </Container>
+        </div>
 
         <div className="hidden min-h-0 flex-1 sm:block">
           <TablePage<Request>

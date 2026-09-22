@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDoorState } from "../../ui/Door"
+import { Container } from "../../ui/Surface"
 import { money as usd, type Plan } from "../../ui/gate"
 import { toast } from "../../templates/TablePage"
 import type { Tile } from "./compute"
@@ -19,9 +20,10 @@ import type { Tile } from "./compute"
 export function TileRow({ tiles, onRecords }: { tiles: Tile[]; onRecords?: (t: Tile) => void }) {
   return (
     // Two per row on a phone, then one row across: sourced and influenced must stay side by side.
-    <ul className={cn("grid grid-cols-2 gap-2 sm:grid-cols-3", tiles.length >= 6 ? "lg:grid-cols-6" : "lg:grid-cols-5")}>
+    <Container as="ul" component="section" padded={false}
+      bodyClassName={cn("grid grid-cols-2 sm:grid-cols-3", tiles.length >= 6 ? "lg:grid-cols-6" : "lg:grid-cols-5")}>
       {tiles.map((t) => (
-        <li key={t.id} className={cn("rounded-lg border p-3", t.tone === "warning" && "border-[color:var(--warning)]")}>
+        <li key={t.id} className={cn("border-r p-3 last:border-r-0", t.tone === "warning" && "border-l-2 border-l-[color:var(--warning)]")}>
           <div className="t-small text-muted-foreground">{t.label}</div>
           {/* A count is a link to its records; a zero is data, not a door. */}
           {t.records && onRecords ? (
@@ -45,7 +47,7 @@ export function TileRow({ tiles, onRecords }: { tiles: Tile[]; onRecords?: (t: T
           )}
         </li>
       ))}
-    </ul>
+    </Container>
   )
 }
 
@@ -113,10 +115,12 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
   }
 
   return (
-    <section className="rounded-lg border">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
-        <h3 className="t-body font-medium">{caption} <span className="font-normal tabular-nums text-muted-foreground">({rows.length})</span></h3>
-        <div className="flex items-center gap-2" data-print-hide>
+    <Container
+      component="table"
+      padded={false}
+      heading={caption}
+      count={rows.length}
+      actions={<div className="flex items-center gap-2" data-print-hide>
           {aside}
           <Popover>
             <PopoverTrigger asChild>
@@ -142,11 +146,10 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
               </ul>
             </PopoverContent>
           </Popover>
-        </div>
-      </div>
-
+        </div>}
+    >
       {rows.length === 0 ? (
-        <div className="px-3 py-8 text-center t-body text-muted-foreground">{empty ?? "Nothing in this range."}</div>
+        <div className="border-t px-3 py-8 text-center t-body text-muted-foreground">{empty ?? "Nothing in this range."}</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-max t-body">
@@ -182,7 +185,7 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
           </table>
         </div>
       )}
-    </section>
+    </Container>
   )
 }
 

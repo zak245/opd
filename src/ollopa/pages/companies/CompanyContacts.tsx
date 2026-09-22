@@ -8,7 +8,7 @@
 // The one way out is the "Open in People" link in the section's heading, and it exists for one job:
 // acting on the whole set at once. It carries this company as the filter and puts the record on the
 // trail, so the way back is one crumb and lands on the row that was left.
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -97,6 +97,86 @@ const EMPTY: ListView = { q: "", stage: "all", inSeq: "all", title: "all", page:
  * the page rather than keep it mounted. In memory only: never a storage key, and gone on a reload.
  */
 const views = new Map<string, ListView>()
+const viewListeners = new Set<() => void>()
+
+function setView(companyId: string, next: ListView) {
+  views.set(companyId, next)
+  viewListeners.forEach((l) => l())
+}
+
+/**
+ * The list's own state, read by the two halves of it: the toolbar in the section's header and the
+ * rows in its body. One store rather than props, because the container's header and its body are
+ * two slots of the record's section and the record must not re-render when somebody types here.
+ */
+function useView(companyId: string): [ListView, (patch: Partial<ListView>) => void] {
+  const view = useSyncExternalStore(
+    (l) => { viewListeners.add(l); return () => { viewListeners.delete(l) } },
+    () => views.get(companyId) ?? EMPTY,
+    () => EMPTY,
+  )
+  return [view, (patch) => setView(companyId, { ...view, ...patch })]
+}
+
+/** The filter chips a company's list carries, from the people held at it. */
+function optionsOf(contacts: Contact[]) {
+  return {
+    stages: unique(contacts.map((c) => c.stage)),
+    titles: unique(contacts.map((c) => c.title)),
+  }
+}
+
+/** One chip: a select that reads and writes the list's state. */
+function Chip({ label, value, onChange, options }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-8 w-auto min-w-32 t-small" aria-label={label}><SelectValue /></SelectTrigger>
+      <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+    </Select>
+  )
+}
+
+/**
+ * The contacts list's toolbar: the search and the three filters this seat uses, drawn in the
+ * section's header beside its count (DESIGN.md §5, containment).
+ */
+export function CompanyContactsToolbar({ companyId, contacts, companyName, children }: {
+  companyId: string
+  contacts: Contact[]
+  companyName: string
+  /** The way out of the list, which the section's header also carries. */
+  children?: React.ReactNode
+}) {
+  const [view, show] = useView(companyId)
+  const { stages, titles } = useMemo(() => optionsOf(contacts), [contacts])
+  return (
+    <>
+      <Input
+        className="h-8 w-48"
+        aria-label={`Find a person at ${companyName}`}
+        placeholder="Find a person here"
+        value={view.q}
+        onChange={(e) => show({ q: e.target.value, page: 0 })}
+      />
+      <Chip label="Stage" value={view.stage} onChange={(v) => show({ stage: v, page: 0 })}
+            options={[{ value: "all", label: "Stage: all" }, ...stages.map((x) => ({ value: x, label: x }))]} />
+      <Chip label="In a sequence" value={view.inSeq} onChange={(v) => show({ inSeq: v, page: 0 })}
+            options={[
+              { value: "all", label: "In a sequence: all" },
+              { value: "yes", label: "In a sequence" },
+              { value: "no", label: "Not in a sequence" },
+            ]} />
+      <Chip label="Title" value={view.title} onChange={(v) => show({ title: v, page: 0 })}
+            options={[{ value: "all", label: "Title: all" }, ...titles.map((x) => ({ value: x, label: x }))]} />
+      {children}
+    </>
+  )
+}
 
 export function CompanyContacts({ companyId, contacts, companyName, sequenceName, pageRenders }: {
   /** Which company's list this is: what the remembered search and page are keyed by. */
@@ -108,16 +188,9 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
   /** Development only: the record's render count, shown here where the rows are, for the same check. */
   pageRenders: number
 }) {
-  const [view, setView] = useState<ListView>(() => views.get(companyId) ?? EMPTY)
+  const [view, show] = useView(companyId)
   const { q, stage, inSeq, title, page } = view
   const listRenders = useRenderCount()
-
-  /** Every change to the list writes what is on screen, so coming back lands on the same view. */
-  const show = (patch: Partial<ListView>) => {
-    const next = { ...view, ...patch }
-    views.set(companyId, next)
-    setView(next)
-  }
 
   // What was done to these people in this session — from this list, or from the pane reading one of
   // them beside it. One store, read by both, so the row and the pane can never say two different
@@ -127,9 +200,6 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
   // The undo window closing is a thing that happens without anybody clicking, so the list has to be
   // told the time has passed.
   const [, setTick] = useState(0)
-
-  const stages = useMemo(() => unique(contacts.map((c) => c.stage)), [contacts])
-  const titles = useMemo(() => unique(contacts.map((c) => c.title)), [contacts])
 
   const sequenceOf = (c: Contact) => {
     const edited = edits[c.id]?.sequence
@@ -192,33 +262,14 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
     return () => window.clearTimeout(t)
   }, [undoUntil])
 
-  const chip = (label: string, value: string, key: keyof ListView, options: { value: string; label: string }[]) => (
-    <Select value={value} onValueChange={(v) => show({ [key]: v, page: 0 })}>
-      <SelectTrigger className="h-8 w-auto min-w-32 t-small" aria-label={label}><SelectValue /></SelectTrigger>
-      <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-    </Select>
-  )
-
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 pb-3">
-        <Input
-          className="h-8 w-56"
-          aria-label={`Find a person at ${companyName}`}
-          placeholder="Find a person here"
-          value={q}
-          onChange={(e) => show({ q: e.target.value, page: 0 })}
-        />
-        {chip("Stage", stage, "stage", [{ value: "all", label: "Stage: all" }, ...stages.map((s) => ({ value: s, label: s }))])}
-        {chip("In a sequence", inSeq, "inSeq", [
-          { value: "all", label: "In a sequence: all" },
-          { value: "yes", label: "In a sequence" },
-          { value: "no", label: "Not in a sequence" },
-        ])}
-        {chip("Title", title, "title", [{ value: "all", label: "Title: all" }, ...titles.map((t) => ({ value: t, label: t }))])}
-        <RenderCount label="record" count={pageRenders} />
-        <RenderCount label="contacts" count={listRenders} />
-      </div>
+      {(import.meta.env.DEV) && (
+        <div className="flex flex-wrap items-center gap-2 pb-2">
+          <RenderCount label="record" count={pageRenders} />
+          <RenderCount label="contacts" count={listRenders} />
+        </div>
+      )}
 
       {/* Renders nothing: it turns the page under a walk that has left the rows on screen. */}
       <PaneFollower onTarget={followPane} />

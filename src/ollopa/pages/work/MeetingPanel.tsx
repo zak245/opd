@@ -278,7 +278,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
             {hasTranscripts(p.session.business) && (
               <div>
                 <div className="text-xs text-muted-foreground">Transcript · from {seed.integrations[0]?.name ?? "the connected recorder"}</div>
-                <p className="mt-1 rounded-md border surface-raised p-2 text-xs text-muted-foreground">
+                <p className="mt-1 border-l pl-2 text-xs text-muted-foreground">
                   “…the part that hurts is the Thursday rebuild. My manager spends half a day on it and I still get asked
                   why the number moved.” — {p.contactName}, {day(TODAY)}
                 </p>
@@ -301,7 +301,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
         )}
 
         {/* ------------------------------------------------------------------ the handoff block */}
-        <section className="rounded-lg border p-3">
+        <section className="border-t pt-3">
           <h3 className="text-sm font-medium">{aes.length ? "Hand this over" : "Turn this into a deal"}</h3>
           <div className="space-y-3 pt-2">
             {HANDOFF_FIELDS.map((f) => (

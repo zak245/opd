@@ -18,6 +18,7 @@ import { useRoute } from "@/app/router"
 import { href } from "@/app/router"
 import { useEdit } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { Container, Group } from "../../ui/Surface"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
@@ -126,13 +127,144 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
     pulled.current = ""
   }, [sendState])
 
+  /**
+   * The composer is the one container-low band this container holds: it sits at the foot of the
+   * thread, edge to edge, rather than in a box of its own (DESIGN.md §5, containment).
+   */
+  const composer = (
+    <Group as="div" className="rounded-none border-x-0 border-b-0 px-4 py-3" data-composer>
+            <div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="t-label text-muted-foreground">
+                  To
+                  <Input className="mt-1 h-8" readOnly value={contact?.email ?? reply.contact} aria-label="Recipient" />
+                </label>
+                <label className="t-label text-muted-foreground">
+                  Subject
+                  <Input className="mt-1 h-8" value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" />
+                </label>
+              </div>
+              {cc && (
+                <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                  <label className="text-xs text-muted-foreground">Cc<Input className="mt-1 h-8" aria-label="Cc" /></label>
+                  <label className="text-xs text-muted-foreground">Bcc<Input className="mt-1 h-8" aria-label="Bcc" /></label>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <Textarea
+                  ref={area}
+                  aria-label={`Reply to ${reply.contact}`}
+                  rows={5}
+                  value={body}
+                  onChange={(e) => { setBody(e.target.value); setFromDraft(false) }}
+                  placeholder={`Write back to ${reply.contact.split(" ")[0]}`}
+                />
+              </div>
+
+              {/* The drafting agent's reply sits beside the composer, never in a queue of its own. */}
+              {draft && (
+                <div className="pt-2">
+                  <Door id="inbox.thread.agent-draft" label={`Agent draft · ${words(draft.body)} words`} defaultOpen={disclosure.level("inbox.agent-draft") === 1}>
+                    <p className="t-small text-muted-foreground">Written by the {draft.by} · {draft.state}</p>
+                    <p className="whitespace-pre-line pt-1 t-body">{draft.body}</p>
+                    <Button size="sm" variant="outline" className="mt-2" onClick={() => {
+                      setBody(draft.body)
+                      setSubject(draft.subject)
+                      setFromDraft(true)
+                      area.current?.focus()
+                    }}>
+                      Load into the composer
+                    </Button>
+                  </Door>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                {/* Sending is the one act this half of the page exists for, and it cannot be taken
+                    back, so it is the filled control and the only one carrying a line: what it
+                    spends. Everything else here is free and reversible and says nothing. */}
+                <Actions
+                  surface="card"
+                  items={[{
+                    kind: "primary",
+                    label: "Send",
+                    onClick: send,
+                    cost: "1 email",
+                    consequence: `to ${reply.contact} from ${mailbox}`,
+                    disabledBecause: body.trim() ? undefined : "Write something first",
+                  }]}
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" aria-label="Send options: schedule, signature, Cc and Bcc, attach">Send ▾</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onSelect={() => say(`Reply to ${reply.contact} scheduled for tomorrow 08:00.`)}>Schedule for later</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setSignature((v) => !v)}>{signature ? "Leave the signature out" : "Include the signature"}</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setCc((v) => !v)}>{cc ? "Hide Cc and Bcc" : "Cc and Bcc"}</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => say("Attaching a file is not built in this demo.")}><Paperclip className="size-3.5" aria-hidden="true" /> Attach a file</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {savedRepliesAtLevelOne ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Insert a saved reply</Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {saved.map((s) => (
+                        <DropdownMenuItem key={s.name} onSelect={() => setBody(s.body.replace("{first name}", reply.contact.split(" ")[0]))}>{s.name}</DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button size="sm" variant="ghost" className="text-xs">Insert a saved reply</Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {saved.map((s) => (
+                        <DropdownMenuItem key={s.name} onSelect={() => setBody(s.body.replace("{first name}", reply.contact.split(" ")[0]))}>{s.name}</DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                <span className="ml-auto">
+                  <Actions surface="card" items={[{ kind: "secondary", label: "Book a meeting", onClick: onBook }]} />
+                </span>
+              </div>
+
+              {/* What the send is doing, where it was caused. For ten seconds it can be pulled back;
+                  after that it reads Sent and there is nothing to undo. */}
+              {sendState?.sending === true && (
+                <p role="status" aria-live="polite" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
+                  <Chip status="Sending">Sending</Chip>
+                  <span className="t-small min-w-0 flex-1 text-muted-foreground">to {reply.contact} from {mailbox}</span>
+                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={pullBack}>Undo</Button>
+                </p>
+              )}
+              {sendState?.sent === true && (
+                <p role="status" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
+                  <Chip status="Sent">Sent</Chip>
+                  <span className="t-small text-muted-foreground">to {reply.contact} from {mailbox}</span>
+                </p>
+              )}
+            </div>
+    </Group>
+  )
+
   return (
-    <section
+    // The open thread is a container of its own beside the list: the person's header at the top,
+    // the messages as divided rows, and the composer as the one container-low band at the bottom.
+    // Nothing inside it is a second box (DESIGN.md §5, containment).
+    <Container
+      as="section"
+      component="section"
       aria-label={`Thread with ${reply.contact}`}
+      padded={false}
       className="flex h-full min-h-0 flex-col"
+      bodyClassName="min-h-0 flex-1 divide-y overflow-y-auto"
     >
       <DoorGroup>
-        <header className="shrink-0 border-b px-4 py-3">
+        <header className="surface-container sticky top-0 z-[1] border-b px-4 py-3">
           <div className="flex items-start gap-2">
             {/* A destination, so a real link: it copies, it opens in a new tab, and the click
                 keeps the list where it is rather than reloading it (DESIGN.md §1). */}
@@ -186,9 +318,9 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
-          {/* -------------------------------------------------------------------- the reply itself */}
-          <article className="surface-raised rounded-lg border p-3">
+        {/* -------------------------------------------------------------------- the reply itself */}
+        <div>
+          <article className="px-4 py-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-2">
               <span className="t-body font-medium">{reply.contact}</span>
               <span className="t-small tabular-nums text-muted-foreground">{waiting(reply.received)}</span>
@@ -206,7 +338,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
           </article>
 
           {/* -------------------------------------------------------------- the doors of the thread */}
-          <div>
+          <div className="divide-y border-t">
             <Door id="inbox.thread.earlier" label="Earlier messages" count={sent.length} defaultOpen={disclosure.level("inbox.thread.earlier-messages") === 1}>
               <ul className="space-y-3">
                 {sent.map((m, i) => (
@@ -241,124 +373,11 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
             </Door>
           </div>
 
-          {/* ------------------------------------------------------------------------ the composer */}
-          <div className="surface-raised rounded-lg border p-3" data-composer>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <label className="t-label text-muted-foreground">
-                To
-                <Input className="mt-1 h-8" readOnly value={contact?.email ?? reply.contact} aria-label="Recipient" />
-              </label>
-              <label className="t-label text-muted-foreground">
-                Subject
-                <Input className="mt-1 h-8" value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" />
-              </label>
-            </div>
-            {cc && (
-              <div className="grid gap-2 pt-2 sm:grid-cols-2">
-                <label className="text-xs text-muted-foreground">Cc<Input className="mt-1 h-8" aria-label="Cc" /></label>
-                <label className="text-xs text-muted-foreground">Bcc<Input className="mt-1 h-8" aria-label="Bcc" /></label>
-              </div>
-            )}
-
-            <div className="pt-2">
-              <Textarea
-                ref={area}
-                aria-label={`Reply to ${reply.contact}`}
-                rows={5}
-                value={body}
-                onChange={(e) => { setBody(e.target.value); setFromDraft(false) }}
-                placeholder={`Write back to ${reply.contact.split(" ")[0]}`}
-              />
-            </div>
-
-            {/* The drafting agent's reply sits beside the composer, never in a queue of its own. */}
-            {draft && (
-              <div className="pt-2">
-                <Door id="inbox.thread.agent-draft" label={`Agent draft · ${words(draft.body)} words`} defaultOpen={disclosure.level("inbox.agent-draft") === 1}>
-                  <p className="t-small text-muted-foreground">Written by the {draft.by} · {draft.state}</p>
-                  <p className="whitespace-pre-line pt-1 t-body">{draft.body}</p>
-                  <Button size="sm" variant="outline" className="mt-2" onClick={() => {
-                    setBody(draft.body)
-                    setSubject(draft.subject)
-                    setFromDraft(true)
-                    area.current?.focus()
-                  }}>
-                    Load into the composer
-                  </Button>
-                </Door>
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              {/* Sending is the one act this half of the page exists for, and it cannot be taken
-                  back, so it is the filled control and the only one carrying a line: what it
-                  spends. Everything else here is free and reversible and says nothing. */}
-              <Actions
-                surface="card"
-                items={[{
-                  kind: "primary",
-                  label: "Send",
-                  onClick: send,
-                  cost: "1 email",
-                  consequence: `to ${reply.contact} from ${mailbox}`,
-                  disabledBecause: body.trim() ? undefined : "Write something first",
-                }]}
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" aria-label="Send options: schedule, signature, Cc and Bcc, attach">Send ▾</Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onSelect={() => say(`Reply to ${reply.contact} scheduled for tomorrow 08:00.`)}>Schedule for later</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setSignature((v) => !v)}>{signature ? "Leave the signature out" : "Include the signature"}</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setCc((v) => !v)}>{cc ? "Hide Cc and Bcc" : "Cc and Bcc"}</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => say("Attaching a file is not built in this demo.")}><Paperclip className="size-3.5" aria-hidden="true" /> Attach a file</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {savedRepliesAtLevelOne ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Insert a saved reply</Button></DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {saved.map((s) => (
-                      <DropdownMenuItem key={s.name} onSelect={() => setBody(s.body.replace("{first name}", reply.contact.split(" ")[0]))}>{s.name}</DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button size="sm" variant="ghost" className="text-xs">Insert a saved reply</Button></DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {saved.map((s) => (
-                      <DropdownMenuItem key={s.name} onSelect={() => setBody(s.body.replace("{first name}", reply.contact.split(" ")[0]))}>{s.name}</DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-
-              <span className="ml-auto">
-                <Actions surface="card" items={[{ kind: "secondary", label: "Book a meeting", onClick: onBook }]} />
-              </span>
-            </div>
-
-            {/* What the send is doing, where it was caused. For ten seconds it can be pulled back;
-                after that it reads Sent and there is nothing to undo. */}
-            {sendState?.sending === true && (
-              <p role="status" aria-live="polite" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
-                <Chip status="Sending">Sending</Chip>
-                <span className="t-small min-w-0 flex-1 text-muted-foreground">to {reply.contact} from {mailbox}</span>
-                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={pullBack}>Undo</Button>
-              </p>
-            )}
-            {sendState?.sent === true && (
-              <p role="status" className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
-                <Chip status="Sent">Sent</Chip>
-                <span className="t-small text-muted-foreground">to {reply.contact} from {mailbox}</span>
-              </p>
-            )}
-          </div>
+          {/* The composer closes the thread: the one container-low band this container holds, edge
+              to edge at the bottom rather than a box of its own (DESIGN.md §5, containment). */}
+          {composer}
         </div>
       </DoorGroup>
-    </section>
+    </Container>
   )
 }

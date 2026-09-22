@@ -21,6 +21,7 @@ import type { Session } from "../../session"
 import { copyRows, usedByLine } from "./Templates"
 import { engage } from "./store"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container } from "../../ui/Surface"
 import { BesideLink, FollowLink, ago, day, h1Of, n, toast } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
@@ -175,16 +176,18 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
           </div>
 
           {/* A section, never a door: who else receives this edit. */}
-          <section>
-            <SectionHeader
-              title={`Used by ${usedByLine(row)}`}
-              action={uses.length > SEARCH_OVER
-                ? <Input
-                    data-page-search aria-label="Find something that uses this" placeholder="Find one of these"
-                    className="h-8 w-48" value={usesQ} onChange={(e) => setUsesQ(e.target.value)}
-                  />
-                : undefined}
-            />
+          <Container
+            component="list"
+            padded={false}
+            bodyClassName="px-4 pb-3"
+            heading={`Used by ${usedByLine(row)}`}
+            actions={uses.length > SEARCH_OVER
+              ? <Input
+                  data-page-search aria-label="Find something that uses this" placeholder="Find one of these"
+                  className="h-8 w-48" value={usesQ} onChange={(e) => setUsesQ(e.target.value)}
+                />
+              : undefined}
+          >
             {uses.length === 0
               ? <p className="t-body text-muted-foreground">Nothing uses this yet.</p>
               : shownUses.length === 0
@@ -202,13 +205,12 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                     ))}
                   </ul>
                 )}
-          </section>
+          </Container>
         </div>
 
         {/* Preview and the test send, beside the copy they read. */}
         <div className="space-y-3">
-          <section className="rounded-lg border p-3">
-            <SectionHeader title="Preview on a real contact" />
+          <Container component="section" heading="Preview on a real contact">
             <Select value={who} onValueChange={setWho}>
               <SelectTrigger className="w-full" aria-label="Preview for"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -224,10 +226,9 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
               {row.kind === "Template" && <p className="t-body font-medium">{render(subject) || "No subject"}</p>}
               <p className="mt-1 whitespace-pre-wrap text-sm">{render(body)}</p>
             </div>
-          </section>
+          </Container>
 
-          <section className="rounded-lg border p-3">
-            <SectionHeader title="Send a test to me" />
+          <Container component="section" heading="Send a test to me">
             <Actions
               surface="card"
               items={[{
@@ -238,7 +239,7 @@ export function TemplateRecord({ session, id }: { session: Session; id?: string 
                 consequence: `To ${mailboxOf(session)}, nobody else`,
               }]}
             />
-          </section>
+          </Container>
         </div>
       </div>
       <p className="sr-only" role="status" aria-live="polite">{live}</p>

@@ -14,6 +14,7 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container, surfaceClass } from "../../ui/Surface"
 import { Input } from "@/components/ui/input"
 import { navigate } from "@/app/router"
 import { back, useTrail } from "../../chain"
@@ -55,6 +56,9 @@ const SEAT_JOBS: { id: Role; label: string }[] = [
   { id: "marketer", label: "Campaigns and audiences" },
   { id: "cs", label: "Keeping customers and renewals" },
 ]
+
+/** One option, as a divided row inside its question's container. The box is the group, not the row. */
+const ROW = "t-body flex items-center gap-2 border-t px-4 py-3 first:border-t-0"
 
 const STARTER_SEATS = 3
 const PRICE = { Starter: 49, Growth: 79, Scale: 129 }
@@ -214,7 +218,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   return (
     <div className={cn(!inShell && "min-h-screen bg-muted/30")}>
       {!inShell && (
-        <header className="flex h-14 items-center gap-3 border-b surface-raised px-4">
+        <header className={cn(surfaceClass("header"), "flex h-14 items-center gap-3 border-x-0 border-t-0 px-4")}>
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
           <span className="t-label">{workspace.name}</span>
           <span className="t-body text-muted-foreground">· {session.user}</span>
@@ -227,7 +231,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
           How your team works
         </h1>
 
-        <section className="mt-8 grid gap-3 sm:grid-cols-3">
+        <Container component="form" as="section" heading="Your workspace" className="mt-8" bodyClassName="grid gap-3 px-4 pb-4 sm:grid-cols-3">
           <label className="t-label">
             <span className="text-muted-foreground">Workspace name</span>
             <Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
@@ -240,13 +244,14 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
             <span className="text-muted-foreground">Currency</span>
             <Input className="mt-1" value={currency} onChange={(e) => setCurrency(e.target.value)} />
           </label>
-        </section>
+        </Container>
 
-        <fieldset className="mt-8">
-          <legend className="t-section">What are you here to do first?</legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        {/* One container per question, the options divided inside it: the box is the group, and a
+            box per option would be a second group where there is one (DESIGN.md §5). */}
+        <Container as="fieldset" component="form" className="mt-4" aria-label="What are you here to do first?" heading="What are you here to do first?" padded={false}>
+          <div>
             {JOBS.map((j) => (
-              <label key={j.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border p-3", firstJob === j.id && "border-foreground")}>
+              <label key={j.id} className={cn(ROW, firstJob === j.id && "font-medium")}>
                 <input
                   type="radio"
                   name="firstJob"
@@ -257,26 +262,24 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
               </label>
             ))}
           </div>
-        </fieldset>
+        </Container>
 
-        <fieldset className="mt-8">
-          <legend className="t-section">How many people will use it?</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
+        <Container as="fieldset" component="form" className="mt-4" aria-label="How many people will use it?" heading="How many people will use it?" padded={false}
+          footer={<Chip status="new">{priceLine(people)}</Chip>}>
+          <div>
             {SIZES.map((s) => (
-              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border px-3 py-2", people === s.id && "border-foreground")}>
+              <label key={s.id} className={cn(ROW, people === s.id && "font-medium")}>
                 <input type="radio" name="people" checked={people === s.id} onChange={() => { setPeople(s.id); save({ people: s.id }) }} />
                 {s.label}
               </label>
             ))}
           </div>
-          <p className="mt-2"><Chip status="new">{priceLine(people)}</Chip></p>
-        </fieldset>
+        </Container>
 
-        <fieldset className="mt-8">
-          <legend className="t-section">Which of these jobs exist here?</legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Container as="fieldset" component="form" className="mt-4" aria-label="Which of these jobs exist here?" heading="Which of these jobs exist here?" padded={false}>
+          <div>
             {SEAT_JOBS.map((s) => (
-              <label key={s.id} className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border p-3", seats.includes(s.id) && !everything && "border-foreground", everything && "opacity-60")}>
+              <label key={s.id} className={cn(ROW, seats.includes(s.id) && !everything && "font-medium", everything && "opacity-60")}>
                 <input
                   type="checkbox"
                   checked={seats.includes(s.id) && !everything}
@@ -288,18 +291,18 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                 {s.label}
               </label>
             ))}
-            <label className={cn("surface-raised t-body flex items-center gap-2 rounded-[var(--radius-container)] border p-3 sm:col-span-2", everything && "border-foreground")}>
+            <label className={cn(ROW, everything && "font-medium")}>
               <input type="checkbox" checked={everything} onChange={() => { const v = !everything; setEverything(v); setSeats(v ? [] : seats); save({ everything: v, seats: v ? [] : seats }) }} />
               We all do everything
             </label>
           </div>
-        </fieldset>
+        </Container>
 
-        <section aria-live="polite" className="surface-raised mt-8 rounded-[var(--radius-container)] border p-4">
-          <h2 className="t-section">
+        <Container as="section" component="section" aria-live="polite" className="mt-4"
+          heading={<>
             {answered ? PROFILE_LABEL[profile] : "Answer the three questions and this will say what your team gets"}
             {!answered && (firstJob || people || seats.length) ? ` · ${PROFILE_LABEL[profile]} so far` : ""}
-          </h2>
+          </>}>
           {(answered || firstJob || people || seats.length > 0) && (
             <div className="mt-3">
               <ProfileBlock profile={profile} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} />
@@ -328,11 +331,10 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
               </div>
             )}
           </div>
-        </section>
+        </Container>
 
-        <section className="mt-8">
-          <h2 className="t-section">Invite the people you counted</h2>
-          <div className="mt-2 grid gap-2">
+        <Container as="section" component="form" className="mt-4" heading="Invite the people you counted">
+          <div className="grid gap-2">
             {invites.map((row, i) => (
               <div key={i} className="flex flex-wrap gap-2">
                 <Input
@@ -342,7 +344,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
                 />
                 <select
-                  className="surface-raised t-body rounded-[var(--radius-control)] border px-2"
+                  className="t-body rounded-[var(--radius-control)] border bg-transparent px-2"
                   aria-label="Seat"
                   value={row.seat}
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: e.target.value as Role } : r)))}
@@ -353,7 +355,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
             ))}
           </div>
           <Actions className="mt-2" surface="card" items={[{ label: "Add another person", kind: "secondary", onClick: () => setInvites([...invites, { email: "", seat: "sdr" }]) }]} />
-        </section>
+        </Container>
 
         {/* The wizard's footer is a form bar: the primary at the leading edge, Skip after it. */}
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t pt-6">

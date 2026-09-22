@@ -48,6 +48,13 @@ export interface GridProps<T> {
   empty?: ReactNode
   /** Extra controls that sit in the header row beside the column chooser. */
   headerExtra?: ReactNode
+  /**
+   * The page has put this table in a `Container` (DESIGN.md §5, containment). The grid then paints
+   * no surface and draws no edge of its own — the container's outline is the boundary — its toolbar
+   * lives in the container's header (see `GridColumns`), and the phone list is divided rows rather
+   * than a card each, because a card inside a container is a box inside a box.
+   */
+  inContainer?: boolean
   /** What a row is called, for the crumb and for the return cue that lights it on the way back. */
   rowLabel?: (row: T) => string
 }
@@ -111,7 +118,7 @@ export function Grid<T>(p: GridProps<T>) {
 
   return (
     <div>
-      {(optional.length > 0 || p.headerExtra) && (
+      {!p.inContainer && (optional.length > 0 || p.headerExtra) && (
         <div className="hidden flex-wrap items-center justify-end gap-2 px-6 pb-2 md:flex">
           {p.headerExtra}
           {optional.length > 0 && (
@@ -143,9 +150,9 @@ export function Grid<T>(p: GridProps<T>) {
       )}
 
       {/* ---------------------------------------------------------------- the table, from tablet up */}
-      <div className="surface-raised hidden overflow-x-auto border-t md:block">
+      <div className={cn("hidden overflow-x-auto md:block", p.inContainer ? "" : "surface-raised border-t")}>
         <Table>
-          <TableHeader className="surface-raised sticky top-0 z-10">
+          <TableHeader className={cn("sticky top-0 z-10", p.inContainer ? "surface-container" : "surface-raised")}>
             <TableRow>
               {shown.map((c) => (
                 <TableHead key={c.key} className={cn("t-label", c.className)}>
@@ -208,9 +215,16 @@ export function Grid<T>(p: GridProps<T>) {
       </div>
 
       {/* -------------------------- the phone: cards carrying every column the desktop row carries */}
-      <ul className="space-y-2 border-t px-4 py-3 md:hidden">
+      {/* The phone: one list with dividers between rows when the page has contained it, and a card
+          each when it has not. A card inside a container reads as two groups where there is one. */}
+      <ul className={cn("md:hidden", p.inContainer ? "" : "space-y-2 border-t px-4 py-3")}>
         {rows.map((row) => (
-          <li key={p.rowKey(row)} data-item={p.rowKey(row)} data-item-label={p.rowLabel?.(row)} className="surface-raised rounded-lg border p-3">
+          <li
+            key={p.rowKey(row)}
+            data-item={p.rowKey(row)}
+            data-item-label={p.rowLabel?.(row)}
+            className={cn(p.inContainer ? "border-t px-4 py-3 first:border-t-0" : "surface-raised rounded-lg border p-3")}
+          >
             <div className="flex items-start gap-2">
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>
               {rowMenu(row)}
@@ -228,5 +242,43 @@ export function Grid<T>(p: GridProps<T>) {
         {rows.length === 0 && <li className="t-body py-8 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</li>}
       </ul>
     </div>
+  )
+}
+
+/**
+ * The column chooser on its own, for a page that has put the grid in a `Container`: the toolbar
+ * belongs in the container's header, and the container is drawn outside the grid.
+ */
+export function GridColumns<T>({ columns, hidden, onHidden }: {
+  columns: GridColumn<T>[]
+  hidden: string[]
+  onHidden: (next: string[]) => void
+}) {
+  const optional = columns.filter((c) => c.optional)
+  if (optional.length === 0) return null
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="t-small h-8">
+          Columns: {optional.map((c) => c.header.toLowerCase()).join(", ")} ({optional.length})
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64">
+        <fieldset>
+          <legend className="t-label pb-2">Columns you can add</legend>
+          <div className="space-y-2">
+            {optional.map((c) => (
+              <label key={c.key} className="t-body flex items-center gap-2">
+                <Checkbox
+                  checked={!hidden.includes(c.key)}
+                  onCheckedChange={(v) => onHidden(v ? hidden.filter((k) => k !== c.key) : [...hidden, c.key])}
+                />
+                {c.header}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </PopoverContent>
+    </Popover>
   )
 }

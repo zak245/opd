@@ -24,6 +24,7 @@ import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { inkOf } from "../../ui/Identity"
 import { warningStatus } from "../deals/pipeline"
 import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
@@ -161,7 +162,8 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
   ] as const
 
   return (
-    <div className="rounded-lg border p-3" data-composer>
+    // No box: this is drawn inside the timeline's container-low band, which is its boundary.
+    <div className="p-0" data-composer>
       <div role="tablist" aria-label="Log activity" className="flex flex-wrap gap-1 pb-2">
         {tabs.map((t) => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
@@ -183,7 +185,8 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
             </Select>
           </label>
           {/* The agent's draft sits beside the human's and is marked as a draft. Sending is the approval. */}
-          <div className="rounded-md border surface-raised p-2 text-xs">
+          {/* Inside the composer's band already: a divider and a line of its own, not a second box. */}
+          <div className="t-small border-t pt-2">
             <div className="font-medium">The agent's draft <span className="font-normal text-muted-foreground">· draft, not sent</span></div>
             <p className="mt-1 text-muted-foreground">Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?</p>
             <Button size="sm" variant="ghost" className="mt-1 h-6 px-1 text-xs"
@@ -683,12 +686,15 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     <ThingPlace id="timeline.list" label="The activity timeline" place="timeline" placeLabel="the timeline" className="space-y-4">
       {groups.map((g) => (
         <section key={g.day}>
-          <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-medium text-muted-foreground">{g.day}</h3>
-          <div className="space-y-2">
+          {/* The day is a divider with a word on it, not a heading over a stack of boxes. */}
+          <h3 className="surface-container t-small sticky top-0 z-10 border-b py-1 font-medium text-muted-foreground">{g.day}</h3>
+          <div>
             {g.items.map((a) => {
               const Icon = KIND_ICON[a.kind]
               return (
-                <article key={a.id} className="flex gap-2.5 rounded-md border p-2.5">
+                // One event is a row in the timeline's container, separated by a divider. A box
+                // each would make every event its own group (DESIGN.md §5, containment).
+                <article key={a.id} className="flex gap-2.5 border-b py-2.5 last:border-b-0">
                   <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm">{a.summary}</div>
@@ -1092,11 +1098,11 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   )
 
   const pinnedNote = pinned ? (
-    <article data-item="timeline.pin" data-item-label="Pinned note" className="mb-3 rounded-md border border-dashed p-2.5">
-      <div className="text-xs font-medium text-muted-foreground">Pinned note</div>
-      <p className="text-sm">{pinned.body}</p>
-      <div className="text-xs text-muted-foreground">{pinned.author} · {day(pinned.at)}</div>
-    </article>
+    <Group as="article" data-item="timeline.pin" data-item-label="Pinned note" className="mb-3 rounded-[var(--radius-container)] border px-3 py-2">
+      <div className="t-small font-medium text-muted-foreground">Pinned note</div>
+      <p className="t-body">{pinned.body}</p>
+      <div className="t-small text-muted-foreground">{pinned.author} · {day(pinned.at)}</div>
+    </Group>
   ) : undefined
 
   const loadOlder = filtered.length > shown ? (
@@ -1458,13 +1464,26 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             Owned by {deal.owner}; only the owner or an admin can act on this deal.
           </span>
         )}
+        /* The timeline is one container: the composer is the container-low band at its top, the
+           events are rows with dividers between them, and the whole thing is a single enclosure
+           rather than a box per event (DESIGN.md §5, containment). It is handed over whole so the
+           band sits inside the container rather than beside it. */
         main={{
           kind: "timeline",
-          composer: composerBlock,
-          filters: filterChips,
-          pinned: pinnedNote,
-          items: timelineItems,
-          footer: loadOlder || residualTabs ? <>{loadOlder}{residualTabs}</> : undefined,
+          items: (
+            <Container component="section" heading="Activity" count={filtered.length} padded={false}>
+              <Group className="border-y px-4 py-3">{composerBlock}</Group>
+              <div className="px-4 pt-3 pb-1">
+                {filterChips}
+              </div>
+              <div className="px-4 pb-3">
+                {pinnedNote}
+                {timelineItems}
+                {loadOlder}
+                {residualTabs}
+              </div>
+            </Container>
+          ),
         }}
         side={cards}
         doors={doors}

@@ -190,15 +190,16 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
       // Who filled it in lives inside the form, whatever the count, and a row opens that person
       // beside the form rather than replacing it.
       id: "submissions", title: "Submissions", count: f.submissions.length,
+      // Search once the list is longer than a screenful of names; it lives in the container's
+      // header, which is where a contained list keeps its toolbar (DESIGN.md §5, containment).
+      action: f.submissions.length > 10
+        ? <Input aria-label="Find a submission by name or address" placeholder="Find a submission" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+        : undefined,
       children: f.submissions.length === 0
         ? <EmptyState title="No submissions yet" body="When somebody fills this in, the answers become a note on their contact record." />
         : (
           <div className="space-y-2">
-            {/* Search once the list is longer than a screenful of names (over ten). */}
-            {f.submissions.length > 10 && (
-              <Input aria-label="Find a submission by name or address" placeholder="Find a submission" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-            )}
-            <ul className="text-sm">
+            <ul className="t-body">
               {submissions.map((s) => {
                 const contact = seed.contacts.find((c) => c.id === s.contactId)
                 return (

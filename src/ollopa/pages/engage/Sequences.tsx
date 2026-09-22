@@ -19,6 +19,7 @@ import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { Actions } from "../../ui/Actions"
+import { Container } from "../../ui/Surface"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
@@ -212,38 +213,7 @@ export function SequencesPage({ session }: { session: Session }) {
         )}
 
         <div className="px-4 pt-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              data-page-search aria-label="Search sequences by name or owner" placeholder="Search sequences"
-              value={q} onChange={(e) => setQ(e.target.value)} className="w-56"
-            />
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-44" aria-label="Status"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Status: all</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Paused">Paused</SelectItem>
-                <SelectItem value="Auto-paused">Auto-paused</SelectItem>
-                <SelectItem value="Draft">Draft</SelectItem>
-                <SelectItem value="Archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-            {showOwnerFilter && (
-              <Select value={owner} onValueChange={setOwner}>
-                <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Mine">Owner: mine</SelectItem>
-                  <SelectItem value="all">Owner: everyone</SelectItem>
-                  {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
-            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-              {n(rows.length)} shown of {n(b.counts.sequences)}
-            </span>
-          </div>
-
-          <div className="mt-2 rounded-lg border">
+          <div>
             <Door id="sequences.columns" label="Columns: opened, interested, meetings, created, mailbox, schedule">
               <div className="flex flex-wrap gap-4 py-1 text-sm">
                 {([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const).map(([k, label]) => (
@@ -257,7 +227,42 @@ export function SequencesPage({ session }: { session: Session }) {
           </div>
         </div>
 
-        <div className="mt-3 min-h-0 flex-1 overflow-auto">
+        {/* The table lives in a container: its toolbar and its count in the header (DESIGN.md §5,
+            containment). The phone cards are the same container's body at that width. */}
+        <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
+          <Container
+            component="table"
+            padded={false}
+            heading="Sequences"
+            count={`${n(rows.length)} shown of ${n(b.counts.sequences)}`}
+            actions={<>
+              <Input
+                data-page-search aria-label="Search sequences by name or owner" placeholder="Search sequences"
+                value={q} onChange={(e) => setQ(e.target.value)} className="w-56"
+              />
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-44" aria-label="Status"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Status: all</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Paused">Paused</SelectItem>
+                  <SelectItem value="Auto-paused">Auto-paused</SelectItem>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="Archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              {showOwnerFilter && (
+                <Select value={owner} onValueChange={setOwner}>
+                  <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mine">Owner: mine</SelectItem>
+                    <SelectItem value="all">Owner: everyone</SelectItem>
+                    {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </>}
+          >
           <DataTable<Sequence>
             rows={rows}
             rowKey={(s) => s.id}
@@ -308,6 +313,7 @@ export function SequencesPage({ session }: { session: Session }) {
                 : undefined
             }
           />
+          </Container>
         </div>
       </div>
     </DoorGroup>

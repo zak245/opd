@@ -26,6 +26,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { Actions } from "../../ui/Actions"
+import { Container, Group } from "../../ui/Surface"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -751,21 +752,14 @@ export function PeoplePage({ session }: { session: Session }) {
     )
   }
 
-  const pad = density === "Compact" ? "py-1" : "py-2"
-
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* --------------------------------------------------------------------------- 1. header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-6">
-        <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("people").ink }}>
-          <FamilyIcon of="people" size="header" />
-          People <span className="font-normal tabular-nums text-muted-foreground">· {total.toLocaleString()}</span>
-        </h2>
-        <div data-print-hide>{addPeople}</div>
-      </div>
-
-      {/* ---------------------------------------------------------------------- 2. the views row */}
-      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 lg:px-6" data-container="people.views.row" data-container-label="the views row" data-print-hide>
+  /**
+   * What the table's container carries in its header: the views, the search, the filter chips, the
+   * result count and the columns control (DESIGN.md §5 — a table's toolbar and its count belong to
+   * the container, not to the canvas above it).
+   */
+  const tableHeader = (
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full flex-wrap items-center gap-2" data-container="people.views.row" data-container-label="the views row" data-print-hide>
         {rHead && d.level("people.views.saved") === 1 && views
           .filter((v) => v.defaultFor.includes(session.role) || v.owner === session.user || (v.shipped && d.level("people.views.needs-enrichment") === 1))
           .slice(0, 4)
@@ -818,8 +812,7 @@ export function PeoplePage({ session }: { session: Session }) {
         )}
       </div>
 
-      {/* --------------------------------------------------------------------- 3. the filter bar */}
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3 lg:px-6" data-print-hide>
+      <div className="flex w-full flex-wrap items-center gap-2" data-print-hide>
         <Input
           ref={searchRef}
           data-item="people.search"
@@ -908,7 +901,23 @@ export function PeoplePage({ session }: { session: Session }) {
           )}
         </span>
       </div>
+    </div>
+  )
 
+  const pad = density === "Compact" ? "py-1" : "py-2"
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      {/* --------------------------------------------------------------------------- 1. header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-6">
+        <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("people").ink }}>
+          <FamilyIcon of="people" size="header" />
+          People <span className="font-normal tabular-nums text-muted-foreground">· {total.toLocaleString()}</span>
+        </h2>
+        <div data-print-hide>{addPeople}</div>
+      </div>
+
+      {/* the header rows now live in `tableHeader`, in the container's header */}
       {/* --------------------------------------------- 3b. the tabs, and the strip above the results */}
       {!rFlat && (
         <ParodyTabs
@@ -925,26 +934,8 @@ export function PeoplePage({ session }: { session: Session }) {
         {activeCount === 0 && !q ? "No filters" : [q && `Search: ${q}`, ...defs.filter((f) => active[f.id]?.length).map((f) => chipLabel(f, active[f.id]))].filter(Boolean).join(" · ")}
       </p>
 
-      {/* ----------------------------------------------------------------- 4. the selection bar */}
-      {rStable ? (
-        count > 0 && (
-          <div
-            className="flex flex-wrap items-center gap-2 border-y surface-raised px-4 py-2 lg:px-6"
-            data-container="people.bulk.bar"
-            data-container-label="the selection bar"
-            data-print-hide
-          >
-            {selectionControls}
-            <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
-          </div>
-        )
-      ) : (
-        /* Before rule 6 the strip is simply always there, selection or no selection. */
-        <BulkSelection controls={selectionControls}>{bulkStrip}</BulkSelection>
-      )}
-
       {/* ------------------------------------------------------------------------- 5. the table */}
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 gap-4 px-4 pb-4 pt-3 lg:px-6">
         {!rFlat && (
           <ParodySidebar
             popular={popularFilters}
@@ -972,7 +963,56 @@ export function PeoplePage({ session }: { session: Session }) {
           </FiltersPanelFrame>
         )}
 
-        <div className="min-w-0 flex-1 overflow-auto border-t" data-container="people.table.columns" data-container-label="the table header">
+        {/* The table lives in a container: the toolbar and the count in its header, the pager in
+            its footer, and the selection band the one container-low region inside it. Nothing here
+            sits naked on the canvas any more (DESIGN.md §5, containment). */}
+        <Container
+          component="table"
+          padded={false}
+          heading="People"
+          actions={tableHeader}
+          className="flex min-w-0 flex-1 flex-col"
+          bodyClassName="min-h-0 flex-1 overflow-auto"
+          data-container="people.table.columns"
+          data-container-label="the table header"
+          footer={
+            <>
+              {sorted.length > shown && (
+                <Button variant="outline" size="sm" onClick={() => setShown((n) => n + pageSize)}>
+                  Show {Math.min(pageSize, sorted.length - shown)} more
+                </Button>
+              )}
+              <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+                <label htmlFor="rows-per-page">Rows per page</label>
+                <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setShown(Number(v)) }}>
+                  <SelectTrigger id="rows-per-page" className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>{[25, 50, 100].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
+                </Select>
+              </span>
+              <Button size="sm" variant="ghost" className="text-xs md:hidden" onClick={() => setSelectMode((v) => !v)}>
+                {selectMode ? "Done selecting" : "Select"}
+              </Button>
+            </>
+          }
+        >
+          {/* The selection band: a group inside the container, never a second box. */}
+          {rStable ? (
+            count > 0 && (
+              <Group
+                className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b px-4 py-2"
+                data-container="people.bulk.bar"
+                data-container-label="the selection bar"
+                data-print-hide
+              >
+                {selectionControls}
+                <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
+              </Group>
+            )
+          ) : (
+            /* Before rule 6 the strip is simply always there, selection or no selection. */
+            <BulkSelection controls={selectionControls}>{bulkStrip}</BulkSelection>
+          )}
+
           {/* Phone: the same items as cards, no level change. */}
           <ul className="divide-y md:hidden">
             {page.map((p, i) => (
@@ -1016,7 +1056,7 @@ export function PeoplePage({ session }: { session: Session }) {
           </ul>
 
           <table className="hidden w-full caption-bottom text-sm md:table">
-            <thead className="sticky top-0 z-10 bg-background">
+            <thead className="surface-container-low sticky top-0 z-10">
               <tr className="border-b">
                 <th scope="col" className="w-8 px-3">
                   <input
@@ -1038,7 +1078,7 @@ export function PeoplePage({ session }: { session: Session }) {
                     {sortHeader(c)}
                   </th>
                 ))}
-                <th scope="col" className="sticky right-0 w-px border-l surface-raised px-2"><span className="sr-only">Actions</span></th>
+                <th scope="col" className="sticky right-0 w-px border-l px-2 [background-color:var(--surface-container-low)]"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -1056,7 +1096,13 @@ export function PeoplePage({ session }: { session: Session }) {
                   onFocus={() => setFocused(i)}
                   onKeyDown={(e) => onRowKey(e, p, i)}
                   onClick={(e) => { if ((e.target as HTMLElement).closest("a,button,input,[role=menuitem]")) return; rowRefs.current[i]?.focus(); setGlancing(p) }}
-                  className={cn("group cursor-pointer border-b hover:bg-muted/40 focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring", selected.includes(p.id) && "bg-muted/60")}
+                  /* The row you are on — hovered, focused, or selected — is the container-low
+                     region inside the table's container (DESIGN.md §5, the level map's `rowOn`). */
+                  className={cn(
+                    "group cursor-pointer border-b focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+                    "hover:[background-color:var(--surface-container-low)] focus-visible:[background-color:var(--surface-container-low)]",
+                    selected.includes(p.id) && "[background-color:var(--surface-container-low)]",
+                  )}
                 >
                   <td className={cn("px-3", pad)}>
                     <input
@@ -1105,7 +1151,7 @@ export function PeoplePage({ session }: { session: Session }) {
                   ))}
                   {/* The menu is always in the row; the named buttons come forward on hover and on
                       keyboard focus, over the row rather than taking a column's width from it. */}
-                  <td className={cn("sticky right-0 w-10 border-l bg-background px-2 group-hover:bg-muted", pad)} onClick={(e) => e.stopPropagation()}>
+                  <td className={cn("sticky right-0 w-10 border-l px-2 [background-color:var(--surface-container)] group-hover:[background-color:var(--surface-container-low)]", pad)} onClick={(e) => e.stopPropagation()}>
                     <div className="relative flex items-center justify-end">
                       <div
                         className="surface-overlay absolute right-7 flex items-center gap-1 rounded-md border opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
@@ -1127,26 +1173,7 @@ export function PeoplePage({ session }: { session: Session }) {
           </table>
 
           {sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}
-
-          {/* ------------------------------------------------------------------- 6. the footer */}
-          <div className="flex flex-wrap items-center justify-center gap-4 border-t px-4 py-3" data-print-hide>
-            {sorted.length > shown && (
-              <Button variant="outline" size="sm" onClick={() => setShown((n) => n + pageSize)}>
-                Show {Math.min(pageSize, sorted.length - shown)} more
-              </Button>
-            )}
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <label htmlFor="rows-per-page">Rows per page</label>
-              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setShown(Number(v)) }}>
-                <SelectTrigger id="rows-per-page" className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>{[25, 50, 100].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
-              </Select>
-            </span>
-            <Button size="sm" variant="ghost" className="text-xs md:hidden" onClick={() => setSelectMode((v) => !v)}>
-              {selectMode ? "Done selecting" : "Select"}
-            </Button>
-          </div>
-        </div>
+        </Container>
       </div>
 
       {pending && (

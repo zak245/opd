@@ -29,6 +29,7 @@ import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Workflow } from "../../data/seed"
 import type { Session } from "../../session"
+import { Container } from "../../ui/Surface"
 import { Grid, type GridColumn } from "./grid"
 import { breachedRows, enrolled7d, notRoutedRuns, runsOf } from "./derive"
 import { ago, day, num } from "./format"
@@ -215,26 +216,40 @@ export function WorkflowsPage({ session }: { session: Session }) {
           />
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto">
-          <div className="flex flex-wrap items-center gap-2 px-6 py-3">
-            <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-8 w-40 text-xs" aria-label="Status"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">On ({on}) · Off ({off})</SelectItem>
-                <SelectItem value="On">On ({on})</SelectItem>
-                <SelectItem value="Off">Off ({off})</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={folder} onValueChange={setFolder}>
-              <SelectTrigger className="h-8 w-40 text-xs" aria-label="Folder"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Folder: all</SelectItem>
-                {[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3 max-sm:px-4">
+          {/* One container: the toolbar and the count in its header, the rows inside it with
+              dividers, nothing naked on the canvas (DESIGN.md §5, containment). */}
+          <Container
+            component="table"
+            padded={false}
+            heading="Workflows"
+            count={filtered.length === rows.workflows.length ? num(rows.workflows.length) : `${num(filtered.length)} shown of ${num(rows.workflows.length)}`}
+            actions={
+              <div className="hidden flex-wrap items-center gap-2 md:flex">
+                <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="t-small h-8 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">On ({on}) · Off ({off})</SelectItem>
+                    <SelectItem value="On">On ({on})</SelectItem>
+                    <SelectItem value="Off">Off ({off})</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={folder} onValueChange={setFolder}>
+                  <SelectTrigger className="t-small h-8 w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Folder: all</SelectItem>
+                    {[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            }
+          >
+          {/* The phone keeps the search in the body: the header there is the title and the count. */}
+          <div className="px-4 pt-3 md:hidden">
+            <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8" />
           </div>
-          <div className="px-6 pb-2">
+          <div className="px-4 py-2">
             <Door id="workflows.filters" label="Additional filters: trigger, owner, folder, archived" count={activeBehind || undefined}>
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 {secondary.map((f) => (
@@ -281,7 +296,9 @@ export function WorkflowsPage({ session }: { session: Session }) {
             onOpen={(w) => open(`/ollopa/workflows/${w.id}`, w.id)}
             rowLabel={(w) => w.name}
             cardTitle={(w) => <span className="font-medium">{w.name}</span>}
+            inContainer
           />
+          </Container>
         </div>
       )}
 

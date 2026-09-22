@@ -25,6 +25,7 @@ import { follow } from "../../chain"
 import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { FamilyIcon, inkOf } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { useEdits } from "../../edits"
@@ -549,28 +550,38 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     const stale = list.filter((x) => warningsOf(x, seed).some((w) => w.kind === "No activity" || w.kind === "Stalled in stage")).length
     const weightedInHeader = one("deals.column.weighted")
     const doorParts = [weightedInHeader ? null : "Weighted total", one("deals.column.stale-count") ? null : "stale deals"].filter(Boolean)
+    const summary = weightedInHeader || one("deals.column.stale-count") || doorParts.length > 0
     return (
-      <section key={stage} className={cn("surface-page flex min-h-0 w-full shrink-0 flex-col rounded-lg border md:w-[17rem]", target === stage && carrying && "ring-2 ring-ring", className)}>
-        <header className="space-y-0.5 border-b px-2.5 py-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <h3 className="t-label">{stage}</h3>
-            <span className="t-small tabular-nums text-muted-foreground">{list.length} · {moneyShort(sum, currency)}</span>
-          </div>
-          {weightedInHeader && <div className="t-small tabular-nums text-muted-foreground">Weighted {moneyShort(weightedOf(list), currency)}</div>}
-          {one("deals.column.stale-count") && <div className="t-small tabular-nums text-muted-foreground">{stale} not moving</div>}
-          {doorParts.length > 0 && (
-            <Door id={`deals.column.${stage}`} label={doorParts.join(" and ").replace(/^s/, "S")}>
-              <dl className="space-y-1 text-xs">
-                {!weightedInHeader && (
-                  <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Weighted total</dt><dd className="tabular-nums">{moneyShort(weightedOf(list), currency)}</dd></div>
-                )}
-                {!one("deals.column.stale-count") && (
-                  <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Not moving</dt><dd className="tabular-nums">{stale}</dd></div>
-                )}
-              </dl>
-            </Door>
-          )}
-        </header>
+      // A stage is a container: its name and its total are the container's header, and the
+      // weighted total and the stale count sit in the one container-low band a container may hold
+      // rather than in a second box (DESIGN.md §5, containment).
+      <Container
+        key={stage}
+        component="section"
+        heading={stage}
+        count={`${list.length} · ${moneyShort(sum, currency)}`}
+        padded={false}
+        className={cn("flex min-h-0 w-full shrink-0 flex-col md:w-[17rem]", target === stage && carrying && "ring-2 ring-ring", className)}
+        bodyClassName="flex min-h-0 flex-1 flex-col"
+      >
+        {summary && (
+          <Group className="space-y-0.5 border-y px-4 py-2">
+            {weightedInHeader && <div className="t-small tabular-nums text-muted-foreground">Weighted {moneyShort(weightedOf(list), currency)}</div>}
+            {one("deals.column.stale-count") && <div className="t-small tabular-nums text-muted-foreground">{stale} not moving</div>}
+            {doorParts.length > 0 && (
+              <Door id={`deals.column.${stage}`} label={doorParts.join(" and ").replace(/^s/, "S")}>
+                <dl className="t-small space-y-1">
+                  {!weightedInHeader && (
+                    <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Weighted total</dt><dd className="tabular-nums">{moneyShort(weightedOf(list), currency)}</dd></div>
+                  )}
+                  {!one("deals.column.stale-count") && (
+                    <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Not moving</dt><dd className="tabular-nums">{stale}</dd></div>
+                  )}
+                </dl>
+              </Door>
+            )}
+          </Group>
+        )}
         <ul
           data-stage-list
           data-stage={stage}
@@ -581,13 +592,13 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         >
           {list.map(renderCard)}
           {list.length === 0 && (
-            <li className="rounded-md border border-dashed px-2 py-6 text-center text-xs text-muted-foreground">
+            <li className="t-small rounded-md border border-dashed px-2 py-6 text-center text-muted-foreground">
               0 · {moneyShort(0, currency)}
               <div>Drop a deal here</div>
             </li>
           )}
         </ul>
-      </section>
+      </Container>
     )
   }
 
@@ -603,7 +614,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     </div>
   ) : (
     <button
-      className="surface-page flex w-12 shrink-0 items-center justify-center rounded-lg border py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="surface-container flex w-12 shrink-0 items-center justify-center rounded-[var(--radius-container)] border py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       aria-expanded={false}
       onClick={() => setRailOpen(true)}
     >
@@ -940,12 +951,14 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           </Door>
         </div>
 
-        {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it. */}
-        <div className="px-4 py-3 sm:px-6">
+        {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it.
+            One band across the top of the board, not four boxes: the sums are read together and a
+            box each would say they are four separate things (DESIGN.md §5, containment). */}
+        <Group as="div" className="mx-4 mb-3 rounded-[var(--radius-container)] border px-4 py-3 sm:mx-6">
           {one("deals.forecast.strip")
             ? strip
             : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
-        </div>
+        </Group>
 
         {workspaceEmpty ? (
           <div className="px-4 pb-6 sm:px-6">

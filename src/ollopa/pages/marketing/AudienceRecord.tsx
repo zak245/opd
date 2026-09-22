@@ -251,22 +251,24 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
     </div>
   )
 
+  /** The list's toolbar lives in its container's header (DESIGN.md §5, containment). */
+  const peopleTools = (
+    <>
+      {/* Search once the list is longer than a screenful of names (over ten). */}
+      {pool.length > 10 && (
+        <Input aria-label="Find a person in this audience" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48" />
+      )}
+      {openCount && <Actions surface="card" items={[{ kind: "secondary", label: "Show everybody", onClick: () => { setRecords(null); setQ("") } }]} />}
+    </>
+  )
+
   const peopleBlock = (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
+      <p className="t-body text-muted-foreground">
           {openCount
             ? <>The first {num(pool.length)} of {num(openCount.count)}.</>
             : <>The first {num(pool.length)} of {num(net)} after suppressions.</>}
-        </p>
-        <div className="flex items-center gap-2">
-          {/* Search once the list is longer than a screenful of names (over ten). */}
-          {pool.length > 10 && (
-            <Input aria-label="Find a person in this audience" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48" />
-          )}
-          {openCount && <Actions surface="card" items={[{ kind: "secondary", label: "Show everybody", onClick: () => { setRecords(null); setQ("") } }]} />}
-        </div>
-      </div>
+      </p>
       <ul className="text-sm">
         {people.map((p) => (
           <li key={p.id} data-item={p.id} data-item-label={p.name} className="t-body flex flex-wrap items-baseline justify-between gap-2 border-t py-1.5 first:border-t-0">
@@ -337,6 +339,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
               id: "people",
               title: openCount ? `${num(openCount.count)} ${openCount.label}` : "People in this audience",
               count: people.length,
+              action: peopleTools,
               children: peopleBlock,
             },
           ],

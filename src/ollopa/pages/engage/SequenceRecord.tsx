@@ -37,6 +37,7 @@ import { statusOf, totalPeople } from "./Sequences"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
@@ -308,7 +309,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             Sends from {seq.mailboxRotation.length ? `${seq.mailboxRotation.length} mailboxes in rotation` : seq.mailbox}
             {mailboxToday(session, seq)} · {seq.schedule} · {seq.ruleset} rules · {seq.priority} priority
           </p>
-          <div className="surface-raised mt-2 mb-3 rounded-lg border">
+          <div className="mt-2 mb-3">
             <SendingSettings session={session} seq={seq} canEdit={canEdit} onSaid={say} />
           </div>
 
@@ -325,16 +326,18 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         </header>
 
         {/* -------------------------------------------------------------------------- the steps */}
-        <section id="seq-steps" className="px-4 pt-5 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="t-section">Steps ({steps.length})</h3>
-            <div className="flex items-center gap-2" data-print-hide>
-              {canEdit && <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} />}
-            </div>
-          </div>
-
+        <div id="seq-steps" className="px-4 pt-5 sm:px-6">
+          {/* One container for the set, with the steps as rows and a divider between them — never a
+              card per step, because the smallest enclosing box wins (DESIGN.md §5, containment). */}
+          <Container
+            component="section"
+            padded={false}
+            heading="Steps"
+            count={steps.length}
+            actions={canEdit ? <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} /> : undefined}
+          >
           {adding && canEdit && (
-            <div className="surface-raised mt-2 flex flex-wrap gap-2 rounded-lg border p-3">
+            <Group className="mx-4 mb-3 flex flex-wrap gap-2 rounded-md p-3">
               {(["Email", "Call task", "LinkedIn task", "Wait"] as const).map((kind) => (
                 <Button
                   key={kind} size="sm" variant="outline"
@@ -356,15 +359,15 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                 >{kind}</Button>
               ))}
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
-            </div>
+            </Group>
           )}
 
           {/* The steps have their own expand-all, because "every step" is the set a person means. */}
           <DoorGroup>
-            <div className="flex justify-end" data-expand-steps data-print-hide>
+            <div className="flex justify-end px-4" data-expand-steps data-print-hide>
               <ExpandAll />
             </div>
-            <ol className="mt-1 space-y-2">
+            <ol className="divide-y border-t">
               {steps.map((step, i) => (
                 <li key={step.id}>
                   <StepCard
@@ -376,10 +379,10 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             </ol>
           </DoorGroup>
 
-          {steps.length === 0 && <EmptyState title="No steps yet" body="Add an email, a call, a LinkedIn task or a wait." />}
+          {steps.length === 0 && <div className="px-4 pb-3"><EmptyState title="No steps yet" body="Add an email, a call, a LinkedIn task or a wait." /></div>}
 
           {seq.status === "Draft" && (
-            <div className="surface-raised mt-3 flex flex-wrap items-center gap-3 rounded-lg border p-3">
+            <Group className="mt-3 flex flex-wrap items-center gap-3 border-t p-3">
               <Button
                 size="sm"
                 disabled={stepsOn === 0 || !seq.mailbox}
@@ -396,9 +399,10 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                     ? "No mailbox is linked to this sequence. Link one in the sending settings."
                     : `${n(stepsOn)} of ${n(steps.length)} steps are on.${offStep ? ` Step ${offStep.order} is off and will be skipped.` : ""}`}
               </span>
-            </div>
+            </Group>
           )}
-        </section>
+          </Container>
+        </div>
 
         {/* ------------------------------------------------------------------------- the people */}
         <SequencePeople
@@ -408,9 +412,9 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         />
 
         {/* ------------------------------------------------------- results and history, in place */}
-        <div className="px-4 pb-10 sm:px-6">
-          <div className="surface-raised rounded-lg border">
-            <section id="seq-results">
+        <div className="space-y-3 px-4 pb-10 sm:px-6">
+          <Container component="section" as="div" id="seq-results" padded={false} bodyClassName="px-4 pb-3">
+            <div>
               <Door id="seq.results" label="Results by step and by audience" defaultOpen={d.level("seq.results.by-step") === 1}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
@@ -456,9 +460,11 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                 </div>
                 <Button size="sm" variant="outline" className="mt-3" onClick={() => say(`Exported the results of ${seq.name}`)}>Export CSV</Button>
               </Door>
-            </section>
+            </div>
+          </Container>
 
-            <section id="seq-history">
+          <Container component="section" as="div" id="seq-history" padded={false} bodyClassName="px-4 pb-3">
+            <div>
               <Door id="seq.history" label="Change history" count={changes.length} defaultOpen={d.level("seq.history") === 1}>
                 <ul className="space-y-1 py-1">
                   {changes.map((c) => (
@@ -470,8 +476,8 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                   ))}
                 </ul>
               </Door>
-            </section>
-          </div>
+            </div>
+          </Container>
         </div>
 
         {addingPeople && (
@@ -559,7 +565,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
   const readOnly = !canEdit
 
   return (
-    <div className={cn("surface-raised rounded-lg border", step.on === 0 && "opacity-70")}>
+    <div className={cn(step.on === 0 && "opacity-70")}>
       <div className="flex flex-wrap items-start gap-2 px-3 pt-3">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums">{step.order}</span>
         <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -785,7 +791,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
             )}
 
             {step.variants.slice(1).map((v, i) => (
-              <div key={v.label} className="surface-raised rounded-md border p-2">
+              <div key={v.label} className="rounded-md border p-2">
                 <p className="t-label">Variant {v.label}</p>
                 <Input aria-label={`Variant ${v.label} subject`} className="mt-1 h-8" defaultValue={v.subject}
                   onBlur={(e) => engage.patchStep(session.business, step.id, { variants: step.variants.map((x, j) => (j === i + 1 ? { ...x, subject: e.target.value } : x)) })} />
@@ -852,10 +858,10 @@ function PreviewBody({ session, subject, body }: { session: Session; subject: st
           {n(unfilled.length)} {unfilled.length === 1 ? "variable has" : "variables have"} no value for {person?.name}: {unfilled.join(", ")}
         </p>
       )}
-      <div className="surface-raised mt-3 rounded-md border p-3">
+      <Group className="mt-3 rounded-md p-3">
         <p className="t-body font-medium">{render(subject) || "No subject"}</p>
         <p className="mt-2 whitespace-pre-wrap text-sm">{render(body)}</p>
-      </div>
+      </Group>
     </>
   )
 }
@@ -892,7 +898,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
   // Controls are absent, never greyed: a disabled control teaches nothing and invites a wasted click.
   if (!canEdit) {
     return (
-      <section id="seq-settings">
+      <Container component="form" as="div" id="seq-settings" padded={false} bodyClassName="px-4 pb-3">
         <Door id="seq.settings" label="Sending settings">
           <dl className="grid gap-x-6 gap-y-2 py-1 sm:grid-cols-2">
             <div><dt className="t-small text-muted-foreground">Sending mailbox</dt>
@@ -909,12 +915,12 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
           </dl>
           <p className="t-small pt-2 text-muted-foreground">{seq.owner} and RevOps admins change these.</p>
         </Door>
-      </section>
+      </Container>
     )
   }
 
   return (
-    <section id="seq-settings">
+    <Container component="form" as="div" id="seq-settings" padded={false} bodyClassName="px-4 pb-3">
       <Door id="seq.settings" label="Change sending settings">
         <div className="grid gap-4 py-1 sm:grid-cols-2">
           <div>
@@ -1030,7 +1036,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
           </div>
         )}
       </Door>
-    </section>
+    </Container>
   )
 }
 
@@ -1173,14 +1179,17 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
   const nameOf = (e: Enrollment) => byId.get(e.contactId)?.name ?? e.contactId
 
   return (
-    <section id="seq-people" className="px-4 pt-6 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="t-section">People ({n(rows.length)})</h3>
+    <div id="seq-people" className="px-4 pt-6 sm:px-6">
+      {/* The enrolled people are a table in a container, with the search that keeps them findable
+          inside the record in the container's header (DESIGN.md §5, containment). */}
+      <Container
+        component="table"
+        padded={false}
+        heading="People"
+        count={n(rows.length)}
+        actions={<>
           <RenderCount label="page" count={pageRenders} />
           <RenderCount label="rows" count={rowRenders} />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
           <Input aria-label="Find a person in this sequence" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-48" />
           <Select value={filter} onValueChange={onFilter}>
             <SelectTrigger className="h-9 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
@@ -1190,9 +1199,8 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
             </SelectContent>
           </Select>
           <Actions surface="card" items={[{ kind: "secondary", label: "Add people", onClick: onAdd }]} />
-        </div>
-      </div>
-
+        </>}
+      >
       <DataTable<Enrollment>
         rows={shown}
         rowKey={(e) => e.id}
@@ -1257,7 +1265,8 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
         }}
         empty={<EmptyState title="Nobody in this sequence yet" body="Add people, or add them from People and Lists." action={<Button size="sm" onClick={onAdd}>Add people</Button>} />}
       />
-    </section>
+      </Container>
+    </div>
   )
 }
 

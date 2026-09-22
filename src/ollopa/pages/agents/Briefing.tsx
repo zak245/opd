@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { href } from "@/app/router"
 import { Actions } from "../../ui/Actions"
+import { Container, Group } from "../../ui/Surface"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Locked } from "../../ui/Locked"
 import { gate, money as dollars } from "../../ui/gate"
@@ -57,16 +58,36 @@ export function Briefing(p: BriefingProps) {
   const pct = Math.min(100, Math.round((spend.week / Math.max(1, spend.weekCap)) * 100))
 
   return (
-    <section aria-labelledby="agents-briefing" data-container="briefing" data-container-label="the briefing">
+    <>
+      {/* The briefing is one container: what has happened, then the two bands a person reads before
+          deciding anything. A band is container-low, never a second box (DESIGN.md §5). */}
+      <Container
+        aria-labelledby="agents-briefing"
+        data-container="briefing" data-container-label="the briefing"
+        component="section"
+        padded={false}
+        footer={
+          <p className="t-small text-muted-foreground">
+            <span data-item="set.link" data-item-label="Agent settings, or who can change them">{settingsLink}</span>{" "}
+            {!rules.r4 && (
+              <a data-item="set.scoring-link" data-item-label="Scoring rules, or who can change them"
+                className="underline underline-offset-4" href={href("/ollopa/settings/scoring")}>Scoring rules →</a>
+            )}{" "}
+            {seed.agents.length > 0 && <>Second approval above {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits.toLocaleString()} credits in one action.</>}
+          </p>
+        }
+      >
       <h2 id="agents-briefing" className="sr-only">Briefing</h2>
 
-      {p.workspace && <p data-item="brief.workspace" data-item-label="Which client workspace this page shows"
-        className="t-small font-medium uppercase tracking-wider text-muted-foreground">{p.workspace}</p>}
+      <div className="px-4 pt-3">
+        {p.workspace && <p data-item="brief.workspace" data-item-label="Which client workspace this page shows"
+          className="t-small font-medium uppercase tracking-wider text-muted-foreground">{p.workspace}</p>}
 
-      <p data-item="brief.digest" data-item-label="Since you last looked" className="t-body">{p.sentence}</p>
+        <p data-item="brief.digest" data-item-label="Since you last looked" className="t-body">{p.sentence}</p>
+      </div>
 
       {/* Spend is decision-critical, so it is here at every width and on every role's page. */}
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <Group className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-y px-4 py-2">
         <div data-item="brief.credits-week" data-item-label="Credits this week against the cap" className="h-1.5 w-40 overflow-hidden rounded-full bg-muted" role="img"
           aria-label={`${spend.week.toLocaleString()} credits this week of the agents' ${spend.weekCap.toLocaleString()} weekly cap`}>
           <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: pct > 85 ? "var(--danger)" : "var(--brand)" }} />
@@ -80,12 +101,12 @@ export function Briefing(p: BriefingProps) {
         )}
         <span data-item="credits.balance" data-item-label="Workspace credit balance"
           className="t-body tabular-nums text-muted-foreground">Workspace balance {spend.balance.toLocaleString()}</span>
-      </div>
+      </Group>
 
       {/* Exceptions exist only while something is paused or capped. Nothing here when nothing is wrong. */}
       {p.exceptions.length > 0 && (
-        <div role="status" className="t-body mt-3 grid gap-1.5 rounded-lg border p-3"
-          style={{ borderColor: "var(--warning)", backgroundColor: "var(--warning-tint)", color: "var(--warning-ink)" }}>
+        <Group role="status" className="t-body grid gap-1.5 border-b px-4 py-3"
+          style={{ backgroundColor: "var(--warning-tint)", borderColor: "var(--warning)", color: "var(--warning-ink)" }}>
           {p.exceptions.map((x, i) => (
             <div key={x.id}
               data-item={i === capLine ? "exc.cap-reached" : i === pauseLine ? "exc.paused" : `exc.line.${x.id}`}
@@ -113,36 +134,37 @@ export function Briefing(p: BriefingProps) {
               }]} />
             </div>
           )}
-        </div>
+        </Group>
       )}
+      </Container>
 
+      {/* The one place a card per thing is right: each agent is read on its own, so each tile is its
+          own container and every tile in the set has the same structure (DESIGN.md §5). */}
       <ul className={cn("mt-4 grid gap-3", d.atLevelOne("brief.status") ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-3")}>
         {p.agents.map((a) => {
           const paused = p.pausedHere[a.id] || !a.on
           const track = p.trackOf(a)
           const selected = p.filterAgent === a.name
           return (
-            <li key={a.id} data-item={`brief.tile.${a.id}`} data-item-label={a.name}
+            <Container as="li" component="card"
+              key={a.id} data-item={`brief.tile.${a.id}`} data-item-label={a.name}
               data-container={`tile.${a.id}`} data-container-label={`the ${a.name} tile`}
-              className={cn("surface-raised rounded-lg border p-3", selected && "ring-2 ring-ring")}>
-              <div className="flex items-start gap-2">
-                <FamilyIcon of="agents" className="mt-0.5" />
-                {/* Rule 8: the tile becomes a one-click filter for the ledger below it. */}
-                {rules.r8 ? (
-                  <button
-                    className="t-label min-w-0 flex-1 text-left hover:underline"
-                    aria-pressed={selected}
-                    onClick={() => p.onFilterAgent(selected ? "all" : a.name)}
-                  >
-                    {a.name}
-                  </button>
-                ) : (
-                  <span className="t-label min-w-0 flex-1">{a.name}</span>
-                )}
-                <Chip className="shrink-0" status={paused ? "paused" : "active"}>{paused ? "Paused" : "On"}</Chip>
-              </div>
-
-              <p className="t-small mt-1 tabular-nums text-muted-foreground">
+              className={cn(selected && "ring-2 ring-ring")}
+              heading={
+                <span className="inline-flex items-center gap-2">
+                  <FamilyIcon of="agents" />
+                  {/* Rule 8: the tile becomes a one-click filter for the ledger below it. */}
+                  {rules.r8 ? (
+                    <button className="t-label text-left hover:underline" aria-pressed={selected}
+                      onClick={() => p.onFilterAgent(selected ? "all" : a.name)}>{a.name}</button>
+                  ) : (
+                    <span className="t-label">{a.name}</span>
+                  )}
+                </span>
+              }
+              actions={<Chip status={paused ? "paused" : "active"}>{paused ? "Paused" : "On"}</Chip>}
+            >
+              <p className="t-small tabular-nums text-muted-foreground">
                 {p.runsToday(a)} runs today · {a.spentToday.toLocaleString()} of {a.capPerDay.toLocaleString()} credits today
               </p>
 
@@ -190,18 +212,21 @@ export function Briefing(p: BriefingProps) {
                   dataItemLabel: `Pause ${a.name} now`,
                 }]} />
               )}
-            </li>
+            </Container>
           )
         })}
 
         {/* The agent this workspace does not run, in its place, with its description intact. */}
         {missing && (
-          <li className="surface-raised rounded-lg border border-dashed p-3">
-            <div className="flex items-start gap-2">
-              <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-              <span className="t-label min-w-0 flex-1">Scoring agent</span>
-            </div>
-            <p className="t-small mt-2">Never without a person: changing the primary score model</p>
+          <Container as="li" component="card" className="border-dashed"
+            heading={
+              <span className="inline-flex items-center gap-2">
+                <Lock className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="t-label">Scoring agent</span>
+              </span>
+            }
+          >
+            <p className="t-small">Never without a person: changing the primary score model</p>
             {third.locked ? (
               <div className="mt-3">
                 <Locked feature="A third agent" plan={third.plan} pricePerMonth={third.pricePerMonth} what={third.what}>
@@ -216,18 +241,9 @@ export function Briefing(p: BriefingProps) {
                   : <>{p.admin ? `${p.admin.user}, ${p.admin.title}` : "Your admin"} can turn the scoring agent on.</>}
               </p>
             )}
-          </li>
+          </Container>
         )}
       </ul>
-
-      <p className="t-small mt-3 text-muted-foreground">
-        <span data-item="set.link" data-item-label="Agent settings, or who can change them">{settingsLink}</span>{" "}
-        {!rules.r4 && (
-          <a data-item="set.scoring-link" data-item-label="Scoring rules, or who can change them"
-            className="underline underline-offset-4" href={href("/ollopa/settings/scoring")}>Scoring rules →</a>
-        )}{" "}
-        {seed.agents.length > 0 && <>Second approval above {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits.toLocaleString()} credits in one action.</>}
-      </p>
-    </section>
+    </>
   )
 }

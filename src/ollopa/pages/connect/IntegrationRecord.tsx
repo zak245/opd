@@ -11,6 +11,7 @@ import { toast } from "../../templates/TablePage"
 import type { RecordDoor } from "../../templates/RecordPage"
 import { Door, DoorGroup } from "../../ui/Door"
 import { Chip } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Integration, type IntegrationError } from "../../data/seed"
 import type { Session } from "../../session"
@@ -262,10 +263,10 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
           </div>
 
           {ribbon && (
-            <div role="status" aria-live="polite" className="surface-raised t-body mt-3 rounded-md border px-3 py-2">{ribbon}</div>
+            <div role="status" aria-live="polite" className="t-body mt-3">{ribbon}</div>
           )}
 
-          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 pb-4 sm:grid-cols-3 xl:grid-cols-5">
+          <Group as="dl" className="-mx-5 mt-3 grid grid-cols-2 gap-x-6 gap-y-3 border-t px-5 py-3 sm:grid-cols-3 xl:grid-cols-5 lg:-mx-6 lg:px-6">
             {[
               { label: "Status", value: <Chip status={status}>{status}</Chip> },
               { label: "Last sync", value: live ? `${day(live.lastSync)} ${live.lastSync.slice(11)}` : "not yet" },
@@ -278,21 +279,23 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                 <dd className="t-body mt-0.5">{f.value}</dd>
               </div>
             ))}
-          </dl>
+          </Group>
         </header>
 
         <DoorGroup>
           <div className="grid max-w-5xl gap-8 px-5 py-6 lg:px-6">
-            <section>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="t-section">{groups.length ? `Errors, grouped by cause · ${filtered.length}` : "Errors"}</h3>
-                {groups.length > 0 && <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} />}
-              </div>
+            <Container
+              component="list"
+              padded={false}
+              heading="Errors, grouped by cause"
+              count={groups.length ? filtered.length : undefined}
+              actions={groups.length > 0 ? <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} /> : undefined}
+            >
               {groups.length === 0 ? (
-                <p className="t-body mt-2 text-muted-foreground">No errors held.</p>
+                <p className="t-body px-4 pb-3 text-muted-foreground">No errors held.</p>
               ) : (
-                <div className="mt-3 grid gap-3">
-                  <div className="grid gap-2 sm:grid-cols-[14rem_14rem_1fr]">
+                <div className="grid">
+                  <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-[14rem_14rem_1fr]">
                     <Picker label="When" value={windowPick} options={WINDOWS} onChange={setWindowPick} />
                     <Picker label="Object" value={objectPick} options={objectNames} onChange={setObjectPick} />
                     <div className="flex items-end">
@@ -307,7 +310,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                   {groups.map((group) => {
                     const busy = group.rows.some((r) => retrying.includes(r.id))
                     return (
-                      <div key={group.cause} className="surface-raised rounded-lg border p-3">
+                      <div key={group.cause} className="border-t px-4 py-3">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="t-label flex flex-wrap items-center gap-2">
@@ -323,7 +326,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                             disabledBecause: busy ? "Running now" : undefined,
                           }]} />
                         </div>
-                        <div className="mt-2 border-t">
+                        <div className="mt-2">
                           <Door id={`int.error.${id}.${group.cause.slice(0, 24)}`} label={`The ${group.rows.length} records this happened to`} count={group.rows.length}>
                             <div className="min-w-0 overflow-x-auto">
                               <table className="w-full min-w-[40rem] border-collapse t-small">
@@ -356,19 +359,20 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                   })}
                 </div>
               )}
-            </section>
+            </Container>
 
-            <section>
-              <div className="flex items-center justify-between pb-1">
-                <h3 className="t-section">Everything this connection is set to do</h3>
-                <ExpandDoors ids={doorIds} />
-              </div>
-              <div className="rounded-lg border">
+            <Container
+              component="section"
+              padded={false}
+              heading="Everything this connection is set to do"
+              actions={<ExpandDoors ids={doorIds} />}
+            >
+              <div className="border-t">
                 {doors.map((d) => (
                   <Door key={d.id} id={d.id} label={d.label} count={d.count}>{d.content}</Door>
                 ))}
               </div>
-            </section>
+            </Container>
           </div>
         </DoorGroup>
       </fieldset>

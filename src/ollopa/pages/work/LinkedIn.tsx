@@ -10,6 +10,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Actions } from "../../ui/Actions"
+import { Group } from "../../ui/Surface"
 import { Panel } from "../../ui/Panel"
 import type { Task } from "../../data/seed"
 import { Chip } from "../../ui/Identity"
@@ -50,7 +51,7 @@ export function LinkedInBody({ session, task, say, onComplete, onSnoozeRest }: L
     <div className="space-y-4">
       <InviteCounter session={session} onSnoozeRest={onSnoozeRest} />
 
-      <div className="rounded-md border p-3">
+      <div className="border-b pb-3">
         <div className="font-medium">{task.contact}</div>
         <div className="text-sm text-muted-foreground">{contact?.title} · {task.company}</div>
         <div className="pt-1 text-sm">

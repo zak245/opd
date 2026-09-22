@@ -25,6 +25,7 @@ import { RecordPage, type RecordDoor, type RecordField } from "../../templates/R
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Group } from "../../ui/Surface"
 import { FAMILY, PERSON_FAMILY, ink } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -92,11 +93,11 @@ function Previews({ c }: { c: Campaign }) {
     <div className="flex flex-wrap items-start gap-4">
       <figure className="min-w-0 flex-1">
         <figcaption className="t-label pb-1 text-muted-foreground">Desktop</figcaption>
-        <div className="surface-raised t-body min-h-40 rounded-md border p-3">{body}</div>
+        <div className="t-body min-h-40 rounded-md border p-3">{body}</div>
       </figure>
       <figure>
         <figcaption className="t-label pb-1 text-muted-foreground">Phone, 400 px</figcaption>
-        <div className="surface-raised t-small min-h-40 w-[var(--menu-min-width)] rounded-md border p-2">{body}</div>
+        <div className="t-small min-h-40 w-[var(--menu-min-width)] rounded-md border p-2">{body}</div>
       </figure>
     </div>
   )
@@ -352,21 +353,23 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     : recipientPool
   const recipientIds = recipientRows.map((p) => p.id)
 
+  /**
+   * Search once the list is longer than a screenful of names (over ten). It sits in the container's
+   * header, which is where a contained list keeps its toolbar (DESIGN.md §5, containment).
+   */
+  const recipientSearch = recipientPool.length > 10 ? (
+    <Input
+      aria-label="Find a recipient of this campaign"
+      placeholder="Find a person"
+      value={recipientQ}
+      onChange={(e) => setRecipientQ(e.target.value)}
+      className="h-8 w-48"
+    />
+  ) : undefined
+
   const recipientsBlock = (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">The first {num(recipientPool.length)} of {num(recipients)}.</p>
-        {/* Search once the list is longer than a screenful of names (over ten). */}
-        {recipientPool.length > 10 && (
-          <Input
-            aria-label="Find a recipient of this campaign"
-            placeholder="Find a person"
-            value={recipientQ}
-            onChange={(e) => setRecipientQ(e.target.value)}
-            className="h-8 w-48"
-          />
-        )}
-      </div>
+      <p className="t-body text-muted-foreground">The first {num(recipientPool.length)} of {num(recipients)}.</p>
       <table className="w-full text-xs">
         <thead><tr className="t-label text-left text-muted-foreground"><th className="py-1">Person</th><th>Company</th><th>Opened</th><th>Replied</th></tr></thead>
         <tbody>
@@ -468,15 +471,15 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       )}
 
       {/* The QA line, directly above the button, never disabled and never blocking. */}
-      <div className="rounded-md border px-3 py-2">
-        <p className="text-sm">
+      <Group className="rounded-[var(--radius-container)] border px-3 py-2">
+        <p className="t-body">
           <Chip status={failures.length ? "failed" : "done"}>{line}</Chip>
           {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}</span>}
         </p>
         <div id="camp-run-checks" className="mt-1">
           <Actions surface="card" items={[{ kind: "secondary", label: "Run the checks", onClick: () => setQaOpen(true), keys: "Q" }]} />
         </div>
-      </div>
+      </Group>
 
       {c.status === "Sent" ? (
         <p className="text-sm text-muted-foreground">Sent {day(c.sendAt)}.</p>
@@ -581,7 +584,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             { id: "results", title: "Results", children: <><Funnel c={c} />{buildAudienceFrom}</> },
             { id: "audience", title: "Audience", children: audienceBlock },
             // The count in the heading is what the section holds; the line under it says of how many.
-            ...(recipients > 0 ? [{ id: "recipients", title: "Recipients", count: recipientPool.length, children: recipientsBlock }] : []),
+            ...(recipients > 0 ? [{ id: "recipients", title: "Recipients", count: recipientPool.length, action: recipientSearch, children: recipientsBlock }] : []),
             { id: "content", title: "Content", children: <Previews c={c} /> },
             { id: "schedule", title: c.kind === "Lifecycle" ? "Trigger" : "Schedule", children: scheduleSection },
           ],

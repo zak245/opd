@@ -18,6 +18,7 @@ import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -143,7 +144,9 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   const paused = seed.mailboxes.filter((m) => m.paused).length
 
   return (
-    <section aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="border-b surface-raised px-4 py-3 sm:px-6">
+    // One band on the canvas above the areas, not a box of boxes: the facts that may never be
+    // behind anything, grouped by the one container-low region this page is allowed (DESIGN.md §5).
+    <Group as="section" aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="rounded-[var(--radius-container)] px-4 py-3 sm:px-6">
       {isAdmin ? (
         <>
           <StripLine item="plan.price" label="Plan and price">
@@ -234,7 +237,7 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
           </StripLine>
         </>
       )}
-    </section>
+    </Group>
   )
 }
 
@@ -352,11 +355,18 @@ function Area({ area, one, two, admin, register, flat, honest }: {
   const tabbed = !flat && !!TAB_GROUPS[area] && one.length > 0
 
   return (
-    <section id={`area-${slug(area)}`} className="scroll-mt-4 border-b px-4 py-5 sm:px-6">
-      <h3 className="t-section flex items-center gap-2 pb-2">
+    <Container
+      as="section"
+      component="section"
+      id={`area-${slug(area)}`}
+      className="scroll-mt-4"
+      padded={false}
+      bodyClassName="px-3 pb-2.5 sm:px-4"
+      heading={<>
         {AREA_FAMILY[area] && <FamilyIcon of={AREA_FAMILY[area]} />}
         {honest ? area : VAGUE_AREA[area] ?? area}
-      </h3>
+      </>}
+    >
       <div data-container={`area.${slug(area)}`} data-container-label={area}>
         {tabbed
           ? <AreaTabs area={area} rows={one} admin={admin} honest={honest} />
@@ -373,7 +383,7 @@ function Area({ area, one, two, admin, register, flat, honest }: {
           </Door>
         </div>
       )}
-    </section>
+    </Container>
   )
 }
 
@@ -703,9 +713,12 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
                 </Select>
               </div>
 
-              {areas.map((a) => (
-                <Area key={a.area} area={a.area} one={a.one} two={a.two} admin={admin} register={register} flat={twoLevels} honest={honest} />
-              ))}
+              {/* A stack of containers on the canvas, one per area, with space between them. */}
+              <div className="grid gap-3 px-4 py-4 sm:px-6">
+                {areas.map((a) => (
+                  <Area key={a.area} area={a.area} one={a.one} two={a.two} admin={admin} register={register} flat={twoLevels} honest={honest} />
+                ))}
+              </div>
 
               {!isAdmin && (
                 <p className="t-body px-4 py-6 text-muted-foreground sm:px-6">

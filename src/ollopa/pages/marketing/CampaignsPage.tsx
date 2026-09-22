@@ -32,7 +32,8 @@ import { BOUNCE_GUARD, CAMPAIGN_CHECKS, TODAY, seedFor, type Audience, type Camp
 import type { Session } from "../../session"
 import type { Business } from "../../usage/model"
 import { familyOf } from "../../identity"
-import { Grid, type GridColumn } from "./grid"
+import { Container, Group } from "../../ui/Surface"
+import { Grid, GridColumns, type GridColumn } from "./grid"
 import { usePref } from "./prefs"
 import { addRow, patchRow, removeRow, useMarketing } from "./store"
 import { netSize, rulesApplied, suppressionCounts, suppressedTotal } from "./derive"
@@ -79,7 +80,7 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
   // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
   const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
   return (
-    <p id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 border-b surface-raised px-6 py-2">
+    <Group as="p" id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 border-b px-4 py-2">
       <span>Bounce guard: warn {guard.warnPercent}%, pause {guard.pausePercent}%</span>
       <span aria-hidden="true">·</span>
       <span
@@ -103,7 +104,7 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
       >
         Sending policy
       </a>
-    </p>
+    </Group>
   )
 }
 
@@ -373,11 +374,12 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   const doorLabel = `Additional filters: ${behindTheDoor.map((f) => f.label.toLowerCase()).join(", ")}`
 
+  const shownRows = view === "campaigns" ? campaigns.length : view === "audiences" ? audiences.length : forms.length
+  const totalRows = view === "campaigns" ? rows.campaigns.length : view === "audiences" ? rows.audiences.length : rows.forms.length
+  const viewLabel = views.find((v) => v.key === view)!.label
+
   return (
     <div className="flex h-full flex-col">
-      {/* Decision-critical, above everything, on every plan: the guard, the observed rate, the cap. */}
-      <PolicyLine business={session.business} admin={admin} from={from} />
-
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-4">
         <div className="min-w-0">
           <h2 className="t-title inline-flex min-w-0 items-center gap-2" style={{ color: familyOf(FAMILY).ink }}>
@@ -424,20 +426,34 @@ export function CampaignsPage({ session }: { session: Session }) {
           />
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto">
-          {/* From tablet up: the filter row, then the door that ends it, named for what is behind it. */}
-          <div className="hidden px-6 py-3 md:block">
-            <div className="flex flex-wrap items-center gap-2">{filterRow}</div>
-            {view === "campaigns" && behindTheDoor.length > 0 && (
-              <div className="pt-2">
-                <Door id="campaigns.filters" label={doorLabel} count={activeBehind || undefined}>
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {behindTheDoor.map((f) => <Filter key={f.key} f={f} />)}
-                  </div>
-                </Door>
+        <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3 max-sm:px-4">
+          {/* The table lives in one container: its toolbar and its count in the header, and the
+              sending policy as the one container-low band inside it (DESIGN.md §5, containment). */}
+          <Container
+            component="table"
+            padded={false}
+            heading={viewLabel}
+            count={shownRows === totalRows ? num(totalRows) : `${num(shownRows)} shown of ${num(totalRows)}`}
+            actions={
+              <div className="hidden flex-wrap items-center gap-2 md:flex">
+                {filterRow}
+                {view === "campaigns" && <GridColumns columns={campaignColumns} hidden={hiddenColumns} onHidden={setHiddenColumns} />}
               </div>
-            )}
-          </div>
+            }
+          >
+          {/* Decision-critical, above everything, on every plan: the guard, the observed rate, the cap. */}
+          <PolicyLine business={session.business} admin={admin} from={from} />
+
+          {/* From tablet up: the door that ends the filter row, named for what is behind it. */}
+          {view === "campaigns" && behindTheDoor.length > 0 && (
+            <div className="hidden px-4 py-2 md:block">
+              <Door id="campaigns.filters" label={doorLabel} count={activeBehind || undefined}>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {behindTheDoor.map((f) => <Filter key={f.key} f={f} />)}
+                </div>
+              </Door>
+            </div>
+          )}
 
           {/* The phone: one door replacing two, with the same values. */}
           <div className="px-4 py-3 md:hidden">
@@ -474,6 +490,7 @@ export function CampaignsPage({ session }: { session: Session }) {
               menu={rowMenu}
               hidden={hiddenColumns}
               onHidden={setHiddenColumns}
+              inContainer
               menuName="Read it beside this table, open, duplicate, compare, export results, archive, delete draft"
               onOpen={(c) => open(`/ollopa/campaigns/${c.id}`, c.id)}
               rowLabel={(c) => c.name}
@@ -495,6 +512,7 @@ export function CampaignsPage({ session }: { session: Session }) {
                 { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
                 { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
               ]}
+              inContainer
               menuName="Read it beside this table, open, hand to sales, freeze, delete audience"
               onOpen={(a) => open(`/ollopa/audiences/${a.id}`, a.id)}
               rowLabel={(a) => a.name}
@@ -519,8 +537,10 @@ export function CampaignsPage({ session }: { session: Session }) {
               onOpen={(f) => open(`/ollopa/forms/${f.id}`, f.id)}
               rowLabel={(f) => f.name}
               cardTitle={(f) => <span className="font-medium">{f.name}</span>}
+              inContainer
             />
           )}
+          </Container>
         </div>
       )}
 

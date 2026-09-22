@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { href } from "@/app/router"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Chip } from "../../ui/Identity"
+import { Container } from "../../ui/Surface"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { SectionHeader } from "../../ui/SectionHeader"
@@ -177,14 +178,33 @@ export function Ledger(p: LedgerProps) {
 
   return (
     <DoorGroup>
-    <section aria-labelledby="agents-activity" data-container="ledger" data-container-label="the activity ledger" className="mt-8">
-      <div className="flex flex-wrap items-center gap-2">
-        <SectionHeader
-          title={teammates ? "Activity" : "Your contacts’ activity"}
-          count={p.events.length}
-          className="pb-0"
-        />
-        <div className="ml-auto flex items-center gap-1">
+    <Container
+      aria-labelledby="agents-activity"
+      data-container="ledger" data-container-label="the activity ledger"
+      className="mt-8"
+      component="list"
+      padded={false}
+      heading={teammates ? "Activity" : "Your contacts’ activity"}
+      count={p.events.length}
+      actions={<>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            ref={p.searchRef}
+            value={f.q}
+            onChange={(e) => set({ q: e.target.value })}
+            placeholder="Search the activity"
+            aria-label="Search the activity"
+            data-item="act.search" data-item-label="Search the ledger"
+            className="h-8 w-56 pl-7"
+          />
+        </div>
+        <div className="hidden flex-wrap items-center gap-2 sm:flex">{filterControls}</div>
+        <Button variant="outline" size="sm" className="h-8 sm:hidden" onClick={() => setSheet(true)}>
+          <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+          Filters{activeCount(f) > 0 ? ` · ${activeCount(f)}` : ""}
+        </Button>
+        <div className="flex items-center gap-1">
           {rules.r5 && <span data-item="act.expand-all" data-item-label="Expand all steps or collapse all"><ExpandAll /></span>}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -204,36 +224,19 @@ export function Ledger(p: LedgerProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
+      </>}
+    >
       <h2 id="agents-activity" className="sr-only">Activity</h2>
 
+      <div className="px-4">
       {!teammates && admin && (
         <p className="t-small text-muted-foreground">Everyone’s activity is visible to {admin.user}, {admin.title}.</p>
       )}
 
-      {/* Search and the filters. One door, labelled by what is still inside it. */}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input
-            ref={p.searchRef}
-            value={f.q}
-            onChange={(e) => set({ q: e.target.value })}
-            placeholder="Search the activity"
-            aria-label="Search the activity"
-            data-item="act.search" data-item-label="Search the ledger"
-            className="h-8 w-56 pl-7"
-          />
-        </div>
-        <div className="hidden flex-wrap items-center gap-2 sm:flex">{filterControls}</div>
-        <Button variant="outline" size="sm" className="h-8 sm:hidden" onClick={() => setSheet(true)}>
-          <SlidersHorizontal className="size-3.5" aria-hidden="true" />
-          Filters{activeCount(f) > 0 ? ` · ${activeCount(f)}` : ""}
-        </Button>
-      </div>
-
+      {/* The filters that are not promoted stay one door, labelled by what is inside it — a door,
+          not a second box, because a container never holds a container (DESIGN.md §5). */}
       {inDoor.length > 0 && (
-        <div className="mt-2 hidden rounded-md border sm:block">
+        <div className="hidden border-t sm:block">
           <Door id="agents.filters" label={`${inDoor[0][0].toUpperCase() + inDoor[0].slice(1)}${inDoor.length > 1 ? ", " + inDoor.slice(1).join(", ") : ""}`}>
             {doorControls}
           </Door>
@@ -257,7 +260,7 @@ export function Ledger(p: LedgerProps) {
       </div>
 
       {/* The columns, at the widths that fit. Below `sm` every row is two lines and the header goes. */}
-      <div className="mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-b px-2 pb-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
+      <div className="surface-container-low mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-y px-2 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
         style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
         <span>When</span>
         {rules.r4 && <span data-item="act.actor" data-item-label="Actor">Actor</span>}
@@ -319,7 +322,8 @@ export function Ledger(p: LedgerProps) {
           {doorControls}
         </div>
       </Panel>
-    </section>
+      </div>
+    </Container>
     </DoorGroup>
   )
 }

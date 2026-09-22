@@ -526,7 +526,7 @@ export function CompaniesPage({ session }: { session: Session }) {
               ))}
           </div>
 
-          <ul className="divide-y rounded-md border">
+          <ul className="divide-y border-t">
             {findRows.slice(0, 12).map((v) => (
               <li key={v.company.id} className="flex flex-wrap items-center gap-2 p-2">
                 <div className="min-w-0 flex-1">

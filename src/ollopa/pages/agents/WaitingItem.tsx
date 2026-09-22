@@ -137,7 +137,7 @@ export function WaitingItem(p: WaitingItemProps) {
       data-item-label={e.summary}
       data-container={`item.${e.id}`}
       data-container-label="the item"
-      className={cn("surface-raised rounded-lg border", p.focused && "ring-2 ring-ring")}
+      className={cn("outline-none", p.focused && "surface-container-low ring-2 ring-ring")}
     >
       <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:p-4">
         {p.selectable && (

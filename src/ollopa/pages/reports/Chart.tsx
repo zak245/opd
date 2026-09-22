@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { familyOf } from "../../identity"
+import { Container } from "../../ui/Surface"
 import type { Series, Trend } from "./compute"
 import { shortDay } from "./format"
 import "./chart.css"
@@ -105,8 +106,11 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
   const every = Math.max(1, Math.ceil((weeks.length * 46) / plotW))
 
   return (
-    <section className="ollopa-viz rounded-lg border">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+    <Container
+      className="ollopa-viz"
+      component="section"
+      padded={false}
+      heading={
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {series.map((s, i) => (
             <li key={s.id} className="flex items-center gap-1.5 t-small text-muted-foreground">
@@ -124,6 +128,8 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
             </li>
           )}
         </ul>
+      }
+      actions={
         <div role="group" aria-label="Trend as a chart or a table" className="flex gap-1" data-print-hide>
           {(["chart", "table"] as const).map((v) => (
             <button
@@ -140,8 +146,8 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
             </button>
           ))}
         </div>
-      </div>
-
+      }
+    >
       {view === "table" ? (
         <div className="overflow-x-auto">
           <table className="w-full t-body">
@@ -242,6 +248,6 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
       )}
 
       <p id={describedById} className="border-t px-3 py-1.5 t-small text-muted-foreground">{trend.summary}</p>
-    </section>
+    </Container>
   )
 }

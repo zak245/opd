@@ -13,9 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { href, navigate, useRoute } from "@/app/router"
 import { useLesson } from "@/learn/context"
 import { Actions } from "../../ui/Actions"
+import { Container } from "../../ui/Surface"
 import { ApproveBar } from "../../ui/ApproveBar"
 import { DoorGroup, useDoorState } from "../../ui/Door"
-import { SectionHeader } from "../../ui/SectionHeader"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
@@ -275,18 +275,26 @@ export function AgentsPage({ session }: { session: Session }) {
       />}
 
       {/* Waiting for you. Only the irreversible and the costly; everything else is in the ledger. */}
-      {rules.r7 && <section aria-labelledby="agents-waiting" className="mt-8">
-        <SectionHeader
-          title="Waiting for you"
-          count={queue.length}
-          action={
-            queue.length > 0 && !bulkAtLevelOne && rules.r8
-              ? <Actions surface="card" items={[{ kind: "secondary", label: `Review all ${queue.length}`, onClick: () => setBatchOpen(true), dataItem: "wait.review-all", dataItemLabel: "Review all" }]} />
-              : undefined
-          }
-        />
-        <h2 id="agents-waiting" className="sr-only">Waiting for you</h2>
-
+      {rules.r7 && <Container
+        className="mt-8"
+        component="list"
+        padded={false}
+        heading="Waiting for you"
+        count={queue.length}
+        actions={
+          queue.length > 0 && !bulkAtLevelOne && rules.r8
+            ? <Actions surface="card" items={[{ kind: "secondary", label: `Review all ${queue.length}`, onClick: () => setBatchOpen(true), dataItem: "wait.review-all", dataItemLabel: "Review all" }]} />
+            : undefined
+        }
+        footer={bulkAtLevelOne && chosen.length > 0 ? (
+          <ApproveBar
+            items={chosen.map((e) => ({ id: e.id, consequence: consequenceFor(e, seed, b.currency), expanded: read.has(e.id) }))}
+            onApproveAll={() => approveAll(chosen)}
+            onDeclineAll={() => declineAll(chosen)}
+          />
+        ) : undefined}
+      >
+        <div className="px-4 pb-3">
         {batch && (
           <p data-item="wait.batch-line" data-item-label="What arrived in this batch, and what it costs together"
             className="t-small text-muted-foreground">
@@ -310,7 +318,7 @@ export function AgentsPage({ session }: { session: Session }) {
         )}
 
         {queue.length === 0 ? (
-          <p className="t-body mt-3 text-muted-foreground">Nothing waiting.</p>
+          <p className="t-body text-muted-foreground">Nothing waiting.</p>
         ) : (
           <>
             {bulkAtLevelOne && (
@@ -327,11 +335,11 @@ export function AgentsPage({ session }: { session: Session }) {
               <div aria-live="polite" className="sr-only">{announce || `${queue.length} waiting.`}</div>
               <div data-container="waiting" data-container-label="Waiting for you">
               {byAgent(queue).map((group) => (
-                <div key={group.agent} className="mt-4">
-                  <h3 className="t-small pb-1.5 font-medium uppercase tracking-wider text-muted-foreground">
+                <div key={group.agent} className="mt-3 border-t">
+                  <h3 className="t-small py-1.5 font-medium uppercase tracking-wider text-muted-foreground">
                     {group.agent} · {group.items.length}
                   </h3>
-                  <ul className="grid gap-2">
+                  <ul className="divide-y border-t">
                     {group.items.map((e) => (
                       <WaitingItem
                         key={e.id}
@@ -363,16 +371,10 @@ export function AgentsPage({ session }: { session: Session }) {
               </div>
             </DoorGroup>
 
-            {bulkAtLevelOne && chosen.length > 0 && (
-              <ApproveBar
-                items={chosen.map((e) => ({ id: e.id, consequence: consequenceFor(e, seed, b.currency), expanded: read.has(e.id) }))}
-                onApproveAll={() => approveAll(chosen)}
-                onDeclineAll={() => declineAll(chosen)}
-              />
-            )}
           </>
         )}
-      </section>}
+        </div>
+      </Container>}
 
       {result && <p role="status" className="t-small mt-6 rounded-md bg-muted px-2 py-1.5">{result}</p>}
 

@@ -171,7 +171,7 @@ const ReplyBeside: BesideComponent = ({ session, id }) => {
       {/* What they actually wrote: the reason this pane exists rather than a row of fields. It is
           the thread panel's own item, so a seat that does not hold the thread does not hold this. */}
       {d.atLevelOne("inbox.thread.panel") && (
-      <article className="rounded-lg border p-3">
+      <article className="border-y py-3">
         <p className="t-body whitespace-pre-line">{r.body}</p>
         {r.outcome === "Not now" && r.followUpOn && (
           <p className="t-small pt-2 text-muted-foreground">They named a date: {day(r.followUpOn)}.</p>

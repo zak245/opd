@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Container } from "../../ui/Surface"
 import { useDoorState } from "../../ui/Door"
 import { toast } from "../../templates/TablePage"
 
@@ -221,22 +222,30 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
         </div>
       </nav>
 
-      <div className="min-w-0">
-        <h2 ref={heading} tabIndex={-1} className="t-section focus-visible:outline-none">
-          Step {current} of {steps.length}: {step.name}
-        </h2>
-        {constantLine && <p className="t-body mt-1 text-muted-foreground">{constantLine}</p>}
-
-        <div className="mt-6 grid gap-6 [&>*]:min-w-0">{children}</div>
-
-        <div data-container="connect.footer" data-container-label="the footer" className="mt-8 flex flex-wrap items-center gap-3 border-t pt-5">
-          {footer}
-          <Actions className="ml-auto" surface="page" items={[{
-            kind: "secondary", label: "Save and exit", onClick: onSaveAndExit, keys: "⌘S",
-            dataItem: "wiz.save-exit", dataItemLabel: "Save and exit",
-          }]} />
-        </div>
-      </div>
+      {/* One container per step: the step's name in its header, its questions in the body, the way
+          on in its footer. The step list beside it stays on the canvas, because it is navigation
+          rather than content (DESIGN.md §5, containment). */}
+      <Container
+        className="min-w-0"
+        component="form"
+        heading={
+          <span ref={heading} tabIndex={-1} className="focus-visible:outline-none">
+            Step {current} of {steps.length}: {step.name}
+          </span>
+        }
+        footer={
+          <div data-container="connect.footer" data-container-label="the footer" className="flex w-full flex-wrap items-center gap-3">
+            {footer}
+            <Actions className="ml-auto" surface="page" items={[{
+              kind: "secondary", label: "Save and exit", onClick: onSaveAndExit, keys: "⌘S",
+              dataItem: "wiz.save-exit", dataItemLabel: "Save and exit",
+            }]} />
+          </div>
+        }
+      >
+        {constantLine && <p className="t-body -mt-1 mb-4 text-muted-foreground">{constantLine}</p>}
+        <div className="grid gap-6 pb-2 [&>*]:min-w-0">{children}</div>
+      </Container>
     </div>
   )
 }

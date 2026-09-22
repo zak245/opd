@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { follow } from "../../chain"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Container, Group } from "../../ui/Surface"
 import { EmptyState } from "../../ui/EmptyState"
 import type { Task } from "../../data/seed"
 import type { Session } from "../../session"
@@ -83,35 +84,48 @@ export function Queue(p: QueueProps) {
   const next = p.tasks[i + 1] ?? task
   const sequenceWaiting = task.sequence && task.status === "Open"
 
+  /* The queue shows one task and says where the rest are: the line closes the container, so the
+     count on the header can never be read as a lie (DESIGN.md §3, reason 3). */
+  const behind = (
+    <>
+      <span className="t-small text-muted-foreground">
+        {p.tasks.length === 1
+          ? "The last one; nothing else is waiting behind it."
+          : <>One at a time. {p.tasks.length - i - 1 > 0
+              ? <>{p.tasks.length - i - 1} more behind this one · next: <span className="text-foreground">{next.contact} · {next.step ? next.step.title : next.title}</span></>
+              : <>{p.tasks.length - 1} already worked; this is the last.</>}</>}
+      </span>
+      <Actions surface="card" items={[{ kind: "secondary", label: "See the list", onClick: p.onSeeList }]} />
+    </>
+  )
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* ------------------------------------------------------------------- where you are */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2 sm:px-6">
-        <span className="t-body font-medium tabular-nums">Task {i + 1} of {p.tasks.length}</span>
-        <Chip family="tasks">{task.kind}</Chip>
-        <span className="t-body min-w-0 truncate">{task.contact}, {task.company}</span>
-        <div className="ml-auto flex items-center gap-1">
+    // Queue mode is one container holding the task being worked: where you are in its header, the
+    // task flat inside it, and what is behind it in the footer. The call log and the LinkedIn step
+    // are bands inside it, never boxes (DESIGN.md §5, containment).
+    <Container
+      component="section"
+      as="section"
+      aria-label={`Task ${i + 1} of ${p.tasks.length}`}
+      padded={false}
+      className="mx-4 mb-4 flex min-h-0 flex-1 flex-col sm:mx-6"
+      bodyClassName="min-h-0 flex-1 overflow-y-auto"
+      heading={(
+        <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="tabular-nums">Task {i + 1} of {p.tasks.length}</span>
+          <Chip family="tasks">{task.kind}</Chip>
+          <span className="t-body font-normal">{task.contact}, {task.company}</span>
+        </span>
+      )}
+      actions={(
+        <div className="flex items-center gap-1">
           <Button size="icon-sm" variant="ghost" aria-label="Previous task" disabled={i === 0} onClick={() => setI((n) => n - 1)}><ChevronLeft className="size-4" /></Button>
           <Button size="icon-sm" variant="ghost" aria-label="Next task" disabled={i >= p.tasks.length - 1} onClick={() => setI((n) => n + 1)}><ChevronRight className="size-4" /></Button>
         </div>
-      </div>
-
-      {/* The count is never left to be read as a lie: the queue shows one task and says where the
-          rest are, names the one that comes next, and carries the control that shows them all. */}
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b px-4 py-1.5 t-small sm:px-6">
-        <span className="text-muted-foreground">
-          {p.tasks.length === 1
-            ? "The last one; nothing else is waiting behind it."
-            : <>One at a time. {p.tasks.length - i - 1 > 0
-                ? <>{p.tasks.length - i - 1} more behind this one · next: <span className="text-foreground">{next.contact} · {next.step ? next.step.title : next.title}</span></>
-                : <>{p.tasks.length - 1} already worked; this is the last.</>}</>}
-        </span>
-        <Button size="sm" variant="ghost" className="ml-auto h-6 px-2 text-xs" onClick={p.onSeeList}>
-          See the list
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-1.5 t-small sm:px-6">
+      )}
+      footer={behind}
+    >
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y px-4 py-1.5 t-small">
         {p.scores ? (
           <span className="flex items-center gap-2">
             Sort:
@@ -127,10 +141,8 @@ export function Queue(p: QueueProps) {
       </div>
 
       {/* -------------------------------------------------------------------------- the task */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-        {/* The one task the queue is on is the raised card: the thing you are working sits above
-            the page it is on (DESIGN.md §5). */}
-        <div className="surface-raised mx-auto max-w-3xl space-y-5 rounded-lg border p-4">
+      <div className="px-4 py-4">
+        <div className="mx-auto max-w-3xl space-y-5">
           <div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h3 className="t-section">{task.step ? `Step ${task.step.n} of ${task.step.of} · ${task.title}` : task.title}</h3>
@@ -144,8 +156,9 @@ export function Queue(p: QueueProps) {
             </p>
           </div>
 
-          {/* The contact, already open: the queue never asks for a door to see who this is. */}
-          <div className="rounded-lg border p-3">
+          {/* The contact, already open: the queue never asks for a door to see who this is. A
+              divided region inside the task's container, never a second box (DESIGN.md §5). */}
+          <div className="border-y py-3">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1" data-item={task.contactId} data-item-label={task.contact}>
               <button
                 type="button"
@@ -245,11 +258,10 @@ export function Queue(p: QueueProps) {
         </div>
       </div>
 
-      {/* --------------------------------------------------------------------------- the footer */}
-      <div className="shrink-0 border-t px-4 py-3 sm:px-6">
-        {/* Done is the act the queue exists for, so it is the one filled control here; snoozing and
-            skipping are the other two the person came for. A call has four comparable outcomes
-            instead, and four comparable acts are never one filled and three outlined. */}
+      {/* Done is the act the queue exists for, so it is the one filled control here; snoozing and
+          skipping are the other two the person came for. A call has four comparable outcomes
+          instead, and four comparable acts are never one filled and three outlined. */}
+      <div className="border-t px-4 py-3">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
           {task.kind === "Call" ? (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -296,6 +308,6 @@ export function Queue(p: QueueProps) {
           say={p.say}
         />
       )}
-    </div>
+    </Container>
   )
 }

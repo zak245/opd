@@ -30,6 +30,7 @@ import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container } from "../../ui/Surface"
 import { type Col, BesideLink, DataTable, FollowLink, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */
@@ -348,7 +349,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                   {isOwner && <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditingFilters(true)}>Edit filters</Button>}
                 </div>
               )}
-              <div className="mt-2 rounded-lg border">
+              <div className="mt-2">
                 <Door id="list.refresh" label="Refresh and alerts" defaultOpen={d.level("detail.refresh") === 1}>
                   <div className="grid gap-3 py-1 sm:grid-cols-3">
                     <div>
@@ -382,10 +383,15 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
         </header>
 
         {/* --------------------------------------------------------------------------- members */}
-        <div className="min-h-0 flex-1 px-4 pt-4 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <SectionHeader title={list.kind === "people" ? "People in this list" : "Companies in this list"} count={count} />
-            <div className="flex items-center gap-2">
+        <div className="min-h-0 flex-1 space-y-3 px-4 pt-4 pb-6 sm:px-6">
+          {/* The members are a table in a container, with the search that keeps them findable
+              inside the record in its header (DESIGN.md §5, containment). */}
+          <Container
+            component="table"
+            padded={false}
+            heading={list.kind === "people" ? "People in this list" : "Companies in this list"}
+            count={needle ? `${n(list.kind === "people" ? shownPeople.length : shownCompanies.length)} of ${n(count)} shown` : count}
+            actions={<>
               {count > SEARCH_OVER && (
                 <Input
                   data-page-search
@@ -396,14 +402,8 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                 />
               )}
               <ExpandAll />
-            </div>
-          </div>
-          {needle && (
-            <p className="pt-1 text-xs tabular-nums text-muted-foreground" role="status">
-              {n(list.kind === "people" ? shownPeople.length : shownCompanies.length)} of {n(count)} shown
-            </p>
-          )}
-
+            </>}
+          >
           {list.kind === "people" ? (
             <DataTable<Contact>
               rows={shownPeople}
@@ -504,8 +504,9 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                 : <EmptyState title="No companies in this list yet" body="Add them from Companies or from a search." />}
             />
           )}
+          </Container>
 
-          <div className="mt-4 rounded-lg border">
+          <Container component="section" as="div" padded={false} bodyClassName="px-4 pb-3">
             <Door id="list.history" label="History" count={list.history.length} defaultOpen={d.level("detail.history") === 1}>
               <ul className="space-y-1 py-1">
                 {list.history.map((h, i) => (
@@ -517,8 +518,7 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
                 ))}
               </ul>
             </Door>
-          </div>
-
+          </Container>
         </div>
 
         {/* ---------------------------------------------------------------------- the two panels */}

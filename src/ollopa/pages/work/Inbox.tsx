@@ -22,6 +22,8 @@ import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
+import { Container } from "../../ui/Surface"
+import { surfaceClass } from "../../ui/Surface"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -332,8 +334,10 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
         onClick={() => { setOpenId(r.id); setOnPhoneThread(true) }}
         onKeyDown={(e) => { if (e.key === "Enter" && e.target === e.currentTarget) { e.preventDefault(); setOpenId(r.id); setOnPhoneThread(true) } }}
         className={cn(
-          "group block w-full cursor-pointer border-b px-3 py-2.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-          r.id === openId ? "bg-muted" : "hover:bg-muted/50",
+          // Rows in one container are divided, never carded, and the row you are on is the one
+          // container-low region the container holds (DESIGN.md §5, containment).
+          "group block w-full cursor-pointer px-3 py-2.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          r.id === openId ? surfaceClass("rowOn") : "hover:bg-muted/50",
         )}
       >
         <div className="flex items-start gap-2">
@@ -508,133 +512,136 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
             </button>.
           </p>
         )}
-
-        {/* ----------------------------------------------------------------------- group tabs */}
-        <div role="tablist" aria-label="What the person meant" className="flex flex-wrap items-center gap-1 overflow-x-auto pt-3">
-          {tabs.map((g) => (
-            <button
-              key={g.key}
-              role="tab"
-              aria-selected={group === g.key}
-              onClick={() => { setGroup(g.key); setSelection([]) }}
-              className={cn("shrink-0 rounded-md px-2.5 py-1 text-sm", group === g.key ? "bg-foreground text-background" : "hover:bg-muted")}
-            >
-              {g.key} <span className="tabular-nums opacity-70">({counts[g.key]})</span>
-            </button>
-          ))}
-          {behind.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  role="tab"
-                  aria-selected={behind.some((g) => g.key === group)}
-                  className={cn("shrink-0 rounded-md px-2.5 py-1 text-sm", behind.some((g) => g.key === group) ? "bg-foreground text-background" : "hover:bg-muted")}
-                >
-                  {behind.map((g) => `${g.key} (${counts[g.key]})`).join(" · ")} ▾
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {behind.map((g) => <DropdownMenuItem key={g.key} onSelect={() => setGroup(g.key)}>{g.key} ({counts[g.key]})</DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
       </div>
 
-      {/* ---------------------------------------------------------- search, filters and the door */}
+      {/* ------------------------------------------- the two containers this page is made of */}
       <DoorGroup>
-        <div className={cn("shrink-0 px-4 pb-2 pt-2 sm:px-6", onPhoneThread && "hidden md:block")}>
-          <div className="flex flex-wrap items-center gap-2">
-            {searchAtLevelOne && (
-              <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-            )}
-            {shownFilters.map((f) => (
-              <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
+        <div className="flex min-h-0 flex-1 gap-4 px-4 pb-4 pt-3 sm:px-6">
+          {/* The replies: one container, with the tabs, the search and the filter door in its
+              header, its rows divided inside it, and what is selected in its footer. Never a card
+              per row, and never a box inside it (DESIGN.md §5, containment). */}
+          <Container
+            component="list"
+            as="div"
+            role="grid"
+            aria-label={`${group} replies`}
+            padded={false}
+            className={cn("flex min-w-0 flex-1 flex-col", onPhoneThread && "hidden md:flex")}
+            actions={(
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div role="tablist" aria-label="What the person meant" className="flex flex-wrap items-center gap-1 overflow-x-auto pt-3">
+                {tabs.map((g) => (
+                <button
+                key={g.key}
+                role="tab"
+                aria-selected={group === g.key}
+                onClick={() => { setGroup(g.key); setSelection([]) }}
+                className={cn("shrink-0 rounded-md px-2.5 py-1 text-sm", group === g.key ? "bg-foreground text-background" : "hover:bg-muted")}
+                >
+                {g.key} <span className="tabular-nums opacity-70">({counts[g.key]})</span>
+                </button>
+                ))}
+                {behind.length > 0 && (
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <button
+                role="tab"
+                aria-selected={behind.some((g) => g.key === group)}
+                className={cn("shrink-0 rounded-md px-2.5 py-1 text-sm", behind.some((g) => g.key === group) ? "bg-foreground text-background" : "hover:bg-muted")}
+                >
+                {behind.map((g) => `${g.key} (${counts[g.key]})`).join(" · ")} ▾
+                </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                {behind.map((g) => <DropdownMenuItem key={g.key} onSelect={() => setGroup(g.key)}>{g.key} ({counts[g.key]})</DropdownMenuItem>)}
+                </DropdownMenuContent>
+                </DropdownMenu>
+                )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                {searchAtLevelOne && (
+                <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+                )}
+                {shownFilters.map((f) => (
+                <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
                 <SelectTrigger className="h-8 w-48 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{f.label}: all</SelectItem>
-                  {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                <SelectItem value="all">{f.label}: all</SelectItem>
+                {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                 </SelectContent>
-              </Select>
-            ))}
-            {activeFilters.length > 0 && (
-              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setFilters({})}>
+                </Select>
+                ))}
+                {activeFilters.length > 0 && (
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setFilters({})}>
                 Clear {activeFilters.length} {activeFilters.length === 1 ? "filter" : "filters"}
-              </Button>
-            )}
-            <span className="ml-auto t-small tabular-nums text-muted-foreground">{filtered.length} shown</span>
-          </div>
+                </Button>
+                )}
+                <span className="ml-auto t-small tabular-nums text-muted-foreground">{filtered.length} shown</span>
+                </div>
 
-          {doorFilters.length > 0 && (
-            <div className="pt-1">
-              <Door
+                {doorFilters.length > 0 && (
+                <div className="pt-1">
+                <Door
                 id="inbox.filters"
                 label={`${searchAtLevelOne ? "Filter" : "Search and filter"} by ${doorFilters.map((f) => f.label.toLowerCase()).join(", ")}`}
                 count={activeFilters.length || undefined}
-              >
+                >
                 <div className="flex flex-wrap items-center gap-2">
-                  {!searchAtLevelOne && (
-                    <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-                  )}
-                  {doorFilters.map((f) => (
-                    <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
-                      <SelectTrigger className="h-8 w-48 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{f.label}: all</SelectItem>
-                        {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  ))}
+                {!searchAtLevelOne && (
+                <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+                )}
+                {doorFilters.map((f) => (
+                <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
+                <SelectTrigger className="h-8 w-48 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+                <SelectContent>
+                <SelectItem value="all">{f.label}: all</SelectItem>
+                {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+                </Select>
+                ))}
                 </div>
-              </Door>
-            </div>
-          )}
-        </div>
-      </DoorGroup>
-
-      {/* ------------------------------------------------------------------------- the bulk bar */}
-      {selection.length > 0 && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-y surface-raised px-4 py-2 t-body sm:px-6">
-          <span className="tabular-nums">{selection.length} selected</span>
-          {/* Comparable acts on a bar, so none of them is filled. Confirming an unsubscribe cannot
-              be undone, so it asks first and the affirmative carries the verb (DESIGN.md §2). */}
-          <Actions
-            surface="page"
-            items={([
-              { kind: "secondary", label: "Mark done", onClick: () => { selection.forEach((id) => { const r = rows.find((x) => x.id === id); if (r) change(id, { handled: true }, `${selection.length} replies marked done.`) }); setSelection([]) } },
-              { kind: "secondary", label: "Mark not interested", onClick: () => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} replies marked not interested.`)); setSelection([]) } },
-              ...(aes.length > 0 && session.role === "sdr"
+                </Door>
+                </div>
+                )}
+              </div>
+            )}
+            bodyClassName="min-h-0 flex-1 divide-y overflow-y-auto"
+            footer={selection.length > 0 ? (
+              <>
+                <span className="tabular-nums">{selection.length} selected</span>
+                {/* Comparable acts on a bar, so none of them is filled. Confirming an unsubscribe cannot
+                be undone, so it asks first and the affirmative carries the verb (DESIGN.md §2). */}
+                <Actions
+                surface="page"
+                items={([
+                { kind: "secondary", label: "Mark done", onClick: () => { selection.forEach((id) => { const r = rows.find((x) => x.id === id); if (r) change(id, { handled: true }, `${selection.length} replies marked done.`) }); setSelection([]) } },
+                { kind: "secondary", label: "Mark not interested", onClick: () => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} replies marked not interested.`)); setSelection([]) } },
+                ...(aes.length > 0 && session.role === "sdr"
                 ? [{ kind: "secondary" as const, label: `Hand to ${aes[0].user}`, onClick: () => { selection.forEach((id) => change(id, { handled: true, handedTo: aes[0].user }, `${selection.length} replies handed to ${aes[0].user}.`)); setSelection([]) } }]
                 : []),
-              ...(selection.every((id) => rows.find((r) => r.id === id)?.outcome === "Unsubscribe")
+                ...(selection.every((id) => rows.find((r) => r.id === id)?.outcome === "Unsubscribe")
                 ? [{
-                  kind: "secondary" as const,
-                  label: "Confirm unsubscribes",
-                  onClick: () => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} unsubscribes confirmed.`)); setSelection([]) },
-                  irreversible: {
-                    title: `Confirm ${selection.length} ${selection.length === 1 ? "unsubscribe" : "unsubscribes"}?`,
-                    consequence: "Those addresses are never emailed from any sequence again. It cannot be undone.",
-                    confirmLabel: "Confirm unsubscribes",
-                  },
+                kind: "secondary" as const,
+                label: "Confirm unsubscribes",
+                onClick: () => { selection.forEach((id) => change(id, { handled: true }, `${selection.length} unsubscribes confirmed.`)); setSelection([]) },
+                irreversible: {
+                title: `Confirm ${selection.length} ${selection.length === 1 ? "unsubscribe" : "unsubscribes"}?`,
+                consequence: "Those addresses are never emailed from any sequence again. It cannot be undone.",
+                confirmLabel: "Confirm unsubscribes",
+                },
                 }]
                 : []),
-              { kind: "secondary", label: "Export CSV", onClick: () => say(`${selection.length} replies exported as CSV.`) },
-            ]) as Action[]}
-          />
-          <Button size="sm" variant="ghost" className="h-7" onClick={() => { setSelection([]); setSelecting(false) }}>Clear</Button>
-        </div>
-      )}
-
-      {/* --------------------------------------------------------------------- master and detail */}
-      <div className="flex min-h-0 flex-1 border-t">
-        <div
-          role="grid"
-          aria-label={`${group} replies`}
-          className={cn("min-w-0 flex-1 overflow-y-auto", onPhoneThread && "hidden md:block")}
-        >
-          {filtered.length === 0 ? <div className="p-6">{q || activeFilters.length ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({}) } }]} />} /> : emptyBody}</div>
-            : filtered.map((r) => <Row key={r.id} r={r} />)}
-        </div>
+                { kind: "secondary", label: "Export CSV", onClick: () => say(`${selection.length} replies exported as CSV.`) },
+                ]) as Action[]}
+                />
+                <Button size="sm" variant="ghost" className="h-7" onClick={() => { setSelection([]); setSelecting(false) }}>Clear</Button>
+              </>
+            ) : undefined}
+          >
+            {filtered.length === 0
+              ? <div className="p-6">{q || activeFilters.length ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({}) } }]} />} /> : emptyBody}</div>
+              : filtered.map((r) => <Row key={r.id} r={r} />)}
+          </Container>
 
         {/* The thread is the open half of the page, not a disclosure: on the phone it is a page. */}
         {open && (
@@ -656,9 +663,9 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
                 window.addEventListener("pointermove", move)
                 window.addEventListener("pointerup", up)
               }}
-              className="hidden w-1 shrink-0 cursor-col-resize bg-border focus-visible:bg-foreground focus-visible:outline-none md:block"
+              className="hidden w-1 shrink-0 cursor-col-resize rounded focus-visible:bg-foreground focus-visible:outline-none md:block"
             />
-            <div className={cn("surface-raised min-h-0 min-w-0 flex-1 border-l md:flex-none", onPhoneThread ? "block" : "hidden md:block")} style={{ width: undefined }}>
+            <div className={cn("min-h-0 min-w-0 flex-1 md:flex-none", onPhoneThread ? "block" : "hidden md:block")} style={{ width: undefined }}>
               <div className="h-full md:w-[var(--thread-w)]" style={{ ["--thread-w" as string]: `${width}px` }}>
                 <Thread
                   session={session}
@@ -676,7 +683,8 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
             </div>
           </>
         )}
-      </div>
+        </div>
+      </DoorGroup>
 
       {booking && (
         <MeetingPanel

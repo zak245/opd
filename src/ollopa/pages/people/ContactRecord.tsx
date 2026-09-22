@@ -16,11 +16,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions, type Action } from "../../ui/Actions"
+import { Group } from "../../ui/Surface"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { toast } from "../../templates/TablePage"
-import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
 import { CREDITS, STAGES, seedFor, type Call, type ContactStage } from "../../data/seed"
@@ -196,7 +196,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
    */
   const preFirstTouch = currentStage === "Cold" || currentStage === "Approaching"
   const formNote = p.source === "Form" && preFirstTouch ? (
-    <article className="mb-3 rounded-md border border-dashed p-2.5">
+    <article className="mb-3 border-b pb-3">
       <div className="text-xs font-medium text-muted-foreground">Form: Book a demo, {day(p.addedOn)}</div>
       <dl className="mt-1 grid grid-cols-[9rem_1fr] gap-x-3 gap-y-0.5 text-sm">
         <dt className="text-muted-foreground">What they wrote</dt>
@@ -435,11 +435,38 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
         // draws it. The template's own three buckets stay empty (DESIGN.md §1).
         actions={{ primary: [], secondary: [] }}
         headerActions={<Actions surface="page" items={headerItems} />}
+        /**
+         * The activity is one container with its heading, its count and its filter chips in the
+         * header, and dividers between the events — never a card per event (DESIGN.md §5). The
+         * composer is the one container-low band the container may hold; everything else inside it
+         * is separated by a divider, because a second box would read as a second group.
+         */
         main={{
-          kind: "timeline",
+          kind: "sections",
           label: "Activity",
-          composer: canEdit ? (
-            <div className="rounded-lg border p-3">
+          sections: [{
+            id: "person.activity",
+            title: "Activity",
+            count: visible.length,
+            action: (
+              <span className="flex flex-wrap items-center gap-1.5">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    aria-pressed={filter === f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={cn("rounded-full border px-2.5 py-0.5 text-xs", filter === f.key ? "bg-foreground text-background" : "hover:bg-muted")}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </span>
+            ),
+            children: (
+              <div className="space-y-3">
+          {canEdit ? (
+            <Group className="-mx-4 border-y px-4 py-3">
               <Textarea aria-label="Add a note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={`Anything the next person reading ${p.name.split(" ")[0]} should know`} />
               <div className="mt-2">
                 <Actions surface="card" items={[{
@@ -454,28 +481,19 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
                   },
                 }]} />
               </div>
-            </div>
-          ) : undefined,
-          filters: FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              aria-pressed={filter === f.key}
-              onClick={() => setFilter(f.key)}
-              className={cn("rounded-full border px-2.5 py-0.5 text-xs", filter === f.key ? "bg-foreground text-background" : "hover:bg-muted")}
-            >
-              {f.label}
-            </button>
-          )),
-          pinned: formNote,
-          items: visible.length === 0 ? (
-            <EmptyState title="Nothing here yet" body={`No ${filter === "all" ? "activity" : FILTERS.find((f) => f.key === filter)!.label.toLowerCase()} on ${p.name} yet.`} />
+            </Group>
+          ) : null}
+          {formNote}
+          {visible.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No {filter === "all" ? "activity" : FILTERS.find((f) => f.key === filter)!.label.toLowerCase()} on {p.name} yet.
+            </p>
           ) : (
-            <ol className="space-y-2">
+            <ol>
               {visible.slice(0, shown).map((it) => {
                 const Icon = ICON[it.kind]
                 return (
-                  <li key={it.id} className="flex gap-2.5 border-t pt-2 first:border-t-0 first:pt-0">
+                  <li key={it.id} className="flex gap-2.5 border-t py-2 first:border-t-0 first:pt-0">
                     <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2">
@@ -492,12 +510,15 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
                 )
               })}
             </ol>
-          ),
-          footer: visible.length > shown ? (
-            <div className="flex justify-center pt-3">
+          )}
+          {visible.length > shown && (
+            <div className="flex justify-center border-t pt-3">
               <Actions surface="card" items={[{ kind: "secondary", label: "Load older", onClick: () => setShown((n) => n + 12) }]} />
             </div>
-          ) : undefined,
+          )}
+              </div>
+            ),
+          }],
         }}
         side={[
           {

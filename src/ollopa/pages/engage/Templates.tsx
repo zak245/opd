@@ -17,6 +17,7 @@ import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container } from "../../ui/Surface"
 import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */
@@ -144,30 +145,36 @@ export function TemplatesPage({ session }: { session: Session }) {
         <Button onClick={() => toast("New template · name it, then write the subject and body")}>New template</Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 sm:px-6">
-        <Input
-          data-page-search aria-label="Search templates by name or body text" placeholder="Search name and body"
-          value={q} onChange={(e) => setQ(e.target.value)} className="w-64"
-        />
-        <Select value={folder} onValueChange={setFolder}>
-          <SelectTrigger className="w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Folder: all</SelectItem>
-            {folders.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={owner} onValueChange={setOwner}>
-          <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Mine">Owner: mine</SelectItem>
-            <SelectItem value="all">Owner: everyone</SelectItem>
-            {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">{n(rows.length)} shown of {n(rowsAll.length)}</span>
-      </div>
-
-      <div className="mt-3 min-h-0 flex-1 overflow-auto">
+      {/* The table lives in a container: its toolbar and its count in the header (DESIGN.md §5,
+          containment). The phone cards are the same container's body at that width. */}
+      <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
+        <Container
+          component="table"
+          padded={false}
+          heading="Templates and snippets"
+          count={`${n(rows.length)} shown of ${n(rowsAll.length)}`}
+          actions={<>
+            <Input
+              data-page-search aria-label="Search templates by name or body text" placeholder="Search name and body"
+              value={q} onChange={(e) => setQ(e.target.value)} className="w-64"
+            />
+            <Select value={folder} onValueChange={setFolder}>
+              <SelectTrigger className="w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Folder: all</SelectItem>
+                {folders.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={owner} onValueChange={setOwner}>
+              <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Mine">Owner: mine</SelectItem>
+                <SelectItem value="all">Owner: everyone</SelectItem>
+                {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </>}
+        >
         <DataTable<CopyRow>
           rows={rows}
           rowKey={(r) => r.id}
@@ -192,6 +199,7 @@ export function TemplatesPage({ session }: { session: Session }) {
           onOpen={open}
           empty={<EmptyState title="No templates yet" body="Write one here, or save a step's copy as a template from the step that uses it." />}
         />
+        </Container>
       </div>
     </div>
   )

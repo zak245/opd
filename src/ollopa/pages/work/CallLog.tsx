@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { follow } from "../../chain"
 import { Chip } from "../../ui/Identity"
+import { Group } from "../../ui/Surface"
 import { Panel } from "../../ui/Panel"
 import { CALL_PURPOSES, DISPOSITIONS, seedFor, TODAY, type Call, type Disposition, type Task } from "../../data/seed"
 import type { Session } from "../../session"
@@ -48,7 +49,7 @@ function CoachingNote({ session, call }: { session: Session; call: Call | null }
   if (!isManager && (!note || state !== "accepted")) return null
 
   return (
-    <section className="rounded-md border p-3">
+    <section className="border-t pt-3">
       <h4 className="flex flex-wrap items-center gap-2 text-sm font-medium">
         Coaching note
         {note && <Chip status={state}>{state}</Chip>}
@@ -130,7 +131,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
         {existing.transcript && (
           <div>
             <div className="text-xs text-muted-foreground">Transcript · from {seed.integrations[0]?.name ?? "the connected recorder"}</div>
-            <p className="mt-1 whitespace-pre-line rounded-md border surface-raised p-2 text-xs text-muted-foreground">{existing.transcript}</p>
+            <p className="mt-1 whitespace-pre-line border-l pl-2 text-xs text-muted-foreground">{existing.transcript}</p>
           </div>
         )}
         <CoachingNote session={session} call={existing} />
@@ -139,10 +140,12 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
   }
 
   return (
-    <div className="space-y-4">
+    // Inside the queue this is a band in the task's own container, not a second box; opened as a
+    // panel it is the panel's body (DESIGN.md §5, containment).
+    <Group as="div" component={asBody ? "summaryStrip" : "page"} className={asBody ? "space-y-4 rounded-[var(--radius-container)] p-3" : "space-y-4 border-0 bg-transparent"}>
       {/* The number and its screening state: calling a flagged person is a compliance consequence.
           The queue already carries the contact above this block, so it is not repeated there. */}
-      <div className={asBody ? "hidden" : "rounded-md border p-3"}>
+      <div className={asBody ? "hidden" : "border-b pb-3"}>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="font-medium">{task.contact}</span>
           <span className="text-sm text-muted-foreground">{contact?.title} · {task.company}</span>
@@ -205,7 +208,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
       {hasTranscripts(session.business) && (
         <div>
           <div className="text-xs text-muted-foreground">Transcript · from {seed.integrations[0]?.name ?? "the connected recorder"}</div>
-          <p className="mt-1 rounded-md border surface-raised p-2 text-xs text-muted-foreground">
+          <p className="mt-1 border-l pl-2 text-xs text-muted-foreground">
             The transcript attaches here when the recorder finishes. Nothing is written to the contact from it without you.
           </p>
         </div>
@@ -239,7 +242,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
         </button>
       </div>
       <p className="text-xs text-muted-foreground">ollopA does not dial. You dial, and this is where what happened is kept — {day(TODAY)}.</p>
-    </div>
+    </Group>
   )
 }
 

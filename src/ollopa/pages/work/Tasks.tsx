@@ -22,6 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { href, useRoute } from "@/app/router"
 import { closeBeside, openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
+import { Container } from "../../ui/Surface"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
@@ -346,7 +347,7 @@ export function Tasks({ session }: { session: Session }) {
             : { kind: "secondary", label: "Write", onClick: () => setMode("queue") }
 
     return (
-      <div role="listitem" data-task-row={t.id} data-item={t.id} data-item-label={`${t.kind} · ${t.contact}`} className="group border-b px-3 py-2 sm:px-4">
+      <div role="listitem" data-task-row={t.id} data-item={t.id} data-item-label={`${t.kind} · ${t.contact}`} className="group px-3 py-2 sm:px-4">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-1 md:flex-nowrap">
           <span className="pt-1">
             <Checkbox aria-label={`Select the ${t.kind.toLowerCase()} for ${t.contact}`} checked={selected} onCheckedChange={(v) => setSelection((s) => (v === true ? [...s, t.id] : s.filter((x) => x !== t.id)))} />
@@ -571,7 +572,18 @@ export function Tasks({ session }: { session: Session }) {
         </div>
       ) : (
         <DoorGroup>
-          <div className="shrink-0 px-4 py-2 sm:px-6">
+          {/* The list is one container: its toolbar and its count in the header, its rows divided
+              inside it, and what is selected in its footer (DESIGN.md §5, containment). */}
+          <Container
+            component="table"
+            as="div"
+            className="mx-4 mb-4 flex min-h-0 flex-1 flex-col sm:mx-6"
+            padded={false}
+            heading={filters.due ?? "All open"}
+            count={rows.length}
+            bodyClassName="min-h-0 flex-1 overflow-y-auto"
+            actions={(
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <Input ref={searchRef} aria-label="Search contact, company, title or sequence" placeholder="Search tasks" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
               {shown.map((f) => <FilterSelect key={f.key} f={f} />)}
@@ -623,11 +635,11 @@ export function Tasks({ session }: { session: Session }) {
                 </Door>
               </div>
             </div>
-          </div>
-
-          {selection.length > 0 && (
-            <div className="flex shrink-0 flex-wrap items-center gap-2 border-y surface-raised px-4 py-2 t-body sm:px-6">
-              <span className="tabular-nums">{selection.length} selected</span>
+            </div>
+            )}
+            footer={selection.length > 0 ? (
+            <>
+              <span className="t-body tabular-nums">{selection.length} selected</span>
               <Actions
                 surface="card"
                 items={([
@@ -647,20 +659,21 @@ export function Tasks({ session }: { session: Session }) {
                 </DropdownMenu>
               )}
               <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelection([])}>Clear</Button>
-            </div>
-          )}
-
-          <div role="list" aria-label="Tasks" className="min-h-0 flex-1 overflow-y-auto border-t">
+            </>
+            ) : undefined}
+          >
+          <div role="list" aria-label="Tasks" className="divide-y">
             {rows.length === 0 ? (
               <div className="p-6">
                 {q || Object.values(filters).some((v) => v && v !== "all" && v !== "All open")
-                  ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Button size="sm" variant="outline" onClick={() => { setQ(""); setFilters({ due: "All open" }) }}>Clear</Button>} />
+                  ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({ due: "All open" }) } }]} />} />
                   : openRows.length === 0
-                    ? <EmptyState title="Done for today." body={`${counts.tomorrow} due tomorrow.`} action={<Button size="sm" variant="outline" onClick={() => setFilters({ due: "This week" })}>See this week</Button>} />
+                    ? <EmptyState title="Done for today." body={`${counts.tomorrow} due tomorrow.`} action={<Actions surface="card" items={[{ kind: "secondary", label: "See this week", onClick: () => setFilters({ due: "This week" }) }]} />} />
                     : <EmptyState title="Nothing due." body="Tasks arrive from sequences you own and from deals and accounts assigned to you." action={<Actions surface="card" items={[{ kind: "secondary", label: "New task", onClick: () => setNewTask(true) }]} />} />}
               </div>
             ) : rows.map((t) => <Row key={t.id} t={t} />)}
           </div>
+          </Container>
         </DoorGroup>
       )}
 

@@ -25,6 +25,7 @@ import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
 import { Chip, FamilyIcon } from "../../ui/Identity"
+import { Container } from "../../ui/Surface"
 import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
@@ -241,38 +242,7 @@ export function ListsPage({ session }: { session: Session }) {
 
         {/* --------------------------------------------------------------------------- toolbar */}
         <div className="px-4 pt-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              data-page-search
-              aria-label="Search lists by name or owner"
-              placeholder="Search lists"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              className="w-56"
-            />
-            <Select value={kind} onValueChange={setKind}>
-              <SelectTrigger className="w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Kind: all</SelectItem>
-                <SelectItem value="people">People</SelectItem>
-                <SelectItem value="companies">Companies</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={owner} onValueChange={setOwner}>
-              <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Mine">Owner: mine</SelectItem>
-                <SelectItem value="Team">Owner: the team</SelectItem>
-                <SelectItem value="all">Owner: all</SelectItem>
-                {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-              {n(rows.length)} shown of {n(lists.length)}
-            </span>
-          </div>
-
-          <div className="mt-2 grid gap-2 rounded-lg border sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Door id="lists.filters" label="Mode, source, archived" count={activeInDoor || undefined}>
               <div className="grid gap-3 py-1 sm:grid-cols-3">
                 <div>
@@ -319,7 +289,42 @@ export function ListsPage({ session }: { session: Session }) {
         </div>
 
         {/* ----------------------------------------------------------------------------- table */}
-        <div className="mt-3 min-h-0 flex-1 overflow-auto">
+        {/* The table lives in a container: its toolbar and its count in the header (DESIGN.md §5,
+            containment). The phone cards are the same container's body at that width. */}
+        <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
+          <Container
+            component="table"
+            padded={false}
+            heading="Lists"
+            count={`${n(rows.length)} shown of ${n(lists.length)}`}
+            actions={<>
+              <Input
+                data-page-search
+                aria-label="Search lists by name or owner"
+                placeholder="Search lists"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="w-56"
+              />
+              <Select value={kind} onValueChange={setKind}>
+                <SelectTrigger className="w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Kind: all</SelectItem>
+                  <SelectItem value="people">People</SelectItem>
+                  <SelectItem value="companies">Companies</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={owner} onValueChange={setOwner}>
+                <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Mine">Owner: mine</SelectItem>
+                  <SelectItem value="Team">Owner: the team</SelectItem>
+                  <SelectItem value="all">Owner: all</SelectItem>
+                  {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </>}
+          >
           <DataTable<List>
             rows={rows}
             rowKey={(l) => l.id}
@@ -354,11 +359,12 @@ export function ListsPage({ session }: { session: Session }) {
                 : undefined
             }
           />
+          </Container>
         </div>
 
         {/* ------------------------------------------------------------- delete, with its words */}
         {confirming && (
-          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t border-destructive/40 surface-raised px-4 py-3 sm:px-6">
+          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t border-destructive/40 surface-overlay px-4 py-3 sm:px-6">
             <p className="text-sm">
               Delete <span className="font-medium">{confirming.name}</span>. The {n(confirming.memberIds.length)}{" "}
               {confirming.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
@@ -369,7 +375,7 @@ export function ListsPage({ session }: { session: Session }) {
         )}
 
         {undo && (
-          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t surface-raised px-4 py-2 sm:px-6">
+          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t surface-overlay px-4 py-2 sm:px-6">
             <span className="text-sm">{undo.name} deleted. The people stay in People.</span>
             <Button size="sm" variant="outline" onClick={() => { engage.undeleteList(session.business, undo.id); setUndo(null) }}>Undo</Button>
           </div>

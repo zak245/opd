@@ -166,7 +166,7 @@ export function AccountsPage({ session }: { session: Session }) {
             {handoffs.map((v) => {
               const h = v.account!.handoff!
               return (
-                <li key={v.company.id} className="rounded-md border p-2">
+                <li key={v.company.id} className="border-t pt-2 first:border-t-0 first:pt-0">
                   <div className="t-label">{v.account!.name}</div>
                   <div className="t-small text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
                   <p className="pt-1 t-small">Why they bought: {h.whyTheyBought}</p>

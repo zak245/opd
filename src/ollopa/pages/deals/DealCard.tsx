@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Chip } from "../../ui/Identity"
+import { Group, surfaceClass } from "../../ui/Surface"
 import { inkOf } from "../../ui/Identity"
 import { TODAY, type Deal, type DealStage, type DealWarning, type ForecastCategory } from "../../data/seed"
 import { day, daysBetween } from "../deal/format"
@@ -120,8 +121,13 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
   const [due, setDue] = useState(deal.nextStepDue ?? TODAY)
   const ok = text.trim().length > 0 && due.length === 10
   return (
-    <div className="grid gap-1.5 rounded-md border p-2" onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") onCancel(); if (e.key === "Enter" && ok) onSave(text.trim(), due) }}>
+    // The one container-low band a card may hold: the editor is a region of the card, not a card
+    // inside a card (DESIGN.md §5, containment).
+    <Group
+      className="grid gap-1.5 rounded-[var(--radius-container)] p-2"
+      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      onKeyDown={(e: React.KeyboardEvent) => { e.stopPropagation(); if (e.key === "Escape") onCancel(); if (e.key === "Enter" && ok) onSave(text.trim(), due) }}
+    >
       <Input autoFocus aria-label="Next step" value={text} placeholder="What has to happen next" className="h-7 px-1.5 py-0 text-xs"
         onChange={(e) => setText(e.target.value)} />
       <div className="flex items-center gap-1.5">
@@ -129,7 +135,7 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
         <Button size="sm" className="h-7 px-2 text-xs" disabled={!ok} onClick={() => onSave(text.trim(), due)}>Save</Button>
         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onCancel}>Cancel</Button>
       </div>
-    </div>
+    </Group>
   )
 }
 
@@ -164,11 +170,18 @@ export function DealCard(p: DealCardProps) {
         if (e.key.toLowerCase() === "e") { e.preventDefault(); if (p.canEdit) p.onEditingNextStep(true) }
       }}
       className={cn(
-        // Raised: a card sits above the column it is in. The one you are on is raised further by
-        // its border alone — no tint and no shadow, which belong to the overlay level.
-        "surface-raised t-body group cursor-pointer rounded-lg border focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        // A card per deal is the exception the rule allows: a deal on a board is read on its own,
+        // decided on on its own and dragged on its own, so it is a thing and not a row in a list
+        // (DESIGN.md §5, containment). The exception is paid for by uniformity — every card in
+        // every column has the same structure, the same padding and the same order: name and
+        // company, amount and close date, next step, warnings, the footer facts. It is flat and
+        // outlined like any container; nothing on the page casts a shadow except while it is in
+        // the air, which is what the drag lift below says. It uses the card role's classes rather
+        // than `Container`, because a container inside a container is two groups where there is one.
+        surfaceClass("card"),
+        "t-body group cursor-pointer rounded-[var(--radius-container)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         flags.compact ? "space-y-1 p-2" : "space-y-1.5 p-2.5",
-        p.carrying && "ring-2 ring-ring",
+        p.carrying && "elev-small ring-2 ring-ring",
         p.selected && "border-foreground",
       )}
     >
@@ -337,8 +350,8 @@ export function DealCard(p: DealCardProps) {
 
       {/* A proposal waits here for the next time the AE looks at the deal. Nothing interrupts. */}
       {deal.agentProposal && (
-        <div className="rounded-md border border-dashed p-2 text-xs" onClick={(e) => e.stopPropagation()}>
-          <div className="t-small font-medium text-muted-foreground">Proposed by the research agent</div>
+        <div className="t-small border-t pt-2" onClick={(e) => e.stopPropagation()}>
+          <div className="font-medium text-muted-foreground">Proposed by the research agent</div>
           <p className="pt-0.5">{deal.agentProposal}</p>
           <div className="flex gap-1.5 pt-1.5">
             <Button size="sm" className="h-7 flex-1 px-2 text-xs" disabled={!p.canEdit} onClick={p.onUseProposal}>Use this next step</Button>

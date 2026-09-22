@@ -34,7 +34,7 @@ import { bandChip, companyFields, healthLine, quickLookFields, riskLine, stageCh
 import { ago, day, money, renewalText } from "./format"
 import { applyChange, changeFor, useChanges } from "./changes"
 import { PlayPanel } from "./PlayPanel"
-import { CompanyContacts } from "./CompanyContacts"
+import { CompanyContacts, CompanyContactsToolbar } from "./CompanyContacts"
 
 export function CompanyRecord({ session, id }: { session: Session; id?: string }) {
   // Development only: counted so the "the page behind the pane does not re-render" claim is checked.
@@ -432,7 +432,11 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   if (used("rec.contacts")) sections.push({
     id: "contacts", title: "Contacts at this company", count: v.contacts.length,
     action: v.contacts.length > 0
-      ? <Actions surface="card" items={[{ kind: "link", label: "Open in People", href: href(`/ollopa/people?company=${company.id}`), onClick: openPeopleAtCompany }]} />
+      ? (
+        <CompanyContactsToolbar companyId={company.id} contacts={v.contacts} companyName={merged.name}>
+          <Actions surface="card" items={[{ kind: "link", label: "Open in People", href: href(`/ollopa/people?company=${company.id}`), onClick: openPeopleAtCompany }]} />
+        </CompanyContactsToolbar>
+      )
       : undefined,
     children: v.contacts.length === 0
       ? <EmptyState title="No contacts here yet" body="Find people at this company and they appear on this list." action={<Actions surface="card" items={[{ kind: "link", label: "Find people in People", href: href(`/ollopa/people?company=${company.id}`), onClick: openPeopleAtCompany }]} />} />

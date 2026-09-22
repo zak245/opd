@@ -24,6 +24,7 @@ import { ruleOn, useLesson } from "../../../learn/context"
 import { Check, Code, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
+import { Group } from "../../ui/Surface"
 import { CONNECT_RULES, ConnectLesson } from "./lesson"
 import { discardDraft, peekDraft, useDraft, writeDraft } from "./drafts"
 import {
@@ -411,7 +412,8 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
         return (
           <TabsContent key={object} value={object} className="mt-4 grid min-w-0 gap-4 [&>*]:min-w-0">
             {c.requiredUnmapped.length > 0 && (
-              <div className="surface-raised t-body rounded-md border p-3" style={{ borderColor: "var(--warning)" }}>
+              <Group className="t-body rounded-[var(--radius-container)] border p-3"
+                style={{ borderColor: "var(--warning)", backgroundColor: "var(--warning-tint)" }}>
                 <p className="t-label flex flex-wrap items-center gap-2">
                   <Chip status="pending">Not mapped</Chip>
                   Required in {draft.kind}, not mapped yet ({c.requiredUnmapped.length})
@@ -427,7 +429,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Group>
             )}
 
             <label className="block max-w-sm t-body">
@@ -810,14 +812,17 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
 
   return (
     <div className="grid gap-5">
-      <section data-item="wiz.first-sync" data-item-label="what the first sync will do" className="surface-raised rounded-lg border p-4">
+      <Group as="section" data-item="wiz.first-sync" data-item-label="what the first sync will do"
+        className="rounded-[var(--radius-container)] border p-4">
         <h3 className="t-section">What the first sync will do</h3>
         <p className="t-body mt-2">{firstSyncConsequence(session, draft)}</p>
-      </section>
+      </Group>
 
-      <div data-item="wiz.review" data-item-label="the review" className="grid gap-3 sm:grid-cols-2">
+      {/* The review is one list, divided. A box per block would be six groups inside the step's
+          own container, and the smallest enclosing box wins (DESIGN.md §5). */}
+      <div data-item="wiz.review" data-item-label="the review" className="grid border-t sm:grid-cols-2">
         {blocks.map((block) => (
-          <section key={block.title} className="surface-raised rounded-lg border p-3">
+          <section key={block.title} className="border-b py-2.5 sm:odd:pr-4 sm:even:border-l sm:even:pl-4">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="t-label">{block.title}</h3>
               <button type="button" className="t-small underline" onClick={() => go(block.step)}>Change</button>

@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Door } from "../../ui/Door"
+import { Container, Group } from "../../ui/Surface"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 
@@ -211,36 +212,69 @@ export function DataTable<T>(p: DataTableProps<T>) {
     )
   }
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-5 lg:px-6">
-        <h2 className="t-section">
-          {p.title}
-          <span className="pl-2 t-body font-normal tabular-nums text-muted-foreground">
-            {rows.length.toLocaleString()}{p.total ? ` of ${p.total.toLocaleString()}` : ""}
-          </span>
-        </h2>
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {p.views}
-          {p.pageMenu && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-0 max-w-full truncate">{p.pageMenu.label}</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {p.pageMenu.items.map((i) => <DropdownMenuItem key={i.label} onSelect={i.onClick}>{i.label}</DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          {p.primary && <Button size="sm" onClick={p.primary.onClick}>{p.primary.label}</Button>}
-        </div>
-      </div>
+  // The toolbar: the search, the seat's filter chips and the column chooser, in the container's
+  // header where the rule puts them (DESIGN.md §5, containment).
+  const toolbar = (
+    <>
+      <Input
+        ref={search}
+        aria-label={p.searchHint ?? "Search"}
+        placeholder={p.searchHint ?? "Search"}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        className="w-64"
+      />
+      {p.chips.map((f) => (
+        <Select key={f.id} value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
+          <SelectTrigger className="h-9 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{f.label}: all</SelectItem>
+            {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ))}
+      <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} />
+      {p.views}
+      {p.pageMenu && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="min-w-0 max-w-full truncate">{p.pageMenu.label}</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {p.pageMenu.items.map((i) => <DropdownMenuItem key={i.label} onSelect={i.onClick}>{i.label}</DropdownMenuItem>)}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      {p.primary && <Button size="sm" onClick={p.primary.onClick}>{p.primary.label}</Button>}
+    </>
+  )
 
-      {p.strip && <div className="px-5 pt-3 lg:px-6">{p.strip}</div>}
+  return (
+    <div className="flex h-full flex-col p-4 lg:p-5">
+      <Container
+        component="table"
+        padded={false}
+        className="flex min-h-0 flex-1 flex-col"
+        bodyClassName="flex min-h-0 flex-1 flex-col"
+        heading={p.title}
+        count={`${rows.length.toLocaleString()}${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+        actions={toolbar}
+        footer={rows.length > limit ? (
+          <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
+            Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
+          </Button>
+        ) : undefined}
+      >
+      {/* The one container-low band this container may hold: whatever the page puts above its rows
+          — the renewal counters, a hand-off waiting, a confirmation, an undo — and, while rows are
+          selected, what can be done to them. Never a second box (DESIGN.md §5, nesting). */}
+      {(p.strip || p.doorFilters.length > 0 || selected.length > 0 || allMatching || activeFilters.length > 0) && (
+        <Group className="border-b px-4 py-2.5">
+      {p.strip && <div className="pb-2">{p.strip}</div>}
 
       {/* While anything is selected the bar replaces the filter row, so the two never fight. */}
       {selected.length > 0 || allMatching ? (
-        <div className="flex flex-wrap items-center gap-2 px-5 py-3 lg:px-6">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="t-label tabular-nums">
             {allMatching ? `All ${rows.length.toLocaleString()} matching selected` : `${selected.length} selected`}
           </span>
@@ -259,33 +293,13 @@ export function DataTable<T>(p: DataTableProps<T>) {
           <Button size="sm" variant="ghost" className="h-7 t-small" onClick={clearSelection}>Clear</Button>
         </div>
       ) : (
-        <div className="px-5 py-3 lg:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              ref={search}
-              aria-label={p.searchHint ?? "Search"}
-              placeholder={p.searchHint ?? "Search"}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              className="w-64"
-            />
-            {p.chips.map((f) => (
-              <Select key={f.id} value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
-                <SelectTrigger className="h-9 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{f.label}: all</SelectItem>
-                  {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            ))}
-            <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} />
-            {activeFilters.length > 0 && (
-              <>
-                <span className="t-small text-muted-foreground">Matching all of: {activeFilters.map((f) => f.label).join(", ")}</span>
-                <Button size="sm" variant="ghost" className="h-7 t-small" onClick={() => p.onFiltersChange({})}>Clear</Button>
-              </>
-            )}
-          </div>
+        <div>
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="t-small text-muted-foreground">Matching all of: {activeFilters.map((f) => f.label).join(", ")}</span>
+              <Button size="sm" variant="ghost" className="h-7 t-small" onClick={() => p.onFiltersChange({})}>Clear</Button>
+            </div>
+          )}
 
           {p.doorFilters.length > 0 && (
             <div className="pt-1">
@@ -310,12 +324,14 @@ export function DataTable<T>(p: DataTableProps<T>) {
           )}
         </div>
       )}
+        </Group>
+      )}
 
       <div role="status" aria-live="polite" className="sr-only">{rows.length} rows match</div>
 
-      <div className="min-h-0 flex-1 overflow-auto border-t">
+      <div className="min-h-0 flex-1 overflow-auto">
         <Table>
-          <TableHeader className="sticky top-0 z-10 bg-background">
+          <TableHeader className="surface-container sticky top-0 z-10">
             <TableRow>
               {hasBulk && (
                 <TableHead className="w-8 pl-4 lg:pl-6">
@@ -327,7 +343,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                 </TableHead>
               )}
               {p.columns.map(header)}
-              <TableHead className="sticky right-0 z-20 w-12 bg-background"><span className="sr-only">Actions</span></TableHead>
+              <TableHead className="surface-container sticky right-0 z-20 w-12"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody ref={body}>
@@ -372,7 +388,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                     {/* The row's actions are in the DOM at all times and change opacity, never presence.
                         They are laid over the row rather than in it, so a seat with four of them does
                         not widen the table, and the "…" stays pinned to the right edge. */}
-                    <TableCell className="sticky right-0 z-10 w-12 bg-background py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="surface-container sticky right-0 z-10 w-12 py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex items-center justify-end gap-1">
                         <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 rounded-md surface-raised opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
                         {p.rowActions.map((a) => (
@@ -442,14 +458,8 @@ export function DataTable<T>(p: DataTableProps<T>) {
           </TableBody>
         </Table>
 
-        {rows.length > limit && (
-          <div className="flex justify-center border-t py-3">
-            <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
-              Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
-            </Button>
-          </div>
-        )}
       </div>
+      </Container>
 
       {glancing && (
         <QuickLook
