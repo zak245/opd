@@ -1,0 +1,24 @@
+
+== connect (meridian:admin) light
+   h1        "Salesforce · Connect an integration" 14px ink=family:neutral:ink
+   icon      lucide-layout-dashboard ink=family:neutral:ink
+   sidebar   (nothing lit)
+   families  {"neutral":17,"people":10,"companies":16,"engagement":9,"deals":4,"agents":14}
+   statuses  {"warning":1,"success":10,"info":2} · chips=7 wordless=0 warning:"NEEDS YOU NOW Bounce rate 4.3%" success:"Done" success:"Done" success:"Done" success:"Done"
+   levels    raisedUsed=true page=oklch(0.985 0.004 80) raised=oklch(1 0.002 80) overlay=oklch(1 0.002 80)
+   shadows   4 on button[button],div
+   type      12px×31 14px×26 13px×12 11px×4 10px×3 16px×2 18px×2
+   fonts     Inter local/ui-monospace
+   off-token 1: html color=rgb(0, 0, 0) "Skip to content ollopA"
+
+== connect (meridian:admin) dark
+   h1        "Salesforce · Connect an integration" 14px ink=family:neutral:ink
+   icon      lucide-layout-dashboard ink=family:neutral:ink
+   sidebar   (nothing lit)
+   families  {"neutral":17,"people":10,"companies":16,"engagement":9,"deals":4,"agents":14}
+   statuses  {"warning":1,"success":10,"info":2} · chips=7 wordless=0 warning:"NEEDS YOU NOW Bounce rate 4.3%" success:"Done" success:"Done" success:"Done" success:"Done"
+   levels    raisedUsed=true page=oklch(0.165 0.006 80) raised=oklch(0.215 0.007 80) overlay=oklch(0.265 0.008 80)
+   shadows   4 on button[button],div
+   type      12px×31 14px×26 13px×12 11px×4 10px×3 16px×2 18px×2
+   fonts     Inter local/ui-monospace
+   off-token 4: html color=rgb(0, 0, 0) "Skip to content ollopA" | button[button] background-color=oklab(0.58 0.00208378 0.0118177 / 0.3) "Search or jump to… ⌘K" | button[button] background-color=oklab(0.58 0.00208378 0.0118177 / 0.3) "Save without syncing" | button[button] background-color=oklab(0.58 0.00208378 0.0118177 / 0.3) "Save and exit ⌘S"

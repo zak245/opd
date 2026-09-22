@@ -1,11 +1,157 @@
 # Stage 3 review: the chains
 
-Round 8 is the current review — the last confirmation, chains 7 and 8. Rounds 7 through 1 are kept
-below, in order, so the proof lines each fix round was made against are still readable.
+Round 9 is the current review — the visual pass over every page of the map. Rounds 8 through 1 are
+kept below, in order.
 
 ---
 
-# Round 8 — the last confirmation
+# Round 9 — the visual pass
+
+I read `DESIGN.md` §5 and `src/ollopa/identity.ts`, then walked every page of the map as a seat that
+holds it, at 1440 and 400, in light and dark: 76 screenshots under `shots/chains/review9/light/`
+and `…/dark/`, plus the observation log in `…/logs/visual.txt`. On each page I read back the title's
+ink and icon, the lit sidebar item, every colour actually painted (resolved against the token sheet,
+so a hand-set hue shows up), every status chip and whether it carries a word, the three surface
+levels, and the type sizes in play. Then I looked at the pictures.
+
+`node scripts/contrast.mjs` — **passes, exit 0**: *"all pairs clear their floor and no two meanings
+collapse"*. Worst text 5.29:1 against a 4.5 floor; worst non-text 3.39:1 against 3; faintest tint
+0.065 apart against 0.015. Under simulated colour vision the closest pairs are deals/work at 0.094
+and companies/engagement at 0.091 (floor 0.06), in both themes.
+
+## Is the flatness fixed?
+
+**Largely, yes.** The owner's complaint was that every page looked alike and people navigated by
+reading. Put Home and the Deals board side by side now and they are not the same object: Home is
+two columns of raised cards with olive work chips and terracotta agent chips; the board is four
+ochre-titled columns of deal cards with amber and red warning chips and one indigo "New deal".
+Inbox announces itself with a 24 px olive title and an olive inbox glyph before you read a word.
+The three cues §5 promises are real and I verified each: the lit sidebar item carries the accent
+tint **and** a leading bar; the page title carries its family icon in its family ink; the pane
+carries a 3 px top bar in the object's hue with the matching glyph; and the trail crumb does carry
+the family icon of the page you left (`lucide-send` in engagement magenta, coming back from a
+contact to a sequence).
+
+What is not fixed is the **top of the type scale**. Five sizes are declared and nine are in use, and
+the biggest of them is missing from most pages: the Deals board has no page title at all, and
+Reports none either. On those two the only "where am I" is the 14 px strip in the shell and the
+sidebar. That is where the old flatness survives.
+
+## Page by page, checks A to F
+
+✓ passes · ! fails · ? passes but see the note. A: known without reading. B: registry icon and hue,
+never reused. C: state is a chip or line with a word, no colour that means nothing. D: three surface
+levels, dark keeps the hierarchy. E: type scale gives visible hierarchy. F: nothing lost legibility.
+
+| Page (seat) | A | B | C | D | E | F | Note |
+|---|---|---|---|---|---|---|---|
+| Home (sdr) | ✓ | ✓ | ? | ? | ? | ? | Neutral LayoutDashboard + neutral ink; sidebar lit. Largest text 20 px, no 24. 26 elements at 10 px in the approvals column. |
+| People (sdr) | ✓ | ✓ | ✓ | ? | ? | ✓ | Users glyph, teal ink, title "People · 800" at **18 px**, not 24. |
+| Companies (sdr) | ✓ | ✓ | ✓ | ? | ? | ✓ | Building2 violet. 27 chips, none wordless: "Current client" success, "Cold" paused. |
+| Lists (sdr) | ✓ | ✓ | ✓ | ? | ? | ✓ | Correctly wears People's Users/teal — a list holds people. |
+| Sequences (sdr) | ✓ | ✓ | ✓ | ? | ? | ✓ | Send glyph, magenta, 14 chips, "Active" in success green. |
+| Templates (sdr) | ! | ✓ | ✓ | ? | ? | ✓ | **Nothing lit in the sidebar** — Templates is not in this seat's profile, so one of the three cues is simply absent. |
+| Inbox (sdr) | ✓ | ✓ | ! | ? | ✓ | ? | The best page in the build: 24 px olive title with its glyph. But "Interested", "Question" are painted `paused`. |
+| Tasks (sdr) | ✓ | ✓ | ! | ? | ? | ✓ | A whole sentence inside a status chip: `paused:"personalised for this send"`. |
+| Deals board (ae) | ! | ✓ | ! | ? | ! | ! | **No page title.** Largest heading 16 px. Forecast categories drawn as status chips. The collapsed "Closed won · 6 · €346k" column is set in rotated vertical type. |
+| Deal record (ae) | ✓ | ✓ | ✓ | ? | ✓ | ✓ | Reaches 24 px; ochre Columns3; "validated" success, "suggested" info. |
+| Campaigns (marketer) | ✓ | ✓ | ✓ | ? | ? | ✓ | Magenta Send; "Running" info, "Draft" warning, "Paused" paused — the five used as meant. |
+| Accounts (cs) | ✓ | ✓ | ? | ? | ? | ✓ | Correctly wears Companies' Building2/violet. "Watch" painted paused. |
+| Workflows (marketer) | ✓ | ✓ | ✓ | ? | ? | ✓ | Magenta Send; "On" in success green. |
+| Requests (admin) | ✓ | ✓ | ✓ | ? | ? | ✓ | Bot terracotta; "Shipped" success, overdue counts danger. |
+| Reports (admin) | ! | ✓ | ✓ | ? | ? | ! | Own LineChart glyph, neutral. **No page title**; the tab row is the top. The activity chart is four white-grey dashed lines — see F below. |
+| Agents (admin) | ✓ | ✓ | ✓ | ? | ? | ✓ | Bot terracotta. |
+| Settings (admin) | ✓ | ✓ | ✓ | ? | ? | ✓ | Own gear glyph; title 18 px. |
+| Connect wizard (admin) | ! | ! | ✓ | ? | ? | ? | **Wears Home's LayoutDashboard.** Its own top heading is a 12 px uppercase H2, "STEPS · 5 OF 6 DONE". |
+| Workspace set-up (admin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Outside the shell by design; gear glyph, 24 px title, clean hierarchy. |
+
+The `?` in column D is the same note on every page and the `?` in E is the same on most; both are
+below rather than repeated nineteen times.
+
+## What each check found
+
+**A — where am I, without reading.** Seventeen of nineteen pages answer with at least two of the
+three cues and most with three. Three pages are short: **Templates** has nothing lit because the
+seat's profile leaves it out of the sidebar; the **Deals board** and **Reports** carry no title on
+the page itself, only the 14 px shell strip, so the family ink has almost nothing to colour.
+
+**B — the registry, never reused.** Every page's title glyph and ink matched `identity.ts` exactly:
+Users teal for People and Lists, Building2 violet for Companies and Accounts, Columns3 ochre for
+Deals, Send magenta for Sequences, Templates, Campaigns and Workflows, Inbox olive for Inbox and
+Tasks, Bot terracotta for Requests and Agents, own glyphs for Home, Reports and Settings. No family
+hue appeared on a page of another family except where that family's objects appear, which is what
+§5 asks for. **One reuse:** `FAMILIES.neutral.icon` is `LayoutDashboard`, which is also
+`PAGE_ICON.home`, so the connect wizard and any other neutral page without its own entry wears
+**Home's** glyph.
+
+**C — a word on every state, and no colour that means nothing.** Every chip on every page carries a
+word: **zero wordless chips** across all nineteen pages in both themes. The failure is the other
+way round. `statusOf()` sends any unrecognised word to `paused`, so things that are not states are
+painted as one: the board's forecast categories ("Pipeline", "Best case", "Commit", "Omitted"), the
+Inbox's reply outcomes ("Interested", "Question"), Accounts' "Watch", and on Tasks an entire
+sentence, *"personalised for this send"*, inside a status chip. Apply the swap test and it fails
+quietly: swap `paused` for the neutral family tint and nothing reads wrong, because
+`scripts/contrast.mjs` prints them as the **same ink** — `#504635` light, `#c5b9a5` dark. A paused
+chip on a non-state is decoration.
+
+**D — three levels, and dark keeps them.** Dark is right: page `oklch(0.165)`, raised `0.215`,
+overlay `0.265` — three distinct levels, higher is lighter, exactly as the rule says. **Light has
+two**: `--surface-raised` and `--surface-overlay` are both `oklch(1 0.002 80)`, so a dialog is
+separated from a card only by its shadow. And shadow is not confined to the overlay level: Home
+alone paints 29 shadowed elements, on `button[data-slot="button"]` and on plain `div`s, where §5
+says "shadow only on the overlay level".
+
+**E — five sizes, used.** Declared: 24 / 18 / 14 / 13 / 12. Measured on screen: **10, 11, 12, 13,
+14, 16, 18, 20 and 24** — nine. 24 px appears on three pages only (Inbox, the deal record, the
+Reports stat tiles); People and Settings top out at 18; the Deals board's largest heading is 16.
+10 px text is not rare — 26 elements on Home, 38 in the connect wizard — and it is below the
+declared floor of 12. Where a 24 px titled heading exists the hierarchy is immediate; where it does
+not, the page opens flat, which is the owner's original complaint surviving in the two places the
+retheme did not reach.
+
+**F — what lost legibility.** The **Reports activity chart** is the worst: four series drawn as
+white and grey lines distinguished only by dash pattern, and in dark the three lower series overlap
+into a single grey band at the foot of the plot. Nothing in the five status colours or six family
+hues is used, on the one screen built for comparison. `dark/reports-1440.png`. After that: the 10 px
+text noted above, and the board's rotated vertical type on a collapsed column.
+
+## The chain cards, re-run
+
+Chains 1, 3 and 7, both widths, both consoles silent on all six runs.
+
+| Chain | Chain card | Disclosure card |
+|---|---|---|
+| 1 · Sequence › person | **18**/18 | **17**/18 |
+| 3 · Company › person | **18**/18 | **17**/18 |
+| 7 · Inbox, Tasks, Home | **18**/18 | **17**/18 |
+
+Nothing regressed: walkers read 1 of 34 and 1 of 24, the pane action still lands on the row with its
+Undo, arrival still focuses the lit `h1`, the crumb still returns to the lit row, and the render
+counters still show the page not re-rendering.
+
+Two of round 8's open items fixed themselves in this pass: **"Research" now carries
+*"12 credits · Charged once"***, and the **Home task chip now has its separator** —
+*"Send a connection request 4 days overdue"*.
+
+One A-failure remains, at 400 only: the contact record's header collapses at phone width and
+"Move sequence" and "Add a note" end up as two filled controls on one surface.
+
+## The five worst
+
+1. **The Deals board has no page title** — no 24 px heading, no family ink at the top, largest text
+   16 px. The one page an AE lives on opens flat.
+2. **Non-states painted as states.** Forecast categories, reply outcomes and one whole sentence sit
+   in `paused` chips, and `paused` is the same ink as the neutral family, so the swap test fails.
+3. **The Reports chart is four grey dashes**, unreadable in dark where three of them overlap.
+4. **Light has two surface levels, not three**, and shadow is used at the raised level on buttons
+   and divs rather than reserved for overlay.
+5. **The connect wizard wears Home's glyph**, and its own first heading is 12 px uppercase.
+
+Then: 10 px text below the declared floor, and Templates with nothing lit in the sidebar.
+
+---
+
+# Round 8 — the last confirmation (superseded)
 
 Chains 7 and 8 only, at 1440 and at 400, by keyboard, against my own `npx vite preview --port 4180`,
 with the dev server on 4181 for the console. Both killed after. 72 screenshots in
