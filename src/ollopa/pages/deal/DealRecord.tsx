@@ -1391,6 +1391,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     <>
       <RecordPage
         back={{ label: "Deals", href: href("/ollopa/deals") }}
+        family="deals"
         title={{ value: name, onRename: canEdit ? (v) => { setName(v); log("field", `Name · ${v}`) } : undefined }}
         subtitle={company ? {
           label: deal.company,

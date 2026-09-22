@@ -411,6 +411,7 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
     <>
       <RecordPage
         back={{ label: "People", href: href("/ollopa/people") }}
+        family="people"
         title={{ value: p.name }}
         // A destination is a real link — it copies and opens in a new tab — and a plain click on it
         // opens the company beside this page instead of leaving (DESIGN.md §1, "links are links").

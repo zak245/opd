@@ -27,14 +27,16 @@ export interface ColumnDef {
 
 const dash = <span className="text-muted-foreground">—</span>
 
+/** The five statuses, from the one token set (DESIGN.md §5); the chip always carries the word. */
+const PAUSED = "[background-color:var(--paused-tint)] [color:var(--paused-ink)]"
 export const STAGE_TONE: Record<string, string> = {
-  Cold: "bg-muted text-muted-foreground",
-  Approaching: "bg-muted text-muted-foreground",
-  Replied: "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200",
-  Interested: "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
-  "Meeting booked": "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
-  "Not interested": "bg-muted text-muted-foreground",
-  Unresponsive: "bg-muted text-muted-foreground",
+  Cold: PAUSED,
+  Approaching: "[background-color:var(--info-tint)] [color:var(--info-ink)]",
+  Replied: "[background-color:var(--info-tint)] [color:var(--info-ink)]",
+  Interested: "[background-color:var(--success-tint)] [color:var(--success-ink)]",
+  "Meeting booked": "[background-color:var(--success-tint)] [color:var(--success-ink)]",
+  "Not interested": PAUSED,
+  Unresponsive: PAUSED,
 }
 
 const EMAIL_TONE: Record<string, string> = {

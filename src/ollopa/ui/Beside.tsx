@@ -26,6 +26,8 @@ import type { Session } from "../session"
 import type { Page } from "../usage/model"
 import { useDisclosure } from "./useDisclosure"
 import { FlatProvider } from "./Door"
+import { FamilyIcon } from "./Identity"
+import { familyOf } from "../identity"
 import { Actions } from "./Actions"
 
 const MS = 200
@@ -336,12 +338,15 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
       aria-label={`${head.name}, beside ${pageTitle}`}
       style={{ width: open ? "min(100%, 28rem)" : 0 }}
       className={cn(
-        "z-40 shrink-0 overflow-hidden border-l bg-background",
+        "surface-raised z-40 shrink-0 overflow-hidden border-l",
         "transition-[width] duration-200 ease-out motion-reduce:transition-none",
         "max-sm:absolute max-sm:inset-y-0 max-sm:right-0",
       )}
     >
       <div ref={panel} tabIndex={-1} className="flex h-full w-[min(100vw,28rem)] flex-col outline-none">
+        {/* A thin bar in the object's family hue, so the pane says what it is holding before it is
+            read (DESIGN.md §5). */}
+        <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(shown.kind).fill }} />
         <header className="shrink-0 border-b px-4 py-3">
           {parentHead && (
             <button
@@ -354,13 +359,14 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
             </button>
           )}
           {/* On a phone the pane covers the page, so the header says what it is covering. */}
-          <p className="mb-1 truncate text-xs text-muted-foreground sm:hidden">
+          <p className="t-small mb-1 truncate text-muted-foreground sm:hidden">
             From {crumbName(pageTitle)}{fromRow ? ` · row ${fromRow}` : ""}
           </p>
           <div className="flex items-start gap-2">
+            <FamilyIcon of={shown.kind} size="header" className="mt-0.5" label={familyOf(shown.kind).name} />
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-sm font-semibold">{head.name}</h2>
-              {head.context && <p className="truncate text-xs text-muted-foreground">{head.context}</p>}
+              <h2 className="t-section truncate">{head.name}</h2>
+              {head.context && <p className="t-small truncate text-muted-foreground">{head.context}</p>}
             </div>
             {/* Icon-only is allowed for exactly three controls, and each carries a name and a
                 tooltip (DESIGN.md §4): this one, and previous and next below. */}
@@ -401,7 +407,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
             was caused, over 150 ms. */}
         {done && (
           <div role="status" className="ollopa-done flex shrink-0 items-baseline gap-2 border-t bg-muted/60 px-4 py-2 text-xs">
-            <span className="min-w-0 flex-1 text-success">Done · {done.note}</span>
+            <span className="t-small min-w-0 flex-1" style={{ color: "var(--success-ink)" }}>Done · {done.note}</span>
             <button type="button" className="ollopa-act shrink-0 font-medium underline underline-offset-4" onClick={done.onUndo}>Undo</button>
           </div>
         )}
@@ -417,7 +423,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
               </TooltipTrigger>
               <TooltipContent>Previous · [</TooltipContent>
             </Tooltip>
-            <span className="text-xs tabular-nums text-muted-foreground">{list.index + 1} of {list.ids.length}</span>
+            <span className="t-small tabular-nums text-muted-foreground">{list.index + 1} of {list.ids.length}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="icon-sm" variant="ghost" className="ollopa-act" disabled={!hasNext}

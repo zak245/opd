@@ -4,7 +4,7 @@ import { type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 export interface SectionHeaderProps {
-  title: string
+  title: ReactNode
   count?: number
   action?: ReactNode
   className?: string
@@ -13,7 +13,7 @@ export interface SectionHeaderProps {
 export function SectionHeader({ title, count, action, className }: SectionHeaderProps) {
   return (
     <div className={cn("flex items-center gap-2 pb-2", className)}>
-      <h3 className="text-sm font-semibold">
+      <h3 className="t-section">
         {title}
         {count !== undefined && <span className="ml-1.5 font-normal tabular-nums text-muted-foreground">{count}</span>}
       </h3>

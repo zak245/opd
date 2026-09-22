@@ -66,7 +66,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5">
         <div>
-          <h2 className="text-lg font-semibold">{p.title}</h2>
+          <h2 className="t-title">{p.title}</h2>
           {p.description && <p className="text-sm text-muted-foreground">{p.description}</p>}
         </div>
         {p.primary && <Button onClick={p.primary.onClick}>{p.primary.label}</Button>}

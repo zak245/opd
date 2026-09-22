@@ -27,6 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { back, routeKey, useTrail } from "../chain"
 import { Door, DoorGroup, ExpandAll } from "../ui/Door"
+import { FamilyIcon } from "../ui/Identity"
+import { familyOf } from "../identity"
 import { Panel } from "../ui/Panel"
 import { SectionHeader } from "../ui/SectionHeader"
 import type { QuickLookEditable, QuickLookField } from "./QuickLook"
@@ -155,6 +157,8 @@ export const SUBTITLE_ANCHOR = "record.subtitle"
 
 export interface RecordPageProps {
   back: { label: string; href: string }
+  /** The family this record belongs to: its icon and hue on the title (DESIGN.md §5). */
+  family?: string
   title: { value: string; onRename?: (value: string) => void }
   /**
    * The object this record hangs off — a deal's company, an account's parent. `href` keeps it a real
@@ -200,8 +204,8 @@ export interface RecordPageProps {
 
 const RIBBON: Record<string, string> = {
   info: "bg-muted text-foreground",
-  good: "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
-  warning: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100",
+  good: "[background-color:var(--success-tint)] [color:var(--success-ink)]",
+  warning: "[background-color:var(--warning-tint)] [color:var(--warning-ink)]",
   error: "bg-destructive/10 text-destructive",
 }
 
@@ -258,7 +262,7 @@ function FieldCell({ field }: { field: RecordField }) {
   return (
     <div className={cn("min-w-0", field.wide && "col-span-full", field.span === 2 && "col-span-2")}>
       <div className="text-xs text-muted-foreground">{field.label}</div>
-      <div className={cn("mt-0.5 text-sm", field.tone === "warning" && "font-medium text-amber-700 dark:text-amber-400", field.tone === "muted" && "text-muted-foreground")}>
+      <div className={cn("mt-0.5 text-sm", field.tone === "warning" && "font-medium [color:var(--warning-ink)]", field.tone === "muted" && "text-muted-foreground")}>
         <InlineValue field={field} />
       </div>
       {field.under && <div className="mt-1 text-xs text-muted-foreground">{field.under}</div>}
@@ -268,7 +272,7 @@ function FieldCell({ field }: { field: RecordField }) {
 
 function Card({ card }: { card: RecordCard }) {
   return (
-    <section data-record-card className={cn("rounded-lg border p-3", card.tone === "attention" && "border-amber-300 dark:border-amber-800")}>
+    <section data-record-card className={cn("rounded-lg border p-3", card.tone === "attention" && "[border-color:var(--warning)]")}>
       <SectionHeader title={card.title} count={card.count} action={card.action} />
       {card.subtitle && <p className="-mt-1 pb-2 text-xs text-muted-foreground">{card.subtitle}</p>}
       {card.children}
@@ -382,7 +386,7 @@ export function RecordPage(p: RecordPageProps) {
     return (
       <div className="mx-auto max-w-md p-10 text-center">
         <BackToIndex label={p.back.label} to={p.back.href} />
-        <h2 className="mt-6 text-lg font-semibold">{p.noAccess.message}</h2>
+        <h2 className="t-section mt-6">{p.noAccess.message}</h2>
         <p className="mt-2 text-sm text-muted-foreground">Who works here: {p.noAccess.who.join(", ")}.</p>
       </div>
     )
@@ -461,7 +465,8 @@ export function RecordPage(p: RecordPageProps) {
                     onBlur={() => { p.title.onRename!(name); setRenaming(false) }}
                   />
                 ) : (
-                  <h2 className="truncate text-lg font-semibold">
+                  <h2 className="t-title inline-flex min-w-0 items-center gap-2 truncate" style={{ color: familyOf(p.family).ink }}>
+                    <FamilyIcon of={p.family} size="header" />
                     {p.title.onRename ? (
                       <button type="button" className="group/title inline-flex items-center gap-1.5 rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => setRenaming(true)}>
                         {p.title.value}
@@ -505,7 +510,7 @@ export function RecordPage(p: RecordPageProps) {
               <div><dt className="inline text-muted-foreground">On </dt><dd className="inline">{p.brief.assembledOn}</dd></div>
               <div><dt className="inline text-muted-foreground">Covers </dt><dd className="inline">{p.brief.covers.map((c, i) => <span key={c.href}>{i > 0 && ", "}<a className="underline" href={c.href}>{c.label}</a></span>)}</dd></div>
               <div><dt className="inline text-muted-foreground">Cost of the run </dt><dd className="inline tabular-nums">{p.brief.credits} credits</dd></div>
-              {p.brief.approved === false && <div className="sm:col-span-2 font-medium text-amber-700 dark:text-amber-400">Not yet approved</div>}
+              {p.brief.approved === false && <div className="sm:col-span-2 font-medium [color:var(--warning-ink)]">Not yet approved</div>}
             </dl>
           )}
 

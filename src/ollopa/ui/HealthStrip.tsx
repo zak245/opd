@@ -17,7 +17,7 @@ export interface HealthLine {
 const ICON = { error: CircleAlert, warning: AlertTriangle, info: Info }
 const TONE: Record<HealthKind, string> = {
   error: "text-destructive",
-  warning: "text-amber-700 dark:text-amber-400",
+  warning: "[color:var(--warning-ink)]",
   info: "text-muted-foreground",
 }
 

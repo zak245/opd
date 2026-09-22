@@ -105,7 +105,7 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen,
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-sm">
         <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle className="text-base">{title}</SheetTitle>
+          <SheetTitle className="t-section">{title}</SheetTitle>
           <SheetDescription className="sr-only">A glance at this record. Open it for everything else.</SheetDescription>
         </SheetHeader>
         {/* Flat by construction: anything openable rendered in here renders in place instead. */}
@@ -116,7 +116,7 @@ export function QuickLook({ open, onOpenChange, title, fields, editable, onOpen,
                 <div key={f.label}>{editor}</div>
               ) : (
                 <div key={f.label} className="grid grid-cols-[9rem_1fr] items-baseline gap-3">
-                  <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                  <dt className="t-label text-muted-foreground">{f.label}</dt>
                   <dd className="min-w-0">{f.value}</dd>
                 </div>
               )

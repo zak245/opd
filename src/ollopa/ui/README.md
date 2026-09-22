@@ -177,6 +177,52 @@ the pane's footer, which is the backstop confirmation never replaces.
 and one sentence naming who can (RULES.md rule 4), so the page leaves the item out of the list
 rather than passing it here with `disabledBecause`.
 
+## Visual identity (DESIGN.md §5)
+
+Colour has five jobs here and nothing else may use colour. The tokens are in `src/index.css`, the
+registry in `src/ollopa/identity.ts`, and the shell and these primitives apply them — so a page
+never picks a hue.
+
+1. **Structure.** Warm neutrals (a little chroma at hue 80), most of every screen: `--surface-page`,
+   `--surface-raised`, `--surface-overlay`, `--foreground`, `--muted-foreground`, `--border`.
+   Three depths, and in dark higher is lighter rather than shadowed. Utilities: `.surface-page`,
+   `.surface-raised`, `.surface-overlay`.
+2. **The accent.** One hue, indigo 264: `--brand` is the primary fill, `--brand-tint` the active
+   sidebar item, `--brand-ink` links, `--ring` the focus ring, and `--info` the informational status.
+   Nothing else is indigo.
+3. **Six object families.** Each a fixed icon plus a fixed hue, always together:
+   `--family-<id>` (a bar or a dot), `--family-<id>-tint` (a chip), `--family-<id>-ink` (icon and text).
+4. **Five statuses.** `danger`, `warning`, `success`, `info`, `paused` — state only, never decoration
+   and never a family, each with a tint and an ink, and always with a word beside it.
+5. **Nothing else.**
+
+```tsx
+import { Chip, FamilyIcon, FamilyBar, familyOf, statusOf } from "@/ollopa/ui"
+
+<FamilyIcon of="people" size="header" />          {/* a page id or a pane kind */}
+<Chip family="deals">Deals</Chip>                  {/* a family chip: always carries its icon */}
+<Chip status={enrolment.status} />                 {/* a status chip: always carries its word */}
+<FamilyBar of={target.kind} className="h-[3px]" /> {/* the pane's top edge */}
+```
+
+`familyOf(pageOrKind)` takes a page id (`"sequences"`), a pane kind (`"person"`) or a family id and
+returns `{ name, icon, fill, tint, ink }`. `statusOf(word)` maps the words the product already shows
+— "Bounced", "Active", "Paused" — onto the five, so a page passes its word and never a colour.
+
+**You know where you are three ways at once**: the page title carries its family icon and ink, the
+active sidebar item is the accent tint with a leading bar, and a trail crumb carries the family icon
+of the page it points back at. A pane adds a fourth: a thin bar in its object's hue and its icon
+beside the name.
+
+**Type has five sizes and no others**: `.t-title` 24/600, `.t-section` 18/600, `.t-body` 14/400,
+`.t-label` 13/500, `.t-small` 12/400. Inter where it is installed, the system stack otherwise, and
+nothing is fetched at runtime. Tabular numerals are on for the whole product.
+
+**Every pair is measured.** `node scripts/contrast.mjs` reads `index.css` itself and fails below
+4.5:1 for text or 3:1 for icons and control boundaries; it also simulates deuteranopia and
+protanopia over the six family inks and the five status inks and fails if any two collapse. Change a
+token, run it. `#/design` is the same set on a page.
+
 ## `QuickLook` (`templates/QuickLook.tsx`)
 
 `{ open, onOpenChange, title, fields: {label, value}[], editable?, onOpen }`

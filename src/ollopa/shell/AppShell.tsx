@@ -21,6 +21,8 @@ import { AccountMenu } from "./AccountMenu"
 import { Palette } from "./Palette"
 import { Shortcuts } from "./Shortcuts"
 import { Panel } from "../ui/Panel"
+import { FamilyIcon } from "../ui/Identity"
+import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY } from "./notifications"
@@ -31,18 +33,24 @@ const COLLAPSE_KEY = "ollopa.sidebar"
 function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry; page: Page; collapsed: boolean; onAnswer: (a: "keep" | "remove") => void }) {
   const i = entry.item
   const active = i.page === page
+  // Where you are, said three ways: the accent tint, a leading bar in the accent, and the item's
+  // own family icon in its family ink (DESIGN.md §5).
   const link = (
     <a
       href={href(`/ollopa/${i.page === "home" ? "" : i.page}`)}
       onClick={clearTrail}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
+        "t-body relative flex items-center gap-2 rounded-md py-1.5 pl-3 pr-2",
         collapsed && "justify-center px-0",
-        active ? "bg-background font-medium shadow-sm" : "text-muted-foreground hover:bg-background hover:text-foreground",
+        active ? "font-medium" : "text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
+      style={active ? { backgroundColor: "var(--brand-tint)", color: "var(--brand-ink)" } : undefined}
     >
-      <i.icon className="size-4 shrink-0" aria-hidden="true" />
+      {active && !collapsed && (
+        <span aria-hidden="true" className="absolute inset-y-1 left-0 w-[3px] rounded-full" style={{ backgroundColor: "var(--brand)" }} />
+      )}
+      <FamilyIcon of={i.page} tone={active ? "current" : "ink"} />
       {!collapsed && <span className="truncate">{i.label}</span>}
     </a>
   )
@@ -75,6 +83,11 @@ function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry;
  * Every crumb but the last is a button back to that page, exactly as it was left. At phone width
  * there is only room for one, so only the step back shows.
  */
+/** The family a trail origin belongs to, read from its route: "/ollopa/sequences/seq-1" → engagement. */
+function familyOfRoute(route: string): string {
+  return route.replace(/^#/, "").split("?")[0].split("/").filter(Boolean)[1] ?? "home"
+}
+
 function Crumbs({ trail }: { trail: Origin[] }) {
   if (trail.length === 0) return null
   const previous = trail[trail.length - 1]
@@ -86,6 +99,7 @@ function Crumbs({ trail }: { trail: Origin[] }) {
         className="flex min-w-0 items-center gap-1 rounded text-sm text-muted-foreground hover:text-foreground sm:hidden"
       >
         <ChevronLeft className="size-4 shrink-0" aria-hidden="true" />
+        <FamilyIcon of={familyOfRoute(previous.route)} />
         <span className="truncate">{crumbName(previous.title)}</span>
       </button>
       <ol className="hidden min-w-0 items-center gap-1 sm:flex">
@@ -93,12 +107,14 @@ function Crumbs({ trail }: { trail: Origin[] }) {
           // The oldest crumb gives way first: its shrink weight is the largest, so the page you are
           // on and the step you just took stay readable while the head of the path shortens.
           <li key={`${o.route}-${i}`} className="flex min-w-0 items-center gap-1" style={{ flexShrink: trail.length - i }}>
+            {/* The crumb carries the family icon of the page you left (DESIGN.md §5). */}
             <button
               type="button"
               onClick={() => back(i)}
-              className="min-w-0 truncate rounded text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              className="t-body inline-flex min-w-0 items-center gap-1 truncate rounded text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              {crumbName(o.title)}
+              <FamilyIcon of={familyOfRoute(o.route)} />
+              <span className="truncate">{crumbName(o.title)}</span>
             </button>
             <span aria-hidden="true" className="shrink-0 text-muted-foreground">›</span>
           </li>
@@ -254,7 +270,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         Skip to content
       </a>
 
-      <aside className={cn("hidden shrink-0 flex-col border-r bg-muted/30 md:flex", collapsed ? "w-14" : "w-56")}>
+      <aside className={cn("surface-raised hidden shrink-0 flex-col border-r md:flex", collapsed ? "w-14" : "w-56")}>
         <a href={href("/ollopa")} onClick={clearTrail} className={cn("flex h-14 items-center gap-2 border-b px-4 font-semibold tracking-tight", collapsed && "justify-center px-0")}>
           <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
           {!collapsed && "ollopA"}
@@ -292,13 +308,16 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
             and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
         <header className={cn("flex shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
+          {/* The page title carries its family icon and hue — one of the three ways you know
+              where you are (DESIGN.md §5). */}
+          <FamilyIcon of={page} size="header" className="hidden shrink-0 sm:block" />
           <Crumbs trail={trail} />
           {/* The last crumb is the page you are on, and it never truncates: the earlier ones do. */}
           <h1 ref={heading} tabIndex={-1} className={cn(
             "rounded text-sm font-semibold outline-none",
             (canAdd || added) && "mr-auto md:mr-0",
             trail.length > 0 ? "shrink-0 whitespace-nowrap max-sm:sr-only" : "truncate",
-          )}>{trail.length > 0 ? crumbName(title) : title}</h1>
+          )} style={{ color: familyOf(page).ink }}>{trail.length > 0 ? crumbName(title) : title}</h1>
           {client && <span className="hidden shrink-0 rounded border px-2 py-0.5 text-xs text-muted-foreground sm:inline">{client} · client workspace</span>}
           {canAdd && (
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>
@@ -329,7 +348,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         )}
 
         {alerts.length > 0 && (
-          <div role="alert" className="border-b bg-amber-50 px-4 py-1.5 text-sm dark:bg-amber-950/40">
+          <div role="alert" className="t-body border-b px-4 py-1.5" style={{ backgroundColor: "var(--warning-tint)" }}>
             <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Needs you now</div>
             {alerts.map((n) => (
               <div key={n.id} className="flex flex-wrap items-baseline gap-x-3 py-0.5">
@@ -357,9 +376,11 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                 href={href(`/ollopa/${p === "home" ? "" : p}`)}
                 onClick={clearTrail}
                 aria-current={p === page ? "page" : undefined}
-                className={cn("flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]", p === page ? "font-medium" : "text-muted-foreground")}
+                className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]", p === page ? "font-medium" : "text-muted-foreground")}
+                style={p === page ? { backgroundColor: "var(--brand-tint)", color: "var(--brand-ink)" } : undefined}
               >
-                <nav.icon className="size-4" aria-hidden="true" />
+                {p === page && <span aria-hidden="true" className="absolute inset-x-3 top-0 h-[3px] rounded-full" style={{ backgroundColor: "var(--brand)" }} />}
+                <FamilyIcon of={p} tone={p === page ? "current" : "ink"} />
                 {nav.label}
               </a>
             )
@@ -384,7 +405,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                 href={href(`/ollopa/${e.item.page === "home" ? "" : e.item.page}`)}
                 onClick={() => { clearTrail(); setAllPages(false) }}
               >
-                <e.item.icon className="size-4" aria-hidden="true" />
+                <FamilyIcon of={e.item.page} />
                 {e.item.label}
               </a>
             </li>

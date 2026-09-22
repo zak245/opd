@@ -99,11 +99,13 @@ export function Pill({ children, tone }: { children: ReactNode; tone?: "warning"
     <Badge
       variant="secondary"
       className={cn(
-        "px-1.5 py-0 text-[11px] font-normal",
-        tone === "warning" && "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100",
-        tone === "error" && "bg-destructive/10 text-destructive",
-        tone === "good" && "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200",
-        tone === "muted" && "bg-muted text-muted-foreground",
+        // The five statuses, from the one token set (DESIGN.md §5). A status chip always carries
+        // its word, so it never leans on colour alone.
+        "t-small px-1.5 py-0 font-medium",
+        tone === "warning" && "[background-color:var(--warning-tint)] [color:var(--warning-ink)]",
+        tone === "error" && "[background-color:var(--danger-tint)] [color:var(--danger-ink)]",
+        tone === "good" && "[background-color:var(--success-tint)] [color:var(--success-ink)]",
+        tone === "muted" && "[background-color:var(--paused-tint)] [color:var(--paused-ink)]",
       )}
     >
       {children}

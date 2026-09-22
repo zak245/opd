@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
+import { FamilyIcon } from "../../ui/Identity"
 import { SectionHeader } from "../../ui"
 
 /* ------------------------------------------------------------------------------------- section */
@@ -31,21 +32,27 @@ export interface SectionProps {
 
 const ORDER = ["", "order-1", "order-2", "order-3", "order-4", "order-5", "order-6", "order-7", "order-8"]
 
+/** The family a Home section is a window on, from the page it links to. */
+function familyForSection(id: string, to?: string): string {
+  if (to) return to.replace(/^#/, "").split("?")[0].split("/").filter(Boolean)[1] ?? id
+  return id
+}
+
 export function Section({ id, title, count, link, order = 0, children }: SectionProps) {
   return (
     // The id is the anchor a chain that left from inside this section comes back to, when what it
     // left was the section itself rather than one row.
     <section id={id} aria-label={title} data-section={id} className={cn("min-w-0", ORDER[order] ?? "")}>
       <SectionHeader
-        title={title}
+        title={<span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>}
         count={count}
-        className="sticky top-0 z-[1] bg-background pt-1"
+        className="surface-page sticky top-0 z-[1] pt-1"
         action={link && (
           // The whole page this section is a window on. It is a move, not a jump: the trail keeps
           // Home and the section, so the crumb comes back to it.
           <button
             type="button"
-            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="t-small text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             onClick={() => follow(link.to, originHere(id))}
           >
             {link.label}
@@ -60,7 +67,7 @@ export function Section({ id, title, count, link, order = 0, children }: Section
 /** One sentence where a list would be: an empty section keeps its shape rather than disappearing. */
 export function Nothing({ text, link }: { text: string; link?: { label: string; to: string } }) {
   return (
-    <p className="rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground">
+    <p className="t-body rounded-lg border border-dashed px-3 py-2.5 text-muted-foreground">
       {text}{link && (
         <> <button type="button" className="text-foreground underline underline-offset-4"
                    onClick={() => follow(link.to, originHere())}>{link.label}</button></>

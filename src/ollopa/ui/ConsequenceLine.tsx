@@ -33,5 +33,5 @@ export function consequenceText(p: ConsequenceProps): string {
 export function ConsequenceLine(p: ConsequenceProps & { className?: string }) {
   const text = consequenceText(p)
   if (!text) return null
-  return <p className={cn("text-xs text-muted-foreground", p.className)}>{text}</p>
+  return <p className={cn("t-small text-muted-foreground", p.className)}>{text}</p>
 }

@@ -116,7 +116,7 @@ export function CreditsPanel({ session, open, onOpenChange }: { session: Session
             <div className="text-xs text-muted-foreground">Runs out</div>
           </div>
         </div>
-        <p className={cn("mt-3 text-sm", tone === "error" && "text-destructive", tone === "warning" && "text-amber-700 dark:text-amber-400")}>
+        <p className={cn("mt-3 text-sm", tone === "error" && "text-destructive", tone === "warning" && "[color:var(--warning-ink)]")}>
           {TONE_WORDS[tone]} About {weeks.toFixed(1)} weeks at this rate.
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export function CreditsPill({ session, onOpen, compact }: { session: Session; on
           onClick={onOpen}
           className={cn(
             "shrink-0 rounded-full border px-3 py-1 text-xs tabular-nums hover:bg-muted",
-            tone === "warning" && "border-amber-500 text-amber-700 dark:text-amber-400",
+            tone === "warning" && "[border-color:var(--warning)] [color:var(--warning-ink)]",
             tone === "error" && "border-destructive text-destructive",
           )}
         >

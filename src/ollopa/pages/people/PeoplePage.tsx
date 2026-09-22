@@ -996,7 +996,7 @@ export function PeoplePage({ session }: { session: Session }) {
                     >{p.name}</a>
                     <div className="text-xs text-muted-foreground">{p.title} · {p.company}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                      <Badge variant="secondary" className={STAGE_TONE[stageOf(p)]}>{stageOf(p)}</Badge>
+                      <Badge variant="secondary" className={cn("t-small font-medium", STAGE_TONE[stageOf(p)])}>{stageOf(p)}</Badge>
                       <span className="text-muted-foreground">{seqOf(p) || "Not in a sequence"}</span>
                       <span className="text-muted-foreground">{p.lastContacted ? day(p.lastContacted) : "Never contacted"}</span>
                       {p.phone && !isRevealed(p) && (
