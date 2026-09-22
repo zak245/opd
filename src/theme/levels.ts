@@ -1,78 +1,101 @@
-// Which component sits at which depth, and nothing else.
+// Which component takes which surface role, and whether it casts a shadow.
 //
-// One object. A page never decides how deep it is, and a primitive never picks a surface class by
-// hand: it names what it is, this says what level that is, and `Surface` draws it. When the
-// containment memo lands, the tuning happens here and nowhere else.
+// One object. Containment and elevation are two different jobs (DESIGN.md §5, memo 29): the role
+// groups, the shadow says a thing floats over the page. A container on the page is flat and
+// outlined; only the pane, menus, popovers, dialogs and sheets cast anything.
 //
-// The values below are placeholders in the sense that the memo may move a component between levels.
-// They are not placeholders in the sense of being wrong today: they are what the product ships.
+// Changing where a component sits is an edit here and in `src/theme/theme.css`, and nowhere else.
 
-/** 0 is the page; 1 rises to 4; the chrome is beside the ladder, not on it. */
-export type Level = 0 | 1 | 2 | 3 | 4 | "chrome"
+/** The five colour roles. Not a ladder: a role says what a thing is, not how high it is. */
+export type Role = "canvas" | "container" | "container-low" | "chrome" | "overlay"
+
+/** The two shadows, and the absence of one. */
+export type Elevation = "none" | "small" | "large"
+
+export interface LevelSpec {
+  role: Role
+  elevation: Elevation
+  /** Dialogs and sheets take the page: they dim what is behind them. */
+  scrim?: boolean
+  /** The strong border sits on a container's edge; inside it, a divider is enough. */
+  border?: "strong" | "soft" | "none"
+}
 
 /**
- * The map. Left column is what a thing *is*; right column is how deep it sits.
+ * The map, from the rule's own table.
  *
- *   0  the page
- *   1  what sits on the page and holds content: a section, a card, a table, a form, the row you are on
- *   2  what floats beside the page and keeps it: the pane
- *   3  what floats over the page for a moment: a popover, a menu
- *   4  what takes the page: a dialog, a sheet
+ *   canvas          the page behind everything
+ *   container       every content container: a table, a form, a section, a list, a card
+ *   container-low   one region inside a container that must read as a group
+ *   chrome          the frame: sidebar, header, bottom bar
+ *   overlay         what floats over the page
  */
 export const LEVELS = {
-  page: 0,
-  section: 1,
-  card: 1,
-  table: 1,
-  form: 1,
-  listRow: 1,
-  pane: 2,
-  popover: 3,
-  menu: 3,
-  dialog: 4,
-  sheet: 4,
-  chrome: "chrome",
-} as const satisfies Record<string, Level>
+  page: { role: "canvas", elevation: "none", border: "none" },
+
+  section: { role: "container", elevation: "none", border: "strong" },
+  card: { role: "container", elevation: "none", border: "strong" },
+  table: { role: "container", elevation: "none", border: "strong" },
+  form: { role: "container", elevation: "none", border: "strong" },
+  list: { role: "container", elevation: "none", border: "strong" },
+
+  rowOn: { role: "container-low", elevation: "none", border: "none" },
+  cardHeader: { role: "container-low", elevation: "none", border: "none" },
+  summaryStrip: { role: "container-low", elevation: "none", border: "soft" },
+
+  pane: { role: "overlay", elevation: "small", border: "strong" },
+  menu: { role: "overlay", elevation: "small", border: "strong" },
+  popover: { role: "overlay", elevation: "small", border: "strong" },
+
+  dialog: { role: "overlay", elevation: "large", scrim: true, border: "strong" },
+  sheet: { role: "overlay", elevation: "large", scrim: true, border: "strong" },
+
+  sidebar: { role: "chrome", elevation: "none", border: "strong" },
+  header: { role: "chrome", elevation: "none", border: "strong" },
+  bottomBar: { role: "chrome", elevation: "none", border: "strong" },
+  chrome: { role: "chrome", elevation: "none", border: "strong" },
+} as const satisfies Record<string, LevelSpec>
 
 export type Component = keyof typeof LEVELS
 
-/** What a level is drawn with: the three token names, and nothing a caller has to choose. */
-export interface SurfaceTokens {
-  level: Level
-  /** The Tailwind class that paints the level. One class, from `index.css`. */
+export interface SurfaceTokens extends LevelSpec {
+  /** The class that paints the role. */
   className: string
+  /** The class that casts the shadow, or "" where nothing floats. */
+  elevationClass: string
   /** The raw token names, for the rare place that needs a value rather than a class. */
   background: string
-  border: string
-  /** `none` below level 2: exactly two shadows exist and the lower levels cast neither. */
+  borderColor: string
   shadow: string
 }
 
-const SHADOW: Record<string, string> = {
-  0: "none",
-  1: "none",
-  2: "var(--shadow-small)",
-  3: "var(--shadow-small)",
-  4: "var(--shadow-large)",
-  chrome: "none",
+const SHADOW: Record<Elevation, string> = {
+  none: "none",
+  small: "var(--shadow-small)",
+  large: "var(--shadow-large)",
 }
 
-/** The tokens for a level, or for the component that sits at one. */
-export function surfaceFor(what: Component | Level): SurfaceTokens {
-  const level: Level = typeof what === "string" && what in LEVELS
-    ? (LEVELS[what as Component] as Level)
-    : (what as Level)
-  const key = String(level)
+const BORDER: Record<string, string> = {
+  strong: "var(--border-strong)",
+  soft: "var(--border-soft)",
+  none: "transparent",
+}
+
+/** Everything a component needs to be drawn at its place, from the one map. */
+export function surfaceFor(what: Component | Role): SurfaceTokens {
+  const spec: LevelSpec = (LEVELS as Record<string, LevelSpec>)[what]
+    ?? { role: what as Role, elevation: "none", border: "none" }
   return {
-    level,
-    className: `surface-${key}`,
-    background: `var(--surface-${key})`,
-    border: "var(--border-strong)",
-    shadow: SHADOW[key] ?? "none",
+    ...spec,
+    className: `surface-${spec.role}`,
+    elevationClass: spec.elevation === "none" ? "" : `elev-${spec.elevation}`,
+    background: `var(--surface-${spec.role})`,
+    borderColor: BORDER[spec.border ?? "none"],
+    shadow: SHADOW[spec.elevation],
   }
 }
 
-/** Does this level take the page behind it? Only the top one does, and only it gets a scrim. */
-export function takesThePage(what: Component | Level): boolean {
-  return surfaceFor(what).level === 4
+/** Does this take the page behind it? Only a dialog and a sheet do, and only they get a scrim. */
+export function takesThePage(what: Component | Role): boolean {
+  return surfaceFor(what).scrim === true
 }

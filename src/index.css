@@ -117,20 +117,27 @@
    The page, then raised (cards, panes, the row you are on), then overlay (dialogs, menus). Group
    with space first, then a border, then a tint; a shadow only at the overlay level, and in dark
    higher is lighter instead. */
-/* One class per level. `src/theme/levels.ts` says which component is at which level; nothing picks
-   a class by hand (the `Surface` primitive does it). */
+/* One class per colour role. `src/theme/levels.ts` says which component takes which role; nothing
+   picks a class by hand — the `Surface` and `Container` primitives do it.
+   A container on the page is flat and outlined. Only what floats casts a shadow. */
+.surface-canvas { background-color: var(--surface-canvas); }
 .surface-chrome { background-color: var(--surface-chrome); }
-.surface-0 { background-color: var(--surface-0); }
-.surface-1 { background-color: var(--surface-1); border-color: var(--border-strong); }
-.surface-2 { background-color: var(--surface-2); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
-.surface-3 { background-color: var(--surface-3); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
-.surface-4 { background-color: var(--surface-4); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
+.surface-container { background-color: var(--surface-container); border-color: var(--border-strong); }
+.surface-container-low { background-color: var(--surface-container-low); border-color: var(--border-soft); }
+.surface-overlay { background-color: var(--surface-overlay); border-color: var(--border-strong); }
 
-/* The names the product used before levels, kept so the refactor could land in one piece. */
-.surface-page { background-color: var(--surface-0); }
-.surface-raised { background-color: var(--surface-1); border-color: var(--border-strong); }
-.surface-floating { background-color: var(--surface-2); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
-.surface-overlay { background-color: var(--surface-4); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
+/* The two shadows, applied by the level map and nowhere else. */
+.elev-small { box-shadow: var(--shadow-small); }
+.elev-large { box-shadow: var(--shadow-large); }
+
+/* The names the product used before the roles, for one release. */
+.surface-page { background-color: var(--surface-canvas); }
+.surface-raised { background-color: var(--surface-container); border-color: var(--border-strong); }
+.surface-floating { background-color: var(--surface-overlay); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
+.surface-0 { background-color: var(--surface-canvas); }
+.surface-1 { background-color: var(--surface-container); border-color: var(--border-strong); }
+.surface-2, .surface-3 { background-color: var(--surface-overlay); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
+.surface-4 { background-color: var(--surface-overlay); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
 
 /* Exactly two shadows exist and nothing else casts one. */
 .shadow-small { box-shadow: var(--shadow-small); }

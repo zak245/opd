@@ -148,6 +148,15 @@ function ApprovalRow({ e, canApprove, isAdmin, mine, adminName, adminTitle, seen
   )
 }
 
+/*
+ * The one allowed exception to "a list of similar things is one container with dividers".
+ *
+ * Each waiting item is read on its own — what it will do, what it costs, approve or decline — and
+ * the decision is per item, so each gets its own card inside this section's container. The rule
+ * permits that where every card in the set has the same structure and the same padding
+ * (DESIGN.md §5, containment; memo 29: uniformity within a set matters more than the containers).
+ * Every card here does. Nothing else on Home draws a card per row.
+ */
 export function Approvals({ data, d, session, order }: { data: HomeData; d: Disclosure; session: Session; order: number }) {
   const [decided, setDecided] = useState<Record<string, Decision>>({})
   const [read, setRead] = useState<Record<string, true>>({})

@@ -67,10 +67,22 @@ function tokensIn(css, selector) {
 const css = readFileSync(new URL("../src/theme/theme.css", import.meta.url), "utf8")
 const THEMES = { light: tokensIn(css, ":root {"), dark: tokensIn(css, ".dark {") }
 
-/** The four levels plus the chrome, in the order they rise. DESIGN.md §5. */
-const LEVELS = ["surface-chrome", "surface-0", "surface-1", "surface-2", "surface-3", "surface-4"]
-/** A tone step the eye can see: the floor the first version of the rule failed. */
-const STEP = { light: 0.03, dark: 0.05 }
+/** The five colour roles. Not a ladder — a role says what a thing is (DESIGN.md §5, memo 29). */
+const ROLES = ["surface-canvas", "surface-container", "surface-container-low", "surface-chrome", "surface-overlay"]
+
+/**
+ * The pairs that must be told apart, and why. A role is only ever compared with a role it can
+ * actually touch: a container sits on the canvas, a band sits inside a container, the chrome runs
+ * beside the canvas, an overlay floats over it.
+ */
+const ROLE_PAIRS = [
+  ["surface-container", "surface-canvas", "a container on the page"],
+  ["surface-container-low", "surface-container", "a band inside a container"],
+  ["surface-chrome", "surface-canvas", "the chrome beside the content"],
+  ["surface-overlay", "surface-canvas", "an overlay over the page"],
+]
+/** A step the eye can see. Containment does the grouping; this only has to be visible. */
+const STEP = { light: 0.02, dark: 0.03 }
 
 const FAMILIES = ["people", "companies", "deals", "engagement", "work", "agents", "neutral"]
 const STATUSES = ["danger", "warning", "success", "info", "paused"]
@@ -90,10 +102,10 @@ function pairs(T) {
   seen("paused ink against the neutral family ink", T["paused-ink"], T["family-neutral-ink"])
 
   // The border that carries meaning reaches 3:1 against every surface it can sit on.
-  for (const level of LEVELS) nontext(`strong border on ${level}`, T["border-strong"], T[level])
-  for (const level of LEVELS) seen(`soft divider on ${level}`, T["border-soft"], T[level])
+  for (const role of ROLES) nontext(`strong border on ${role}`, T["border-strong"], T[role])
+  for (const role of ROLES) seen(`soft divider on ${role}`, T["border-soft"], T[role])
 
-  for (const surface of ["surface-0", "surface-1", "surface-2", "surface-3", "surface-4", "surface-chrome"]) {
+  for (const surface of ROLES) {
     text(`body text on ${surface}`, T.foreground, T[surface])
     text(`muted text on ${surface}`, T["muted-foreground"], T[surface])
     seen(`divider on ${surface}`, T.border, T[surface])
@@ -167,22 +179,19 @@ for (const [theme, T] of Object.entries(THEMES)) {
   console.log(`  worst text ${worstText.toFixed(2)}:1 (needs 4.5) · worst non-text ${worstNon.toFixed(2)}:1 (needs 3)` +
     ` · faintest tint ${worstSeen.toFixed(3)} apart (needs 0.015)`)
 
-  // The tone ladder: every step between one level and the next, measured in OKLab lightness.
+  // The roles: every pair that can meet on screen, measured in OKLab lightness.
   const floor = STEP[theme]
   let worstStep = Infinity
-  for (let i = 0; i < LEVELS.length - 1; i++) {
-    const a = T[LEVELS[i]], b = T[LEVELS[i + 1]]
-    if (!a || !b || a.alias || b.alias) { console.log(`  ?  ${LEVELS[i]} → ${LEVELS[i + 1]} — token missing`); failures++; continue }
-    const step = Math.abs(oklab(b)[0] - oklab(a)[0])
-    // Levels 2 and 3 share a tone today and are told apart by their shadow; `levels.ts` says so and
-    // the memo may separate them. Every other pair of neighbours must step.
-    if (LEVELS[i] === "surface-2" && LEVELS[i + 1] === "surface-3") continue
+  for (const [a, b, why] of ROLE_PAIRS) {
+    const x = T[a], y = T[b]
+    if (!x || !y || x.alias || y.alias) { console.log(`  ?  ${a} vs ${b} — token missing`); failures++; continue }
+    const step = Math.abs(oklab(x)[0] - oklab(y)[0])
     worstStep = Math.min(worstStep, step)
     const ok = step >= floor
     if (!ok) failures++
-    if (!quiet || !ok) console.log(`  ${ok ? " " : "✗"} tone step ${LEVELS[i]} → ${LEVELS[i + 1]}`.padEnd(45) + `${step.toFixed(3)}  (needs ${floor})`)
+    if (!quiet || !ok) console.log(`  ${ok ? " " : "✗"} ${why}`.padEnd(45) + `${step.toFixed(3)}  (needs ${floor})`)
   }
-  console.log(`  smallest tone step ${worstStep.toFixed(3)} (needs ${floor})`)
+  console.log(`  faintest role step ${worstStep.toFixed(3)} (needs ${floor})`)
 }
 
 

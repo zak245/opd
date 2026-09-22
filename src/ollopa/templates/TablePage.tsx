@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { surfaceClass } from "../ui/Surface"
+import { Container } from "../ui/Surface"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
@@ -93,7 +93,15 @@ export function TablePage<T>(p: TablePageProps<T>) {
         </div>
         {p.primary && <Button onClick={p.primary.onClick}>{p.primary.label}</Button>}
       </div>
-      <div className="flex flex-wrap items-center gap-2 px-6 py-3">
+      <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3">
+      {/* The table lives in a container: its toolbar and its count in the header, its pager in the
+          footer (DESIGN.md §5, containment). Nothing here sits naked on the canvas. */}
+      <Container
+        component="table"
+        padded={false}
+        heading={p.title}
+        count={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+        actions={<>
         <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
         {(p.filters ?? []).map((f) => (
           <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
@@ -104,13 +112,15 @@ export function TablePage<T>(p: TablePageProps<T>) {
             </SelectContent>
           </Select>
         ))}
-        <span className="t-label ml-auto tabular-nums text-muted-foreground">
-          {rows.length.toLocaleString()} shown{p.total ? ` of ${p.total.toLocaleString()}` : ""}
-        </span>
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto border-t">
+        </>}
+        footer={rows.length > limit ? (
+          <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
+            Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
+          </Button>
+        ) : undefined}
+      >
         <Table>
-          <TableHeader className={cn(surfaceClass("table", false), "sticky top-0")}>
+          <TableHeader className="surface-container-low sticky top-0">
             <TableRow>
               {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
               {(p.rowActions || p.moreActions) && <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>}
@@ -123,9 +133,9 @@ export function TablePage<T>(p: TablePageProps<T>) {
                 // The row you are on is the raised surface: hovered, focused, or the one the quick
                 // look is open on (DESIGN.md §5, the three depths).
                 className={cn(
-                  "group hover:[background-color:var(--surface-raised)] focus-visible:[background-color:var(--surface-raised)] focus-visible:[box-shadow:inset_0_0_0_var(--inset-hairline)_var(--border-strong)]",
+                  "group hover:[background-color:var(--surface-container-low)] focus-visible:[background-color:var(--surface-container-low)]",
                   p.quickLook && "cursor-pointer",
-                  glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--surface-raised)]",
+                  glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--surface-container-low)]",
                 )}
                 tabIndex={p.quickLook ? 0 : undefined}
                 onClick={p.quickLook ? (e) => { e.currentTarget.focus(); setGlancing(r) } : undefined}
@@ -178,6 +188,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
             )}
           </TableBody>
         </Table>
+      </Container>
         {p.quickLook && glancing && (
           <QuickLook
             open
@@ -188,11 +199,6 @@ export function TablePage<T>(p: TablePageProps<T>) {
             editable={p.quickLook.editable?.(glancing)}
             onOpen={() => { const row = glancing; setGlancing(null); p.quickLook!.onOpen(row) }}
           />
-        )}
-        {rows.length > limit && (
-          <div className="flex justify-center border-t py-3">
-            <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more</Button>
-          </div>
         )}
       </div>
     </div>

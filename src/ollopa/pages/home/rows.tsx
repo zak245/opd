@@ -15,7 +15,7 @@ import {
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
 import { FamilyIcon } from "../../ui/Identity"
-import { SectionHeader } from "../../ui"
+import { Container } from "../../ui/Surface"
 
 /* ------------------------------------------------------------------------------------- section */
 
@@ -42,12 +42,18 @@ export function Section({ id, title, count, link, order = 0, children }: Section
   return (
     // The id is the anchor a chain that left from inside this section comes back to, when what it
     // left was the section itself rather than one row.
-    <section id={id} aria-label={title} data-section={id} className={cn("min-w-0", ORDER[order] ?? "")}>
-      <SectionHeader
-        title={<span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>}
-        count={count}
-        className="surface-page sticky top-0 z-[1] pt-1"
-        action={link && (
+    // Home is a set of containers, one per section, each with its heading and its count in the
+    // header (DESIGN.md §5, containment). The rows inside are divided, not carded.
+    <Container
+      id={id}
+      aria-label={title}
+      data-section={id}
+      component="section"
+      padded={false}
+      className={cn("min-w-0", ORDER[order] ?? "")}
+      heading={<span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>}
+      count={count}
+      actions={link && (
           // The whole page this section is a window on. It is a move, not a jump: the trail keeps
           // Home and the section, so the crumb comes back to it.
           <button
@@ -58,9 +64,9 @@ export function Section({ id, title, count, link, order = 0, children }: Section
             {link.label}
           </button>
         )}
-      />
+    >
       {children}
-    </section>
+    </Container>
   )
 }
 

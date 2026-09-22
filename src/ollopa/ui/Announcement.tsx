@@ -9,7 +9,7 @@ export interface AnnouncementProps {
 
 export function Announcement({ text, href }: AnnouncementProps) {
   return (
-    <div className={cn(surfaceClass("section", false), "t-small border-b px-6 py-2 text-muted-foreground")}>
+    <div className={cn(surfaceClass("summaryStrip"), "t-small border-b px-6 py-2 text-muted-foreground")}>
       {text}
       {href && <> <a className="font-medium text-foreground underline underline-offset-2" href={href}>Open</a></>}
     </div>

@@ -20,7 +20,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { ArrowLeft, ChevronRight, MoreHorizontal, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { surfaceClass } from "../ui/Surface"
+import { Container } from "../ui/Surface"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -273,11 +273,17 @@ function FieldCell({ field }: { field: RecordField }) {
 
 function Card({ card }: { card: RecordCard }) {
   return (
-    <section data-record-card className={cn(surfaceClass("card"), "rounded-lg p-3", card.tone === "attention" && "[border-color:var(--warning)]")}>
-      <SectionHeader title={card.title} count={card.count} action={card.action} />
+    <Container
+      data-record-card
+      component="card"
+      heading={card.title}
+      count={card.count}
+      actions={card.action}
+      className={card.tone === "attention" ? "[border-color:var(--warning)]" : undefined}
+    >
       {card.subtitle && <p className="t-small -mt-1 pb-2 text-muted-foreground">{card.subtitle}</p>}
       {card.children}
-    </section>
+    </Container>
   )
 }
 
@@ -316,10 +322,10 @@ export function CardRow({ title, meta, actions, children }: {
   )
 }
 
+/** A section of a record is a container with its heading, and its doors open inside it. */
 function Section({ section }: { section: RecordSection }) {
   return (
-    <section id={section.id} className="border-t py-4 first:border-t-0 first:pt-0">
-      <SectionHeader title={section.title} count={section.count} action={section.action} />
+    <Container id={section.id} component="section" heading={section.title} count={section.count} actions={section.action}>
       {section.authored && (
         <p className="t-small pb-2 text-muted-foreground">
           {section.authored === "generated" ? "Written by an agent" : "Written by a person"}
@@ -327,7 +333,7 @@ function Section({ section }: { section: RecordSection }) {
         </p>
       )}
       {section.children}
-    </section>
+    </Container>
   )
 }
 
@@ -437,7 +443,7 @@ export function RecordPage(p: RecordPageProps) {
           {p.main.footer}
         </>
       ) : (
-        p.main.sections.map((s) => <Section key={s.id} section={s} />)
+        <div className="space-y-4">{p.main.sections.map((s) => <Section key={s.id} section={s} />)}</div>
       )}
     </>
   )
@@ -515,9 +521,13 @@ export function RecordPage(p: RecordPageProps) {
             </dl>
           )}
 
-          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 pb-4 sm:grid-cols-3 xl:grid-cols-4">
+          {/* The record's own fields are its first container: they are a group, and a group on the
+              canvas is contained (DESIGN.md §5). */}
+          <Container component="section" className="mt-3 mb-4">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((f) => <FieldCell key={f.key} field={f} />)}
           </dl>
+          </Container>
         </header>
 
         {/* --------------------------------------------- phone: the actions sit under the header */}

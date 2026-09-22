@@ -19,17 +19,25 @@
      lighter than white, so the page starts low and every level rises to it; the chrome steps the
      other way, below the page, so the frame separates from the work. Steps are measured —
      `scripts/contrast.mjs` fails below 0.03 in light and 0.05 in dark. */
-  --surface-chrome: oklch(0.865 0.008 80);
-  --surface-0: oklch(0.900 0.007 80);
-  --surface-1: oklch(0.935 0.005 80);
-  --surface-2: oklch(0.968 0.004 80);
-  --surface-3: oklch(0.968 0.004 80);
-  --surface-4: oklch(1 0 0);
-  /* The names the product used before levels. Kept so a page reads either way. */
-  --surface-page: var(--surface-0);
-  --surface-raised: var(--surface-1);
-  --surface-floating: var(--surface-2);
-  --surface-overlay: var(--surface-4);
+  /* Five colour roles, not a ladder of five depths. Grouping is done by putting things in a
+     container with a role; a shadow is only for what floats over the page (DESIGN.md §5,
+     "Containment, not depth"; memo 29: M3 has split containment from elevation and deprecated
+     surface tint). */
+  --surface-canvas: oklch(0.975 0.005 80);
+  --surface-container: oklch(1 0 0);
+  --surface-container-low: oklch(0.950 0.006 80);
+  --surface-chrome: oklch(0.945 0.006 80);
+  --surface-overlay: oklch(1 0 0);
+
+  /* One release of aliases, so the refactor lands without a flag day. Then they go. */
+  --surface-page: var(--surface-canvas);
+  --surface-raised: var(--surface-container);
+  --surface-floating: var(--surface-overlay);
+  --surface-0: var(--surface-canvas);
+  --surface-1: var(--surface-container);
+  --surface-2: var(--surface-overlay);
+  --surface-3: var(--surface-overlay);
+  --surface-4: var(--surface-overlay);
 
   --background: var(--surface-page);
   --foreground: oklch(0.24 0.008 80);
@@ -112,16 +120,22 @@
 
 .dark {
   /* The same four levels by tone, lighter as they rise, with the chrome one step below the page. */
-  --surface-chrome: oklch(0.140 0.006 80);
-  --surface-0: oklch(0.195 0.007 80);
-  --surface-1: oklch(0.250 0.008 80);
-  --surface-2: oklch(0.305 0.009 80);
-  --surface-3: oklch(0.305 0.009 80);
-  --surface-4: oklch(0.360 0.010 80);
-  --surface-page: var(--surface-0);
-  --surface-raised: var(--surface-1);
-  --surface-floating: var(--surface-2);
-  --surface-overlay: var(--surface-4);
+  /* The same roles by tone, lighter as things rise above the canvas; the outline does the work and
+     the shadows are weaker. */
+  --surface-canvas: oklch(0.165 0.006 80);
+  --surface-container: oklch(0.215 0.007 80);
+  --surface-container-low: oklch(0.260 0.008 80);
+  --surface-chrome: oklch(0.125 0.006 80);
+  --surface-overlay: oklch(0.300 0.009 80);
+
+  --surface-page: var(--surface-canvas);
+  --surface-raised: var(--surface-container);
+  --surface-floating: var(--surface-overlay);
+  --surface-0: var(--surface-canvas);
+  --surface-1: var(--surface-container);
+  --surface-2: var(--surface-overlay);
+  --surface-3: var(--surface-overlay);
+  --surface-4: var(--surface-overlay);
 
   --background: var(--surface-page);
   --foreground: oklch(0.96 0.005 80);
@@ -291,6 +305,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-surface-canvas: var(--surface-canvas);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-low: var(--surface-container-low);
   --color-surface-0: var(--surface-0);
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);

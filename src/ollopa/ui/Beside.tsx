@@ -339,7 +339,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
       aria-label={`${head.name}, beside ${pageTitle}`}
       style={{ width: open ? "min(100%, 28rem)" : 0 }}
       className={cn(
-        surfaceClass("pane", false) + " z-40 shrink-0 overflow-hidden border-l",
+        surfaceClass("pane") + " z-40 shrink-0 overflow-hidden border-l",
         "transition-[width] duration-200 ease-out motion-reduce:transition-none",
         "max-sm:absolute max-sm:inset-y-0 max-sm:right-0",
       )}
