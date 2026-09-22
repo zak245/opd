@@ -381,49 +381,10 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
         {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
             with the library's gap. */}
-        {/* The workspace's own state, directly under the page title: a plain row of small outline
-            Badges with their icons, and the workspace-change line beside them. No box, no border,
-            no band — "Credits on track" is not an alert and must not be read in an alert's
-            register. The Alert below holds only what needs a decision. */}
-        {(banner.items.length > 0 || news) && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pt-2">
-            {banner.items.map((h) => {
-              const Icon = HEALTH_ICON[h.kind]
-              const cut = h.text.indexOf(" · ")
-              const short = cut > 0 && h.text.length > 44 ? h.text.slice(0, cut) : h.text
-              return (
-                <Badge key={h.text} asChild variant="outline" className="font-normal text-muted-foreground">
-                  <a href={h.href} title={h.text}>
-                    <Icon
-                      aria-hidden="true"
-                      style={h.kind === "warning" ? { color: "var(--warning-ink)" } : h.kind === "error" ? { color: "var(--danger-ink)" } : undefined}
-                    />
-                    {short}
-                  </a>
-                </Badge>
-              )
-            })}
-            {news && (
-              <span className="t-small flex min-w-[14rem] flex-1 items-center gap-1.5 text-muted-foreground">
-                <Megaphone className="size-3.5 shrink-0" aria-hidden="true" />
-                <span className="min-w-0 truncate">{news.text}</span>
-                {news.href && (
-                  <Button asChild variant="link" size="sm" className="h-auto shrink-0 px-0 py-0">
-                    <a href={news.href}>Open</a>
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon-xs" className="shrink-0" aria-label="Dismiss this notice" onClick={() => setNewsRead(true)}>
-                  <X aria-hidden="true" />
-                </Button>
-              </span>
-            )}
-          </div>
-        )}
-
         {/* One Alert, and only what needs a decision is in it. */}
         {(expiring || alerts.length > 0) && (
-          <div className="p-3">
-            <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) ? "destructive" : "default"} className="py-2">
+          <div className="px-3 pb-1 pt-1.5">
+            <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) ? "destructive" : "default"} className="py-1.5">
               <TriangleAlert />
               <AlertTitle>Needs you now</AlertTitle>
               <AlertDescription>
@@ -442,6 +403,46 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                 ))}
               </AlertDescription>
             </Alert>
+          </div>
+        )}
+
+        {/* The workspace's own state, under the Alert and directly above the page: a plain row of
+            small outline Badges with their icons, and the workspace-change line beside them. No box,
+            no border, no band — "Credits on track" is not an alert and must not be read in an
+            alert's register. It is one line at every width: too narrow and it scrolls rather than
+            taking a second and a third row away from the page. */}
+        {(banner.items.length > 0 || news) && (
+          <div className="flex items-center gap-3 overflow-x-auto px-4 pb-1.5">
+            {banner.items.map((h) => {
+              const Icon = HEALTH_ICON[h.kind]
+              const cut = h.text.indexOf(" · ")
+              const short = cut > 0 && h.text.length > 44 ? h.text.slice(0, cut) : h.text
+              return (
+                <Badge key={h.text} asChild variant="outline" className="shrink-0 font-normal text-muted-foreground">
+                  <a href={h.href} title={h.text}>
+                    <Icon
+                      aria-hidden="true"
+                      style={h.kind === "warning" ? { color: "var(--warning-ink)" } : h.kind === "error" ? { color: "var(--danger-ink)" } : undefined}
+                    />
+                    {short}
+                  </a>
+                </Badge>
+              )
+            })}
+            {news && (
+              <span className="t-small flex min-w-0 flex-1 items-center gap-1.5 text-muted-foreground">
+                <Megaphone className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">{news.text}</span>
+                {news.href && (
+                  <Button asChild variant="link" size="sm" className="h-auto shrink-0 px-0 py-0">
+                    <a href={news.href}>Open</a>
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon-xs" className="shrink-0" aria-label="Dismiss this notice" onClick={() => setNewsRead(true)}>
+                  <X aria-hidden="true" />
+                </Button>
+              </span>
+            )}
           </div>
         )}
 

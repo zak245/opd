@@ -34,6 +34,8 @@ import { Panel } from "../ui/Panel"
 import { SectionHeader } from "../ui/SectionHeader"
 import type { QuickLookEditable, QuickLookField } from "./QuickLook"
 import { Divider } from "../ui/Divider"
+import { ButtonGroup } from "@/components/ui/button-group"
+import { Separator } from "@/components/ui/separator"
 
 
 /**
@@ -552,10 +554,10 @@ export function RecordPage(p: RecordPageProps) {
             inside it. Nothing here paints a border or a background of its own beyond the surface
             the bar sits on. */}
         <div className="fixed inset-x-0 bottom-16 z-30 order-last bg-background md:bottom-0 lg:hidden" data-print-hide>
-          <Divider />
-          <div className="flex flex-wrap items-center gap-2 px-5 py-2">
+          <Separator />
+          <ButtonGroup className="w-full flex-wrap items-center gap-2 px-5 py-2">
             {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
-          </div>
+          </ButtonGroup>
         </div>
 
         {/* ------------------------------------------------------- body: main, side cards, doors */}

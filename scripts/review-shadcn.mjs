@@ -10,26 +10,10 @@ const DIR = process.env.OPD_SHOTS ?? "shots/chains/review11"
 
 export const PAGES = [
   ["home", "meridian:sdr", "/ollopa"],
-  ["people", "meridian:sdr", "/ollopa/people"],
-  ["companies", "meridian:sdr", "/ollopa/companies"],
-  ["lists", "meridian:sdr", "/ollopa/lists"],
-  ["sequences", "meridian:sdr", "/ollopa/sequences"],
   ["sequence-record", "meridian:sdr", "/ollopa/sequences/seq-1"],
-  ["templates", "meridian:sdr", "/ollopa/templates"],
-  ["inbox", "meridian:sdr", "/ollopa/inbox"],
-  ["tasks", "meridian:sdr", "/ollopa/tasks"],
-  ["deals-board", "meridian:ae", "/ollopa/deals"],
   ["deal-record", "meridian:ae", "/ollopa/deals/d-118"],
   ["contact-record", "meridian:sdr", "/ollopa/people/c-13"],
-  ["campaigns", "ridgeline:marketer", "/ollopa/campaigns"],
-  ["accounts", "meridian:cs", "/ollopa/accounts"],
-  ["workflows", "ridgeline:marketer", "/ollopa/workflows"],
-  ["requests", "meridian:admin", "/ollopa/requests"],
-  ["reports", "meridian:admin", "/ollopa/reports"],
-  ["agents", "meridian:admin", "/ollopa/agents"],
-  ["settings", "meridian:admin", "/ollopa/settings"],
   ["connect", "meridian:admin", "/ollopa/connect/salesforce"],
-  ["setup", "meridian:admin", "/ollopa/setup"],
 ]
 
 export const inspect = (page) => page.evaluate(() => {
