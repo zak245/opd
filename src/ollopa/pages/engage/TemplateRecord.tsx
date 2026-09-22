@@ -21,7 +21,7 @@ import type { Session } from "../../session"
 import { copyRows, usedByLine } from "./Templates"
 import { engage } from "./store"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { BesideLink, FollowLink, ago, day, h1Of, n, toast } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */

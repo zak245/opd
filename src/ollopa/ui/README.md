@@ -177,30 +177,25 @@ the pane's footer, which is the backstop confirmation never replaces.
 and one sentence naming who can (RULES.md rule 4), so the page leaves the item out of the list
 rather than passing it here with `disabledBecause`.
 
-## Where the visual values live
+## Where the look comes from
 
-**One file.** `src/theme/theme.css` holds every colour, shadow, radius, spacing, size and weight in
-the product, both themes. `src/index.css` imports it and keeps only resets and the utilities that
-read it. Nothing else declares a value — `node scripts/contrast.mjs` measures every pair in the
-theme against its floor and then lints the rest of `src/` for one that escaped, with a short
-allowlist for the parody and lesson files, which exist to look like the version we are criticising.
+**shadcn, as it ships.** Radius, shadows, spacing, typography and the components themselves are
+shadcn's; nothing here overrides a component's internals. The nav is `Sidebar`, the trail is
+`Breadcrumb`, every container is `Card`, and `Dialog`, `Popover`, `DropdownMenu` and `Sheet` are
+used unchanged.
 
-**One depth map.** `src/theme/levels.ts` says which component sits at which level:
+**`src/theme/theme.css`** holds shadcn's variables with our values — warm neutrals, an indigo
+primary — plus the additions that carry meaning and have nowhere else to live: the six object
+families, the five statuses, success, the focus-ring hue and the five type sizes. `node
+scripts/contrast.mjs` measures every pair there and lints the rest of `src/` for a colour declared
+outside it; `src/components/ui` is allowlisted because it ships as it is.
 
-```ts
-{ page: 0, section: 1, card: 1, table: 1, form: 1, listRow: 1,
-  pane: 2, popover: 3, menu: 3, dialog: 4, sheet: 4, chrome: "chrome" }
-```
+**`Section`** (`src/ollopa/ui/Section.tsx`) is the one composition helper: a shadcn `Card` with the
+arrangement every section shares — heading, count, the section's own controls, body, footer. It
+declares no colour, no shadow and no radius. `Group` is a `div` on shadcn's muted background.
 
-`surfaceFor(component)` returns the class and the token names for that level. A component names what
-it *is* and never how deep it is, so moving a card behind a pane is one line in that map.
-
-```tsx
-import { Surface, surfaceClass } from "@/ollopa/ui/Surface"
-
-<Surface as="section" component="card">…</Surface>   // the element
-className={surfaceClass("menu")}                      // where something else draws the element
-```
+The invented surface layer — `levels.ts`, `Surface.tsx`, the `--surface-*` roles, the custom shadows
+and the scrim — is gone, with DESIGN.md §4 and §5's containment rule.
 
 ## Visual identity (DESIGN.md §5)
 

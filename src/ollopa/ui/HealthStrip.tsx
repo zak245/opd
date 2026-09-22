@@ -24,7 +24,7 @@ const TONE: Record<HealthKind, string> = {
 export function HealthStrip({ lines }: { lines: HealthLine[] }) {
   if (lines.length === 0) return null
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-b-[color:var(--border-strong)] bg-muted/40 px-6 py-2 text-xs">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-b-border bg-muted/40 px-6 py-2 text-xs">
       {lines.map((l) => {
         const Icon = ICON[l.kind]
         return (

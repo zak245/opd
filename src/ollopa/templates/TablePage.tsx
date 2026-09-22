@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Container } from "../ui/Surface"
+import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
@@ -96,12 +96,16 @@ export function TablePage<T>(p: TablePageProps<T>) {
       <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3">
       {/* The table lives in a container: its toolbar and its count in the header, its pager in the
           footer (DESIGN.md §5, containment). Nothing here sits naked on the canvas. */}
-      <Container
-        component="table"
-        padded={false}
-        heading={p.title}
-        count={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
-        actions={<>
+      {/* The table sits in a shadcn Card: the toolbar in its header, the pager in its footer. */}
+      <Card className="gap-0 overflow-hidden py-0">
+        <CardHeader className="gap-2 border-b px-4 py-3">
+          <CardTitle className="t-section inline-flex items-baseline gap-2">
+            {p.title}
+            <span className="t-label font-normal tabular-nums text-muted-foreground">
+              {rows.length.toLocaleString()} shown{p.total ? ` of ${p.total.toLocaleString()}` : ""}
+            </span>
+          </CardTitle>
+          <CardAction className="flex flex-wrap items-center gap-2">
         <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
         {(p.filters ?? []).map((f) => (
           <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
@@ -112,15 +116,11 @@ export function TablePage<T>(p: TablePageProps<T>) {
             </SelectContent>
           </Select>
         ))}
-        </>}
-        footer={rows.length > limit ? (
-          <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
-            Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
-          </Button>
-        ) : undefined}
-      >
+          </CardAction>
+        </CardHeader>
+        <CardContent className="px-0">
         <Table>
-          <TableHeader className="surface-container-low sticky top-0">
+          <TableHeader className="bg-muted sticky top-0">
             <TableRow>
               {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
               {(p.rowActions || p.moreActions) && <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>}
@@ -133,9 +133,9 @@ export function TablePage<T>(p: TablePageProps<T>) {
                 // The row you are on is the raised surface: hovered, focused, or the one the quick
                 // look is open on (DESIGN.md §5, the three depths).
                 className={cn(
-                  "group hover:[background-color:var(--surface-container-low)] focus-visible:[background-color:var(--surface-container-low)]",
+                  "group hover:[background-color:var(--muted)] focus-visible:[background-color:var(--muted)]",
                   p.quickLook && "cursor-pointer",
-                  glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--surface-container-low)]",
+                  glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--muted)]",
                 )}
                 tabIndex={p.quickLook ? 0 : undefined}
                 onClick={p.quickLook ? (e) => { e.currentTarget.focus(); setGlancing(r) } : undefined}
@@ -188,7 +188,15 @@ export function TablePage<T>(p: TablePageProps<T>) {
             )}
           </TableBody>
         </Table>
-      </Container>
+        </CardContent>
+        {rows.length > limit && (
+          <CardFooter className="justify-center border-t px-4 py-3">
+            <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
+              Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
         {p.quickLook && glancing && (
           <QuickLook
             open

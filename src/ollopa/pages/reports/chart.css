@@ -8,17 +8,16 @@
  * themes, with a stroke width and a marker shape on top — and the legend repeats the marker, so a
  * series is named three ways before colour is counted at all. */
 .ollopa-viz {
-  --viz-surface: var(--surface-raised);
+  --viz-surface: var(--card);
   --viz-grid: var(--border);
   --viz-axis: var(--muted-foreground);
   /* The series the report exists for is the accent — "look here" is one of colour's five jobs.
      The rest are a neutral ramp with 0.17 of lightness between steps, which is the gap that still
      reads as three different lines when they run together at the foot of the plot. */
-  --viz-1: var(--brand-ink);
-}
-
-.dark .ollopa-viz {
-  /* The same 0.17 steps, started low enough that no neutral line outshines the accent one. */
+  --viz-1: var(--chart-1);
+  --viz-2: var(--chart-2);
+  --viz-3: var(--chart-3);
+  --viz-4: var(--chart-4);
 }
 
 /* Print: the chart is ink on paper, and every door is already open by then. */

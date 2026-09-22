@@ -37,7 +37,7 @@ import { statusOf, totalPeople } from "./Sequences"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }

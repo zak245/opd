@@ -25,7 +25,7 @@ import { follow } from "../../chain"
 import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { FamilyIcon, inkOf } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { useEdits } from "../../edits"
@@ -614,7 +614,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     </div>
   ) : (
     <button
-      className="surface-container flex w-12 shrink-0 items-center justify-center rounded-[var(--radius-container)] border py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="bg-card flex w-12 shrink-0 items-center justify-center rounded-[var(--radius)] border py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       aria-expanded={false}
       onClick={() => setRailOpen(true)}
     >
@@ -954,7 +954,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it.
             One band across the top of the board, not four boxes: the sums are read together and a
             box each would say they are four separate things (DESIGN.md §5, containment). */}
-        <Group as="div" className="mx-4 mb-3 rounded-[var(--radius-container)] border px-4 py-3 sm:mx-6">
+        <Group as="div" className="mx-4 mb-3 rounded-[var(--radius)] border px-4 py-3 sm:mx-6">
           {one("deals.forecast.strip")
             ? strip
             : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
@@ -1016,7 +1016,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
         {/* Bulk: what applies to the selection, and delete naming what goes with it. */}
         {selected.length > 0 && (
-          <div className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t surface-raised px-4 py-2 text-sm sm:px-6">
+          <div className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t bg-card px-4 py-2 text-sm sm:px-6">
             <span className="font-medium tabular-nums">{selected.length} selected</span>
             <Select onValueChange={(v) => { selected.forEach((id) => patch(id, { owner: v }, `${selected.length} deals now belong to ${v}`)); setSelected([]) }}>
               <SelectTrigger className="h-8 w-40" aria-label="Change owner"><SelectValue placeholder="Change owner" /></SelectTrigger>

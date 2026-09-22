@@ -1,49 +1,24 @@
-/* The theme: every visual value in the product, in one file.
+/* The theme: shadcn's variables, with our values, plus the few tokens that carry meaning.
  *
- * The owner's rule, 22 September 2026: a visual change or an experiment is a single-file edit. So
- * nothing outside this file declares a colour, a shadow, a radius, a spacing or a size — they read
- * a token from here. `node scripts/contrast.mjs` measures every pair in this file against its floor
- * and then lints the rest of `src/` for a value that escaped.
+ * The look is shadcn's — radius, shadows, spacing, typography come from the components as they
+ * ship, and nothing here overrides a component's internals. What this file sets is the palette
+ * shadcn reads (warm neutrals, an indigo primary) and the additions that mean something in this
+ * product and have nowhere else to live: the six object families, the five statuses, success, the
+ * focus-ring hue and the five type sizes (DESIGN.md §5, the colour and type parts).
  *
- * The rules these values encode are DESIGN.md §§4 and 5. Read that for why; read this for what.
+ * `node scripts/contrast.mjs` measures every pair here and lints the rest of src/ for a colour that
+ * escaped the file.
  *
- * Surfaces are named by level, not by the thing that uses them — `src/theme/levels.ts` maps a
- * component to a level, and that map is where containment gets tuned. Level 2 and 3 share a tone
- * today and are told apart by their shadow; the memo may separate them, and this is the one place
- * that would change.
  */
 
 :root {
-  /* Structure. Slightly warm — a little chroma at hue 80 — never pure grey. */
-  /* Four levels and the chrome, each a tone step the eye can see (DESIGN.md §5). Light cannot go
-     lighter than white, so the page starts low and every level rises to it; the chrome steps the
-     other way, below the page, so the frame separates from the work. Steps are measured —
-     `scripts/contrast.mjs` fails below 0.03 in light and 0.05 in dark. */
-  /* Five colour roles, not a ladder of five depths. Grouping is done by putting things in a
-     container with a role; a shadow is only for what floats over the page (DESIGN.md §5,
-     "Containment, not depth"; memo 29: M3 has split containment from elevation and deprecated
-     surface tint). */
-  --surface-canvas: oklch(0.975 0.005 80);
-  --surface-container: oklch(1 0 0);
-  --surface-container-low: oklch(0.950 0.006 80);
-  --surface-chrome: oklch(0.945 0.006 80);
-  --surface-overlay: oklch(1 0 0);
-
-  /* One release of aliases, so the refactor lands without a flag day. Then they go. */
-  --surface-page: var(--surface-canvas);
-  --surface-raised: var(--surface-container);
-  --surface-floating: var(--surface-overlay);
-  --surface-0: var(--surface-canvas);
-  --surface-1: var(--surface-container);
-  --surface-2: var(--surface-overlay);
-  --surface-3: var(--surface-overlay);
-  --surface-4: var(--surface-overlay);
-
-  --background: var(--surface-page);
+  /* shadcn's surfaces. Slightly warm — a little chroma at hue 80 — never pure grey. The card and
+     the popover are white so shadcn's own border and shadow do the separating. */
+  --background: oklch(0.975 0.005 80);
   --foreground: oklch(0.24 0.008 80);
-  --card: var(--surface-raised);
+  --card: oklch(1 0 0);
   --card-foreground: var(--foreground);
-  --popover: var(--surface-overlay);
+  --popover: oklch(1 0 0);
   --popover-foreground: var(--foreground);
 
   /* The accent. One hue for the primary fill, the active sidebar item, links, the ring, info. */
@@ -63,12 +38,7 @@
   --accent-foreground: oklch(0.24 0.008 80);
   /* One border that carries meaning — 3:1 against every surface it can sit on — and one for a
      divider inside a card, which only has to be seen. */
-  --shadow-small: 0 1px 2px oklch(0.30 0.02 80 / 0.10), 0 2px 8px oklch(0.30 0.02 80 / 0.08);
-  --shadow-large: 0 4px 12px oklch(0.30 0.02 80 / 0.14), 0 16px 40px oklch(0.30 0.02 80 / 0.16);
-  --scrim: oklch(0.30 0.02 80 / 0.42);
-  --border-strong: oklch(0.54 0.012 80);
-  --border-soft: oklch(0.80 0.008 80);
-  --border: var(--border-strong);
+  --border: oklch(0.88 0.008 80);
   --input: oklch(0.55 0.012 80);
 
   /* The six object families: a fill for bars and dots, a tint for chips, an ink for icons and text.
@@ -115,6 +85,16 @@
   --paused-ink: oklch(0.45 0.045 250);
 
   --destructive: var(--danger);
+
+  /* shadcn's sidebar variables, with our neutrals and our indigo. */
+  --sidebar: oklch(0.955 0.006 80);
+  --sidebar-foreground: oklch(0.24 0.008 80);
+  --sidebar-primary: oklch(0.52 0.17 264);
+  --sidebar-primary-foreground: oklch(0.99 0.003 80);
+  --sidebar-accent: oklch(0.955 0.025 264);
+  --sidebar-accent-foreground: oklch(0.47 0.17 264);
+  --sidebar-border: oklch(0.88 0.008 80);
+  --sidebar-ring: oklch(0.55 0.16 264);
   --radius: 0.625rem;
 }
 
@@ -122,26 +102,12 @@
   /* The same four levels by tone, lighter as they rise, with the chrome one step below the page. */
   /* The same roles by tone, lighter as things rise above the canvas; the outline does the work and
      the shadows are weaker. */
-  --surface-canvas: oklch(0.165 0.006 80);
-  --surface-container: oklch(0.215 0.007 80);
-  --surface-container-low: oklch(0.260 0.008 80);
-  --surface-chrome: oklch(0.125 0.006 80);
-  --surface-overlay: oklch(0.300 0.009 80);
 
-  --surface-page: var(--surface-canvas);
-  --surface-raised: var(--surface-container);
-  --surface-floating: var(--surface-overlay);
-  --surface-0: var(--surface-canvas);
-  --surface-1: var(--surface-container);
-  --surface-2: var(--surface-overlay);
-  --surface-3: var(--surface-overlay);
-  --surface-4: var(--surface-overlay);
-
-  --background: var(--surface-page);
+  --background: oklch(0.165 0.006 80);
   --foreground: oklch(0.96 0.005 80);
-  --card: var(--surface-raised);
+  --card: oklch(0.215 0.007 80);
   --card-foreground: var(--foreground);
-  --popover: var(--surface-overlay);
+  --popover: oklch(0.230 0.008 80);
   --popover-foreground: var(--foreground);
 
   --brand: oklch(0.52 0.17 264);
@@ -157,12 +123,7 @@
   --muted-foreground: oklch(0.73 0.011 80);
   --accent: oklch(0.29 0.008 80);
   --accent-foreground: oklch(0.96 0.005 80);
-  --shadow-small: 0 1px 2px oklch(0 0 0 / 0.40), 0 2px 8px oklch(0 0 0 / 0.32);
-  --shadow-large: 0 4px 12px oklch(0 0 0 / 0.50), 0 16px 40px oklch(0 0 0 / 0.45);
-  --scrim: oklch(0.10 0.01 80 / 0.62);
-  --border-strong: oklch(0.66 0.012 80);
-  --border-soft: oklch(0.40 0.010 80);
-  --border: var(--border-strong);
+  --border: oklch(0.88 0.008 80);
   --input: oklch(0.64 0.012 80);
 
   --family-people: oklch(0.70 0.12 200);
@@ -199,17 +160,25 @@
   --info: var(--brand);
   --info-tint: var(--brand-tint);
   --info-ink: var(--brand-ink);
-  --viz-1: oklch(0.62 0.17 264);
-  --viz-2: oklch(0.86 0.008 80);
-  --viz-3: oklch(0.69 0.008 80);
-  --viz-4: oklch(0.52 0.010 80);
+  --chart-1: oklch(0.62 0.17 264);
+  --chart-2: oklch(0.86 0.008 80);
+  --chart-3: oklch(0.69 0.008 80);
+  --chart-4: oklch(0.52 0.010 80);
   --paused: oklch(0.70 0.035 250);
   --paused-tint: oklch(0.30 0.025 250);
   --paused-ink: oklch(0.79 0.055 250);
 
   --destructive: var(--danger);
-}
+  --sidebar: oklch(0.145 0.006 80);
+  --sidebar-foreground: oklch(0.96 0.005 80);
+  --sidebar-primary: oklch(0.52 0.17 264);
+  --sidebar-primary-foreground: oklch(0.99 0.003 80);
+  --sidebar-accent: oklch(0.31 0.06 264);
+  --sidebar-accent-foreground: oklch(0.76 0.12 264);
+  --sidebar-border: oklch(0.30 0.009 80);
+  --sidebar-ring: oklch(0.58 0.16 264);
 
+}
 
 /* The return cue. Coming back along the trail, the row, door or field you left is lit for three
    seconds, in the same two colours the lesson view uses for "where it is now" — one mark meaning
@@ -225,23 +194,11 @@
   --lesson-accent-soft: oklch(0.33 0.07 255);
 }
 
-
-
 /* ------------------------------------------------------------------------------ shape and space */
 :root {
   /* Two radii: one for a control, one for a container. */
-  --radius-control: 0.5rem;
-  --radius-container: 0.625rem;
 
   /* The spacing scale. Every gap, pad and inset in the product is one of these. */
-  --space-0: 0px;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
 
   /* The type scale: five sizes, five weights, and the line height each one reads at. */
   --text-title: 24px;       --leading-title: 30px;   --weight-title: 600;
@@ -253,22 +210,14 @@
   /* The one hit region a phone needs, whatever a control is drawn at. */
   /* Data series on a chart. They are not a family and not a status: they are four marks that must
      stay apart from each other and from the page (DESIGN.md §5, "nothing else may use colour"). */
-  --viz-1: oklch(0.52 0.17 264);
-  --viz-2: oklch(0.28 0.012 80);
-  --viz-3: oklch(0.45 0.010 80);
-  --viz-4: oklch(0.62 0.008 80);
-  --hit-phone: 44px;
+  --chart-1: oklch(0.52 0.17 264);
+  --chart-2: oklch(0.28 0.012 80);
+  --chart-3: oklch(0.45 0.010 80);
+  --chart-4: oklch(0.62 0.008 80);
   /* The thin bar that marks a family: a pane's top edge, the active sidebar row's leading edge. */
-  --bar-thin: 3px;
   /* What a menu may grow to before it scrolls, and what it may not shrink below. */
-  --menu-max-height: 300px;
-  --menu-min-width: 200px;
   /* The return cue's ring, and the hairline a focused row draws inside itself. */
-  --cue-ring: 3px;
-  --inset-hairline: 1px;
   /* The focus ring, drawn the same on every control. */
-  --ring-width: 3px;
-  --ring-offset: 2px;
 }
 
 /* One declared typeface. `local()` only — nothing is fetched at runtime, so a machine with Inter
@@ -284,7 +233,6 @@
 @theme {
   --font-sans: "Inter local", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
-
 
 @theme inline {
   --color-background: var(--background);
@@ -305,21 +253,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-surface-canvas: var(--surface-canvas);
-  --color-surface-container: var(--surface-container);
-  --color-surface-container-low: var(--surface-container-low);
-  --color-surface-0: var(--surface-0);
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
-  --color-surface-4: var(--surface-4);
-  --color-surface-page: var(--surface-page);
-  --color-surface-raised: var(--surface-raised);
-  --color-surface-floating: var(--surface-floating);
-  --color-surface-overlay: var(--surface-overlay);
-  --color-surface-chrome: var(--surface-chrome);
-  --color-border-strong: var(--border-strong);
-  --color-border-soft: var(--border-soft);
   --color-brand: var(--brand);
   --color-brand-tint: var(--brand-tint);
   --color-brand-ink: var(--brand-ink);

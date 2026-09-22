@@ -1,3 +1,4 @@
+import { Container } from "../../ui/Section"
 // Workspace set-up: the only page a person sees once — and the one page an admin comes back to.
 //
 // Three questions on one screen, because the sidebar cannot be decided without them and because the
@@ -14,7 +15,6 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container, surfaceClass } from "../../ui/Surface"
 import { Input } from "@/components/ui/input"
 import { navigate } from "@/app/router"
 import { back, useTrail } from "../../chain"
@@ -218,7 +218,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   return (
     <div className={cn(!inShell && "min-h-screen bg-muted/30")}>
       {!inShell && (
-        <header className={cn(surfaceClass("header"), "flex h-14 items-center gap-3 border-x-0 border-t-0 px-4")}>
+        <header className={cn("bg-sidebar", "flex h-14 items-center gap-3 border-x-0 border-t-0 px-4")}>
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
           <span className="t-label">{workspace.name}</span>
           <span className="t-body text-muted-foreground">· {session.user}</span>
@@ -344,7 +344,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
                 />
                 <select
-                  className="t-body rounded-[var(--radius-control)] border bg-transparent px-2"
+                  className="t-body rounded-[var(--radius)] border bg-transparent px-2"
                   aria-label="Seat"
                   value={row.seat}
                   onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: e.target.value as Role } : r)))}

@@ -12,7 +12,7 @@ import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { Door, DoorGroup } from "../../ui/Door"
@@ -145,7 +145,7 @@ export function RequestsPage({ session }: { session: Session }) {
     <div className="block sm:flex sm:h-full sm:flex-col">
       <DoorGroup>
         <div className="shrink-0 px-4 pt-5 sm:px-6">
-          <Group className="rounded-[var(--radius-container)] px-3 py-2">
+          <Group className="rounded-[var(--radius)] px-3 py-2">
           <p className="t-body">
             <strong className="font-semibold">{plural(open.length, "waiting", "waiting")}</strong>
             {" · "}

@@ -25,7 +25,7 @@ import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
@@ -364,7 +364,7 @@ export function ListsPage({ session }: { session: Session }) {
 
         {/* ------------------------------------------------------------- delete, with its words */}
         {confirming && (
-          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t border-destructive/40 surface-overlay px-4 py-3 sm:px-6">
+          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t border-destructive/40 bg-popover px-4 py-3 sm:px-6">
             <p className="text-sm">
               Delete <span className="font-medium">{confirming.name}</span>. The {n(confirming.memberIds.length)}{" "}
               {confirming.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
@@ -375,7 +375,7 @@ export function ListsPage({ session }: { session: Session }) {
         )}
 
         {undo && (
-          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t surface-overlay px-4 py-2 sm:px-6">
+          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 border-t bg-popover px-4 py-2 sm:px-6">
             <span className="text-sm">{undo.name} deleted. The people stay in People.</span>
             <Button size="sm" variant="outline" onClick={() => { engage.undeleteList(session.business, undo.id); setUndo(null) }}>Undo</Button>
           </div>

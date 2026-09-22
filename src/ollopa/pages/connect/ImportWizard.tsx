@@ -443,7 +443,7 @@ export function ImportWizard({ session }: { session: Session }) {
                   </table>
                 </div>
 
-                <section className="grid gap-2 rounded-lg border surface-raised p-4">
+                <section className="grid gap-2 rounded-lg border bg-card p-4">
                   <p className="t-body">
                     At this rate, {n(draft.rows)} rows will cost about {n(projected)} credits — {n(balanceAfter)} of your balance after this run.
                     {chosen.map((r) => ` ${r.field} lands on ${inTen(r.hitRate)}.`).join("")}

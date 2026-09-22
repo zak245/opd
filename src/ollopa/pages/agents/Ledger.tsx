@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { href } from "@/app/router"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Chip } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { SectionHeader } from "../../ui/SectionHeader"
@@ -260,7 +260,7 @@ export function Ledger(p: LedgerProps) {
       </div>
 
       {/* The columns, at the widths that fit. Below `sm` every row is two lines and the header goes. */}
-      <div className="surface-container-low mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-y px-2 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
+      <div className="bg-muted mt-3 hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 border-y px-2 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
         style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
         <span>When</span>
         {rules.r4 && <span data-item="act.actor" data-item-label="Actor">Actor</span>}
@@ -286,7 +286,7 @@ export function Ledger(p: LedgerProps) {
           return (
             <div key={when}>
               <h3 {...(rules.r2 ? { "data-item": `act.day-digest.${when}`, "data-item-label": `Digest for ${dayGroup(when)}` } : {})}
-                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b surface-raised/95 py-1.5 t-small backdrop-blur">
+                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-card/95 py-1.5 t-small backdrop-blur">
                 <span className="font-semibold">{dayGroup(when)}</span>
                 {rules.r2 && <span className="text-muted-foreground">
                   {digest.count} {digest.count === 1 ? "event" : "events"} · {digest.kinds} · <span className="tabular-nums">{digest.credits.toLocaleString()}</span> {digest.credits === 1 ? "credit" : "credits"}

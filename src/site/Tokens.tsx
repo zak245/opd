@@ -39,7 +39,7 @@ export function Tokens() {
   const statuses = Object.keys(STATUSES) as Status[]
   const t = currentTheme()
   return (
-    <main className="surface-page min-h-screen px-6 py-8 text-foreground">
+    <main className="bg-background min-h-screen px-6 py-8 text-foreground">
       <div className="mx-auto max-w-4xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="t-title">The tokens</h1>
@@ -64,27 +64,27 @@ export function Tokens() {
 
         <Section title="Structure — warm neutrals, most of every screen">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Swatch name="--surface-page" value="var(--surface-page)" note="page" />
-            <Swatch name="--surface-raised" value="var(--surface-raised)" note="raised" />
-            <Swatch name="--surface-overlay" value="var(--surface-overlay)" note="overlay" />
+            <Swatch name="--background" value="var(--background)" note="page" />
+            <Swatch name="--card" value="var(--card)" note="raised" />
+            <Swatch name="--popover" value="var(--popover)" note="overlay" />
             <Swatch name="--muted" value="var(--muted)" note="muted" />
-            <Swatch name="--foreground" value="var(--foreground)" ink="var(--surface-page)" note="body text" />
-            <Swatch name="--muted-foreground" value="var(--muted-foreground)" ink="var(--surface-page)" note="muted text" />
-            <Swatch name="--border-strong" value="var(--border-strong)" ink="var(--surface-page)" note="edge" />
-            <Swatch name="--border-soft" value="var(--border-soft)" note="divider" />
-            <Swatch name="--input" value="var(--input)" ink="var(--surface-page)" note="control edge" />
+            <Swatch name="--foreground" value="var(--foreground)" ink="var(--background)" note="body text" />
+            <Swatch name="--muted-foreground" value="var(--muted-foreground)" ink="var(--background)" note="muted text" />
+            <Swatch name="--border-strong" value="var(--border)" ink="var(--background)" note="edge" />
+            <Swatch name="--border-soft" value="var(--border)" note="divider" />
+            <Swatch name="--input" value="var(--input)" ink="var(--background)" note="control edge" />
           </div>
         </Section>
 
         <Section title="Depth — four levels and the chrome, each one visible">
-          <div className="surface-page rounded-lg border p-4">
+          <div className="bg-background rounded-lg border p-4">
             <div className="space-y-3">
               {([
-                ["--surface-chrome", "Chrome — sidebar, header, bottom bar", "surface-chrome", ""],
-                ["--surface-page", "Page — the base", "surface-page", ""],
-                ["--surface-raised", "Raised — cards, sections, the row you are on", "surface-raised", ""],
-                ["--surface-floating", "Floating — the pane, popovers, menus", "surface-floating", ""],
-                ["--surface-overlay", "Overlay — dialogs, over a dimmed page", "surface-overlay", ""],
+                ["--sidebar", "Chrome — sidebar, header, bottom bar", "bg-sidebar", ""],
+                ["--background", "Page — the base", "bg-background", ""],
+                ["--card", "Raised — cards, sections, the row you are on", "bg-card", ""],
+                ["--popover", "Floating — the pane, popovers, menus", "bg-popover", ""],
+                ["--popover", "Overlay — dialogs, over a dimmed page", "bg-popover", ""],
               ] as const).map(([token, what, cls]) => (
                 <div key={token} className={`${cls} flex items-baseline justify-between gap-4 rounded-md border px-3 py-3`}>
                   <span className="t-label">{what}</span>
@@ -99,15 +99,15 @@ export function Tokens() {
               overlay. Nothing else casts one.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="surface-raised rounded-md border px-3 py-3">
+              <div className="bg-card rounded-md border px-3 py-3">
                 <div className="t-label">A strong border</div>
                 <div className="t-small text-muted-foreground">--border-strong · 3:1 on every surface</div>
                 <div className="mt-2 border-t" />
                 <div className="t-small mt-2 text-muted-foreground">--border-soft, the divider above, inside a card</div>
               </div>
-              <div className="surface-overlay rounded-md border px-3 py-3">
+              <div className="bg-popover rounded-md border px-3 py-3">
                 <div className="t-label">Overlay, with the large shadow</div>
-                <div className="t-small text-muted-foreground">--shadow-large · --scrim behind it</div>
+                <div className="t-small text-muted-foreground">--shadow-lg · -- behind it</div>
               </div>
             </div>
           </div>
@@ -117,8 +117,8 @@ export function Tokens() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Swatch name="--brand" value="var(--brand)" ink="var(--primary-foreground)" note="primary fill" />
             <Swatch name="--brand-tint" value="var(--brand-tint)" ink="var(--brand-ink)" note="active item" />
-            <Swatch name="--brand-ink" value="var(--brand-ink)" ink="var(--surface-page)" note="links" />
-            <Swatch name="--ring" value="var(--ring)" ink="var(--surface-page)" note="focus ring" />
+            <Swatch name="--brand-ink" value="var(--brand-ink)" ink="var(--background)" note="links" />
+            <Swatch name="--ring" value="var(--ring)" ink="var(--background)" note="focus ring" />
           </div>
         </Section>
 
@@ -127,7 +127,7 @@ export function Tokens() {
             {families.map((f) => {
               const look = FAMILIES[f]
               return (
-                <div key={f} className="surface-raised flex items-center gap-3 rounded-md border p-3">
+                <div key={f} className="bg-card flex items-center gap-3 rounded-md border p-3">
                   <div aria-hidden="true" className="h-10 w-[3px] rounded-full" style={{ backgroundColor: look.fill }} />
                   <FamilyIcon of={f} size="header" />
                   <div className="min-w-0 flex-1">
@@ -150,7 +150,7 @@ export function Tokens() {
         <Section title="Five statuses — only ever state, and always with a word">
           <div className="grid gap-3 sm:grid-cols-2">
             {statuses.map((s) => (
-              <div key={s} className="surface-raised flex items-center gap-3 rounded-md border p-3">
+              <div key={s} className="bg-card flex items-center gap-3 rounded-md border p-3">
                 <div aria-hidden="true" className="size-3 shrink-0 rounded-full" style={{ backgroundColor: `var(--${s})` }} />
                 <div className="min-w-0 flex-1">
                   <div className="t-label capitalize">{s}</div>
@@ -168,7 +168,7 @@ export function Tokens() {
         </Section>
 
         <Section title="Five type sizes and no others">
-          <div className="surface-raised space-y-2 rounded-md border p-4">
+          <div className="bg-card space-y-2 rounded-md border p-4">
             <p className="t-title">Title · 24 · 600</p>
             <p className="t-section">Section and record title · 18 · 600</p>
             <p className="t-body">Body · 14 · 400 · 1,234,567 tabular</p>

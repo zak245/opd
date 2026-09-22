@@ -18,7 +18,7 @@ import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -146,7 +146,7 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   return (
     // One band on the canvas above the areas, not a box of boxes: the facts that may never be
     // behind anything, grouped by the one container-low region this page is allowed (DESIGN.md §5).
-    <Group as="section" aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="rounded-[var(--radius-container)] px-4 py-3 sm:px-6">
+    <Group as="section" aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="rounded-[var(--radius)] px-4 py-3 sm:px-6">
       {isAdmin ? (
         <>
           <StripLine item="plan.price" label="Plan and price">
@@ -434,7 +434,7 @@ function SettingsSearch({ rows, onJump, inputRef, accelerators = true }: {
       />
       {accelerators && <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono t-small text-muted-foreground">/</kbd>}
       {hits.length > 0 && (
-        <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border surface-floating shadow-large" role="listbox">
+        <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-lg" role="listbox">
           {hits.map((h, i) => (
             <li key={h.id}>
               <button

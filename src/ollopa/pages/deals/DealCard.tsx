@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
 import { Chip } from "../../ui/Identity"
-import { Group, surfaceClass } from "../../ui/Surface"
+import { Group } from "../../ui/Section"
 import { inkOf } from "../../ui/Identity"
 import { TODAY, type Deal, type DealStage, type DealWarning, type ForecastCategory } from "../../data/seed"
 import { day, daysBetween } from "../deal/format"
@@ -124,7 +124,7 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
     // The one container-low band a card may hold: the editor is a region of the card, not a card
     // inside a card (DESIGN.md §5, containment).
     <Group
-      className="grid gap-1.5 rounded-[var(--radius-container)] p-2"
+      className="grid gap-1.5 rounded-[var(--radius)] p-2"
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
       onKeyDown={(e: React.KeyboardEvent) => { e.stopPropagation(); if (e.key === "Escape") onCancel(); if (e.key === "Enter" && ok) onSave(text.trim(), due) }}
     >
@@ -178,10 +178,10 @@ export function DealCard(p: DealCardProps) {
         // outlined like any container; nothing on the page casts a shadow except while it is in
         // the air, which is what the drag lift below says. It uses the card role's classes rather
         // than `Container`, because a container inside a container is two groups where there is one.
-        surfaceClass("card"),
-        "t-body group cursor-pointer rounded-[var(--radius-container)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "bg-card",
+        "t-body group cursor-pointer rounded-[var(--radius)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         flags.compact ? "space-y-1 p-2" : "space-y-1.5 p-2.5",
-        p.carrying && "elev-small ring-2 ring-ring",
+        p.carrying && "shadow-sm ring-2 ring-ring",
         p.selected && "border-foreground",
       )}
     >

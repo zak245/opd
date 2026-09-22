@@ -8,7 +8,6 @@
 // Nothing here approves anything: the approvals row opens the queue, where the consequence line is.
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
-import { surfaceClass } from "../ui/Surface"
 import { navigate, openInNewTab } from "@/app/router"
 import { clearTrail } from "../chain"
 import { businessById } from "../data/businesses"
@@ -324,8 +323,8 @@ export function Palette({ session, open, onOpenChange }: { session: Session; ope
   let cursor = -1
   return (
     <div className="fixed inset-0 z-50" role="presentation">
-      <div className="scrim absolute inset-0" onClick={close} aria-hidden="true" />
-      <div role="dialog" aria-modal="true" aria-label="Search or jump to" className={cn("absolute left-1/2 top-4 w-[min(40rem,calc(100vw-1rem))] -translate-x-1/2 overflow-hidden ", surfaceClass("menu"), "rounded-xl max-sm:inset-0 max-sm:top-0 max-sm:w-full max-sm:translate-x-0 max-sm:rounded-none")}>
+      <div className=" absolute inset-0" onClick={close} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-label="Search or jump to" className={cn("absolute left-1/2 top-4 w-[min(40rem,calc(100vw-1rem))] -translate-x-1/2 overflow-hidden ", "bg-popover", "rounded-xl max-sm:inset-0 max-sm:top-0 max-sm:w-full max-sm:translate-x-0 max-sm:rounded-none")}>
         <div className="flex items-center gap-2 border-b px-3">
           {stage && <span className="shrink-0 rounded bg-muted px-2 py-1 text-xs">Add {stage.name} to {stage.kind}</span>}
           <input

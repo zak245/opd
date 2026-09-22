@@ -18,7 +18,7 @@ import { useRoute } from "@/app/router"
 import { href } from "@/app/router"
 import { useEdit } from "../../edits"
 import { Actions } from "../../ui/Actions"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { arrivalHandledHere, showReturn, takeArrival } from "../../chain"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
@@ -264,7 +264,7 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
       bodyClassName="min-h-0 flex-1 divide-y overflow-y-auto"
     >
       <DoorGroup>
-        <header className="surface-container sticky top-0 z-[1] border-b px-4 py-3">
+        <header className="bg-card sticky top-0 z-[1] border-b px-4 py-3">
           <div className="flex items-start gap-2">
             {/* A destination, so a real link: it copies, it opens in a new tab, and the click
                 keeps the list where it is rather than reloading it (DESIGN.md §1). */}

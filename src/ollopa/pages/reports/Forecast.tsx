@@ -70,7 +70,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
       {/* 2. The five categories, each with its definition printed under its label. */}
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {report.categories.map((c) => (
-          <li key={c.name} className={cn("surface-raised rounded-lg border p-3", c.counted && "border-foreground/30")}>
+          <li key={c.name} className={cn("bg-card rounded-lg border p-3", c.counted && "border-foreground/30")}>
             <div className="flex items-baseline justify-between gap-2">
               <Chip family="neutral" icon={false}>{c.name}</Chip>
               <span className="t-small tabular-nums text-muted-foreground">{c.count}</span>
@@ -85,7 +85,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
       </p>
 
       {/* 3. The goal for the period, as the denominator. */}
-      <div className="surface-raised rounded-lg border p-3">
+      <div className="bg-card rounded-lg border p-3">
         <div className="t-small text-muted-foreground">Against the goal for {report.periodLabel}</div>
         {report.goal === null ? (
           <p className="mt-1 t-body">
@@ -105,7 +105,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
       </div>
 
       {/* 4. The predicted number beside the submitted one. Beside, never instead. */}
-      <div className="surface-raised rounded-lg border p-3">
+      <div className="bg-card rounded-lg border p-3">
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
           <div>
             <div className="t-small text-muted-foreground">You</div>
@@ -148,7 +148,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
             <Actions surface="card" items={[{ kind: "secondary", label: "Open the team roll-up" }]} />
           </Locked>
         ) : (
-          <section className="surface-raised rounded-lg border">
+          <section className="bg-card rounded-lg border">
             <h3 className="t-label border-b px-3 py-2">The team roll-up <span className="font-normal tabular-nums text-muted-foreground">({report.repRows.length})</span></h3>
             <table className="w-full t-body">
               <caption className="sr-only">One row per rep: their roll-up, what they submitted, and when.</caption>
@@ -183,7 +183,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
       {report.split && (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {report.split.map((g) => (
-            <li key={g.label} className="surface-raised rounded-lg border p-3">
+            <li key={g.label} className="bg-card rounded-lg border p-3">
               <div className="t-small text-muted-foreground">{g.label}</div>
               <div className="t-title mt-0.5">{money(g.amount, cur)}</div>
               <p className="t-small mt-0.5 text-muted-foreground">{g.count} deals</p>
@@ -194,7 +194,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
 
       {/* 6. The submissions strip for this period. */}
       {showStrip && report.strip.length > 0 && (
-        <section className="surface-raised rounded-lg border p-3">
+        <section className="bg-card rounded-lg border p-3">
           <h3 className="t-small font-medium uppercase tracking-wide text-muted-foreground">Submitted for {report.periodLabel}</h3>
           <ul className="t-small mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {report.strip.map((s) => (
@@ -217,7 +217,7 @@ export function ForecastTab({ session, report, drillTo, onDrill, onSubmitPanel, 
 function ForecastDeals({ deals, currency, onRecords }: { deals: Deal[]; currency: string; onRecords: () => void }) {
   const sorted = sortByCategoryThenRisk(deals).slice(0, 12)
   return (
-    <section className="surface-raised rounded-lg border">
+    <section className="bg-card rounded-lg border">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
         <h3 className="t-label">Every deal in the period <span className="font-normal tabular-nums text-muted-foreground">({deals.length})</span></h3>
         <button type="button" className="t-small underline" onClick={onRecords} data-print-hide>All {deals.length} records</button>

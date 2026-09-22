@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Door } from "../../ui/Door"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 
@@ -331,7 +331,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
       <div className="min-h-0 flex-1 overflow-auto">
         <Table>
-          <TableHeader className="surface-container sticky top-0 z-10">
+          <TableHeader className="bg-card sticky top-0 z-10">
             <TableRow>
               {hasBulk && (
                 <TableHead className="w-8 pl-4 lg:pl-6">
@@ -343,7 +343,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                 </TableHead>
               )}
               {p.columns.map(header)}
-              <TableHead className="surface-container sticky right-0 z-20 w-12"><span className="sr-only">Actions</span></TableHead>
+              <TableHead className="bg-card sticky right-0 z-20 w-12"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody ref={body}>
@@ -388,9 +388,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
                     {/* The row's actions are in the DOM at all times and change opacity, never presence.
                         They are laid over the row rather than in it, so a seat with four of them does
                         not widen the table, and the "…" stays pinned to the right edge. */}
-                    <TableCell className="surface-container sticky right-0 z-10 w-12 py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="bg-card sticky right-0 z-10 w-12 py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex items-center justify-end gap-1">
-                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 rounded-md surface-raised opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
+                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 rounded-md bg-card opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
                         {p.rowActions.map((a) => (
                           <Button
                             key={a.id}

@@ -6,7 +6,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
-import { surfaceClass } from "../../ui/Surface"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -87,9 +86,7 @@ export function SaveBar() {
       data-print-hide
       /* The bar floats over the page: overlay, and the shadow that says so. Its role and its
          elevation come from the one map, never from a class picked here (DESIGN.md §5). */
-      className={cn(
-        surfaceClass("popover"),
-        "sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-x-0 border-b-0 px-4 py-3 sm:px-6",
+      className={cn("bg-popover", "sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-x-0 border-b-0 px-4 py-3 sm:px-6",
       )}
     >
       {/* A Save bar is a form: Save at the leading edge, Discard after it (DESIGN.md §4). It is the

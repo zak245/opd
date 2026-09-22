@@ -17,7 +17,7 @@ import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */

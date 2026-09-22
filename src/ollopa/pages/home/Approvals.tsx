@@ -61,7 +61,7 @@ function ItemBody({ e, inPanel }: { e: AgentEvent; inPanel?: boolean }) {
           ))}
         </p>
         {e.draft
-          ? <p className="whitespace-pre-wrap rounded-md surface-raised p-2 text-xs">{e.draft}</p>
+          ? <p className="whitespace-pre-wrap rounded-md bg-card p-2 text-xs">{e.draft}</p>
           : <p className="text-xs text-muted-foreground">{e.detail}</p>}
         {e.sourceQuote && <p className="pt-1 text-xs text-muted-foreground">{e.sourceQuote}</p>}
       </Door>

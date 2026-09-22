@@ -150,9 +150,9 @@ export function Grid<T>(p: GridProps<T>) {
       )}
 
       {/* ---------------------------------------------------------------- the table, from tablet up */}
-      <div className={cn("hidden overflow-x-auto md:block", p.inContainer ? "" : "surface-raised border-t")}>
+      <div className={cn("hidden overflow-x-auto md:block", p.inContainer ? "" : "bg-card border-t")}>
         <Table>
-          <TableHeader className={cn("sticky top-0 z-10", p.inContainer ? "surface-container" : "surface-raised")}>
+          <TableHeader className={cn("sticky top-0 z-10", p.inContainer ? "bg-card" : "bg-card")}>
             <TableRow>
               {shown.map((c) => (
                 <TableHead key={c.key} className={cn("t-label", c.className)}>
@@ -223,7 +223,7 @@ export function Grid<T>(p: GridProps<T>) {
             key={p.rowKey(row)}
             data-item={p.rowKey(row)}
             data-item-label={p.rowLabel?.(row)}
-            className={cn(p.inContainer ? "border-t px-4 py-3 first:border-t-0" : "surface-raised rounded-lg border p-3")}
+            className={cn(p.inContainer ? "border-t px-4 py-3 first:border-t-0" : "bg-card rounded-lg border p-3")}
           >
             <div className="flex items-start gap-2">
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>

@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { follow } from "../../chain"
 import { Chip } from "../../ui/Identity"
-import { Group } from "../../ui/Surface"
+import { Group } from "../../ui/Section"
 import { Panel } from "../../ui/Panel"
 import { CALL_PURPOSES, DISPOSITIONS, seedFor, TODAY, type Call, type Disposition, type Task } from "../../data/seed"
 import type { Session } from "../../session"
@@ -142,7 +142,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
   return (
     // Inside the queue this is a band in the task's own container, not a second box; opened as a
     // panel it is the panel's body (DESIGN.md §5, containment).
-    <Group as="div" component={asBody ? "summaryStrip" : "page"} className={asBody ? "space-y-4 rounded-[var(--radius-container)] p-3" : "space-y-4 border-0 bg-transparent"}>
+    <Group as="div" component={asBody ? "summaryStrip" : "page"} className={asBody ? "space-y-4 rounded-[var(--radius)] p-3" : "space-y-4 border-0 bg-transparent"}>
       {/* The number and its screening state: calling a flagged person is a compliance consequence.
           The queue already carries the contact above this block, so it is not repeated there. */}
       <div className={asBody ? "hidden" : "border-b pb-3"}>

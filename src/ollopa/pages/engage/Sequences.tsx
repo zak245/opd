@@ -19,7 +19,7 @@ import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { Actions } from "../../ui/Actions"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 

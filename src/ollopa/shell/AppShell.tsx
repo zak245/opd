@@ -3,7 +3,7 @@
 // The sidebar is declared, never inferred: the seat decides what may be opened, the workspace profile
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight, Grid3x3, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,61 +20,43 @@ import { BellButton, NotificationPanel, unreadCount } from "./Bell"
 import { AccountMenu } from "./AccountMenu"
 import { Palette } from "./Palette"
 import { Shortcuts } from "./Shortcuts"
+import {
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider,
+  SidebarRail, SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Panel } from "../ui/Panel"
 import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
-import { surfaceClass } from "../ui/Surface"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY } from "./notifications"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
 const COLLAPSE_KEY = "ollopa.sidebar"
 
-function SidebarRow({ entry, page, collapsed, onAnswer }: { entry: SidebarEntry; page: Page; collapsed: boolean; onAnswer: (a: "keep" | "remove") => void }) {
+function SidebarRow({ entry, page, onAnswer }: { entry: SidebarEntry; page: Page; onAnswer: (a: "keep" | "remove") => void }) {
   const i = entry.item
   const active = i.page === page
-  // Where you are, said three ways: the accent tint, a leading bar in the accent, and the item's
-  // own family icon in its family ink (DESIGN.md §5).
-  const link = (
-    <a
-      href={href(`/ollopa/${i.page === "home" ? "" : i.page}`)}
-      onClick={clearTrail}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "t-body relative flex items-center gap-2 rounded-md py-1.5 pl-3 pr-2",
-        collapsed && "justify-center px-0",
-        active ? "font-medium" : "text-muted-foreground hover:bg-accent hover:text-foreground",
-      )}
-      style={active ? { backgroundColor: "var(--brand-tint)", color: "var(--brand-ink)" } : undefined}
-    >
-      {active && !collapsed && (
-        <span aria-hidden="true" className="absolute inset-y-1 left-0 w-[var(--bar-thin)] rounded-full" style={{ backgroundColor: "var(--brand)" }} />
-      )}
-      <FamilyIcon of={i.page} tone={active ? "current" : "ink"} />
-      {!collapsed && <span className="truncate">{i.label}</span>}
-    </a>
-  )
   return (
-    <div>
-      {collapsed ? (
-        <Tooltip>
-          <TooltipTrigger asChild>{link}</TooltipTrigger>
-          <TooltipContent side="right">{i.label}</TooltipContent>
-        </Tooltip>
-      ) : (
-        link
-      )}
-      {entry.asking && !collapsed && (
-        <div className="mx-2 mb-1 mt-1 rounded-md border bg-background p-2 text-xs">
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={active} tooltip={i.label}>
+        <a href={href(`/ollopa/${i.page === "home" ? "" : i.page}`)} onClick={clearTrail} aria-current={active ? "page" : undefined}>
+          <FamilyIcon of={i.page} tone={active ? "current" : "ink"} />
+          <span>{i.label}</span>
+        </a>
+      </SidebarMenuButton>
+      {entry.asking && (
+        <div className="t-small mx-2 mb-1 mt-1 rounded-md border bg-background p-2 group-data-[collapsible=icon]:hidden">
           <p>Keep {i.label} in the sidebar?</p>
           <div className="mt-1.5 flex gap-1">
-            <Button size="sm" className="h-6 px-2 text-xs" onClick={() => onAnswer("keep")}>Keep</Button>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => onAnswer("remove")}>Remove</Button>
+            <Button size="sm" className="t-small h-6 px-2" onClick={() => onAnswer("keep")}>Keep</Button>
+            <Button size="sm" variant="outline" className="t-small h-6 px-2" onClick={() => onAnswer("remove")}>Remove</Button>
           </div>
         </div>
       )}
-    </div>
+    </SidebarMenuItem>
   )
 }
 
@@ -93,35 +75,36 @@ function Crumbs({ trail }: { trail: Origin[] }) {
   if (trail.length === 0) return null
   const previous = trail[trail.length - 1]
   return (
-    <nav aria-label="Your path" className="flex min-w-0 items-center">
+    <>
+      {/* At phone width there is room for one step back; above it, shadcn's Breadcrumb. */}
+      {/* One nav, so "Your path" names the trail at every width; shadcn's breadcrumb parts draw it. */}
+      <nav aria-label="Your path" className="flex min-w-0 items-center">
       <button
         type="button"
         onClick={() => back(trail.length - 1)}
-        className="flex min-w-0 items-center gap-1 rounded text-sm text-muted-foreground hover:text-foreground sm:hidden"
+        className="t-body flex min-w-0 items-center gap-1 rounded text-muted-foreground hover:text-foreground sm:hidden"
       >
         <ChevronLeft className="size-4 shrink-0" aria-hidden="true" />
         <FamilyIcon of={familyOfRoute(previous.route)} />
         <span className="truncate">{crumbName(previous.title)}</span>
       </button>
-      <ol className="hidden min-w-0 items-center gap-1 sm:flex">
-        {trail.map((o, i) => (
-          // The oldest crumb gives way first: its shrink weight is the largest, so the page you are
-          // on and the step you just took stay readable while the head of the path shortens.
-          <li key={`${o.route}-${i}`} className="flex min-w-0 items-center gap-1" style={{ flexShrink: trail.length - i }}>
-            {/* The crumb carries the family icon of the page you left (DESIGN.md §5). */}
-            <button
-              type="button"
-              onClick={() => back(i)}
-              className="t-body inline-flex min-w-0 items-center gap-1 truncate rounded text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            >
-              <FamilyIcon of={familyOfRoute(o.route)} />
-              <span className="truncate">{crumbName(o.title)}</span>
-            </button>
-            <span aria-hidden="true" className="shrink-0 text-muted-foreground">›</span>
-          </li>
-        ))}
-      </ol>
-    </nav>
+      <BreadcrumbList className="hidden sm:flex">
+          {trail.map((o, i) => (
+            <Fragment key={`${o.route}-${i}`}>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <button type="button" onClick={() => back(i)} className="inline-flex items-center gap-1">
+                    <FamilyIcon of={familyOfRoute(o.route)} />
+                    <span className="max-w-[14rem] truncate">{crumbName(o.title)}</span>
+                  </button>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </Fragment>
+          ))}
+      </BreadcrumbList>
+      </nav>
+    </>
   )
 }
 
@@ -266,51 +249,58 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const restOfPages = entries.filter((e) => !bottom.includes(e.item.page))
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <SidebarProvider defaultOpen={!collapsed} onOpenChange={(o) => setCollapsed(!o)}>
       <a href="#ollopa-main" className="sr-only rounded-md bg-foreground px-3 py-2 text-background focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         Skip to content
       </a>
 
-      <aside className={cn(surfaceClass("sidebar"), "hidden shrink-0 flex-col border-r border-r-[color:var(--border-strong)] md:flex", collapsed ? "w-14" : "w-56")}>
-        <a href={href("/ollopa")} onClick={clearTrail} className={cn("flex h-14 items-center gap-2 border-b px-4 font-semibold tracking-tight", collapsed && "justify-center px-0")}>
-          <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
-          {!collapsed && "ollopA"}
-        </a>
-        <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Main">
+      {/* shadcn's Sidebar, as it ships: the collapsible icon rail replaces our own Collapse button,
+          and the groups carry the declared sidebar's own labels. */}
+      <Sidebar collapsible="icon">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild size="lg">
+                <a href={href("/ollopa")} onClick={clearTrail}>
+                  <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
+                  <span className="font-semibold tracking-tight">ollopA</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
           {groups.map((g) => (
-            <div key={g} className={g === "bottom" ? "mt-2 border-t pt-3" : "mb-3"}>
-              {g !== "top" && g !== "bottom" && !collapsed && (
-                <div className="px-2 pb-1 t-small font-medium uppercase tracking-wider text-muted-foreground">{g}</div>
-              )}
-              {entries.filter((e) => e.item.group === g).map((e) => (
-                <SidebarRow
-                  key={e.item.page}
-                  entry={e}
-                  page={page}
-                  collapsed={collapsed}
-                  onAnswer={(a) => { answerExposure(e.item.page, a); refresh() }}
-                />
-              ))}
-            </div>
+            <SidebarGroup key={g}>
+              {g !== "top" && g !== "bottom" && <SidebarGroupLabel>{g}</SidebarGroupLabel>}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {entries.filter((e) => e.item.group === g).map((e) => (
+                    <SidebarRow
+                      key={e.item.page}
+                      entry={e}
+                      page={page}
+                      onAnswer={(a) => { answerExposure(e.item.page, a); refresh() }}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           ))}
-        </nav>
-        <button
-          className="flex items-center gap-2 border-t px-4 py-2 text-xs text-muted-foreground hover:text-foreground"
-          onClick={() => setCollapsed((v) => !v)}
-          aria-expanded={!collapsed}
-        >
-          {collapsed ? <ChevronRight className="size-4" aria-hidden="true" /> : <ChevronLeft className="size-4" aria-hidden="true" />}
-          {!collapsed && "Collapse"}
-        </button>
-        {!collapsed && <div className="border-t px-4 py-3 text-xs text-muted-foreground">{b.name}</div>}
-      </aside>
+        </SidebarContent>
+        <SidebarFooter>
+          <div className="t-small px-2 py-1 text-muted-foreground group-data-[collapsible=icon]:hidden">{b.name}</div>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <SidebarInset className="min-w-0">
         {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
             and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
-        <header className={cn(surfaceClass("header"), "flex shrink-0 items-center gap-2 border-b border-b-[color:var(--border-strong)] px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
+        <header className={cn("bg-sidebar", "flex shrink-0 items-center gap-2 border-b border-b-border px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
           {/* The page title carries its family icon and hue — one of the three ways you know
               where you are (DESIGN.md §5). */}
+          <SidebarTrigger className="-ml-1 md:hidden" />
           <FamilyIcon of={page} size="header" className="hidden shrink-0 sm:block" />
           <Crumbs trail={trail} />
           {/* The last crumb is the page you are on, and it never truncates: the earlier ones do. */}
@@ -364,11 +354,11 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* The page and the pane are siblings, so opening a pane shrinks the page instead of covering
             it. Below `sm` there is no room for both and the pane takes the whole width. */}
         <div className="relative flex min-h-0 flex-1">
-          <main id="ollopa-main" className={cn(surfaceClass("page"), "relative min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0")}>{children}</main>
+          <main id="ollopa-main" className={cn("bg-background", "relative min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0")}>{children}</main>
           <Beside session={session} pageTitle={title} />
         </div>
 
-        <nav className={cn(surfaceClass("bottomBar"), "fixed inset-x-0 bottom-0 z-30 flex border-t border-t-[color:var(--border-strong)] md:hidden")} aria-label="Pages">
+        <nav className={cn("bg-sidebar", "fixed inset-x-0 bottom-0 z-30 flex border-t border-t-border md:hidden")} aria-label="Pages">
           {bottom.map((p) => {
             const nav = navItem(p)!
             return (
@@ -380,7 +370,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                 className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2 t-small", p === page ? "font-medium" : "text-muted-foreground")}
                 style={p === page ? { backgroundColor: "var(--brand-tint)", color: "var(--brand-ink)" } : undefined}
               >
-                {p === page && <span aria-hidden="true" className="absolute inset-x-3 top-0 h-[var(--bar-thin)] rounded-full" style={{ backgroundColor: "var(--brand)" }} />}
+                {p === page && <span aria-hidden="true" className="absolute inset-x-3 top-0 h-[3px] rounded-full" style={{ backgroundColor: "var(--brand)" }} />}
                 <FamilyIcon of={p} tone={p === page ? "current" : "ink"} />
                 {nav.label}
               </a>
@@ -391,7 +381,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
             All pages
           </button>
         </nav>
-      </div>
+      </SidebarInset>
 
       <Palette session={session} open={palette} onOpenChange={setPalette} />
       <NotificationPanel session={session} rows={notes} open={bell} onOpenChange={setBell} onChange={refresh} />
@@ -413,7 +403,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           ))}
         </ul>
       </Panel>
-    </div>
+    </SidebarProvider>
   )
 }
 

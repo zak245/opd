@@ -32,7 +32,7 @@ import { BOUNCE_GUARD, CAMPAIGN_CHECKS, TODAY, seedFor, type Audience, type Camp
 import type { Session } from "../../session"
 import type { Business } from "../../usage/model"
 import { familyOf } from "../../identity"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { Grid, GridColumns, type GridColumn } from "./grid"
 import { usePref } from "./prefs"
 import { addRow, patchRow, removeRow, useMarketing } from "./store"

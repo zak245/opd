@@ -26,7 +26,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { Actions } from "../../ui/Actions"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -1056,7 +1056,7 @@ export function PeoplePage({ session }: { session: Session }) {
           </ul>
 
           <table className="hidden w-full caption-bottom text-sm md:table">
-            <thead className="surface-container-low sticky top-0 z-10">
+            <thead className="bg-muted sticky top-0 z-10">
               <tr className="border-b">
                 <th scope="col" className="w-8 px-3">
                   <input
@@ -1078,7 +1078,7 @@ export function PeoplePage({ session }: { session: Session }) {
                     {sortHeader(c)}
                   </th>
                 ))}
-                <th scope="col" className="sticky right-0 w-px border-l px-2 [background-color:var(--surface-container-low)]"><span className="sr-only">Actions</span></th>
+                <th scope="col" className="sticky right-0 w-px border-l px-2 [background-color:var(--muted)]"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -1100,8 +1100,8 @@ export function PeoplePage({ session }: { session: Session }) {
                      region inside the table's container (DESIGN.md §5, the level map's `rowOn`). */
                   className={cn(
                     "group cursor-pointer border-b focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
-                    "hover:[background-color:var(--surface-container-low)] focus-visible:[background-color:var(--surface-container-low)]",
-                    selected.includes(p.id) && "[background-color:var(--surface-container-low)]",
+                    "hover:[background-color:var(--muted)] focus-visible:[background-color:var(--muted)]",
+                    selected.includes(p.id) && "[background-color:var(--muted)]",
                   )}
                 >
                   <td className={cn("px-3", pad)}>
@@ -1151,10 +1151,10 @@ export function PeoplePage({ session }: { session: Session }) {
                   ))}
                   {/* The menu is always in the row; the named buttons come forward on hover and on
                       keyboard focus, over the row rather than taking a column's width from it. */}
-                  <td className={cn("sticky right-0 w-10 border-l px-2 [background-color:var(--surface-container)] group-hover:[background-color:var(--surface-container-low)]", pad)} onClick={(e) => e.stopPropagation()}>
+                  <td className={cn("sticky right-0 w-10 border-l px-2 [background-color:var(--card)] group-hover:[background-color:var(--muted)]", pad)} onClick={(e) => e.stopPropagation()}>
                     <div className="relative flex items-center justify-end">
                       <div
-                        className="surface-overlay absolute right-7 flex items-center gap-1 rounded-md border opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                        className="bg-popover absolute right-7 flex items-center gap-1 rounded-md border opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
                         data-container="people.row.actions"
                         data-container-label="the row's buttons"
                       >
@@ -1177,7 +1177,7 @@ export function PeoplePage({ session }: { session: Session }) {
       </div>
 
       {pending && (
-        <div role="status" aria-live="assertive" className="flex items-center gap-3 border-t surface-raised px-4 py-2 text-sm lg:px-6" data-print-hide>
+        <div role="status" aria-live="assertive" className="flex items-center gap-3 border-t bg-card px-4 py-2 text-sm lg:px-6" data-print-hide>
           <span className="min-w-0 flex-1">{pending.text}</span>
           <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { pending.run(); setPending(null) }}>Spend</Button>
           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setPending(null)}>Cancel</Button>
@@ -1186,7 +1186,7 @@ export function PeoplePage({ session }: { session: Session }) {
 
       {/* Undo, for ten seconds, on anything undoable. ⌘Z does the same. */}
       {undo && (
-        <div role="status" aria-live="polite" className="flex items-center gap-3 border-t surface-raised px-4 py-2 text-sm lg:px-6" data-print-hide>
+        <div role="status" aria-live="polite" className="flex items-center gap-3 border-t bg-card px-4 py-2 text-sm lg:px-6" data-print-hide>
           <span className="min-w-0 flex-1">{undo.text}</span>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { undo.run(); setUndo(null) }}>Undo</Button>
         </div>

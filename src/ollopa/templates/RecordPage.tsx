@@ -20,7 +20,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { ArrowLeft, ChevronRight, MoreHorizontal, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Container } from "../ui/Surface"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -271,19 +271,21 @@ function FieldCell({ field }: { field: RecordField }) {
   )
 }
 
-function Card({ card }: { card: RecordCard }) {
+function SideCard({ card }: { card: RecordCard }) {
   return (
-    <Container
-      data-record-card
-      component="card"
-      heading={card.title}
-      count={card.count}
-      actions={card.action}
-      className={card.tone === "attention" ? "[border-color:var(--warning)]" : undefined}
-    >
-      {card.subtitle && <p className="t-small -mt-1 pb-2 text-muted-foreground">{card.subtitle}</p>}
-      {card.children}
-    </Container>
+    <Card data-record-card className={cn("gap-3 py-4", card.tone === "attention" && "[border-color:var(--warning)]")}>
+      <CardHeader className="gap-0 px-4">
+        <CardTitle className="t-section inline-flex items-baseline gap-2">
+          {card.title}
+          {card.count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{card.count}</span>}
+        </CardTitle>
+        {card.action && <CardAction>{card.action}</CardAction>}
+      </CardHeader>
+      <CardContent className="px-4">
+        {card.subtitle && <p className="t-small -mt-1 pb-2 text-muted-foreground">{card.subtitle}</p>}
+        {card.children}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -325,7 +327,15 @@ export function CardRow({ title, meta, actions, children }: {
 /** A section of a record is a container with its heading, and its doors open inside it. */
 function Section({ section }: { section: RecordSection }) {
   return (
-    <Container id={section.id} component="section" heading={section.title} count={section.count} actions={section.action}>
+    <Card id={section.id} className="gap-3 py-4">
+      <CardHeader className="gap-0 px-4">
+        <CardTitle className="t-section inline-flex items-baseline gap-2">
+          {section.title}
+          {section.count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{section.count}</span>}
+        </CardTitle>
+        {section.action && <CardAction>{section.action}</CardAction>}
+      </CardHeader>
+      <CardContent className="px-4">
       {section.authored && (
         <p className="t-small pb-2 text-muted-foreground">
           {section.authored === "generated" ? "Written by an agent" : "Written by a person"}
@@ -333,7 +343,8 @@ function Section({ section }: { section: RecordSection }) {
         </p>
       )}
       {section.children}
-    </Container>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -523,15 +534,17 @@ export function RecordPage(p: RecordPageProps) {
 
           {/* The record's own fields are its first container: they are a group, and a group on the
               canvas is contained (DESIGN.md §5). */}
-          <Container component="section" className="mt-3 mb-4">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
-            {shown.map((f) => <FieldCell key={f.key} field={f} />)}
-          </dl>
-          </Container>
+          <Card className="mt-3 mb-4 py-4">
+            <CardContent className="px-4">
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
+                {shown.map((f) => <FieldCell key={f.key} field={f} />)}
+              </dl>
+            </CardContent>
+          </Card>
         </header>
 
         {/* --------------------------------------------- phone: the actions sit under the header */}
-        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 surface-raised border-t px-5 py-2 lg:hidden" data-print-hide>
+        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 bg-card border-t px-5 py-2 lg:hidden" data-print-hide>
           {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
         </div>
 
@@ -551,7 +564,7 @@ export function RecordPage(p: RecordPageProps) {
           </div>
 
           <div className="order-1 space-y-3 lg:order-none lg:col-start-2 lg:row-start-1">
-            {p.side.map((c) => <Card key={c.id} card={c} />)}
+            {p.side.map((c) => <SideCard key={c.id} card={c} />)}
           </div>
 
           <div className="order-3 lg:order-none lg:col-start-2 lg:row-start-2">

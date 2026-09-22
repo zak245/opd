@@ -28,7 +28,7 @@ export function useUndo() {
   const bar = (
     <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-16 z-40 flex justify-center px-4 md:bottom-6">
       {item && (
-        <div className="pointer-events-auto flex max-w-full items-center gap-3 rounded-md border surface-raised px-3 py-2 text-sm shadow-large">
+        <div className="pointer-events-auto flex max-w-full items-center gap-3 rounded-md border bg-card px-3 py-2 text-sm shadow-lg">
           <span className="min-w-0">{item.message}</span>
           {item.undo && (
             <Button

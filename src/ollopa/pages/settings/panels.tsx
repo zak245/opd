@@ -14,7 +14,7 @@ import { href } from "@/app/router"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Group } from "../../ui/Surface"
+import { Group } from "../../ui/Section"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
@@ -286,7 +286,7 @@ export function RemovalPanel({ session, ...p }: PanelShell & { session: Session 
   return (
     <Panel id="x-removal" title="Removal list" {...p}
       footer={<Actions surface="dialog" items={[{ label: "Export as CSV", kind: "secondary", onClick: () => toast("Exported the removal list as CSV.") }]} />}>
-      <Group className="rounded-[var(--radius-container)] p-3">
+      <Group className="rounded-[var(--radius)] p-3">
         <p className="t-label flex items-center gap-2">
           Delete everywhere
           <Chip status="do not contact">Cannot be undone</Chip>

@@ -24,7 +24,7 @@ import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { inkOf } from "../../ui/Identity"
 import { warningStatus } from "../deals/pipeline"
 import type { QuickLookEditable, QuickLookField } from "../../templates/QuickLook"
@@ -486,7 +486,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
               onClick={() => (missing.length ? toast(`${s.name} needs ${missing.join(" and ")}.`) : moveStage(s.name))}
               className={cn(
                 "rounded-md border px-2.5 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                at <= index ? "bg-foreground text-background" : "surface-raised hover:bg-muted",
+                at <= index ? "bg-foreground text-background" : "bg-card hover:bg-muted",
               )}
               style={missing.length > 0 ? { borderColor: statusInk("warning") } : undefined}
             >
@@ -687,7 +687,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
       {groups.map((g) => (
         <section key={g.day}>
           {/* The day is a divider with a word on it, not a heading over a stack of boxes. */}
-          <h3 className="surface-container t-small sticky top-0 z-10 border-b py-1 font-medium text-muted-foreground">{g.day}</h3>
+          <h3 className="bg-card t-small sticky top-0 z-10 border-b py-1 font-medium text-muted-foreground">{g.day}</h3>
           <div>
             {g.items.map((a) => {
               const Icon = KIND_ICON[a.kind]
@@ -1098,7 +1098,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   )
 
   const pinnedNote = pinned ? (
-    <Group as="article" data-item="timeline.pin" data-item-label="Pinned note" className="mb-3 rounded-[var(--radius-container)] border px-3 py-2">
+    <Group as="article" data-item="timeline.pin" data-item-label="Pinned note" className="mb-3 rounded-[var(--radius)] border px-3 py-2">
       <div className="t-small font-medium text-muted-foreground">Pinned note</div>
       <p className="t-body">{pinned.body}</p>
       <div className="t-small text-muted-foreground">{pinned.author} · {day(pinned.at)}</div>
@@ -1208,7 +1208,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <Settings2 className="size-4" />
       </Button>
       {gearOpen && (
-        <span className="absolute left-0 top-8 z-30 w-56 rounded-md border surface-floating p-2 text-xs shadow-large">
+        <span className="absolute left-0 top-8 z-30 w-56 rounded-md border bg-popover p-2 text-xs shadow-lg">
           <span className="block pb-1 font-medium">Show widgets</span>
           {["general", "details", "account", "contacts", "tasks", "notes"].map((w) => (
             <label key={w} className="flex items-center gap-2 py-0.5 capitalize">
@@ -1230,7 +1230,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <Bell className="size-3.5" /> 1
       </Button>
       <Place id="bell" label="the notification bell" open={bellOpen}
-        className={cn("absolute right-0 top-8 z-30 w-72 rounded-md border bg-background p-2 text-xs shadow-small", !bellOpen && "hidden")}>
+        className={cn("absolute right-0 top-8 z-30 w-72 rounded-md border bg-background p-2 text-xs shadow-sm", !bellOpen && "hidden")}>
         <ThingPlace id="agent.proposal" label="The agent proposal" place="bell.item" placeLabel="the notification bell">
           <span className="block font-medium">{proposal.agent}</span>
           <span className="block text-muted-foreground">{proposal.summary}</span>
@@ -1246,7 +1246,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <MoreHorizontal className="size-4" />
       </Button>
       <Place id="parody.menu" label={"the \u201c\u2026\u201d menu"} open={parodyMenu}
-        className={cn("absolute right-0 top-8 z-30 w-48 rounded-md border bg-background p-1 text-xs shadow-small", !parodyMenu && "hidden")}>
+        className={cn("absolute right-0 top-8 z-30 w-48 rounded-md border bg-background p-1 text-xs shadow-sm", !parodyMenu && "hidden")}>
         <button type="button" data-item="close.delete" data-item-label="Delete deal"
           className="block w-full rounded px-2 py-1 text-left text-destructive hover:bg-muted"
           onClick={() => { setParodyMenu(false); toast("Delete this deal?") }}>
@@ -1283,7 +1283,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   if (!r1) {
     const widget = (key: string, title: string, body: ReactNode, action?: ReactNode) =>
       hiddenWidgets.includes(key) ? null : (
-        <section className="rounded-lg border surface-raised p-3">
+        <section className="rounded-lg border bg-card p-3">
           <div className="flex items-baseline gap-2 pb-2">
             <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h3>
             {action && <span className="ml-auto">{action}</span>}
@@ -1301,7 +1301,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
     return (
       <div className="min-h-full bg-muted/30">
-        <header className="border-b surface-raised px-5 py-3">
+        <header className="border-b bg-card px-5 py-3">
           <p className="text-xs text-muted-foreground">
             Win deals › <a className="hover:underline" href={href("/ollopa/deals")}>Deals</a> › {deal.name}
           </p>
@@ -1387,7 +1387,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             ))}
           </Place>
 
-          <section className="rounded-lg border surface-raised">
+          <section className="rounded-lg border bg-card">
             <Place id="parody.tabs" label="the tab strip" className="flex flex-wrap gap-1 border-b p-1">
               {tabStrip.map(([k, l]) => (
                 <button key={k} type="button" onClick={() => setParodyTab(k as typeof parodyTab)}

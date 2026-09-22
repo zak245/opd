@@ -67,23 +67,6 @@ function tokensIn(css, selector) {
 const css = readFileSync(new URL("../src/theme/theme.css", import.meta.url), "utf8")
 const THEMES = { light: tokensIn(css, ":root {"), dark: tokensIn(css, ".dark {") }
 
-/** The five colour roles. Not a ladder — a role says what a thing is (DESIGN.md §5, memo 29). */
-const ROLES = ["surface-canvas", "surface-container", "surface-container-low", "surface-chrome", "surface-overlay"]
-
-/**
- * The pairs that must be told apart, and why. A role is only ever compared with a role it can
- * actually touch: a container sits on the canvas, a band sits inside a container, the chrome runs
- * beside the canvas, an overlay floats over it.
- */
-const ROLE_PAIRS = [
-  ["surface-container", "surface-canvas", "a container on the page"],
-  ["surface-container-low", "surface-container", "a band inside a container"],
-  ["surface-chrome", "surface-canvas", "the chrome beside the content"],
-  ["surface-overlay", "surface-canvas", "an overlay over the page"],
-]
-/** A step the eye can see. Containment does the grouping; this only has to be visible. */
-const STEP = { light: 0.02, dark: 0.03 }
-
 const FAMILIES = ["people", "companies", "deals", "engagement", "work", "agents", "neutral"]
 const STATUSES = ["danger", "warning", "success", "info", "paused"]
 
@@ -102,10 +85,7 @@ function pairs(T) {
   seen("paused ink against the neutral family ink", T["paused-ink"], T["family-neutral-ink"])
 
   // The border that carries meaning reaches 3:1 against every surface it can sit on.
-  for (const role of ROLES) nontext(`strong border on ${role}`, T["border-strong"], T[role])
-  for (const role of ROLES) seen(`soft divider on ${role}`, T["border-soft"], T[role])
-
-  for (const surface of ROLES) {
+  for (const surface of ["background", "card", "popover", "muted", "sidebar"]) {
     text(`body text on ${surface}`, T.foreground, T[surface])
     text(`muted text on ${surface}`, T["muted-foreground"], T[surface])
     seen(`divider on ${surface}`, T.border, T[surface])
@@ -113,23 +93,23 @@ function pairs(T) {
     nontext(`ring on ${surface}`, T.ring, T[surface])
   }
   text("primary label on the primary fill", T["primary-foreground"], T.primary)
-  nontext("primary fill on the page", T.primary, T["surface-page"])
+  nontext("primary fill on the page", T.primary, T.background)
   // The printed shortcut on a filled primary: the label's colour at 80%, composited on the fill.
   nontext("shortcut kbd on the primary fill", mix(T["primary-foreground"], T.primary, 0.8), T.primary)
-  text("link ink on the page", T["brand-ink"], T["surface-page"])
+  text("link ink on the page", T["brand-ink"], T.background)
   text("link ink on the brand tint", T["brand-ink"], T["brand-tint"])
-  seen("brand tint on the page", T["brand-tint"], T["surface-page"])
+  seen("brand tint on the page", T["brand-tint"], T.background)
 
   for (const f of FAMILIES) {
-    text(`${f} ink on the page`, T[`family-${f}-ink`], T["surface-page"])
+    text(`${f} ink on the page`, T[`family-${f}-ink`], T.background)
     text(`${f} ink on its chip`, T[`family-${f}-ink`], T[`family-${f}-tint`])
-    nontext(`${f} bar on the page`, T[`family-${f}`], T["surface-page"])
-    seen(`${f} chip on the page`, T[`family-${f}-tint`], T["surface-page"])
+    nontext(`${f} bar on the page`, T[`family-${f}`], T.background)
+    seen(`${f} chip on the page`, T[`family-${f}-tint`], T.background)
   }
   for (const s of STATUSES) {
-    text(`${s} ink on the page`, T[`${s}-ink`], T["surface-page"])
+    text(`${s} ink on the page`, T[`${s}-ink`], T.background)
     text(`${s} ink on its chip`, T[`${s}-ink`], T[`${s}-tint`])
-    seen(`${s} chip on the page`, T[`${s}-tint`], T["surface-page"])
+    seen(`${s} chip on the page`, T[`${s}-tint`], T.background)
   }
   return p
 }
@@ -179,19 +159,6 @@ for (const [theme, T] of Object.entries(THEMES)) {
   console.log(`  worst text ${worstText.toFixed(2)}:1 (needs 4.5) · worst non-text ${worstNon.toFixed(2)}:1 (needs 3)` +
     ` · faintest tint ${worstSeen.toFixed(3)} apart (needs 0.015)`)
 
-  // The roles: every pair that can meet on screen, measured in OKLab lightness.
-  const floor = STEP[theme]
-  let worstStep = Infinity
-  for (const [a, b, why] of ROLE_PAIRS) {
-    const x = T[a], y = T[b]
-    if (!x || !y || x.alias || y.alias) { console.log(`  ?  ${a} vs ${b} — token missing`); failures++; continue }
-    const step = Math.abs(oklab(x)[0] - oklab(y)[0])
-    worstStep = Math.min(worstStep, step)
-    const ok = step >= floor
-    if (!ok) failures++
-    if (!quiet || !ok) console.log(`  ${ok ? " " : "✗"} ${why}`.padEnd(45) + `${step.toFixed(3)}  (needs ${floor})`)
-  }
-  console.log(`  faintest role step ${worstStep.toFixed(3)} (needs ${floor})`)
 }
 
 
@@ -244,6 +211,8 @@ import { join, relative } from "node:path"
 
 /** The mockups exist to show the version we are criticising; they keep the look they criticise. */
 const ALLOW = [
+  // shadcn's components ship as they are; their radius, shadows and spacing are the look.
+  /\/components\/ui\//,
   /\/pages\/[a-z]+\/parody\.tsx$/,
   /\/pages\/agents\/Parody\.tsx$/,
   /\/pages\/connect\/lesson\.tsx$/,
@@ -254,9 +223,6 @@ const ALLOW = [
 const RULES = [
   { what: "an oklch colour", re: /oklch\(/g },
   { what: "a hex colour", re: /#[0-9a-fA-F]{6}\b/g },
-  { what: "a sized shadow", re: /\bshadow-(xs|sm|md|lg|xl|2xl)\b/g },
-  { what: "a raw pixel size", re: /\[[-\d.]+px\]/g },
-  // A shadow whose geometry is written out is fine; a shadow that names its own colour is not.
   { what: "a box-shadow with a colour in it", re: /box-shadow:[^;]*(?:oklch\(|#[0-9a-fA-F]{3,8}\b|rgba?\()/g },
 ]
 

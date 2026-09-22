@@ -24,7 +24,7 @@ import { ruleOn, useLesson } from "../../../learn/context"
 import { Check, Code, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Group } from "../../ui/Surface"
+import { Group } from "../../ui/Section"
 import { CONNECT_RULES, ConnectLesson } from "./lesson"
 import { discardDraft, peekDraft, useDraft, writeDraft } from "./drafts"
 import {
@@ -96,7 +96,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
   return (
     <>
       {d.atLevelOne("wiz.template") && (
-        <div data-item="wiz.template" data-item-label="start from a saved template" className="flex flex-wrap items-center gap-3 rounded-lg border surface-raised p-3">
+        <div data-item="wiz.template" data-item-label="start from a saved template" className="flex flex-wrap items-center gap-3 rounded-lg border bg-card p-3">
           <Actions surface="card" items={[{ kind: "secondary", label: "Start from a saved template", onClick: () => toast("Loaded the saved template · steps 3 to 5 filled in") }]} />
         </div>
       )}
@@ -163,7 +163,7 @@ function ChooseStep({ session, slug, go }: { session: Session; slug: string; go:
               )
             })}
             {group.name === "CRM" && (
-              <div data-item="wiz.declare-no-crm" data-item-label="ollopA is our CRM" className="rounded-lg border surface-raised p-3 t-body sm:col-span-2">
+              <div data-item="wiz.declare-no-crm" data-item-label="ollopA is our CRM" className="rounded-lg border bg-card p-3 t-body sm:col-span-2">
                 <Check
                   checked={noCrm.declared}
                   onChange={() => { saveNoCrm({ declared: !noCrm.declared }); toast(noCrm.declared ? "ollopA is no longer marked as your CRM · the CRM row is back in the set-up list" : "ollopA is your CRM · the CRM row has left the set-up list") }}
@@ -252,7 +252,7 @@ function AuthoriseStep({ session, draft, save }: { session: Session; draft: Conn
       )}
 
       {isSalesforce && (
-        <div data-item="wiz.sf-permissions" data-item-label="what the sync user must be able to do" className="rounded-md border surface-raised p-3 t-body">
+        <div data-item="wiz.sf-permissions" data-item-label="what the sync user must be able to do" className="rounded-md border bg-card p-3 t-body">
           <p className="font-medium">What the sync user must be able to do</p>
           <p className="mt-1">
             The sync user needs create, read and edit on Accounts, Contacts, Leads, Opportunities and User Roles, and API Enabled under System Permissions. Salesforce Essentials cannot connect.
@@ -412,7 +412,7 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
         return (
           <TabsContent key={object} value={object} className="mt-4 grid min-w-0 gap-4 [&>*]:min-w-0">
             {c.requiredUnmapped.length > 0 && (
-              <Group className="t-body rounded-[var(--radius-container)] border p-3"
+              <Group className="t-body rounded-[var(--radius)] border p-3"
                 style={{ borderColor: "var(--warning)", backgroundColor: "var(--warning-tint)" }}>
                 <p className="t-label flex flex-wrap items-center gap-2">
                   <Chip status="pending">Not mapped</Chip>
@@ -454,17 +454,17 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                     <tr key={p.id} className="border-b align-top">
                       <td className="py-2 pr-3">{p.ollopa}</td>
                       <td className="py-2 pr-3">
-                        <select aria-label={`Direction for ${p.ollopa}`} className="h-8 rounded-md border surface-raised px-1 t-small" value={p.direction} onChange={(e) => setPair(p.id, { direction: e.target.value as FieldPair["direction"] })}>
+                        <select aria-label={`Direction for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.direction} onChange={(e) => setPair(p.id, { direction: e.target.value as FieldPair["direction"] })}>
                           <option value="both">Both ways</option><option value="pull">Pull only</option><option value="push">Push only</option>
                         </select>
                       </td>
                       <td className="py-2 pr-3">
-                        <select aria-label={`${draft.kind} field for ${p.ollopa}`} className="h-8 rounded-md border surface-raised px-1 t-small" value={p.remote} onChange={(e) => setPair(p.id, { remote: e.target.value })}>
+                        <select aria-label={`${draft.kind} field for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.remote} onChange={(e) => setPair(p.id, { remote: e.target.value })}>
                           {remoteFields.map((f) => <option key={f.name} value={f.name}>{f.name}{f.required ? " (required)" : ""}</option>)}
                         </select>
                       </td>
                       <td className="py-2 pr-3">
-                        <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border surface-raised px-1 t-small" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
+                        <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
                           {WRITE_RULES.map((w) => <option key={w} value={w}>{w}</option>)}
                         </select>
                       </td>
@@ -813,7 +813,7 @@ function ReviewStep({ session, draft, go }: { session: Session; draft: ConnectDr
   return (
     <div className="grid gap-5">
       <Group as="section" data-item="wiz.first-sync" data-item-label="what the first sync will do"
-        className="rounded-[var(--radius-container)] border p-4">
+        className="rounded-[var(--radius)] border p-4">
         <h3 className="t-section">What the first sync will do</h3>
         <p className="t-body mt-2">{firstSyncConsequence(session, draft)}</p>
       </Group>

@@ -298,7 +298,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
         <div
           role="region"
           aria-label={`${selected.length} selected`}
-          className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t surface-overlay/95 px-4 py-2 backdrop-blur"
+          className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t bg-popover/95 px-4 py-2 backdrop-blur"
         >
           <span className="text-sm font-medium tabular-nums">{n(selected.length)} selected</span>
           {p.selection.bar(selected)}

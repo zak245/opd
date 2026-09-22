@@ -62,7 +62,7 @@ export function BatchPanel(p: BatchPanelProps) {
           <Item key={e.id} e={e} seed={seed} session={session} currency={currency} draft={p.drafts[e.id] ?? ""} read={p.read.has(e.id)} onRead={() => p.onRead(e.id)} />
         ))}
         {held.map((e) => (
-          <li key={e.id} className="surface-raised t-body rounded-lg border border-dashed p-3">
+          <li key={e.id} className="bg-card t-body rounded-lg border border-dashed p-3">
             <div className="flex flex-wrap items-center gap-2">
               <p className="t-label">{e.agent} · {e.summary}</p>
               <Chip status="paused">Held back</Chip>
@@ -98,7 +98,7 @@ function Item({ e, seed, session, currency, draft, read, onRead }: {
   }, [read])
 
   return (
-    <li ref={box} className="surface-raised t-body rounded-lg border p-3">
+    <li ref={box} className="bg-card t-body rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <p className="t-label">{e.surface === "mcp" || e.surface === "cli" ? e.actorUser : e.agent} · {e.summary}</p>
         <Chip status="waiting">Waiting</Chip>

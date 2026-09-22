@@ -25,7 +25,7 @@ import { RecordPage, type RecordDoor, type RecordField } from "../../templates/R
 import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Group } from "../../ui/Surface"
+import { Group } from "../../ui/Section"
 import { FAMILY, PERSON_FAMILY, ink } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -97,7 +97,7 @@ function Previews({ c }: { c: Campaign }) {
       </figure>
       <figure>
         <figcaption className="t-label pb-1 text-muted-foreground">Phone, 400 px</figcaption>
-        <div className="t-small min-h-40 w-[var(--menu-min-width)] rounded-md border p-2">{body}</div>
+        <div className="t-small min-h-40 w-[200px] rounded-md border p-2">{body}</div>
       </figure>
     </div>
   )
@@ -471,7 +471,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       )}
 
       {/* The QA line, directly above the button, never disabled and never blocking. */}
-      <Group className="rounded-[var(--radius-container)] border px-3 py-2">
+      <Group className="rounded-[var(--radius)] border px-3 py-2">
         <p className="t-body">
           <Chip status={failures.length ? "failed" : "done"}>{line}</Chip>
           {c.qa.on && <span className="text-muted-foreground">. Run {day(c.qa.on)} by {c.qa.by}</span>}

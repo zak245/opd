@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { useDoorState } from "../../ui/Door"
 import { toast } from "../../templates/TablePage"
 
@@ -40,7 +40,7 @@ export function Radio({ name, checked, onChange, label, hint, disabled }: {
 }) {
   return (
     <label className={cn(
-      "surface-raised t-body flex min-h-10 items-start gap-2 rounded-lg border p-3",
+      "bg-card t-body flex min-h-10 items-start gap-2 rounded-lg border p-3",
       checked && "border-foreground",
       disabled && "opacity-60",
     )}>
@@ -72,7 +72,7 @@ export function Picker({ label, value, options, onChange, hint }: {
     <label className="t-body block">
       <span className="t-small text-muted-foreground">{label}</span>
       <select
-        className="mt-1 h-10 w-full rounded-md border surface-raised px-2 t-body"
+        className="mt-1 h-10 w-full rounded-md border bg-card px-2 t-body"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -148,7 +148,7 @@ function StepRows({ steps, current, go, tagged }: { steps: StepState[]; current:
         )
         const openable = s.n !== current && (s.done || !s.blocked)
         return (
-          <li key={s.n} className={cn("rounded-md px-2 py-1.5", s.n === current && "surface-raised")}>
+          <li key={s.n} className={cn("rounded-md px-2 py-1.5", s.n === current && "bg-card")}>
             {openable ? (
               <button type="button" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`} className="block text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
                 <span className="t-label hover:underline">Step {s.n}: {s.name}</span>
@@ -288,7 +288,7 @@ export function Confirm({ open, title, body, confirmLabel, onConfirm, onCancel }
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div ref={box} role="dialog" aria-modal="true" aria-label={title} className="surface-overlay shadow-overlay w-full max-w-md rounded-lg border p-5 shadow-large">
+      <div ref={box} role="dialog" aria-modal="true" aria-label={title} className="bg-popover shadow-overlay w-full max-w-md rounded-lg border p-5 shadow-lg">
         <h3 className="t-label">{title}</h3>
         <div className="t-body mt-2 text-muted-foreground">{body}</div>
         <div className="mt-5 flex flex-wrap gap-2">

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { familyOf } from "../../identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import type { Series, Trend } from "./compute"
 import { shortDay } from "./format"
 import "./chart.css"
@@ -227,7 +227,7 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
 
           {at !== null && (
             <div
-              className="pointer-events-none absolute top-3 rounded-md border surface-raised px-2 py-1.5 t-small shadow-small"
+              className="pointer-events-none absolute top-3 rounded-md border bg-card px-2 py-1.5 t-small shadow-sm"
               style={{ left: Math.min(Math.max(x(at) - 60, 8), Math.max(8, width - 140)) }}
             >
               <div className="font-medium">Week of {shortDay(weeks[at])}</div>

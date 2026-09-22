@@ -89,7 +89,7 @@ const ApprovalBeside: BesideComponent = ({ session, id, target }) => {
           ))}
         </p>
         {e.draft
-          ? <p className="mt-1 whitespace-pre-wrap rounded-md surface-raised p-2 text-xs">{e.draft}</p>
+          ? <p className="mt-1 whitespace-pre-wrap rounded-md bg-card p-2 text-xs">{e.draft}</p>
           : <p className="mt-1 text-xs text-muted-foreground">{e.detail}</p>}
         {e.draft && <p className="pt-1 text-xs text-muted-foreground">{count(words)} words · {e.sources.length} sources</p>}
         {e.sourceQuote && <p className="pt-1 text-xs text-muted-foreground">{e.sourceQuote}</p>}

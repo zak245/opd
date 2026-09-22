@@ -15,7 +15,7 @@ import {
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
 import { FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 /* ------------------------------------------------------------------------------------- section */
 
@@ -44,29 +44,29 @@ export function Section({ id, title, count, link, order = 0, children }: Section
     // left was the section itself rather than one row.
     // Home is a set of containers, one per section, each with its heading and its count in the
     // header (DESIGN.md §5, containment). The rows inside are divided, not carded.
-    <Container
-      id={id}
-      aria-label={title}
-      data-section={id}
-      component="section"
-      padded={false}
-      className={cn("min-w-0", ORDER[order] ?? "")}
-      heading={<span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>}
-      count={count}
-      actions={link && (
-          // The whole page this section is a window on. It is a move, not a jump: the trail keeps
-          // Home and the section, so the crumb comes back to it.
-          <button
-            type="button"
-            className="t-small text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            onClick={() => follow(link.to, originHere(id))}
-          >
-            {link.label}
-          </button>
+    // A section of Home is a shadcn Card: its heading and count in the header, its rows inside.
+    <Card id={id} aria-label={title} data-section={id} className={cn("min-w-0 gap-3 py-4", ORDER[order] ?? "")}>
+      <CardHeader className="gap-0 px-4">
+        <CardTitle className="t-section inline-flex items-baseline gap-2">
+          <span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>
+          {count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{count}</span>}
+        </CardTitle>
+        {link && (
+          <CardAction>
+            {/* The whole page this section is a window on. It is a move, not a jump: the trail
+                keeps Home and the section, so the crumb comes back to it. */}
+            <button
+              type="button"
+              className="t-small text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              onClick={() => follow(link.to, originHere(id))}
+            >
+              {link.label}
+            </button>
+          </CardAction>
         )}
-    >
-      {children}
-    </Container>
+      </CardHeader>
+      <CardContent className="px-0">{children}</CardContent>
+    </Card>
   )
 }
 

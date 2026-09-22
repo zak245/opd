@@ -22,8 +22,7 @@ import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
-import { Container } from "../../ui/Surface"
-import { surfaceClass } from "../../ui/Surface"
+import { Container, Group } from "../../ui/Section"
 import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -337,7 +336,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           // Rows in one container are divided, never carded, and the row you are on is the one
           // container-low region the container holds (DESIGN.md §5, containment).
           "group block w-full cursor-pointer px-3 py-2.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-          r.id === openId ? surfaceClass("rowOn") : "hover:bg-muted/50",
+          r.id === openId ? "bg-muted" : "hover:bg-muted/50",
         )}
       >
         <div className="flex items-start gap-2">

@@ -30,7 +30,7 @@ import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { type Col, BesideLink, DataTable, FollowLink, RowNote, ago, day, h1Of, n, toast, undoable, usePersisted, useTick } from "./shared"
 
 /** A related list stops needing a jump to find something once it has a search in it (rule 4). */

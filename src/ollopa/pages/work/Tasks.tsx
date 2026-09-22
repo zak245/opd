@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { href, useRoute } from "@/app/router"
 import { closeBeside, openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
-import { Container } from "../../ui/Surface"
+import { Container } from "../../ui/Section"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
