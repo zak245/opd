@@ -529,52 +529,56 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
             className={cn("flex min-w-0 flex-1 flex-col", onPhoneThread && "hidden md:flex")}
             actions={(
               <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <Tabs value={group} onValueChange={(v) => { setGroup(v as GroupKey); setSelection([]) }} className="pt-3">
-                <TabsList aria-label="What the person meant" className="h-auto! flex-wrap items-center gap-2">
-                {tabs.map((g) => (
-                <TabsTrigger key={g.key} value={g.key} className="shrink-0">
-                {g.key} <span className="tabular-nums opacity-70">({counts[g.key]})</span>
-                </TabsTrigger>
-                ))}
-                {behind.length > 0 && (
-                <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                role="tab"
-                aria-selected={behind.some((g) => g.key === group)}
-                >
-                {behind.map((g) => `${g.key} (${counts[g.key]})`).join(" · ")} ▾
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                {behind.map((g) => <DropdownMenuItem key={g.key} onSelect={() => setGroup(g.key)}>{g.key} ({counts[g.key]})</DropdownMenuItem>)}
-                </DropdownMenuContent>
-                </DropdownMenu>
-                )}
-                </TabsList>
-                </Tabs>
-                <div className="flex flex-wrap items-center gap-2">
-                {searchAtLevelOne && (
-                <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-                )}
-                {shownFilters.map((f) => (
-                <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
-                <SelectTrigger className="h-8 w-48 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-                <SelectContent>
-                <SelectItem value="all">{f.label}: all</SelectItem>
-                {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                </SelectContent>
-                </Select>
-                ))}
-                {activeFilters.length > 0 && (
-                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setFilters({})}>
-                Clear {activeFilters.length} {activeFilters.length === 1 ? "filter" : "filters"}
-                </Button>
-                )}
-                <span className="ml-auto t-small tabular-nums text-muted-foreground">{filtered.length} shown</span>
+                {/* One row: the tabs as shipped (inline, never wrapped), the groups that do not fit
+                    behind their own menu, and the search and filters pushed to the right. */}
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2 pt-3">
+                  <Tabs value={group} onValueChange={(v) => { setGroup(v as GroupKey); setSelection([]) }} className="min-w-0 max-w-full overflow-x-auto">
+                    <TabsList aria-label="What the person meant" className="w-fit">
+                      {tabs.map((g) => (
+                        <TabsTrigger key={g.key} value={g.key} className="shrink-0">
+                          {g.key} <span className="tabular-nums opacity-70">({counts[g.key]})</span>
+                        </TabsTrigger>
+                      ))}
+                      {behind.length > 0 && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-[calc(100%-1px)] shrink-0"
+                              role="tab"
+                              aria-selected={behind.some((g) => g.key === group)}
+                            >
+                              {behind.map((g) => `${g.key} (${counts[g.key]})`).join(" · ")} ▾
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            {behind.map((g) => <DropdownMenuItem key={g.key} onSelect={() => setGroup(g.key)}>{g.key} ({counts[g.key]})</DropdownMenuItem>)}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TabsList>
+                  </Tabs>
+                  <div className="ml-auto flex min-w-0 flex-wrap items-center gap-2">
+                    {searchAtLevelOne && (
+                      <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48" />
+                    )}
+                    {shownFilters.map((f) => (
+                      <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
+                        <SelectTrigger className="h-8 w-48 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{f.label}: all</SelectItem>
+                          {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ))}
+                    {activeFilters.length > 0 && (
+                      <Button size="sm" variant="ghost" onClick={() => setFilters({})}>
+                        Clear {activeFilters.length} {activeFilters.length === 1 ? "filter" : "filters"}
+                      </Button>
+                    )}
+                    <span className="t-small tabular-nums text-muted-foreground">{filtered.length} shown</span>
+                  </div>
                 </div>
 
                 {doorFilters.length > 0 && (

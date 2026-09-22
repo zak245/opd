@@ -4,13 +4,13 @@
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { ChevronLeft, Clock, Grid3x3, Search, TriangleAlert } from "lucide-react"
+import { ChevronLeft, Grid3x3, Search, TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Kbd } from "@/components/ui/kbd"
 import { Separator } from "@/components/ui/separator"
-import { Alert, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { href, navigate, useRoute } from "@/app/router"
 import { businessById } from "../data/businesses"
 import { seedFor } from "../data/seed"
@@ -33,10 +33,13 @@ import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
-import { notificationsFor, TODAY } from "./notifications"
+import { notificationsFor, TODAY, type Kind } from "./notifications"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
 const COLLAPSE_KEY = "ollopa.sidebar"
+
+/** The interrupting kinds that read as danger rather than as a warning, which sets the Alert's variant. */
+const DANGER_KINDS = new Set<Kind>(["bounce-guard", "sync-error", "credits-low"])
 
 function SidebarRow({ entry, page, onAnswer }: { entry: SidebarEntry; page: Page; onAnswer: (a: "keep" | "remove") => void }) {
   const i = entry.item
@@ -371,25 +374,29 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
         {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
             with the library's gap. */}
+        {/* One row above the page, never a stack: everything interrupting is one Alert, and each
+            item keeps its own Open and Dismiss as inline links inside the description. */}
         {(expiring || alerts.length > 0) && (
-          <div className="grid gap-2 border-b p-4">
-            {expiring && (
-              <Alert className="flex items-center gap-3 py-2">
-                <Clock />
-                <AlertTitle className="line-clamp-none min-w-0 flex-1 font-normal">Your session ends in 5 minutes</AlertTitle>
-                <Button size="sm" variant="outline" className="shrink-0" onClick={() => setExpiring(false)}>Stay signed in</Button>
-              </Alert>
-            )}
-            {alerts.map((n) => (
-              <Alert key={n.id} className="flex items-center gap-3 py-2">
-                <TriangleAlert style={{ color: "var(--warning-ink)" }} />
-                <AlertTitle className="line-clamp-none min-w-0 flex-1 font-normal">
-                  <span className="text-muted-foreground">Needs you now · </span>{n.title}
-                </AlertTitle>
-                <Button asChild size="sm" variant="outline" className="shrink-0"><a href={href(n.target)}>Open</a></Button>
-                <Button size="sm" variant="ghost" className="shrink-0" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</Button>
-              </Alert>
-            ))}
+          <div className="p-3">
+            <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) ? "destructive" : "default"} className="py-2">
+              <TriangleAlert />
+              <AlertTitle>Needs you now</AlertTitle>
+              <AlertDescription>
+                {expiring && (
+                  <p className="flex flex-wrap items-baseline gap-x-2">
+                    <span>Your session ends in 5 minutes.</span>
+                    <button type="button" className="underline underline-offset-4" onClick={() => setExpiring(false)}>Stay signed in</button>
+                  </p>
+                )}
+                {alerts.map((n) => (
+                  <p key={n.id} className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="min-w-0">{n.title}</span>
+                    <a className="shrink-0 underline underline-offset-4" href={href(n.target)}>Open</a>
+                    <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</button>
+                  </p>
+                ))}
+              </AlertDescription>
+            </Alert>
           </div>
         )}
 

@@ -13,7 +13,7 @@ import { Bot, CalendarClock, CheckSquare, Mail, MessageSquare, Phone, Send } fro
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions, type Action } from "../../ui/Actions"
@@ -450,19 +450,14 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             title: "Activity",
             count: visible.length,
             action: (
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                size="sm"
-                spacing={2}
-                className="flex-wrap"
-                value={filter}
-                onValueChange={(v) => { if (v) setFilter(v) }}
-              >
-                {FILTERS.map((f) => (
-                  <ToggleGroupItem key={f.key} value={f.key}>{f.label}</ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+              // The same inline TabsList the deal record's timeline uses: one row, never wrapped.
+              <Tabs value={filter} onValueChange={(v) => { if (v) setFilter(v) }}>
+                <TabsList aria-label="Activity filters" className="w-fit">
+                  {FILTERS.map((f) => (
+                    <TabsTrigger key={f.key} value={f.key}>{f.label}</TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
             ),
             children: (
               <div className="space-y-3">

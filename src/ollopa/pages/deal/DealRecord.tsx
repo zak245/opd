@@ -207,7 +207,7 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
     // No box: this is drawn inside the timeline's container-low band, which is its boundary.
     <div className="p-0" data-composer>
       <Tabs value={tab} onValueChange={(v) => { if (v) setTab(v as typeof tab) }}>
-        <TabsList aria-label="Log activity" className="h-auto! flex-wrap items-center gap-2">
+        <TabsList aria-label="Log activity" className="w-fit">
           {tabs.map((t) => (
             <TabsTrigger key={t.key} value={t.key}
               data-item={t.key === "email" ? "timeline.email" : t.key === "note" ? "timeline.note" : undefined}
@@ -1102,7 +1102,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   )
 
   const filterChips = (
-    <TabsList data-item="timeline.filter" data-item-label="Timeline filters" className="h-auto! flex-wrap items-center gap-2">
+    <TabsList data-item="timeline.filter" data-item-label="Timeline filters" className="w-fit">
       {FILTERS.map((f) => (
         <TabsTrigger key={f.key} value={f.key}
           data-item={f.key === "note" && r2 ? "timeline.note-list" : undefined}

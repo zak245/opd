@@ -8,7 +8,7 @@
 //
 // There is no layout editor, no widget library and no chart. Those were removed, not hidden.
 import { useMemo } from "react"
-import { Announcement, DoorGroup, ExpandAll, HealthStrip, useDisclosure } from "../../ui"
+import { DoorGroup, ExpandAll, HealthStrip, useDisclosure } from "../../ui"
 import type { Session } from "../../session"
 import { useRenderCount } from "../work/register"
 import { homeData, type SectionKey } from "./data"
@@ -75,10 +75,8 @@ export function HomePage({ session }: { session: Session }) {
 
   return (
     <DoorGroup>
-      {/* Each line is its own Alert now, with its own icon and border, so the strip needs no rule
-          of its own to say "this one needs a human". */}
-      <HealthStrip lines={lines} />
-      {data.announcement && <Announcement text={data.announcement.text} href={data.announcement.href} />}
+      {/* One row above the page, never two: the health items and the workspace notice share it. */}
+      <HealthStrip lines={lines} announcement={data.announcement ?? undefined} />
       {d.weekly("home.health.setup") > 0 && <SetupDoor rows={data.setupRows} />}
 
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">

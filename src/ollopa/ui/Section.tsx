@@ -35,7 +35,7 @@ export function Section({
   return (
     <Card className={cn("gap-3 py-4", className)} {...rest}>
       {(heading || actions) && (
-        <CardHeader className="flex-wrap items-start gap-2 px-4 [grid-template-columns:1fr] sm:[grid-template-columns:auto_1fr]">
+        <CardHeader className="min-w-0 flex-wrap items-start gap-2 px-4 [grid-template-columns:minmax(0,1fr)] sm:[grid-template-columns:auto_minmax(0,1fr)]">
           {heading && (
             <CardTitle className="t-section inline-flex items-baseline gap-2">
               {heading}
@@ -45,7 +45,7 @@ export function Section({
             </CardTitle>
           )}
           {actions && (
-            <CardAction className="col-start-1 row-start-2 flex w-full flex-wrap items-center gap-2 justify-self-start sm:col-start-2 sm:row-start-1 sm:justify-self-end">
+            <CardAction className="col-start-1 row-start-2 flex w-full min-w-0 flex-wrap items-center gap-2 justify-self-start sm:col-start-2 sm:row-start-1 sm:justify-self-end">
               {actions}
             </CardAction>
           )}
