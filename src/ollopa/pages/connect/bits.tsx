@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronRight, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
@@ -206,16 +207,19 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
         </h2>
         <div className="mt-2 hidden lg:block"><StepRows steps={steps} current={current} go={go} tagged /></div>
         <div className="mt-2 lg:hidden">
-          <button
-            type="button"
-            className="t-label flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left"
+          {/* The phone's way into the step list is the library's own control: a ghost Button with
+              the step count as a Badge, nothing drawn by hand (DESIGN.md §4). */}
+          <Button
+            variant="ghost"
+            className="t-label h-auto w-full justify-start gap-2 whitespace-normal px-3 py-2 text-left"
             aria-expanded={stepsOpen}
             aria-controls="wiz-steps-phone"
             onClick={() => setStepsOpen((v) => !v)}
           >
             <ChevronRight aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground transition-transform", stepsOpen && "rotate-90")} />
-            Step {current} of {steps.length}: {step.name} · {stepsOpen ? "Hide steps" : "Show steps"}
-          </button>
+            <Badge variant="secondary">{current} of {steps.length}</Badge>
+            <span className="min-w-0">{step.name} · {stepsOpen ? "Hide steps" : "Show steps"}</span>
+          </Button>
           <div id="wiz-steps-phone" hidden={!stepsOpen} className="mt-2">
             <StepRows steps={steps} current={current} go={go} />
           </div>

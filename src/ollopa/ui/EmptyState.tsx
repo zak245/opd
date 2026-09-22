@@ -12,7 +12,7 @@ export interface EmptyStateProps {
 
 export function EmptyState({ title, body, action }: EmptyStateProps) {
   return (
-    <div className={cn("bg-card", "rounded-lg border border-dashed px-4 py-6 text-center")}>
+    <div className={cn("px-4 py-10 text-center")}>
       <p className="text-sm font-medium">{title}</p>
       <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">{body}</p>
       {action && <div className="mt-3 flex justify-center">{action}</div>}

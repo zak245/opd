@@ -547,13 +547,19 @@ export function RecordPage(p: RecordPageProps) {
         </header>
         <Divider />
 
-        {/* --------------------------------------------- phone: the actions sit under the header */}
-        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 border-t bg-background px-5 py-2 lg:hidden" data-print-hide>
-          {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
+        {/* --------------------------------------------- phone: the actions sit under the header.
+            A fixed bar, drawn by the library: a Separator for its top edge and the record's acts
+            inside it. Nothing here paints a border or a background of its own beyond the surface
+            the bar sits on. */}
+        <div className="fixed inset-x-0 bottom-16 z-30 order-last bg-background md:bottom-0 lg:hidden" data-print-hide>
+          <Divider />
+          <div className="flex flex-wrap items-center gap-2 px-5 py-2">
+            {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
+          </div>
         </div>
 
         {/* ------------------------------------------------------- body: main, side cards, doors */}
-        <div className="flex flex-1 flex-col gap-6 px-5 pt-5 pb-28 lg:grid lg:pb-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:px-6">
+        <div className="flex flex-1 flex-col gap-6 px-5 pt-5 pb-56 lg:grid lg:pb-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:px-6">
           <div className="order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-span-2">
             {p.tab ? (
               <Tabs defaultValue="main">
@@ -573,19 +579,22 @@ export function RecordPage(p: RecordPageProps) {
 
           <div className="order-3 lg:order-none lg:col-start-2 lg:row-start-2">
             {doors.length > 0 && (
-              <>
-                <div className="flex items-center justify-between pb-1">
-                  <h3 className="sr-only">More about this record</h3>
-                  <ExpandAll className="ml-auto" />
-                </div>
-                <div className="rounded-lg border">
+              // The doors are a section of the record like any other, so they are a Card: the
+              // "expand all" control is the card's own action, the doors are its content. This cell
+              // is a sibling of the side cards, not a child of one, so nothing nests.
+              <Card className="gap-0 py-2">
+                <CardHeader className="items-center px-2 [.border-b]:pb-2">
+                  <CardTitle className="sr-only">More about this record</CardTitle>
+                  <CardAction className="self-center"><ExpandAll /></CardAction>
+                </CardHeader>
+                <CardContent className="px-2">
                   {doors.map((d) => (
                     d.container === "drawer"
                       ? <DrawerDoor key={d.id} door={d} />
                       : <Door key={d.id} id={d.id} label={d.label} count={d.count} defaultOpen={d.openByDefault}>{d.content}</Door>
                   ))}
-                </div>
-              </>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

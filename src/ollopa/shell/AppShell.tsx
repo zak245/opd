@@ -4,7 +4,7 @@
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { ChevronLeft, Grid3x3, Search, TriangleAlert } from "lucide-react"
+import { AlertTriangle, ChevronLeft, CircleAlert, Grid3x3, Info, Megaphone, Search, TriangleAlert, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +41,9 @@ const COLLAPSE_KEY = "ollopa.sidebar"
 
 /** The interrupting kinds that read as danger rather than as a warning, which sets the Alert's variant. */
 const DANGER_KINDS = new Set<Kind>(["bounce-guard", "sync-error", "credits-low"])
+
+/** The glyph on a health badge, so the row never leans on its ink alone. */
+const HEALTH_ICON = { error: CircleAlert, warning: AlertTriangle, info: Info }
 
 function SidebarRow({ entry, page, onAnswer }: { entry: SidebarEntry; page: Page; onAnswer: (a: "keep" | "remove") => void }) {
   const i = entry.item
@@ -378,14 +381,51 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
         {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
             with the library's gap. */}
-        {/* Above the content there is the header and one Alert. Everything a page has to say up
-            here — what interrupts, the workspace's health, a workspace change — is said inside it:
-            the items as lines, the health as small outline Badges on the last line. */}
-        {(expiring || alerts.length > 0 || banner.items.length > 0 || news) && (
+        {/* The workspace's own state, directly under the page title: a plain row of small outline
+            Badges with their icons, and the workspace-change line beside them. No box, no border,
+            no band — "Credits on track" is not an alert and must not be read in an alert's
+            register. The Alert below holds only what needs a decision. */}
+        {(banner.items.length > 0 || news) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pt-2">
+            {banner.items.map((h) => {
+              const Icon = HEALTH_ICON[h.kind]
+              const cut = h.text.indexOf(" · ")
+              const short = cut > 0 && h.text.length > 44 ? h.text.slice(0, cut) : h.text
+              return (
+                <Badge key={h.text} asChild variant="outline" className="font-normal text-muted-foreground">
+                  <a href={h.href} title={h.text}>
+                    <Icon
+                      aria-hidden="true"
+                      style={h.kind === "warning" ? { color: "var(--warning-ink)" } : h.kind === "error" ? { color: "var(--danger-ink)" } : undefined}
+                    />
+                    {short}
+                  </a>
+                </Badge>
+              )
+            })}
+            {news && (
+              <span className="t-small flex min-w-[14rem] flex-1 items-center gap-1.5 text-muted-foreground">
+                <Megaphone className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">{news.text}</span>
+                {news.href && (
+                  <Button asChild variant="link" size="sm" className="h-auto shrink-0 px-0 py-0">
+                    <a href={news.href}>Open</a>
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon-xs" className="shrink-0" aria-label="Dismiss this notice" onClick={() => setNewsRead(true)}>
+                  <X aria-hidden="true" />
+                </Button>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* One Alert, and only what needs a decision is in it. */}
+        {(expiring || alerts.length > 0) && (
           <div className="p-3">
             <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) ? "destructive" : "default"} className="py-2">
               <TriangleAlert />
-              <AlertTitle>{alerts.length > 0 || expiring ? "Needs you now" : "Your workspace"}</AlertTitle>
+              <AlertTitle>Needs you now</AlertTitle>
               <AlertDescription>
                 {expiring && (
                   <p className="flex flex-wrap items-baseline gap-x-2">
@@ -400,26 +440,6 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                     <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</button>
                   </p>
                 ))}
-                {news && (
-                  <p className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="min-w-0">{news.text}</span>
-                    {news.href && <a className="shrink-0 underline underline-offset-4" href={news.href}>Open</a>}
-                    <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setNewsRead(true)}>Dismiss</button>
-                  </p>
-                )}
-                {banner.items.length > 0 && (
-                  <p className="flex flex-wrap items-center gap-1.5">
-                    {banner.items.map((h) => {
-                      const cut = h.text.indexOf(" · ")
-                      const short = cut > 0 && h.text.length > 44 ? h.text.slice(0, cut) : h.text
-                      return (
-                        <Badge key={h.text} asChild variant="outline" className="font-normal text-muted-foreground">
-                          <a href={h.href} title={h.text}>{short}</a>
-                        </Badge>
-                      )
-                    })}
-                  </p>
-                )}
               </AlertDescription>
             </Alert>
           </div>
