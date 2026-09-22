@@ -1,11 +1,155 @@
 # Stage 3 review: the chains
 
-Round 10 is the current review — the short confirmation of the visual pass. Rounds 9 through 1 are
-kept below, in order.
+Round 11 is the current review — the shadcn pass over every page. Rounds 10 through 1 are kept
+below, in order.
 
 ---
 
-# Round 10 — the short visual confirmation
+# Round 11 — is this the library's look?
+
+I read the rewritten `DESIGN.md` §4, then walked all 21 pages of the map as a seat that holds each,
+at 1440 and 400, in light and dark: **84 screenshots** under `shots/chains/review11/light/` and
+`…/dark/`, with the log in `…/logs/shadcn.txt`. A new probe, `scripts/review-shadcn.mjs`, reads back
+per page: every box that carries a border, a radius or a shadow and is **not** a library
+`data-slot` (A); the bands of chrome above the content and their heights (B); whether every table
+and section sits in a `Card` and whether any `Card` nests (C); the type painted (D); which library
+slots are in play (E); and the console (F).
+
+**Consoles: silent.** Production and dev, all 84 page loads and all six chain runs — no warning, no
+error, no failed request.
+
+## The verdict first
+
+**Mostly, yes — the frame is the library's; the contents are still ours.** The shell is shadcn's
+`Sidebar` with its rail and toggle, the header is the library's pattern, the alert is a real
+`Alert`, tables sit in `Card`s with the toolbar in `CardHeader` and the pager in `CardFooter`, the
+filters are `Badge`s and `ToggleGroup`s, and the slot census shows it: Companies paints
+`card`, `card-header`, `card-content`, `card-footer`, `table`, `table-row`, `badge`,
+`sidebar-menu-button`, `select-trigger`. **Containment is clean everywhere**: every table on every
+page is inside a `Card`, and there is **not one nested `Card`** in the product, at either width, in
+either theme.
+
+What has not moved is the layer below. **1,128 hand-drawn boxes** across the walk — the same six
+idioms repeated — and they are the parts a person actually reads: the chips, the strips, the
+dividers, the tinted blocks.
+
+## Page by page
+
+Counts are at 1440 light, with the off-screen skip link discounted. A = hand-drawn boxes.
+B = bands of chrome above content / total height. ✓ passes, ! fails, ? see the note.
+
+| Page (seat) | A | B | C | D | E | F |
+|---|---|---|---|---|---|---|
+| Home (sdr) | **33** ! | **3 / 200 px** ! | ✓ 4 cards, 0 nested | ✓ | ! third band is a hand-drawn pill strip | ✓ |
+| People (sdr) | 20 ! | 2 / 162 px ✓ | ✓ table in a card | ✓ | ? `th.border-l` and `td.border-l` added to the library's table | ✓ |
+| Companies (sdr) | **52** ! | 2 / 163 px ✓ | ✓ | ✓ | ! `div.bg-muted.border-b` filter strip full-bleed inside the card | ✓ |
+| Lists (sdr) | 28 ! | 2 / 169 px ✓ | ✓ | ✓ | ? `section.border-t.first:border-t-0` hand dividers | ✓ |
+| Sequences (sdr) | 13 ! | 2 / 169 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Sequence record (sdr) | **51** ! | 2 / 183 px ✓ | ✓ 5 cards, 0 nested | ✓ | ! `p.rounded-md` tinted status block where an `Alert` belongs | ✓ |
+| Templates (sdr) | 19 ! | 2 / 169 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Inbox (sdr) | 13 ! | 2 / 159 px ✓ | ✓ | ✓ | ✓ tabs inline, reading pane intact | ✓ |
+| Tasks (sdr) | 9 ! | 2 / 159 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Deals board (ae) | 29 ! | 2 / 159 px ✓ | ✓ | ✓ | ? cards-per-deal is the allowed case | ✓ |
+| Deal record (ae) | 29 ! | 2 / 187 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Contact record (sdr) | 7 ! | 2 / 187 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Campaigns (marketer) | 11 ! | 1 / 72 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Accounts (cs) | 25 ! | 1 / 76 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Workflows (marketer) | 7 ! | 1 / 76 px ✓ | ✓ | ✓ | ✓ | ✓ |
+| Requests (admin) | 24 ! | 2 / 198 px ? | ✓ | ✓ | ? the Alert is 90 px: two messages stacked | ✓ |
+| Reports (admin) | 6 ! | 2 / 190 px ? | ✓ | ✓ | ✓ | ✓ |
+| **Agents (admin)** | **105** ! | 2 / 190 px ? | ✓ | ✓ | ! three hand-drawn full-bleed bands inside one card | ✓ |
+| Settings (admin) | **51** ! | 2 / ~180 px ✓ | ✓ | ✓ | ? hand dividers between every row | ✓ |
+| Connect wizard (admin) | 14 ! | 2 ✓ | ✓ | ✓ | ✓ | ✓ |
+| Workspace set-up (admin) | 16 ! | 1 ✓ (outside the shell) | ✓ | ✓ | ✓ | ✓ |
+
+## A — what is still drawn by hand
+
+Six idioms account for almost all of it:
+
+1. **`span.rounded-md` — 128 instances.** Our `Chip` is a hand-rolled span with an inline tint,
+   sitting next to real `Badge`s on the same screens (Home paints four `badge` slots and twelve
+   `span.rounded-md`). Two chip systems, side by side, same job.
+2. **`label|section|li.border-t.first:border-t-0` — 56 instances.** A hand-rolled divider idiom
+   where the library ships `Separator`.
+3. **`div.bg-muted.border-y` and `.border-b` — 32 instances.** Full-bleed toolbar and filter strips
+   inside cards, with their own border and their own spacing.
+4. **`button.rounded-md.border` and `button.rounded-full.border` — 24 instances.** Buttons that are
+   not `Button`.
+5. **`p.rounded-md` tinted blocks** — our `StatusLine`, where the library ships `Alert`.
+6. **`th.border-l` / `td.border-l` — 14 instances.** Vertical rules added to the library's `Table`,
+   which is overriding a component's internals, the one thing §4 forbids by name.
+
+## B — the chrome above the content
+
+Eighteen of twenty-one pages are two bands or fewer: the 56 px header plus a 63 px `Alert`,
+159–190 px in total. Three pages are worth naming. **Home has three bands, 200 px** — header, Alert,
+and then a hand-drawn strip of pills ("An agent paused outreach in 6 places", "Credits on track",
+"Sending healthy · bounce 1.9%", a workspace-change line with its own Open and ×). That strip is
+both the extra row and a hand-drawn box. **Requests and Reports** stay at two bands but their Alert
+grows to 90 px because two messages stack inside it, putting content 190–198 px down. At 400 Home
+reaches **223 px**, a quarter of the viewport, before a word of the page.
+
+## C — containment
+
+Clean, and this is the strongest part of the pass. Every table on every page is inside a `Card`
+(zero outside, at both widths, in both themes). **Zero nested `Card`s** anywhere in the product.
+The only "sections outside a card" my probe found are the contents of column and filter popovers,
+which are `PopoverContent`, not page sections. The card-per-thing case is used where §4 allows it —
+deal cards on the board, agent cards on Agents — and nowhere else.
+
+## D — dark
+
+Hierarchy holds. The library's own card, border and muted tokens carry it, and our six family inks
+and five statuses read at their contrast floors in both themes (round 10's `contrast.mjs` run still
+stands). Companies in dark is the clearest example: card, toolbar, table head, mono domains,
+"Current client" green, "Cold" neutral, "Active opportunity" blue — all separable.
+Type is five sizes and no more, on every page: 12 / 13 / 14 / 18 / 24.
+
+## E — overflow, context loss, disruption
+
+**Agents is the page to fix.** Its top card is one `Card` containing three hand-drawn full-bleed
+bands: a summary sentence, a grey meter row, and an amber two-message block carrying four controls
+("Resume", "Keep paused", "Credit caps", "Open bounce guard"), then a footer line about agent
+settings. The amber block runs edge to edge with square corners inside a rounded card — the invented
+look the owner rejected, surviving inside a library container. 105 hand-drawn boxes on one page.
+
+After that: **Home's third band**, which pushes "Good morning, Marcus" to 200 px and repeats
+information the Alert above it already carries; and the **filter strips** on Companies and Lists,
+which put a grey full-bleed bar with its own border between a card's header and its table.
+
+## F — console
+
+Nothing, anywhere.
+
+## The chains, re-run
+
+| Chain | Chain card | Disclosure card |
+|---|---|---|
+| 1 · Sequence › person | **18**/18 | **17**/18 |
+| 3 · Company › person | **18**/18 | **17**/18 |
+| 7 · Inbox, Tasks, Home | **18**/18 | **17**/18 |
+
+Nothing regressed through the re-theme: walkers read 1 of 34 and 1 of 24 and 1 of 4, the pane action
+still lands on the row ("moved from Q4 enterprise outbound to Warm inbound follow-up"), arrival
+still focuses the lit `h1`, the crumb still returns to the lit row, and both consoles are silent.
+The one A-failure from round 9 is unchanged: at 400 the contact record's header collapses and
+"Move sequence" and "Add a note" become two filled controls on one surface.
+
+## The worst five
+
+1. **Agents' top card** — three hand-drawn full-bleed bands inside one `Card`, square amber block in
+   a rounded container, 105 hand-drawn boxes on the page.
+2. **`Chip` is not `Badge`** — 128 hand-rolled `span.rounded-md`, next to real `Badge`s doing the
+   same job on the same screens.
+3. **Home's third band**, 200 px of chrome at 1440 and 223 px at 400, the extra row being a
+   hand-drawn pill strip.
+4. **Hand-drawn dividers and toolbar strips** — 56 `border-t` dividers where `Separator` exists, and
+   32 `bg-muted` full-bleed strips inside card bodies.
+5. **`border-l` added to the library's `Table`** — the one override §4 names and forbids.
+
+---
+
+# Round 10 — the short visual confirmation (superseded)
 
 Home, the Deals board, Inbox, Reports, the connect wizard and Settings, in both themes, against my
 own `npx vite preview --port 4180`. Screenshots in `shots/chains/review10/light/` and `…/dark/`.

@@ -1,0 +1,144 @@
+
+=== CHAIN 1 · sequence › enrolled person beside › next › previous › open the page › back (1440) ===
+  1. the sequence, enrolled list in view
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home Prospect People Companies Lists "
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1*@868
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Bounce guard thresholds (Settings)" → "· RevOps admins change them"
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+    scroll    868
+  [shot] shots/chains/review11/chains/01-sequence/01-sequence-1440.png
+    rows      34 visible: Mateo Okonkwo Sales Enablement Lead / Orla Ivanova Head of Customer Success / Tomas Moreau Procurement Lead
+    keyboard  8 tabs from the section's search box to "Mateo Okonkwo Sales " → TR "Mateo Okonkwo Sales Enablement Lead Cedar Holdings"
+  2. Enter on the first enrolled person — the pane
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Mateo Okonkwo" / "Sales Enablement Lead · Cedar Holdings" w=448 doors=0 trans=0.2s
+    buttons   Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    walker    1 of 34
+    body      
+    focus     DIV "Mateo Okonkwo Sales Enablement Lead · Cedar Holdings Open th"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Mateo Okonkwo Sales Enablement Lead Cedar Holdings Active 1. Email 13 Sep 28 Jul
+    mounted   /ollopa/sequences/seq-1*@908
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Bounce guard thresholds (Settings)" → "· RevOps admins change them"
+    [pane] Mateo Okonkwo · filled=0 · destructive=0 · links=1 · sentences=0
+      A-CHECK disabled: "Move to a sequence" — beside it: Choose a sequence above
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+    scroll    908 (was 868)
+  [shot] shots/chains/review11/chains/01-sequence/02-pane-1440.png
+  3. ] — next in the enrolled list
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Orla Ivanova" / "Head of Customer Success · Cedar Partners" w=448 doors=0 trans=0.2s
+    buttons   Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    walker    2 of 34
+    body      
+    focus     DIV "Orla Ivanova Head of Customer Success · Cedar Partners Open "  [inside the pane]
+    lit       (nothing lit)
+    row mark  Orla Ivanova Head of Customer Success Cedar Partners Active 1. Email 13 Sep 27 A
+    mounted   /ollopa/sequences/seq-1*@908
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Bounce guard thresholds (Settings)" → "· RevOps admins change them"
+    [pane] Orla Ivanova · filled=0 · destructive=0 · links=1 · sentences=0
+      A-CHECK disabled: "Move to a sequence" — beside it: Choose a sequence above
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+  [shot] shots/chains/review11/chains/01-sequence/03-next-1440.png
+  4. [ — previous, back to the first
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Mateo Okonkwo" / "Sales Enablement Lead · Cedar Holdings" w=448 doors=0 trans=0.2s
+    buttons   Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    walker    1 of 34
+    body      
+    focus     DIV "Mateo Okonkwo Sales Enablement Lead · Cedar Holdings Open th"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Mateo Okonkwo Sales Enablement Lead Cedar Holdings Active 1. Email 13 Sep 28 Jul
+    mounted   /ollopa/sequences/seq-1*@908
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Bounce guard thresholds (Settings)" → "· RevOps admins change them"
+    [pane] Mateo Okonkwo · filled=0 · destructive=0 · links=1 · sentences=0
+      A-CHECK disabled: "Move to a sequence" — beside it: Choose a sequence above
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+  [shot] shots/chains/review11/chains/01-sequence/04-previous-1440.png
+    picker    "Choose a sequence" → chose "Warm inbound follow-up"
+    acted     clicked "Move to Warm inbound follow-up"
+    row was   Mateo Okonkwo Sales Enablement Lead Cedar Holdings Active 1. Email 13 Sep 28 Jul by Marcus Adeyemi 23 days ago Pause Retry
+    row now   Mateo Okonkwo Sales Enablement Lead moved from Q4 enterprise outbound to Warm inbound follow-up · step 1 Undo Cedar Holdings Moved to Warm inbound follow-up — — 28 Jul by Marcus Adeyemi 23 days ago Pause Retry
+    row moved yes
+    renders     →  
+    heading   (no People heading)
+  4b. after the pane's action
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      "Mateo Okonkwo" / "Sales Enablement Lead · Cedar Holdings" w=448 doors=0 trans=0.2s
+    buttons   Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task | Undo
+    walker    1 of 34
+    body      
+    focus     BUTTON[Sequence to move Mateo Okonkwo to] "Choose a sequence"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Mateo Okonkwo Sales Enablement Lead moved from Q4 enterprise outbound to Warm in
+    mounted   /ollopa/sequences/seq-1*@908
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Bounce guard thresholds (Settings)" → "· RevOps admins change them"
+    [pane] Mateo Okonkwo · filled=0 · destructive=0 · links=1 · sentences=0
+      A-CHECK disabled: "Move to a sequence" — beside it: Choose a sequence above
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+  [shot] shots/chains/review11/chains/01-sequence/05-acted-1440.png
+    keyboard  focus was BUTTON "Choose a sequence" visible=true; "Open the page" is 1 Shift+Tab away
+  5. Open the page — the contact record with the trail
+    hash      #/ollopa/people/c-13
+    h1        Mateo Okonkwo
+    trail     Q4 enterprise outbound
+    pane      (none)
+    focus     H1 "Mateo Okonkwo"
+    lit       Mateo Okonkwo
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1 hidden inert@868 , /ollopa/people/c-13*@0
+    h-scroll  doc=1440
+    [page header] Mateo Okonkwo · filled=1 (Move sequence S) · destructive=1 · links=2 · sentences=3
+      B-SENTENCE "Sales Enablement Lead · Cedar Holdings" → "Mateo Okonkwo Visited site Executive sponsor changed"
+      B-SENTENCE "Enrich" → "2 credits · Charged once"
+      B-SENTENCE "Ask the research agent" → "12 credits · Charged once"
+    [page body] (outside the four surfaces) · filled=1 (Add a note) · destructive=0 · links=0 · sentences=0
+  [shot] shots/chains/review11/chains/01-sequence/06-page-1440.png
+    keyboard  arrived on H1 "Mateo Okonkwo" visible=true; crumb is 1 Shift+Tab away → BUTTON "Q4 enterprise outbound"
+  6. the crumb — back on the sequence
+    hash      #/ollopa/sequences/seq-1
+    h1        Q4 enterprise outbound · Sequences
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Mateo Okonkwo"
+    lit       Mateo Okonkwo Sales Enablement Lead moved from Q4 enterprise outbound to Warm in
+    row mark  (none)
+    mounted   /ollopa/sequences/seq-1*@868
+    h-scroll  doc=1440
+    [page header] Q4 enterprise outbound · Sequences · filled=1 (Add people) · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Bounce guard thresholds (Settings)" → "· RevOps admins change them"
+    [card] Mateo Okonkwo Sales Enablement Lea · filled=0 · destructive=0 · links=0 · sentences=0
+    [card] Orla Ivanova Head of Customer Succ · filled=0 · destructive=0 · links=0 · sentences=0
+    scroll    868 (was 868)
+    focus vis BUTTON "Mateo Okonkwo" visible=true
+  [shot] shots/chains/review11/chains/01-sequence/07-back-1440.png
+  [console] nothing — no warning, no error, no failed request
