@@ -221,7 +221,7 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
 
           {at !== null && (
             <div
-              className="pointer-events-none absolute top-3 rounded-md border bg-background px-2 py-1.5 t-small shadow-sm"
+              className="pointer-events-none absolute top-3 rounded-md border surface-raised px-2 py-1.5 t-small shadow-small"
               style={{ left: Math.min(Math.max(x(at) - 60, 8), Math.max(8, width - 140)) }}
             >
               <div className="font-medium">Week of {shortDay(weeks[at])}</div>

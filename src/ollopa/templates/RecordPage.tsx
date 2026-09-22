@@ -272,7 +272,7 @@ function FieldCell({ field }: { field: RecordField }) {
 
 function Card({ card }: { card: RecordCard }) {
   return (
-    <section data-record-card className={cn("rounded-lg border p-3", card.tone === "attention" && "[border-color:var(--warning)]")}>
+    <section data-record-card className={cn("surface-raised rounded-lg border p-3", card.tone === "attention" && "[border-color:var(--warning)]")}>
       <SectionHeader title={card.title} count={card.count} action={card.action} />
       {card.subtitle && <p className="t-small -mt-1 pb-2 text-muted-foreground">{card.subtitle}</p>}
       {card.children}
@@ -504,7 +504,7 @@ export function RecordPage(p: RecordPageProps) {
           )}
 
           {p.brief && (
-            <dl className="mt-3 grid gap-x-6 gap-y-1 rounded-md border bg-muted/40 px-3 py-2 t-small sm:grid-cols-2">
+            <dl className="mt-3 grid gap-x-6 gap-y-1 rounded-md surface-raised border px-3 py-2 t-small sm:grid-cols-2">
               <div className="sm:col-span-2"><dt className="inline text-muted-foreground">About </dt><dd className="inline font-medium">{p.brief.about}</dd></div>
               <div><dt className="inline text-muted-foreground">Assembled by </dt><dd className="inline">{p.brief.author}</dd></div>
               <div><dt className="inline text-muted-foreground">On </dt><dd className="inline">{p.brief.assembledOn}</dd></div>

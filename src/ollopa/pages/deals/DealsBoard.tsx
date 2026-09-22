@@ -1003,7 +1003,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
         {/* Bulk: what applies to the selection, and delete naming what goes with it. */}
         {selected.length > 0 && (
-          <div className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t bg-background px-4 py-2 text-sm sm:px-6">
+          <div className="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 border-t surface-raised px-4 py-2 text-sm sm:px-6">
             <span className="font-medium tabular-nums">{selected.length} selected</span>
             <Select onValueChange={(v) => { selected.forEach((id) => patch(id, { owner: v }, `${selected.length} deals now belong to ${v}`)); setSelected([]) }}>
               <SelectTrigger className="h-8 w-40" aria-label="Change owner"><SelectValue placeholder="Change owner" /></SelectTrigger>

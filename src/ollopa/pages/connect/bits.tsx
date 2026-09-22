@@ -71,7 +71,7 @@ export function Picker({ label, value, options, onChange, hint }: {
     <label className="t-body block">
       <span className="t-small text-muted-foreground">{label}</span>
       <select
-        className="mt-1 h-10 w-full rounded-md border bg-background px-2 t-body"
+        className="mt-1 h-10 w-full rounded-md border surface-raised px-2 t-body"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -279,7 +279,7 @@ export function Confirm({ open, title, body, confirmLabel, onConfirm, onCancel }
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div ref={box} role="dialog" aria-modal="true" aria-label={title} className="surface-overlay shadow-overlay w-full max-w-md rounded-lg border p-5 shadow-lg">
+      <div ref={box} role="dialog" aria-modal="true" aria-label={title} className="surface-overlay shadow-overlay w-full max-w-md rounded-lg border p-5 shadow-large">
         <h3 className="t-label">{title}</h3>
         <div className="t-body mt-2 text-muted-foreground">{body}</div>
         <div className="mt-5 flex flex-wrap gap-2">

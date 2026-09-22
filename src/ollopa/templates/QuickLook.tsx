@@ -107,7 +107,7 @@ export function QuickLook({ family, open, onOpenChange, title, fields, editable,
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="surface-raised w-full gap-0 p-0 sm:max-w-sm">
+      <SheetContent side="right" className="surface-floating w-full gap-0 p-0 sm:max-w-sm">
         {/* A thin bar in the record's family hue, so the drawer says what it is holding before it is
             read — the same mark the pane carries (DESIGN.md §5). */}
         <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />

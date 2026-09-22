@@ -929,7 +929,7 @@ export function PeoplePage({ session }: { session: Session }) {
       {rStable ? (
         count > 0 && (
           <div
-            className="flex flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 lg:px-6"
+            className="flex flex-wrap items-center gap-2 border-y surface-raised px-4 py-2 lg:px-6"
             data-container="people.bulk.bar"
             data-container-label="the selection bar"
             data-print-hide
@@ -1038,7 +1038,7 @@ export function PeoplePage({ session }: { session: Session }) {
                     {sortHeader(c)}
                   </th>
                 ))}
-                <th scope="col" className="sticky right-0 w-px border-l bg-background px-2"><span className="sr-only">Actions</span></th>
+                <th scope="col" className="sticky right-0 w-px border-l surface-raised px-2"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -1150,7 +1150,7 @@ export function PeoplePage({ session }: { session: Session }) {
       </div>
 
       {pending && (
-        <div role="status" aria-live="assertive" className="flex items-center gap-3 border-t bg-muted/60 px-4 py-2 text-sm lg:px-6" data-print-hide>
+        <div role="status" aria-live="assertive" className="flex items-center gap-3 border-t surface-raised px-4 py-2 text-sm lg:px-6" data-print-hide>
           <span className="min-w-0 flex-1">{pending.text}</span>
           <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { pending.run(); setPending(null) }}>Spend</Button>
           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setPending(null)}>Cancel</Button>
@@ -1159,7 +1159,7 @@ export function PeoplePage({ session }: { session: Session }) {
 
       {/* Undo, for ten seconds, on anything undoable. ⌘Z does the same. */}
       {undo && (
-        <div role="status" aria-live="polite" className="flex items-center gap-3 border-t bg-muted/60 px-4 py-2 text-sm lg:px-6" data-print-hide>
+        <div role="status" aria-live="polite" className="flex items-center gap-3 border-t surface-raised px-4 py-2 text-sm lg:px-6" data-print-hide>
           <span className="min-w-0 flex-1">{undo.text}</span>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { undo.run(); setUndo(null) }}>Undo</Button>
         </div>

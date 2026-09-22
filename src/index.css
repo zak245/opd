@@ -9,11 +9,14 @@
    themselves in either. Every pair below is measured: `node scripts/contrast.mjs`. */
 :root {
   /* Structure. Slightly warm — a little chroma at hue 80 — never pure grey. */
-  /* Three steps in light as well as in dark. Light cannot go lighter than white, so the page steps
-     down instead: the card sits above the page, the dialog above the card. Measured — the "seen"
-     rows in `scripts/contrast.mjs` fail below 0.015 apart. */
-  --surface-page: oklch(0.960 0.006 80);
-  --surface-raised: oklch(0.982 0.004 80);
+  /* Four levels and the chrome, each a tone step the eye can see (DESIGN.md §5). Light cannot go
+     lighter than white, so the page starts low and every level rises to it; the chrome steps the
+     other way, below the page, so the frame separates from the work. Steps are measured —
+     `scripts/contrast.mjs` fails below 0.03 in light and 0.05 in dark. */
+  --surface-chrome: oklch(0.865 0.008 80);
+  --surface-page: oklch(0.900 0.007 80);
+  --surface-raised: oklch(0.935 0.005 80);
+  --surface-floating: oklch(0.968 0.004 80);
   --surface-overlay: oklch(1 0 0);
 
   --background: var(--surface-page);
@@ -35,23 +38,30 @@
   --secondary: oklch(0.935 0.007 80);
   --secondary-foreground: oklch(0.24 0.008 80);
   --muted: oklch(0.935 0.007 80);
-  --muted-foreground: oklch(0.49 0.012 80);
+  --muted-foreground: oklch(0.45 0.012 80);
   --accent: oklch(0.935 0.007 80);
   --accent-foreground: oklch(0.24 0.008 80);
-  --border: oklch(0.88 0.008 80);
-  --input: oklch(0.60 0.012 80);
+  /* One border that carries meaning — 3:1 against every surface it can sit on — and one for a
+     divider inside a card, which only has to be seen. */
+  --shadow-small: 0 1px 2px oklch(0.30 0.02 80 / 0.10), 0 2px 8px oklch(0.30 0.02 80 / 0.08);
+  --shadow-large: 0 4px 12px oklch(0.30 0.02 80 / 0.14), 0 16px 40px oklch(0.30 0.02 80 / 0.16);
+  --scrim: oklch(0.30 0.02 80 / 0.42);
+  --border-strong: oklch(0.54 0.012 80);
+  --border-soft: oklch(0.80 0.008 80);
+  --border: var(--border-strong);
+  --input: oklch(0.55 0.012 80);
 
   /* The six object families: a fill for bars and dots, a tint for chips, an ink for icons and text.
      Always with their icon, never as a large fill (DESIGN.md §5). */
-  --family-people: oklch(0.58 0.13 200);
+  --family-people: oklch(0.57 0.09 200);
   --family-people-tint: oklch(0.93 0.03 200);
   --family-people-ink: oklch(0.47 0.08 200);
   --family-companies: oklch(0.58 0.16 295);
   --family-companies-tint: oklch(0.93 0.025 295);
   --family-companies-ink: oklch(0.49 0.17 295);
-  --family-deals: oklch(0.63 0.13 55);
+  --family-deals: oklch(0.59 0.13 55);
   --family-deals-tint: oklch(0.93 0.035 55);
-  --family-deals-ink: oklch(0.51 0.095 55);
+  --family-deals-ink: oklch(0.50 0.10 55);
   --family-engagement: oklch(0.58 0.18 335);
   --family-engagement-tint: oklch(0.93 0.025 335);
   --family-engagement-ink: oklch(0.46 0.18 335);
@@ -69,7 +79,7 @@
   /* The five statuses. Only ever state, never decoration and never a family; always with a word. */
   --danger: oklch(0.55 0.20 27);
   --danger-tint: oklch(0.935 0.035 27);
-  --danger-ink: oklch(0.53 0.17 27);
+  --danger-ink: oklch(0.50 0.11 27);
   --warning: oklch(0.65 0.14 75);
   --warning-tint: oklch(0.93 0.04 75);
   --warning-ink: oklch(0.47 0.10 75);
@@ -89,10 +99,12 @@
 }
 
 .dark {
-  /* Higher is lighter, and there are no shadows below the overlay level. */
-  --surface-page: oklch(0.165 0.006 80);
-  --surface-raised: oklch(0.215 0.007 80);
-  --surface-overlay: oklch(0.265 0.008 80);
+  /* The same four levels by tone, lighter as they rise, with the chrome one step below the page. */
+  --surface-chrome: oklch(0.140 0.006 80);
+  --surface-page: oklch(0.195 0.007 80);
+  --surface-raised: oklch(0.250 0.008 80);
+  --surface-floating: oklch(0.305 0.009 80);
+  --surface-overlay: oklch(0.360 0.010 80);
 
   --background: var(--surface-page);
   --foreground: oklch(0.96 0.005 80);
@@ -106,7 +118,7 @@
   --brand-ink: oklch(0.76 0.12 264);
   --primary: var(--brand);
   --primary-foreground: oklch(0.99 0.003 80);
-  --ring: oklch(0.58 0.16 264);
+  --ring: oklch(0.66 0.15 264);
 
   --secondary: oklch(0.27 0.008 80);
   --secondary-foreground: oklch(0.96 0.005 80);
@@ -114,8 +126,13 @@
   --muted-foreground: oklch(0.73 0.011 80);
   --accent: oklch(0.29 0.008 80);
   --accent-foreground: oklch(0.96 0.005 80);
-  --border: oklch(0.33 0.009 80);
-  --input: oklch(0.58 0.012 80);
+  --shadow-small: 0 1px 2px oklch(0 0 0 / 0.40), 0 2px 8px oklch(0 0 0 / 0.32);
+  --shadow-large: 0 4px 12px oklch(0 0 0 / 0.50), 0 16px 40px oklch(0 0 0 / 0.45);
+  --scrim: oklch(0.10 0.01 80 / 0.62);
+  --border-strong: oklch(0.66 0.012 80);
+  --border-soft: oklch(0.40 0.010 80);
+  --border: var(--border-strong);
+  --input: oklch(0.64 0.012 80);
 
   --family-people: oklch(0.70 0.12 200);
   --family-people-tint: oklch(0.30 0.045 200);
@@ -179,7 +196,11 @@
   --color-ring: var(--ring);
   --color-surface-page: var(--surface-page);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-floating: var(--surface-floating);
   --color-surface-overlay: var(--surface-overlay);
+  --color-surface-chrome: var(--surface-chrome);
+  --color-border-strong: var(--border-strong);
+  --color-border-soft: var(--border-soft);
   --color-brand: var(--brand);
   --color-brand-tint: var(--brand-tint);
   --color-brand-ink: var(--brand-ink);
@@ -340,6 +361,13 @@
    with space first, then a border, then a tint; a shadow only at the overlay level, and in dark
    higher is lighter instead. */
 .surface-page { background-color: var(--surface-page); }
-.surface-raised { background-color: var(--surface-raised); }
-.surface-overlay { background-color: var(--surface-overlay); }
-.dark .shadow-overlay { box-shadow: none; }
+.surface-chrome { background-color: var(--surface-chrome); }
+.surface-raised { background-color: var(--surface-raised); border-color: var(--border-strong); }
+.surface-floating { background-color: var(--surface-floating); border-color: var(--border-strong); box-shadow: var(--shadow-small); }
+.surface-overlay { background-color: var(--surface-overlay); border-color: var(--border-strong); box-shadow: var(--shadow-large); }
+
+/* Exactly two shadows exist and nothing else casts one. */
+.shadow-small { box-shadow: var(--shadow-small); }
+.shadow-large { box-shadow: var(--shadow-large); }
+/* The dimmed page behind a dialog. */
+.scrim { background-color: var(--scrim); }

@@ -86,7 +86,7 @@ export function SaveBar() {
       data-print-hide
       /* The bar floats over the page, so it sits on the overlay surface — the one level that
          carries a shadow (DESIGN.md §5). */
-      className="surface-overlay sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-4 py-3 shadow-lg backdrop-blur sm:px-6"
+      className="surface-overlay sticky bottom-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-4 py-3 shadow-large backdrop-blur sm:px-6"
     >
       {/* A Save bar is a form: Save at the leading edge, Discard after it (DESIGN.md §4). It is the
           page's one filled control — nothing else on Settings is a primary. */}

@@ -278,7 +278,7 @@ export function MeetingPanel(p: MeetingPanelProps) {
             {hasTranscripts(p.session.business) && (
               <div>
                 <div className="text-xs text-muted-foreground">Transcript · from {seed.integrations[0]?.name ?? "the connected recorder"}</div>
-                <p className="mt-1 rounded-md border bg-muted/40 p-2 text-xs text-muted-foreground">
+                <p className="mt-1 rounded-md border surface-raised p-2 text-xs text-muted-foreground">
                   “…the part that hurts is the Thursday rebuild. My manager spends half a day on it and I still get asked
                   why the number moved.” — {p.contactName}, {day(TODAY)}
                 </p>

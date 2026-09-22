@@ -183,10 +183,20 @@ Colour has five jobs here and nothing else may use colour. The tokens are in `sr
 registry in `src/ollopa/identity.ts`, and the shell and these primitives apply them — so a page
 never picks a hue.
 
-1. **Structure.** Warm neutrals (a little chroma at hue 80), most of every screen: `--surface-page`,
-   `--surface-raised`, `--surface-overlay`, `--foreground`, `--muted-foreground`, `--border`.
-   Three depths, and in dark higher is lighter rather than shadowed. Utilities: `.surface-page`,
-   `.surface-raised`, `.surface-overlay`.
+1. **Structure.** Warm neutrals (a little chroma at hue 80), most of every screen.
+
+   **Depth has four levels and each is visible** (DESIGN.md §5, rewritten 22 September). The page is
+   the base; *raised* (cards, sections, the row you are on) is a tone step plus a border that reads;
+   *floating* (the pane, popovers, menus) adds the small shadow; *overlay* (dialogs) the large
+   shadow over a dimmed page. The chrome — sidebar, header, bottom bar — is its own surface one step
+   off the page, so the frame separates from the work. Utilities: `.surface-chrome`, `.surface-page`,
+   `.surface-raised`, `.surface-floating`, `.surface-overlay`, and `.scrim`.
+
+   Tone steps are at least **0.03** apart in light and **0.05** in dark, and `scripts/contrast.mjs`
+   fails below that. Two borders: `--border-strong` for an edge that carries meaning (3:1 against
+   every surface it can sit on, measured) and `--border-soft` for a divider inside a card. Exactly
+   two shadows exist — `--shadow-small` on floating and `--shadow-large` on overlay — and nothing
+   else casts one.
 2. **The accent.** One hue, indigo 264: `--brand` is the primary fill, `--brand-tint` the active
    sidebar item, `--brand-ink` links, `--ring` the focus ring, and `--info` the informational status.
    Nothing else is indigo.

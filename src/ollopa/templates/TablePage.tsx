@@ -122,7 +122,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
                 // The row you are on is the raised surface: hovered, focused, or the one the quick
                 // look is open on (DESIGN.md §5, the three depths).
                 className={cn(
-                  "group hover:[background-color:var(--surface-raised)] focus-visible:[background-color:var(--surface-raised)]",
+                  "group hover:[background-color:var(--surface-raised)] focus-visible:[background-color:var(--surface-raised)] focus-visible:[box-shadow:inset_0_0_0_1px_var(--border-strong)]",
                   p.quickLook && "cursor-pointer",
                   glancing && p.rowKey(glancing) === p.rowKey(r) && "[background-color:var(--surface-raised)]",
                 )}

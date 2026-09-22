@@ -180,7 +180,7 @@ function Tabbed({ session, draft, on }: { session: Session; draft: ConnectDraft;
           ))}
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
-          <Item id="wiz.choose" label="the Salesforce card" className="rounded-lg border bg-background p-3">
+          <Item id="wiz.choose" label="the Salesforce card" className="rounded-lg border bg-card p-3">
             <p className="text-sm font-medium">Salesforce</p>
             <p className="mt-0.5 text-xs text-muted-foreground">CRM</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -190,7 +190,7 @@ function Tabbed({ session, draft, on }: { session: Session; draft: ConnectDraft;
               </span>
             </div>
           </Item>
-          <Item id="connect.hubspot-variant" label="the HubSpot card" className="rounded-lg border bg-background p-3">
+          <Item id="connect.hubspot-variant" label="the HubSpot card" className="rounded-lg border bg-card p-3">
             <p className="text-sm font-medium">HubSpot</p>
             <p className="mt-0.5 text-xs text-muted-foreground">CRM</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -198,12 +198,12 @@ function Tabbed({ session, draft, on }: { session: Session; draft: ConnectDraft;
               <Button size="sm" variant="outline">HubSpot Data Enrichment</Button>
             </div>
           </Item>
-          <Item id="connect.slack-card" label="the Slack card" className="rounded-lg border bg-background p-3">
+          <Item id="connect.slack-card" label="the Slack card" className="rounded-lg border bg-card p-3">
             <p className="text-sm font-medium">Slack</p>
             <p className="mt-0.5 text-xs text-muted-foreground">Notifications</p>
             <div className="mt-2"><Button size="sm" variant="outline">Allow</Button></div>
           </Item>
-          <Item id="connect.more-cards" label="the rest of the marketplace" className="rounded-lg border bg-muted/40 p-3 sm:col-span-3">
+          <Item id="connect.more-cards" label="the rest of the marketplace" className="rounded-lg border bg-card p-3 sm:col-span-3">
             <p className="text-xs text-muted-foreground">
               Pipedrive · Zoho · Microsoft Dynamics · Outreach · Salesloft · Marketo · SendGrid · Mailgun · Vidyard ·
               Zapier · Snowflake · API · OpenAI · Perplexity · Anthropic
@@ -487,7 +487,7 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
       </Heading>
 
       <Step n={1} name="Choose what to connect">
-        <Item id="wiz.choose" label="the Salesforce card" className="rounded-lg border bg-background p-3">
+        <Item id="wiz.choose" label="the Salesforce card" className="rounded-lg border bg-card p-3">
           <p className="text-sm font-medium">Salesforce</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Sync contacts, companies, deals and activities with Salesforce, and decide what ollopA may write, delete and merge there.
@@ -495,12 +495,12 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
           {on(4) && <p className="mt-1 text-xs text-muted-foreground">Starter syncs one way · Growth both ways · Scale adds custom objects. You are on {b.plan.name}.</p>}
         </Item>
         {on(4) && (
-          <Item id="wiz.declare-no-crm" label="ollopA is our CRM" className="rounded-lg border bg-muted/40 p-3">
+          <Item id="wiz.declare-no-crm" label="ollopA is our CRM" className="rounded-lg border bg-card p-3">
             <Check checked={false} onChange={() => {}} label="ollopA is our CRM" hint="A decision, not an absence. It takes the CRM row out of the set-up list, and it is reversible here." />
           </Item>
         )}
         {on(8) && (
-          <Item id="wiz.template" label="start from a saved template" className="rounded-lg border bg-muted/40 p-3">
+          <Item id="wiz.template" label="start from a saved template" className="rounded-lg border bg-card p-3">
             <Button size="sm" variant="outline">Start from a saved template</Button>
             <span className="ml-2 text-xs text-muted-foreground">Holds what syncs, the field pairs and the sync rules.</span>
           </Item>
@@ -509,7 +509,7 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
 
       <Step n={2} name="Authorise">
         {on(7) && (
-          <Item id="wiz.sf-permissions" label="what the sync user must be able to do" className="rounded-md border bg-muted/40 p-3">
+          <Item id="wiz.sf-permissions" label="what the sync user must be able to do" className="rounded-md border bg-card p-3">
             <p className="text-sm font-medium">What the sync user must be able to do</p>
             <p className="mt-1 text-sm">
               Create, read and edit on Accounts, Contacts, Leads, Opportunities and User Roles, and API Enabled under
@@ -664,7 +664,7 @@ function Flat({ session, draft, on }: { session: Session; draft: ConnectDraft; o
 
       <Step n={6} name="Review and start">
         {on(7) && (
-          <Item id="wiz.first-sync" label="what the first sync will do" className="rounded-lg border bg-muted/40 p-3">
+          <Item id="wiz.first-sync" label="what the first sync will do" className="rounded-lg border bg-card p-3">
             <p className="text-sm font-semibold">What the first sync will do</p>
             <p className="mt-1 text-sm">
               ollopA will pull about {n(Math.round((live?.remoteCounts.Contacts ?? 18_400) / 100) * 100)} contacts and{" "}

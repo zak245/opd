@@ -79,7 +79,7 @@ function PolicyLine({ business, admin, from }: { business: Business; admin: stri
   // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
   const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
   return (
-    <p id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 border-b bg-muted/40 px-6 py-2">
+    <p id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 border-b surface-raised px-6 py-2">
       <span>Bounce guard: warn {guard.warnPercent}%, pause {guard.pausePercent}%</span>
       <span aria-hidden="true">·</span>
       <span

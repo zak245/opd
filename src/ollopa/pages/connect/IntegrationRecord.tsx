@@ -245,7 +245,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
           read the CRM's page cannot change it by any route, and the sentence above names who can. */}
       <fieldset disabled={readOnly} className="flex min-h-full min-w-0 flex-col border-0 p-0">
         {readOnly && (
-          <div role="note" className="t-body border-b bg-muted/40 px-5 py-2 lg:px-6">
+          <div role="note" className="t-body border-b surface-raised px-5 py-2 lg:px-6">
             You can read this page. Changes to {kind} are made by {admin ? `${admin.user} (${admin.title})` : "the admin"}.
           </div>
         )}

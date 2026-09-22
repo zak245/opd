@@ -143,7 +143,7 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   const paused = seed.mailboxes.filter((m) => m.paused).length
 
   return (
-    <section aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="border-b bg-muted/30 px-4 py-3 sm:px-6">
+    <section aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="border-b surface-raised px-4 py-3 sm:px-6">
       {isAdmin ? (
         <>
           <StripLine item="plan.price" label="Plan and price">
@@ -424,7 +424,7 @@ function SettingsSearch({ rows, onJump, inputRef, accelerators = true }: {
       />
       {accelerators && <kbd className="pointer-events-none absolute right-2 top-2 rounded border px-1 font-mono t-small text-muted-foreground">/</kbd>}
       {hits.length > 0 && (
-        <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-md" role="listbox">
+        <ul className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border surface-floating shadow-large" role="listbox">
           {hits.map((h, i) => (
             <li key={h.id}>
               <button

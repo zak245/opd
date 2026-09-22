@@ -374,7 +374,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                         not widen the table, and the "…" stays pinned to the right edge. */}
                     <TableCell className="sticky right-0 z-10 w-12 bg-background py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex items-center justify-end gap-1">
-                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 rounded-md bg-background opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
+                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 rounded-md surface-raised opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
                         {p.rowActions.map((a) => (
                           <Button
                             key={a.id}

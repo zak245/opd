@@ -466,7 +466,7 @@ export function ParodyShell({ ctx, rows, present, strip }: {
             <label className="sr-only" htmlFor="parody-page">Settings page</label>
             <select
               id="parody-page"
-              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+              className="h-9 w-full rounded-md border bg-card px-2 text-sm"
               value={current.id}
               onChange={(e) => setPage(e.target.value)}
             >

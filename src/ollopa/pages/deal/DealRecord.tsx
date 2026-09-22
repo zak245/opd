@@ -183,7 +183,7 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
             </Select>
           </label>
           {/* The agent's draft sits beside the human's and is marked as a draft. Sending is the approval. */}
-          <div className="rounded-md border bg-muted/40 p-2 text-xs">
+          <div className="rounded-md border surface-raised p-2 text-xs">
             <div className="font-medium">The agent's draft <span className="font-normal text-muted-foreground">· draft, not sent</span></div>
             <p className="mt-1 text-muted-foreground">Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?</p>
             <Button size="sm" variant="ghost" className="mt-1 h-6 px-1 text-xs"
@@ -1202,7 +1202,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
         <Settings2 className="size-4" />
       </Button>
       {gearOpen && (
-        <span className="absolute left-0 top-8 z-30 w-56 rounded-md border bg-background p-2 text-xs shadow-md">
+        <span className="absolute left-0 top-8 z-30 w-56 rounded-md border surface-floating p-2 text-xs shadow-large">
           <span className="block pb-1 font-medium">Show widgets</span>
           {["general", "details", "account", "contacts", "tasks", "notes"].map((w) => (
             <label key={w} className="flex items-center gap-2 py-0.5 capitalize">
@@ -1277,7 +1277,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   if (!r1) {
     const widget = (key: string, title: string, body: ReactNode, action?: ReactNode) =>
       hiddenWidgets.includes(key) ? null : (
-        <section className="rounded-lg border bg-background p-3">
+        <section className="rounded-lg border surface-raised p-3">
           <div className="flex items-baseline gap-2 pb-2">
             <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h3>
             {action && <span className="ml-auto">{action}</span>}
@@ -1295,7 +1295,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
     return (
       <div className="min-h-full bg-muted/30">
-        <header className="border-b bg-background px-5 py-3">
+        <header className="border-b surface-raised px-5 py-3">
           <p className="text-xs text-muted-foreground">
             Win deals › <a className="hover:underline" href={href("/ollopa/deals")}>Deals</a> › {deal.name}
           </p>
@@ -1381,7 +1381,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             ))}
           </Place>
 
-          <section className="rounded-lg border bg-background">
+          <section className="rounded-lg border surface-raised">
             <Place id="parody.tabs" label="the tab strip" className="flex flex-wrap gap-1 border-b p-1">
               {tabStrip.map(([k, l]) => (
                 <button key={k} type="button" onClick={() => setParodyTab(k as typeof parodyTab)}

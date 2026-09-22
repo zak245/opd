@@ -109,7 +109,7 @@ export function SignIn() {
             : `${b.roles.length} seats at ${b.name}. The seat decides which pages you get.`}
         </p>
 
-        <div className="mt-6 flex items-center gap-3 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-10 max-sm:border-t max-sm:bg-background max-sm:p-4">
+        <div className="mt-6 flex items-center gap-3 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-10 max-sm:border-t max-sm:surface-floating max-sm:p-4">
           <Button type="submit" disabled={!seat} className="max-sm:flex-1">{seat ? `Sign in as ${seat.user}` : "Sign in"}</Button>
           {!seat && <span className="text-sm text-muted-foreground">Pick a seat to continue.</span>}
         </div>

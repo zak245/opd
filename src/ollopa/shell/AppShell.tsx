@@ -270,7 +270,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         Skip to content
       </a>
 
-      <aside className={cn("surface-raised hidden shrink-0 flex-col border-r md:flex", collapsed ? "w-14" : "w-56")}>
+      <aside className={cn("surface-chrome hidden shrink-0 flex-col border-r border-r-[color:var(--border-strong)] md:flex", collapsed ? "w-14" : "w-56")}>
         <a href={href("/ollopa")} onClick={clearTrail} className={cn("flex h-14 items-center gap-2 border-b px-4 font-semibold tracking-tight", collapsed && "justify-center px-0")}>
           <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
           {!collapsed && "ollopA"}
@@ -307,7 +307,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
             and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
-        <header className={cn("flex shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
+        <header className={cn("surface-chrome flex shrink-0 items-center gap-2 border-b border-b-[color:var(--border-strong)] px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
           {/* The page title carries its family icon and hue — one of the three ways you know
               where you are (DESIGN.md §5). */}
           <FamilyIcon of={page} size="header" className="hidden shrink-0 sm:block" />
@@ -363,11 +363,11 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* The page and the pane are siblings, so opening a pane shrinks the page instead of covering
             it. Below `sm` there is no room for both and the pane takes the whole width. */}
         <div className="relative flex min-h-0 flex-1">
-          <main id="ollopa-main" className="relative min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0">{children}</main>
+          <main id="ollopa-main" className="surface-page relative min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0">{children}</main>
           <Beside session={session} pageTitle={title} />
         </div>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-background md:hidden" aria-label="Pages">
+        <nav className="surface-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-t-[color:var(--border-strong)] md:hidden" aria-label="Pages">
           {bottom.map((p) => {
             const nav = navItem(p)!
             return (

@@ -283,7 +283,7 @@ export function Ledger(p: LedgerProps) {
           return (
             <div key={when}>
               <h3 {...(rules.r2 ? { "data-item": `act.day-digest.${when}`, "data-item-label": `Digest for ${dayGroup(when)}` } : {})}
-                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b bg-background/95 py-1.5 t-small backdrop-blur">
+                className="sticky top-0 z-[1] flex flex-wrap items-baseline gap-x-2 border-b surface-raised/95 py-1.5 t-small backdrop-blur">
                 <span className="font-semibold">{dayGroup(when)}</span>
                 {rules.r2 && <span className="text-muted-foreground">
                   {digest.count} {digest.count === 1 ? "event" : "events"} · {digest.kinds} · <span className="tabular-nums">{digest.credits.toLocaleString()}</span> {digest.credits === 1 ? "credit" : "credits"}

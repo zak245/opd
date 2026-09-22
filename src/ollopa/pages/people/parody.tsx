@@ -288,7 +288,7 @@ export function ParodyViewsDoor({ views, viewId, user, onOpen, onDefault, named 
 export function BulkSelection({ controls, children }: { controls: ReactNode; children: ReactNode }) {
   return (
     <div
-      className="flex flex-wrap items-center gap-2 border-y bg-muted/40 px-4 py-2 lg:px-6"
+      className="flex flex-wrap items-center gap-2 border-y bg-card px-4 py-2 lg:px-6"
       data-container="people.parody.results-bar"
       data-container-label="the results toolbar"
       data-print-hide

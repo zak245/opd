@@ -53,12 +53,12 @@ function Fold({ id, label, trigger, children, defaultOpen = false, className }: 
 export function ParodyTopBar({ spend, showCredits, showAssistant }: { spend: Spend; showCredits: boolean; showAssistant: boolean }) {
   return (
     <div data-container="apollo.topbar" data-container-label="the top bar"
-      className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+      className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-card px-3 py-2">
       {/* The second meter: "a separate bill for some special 'power up' credits" (Robillard, 18 Aug 2026).
           It counts what the balance pill does not, and it is the only credit number on the page. */}
       {showCredits && (
         <span data-item="credits.powerups" data-item-label="Power-up credits, a second meter"
-          className="rounded-full border bg-background px-2 py-0.5 text-xs tabular-nums">
+          className="rounded-full border bg-card px-2 py-0.5 text-xs tabular-nums">
           Power-ups {Math.round(spend.week / 3).toLocaleString()} used
         </span>
       )}
@@ -128,7 +128,7 @@ export function ParodyChat(p: ParodyChatProps) {
 function ChatLine({ e, r7, onUndo, undone }: { e: AgentEvent; r7: boolean; onUndo: () => void; undone: boolean }) {
   return (
     <div data-item={`act.row.${e.id}`} data-item-label={e.summary}
-      className="flex flex-wrap items-baseline gap-x-2 rounded-md bg-muted/50 px-2 py-1.5 text-sm">
+      className="flex flex-wrap items-baseline gap-x-2 rounded-md bg-card px-2 py-1.5 text-sm">
       <span className="min-w-0 flex-1">{e.summary}</span>
       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{day(e.when)} {e.at}</span>
       {/* Rule 7 cut the queue: what is reversible stopped asking, and got an Undo instead. */}
@@ -155,7 +155,7 @@ export function ParodyAsk({ e, seed, itemId, container, onApprove, onDecline }: 
   return (
     <div data-item={itemId} data-item-label={e.summary}
       data-container={container} data-container-label={container ? "the item" : undefined}
-      className="rounded-md border border-dashed bg-background p-2.5 text-sm">
+      className="rounded-md border border-dashed bg-card p-2.5 text-sm">
       <p>I’m ready to {what}. Shall I go ahead?</p>
       {draft && <pre className="mt-1.5 max-h-24 overflow-hidden whitespace-pre-wrap rounded bg-muted p-2 font-sans text-xs">{draft}</pre>}
       <div className="mt-2 flex gap-2">
@@ -298,7 +298,7 @@ function ParodySelect({ id, label, value }: { id: string; label: string; value: 
  */
 export function ParodyCredits({ spend, runs, showWeek }: { spend: Spend; runs: Run[]; showWeek: boolean }) {
   return (
-    <section aria-label="Credit usage" className="mt-4 rounded-lg border border-dashed bg-muted/30 p-3">
+    <section aria-label="Credit usage" className="mt-4 rounded-lg border border-dashed bg-card p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Lock className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <p className="text-xs text-muted-foreground">
@@ -308,7 +308,7 @@ export function ParodyCredits({ spend, runs, showWeek }: { spend: Spend; runs: R
         <Fold id="settings.ai-runs" label="Settings › Credits and activity › Credit usage › AI runs"
           className="ml-auto"
           trigger={<><ChevronRight className="size-3.5" aria-hidden="true" />Open</>}>
-          <div className="mt-2 grid gap-1.5 rounded-md border bg-background p-2 text-xs">
+          <div className="mt-2 grid gap-1.5 rounded-md border bg-card p-2 text-xs">
             {showWeek && (
               <>
                 <p data-item="credits.balance" data-item-label="Workspace credit balance" className="tabular-nums">

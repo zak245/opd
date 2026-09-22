@@ -64,6 +64,11 @@ function tokensIn(css, selector) {
 const css = readFileSync(new URL("../src/index.css", import.meta.url), "utf8")
 const THEMES = { light: tokensIn(css, ":root {"), dark: tokensIn(css, ".dark {") }
 
+/** The four levels plus the chrome, in the order they rise. DESIGN.md §5. */
+const LEVELS = ["surface-chrome", "surface-page", "surface-raised", "surface-floating", "surface-overlay"]
+/** A tone step the eye can see: the floor the first version of the rule failed. */
+const STEP = { light: 0.03, dark: 0.05 }
+
 const FAMILIES = ["people", "companies", "deals", "engagement", "work", "agents", "neutral"]
 const STATUSES = ["danger", "warning", "success", "info", "paused"]
 
@@ -78,13 +83,14 @@ function pairs(T) {
   // not to a contrast ratio a tint could never reach and still be a tint.
   const seen = (name, fg, bg) => p.push({ name, fg, bg, floor: 0.015, kind: "seen" })
 
-  // The three depths must be three: each step perceptibly above the one below it.
-  seen("raised above the page", T["surface-raised"], T["surface-page"])
-  seen("overlay above raised", T["surface-overlay"], T["surface-raised"])
   // Paused is a state and the neutral family is not; they must never read as the same ink.
   seen("paused ink against the neutral family ink", T["paused-ink"], T["family-neutral-ink"])
 
-  for (const surface of ["surface-page", "surface-raised", "surface-overlay"]) {
+  // The border that carries meaning reaches 3:1 against every surface it can sit on.
+  for (const level of LEVELS) nontext(`strong border on ${level}`, T["border-strong"], T[level])
+  for (const level of LEVELS) seen(`soft divider on ${level}`, T["border-soft"], T[level])
+
+  for (const surface of ["surface-page", "surface-raised", "surface-floating", "surface-overlay", "surface-chrome"]) {
     text(`body text on ${surface}`, T.foreground, T[surface])
     text(`muted text on ${surface}`, T["muted-foreground"], T[surface])
     seen(`divider on ${surface}`, T.border, T[surface])
@@ -157,6 +163,20 @@ for (const [theme, T] of Object.entries(THEMES)) {
   }
   console.log(`  worst text ${worstText.toFixed(2)}:1 (needs 4.5) · worst non-text ${worstNon.toFixed(2)}:1 (needs 3)` +
     ` · faintest tint ${worstSeen.toFixed(3)} apart (needs 0.015)`)
+
+  // The tone ladder: every step between one level and the next, measured in OKLab lightness.
+  const floor = STEP[theme]
+  let worstStep = Infinity
+  for (let i = 0; i < LEVELS.length - 1; i++) {
+    const a = T[LEVELS[i]], b = T[LEVELS[i + 1]]
+    if (!a || !b || a.alias || b.alias) { console.log(`  ?  ${LEVELS[i]} → ${LEVELS[i + 1]} — token missing`); failures++; continue }
+    const step = Math.abs(oklab(b)[0] - oklab(a)[0])
+    worstStep = Math.min(worstStep, step)
+    const ok = step >= floor
+    if (!ok) failures++
+    if (!quiet || !ok) console.log(`  ${ok ? " " : "✗"} tone step ${LEVELS[i]} → ${LEVELS[i + 1]}`.padEnd(45) + `${step.toFixed(3)}  (needs ${floor})`)
+  }
+  console.log(`  smallest tone step ${worstStep.toFixed(3)} (needs ${floor})`)
 }
 
 

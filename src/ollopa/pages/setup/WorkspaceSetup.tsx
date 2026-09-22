@@ -214,7 +214,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   return (
     <div className={cn(!inShell && "min-h-screen bg-muted/30")}>
       {!inShell && (
-        <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
+        <header className="flex h-14 items-center gap-3 border-b surface-raised px-4">
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
           <span className="t-label">{workspace.name}</span>
           <span className="t-body text-muted-foreground">· {session.user}</span>

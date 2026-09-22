@@ -70,8 +70,46 @@ export function Tokens() {
             <Swatch name="--muted" value="var(--muted)" note="muted" />
             <Swatch name="--foreground" value="var(--foreground)" ink="var(--surface-page)" note="body text" />
             <Swatch name="--muted-foreground" value="var(--muted-foreground)" ink="var(--surface-page)" note="muted text" />
-            <Swatch name="--border" value="var(--border)" note="divider" />
+            <Swatch name="--border-strong" value="var(--border-strong)" ink="var(--surface-page)" note="edge" />
+            <Swatch name="--border-soft" value="var(--border-soft)" note="divider" />
             <Swatch name="--input" value="var(--input)" ink="var(--surface-page)" note="control edge" />
+          </div>
+        </Section>
+
+        <Section title="Depth — four levels and the chrome, each one visible">
+          <div className="surface-page rounded-lg border p-4">
+            <div className="space-y-3">
+              {([
+                ["--surface-chrome", "Chrome — sidebar, header, bottom bar", "surface-chrome", ""],
+                ["--surface-page", "Page — the base", "surface-page", ""],
+                ["--surface-raised", "Raised — cards, sections, the row you are on", "surface-raised", ""],
+                ["--surface-floating", "Floating — the pane, popovers, menus", "surface-floating", ""],
+                ["--surface-overlay", "Overlay — dialogs, over a dimmed page", "surface-overlay", ""],
+              ] as const).map(([token, what, cls]) => (
+                <div key={token} className={`${cls} flex items-baseline justify-between gap-4 rounded-md border px-3 py-3`}>
+                  <span className="t-label">{what}</span>
+                  <span className="t-small font-mono text-muted-foreground">{token}</span>
+                </div>
+              ))}
+            </div>
+            <p className="t-small mt-3 text-muted-foreground">
+              Tone steps are at least 0.03 apart in light and 0.05 in dark, and
+              <span className="font-mono"> node scripts/contrast.mjs </span>
+              fails below that. Exactly two shadows exist: the small one on floating, the large one on
+              overlay. Nothing else casts one.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="surface-raised rounded-md border px-3 py-3">
+                <div className="t-label">A strong border</div>
+                <div className="t-small text-muted-foreground">--border-strong · 3:1 on every surface</div>
+                <div className="mt-2 border-t" />
+                <div className="t-small mt-2 text-muted-foreground">--border-soft, the divider above, inside a card</div>
+              </div>
+              <div className="surface-overlay rounded-md border px-3 py-3">
+                <div className="t-label">Overlay, with the large shadow</div>
+                <div className="t-small text-muted-foreground">--shadow-large · --scrim behind it</div>
+              </div>
+            </div>
           </div>
         </Section>
 

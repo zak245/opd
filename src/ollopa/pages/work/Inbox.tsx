@@ -594,7 +594,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
 
       {/* ------------------------------------------------------------------------- the bulk bar */}
       {selection.length > 0 && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-y bg-muted/50 px-4 py-2 t-body sm:px-6">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-y surface-raised px-4 py-2 t-body sm:px-6">
           <span className="tabular-nums">{selection.length} selected</span>
           {/* Comparable acts on a bar, so none of them is filled. Confirming an unsubscribe cannot
               be undone, so it asks first and the affirmative carries the verb (DESIGN.md §2). */}

@@ -130,7 +130,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
         {existing.transcript && (
           <div>
             <div className="text-xs text-muted-foreground">Transcript · from {seed.integrations[0]?.name ?? "the connected recorder"}</div>
-            <p className="mt-1 whitespace-pre-line rounded-md border bg-muted/40 p-2 text-xs text-muted-foreground">{existing.transcript}</p>
+            <p className="mt-1 whitespace-pre-line rounded-md border surface-raised p-2 text-xs text-muted-foreground">{existing.transcript}</p>
           </div>
         )}
         <CoachingNote session={session} call={existing} />
@@ -205,7 +205,7 @@ export function CallLogBody({ session, task, say, onLogged, asBody }: CallLogPro
       {hasTranscripts(session.business) && (
         <div>
           <div className="text-xs text-muted-foreground">Transcript · from {seed.integrations[0]?.name ?? "the connected recorder"}</div>
-          <p className="mt-1 rounded-md border bg-muted/40 p-2 text-xs text-muted-foreground">
+          <p className="mt-1 rounded-md border surface-raised p-2 text-xs text-muted-foreground">
             The transcript attaches here when the recorder finishes. Nothing is written to the contact from it without you.
           </p>
         </div>
