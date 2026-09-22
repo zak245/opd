@@ -17,8 +17,7 @@ import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Section"
-import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
+import { type Col, DataTable, RowOpen, TableCard, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */
 export interface CopyRow {
@@ -145,15 +144,12 @@ export function TemplatesPage({ session }: { session: Session }) {
         <Button onClick={() => toast("New template · name it, then write the subject and body")}>New template</Button>
       </div>
 
-      {/* The table lives in a container: its toolbar and its count in the header (DESIGN.md §5,
-          containment). The phone cards are the same container's body at that width. */}
+      {/* The page title is above the card; the card's header carries the toolbar and the count
+          and repeats no title. The phone cards are the same card's body at that width. */}
       <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
-        <Container
-          component="table"
-          padded={false}
-          heading="Templates and snippets"
+        <TableCard
           count={`${n(rows.length)} shown of ${n(rowsAll.length)}`}
-          actions={<>
+          toolbar={<>
             <Input
               data-page-search aria-label="Search templates by name or body text" placeholder="Search name and body"
               value={q} onChange={(e) => setQ(e.target.value)} className="w-64"
@@ -199,7 +195,7 @@ export function TemplatesPage({ session }: { session: Session }) {
           onOpen={open}
           empty={<EmptyState title="No templates yet" body="Write one here, or save a step's copy as a template from the step that uses it." />}
         />
-        </Container>
+        </TableCard>
       </div>
     </div>
   )

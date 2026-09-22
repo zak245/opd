@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,11 @@ export interface Column<T> {
    */
   status?: (row: T) => string
 }
+/**
+ * A column that holds a chip — a status column, or one named for a stage or a state — gets a floor
+ * on its width, because a chip that is clipped ("Approachi") stops being a word.
+ */
+const chipColumn = <T,>(c: Column<T>) => !!c.status || /stage|status|state/i.test(c.key) || /stage|status|state/i.test(c.header)
 export interface RowAction<T> { label: string | ((row: T) => string); icon?: LucideIcon; onClick: (row: T) => void }
 const lbl = <T,>(a: RowAction<T>, r: T) => (typeof a.label === "function" ? a.label(r) : a.label)
 export interface MoreAction<T> { label: string; onClick: (row: T) => void; destructive?: boolean }
@@ -94,35 +99,32 @@ export function TablePage<T>(p: TablePageProps<T>) {
         {p.primary && <Button onClick={p.primary.onClick}>{p.primary.label}</Button>}
       </div>
       <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3">
-      {/* The table lives in a container: its toolbar and its count in the header, its pager in the
-          footer (DESIGN.md §5, containment). Nothing here sits naked on the canvas. */}
-      {/* The table sits in a shadcn Card: the toolbar in its header, the pager in its footer. */}
+      {/* The table sits in a shadcn Card: the toolbar in its header, the pager in its footer. The
+          page's own name is the h2 above — the card never says it twice, so the header is one full
+          width toolbar row and no CardTitle. */}
       <Card className="gap-0 overflow-hidden py-0">
-        <CardHeader className="gap-2 border-b px-4 py-3">
-          <CardTitle className="t-section inline-flex items-baseline gap-2">
-            {p.title}
-            <span className="t-label font-normal tabular-nums text-muted-foreground">
+        <CardHeader className="gap-2 border-b px-4 py-3 [grid-template-columns:1fr]">
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
+            {(p.filters ?? []).map((f) => (
+              <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
+                <SelectTrigger className="w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{f.label}: all</SelectItem>
+                  {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ))}
+            <span className="t-label ml-auto shrink-0 tabular-nums text-muted-foreground">
               {rows.length.toLocaleString()} shown{p.total ? ` of ${p.total.toLocaleString()}` : ""}
             </span>
-          </CardTitle>
-          <CardAction className="flex flex-wrap items-center gap-2">
-        <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
-        {(p.filters ?? []).map((f) => (
-          <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
-            <SelectTrigger className="w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{f.label}: all</SelectItem>
-              {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ))}
-          </CardAction>
+          </div>
         </CardHeader>
         <CardContent className="px-0">
         <Table>
           <TableHeader className="bg-muted sticky top-0">
             <TableRow>
-              {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
+              {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", chipColumn(c) && "min-w-36", c.className)}>{c.header}</TableHead>)}
               {(p.rowActions || p.moreActions) && <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>}
             </TableRow>
           </TableHeader>
@@ -142,7 +144,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
                 onKeyDown={p.quickLook ? (e) => { if (e.key === "Enter" && e.target === e.currentTarget) { e.preventDefault(); setGlancing(r) } } : undefined}
               >
                 {p.columns.map((c) => (
-                  <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", c.className)}>
+                  <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", chipColumn(c) && "min-w-36 whitespace-nowrap", c.className)}>
                     {/* A column that shows a state word draws it as a status chip, from the one set,
                         always with the word in it. */}
                     {c.status ? <Chip status={c.status(r)} /> : c.cell(r)}

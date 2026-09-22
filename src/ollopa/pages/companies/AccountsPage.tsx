@@ -7,7 +7,9 @@
 //
 // The record behind a row is the company record. This page builds no second one.
 import { useMemo, useState, type ReactNode } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -133,27 +135,28 @@ export function AccountsPage({ session }: { session: Session }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="t-small text-muted-foreground">Renewals due</span>
-        {[30, 60, 90].map((days) => {
-          const { n, value } = windowCount(days)
-          const on = state.windows.includes(days)
-          return (
-            <button
-              key={days}
-              type="button"
-              aria-pressed={on}
-              onClick={() => toggleWindow(days)}
-              className={cn("rounded-md border px-2.5 py-1 text-left t-small focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                on ? "bg-foreground text-background" : "hover:bg-muted")}
-            >
-              <span className="font-medium tabular-nums">{days} days · {n}</span>
-              <span className={cn("block tabular-nums", on ? "opacity-80" : "text-muted-foreground")}>{money(value, b.currency)}</span>
-            </button>
-          )
-        })}
-        <span className="rounded-md border px-2.5 py-1 t-small [border-color:var(--warning)]">
-          <span className="font-medium">Value at risk</span>
-          <span className="block tabular-nums">{money(valueAtRisk, b.currency)} · {atRisk.length} account{atRisk.length === 1 ? "" : "s"}</span>
-        </span>
+        {/* Each window turns itself on and off inside one set, so the set is a ToggleGroup. */}
+        <ToggleGroup
+          type="multiple"
+          variant="outline"
+          size="sm"
+          spacing={2}
+          className="flex-wrap"
+          value={state.windows.map(String)}
+          onValueChange={(next) => setState({ windows: next.map(Number) })}
+        >
+          {[30, 60, 90].map((days) => {
+            const { n, value } = windowCount(days)
+            return (
+              <ToggleGroupItem key={days} value={String(days)} className="tabular-nums">
+                {days} days · {n} · {money(value, b.currency)}
+              </ToggleGroupItem>
+            )
+          })}
+        </ToggleGroup>
+        <Badge variant="outline" className="tabular-nums">
+          Value at risk · {money(valueAtRisk, b.currency)} · {atRisk.length} account{atRisk.length === 1 ? "" : "s"}
+        </Badge>
         {session.role === "ae" && hasAe && (
           <Actions surface="card" items={[{ kind: "secondary", label: "Send hand-off", onClick: () => toast("Pick a customer success manager; the account joins their queue.") }]} />
         )}
@@ -246,7 +249,7 @@ export function AccountsPage({ session }: { session: Session }) {
       ),
     },
     {
-      id: "acct.health", header: "Health", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.account!.health,
+      id: "acct.health", header: "Health", phone: true, className: "min-w-36 whitespace-nowrap", sortValue: (v) => v.account!.health,
       cell: (v) => (
         <span className="inline-flex items-baseline gap-1.5">
           <span className="font-medium tabular-nums">{v.account!.health}</span>
@@ -264,7 +267,7 @@ export function AccountsPage({ session }: { session: Session }) {
     },
     { id: "acct.value", header: "Contract value", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.value, cell: (v) => money(v.account!.value, b.currency) },
     {
-      id: "acct.risks", header: "Open risks", sortValue: (v) => v.account!.risks.filter((r) => !r.resolved).length,
+      id: "acct.risks", header: "Open risks", className: "min-w-40", sortValue: (v) => v.account!.risks.filter((r) => !r.resolved).length,
       cell: (v) => {
         const open = v.account!.risks.filter((r) => !r.resolved)
         if (open.length === 0) return <span className="text-muted-foreground">None</span>
@@ -299,7 +302,7 @@ export function AccountsPage({ session }: { session: Session }) {
     { id: "acct.forecast", header: "Forecast", sortValue: (v) => v.account!.forecast, cell: (v) => v.account!.forecast },
     { id: "acct.terms", header: "Notice and auto-renew", className: "whitespace-nowrap", cell: (v) => `${v.account!.noticeDays} days · ${v.account!.autoRenew ? "auto-renews" : "does not auto-renew"}` },
     { id: "acct.ae", header: "Account executive", sortValue: (v) => v.account!.ae, cell: (v) => v.account!.ae },
-    { id: "acct.stage", header: "Stage", sortValue: (v) => v.account!.stage, cell: (v) => stageChip(v.account!.stage) },
+    { id: "acct.stage", header: "Stage", className: "min-w-36 whitespace-nowrap", sortValue: (v) => v.account!.stage, cell: (v) => stageChip(v.account!.stage) },
     { id: "acct.contacts-held", header: "Contacts held", className: "tabular-nums", sortValue: (v) => v.contacts.length, cell: (v) => v.contacts.length },
     { id: "acct.industry-size", header: "Industry and employees", cell: (v) => `${v.company.industry} · ${v.company.employees.toLocaleString()}` },
     { id: "acct.parent", header: "Parent account", sortValue: (v) => v.company.parent ?? "", cell: (v) => v.company.parent ?? <span className="text-muted-foreground">—</span> },

@@ -77,7 +77,7 @@ export function ValueList({ filter, values, chosen, count, onChange }: PickerPro
         {shown.length === 0 && <li className="px-1.5 py-1 text-sm text-muted-foreground">Nothing matches “{q}”.</li>}
       </ul>
       {chosen.length > 0 && (
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onChange([])}>
+        <Button size="sm" variant="ghost" onClick={() => onChange([])}>
           Clear {filter.label}
         </Button>
       )}
@@ -90,34 +90,36 @@ export function FilterChip(p: PickerProps & { note?: ReactNode }) {
   const [open, setOpen] = useState(false)
   const on = p.chosen.length > 0
   return (
-    <span className="flex items-center gap-1" data-item={p.filter.id} data-item-label={p.filter.label}>
+    <span className="flex flex-wrap items-center gap-2" data-item={p.filter.id} data-item-label={p.filter.label}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button
+          {/* The chip is the popover's trigger, so it is a shadcn Button; "secondary" is how a
+              shipped button says the filter is applied. Nothing bespoke sits on it. */}
+          <Button
             type="button"
+            variant={on ? "secondary" : "outline"}
+            size="sm"
             aria-expanded={open}
-            className={cn(
-              "flex max-w-[16rem] items-center gap-1 rounded-full border px-2.5 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-              on ? "border-foreground bg-foreground text-background" : "hover:bg-muted",
-            )}
+            className="max-w-[16rem]"
           >
             <span className="truncate">{chipLabel(p.filter, p.chosen)}</span>
-            <ChevronDown aria-hidden="true" className="size-3 shrink-0" />
-          </button>
+            <ChevronDown aria-hidden="true" />
+          </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-72">
           <ValueList {...p} />
         </PopoverContent>
       </Popover>
       {on && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label={`Clear ${p.filter.label}`}
-          className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           onClick={() => p.onChange([])}
         >
-          <X aria-hidden="true" className="size-3.5" />
-        </button>
+          <X aria-hidden="true" />
+        </Button>
       )}
       {p.note}
     </span>
@@ -166,7 +168,7 @@ export function FiltersPanelBody({ filters, active, values, count, onChange, onC
             {dnc.toLocaleString()} {dnc === 1 ? "person carries" : "people carry"} “do not contact”.{" "}
             {includeDnc ? "They are in these results." : "They are left out of these results."}
           </p>
-          <Button size="sm" variant="outline" className="mt-1.5 h-7 px-2 text-xs" onClick={() => onIncludeDnc(!includeDnc)}>
+          <Button size="sm" variant="outline" className="mt-1.5" onClick={() => onIncludeDnc(!includeDnc)}>
             {includeDnc ? "Leave them out again" : "Show them anyway"}
           </Button>
         </div>

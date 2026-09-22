@@ -10,7 +10,9 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -18,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Door } from "../../ui/Door"
-import { Container, Group } from "../../ui/Section"
+import { Group } from "../../ui/Section"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 
@@ -233,6 +235,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
           </SelectContent>
         </Select>
       ))}
+      <Badge variant="outline" className="tabular-nums">
+        {rows.length.toLocaleString()}{p.total ? ` of ${p.total.toLocaleString()}` : ""}
+      </Badge>
       <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} />
       {p.views}
       {p.pageMenu && (
@@ -251,20 +256,13 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
   return (
     <div className="flex h-full flex-col p-4 lg:p-5">
-      <Container
-        component="table"
-        padded={false}
-        className="flex min-h-0 flex-1 flex-col"
-        bodyClassName="flex min-h-0 flex-1 flex-col"
-        heading={p.title}
-        count={`${rows.length.toLocaleString()}${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
-        actions={toolbar}
-        footer={rows.length > limit ? (
-          <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
-            Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
-          </Button>
-        ) : undefined}
-      >
+      <Card className="flex min-h-0 flex-1 flex-col">
+        {/* The page's own name is in the header above; the card's header is the toolbar and the
+            count, one flex-wrap row, and carries no title of its own. */}
+        <CardHeader>
+          <div className="flex w-full flex-wrap items-center gap-2">{toolbar}</div>
+        </CardHeader>
+        <CardContent className="flex min-h-0 flex-1 flex-col px-0">
       {/* The one container-low band this container may hold: whatever the page puts above its rows
           — the renewal counters, a hand-off waiting, a confirmation, an undo — and, while rows are
           selected, what can be done to them. Never a second box (DESIGN.md §5, nesting). */}
@@ -459,7 +457,15 @@ export function DataTable<T>(p: DataTableProps<T>) {
         </Table>
 
       </div>
-      </Container>
+        </CardContent>
+        {rows.length > limit && (
+          <CardFooter className="border-t">
+            <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
+              Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
 
       {glancing && (
         <QuickLook

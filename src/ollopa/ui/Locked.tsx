@@ -8,6 +8,7 @@
 // request came from, because the approver is making a price decision too.
 import { useState, type ReactNode } from "react"
 import { Lock } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -54,10 +55,10 @@ export function Locked({ feature, plan, pricePerMonth, what, children }: LockedP
         onKeyDownCapture={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setOpen(true) } }}
       >
         {children}
-        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 t-small text-muted-foreground">
-          <Lock className="size-3" aria-hidden="true" />
+        <Badge variant="outline" className="gap-1">
+          <Lock aria-hidden="true" />
           {plan}
-        </span>
+        </Badge>
       </span>
 
       <Panel id={`gate-${feature}`} title={feature} open={open} onOpenChange={setOpen}

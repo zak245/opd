@@ -14,6 +14,8 @@ import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Toggle } from "@/components/ui/toggle"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -88,31 +90,25 @@ function Segmented<T extends string>({ label, value, options, onChange }: {
   label: string; value: T; options: { key: T; text: string }[]; onChange: (v: T) => void
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex rounded-md border p-0.5">
-      {options.map((o, i) => (
-        <button
-          key={o.key}
-          role="radio"
-          aria-checked={value === o.key}
-          tabIndex={value === o.key ? 0 : -1}
-          onClick={() => onChange(o.key)}
-          onKeyDown={(e) => {
-            const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0
-            if (!step) return
-            e.preventDefault()
-            e.stopPropagation()
-            const next = options[(i + step + options.length) % options.length]
-            onChange(next.key)
-            const el = e.currentTarget.parentElement?.children[options.indexOf(next)]
-            if (el instanceof HTMLElement) el.focus()
-          }}
-          className={cn("rounded px-2 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-            value === o.key ? "bg-foreground text-background" : "hover:bg-muted")}
-        >
-          {o.text}
-        </button>
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      size="sm"
+      aria-label={label}
+      value={value}
+      onValueChange={(v) => { if (v) onChange(v as T) }}
+      onKeyDown={(e) => {
+        const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0
+        if (!step) return
+        e.stopPropagation()
+        const i = options.findIndex((o) => o.key === value)
+        onChange(options[(i + step + options.length) % options.length].key)
+      }}
+    >
+      {options.map((o) => (
+        <ToggleGroupItem key={o.key} value={o.key}>{o.text}</ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   )
 }
 
@@ -631,24 +627,6 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const anyFilter = filtersOn(filters) > 0 || q.trim().length > 0
   const clearAll = () => { setFilters(NO_FILTERS); setQ("") }
 
-  // The label is the chip: no two chips in one row say the same thing, so it is the stable identity
-  // React needs when a row of them is built from a list.
-  const chip = (label: string, on: boolean, onClick: () => void) => (
-    <button
-      key={label}
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={cn("rounded-full border px-2.5 py-1 text-xs whitespace-nowrap focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        on ? "bg-foreground text-background" : "hover:bg-muted")}
-    >
-      {label}
-    </button>
-  )
-
-  const toggleWarning = (k: WarningKind) =>
-    setFilters({ ...filters, warnings: filters.warnings.includes(k) ? filters.warnings.filter((x) => x !== k) : [...filters.warnings, k] })
-
   const filterDoorLabel =
     "Filters: warnings, no next step, owner, forecast category, amount, company, created, archived and its reason, custom fields" +
     (filtersOn(filters) ? ` · ${filtersOn(filters)} filter${filtersOn(filters) === 1 ? "" : "s"} on` : "")
@@ -785,14 +763,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
                   </div>
                   <div>
                     <div className="pb-1 text-xs font-medium">Card density</div>
-                    <div role="radiogroup" aria-label="Card density" className="flex gap-1">
+                    <ToggleGroup type="single" variant="outline" size="sm" aria-label="Card density"
+                      value={density} onValueChange={(v) => { if (v) setDensity(v as typeof density) }}>
                       {(["comfortable", "compact"] as const).map((v) => (
-                        <button key={v} role="radio" aria-checked={density === v} onClick={() => setDensity(v)}
-                          className={cn("rounded-md border px-2 py-1 text-xs", density === v ? "bg-foreground text-background" : "hover:bg-muted")}>
-                          {v === "comfortable" ? "Comfortable" : "Compact"}
-                        </button>
+                        <ToggleGroupItem key={v} value={v}>{v === "comfortable" ? "Comfortable" : "Compact"}</ToggleGroupItem>
                       ))}
-                    </div>
+                    </ToggleGroup>
                   </div>
                   <div>
                     <div className="pb-1 text-xs font-medium">Table columns, {columns.length} of {TABLE_COLUMNS.length}</div>
@@ -853,8 +829,20 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
           {/* Two counting chips at level one: the number is read without opening anything. */}
           <div className="flex flex-wrap items-center gap-2">
-            {one("deals.filter.no-next-step") && chip(`No next step (${noNextStepCount})`, filters.noNextStep, () => setFilters({ ...filters, noNextStep: !filters.noNextStep }))}
-            {one("deals.filter.comments") && chip(`Comments waiting for you (${commentsCount})`, filters.comments, () => setFilters({ ...filters, comments: !filters.comments }))}
+            {(one("deals.filter.no-next-step") || one("deals.filter.comments")) && (
+              <ToggleGroup
+                type="multiple"
+                variant="outline"
+                size="sm"
+                spacing={2}
+                aria-label="Filters you can read the count of"
+                value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
+                onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
+              >
+                {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
+                {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
+              </ToggleGroup>
+            )}
             <span className="ml-auto text-xs tabular-nums text-muted-foreground">
               {rows.filter(isOpen).length.toLocaleString()} open of {b.counts.openDeals.toLocaleString()} in this workspace
             </span>
@@ -865,9 +853,18 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               {used("deals.filter.warnings") && (
                 <fieldset className="sm:col-span-2 lg:col-span-3">
                   <legend className="pb-1 text-xs font-medium">Warnings</legend>
-                  <div className="flex flex-wrap gap-1.5">
-                    {WARNING_KINDS.map((k) => chip(`${k} (${facets[k]})`, filters.warnings.includes(k), () => toggleWarning(k)))}
-                  </div>
+                  <ToggleGroup
+                    type="multiple"
+                    variant="outline"
+                    size="sm"
+                    spacing={2}
+                    aria-label="Warnings"
+                    className="flex flex-wrap items-center gap-2"
+                    value={filters.warnings}
+                    onValueChange={(v) => setFilters({ ...filters, warnings: v as WarningKind[] })}
+                  >
+                    {WARNING_KINDS.map((k) => <ToggleGroupItem key={k} value={k}>{k} ({facets[k]})</ToggleGroupItem>)}
+                  </ToggleGroup>
                 </fieldset>
               )}
 
@@ -989,18 +986,18 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
             {/* Phone: one column with a row of stage chips, each carrying its count and sum. */}
             {phone ? (
             <div className="min-h-0 flex-1 px-4 pb-4">
-              <div className="flex gap-1.5 overflow-x-auto pb-2">
+              <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2">
                 {OPEN_STAGES.map((s) => (
-                  <button key={s} aria-pressed={phoneStage === s} onClick={() => setPhoneStage(s)}
-                    className={cn("shrink-0 rounded-full border px-2.5 py-1 text-xs", phoneStage === s ? "bg-foreground text-background" : "hover:bg-muted")}>
+                  <Toggle key={s} variant="outline" size="sm" className="shrink-0" pressed={phoneStage === s}
+                    onPressedChange={(on) => { if (on) setPhoneStage(s) }}>
                     {s} · {byStage(s).length} · {moneyShort(sumOf(byStage(s)), currency)}
-                  </button>
+                  </Toggle>
                 ))}
                 {used("deals.board.closed-won-rail") && (
-                  <button aria-pressed={phoneStage === WON_STAGE} onClick={() => setPhoneStage(WON_STAGE)}
-                    className={cn("shrink-0 rounded-full border px-2.5 py-1 text-xs", phoneStage === WON_STAGE ? "bg-foreground text-background" : "hover:bg-muted")}>
+                  <Toggle variant="outline" size="sm" className="shrink-0" pressed={phoneStage === WON_STAGE}
+                    onPressedChange={(on) => { if (on) setPhoneStage(WON_STAGE) }}>
                     {WON_STAGE} · {wonRows.length} · {moneyShort(railSum, currency)}
-                  </button>
+                  </Toggle>
                 )}
               </div>
               {column(phoneStage, "h-full")}
@@ -1203,12 +1200,10 @@ function Sheets({ all, wonFor, setWonFor, lostFor, setLostFor, logFor, setLogFor
           disabledBecause: body.trim() ? undefined : "Say what happened above",
         }]} /> : null}>
         <div className="space-y-3">
-          <div role="radiogroup" aria-label="What to log" className="flex gap-1">
-            {["Call", "Note"].map((k) => (
-              <button key={k} role="radio" aria-checked={kind === k} onClick={() => setKind(k)}
-                className={cn("rounded-md border px-2.5 py-1 text-xs", kind === k ? "bg-foreground text-background" : "hover:bg-muted")}>{k}</button>
-            ))}
-          </div>
+          <ToggleGroup type="single" variant="outline" size="sm" aria-label="What to log"
+            value={kind} onValueChange={(v) => { if (v) setKind(v) }}>
+            {["Call", "Note"].map((k) => <ToggleGroupItem key={k} value={k}>{k}</ToggleGroupItem>)}
+          </ToggleGroup>
           <Textarea rows={4} aria-label="What happened" value={body} onChange={(e) => setBody(e.target.value)}
             placeholder="What was said, and what happens next" />
         </div>

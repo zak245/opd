@@ -1,5 +1,6 @@
 // The keyboard shortcut sheet: `?`, or the account menu. Keys, not rules.
 import { NAV } from "../nav"
+import { Kbd } from "@/components/ui/kbd"
 import { Panel } from "../ui/Panel"
 
 const GENERAL: { keys: string; what: string }[] = [
@@ -18,7 +19,7 @@ export function Shortcuts({ open, onOpenChange }: { open: boolean; onOpenChange:
         <ul className="mt-2 grid gap-1.5">
           {GENERAL.map((g) => (
             <li key={g.keys} className="flex items-baseline gap-3 text-sm">
-              <kbd className="rounded border px-1.5 py-0.5 font-mono t-small">{g.keys}</kbd>
+              <Kbd>{g.keys}</Kbd>
               <span className="text-muted-foreground">{g.what}</span>
             </li>
           ))}
@@ -29,7 +30,7 @@ export function Shortcuts({ open, onOpenChange }: { open: boolean; onOpenChange:
         <ul className="mt-2 grid gap-1.5">
           {NAV.map((n) => (
             <li key={n.page} className="flex items-baseline gap-3 text-sm">
-              <kbd className="rounded border px-1.5 py-0.5 font-mono t-small">g {n.key}</kbd>
+              <Kbd>g {n.key}</Kbd>
               <span className="text-muted-foreground">{n.label}</span>
             </li>
           ))}

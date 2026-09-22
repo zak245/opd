@@ -18,7 +18,7 @@ import { Approvals } from "./Approvals"
 import { Campaigns } from "./Campaigns"
 import { Pipeline } from "./Pipeline"
 import { Replies } from "./Replies"
-import { SetupDoor, healthLines, needsAttention } from "./Health"
+import { SetupDoor, healthLines } from "./Health"
 import { Today } from "./Today"
 import { Week } from "./Week"
 
@@ -57,7 +57,6 @@ export function HomePage({ session }: { session: Session }) {
   const order = (k: SectionKey) => phone.indexOf(k) + 1
 
   const lines = healthLines(data, d)
-  const strip = needsAttention(lines)
 
   // `key` is React's own, never a prop: spreading it in would hand each section a prop it does not
   // declare and warn twice on every render. It goes on the element, and only there.
@@ -76,9 +75,9 @@ export function HomePage({ session }: { session: Session }) {
 
   return (
     <DoorGroup>
-      <div className={strip ? "border-b-2 border-[var(--warning-ink)]" : undefined}>
-        <HealthStrip lines={lines} />
-      </div>
+      {/* Each line is its own Alert now, with its own icon and border, so the strip needs no rule
+          of its own to say "this one needs a human". */}
+      <HealthStrip lines={lines} />
       {data.announcement && <Announcement text={data.announcement.text} href={data.announcement.href} />}
       {d.weekly("home.health.setup") > 0 && <SetupDoor rows={data.setupRows} />}
 

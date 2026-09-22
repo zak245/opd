@@ -8,6 +8,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
 import { href } from "@/app/router"
 import { seedFor, type Surface } from "../data/seed"
 import type { Session } from "../session"
@@ -142,19 +143,23 @@ export function CreditsPill({ session, onOpen, compact }: { session: Session; on
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
+        {/* It opens the credits panel, so it is a Button, not a Badge. Ghost, because the number is
+            the thing to read; only a tight or spent balance takes a status ink. */}
+        <Button
           type="button"
+          variant="ghost"
+          size={compact ? "xs" : "sm"}
           onClick={onOpen}
           className={cn(
-            "shrink-0 rounded-full border px-3 py-1 text-xs tabular-nums hover:bg-muted",
-            tone === "warning" && "[border-color:var(--warning)] [color:var(--warning-ink)]",
-            tone === "error" && "border-destructive text-destructive",
+            "shrink-0 tabular-nums",
+            tone === "warning" && "[color:var(--warning-ink)]",
+            tone === "error" && "text-destructive",
           )}
         >
           {compact
             ? `${credits(c.balance)} · ${credits(c.burnPerWeek)}/wk`
             : `${credits(c.balance)} credits · ${credits(c.burnPerWeek)}/wk${insidePeriod ? ` · out ${shortDate(c.runsOutOn)}` : ""}`}
-        </button>
+        </Button>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
         <p>

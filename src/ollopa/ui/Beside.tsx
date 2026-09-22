@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { href as hashHref, useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
 import { clearHighlight, crumbName, findAnchor, follow, showReturn } from "../chain"
@@ -349,16 +350,12 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
         {/* A thin bar in the object's family hue, so the pane says what it is holding before it is
             read (DESIGN.md §5). */}
         <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(shown.kind).fill }} />
-        <header className="shrink-0 border-b px-4 py-3">
+        <header className="shrink-0 px-4 py-3">
           {parentHead && (
-            <button
-              type="button"
-              className="mb-1 -ml-1 inline-flex items-center gap-1 rounded px-1 text-xs text-muted-foreground hover:text-foreground"
-              onClick={besideBack}
-            >
-              <ChevronLeft className="size-3" aria-hidden="true" />
+            <Button variant="ghost" size="xs" className="-ml-2 mb-1 text-muted-foreground" onClick={besideBack}>
+              <ChevronLeft aria-hidden="true" />
               {parentHead.name}
-            </button>
+            </Button>
           )}
           {/* On a phone the pane covers the page, so the header says what it is covering. */}
           <p className="t-small mb-1 truncate text-muted-foreground sm:hidden">
@@ -391,6 +388,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
             />
           )}
         </header>
+        <Separator />
 
         {/* Flat by construction: a door rendered in here renders in place instead. */}
         <FlatProvider value={true}>
@@ -408,14 +406,19 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
         {/* Success is a text colour and never a button (DESIGN.md §4), and it arrives where the act
             was caused, over 150 ms. */}
         {done && (
-          <div role="status" className="ollopa-done flex shrink-0 items-baseline gap-2 border-t bg-muted/60 px-4 py-2 text-xs">
-            <span className="t-small min-w-0 flex-1" style={{ color: "var(--success-ink)" }}>Done · {done.note}</span>
-            <button type="button" className="ollopa-act shrink-0 font-medium underline underline-offset-4" onClick={done.onUndo}>Undo</button>
-          </div>
+          <>
+            <Separator />
+            <div role="status" className="ollopa-done flex shrink-0 items-center gap-2 bg-muted/60 px-4 py-1.5 text-xs">
+              <span className="t-small min-w-0 flex-1" style={{ color: "var(--success-ink)" }}>Done · {done.note}</span>
+              <Button variant="link" size="sm" className="ollopa-act shrink-0 px-0" onClick={done.onUndo}>Undo</Button>
+            </div>
+          </>
         )}
 
         {list && (
-          <footer className="flex shrink-0 items-center justify-between gap-2 border-t px-4 py-2">
+          <>
+          <Separator />
+          <footer className="flex shrink-0 items-center justify-between gap-2 px-4 py-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="icon-sm" variant="ghost" className="ollopa-act" disabled={!hasPrev}
@@ -436,6 +439,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
               <TooltipContent>Next · ]</TooltipContent>
             </Tooltip>
           </footer>
+          </>
         )}
       </Card>
     </aside>

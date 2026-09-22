@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { href, navigate, useRoute } from "@/app/router"
 import { back as goBack, follow, useTrail } from "../../chain"
 import { openBeside } from "../../beside"
@@ -161,52 +163,10 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
     { key: "note", label: "Note" }, { key: "comment", label: "Comment" },
   ] as const
 
-  return (
-    // No box: this is drawn inside the timeline's container-low band, which is its boundary.
-    <div className="p-0" data-composer>
-      <div role="tablist" aria-label="Log activity" className="flex flex-wrap gap-1 pb-2">
-        {tabs.map((t) => (
-          <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
-            data-item={t.key === "email" ? "timeline.email" : t.key === "note" ? "timeline.note" : undefined}
-            data-item-label={t.key === "email" ? "Email a contact" : t.key === "note" ? "Add a note" : undefined}
-            className={cn("rounded-md px-2.5 py-1 text-xs", tab === t.key ? "bg-foreground text-background" : "hover:bg-muted")}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "email" && (
-        <div className="grid gap-2 pb-2 sm:grid-cols-2">
-          <label className="text-xs text-muted-foreground">
-            To
-            <Select value={to} onValueChange={setTo}>
-              <SelectTrigger className="mt-1 h-8" aria-label="Recipient"><SelectValue placeholder="A contact on this deal" /></SelectTrigger>
-              <SelectContent>{contacts.map((c) => <SelectItem key={c.contactId} value={c.name}>{c.name} · {c.role}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>
-          {/* The agent's draft sits beside the human's and is marked as a draft. Sending is the approval. */}
-          {/* Inside the composer's band already: a divider and a line of its own, not a second box. */}
-          <div className="t-small border-t pt-2">
-            <div className="font-medium">The agent's draft <span className="font-normal text-muted-foreground">· draft, not sent</span></div>
-            <p className="mt-1 text-muted-foreground">Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?</p>
-            <Button size="sm" variant="ghost" className="mt-1 h-6 px-1 text-xs"
-              onClick={() => setBody("Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?")}>
-              Use this draft
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {tab === "comment" && (
-        <label className="block pb-2 text-xs text-muted-foreground">
-          For
-          <Select value={mate} onValueChange={setMate}>
-            <SelectTrigger className="mt-1 h-8 w-64" aria-label="Teammate"><SelectValue placeholder="A teammate" /></SelectTrigger>
-            <SelectContent>{mates.map((m) => <SelectItem key={m.user} value={m.user}>{m.user} · {m.title}</SelectItem>)}</SelectContent>
-          </Select>
-        </label>
-      )}
-
+  /* The shared half of every kind: the body and the one act. It is rendered inside whichever panel
+     is showing, so each tab really does own a panel rather than pointing at one that is not there. */
+  const shared = (
+    <>
       <Textarea
         aria-label={`${tab} body`}
         rows={3}
@@ -240,6 +200,61 @@ function Composer({ session, business, contacts, companyName, isOwner, owner, ma
             spends nothing and can be undone, so nothing is written under those (DESIGN.md §3). */}
         {tab === "email" && <ConsequenceLine sends={1} to={to || "a contact"} from={mailbox} credits={CREDITS.draft} />}
       </div>
+    </>
+  )
+
+  return (
+    // No box: this is drawn inside the timeline's container-low band, which is its boundary.
+    <div className="p-0" data-composer>
+      <Tabs value={tab} onValueChange={(v) => { if (v) setTab(v as typeof tab) }}>
+        <TabsList aria-label="Log activity" className="h-auto! flex-wrap items-center gap-2">
+          {tabs.map((t) => (
+            <TabsTrigger key={t.key} value={t.key}
+              data-item={t.key === "email" ? "timeline.email" : t.key === "note" ? "timeline.note" : undefined}
+              data-item-label={t.key === "email" ? "Email a contact" : t.key === "note" ? "Add a note" : undefined}>
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {tabs.map((t) => (
+          <TabsContent key={t.key} value={t.key}>
+            {t.key === "email" && (
+              <div className="grid gap-2 pb-2 sm:grid-cols-2">
+                <label className="text-xs text-muted-foreground">
+                  To
+                  <Select value={to} onValueChange={setTo}>
+                    <SelectTrigger className="mt-1 h-8" aria-label="Recipient"><SelectValue placeholder="A contact on this deal" /></SelectTrigger>
+                    <SelectContent>{contacts.map((c) => <SelectItem key={c.contactId} value={c.name}>{c.name} · {c.role}</SelectItem>)}</SelectContent>
+                  </Select>
+                </label>
+                {/* The agent's draft sits beside the human's and is marked as a draft. Sending is the approval. */}
+                {/* Inside the composer's band already: a divider and a line of its own, not a second box. */}
+                <div className="t-small border-t pt-2">
+                  <div className="font-medium">The agent's draft <span className="font-normal text-muted-foreground">· draft, not sent</span></div>
+                  <p className="mt-1 text-muted-foreground">Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?</p>
+                  <Button size="sm" variant="ghost" className="mt-1 h-6 px-1 text-xs"
+                    onClick={() => setBody("Thanks for the call — sending the security pack and the pricing we discussed. Shall I put 30 minutes in with your team next week?")}>
+                    Use this draft
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {t.key === "comment" && (
+              <label className="block pb-2 text-xs text-muted-foreground">
+                For
+                <Select value={mate} onValueChange={setMate}>
+                  <SelectTrigger className="mt-1 h-8 w-64" aria-label="Teammate"><SelectValue placeholder="A teammate" /></SelectTrigger>
+                  <SelectContent>{mates.map((m) => <SelectItem key={m.user} value={m.user}>{m.user} · {m.title}</SelectItem>)}</SelectContent>
+                </Select>
+              </label>
+            )}
+
+            {shared}
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   )
 }
@@ -459,42 +474,44 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   const stepper = (
     <Place id="field.stage" label="the stage" className="space-y-2">
       {/* A radiogroup: one tab stop, arrow keys between the steps, and the gate spoken on the step. */}
-      <div role="radiogroup" aria-label="Stage" className="flex flex-wrap gap-1">
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        size="sm"
+        spacing={2}
+        aria-label="Stage"
+        className="max-w-full flex-wrap"
+        value={stage}
+        onValueChange={(v) => {
+          if (!v || v === stage) return
+          const missing = missingFor(v as DealStage)
+          if (missing.length) { toast(`${v} needs ${missing.join(" and ")}.`); return }
+          moveStage(v as DealStage)
+        }}
+      >
         {stages.map((s) => {
-          const index = stages.findIndex((x) => x.name === stage)
           const at = stages.findIndex((x) => x.name === s.name)
           const missing = missingFor(s.name)
           return (
-            <button
+            <ToggleGroupItem
               key={s.name}
-              role="radio"
-              aria-checked={s.name === stage}
+              value={s.name}
               aria-describedby={missing.length && r7 ? "stage-gate" : undefined}
               data-item={s.name === stage ? "deal.stage" : undefined}
               data-item-label={s.name === stage ? "Stage" : undefined}
-              tabIndex={s.name === stage ? 0 : -1}
+              disabled={!canEdit}
               onKeyDown={(e) => {
                 const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0
                 if (!step) return
-                e.preventDefault()
                 const to = stages[(at + step + stages.length) % stages.length]
-                const el = e.currentTarget.parentElement?.children[stages.indexOf(to)] as HTMLButtonElement | undefined
-                el?.focus()
                 if (canEdit && missingFor(to.name).length === 0) moveStage(to.name)
               }}
-              disabled={!canEdit}
-              onClick={() => (missing.length ? toast(`${s.name} needs ${missing.join(" and ")}.`) : moveStage(s.name))}
-              className={cn(
-                "rounded-md border px-2.5 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                at <= index ? "bg-foreground text-background" : "bg-card hover:bg-muted",
-              )}
-              style={missing.length > 0 ? { borderColor: statusInk("warning") } : undefined}
             >
               {s.name}
-            </button>
+            </ToggleGroupItem>
           )
         })}
-      </div>
+      </ToggleGroup>
       {/* The gate is on the step before the click, not after it: a rule met only afterwards is hidden. */}
       {r7 && stages.filter((s) => missingFor(s.name).length > 0).slice(0, 1).map((s) => (
         <p key={s.name} id="stage-gate" className="t-small" style={{ color: statusInk("warning") }}>
@@ -1085,16 +1102,27 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
   )
 
   const filterChips = (
-    <div data-item="timeline.filter" data-item-label="Timeline filters" className="flex flex-wrap items-center gap-1.5">
+    <TabsList data-item="timeline.filter" data-item-label="Timeline filters" className="h-auto! flex-wrap items-center gap-2">
       {FILTERS.map((f) => (
-        <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key}
+        <TabsTrigger key={f.key} value={f.key}
           data-item={f.key === "note" && r2 ? "timeline.note-list" : undefined}
-          data-item-label={f.key === "note" && r2 ? "Notes" : undefined}
-          className={cn("rounded-full border px-2.5 py-0.5 text-xs", filter === f.key ? "bg-foreground text-background" : "hover:bg-muted")}>
+          data-item-label={f.key === "note" && r2 ? "Notes" : undefined}>
           {f.label}
-        </button>
+        </TabsTrigger>
       ))}
-    </div>
+    </TabsList>
+  )
+
+  /** The strip and the list it filters, as one Tabs: the panel really is what the tab controls. */
+  const timeline = (listClass: string, bodyClass: string) => (
+    <Tabs value={active.key} onValueChange={(v) => { if (v) setFilter(v) }}>
+      <div className={listClass}>{filterChips}</div>
+      <TabsContent value={active.key} className={bodyClass}>
+        {pinnedNote}
+        {timelineItems}
+        {loadOlder}
+      </TabsContent>
+    </Tabs>
   )
 
   const pinnedNote = pinned ? (
@@ -1127,7 +1155,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
   const tabBodies = (
     <>
-      {tabBody("activities", "tab.activities", "the Activities tab", <>{filterChips}{pinnedNote}{timelineItems}{loadOlder}</>)}
+      {tabBody("activities", "tab.activities", "the Activities tab", timeline("", ""))}
       {tabBody("files", "tab.files", "the Files tab",
         files.length === 0
           ? <p className="text-muted-foreground">No files yet.</p>
@@ -1473,15 +1501,8 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
           items: (
             <Container component="section" heading="Activity" count={filtered.length} padded={false}>
               <Group className="border-y px-4 py-3">{composerBlock}</Group>
-              <div className="px-4 pt-3 pb-1">
-                {filterChips}
-              </div>
-              <div className="px-4 pb-3">
-                {pinnedNote}
-                {timelineItems}
-                {loadOlder}
-                {residualTabs}
-              </div>
+              {timeline("px-4 pt-3 pb-1", "px-4 pb-3")}
+              {residualTabs && <div className="px-4 pb-3">{residualTabs}</div>}
             </Container>
           ),
         }}

@@ -4,10 +4,13 @@
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { ChevronLeft, ChevronRight, Grid3x3, Search } from "lucide-react"
+import { ChevronLeft, Clock, Grid3x3, Search, TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
+import { Kbd } from "@/components/ui/kbd"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertTitle } from "@/components/ui/alert"
 import { href, navigate, useRoute } from "@/app/router"
 import { businessById } from "../data/businesses"
 import { seedFor } from "../data/seed"
@@ -23,10 +26,9 @@ import { Shortcuts } from "./Shortcuts"
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider,
-  SidebarRail, SidebarTrigger,
+  SidebarRail, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar"
 import { BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Panel } from "../ui/Panel"
 import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
@@ -108,6 +110,40 @@ function Crumbs({ trail }: { trail: Origin[] }) {
   )
 }
 
+/**
+ * The phone's navigation: a fixed bar of ghost Buttons, and "All pages" opens the Sidebar's own
+ * mobile Sheet rather than a second list of our own. The bar sets no colour — the active page is a
+ * secondary Button, which is how the library marks a chosen one.
+ */
+function BottomBar({ pages, page }: { pages: Page[]; page: Page }) {
+  const { setOpenMobile } = useSidebar()
+  return (
+    <nav className="bg-background fixed inset-x-0 bottom-0 z-30 flex border-t md:hidden" aria-label="Pages">
+      {pages.map((p) => {
+        const nav = navItem(p)!
+        const here = p === page
+        return (
+          <Button
+            key={p}
+            asChild
+            variant={here ? "secondary" : "ghost"}
+            className="h-auto flex-1 flex-col gap-0.5 rounded-none py-2 text-xs"
+          >
+            <a href={href(`/ollopa/${p === "home" ? "" : p}`)} onClick={clearTrail} aria-current={here ? "page" : undefined}>
+              <FamilyIcon of={p} tone={here ? "current" : "ink"} />
+              {nav.label}
+            </a>
+          </Button>
+        )
+      })}
+      <Button variant="ghost" className="h-auto flex-1 flex-col gap-0.5 rounded-none py-2 text-xs" onClick={() => setOpenMobile(true)}>
+        <Grid3x3 aria-hidden="true" />
+        All pages
+      </Button>
+    </nav>
+  )
+}
+
 export function AppShell({ session, page, title, children, defaultCollapsed }: { session: Session; page: Page; title: string; children: ReactNode; defaultCollapsed?: boolean }) {
   const b = businessById(session.business)
   const seed = seedFor(session.business)
@@ -121,7 +157,6 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const [bell, setBell] = useState(false)
   const [creditsOpen, setCredits] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
-  const [allPages, setAllPages] = useState(false)
   const [dismissed, setDismissed] = useState<string[]>([])
   const [expiring, setExpiring] = useState(false)
   const [, setTick] = useState(0)
@@ -246,7 +281,6 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
     ...BOTTOM_BAR[session.role].filter((p) => inSidebarPages.includes(p)),
     ...inSidebarPages.filter((p) => !BOTTOM_BAR[session.role].includes(p)),
   ].slice(0, 4)
-  const restOfPages = entries.filter((e) => !bottom.includes(e.item.page))
 
   return (
     <SidebarProvider defaultOpen={!collapsed} onOpenChange={(o) => setCollapsed(!o)}>
@@ -297,10 +331,14 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
       <SidebarInset className="min-w-0">
         {/* At 400 px, with a sidebar button beside the title, the title keeps the first line to itself
             and the chrome wraps under it; above 768 px the bar is one row of 56 px. */}
-        <header className={cn("bg-sidebar", "flex shrink-0 items-center gap-2 border-b border-b-border px-3 sm:gap-3 sm:px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
+        {/* shadcn's header pattern inside SidebarInset: the trigger, a vertical Separator, then the
+            page's own path and the workspace channels. Nothing here sets a colour or a size of its
+            own — the Button, Badge, Kbd and Avatar carry it. */}
+        <header className={cn("flex shrink-0 items-center gap-2 border-b px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
           {/* The page title carries its family icon and hue — one of the three ways you know
               where you are (DESIGN.md §5). */}
-          <SidebarTrigger className="-ml-1 md:hidden" />
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-1 hidden data-[orientation=vertical]:h-4 sm:block" />
           <FamilyIcon of={page} size="header" className="hidden shrink-0 sm:block" />
           <Crumbs trail={trail} />
           {/* The last crumb is the page you are on, and it never truncates: the earlier ones do. */}
@@ -309,20 +347,20 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
             (canAdd || added) && "mr-auto md:mr-0",
             trail.length > 0 ? "shrink-0 whitespace-nowrap max-sm:sr-only" : "truncate",
           )} style={{ color: familyOf(page).ink }}>{trail.length > 0 ? crumbName(title) : title}</h1>
-          {client && <span className="hidden shrink-0 rounded border px-2 py-0.5 text-xs text-muted-foreground sm:inline">{client} · client workspace</span>}
+          {client && <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">{client} · client workspace</Badge>}
           {canAdd && (
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>
           )}
           {added && inSidebar && (
             <Button variant="ghost" size="sm" className="shrink-0" onClick={() => { removeFromSidebar(page); refresh() }}>Remove from sidebar</Button>
           )}
-          <div className={cn("flex-1", (canAdd || added) && "h-0 basis-full md:h-auto md:basis-auto")} />
+          <div className={cn("min-w-0 flex-1", (canAdd || added) && "h-0 basis-full md:h-auto md:basis-auto")} />
           <Button variant="outline" size="sm" className="hidden w-64 justify-start text-muted-foreground lg:flex" onClick={() => setPalette(true)}>
             <Search className="size-4" aria-hidden="true" />
             Search or jump to…
-            <kbd className="ml-auto rounded border px-1 font-mono t-small">⌘K</kbd>
+            <Kbd className="ml-auto">⌘K</Kbd>
           </Button>
-          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Search or jump to" onClick={() => setPalette(true)}>
+          <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Search or jump to" onClick={() => setPalette(true)}>
             <Search className="size-4" aria-hidden="true" />
           </Button>
           <span className="hidden sm:block"><CreditsPill session={session} onOpen={() => setCredits(true)} /></span>
@@ -331,22 +369,26 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           <AccountMenu session={session} onShortcuts={() => setShortcuts(true)} onChange={refresh} />
         </header>
 
-        {expiring && (
-          <div role="alert" className="flex items-center gap-3 border-b bg-muted px-4 py-2 text-sm">
-            <span>Your session ends in 5 minutes.</span>
-            <Button size="sm" variant="outline" onClick={() => setExpiring(false)}>Stay signed in</Button>
-          </div>
-        )}
-
-        {alerts.length > 0 && (
-          <div role="alert" className="t-body border-b px-4 py-1.5" style={{ backgroundColor: "var(--warning-tint)" }}>
-            <div className="t-small font-medium uppercase tracking-wider text-muted-foreground">Needs you now</div>
+        {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
+            with the library's gap. */}
+        {(expiring || alerts.length > 0) && (
+          <div className="grid gap-2 border-b p-4">
+            {expiring && (
+              <Alert className="flex items-center gap-3 py-2">
+                <Clock />
+                <AlertTitle className="line-clamp-none min-w-0 flex-1 font-normal">Your session ends in 5 minutes</AlertTitle>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => setExpiring(false)}>Stay signed in</Button>
+              </Alert>
+            )}
             {alerts.map((n) => (
-              <div key={n.id} className="flex flex-wrap items-baseline gap-x-3 py-0.5">
-                <span className="min-w-0 flex-1">{n.title}</span>
-                <a className="shrink-0 underline underline-offset-4" href={href(n.target)}>Open</a>
-                <button className="shrink-0 text-muted-foreground underline underline-offset-4" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</button>
-              </div>
+              <Alert key={n.id} className="flex items-center gap-3 py-2">
+                <TriangleAlert style={{ color: "var(--warning-ink)" }} />
+                <AlertTitle className="line-clamp-none min-w-0 flex-1 font-normal">
+                  <span className="text-muted-foreground">Needs you now · </span>{n.title}
+                </AlertTitle>
+                <Button asChild size="sm" variant="outline" className="shrink-0"><a href={href(n.target)}>Open</a></Button>
+                <Button size="sm" variant="ghost" className="shrink-0" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</Button>
+              </Alert>
             ))}
           </div>
         )}
@@ -358,51 +400,13 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           <Beside session={session} pageTitle={title} />
         </div>
 
-        <nav className={cn("bg-sidebar", "fixed inset-x-0 bottom-0 z-30 flex border-t border-t-border md:hidden")} aria-label="Pages">
-          {bottom.map((p) => {
-            const nav = navItem(p)!
-            return (
-              <a
-                key={p}
-                href={href(`/ollopa/${p === "home" ? "" : p}`)}
-                onClick={clearTrail}
-                aria-current={p === page ? "page" : undefined}
-                className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2 t-small", p === page ? "font-medium" : "text-muted-foreground")}
-                style={p === page ? { backgroundColor: "var(--brand-tint)", color: "var(--brand-ink)" } : undefined}
-              >
-                {p === page && <span aria-hidden="true" className="absolute inset-x-3 top-0 h-[3px] rounded-full" style={{ backgroundColor: "var(--brand)" }} />}
-                <FamilyIcon of={p} tone={p === page ? "current" : "ink"} />
-                {nav.label}
-              </a>
-            )
-          })}
-          <button className="flex flex-1 flex-col items-center gap-0.5 py-2 t-small text-muted-foreground" onClick={() => setAllPages(true)}>
-            <Grid3x3 className="size-4" aria-hidden="true" />
-            All pages
-          </button>
-        </nav>
+        <BottomBar pages={bottom} page={page} />
       </SidebarInset>
 
       <Palette session={session} open={palette} onOpenChange={setPalette} />
       <NotificationPanel session={session} rows={notes} open={bell} onOpenChange={setBell} onChange={refresh} />
       <CreditsPanel session={session} open={creditsOpen} onOpenChange={setCredits} />
       <Shortcuts open={shortcuts} onOpenChange={setShortcuts} />
-      <Panel id="allpages" title="All pages" open={allPages} onOpenChange={setAllPages} side="bottom">
-        <ul className="p-2">
-          {restOfPages.map((e) => (
-            <li key={e.item.page}>
-              <a
-                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm"
-                href={href(`/ollopa/${e.item.page === "home" ? "" : e.item.page}`)}
-                onClick={() => { clearTrail(); setAllPages(false) }}
-              >
-                <FamilyIcon of={e.item.page} />
-                {e.item.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </Panel>
     </SidebarProvider>
   )
 }

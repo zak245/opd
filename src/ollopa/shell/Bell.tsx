@@ -8,6 +8,7 @@ import { useState } from "react"
 import { Bell as BellIcon, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href, navigate } from "@/app/router"
 import type { Session } from "../session"
@@ -20,12 +21,12 @@ export function unreadCount(rows: Note[]): number {
 
 export function BellButton({ count, onOpen }: { count: number; onOpen: () => void }) {
   return (
-    <Button variant="ghost" size="icon" aria-label={`Notifications, ${count} unread`} onClick={onOpen} className="relative">
+    <Button variant="ghost" size="icon-sm" aria-label={`Notifications, ${count} unread`} onClick={onOpen} className="relative">
       <BellIcon className="size-4" aria-hidden="true" />
       {count > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-foreground px-1 t-small font-medium leading-4 text-background">
+        <Badge className="absolute -right-1 -top-1 h-4 min-w-4 justify-center px-1 tabular-nums">
           {count > 9 ? "9+" : count}
-        </span>
+        </Badge>
       )}
     </Button>
   )

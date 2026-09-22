@@ -19,7 +19,7 @@ import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { FAMILY, ink } from "./look"
-import { useTick } from "../engage/shared"
+import { TableCard, useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { Door } from "../../ui/Door"
@@ -29,7 +29,6 @@ import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Workflow } from "../../data/seed"
 import type { Session } from "../../session"
-import { Container } from "../../ui/Section"
 import { Grid, type GridColumn } from "./grid"
 import { breachedRows, enrolled7d, notRoutedRuns, runsOf } from "./derive"
 import { ago, day, num } from "./format"
@@ -217,14 +216,11 @@ export function WorkflowsPage({ session }: { session: Session }) {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3 max-sm:px-4">
-          {/* One container: the toolbar and the count in its header, the rows inside it with
-              dividers, nothing naked on the canvas (DESIGN.md §5, containment). */}
-          <Container
-            component="table"
-            padded={false}
-            heading="Workflows"
+          {/* The page title is above the card; the card's header carries only the toolbar and the
+              count, and the rows sit inside it with dividers. */}
+          <TableCard
             count={filtered.length === rows.workflows.length ? num(rows.workflows.length) : `${num(filtered.length)} shown of ${num(rows.workflows.length)}`}
-            actions={
+            toolbar={
               <div className="hidden flex-wrap items-center gap-2 md:flex">
                 <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
                 <Select value={status} onValueChange={setStatus}>
@@ -298,7 +294,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
             cardTitle={(w) => <span className="font-medium">{w.name}</span>}
             inContainer
           />
-          </Container>
+          </TableCard>
         </div>
       )}
 

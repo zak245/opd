@@ -10,6 +10,7 @@
 // The test: remove the drawer and you lose only speed. If removing it would lose a feature, it has
 // become a second version of the record, which the pattern forbids.
 import { useEffect, useRef, useState } from "react"
+import { Kbd } from "@/components/ui/kbd"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -140,12 +141,12 @@ export function QuickLook({ family, open, onOpenChange, title, fields, editable,
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" disabled={at === 0} onClick={() => list.onStep(-1)}>
                 Previous
-                <kbd className="ml-1 rounded border px-1 font-mono t-small">[</kbd>
+                <Kbd className="ml-1">[</Kbd>
               </Button>
               <span className="t-small tabular-nums text-muted-foreground">{at + 1} of {list.total}</span>
               <Button size="sm" variant="ghost" className="ml-auto" disabled={at >= list.total - 1} onClick={() => list.onStep(1)}>
                 Next
-                <kbd className="ml-1 rounded border px-1 font-mono t-small">]</kbd>
+                <Kbd className="ml-1">]</Kbd>
               </Button>
             </div>
           )}

@@ -10,15 +10,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, useRoute } from "@/app/router"
 import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Section"
+import { FamilyIcon } from "../../ui/Identity"
+import { Container } from "../../ui/Section"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -116,14 +118,24 @@ function StripLine({ item, label, children, state, word }: {
   word?: string
 }) {
   return (
-    <div data-item={item} data-item-label={label} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 py-1">
-      <span className="t-small w-36 shrink-0 font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="t-body min-w-0 flex-1">
-        {state && <Chip status={state} className="mr-1.5 align-middle">{word}</Chip>}
+    // One <dt>/<dd> pair of the card's definition list. HTML allows the pair to be wrapped, which is
+    // what carries the usage-model id the rest of the product points this fact at.
+    <div data-item={item} data-item-label={label} className="grid gap-1 sm:grid-cols-4 sm:gap-4">
+      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-sm sm:col-span-3">
+        {state && <Badge variant={STATE_BADGE[state]} className="mr-1.5 align-middle">{word}</Badge>}
         {children}
-      </span>
+      </dd>
     </div>
   )
+}
+
+/** A state word is a shadcn Badge; the variant is the library's, and the page invents no colour. */
+const STATE_BADGE: Record<"active" | "warning" | "auto-paused" | "none", "secondary" | "outline" | "destructive"> = {
+  active: "secondary",
+  warning: "outline",
+  "auto-paused": "destructive",
+  none: "outline",
 }
 
 function Strip({ session, role, user, onCredits, homeless }: { session: Session; role: Role; user: string; onCredits: () => void; homeless?: boolean }) {
@@ -144,9 +156,16 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   const paused = seed.mailboxes.filter((m) => m.paused).length
 
   return (
-    // One band on the canvas above the areas, not a box of boxes: the facts that may never be
-    // behind anything, grouped by the one container-low region this page is allowed (DESIGN.md §5).
-    <Group as="section" aria-label="What this workspace costs and what can spend or stop it" data-container="strip" data-container-label="the strip" className="rounded-[var(--radius)] px-4 py-3 sm:px-6">
+    // The facts that may never sit behind anything: one shadcn Card holding a definition list, so
+    // every label/value pair is a <dt>/<dd> and the card's own padding is the only padding.
+    <Card
+      role="region"
+      aria-label="What this workspace costs and what can spend or stop it"
+      data-container="strip"
+      data-container-label="the strip"
+    >
+      <CardContent>
+      <dl className="grid gap-3">
       {isAdmin ? (
         <>
           <StripLine item="plan.price" label="Plan and price">
@@ -237,7 +256,9 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
           </StripLine>
         </>
       )}
-    </Group>
+      </dl>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -687,7 +708,7 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
           </div>
         </div>
 
-        {stripEl && <div className="mt-3">{stripEl}</div>}
+        {stripEl && <div className="mt-3 px-4 sm:px-6">{stripEl}</div>}
 
         <div>
           <div className="lg:flex lg:items-start">
@@ -696,10 +717,14 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
               <ul className="grid gap-0.5">
                 {areas.map((a) => (
                   <li key={a.area}>
-                    <a className="t-label block rounded px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground" href={`#area-${slug(a.area)}`}
-                      onClick={(e) => { e.preventDefault(); document.getElementById(`area-${slug(a.area)}`)?.scrollIntoView({ block: "start", behavior: "smooth" }) }}>
-                      {areaLabel(a.area)}
-                    </a>
+                    {/* The library's vertical nav: a ghost Button over the anchor that already
+                        does the scrolling, so the link, its href and its behaviour are untouched. */}
+                    <Button variant="ghost" asChild className="h-auto w-full justify-start whitespace-normal py-1 text-left">
+                      <a href={`#area-${slug(a.area)}`}
+                        onClick={(e) => { e.preventDefault(); document.getElementById(`area-${slug(a.area)}`)?.scrollIntoView({ block: "start", behavior: "smooth" }) }}>
+                        {areaLabel(a.area)}
+                      </a>
+                    </Button>
                   </li>
                 ))}
               </ul>

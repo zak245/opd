@@ -25,8 +25,7 @@ import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Section"
-import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
+import { type Col, DataTable, RowOpen, TableCard, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
 const KINDS_OF_LIST = [
@@ -289,15 +288,12 @@ export function ListsPage({ session }: { session: Session }) {
         </div>
 
         {/* ----------------------------------------------------------------------------- table */}
-        {/* The table lives in a container: its toolbar and its count in the header (DESIGN.md §5,
-            containment). The phone cards are the same container's body at that width. */}
+        {/* The page title is above the card; the card's header carries the toolbar and the count
+            and repeats no title. The phone cards are the same card's body at that width. */}
         <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
-          <Container
-            component="table"
-            padded={false}
-            heading="Lists"
+          <TableCard
             count={`${n(rows.length)} shown of ${n(lists.length)}`}
-            actions={<>
+            toolbar={<>
               <Input
                 data-page-search
                 aria-label="Search lists by name or owner"
@@ -359,7 +355,7 @@ export function ListsPage({ session }: { session: Session }) {
                 : undefined
             }
           />
-          </Container>
+          </TableCard>
         </div>
 
         {/* ------------------------------------------------------------- delete, with its words */}

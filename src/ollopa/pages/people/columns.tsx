@@ -76,7 +76,7 @@ export function columnsFor(ctx: FilterContext, compact: boolean): ColumnDef[] {
         </span>
       ),
     },
-    { id: "people.col.stage", key: "stage", header: "Stage", sort: (p) => p.stage, cell: () => null },
+    { id: "people.col.stage", key: "stage", header: "Stage", className: "min-w-36 whitespace-nowrap", sort: (p) => p.stage, cell: () => null },
     { id: "people.col.sequence", key: "sequence", header: "Sequence", width: "max-w-[10rem] truncate", sort: (p) => p.inSequence ?? "", cell: (p) => p.inSequence ?? dash },
     { id: "people.col.last-contacted", key: "lastContacted", header: "Last contacted", className: "tabular-nums", sort: (p) => p.lastContacted ?? "", cell: (p) => (p.lastContacted ? day(p.lastContacted) : dash) },
     { id: "people.col.last-activity", key: "lastActivity", header: "Last activity", className: "tabular-nums", sort: (p) => p.lastActivity, cell: (p) => day(p.lastActivity) },

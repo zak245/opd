@@ -136,7 +136,7 @@ export function CompaniesPage({ session }: { session: Session }) {
     },
     { id: "co.col.contacts", header: "Contacts held", className: "tabular-nums", sortValue: (v) => v.contacts.length, cell: (v) => v.contacts.length },
     { id: "co.col.in-sequence", header: "In a sequence", className: "tabular-nums", sortValue: (v) => v.inSequence.length, cell: (v) => (v.inSequence.length === 0 ? <span className="text-muted-foreground">—</span> : v.inSequence.length) },
-    { id: "co.col.stage", header: "Stage", phone: true, sortValue: (v) => v.company.stage, cell: (v) => stageChip(v.company.stage) },
+    { id: "co.col.stage", header: "Stage", phone: true, className: "min-w-36 whitespace-nowrap", sortValue: (v) => v.company.stage, cell: (v) => stageChip(v.company.stage) },
     // The column is the company's own last activity; the record header widens it to the newest of
     // the company, its contacts, its replies and its deals.
     { id: "co.col.last-activity", header: "Last activity", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.company.lastActivity, cell: (v) => <span title={day(v.company.lastActivity)}>{ago(v.company.lastActivity)}</span> },

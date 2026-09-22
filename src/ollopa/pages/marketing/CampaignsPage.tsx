@@ -7,6 +7,7 @@
 // number says; everything else is asked of the usage model and never hard-coded.
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +20,7 @@ import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
 import { FAMILY, ink } from "./look"
-import { useTick } from "../engage/shared"
+import { TableCard, useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
 import { Chip, FamilyIcon } from "../../ui/Identity"
@@ -32,7 +33,7 @@ import { BOUNCE_GUARD, CAMPAIGN_CHECKS, TODAY, seedFor, type Audience, type Camp
 import type { Session } from "../../session"
 import type { Business } from "../../usage/model"
 import { familyOf } from "../../identity"
-import { Container, Group } from "../../ui/Section"
+import { Group } from "../../ui/Section"
 import { Grid, GridColumns, type GridColumn } from "./grid"
 import { usePref } from "./prefs"
 import { addRow, patchRow, removeRow, useMarketing } from "./store"
@@ -257,7 +258,7 @@ export function CampaignsPage({ session }: { session: Session }) {
         <ActedNote business={session.business} kind="campaign" id={c.id} edit={campaignEdits[c.id]} />
       </div>
     ) },
-    { key: "status", header: "Status", sortBy: (c) => c.status, cell: (c) => <StatusBadge c={c} />, optional: !at("camp.list.status") },
+    { key: "status", header: "Status", sortBy: (c) => c.status, className: "min-w-36 whitespace-normal", cell: (c) => <StatusBadge c={c} />, optional: !at("camp.list.status") },
     { key: "audience", header: "Audience", sortBy: (c) => c.audienceSize, optional: !at("camp.list.audience"), className: "min-w-[10rem] whitespace-normal", cell: (c) => {
       const a = rows.audiences.find((x) => x.id === c.audienceId)
       return a
@@ -332,7 +333,7 @@ export function CampaignsPage({ session }: { session: Session }) {
         <ActedNote business={session.business} kind="form" id={f.id} edit={formEdits[f.id]} />
       </div>
     ) },
-    { key: "status", header: "Status", sortBy: (f) => f.status, cell: (f) => <Chip status={f.status}>{f.status}</Chip> },
+    { key: "status", header: "Status", sortBy: (f) => f.status, className: "min-w-28 whitespace-normal", cell: (f) => <Chip status={f.status}>{f.status}</Chip> },
     { key: "submissions", header: "Submissions, 7 days", sortBy: (f) => f.submissions7d, className: "tabular-nums", cell: (f) => num(f.submissions7d) },
     { key: "enrichment", header: "Enrichment spend", sortBy: (f) => f.enrichUsedToday, cell: (f) => (
       <div className="min-w-0 tabular-nums">
@@ -376,7 +377,6 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   const shownRows = view === "campaigns" ? campaigns.length : view === "audiences" ? audiences.length : forms.length
   const totalRows = view === "campaigns" ? rows.campaigns.length : view === "audiences" ? rows.audiences.length : rows.forms.length
-  const viewLabel = views.find((v) => v.key === view)!.label
 
   return (
     <div className="flex h-full flex-col">
@@ -393,21 +393,6 @@ export function CampaignsPage({ session }: { session: Session }) {
           ...(view === "audiences" ? [{ kind: "secondary" as const, label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") }] : []),
           ...(view === "forms" ? [{ kind: "secondary" as const, label: "New form", onClick: () => toast("New form: name it, add the fields, and choose where submissions go.") }] : []),
         ]} />
-      </div>
-
-      {/* The view switch is state, not a door: three objects on one table (IA-MAP 3, P-campaigns). */}
-      <div role="group" aria-label="What this table shows" className="flex flex-wrap gap-1 px-6 pt-3">
-        {views.map((v) => (
-          <button
-            key={v.key}
-            type="button"
-            aria-pressed={view === v.key}
-            onClick={() => setView(v.key)}
-            className={cn("rounded-md border px-3 py-1 text-sm", view === v.key ? "bg-foreground text-background" : "hover:bg-muted")}
-          >
-            {v.label} <span className="tabular-nums">{v.count}</span>
-          </button>
-        ))}
       </div>
 
       {nothing ? (
@@ -427,19 +412,32 @@ export function CampaignsPage({ session }: { session: Session }) {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3 max-sm:px-4">
-          {/* The table lives in one container: its toolbar and its count in the header, and the
-              sending policy as the one container-low band inside it (DESIGN.md §5, containment). */}
-          <Container
-            component="table"
-            padded={false}
-            heading={viewLabel}
+          {/* The page title is above the card; the card's header carries only the toolbar — the
+              view switch, the search, the filters, the count and the column chooser. */}
+          <TableCard
             count={shownRows === totalRows ? num(totalRows) : `${num(shownRows)} shown of ${num(totalRows)}`}
-            actions={
+            toolbar={<>
+              {/* The view switch is state, not a door: three objects on one table (IA-MAP 3,
+                  P-campaigns), and it is the first thing in the toolbar because it says what the
+                  rest of the toolbar is filtering. */}
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                aria-label="What this table shows"
+                value={view}
+                onValueChange={(v) => { if (v) setView(v as View) }}
+              >
+                {views.map((v) => (
+                  <ToggleGroupItem key={v.key} value={v.key}>
+                    {v.label} <span className="tabular-nums">{v.count}</span>
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
               <div className="hidden flex-wrap items-center gap-2 md:flex">
                 {filterRow}
                 {view === "campaigns" && <GridColumns columns={campaignColumns} hidden={hiddenColumns} onHidden={setHiddenColumns} />}
               </div>
-            }
+            </>}
           >
           {/* Decision-critical, above everything, on every plan: the guard, the observed rate, the cap. */}
           <PolicyLine business={session.business} admin={admin} from={from} />
@@ -540,7 +538,7 @@ export function CampaignsPage({ session }: { session: Session }) {
               inContainer
             />
           )}
-          </Container>
+          </TableCard>
         </div>
       )}
 

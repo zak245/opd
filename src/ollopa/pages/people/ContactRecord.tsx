@@ -13,6 +13,7 @@ import { Bot, CalendarClock, CheckSquare, Mail, MessageSquare, Phone, Send } fro
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { href, navigate, useRoute } from "@/app/router"
 import { RecordPage, CardRow, type RecordDoor, type RecordField } from "../../templates/RecordPage"
 import { Actions, type Action } from "../../ui/Actions"
@@ -449,19 +450,19 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             title: "Activity",
             count: visible.length,
             action: (
-              <span className="flex flex-wrap items-center gap-1.5">
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                spacing={2}
+                className="flex-wrap"
+                value={filter}
+                onValueChange={(v) => { if (v) setFilter(v) }}
+              >
                 {FILTERS.map((f) => (
-                  <button
-                    key={f.key}
-                    type="button"
-                    aria-pressed={filter === f.key}
-                    onClick={() => setFilter(f.key)}
-                    className={cn("rounded-full border px-2.5 py-0.5 text-xs", filter === f.key ? "bg-foreground text-background" : "hover:bg-muted")}
-                  >
-                    {f.label}
-                  </button>
+                  <ToggleGroupItem key={f.key} value={f.key}>{f.label}</ToggleGroupItem>
                 ))}
-              </span>
+              </ToggleGroup>
             ),
             children: (
               <div className="space-y-3">

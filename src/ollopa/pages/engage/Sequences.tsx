@@ -19,9 +19,8 @@ import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { Actions } from "../../ui/Actions"
-import { Container } from "../../ui/Section"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { type Col, DataTable, RowOpen, TableCard, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
 /**
  * The words the status cell uses, and the bare state word behind each of them. Bounce guard is a
@@ -121,7 +120,7 @@ export function SequencesPage({ session }: { session: Session }) {
       ),
     },
     {
-      key: "status", header: "Status", phone: true,
+      key: "status", header: "Status", phone: true, className: "min-w-40",
       cell: (s) => {
         const st = statusOf(s)
         return (
@@ -227,15 +226,12 @@ export function SequencesPage({ session }: { session: Session }) {
           </div>
         </div>
 
-        {/* The table lives in a container: its toolbar and its count in the header (DESIGN.md §5,
-            containment). The phone cards are the same container's body at that width. */}
+        {/* The page title is above the card; the card's header carries the toolbar and the count
+            and repeats no title. The phone cards are the same card's body at that width. */}
         <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
-          <Container
-            component="table"
-            padded={false}
-            heading="Sequences"
+          <TableCard
             count={`${n(rows.length)} shown of ${n(b.counts.sequences)}`}
-            actions={<>
+            toolbar={<>
               <Input
                 data-page-search aria-label="Search sequences by name or owner" placeholder="Search sequences"
                 value={q} onChange={(e) => setQ(e.target.value)} className="w-56"
@@ -313,7 +309,7 @@ export function SequencesPage({ session }: { session: Session }) {
                 : undefined
             }
           />
-          </Container>
+          </TableCard>
         </div>
       </div>
     </DoorGroup>

@@ -46,6 +46,9 @@ for (const theme of ["light", "dark"]) {
 
   await as("ae", "/ollopa/deals/d-118"); await shot("3-deal-record")
   await as("admin", "/ollopa/settings"); await shot("4-settings")
+  await as("sdr", "/ollopa/inbox"); await shot("6-inbox")
+  await as("ae", "/ollopa/deals"); await shot("7-deals-board")
+  await as("sdr", "/ollopa/companies"); await shot("8-companies")
 
   await as("ae", "/ollopa/deals/d-118")
   await page.evaluate(() => {

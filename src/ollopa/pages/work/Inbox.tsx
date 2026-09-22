@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal } from "lucide-react"
@@ -528,35 +529,33 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
             className={cn("flex min-w-0 flex-1 flex-col", onPhoneThread && "hidden md:flex")}
             actions={(
               <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <div role="tablist" aria-label="What the person meant" className="flex flex-wrap items-center gap-1 overflow-x-auto pt-3">
+                <Tabs value={group} onValueChange={(v) => { setGroup(v as GroupKey); setSelection([]) }} className="pt-3">
+                <TabsList aria-label="What the person meant" className="h-auto! flex-wrap items-center gap-2">
                 {tabs.map((g) => (
-                <button
-                key={g.key}
-                role="tab"
-                aria-selected={group === g.key}
-                onClick={() => { setGroup(g.key); setSelection([]) }}
-                className={cn("shrink-0 rounded-md px-2.5 py-1 text-sm", group === g.key ? "bg-foreground text-background" : "hover:bg-muted")}
-                >
+                <TabsTrigger key={g.key} value={g.key} className="shrink-0">
                 {g.key} <span className="tabular-nums opacity-70">({counts[g.key]})</span>
-                </button>
+                </TabsTrigger>
                 ))}
                 {behind.length > 0 && (
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                <button
+                <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
                 role="tab"
                 aria-selected={behind.some((g) => g.key === group)}
-                className={cn("shrink-0 rounded-md px-2.5 py-1 text-sm", behind.some((g) => g.key === group) ? "bg-foreground text-background" : "hover:bg-muted")}
                 >
                 {behind.map((g) => `${g.key} (${counts[g.key]})`).join(" · ")} ▾
-                </button>
+                </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                 {behind.map((g) => <DropdownMenuItem key={g.key} onSelect={() => setGroup(g.key)}>{g.key} ({counts[g.key]})</DropdownMenuItem>)}
                 </DropdownMenuContent>
                 </DropdownMenu>
                 )}
-                </div>
+                </TabsList>
+                </Tabs>
                 <div className="flex flex-wrap items-center gap-2">
                 {searchAtLevelOne && (
                 <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />

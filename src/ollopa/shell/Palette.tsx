@@ -7,6 +7,7 @@
 // row naming the seats that use it and the admin to ask — hidden with an explanation, never silently.
 // Nothing here approves anything: the approvals row opens the queue, where the consequence line is.
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Kbd } from "@/components/ui/kbd"
 import { cn } from "@/lib/utils"
 import { navigate, openInNewTab } from "@/app/router"
 import { clearTrail } from "../chain"
@@ -366,9 +367,9 @@ export function Palette({ session, open, onOpenChange }: { session: Session; ope
                       )}
                     >
                       <span className={cn(!r.explanation && "truncate font-medium")}>{r.label}</span>
-                      {r.note && <span className="shrink-0 rounded border px-1 t-small text-muted-foreground">{r.note}</span>}
+                      {r.note && <Kbd className="shrink-0">{r.note}</Kbd>}
                       <span className={cn("min-w-0 flex-1 text-xs text-muted-foreground", !r.explanation && "truncate")}>{r.path}</span>
-                      {r.shortcut && <kbd className="shrink-0 rounded border px-1 font-mono t-small text-muted-foreground">{r.shortcut}</kbd>}
+                      {r.shortcut && <Kbd className="shrink-0">{r.shortcut}</Kbd>}
                     </li>
                   )
                 })}

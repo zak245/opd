@@ -9,7 +9,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -91,6 +93,36 @@ export function CountButton({ label, count, active, onClick, tone }: {
       <span className="t-body block font-medium tabular-nums">{n(count)}</span>
       <span className="sr-only">filter people by {label.toLowerCase()}</span>
     </button>
+  )
+}
+
+/* ------------------------------------------------------------------ the card a table lives in */
+
+/**
+ * A page whose one card holds a table. The page title stays above the card, so the card's header
+ * repeats nothing: it carries the toolbar row — views, search, filters, the count, the column and
+ * density choosers — laid out full width and wrapping, and there is no CardTitle at all.
+ *
+ * Composed from shadcn's Card, CardHeader and CardContent as they ship. The body loses its side
+ * padding, and only that, because a table reaches the card's edges.
+ */
+export function TableCard({ toolbar, count, children }: {
+  /** The toolbar row, in reading order. */
+  toolbar?: ReactNode
+  /** How many rows are shown, of how many there are. Sits at the end of the toolbar row. */
+  count?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <Card>
+      {(toolbar || count !== undefined) && (
+        <CardHeader className="flex w-full flex-wrap items-center gap-2">
+          {toolbar}
+          {count !== undefined && <Badge variant="secondary" className="tabular-nums">{count}</Badge>}
+        </CardHeader>
+      )}
+      <CardContent className="px-0">{children}</CardContent>
+    </Card>
   )
 }
 

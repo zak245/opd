@@ -544,7 +544,7 @@ export function RecordPage(p: RecordPageProps) {
         </header>
 
         {/* --------------------------------------------- phone: the actions sit under the header */}
-        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 bg-card border-t px-5 py-2 lg:hidden" data-print-hide>
+        <div className="sticky bottom-0 z-20 order-last flex flex-wrap items-center gap-2 border-t bg-background px-5 py-2 lg:hidden" data-print-hide>
           {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} compact />}
         </div>
 

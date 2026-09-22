@@ -20,6 +20,7 @@
 import { useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Kbd } from "@/components/ui/kbd"
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
@@ -207,10 +208,10 @@ export function Confirm({ open, onOpenChange, title, consequence, confirmLabel, 
 function Shortcut({ keys, kind }: { keys?: string; kind?: ActionKind }) {
   if (!keys) return null
   return (
-    <kbd className={cn(
-      "ml-1.5 rounded border px-1 font-mono t-small",
-      kind === "primary" ? "border-current/40 text-primary-foreground/80" : "text-muted-foreground",
-    )}>{keys}</kbd>
+    <Kbd className={cn(
+      "ml-1.5",
+      kind === "primary" && "bg-primary-foreground/15 text-primary-foreground/80",
+    )}>{keys}</Kbd>
   )
 }
 

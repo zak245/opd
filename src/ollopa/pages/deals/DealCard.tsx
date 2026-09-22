@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -329,7 +330,7 @@ export function DealCard(p: DealCardProps) {
           </span>
         )}
         {flags.daysInStage && <span>{daysBetween(deal.stageEnteredAt)}d in {deal.stage}</span>}
-        {flags.owner && <span className="ml-auto rounded-full bg-muted px-1.5 py-px font-medium text-foreground" title={deal.owner}>{initials}</span>}
+        {flags.owner && <Badge variant="secondary" className="ml-auto" title={deal.owner}>{initials}</Badge>}
       </div>
 
       {flags.sync && deal.syncState === "error" && (

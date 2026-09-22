@@ -13,6 +13,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronsUpDown, ListPlus, MoreHorizontal, Phone, Send, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { Button } from "@/components/ui/button"
@@ -26,7 +28,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { Actions } from "../../ui/Actions"
-import { Container, Group } from "../../ui/Section"
+import { Group } from "../../ui/Section"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -217,6 +219,10 @@ export function PeoplePage({ session }: { session: Session }) {
     follow(to, { route: route.raw, title: "People", anchor })
 
   const view = views.find((v) => v.id === viewId) ?? null
+  /** The saved views that sit in the row itself, as a set of toggles; the rest live behind the door. */
+  const chipViews = views
+    .filter((v) => v.defaultFor.includes(session.role) || v.owner === session.user || (v.shipped && d.level("people.views.needs-enrichment") === 1))
+    .slice(0, 4)
   const seatColumns = [...defaultColumns, ...(view?.extraColumns ?? []).filter((c) => !defaultColumns.includes(c))]
   /**
    * A lesson adds Phone at the end, as a person would from the columns door. The SDR's seat does not
@@ -760,27 +766,30 @@ export function PeoplePage({ session }: { session: Session }) {
   const tableHeader = (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full flex-wrap items-center gap-2" data-container="people.views.row" data-container-label="the views row" data-print-hide>
-        {rHead && d.level("people.views.saved") === 1 && views
-          .filter((v) => v.defaultFor.includes(session.role) || v.owner === session.user || (v.shipped && d.level("people.views.needs-enrichment") === 1))
-          .slice(0, 4)
-          .map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              data-item={`people.view.${v.id}`}
-              data-item-label={v.name}
-              aria-pressed={viewId === v.id}
-              onClick={() => openView(v)}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                viewId === v.id ? "border-foreground bg-foreground text-background" : "hover:bg-muted",
-              )}
-            >
-              {v.name}
-              {v.shipped && <span className="ml-1 tabular-nums opacity-70">{allRows.filter(needsEnrichment).length.toLocaleString()}</span>}
-              {viewId === v.id && edited && <span className="ml-1 opacity-80">· edited</span>}
-            </button>
-          ))}
+        {rHead && d.level("people.views.saved") === 1 && chipViews.length > 0 && (
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            spacing={2}
+            className="flex-wrap"
+            value={viewId ?? ""}
+            onValueChange={(id) => { const v = chipViews.find((x) => x.id === id); if (v) openView(v) }}
+          >
+            {chipViews.map((v) => (
+              <ToggleGroupItem
+                key={v.id}
+                value={v.id}
+                data-item={`people.view.${v.id}`}
+                data-item-label={v.name}
+              >
+                {v.name}
+                {v.shipped && <span className="tabular-nums">{allRows.filter(needsEnrichment).length.toLocaleString()}</span>}
+                {viewId === v.id && edited && <span>· edited</span>}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        )}
 
         {rDoors ? (
           <ViewsDoor
@@ -805,9 +814,9 @@ export function PeoplePage({ session }: { session: Session }) {
         )}
 
         {edited && view && (
-          <span className="flex items-center gap-1 text-xs">
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => toast(`${view.name} saved with the filters you are looking at.`)}>Save</Button>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setActive(view.filters)}>Revert</Button>
+          <span className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => toast(`${view.name} saved with the filters you are looking at.`)}>Save</Button>
+            <Button size="sm" variant="ghost" onClick={() => setActive(view.filters)}>Revert</Button>
           </span>
         )}
       </div>
@@ -845,8 +854,10 @@ export function PeoplePage({ session }: { session: Session }) {
 
         {/* The one door that holds every filter, flat. On a phone it opens as a full-height sheet.
             Before rule 2 the same control is "Show Filters", which opens a sidebar of groups. */}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           data-item="people.filters.all"
           data-item-label={rDoors ? "All filters" : "Show Filters"}
           aria-expanded={rFlat ? panelOpen || pinned : showFilters}
@@ -854,7 +865,6 @@ export function PeoplePage({ session }: { session: Session }) {
             if (!rFlat) { setShowFilters(!showFilters); return }
             window.matchMedia("(max-width: 767px)").matches ? setPhoneFilters(true) : setPanelOpen(!panelOpen)
           }}
-          className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (rFlat ? panelOpen || pinned : showFilters) && "rotate-180")} />
           {!rFlat ? (
@@ -867,16 +877,16 @@ export function PeoplePage({ session }: { session: Session }) {
               <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
             </>
           )}
-        </button>
+        </Button>
 
         {(activeCount > 0 || q) && (
-          <Button size="sm" variant="ghost" data-item="people.f.clear" data-item-label="Clear" className="h-7 px-2 text-xs" onClick={clearAll}>Clear</Button>
+          <Button size="sm" variant="ghost" data-item="people.f.clear" data-item-label="Clear" onClick={clearAll}>Clear</Button>
         )}
 
         <span className="ml-auto flex items-center gap-3">
-          <span data-item="people.count" data-item-label="the result count" role="status" aria-live="polite" className={cn("tabular-nums text-xs", settling ? "text-muted-foreground/60" : "text-muted-foreground")}>
+          <Badge variant="outline" data-item="people.count" data-item-label="the result count" role="status" aria-live="polite" className="tabular-nums">
             {settling ? "…" : `${sorted.length.toLocaleString()} of ${total.toLocaleString()}`}
-          </span>
+          </Badge>
           {rDoors ? (
             <ColumnsDoor
               all={allColumns}
@@ -966,35 +976,16 @@ export function PeoplePage({ session }: { session: Session }) {
         {/* The table lives in a container: the toolbar and the count in its header, the pager in
             its footer, and the selection band the one container-low region inside it. Nothing here
             sits naked on the canvas any more (DESIGN.md §5, containment). */}
-        <Container
-          component="table"
-          padded={false}
-          heading="People"
-          actions={tableHeader}
+        <Card
           className="flex min-w-0 flex-1 flex-col"
-          bodyClassName="min-h-0 flex-1 overflow-auto"
           data-container="people.table.columns"
           data-container-label="the table header"
-          footer={
-            <>
-              {sorted.length > shown && (
-                <Button variant="outline" size="sm" onClick={() => setShown((n) => n + pageSize)}>
-                  Show {Math.min(pageSize, sorted.length - shown)} more
-                </Button>
-              )}
-              <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-                <label htmlFor="rows-per-page">Rows per page</label>
-                <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setShown(Number(v)) }}>
-                  <SelectTrigger id="rows-per-page" className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>{[25, 50, 100].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
-                </Select>
-              </span>
-              <Button size="sm" variant="ghost" className="text-xs md:hidden" onClick={() => setSelectMode((v) => !v)}>
-                {selectMode ? "Done selecting" : "Select"}
-              </Button>
-            </>
-          }
         >
+          {/* No title in here: the page's own heading is above the card, and the card's header
+              carries the toolbar — views, search, chips, the count, columns and density — and
+              nothing else (shadcn's CardHeader, as it ships). */}
+          <CardHeader>{tableHeader}</CardHeader>
+          <CardContent className="min-h-0 flex-1 overflow-auto px-0">
           {/* The selection band: a group inside the container, never a second box. */}
           {rStable ? (
             count > 0 && (
@@ -1173,7 +1164,25 @@ export function PeoplePage({ session }: { session: Session }) {
           </table>
 
           {sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}
-        </Container>
+          </CardContent>
+          <CardFooter className="border-t">
+            {sorted.length > shown && (
+              <Button variant="outline" size="sm" onClick={() => setShown((n) => n + pageSize)}>
+                Show {Math.min(pageSize, sorted.length - shown)} more
+              </Button>
+            )}
+            <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+              <label htmlFor="rows-per-page">Rows per page</label>
+              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setShown(Number(v)) }}>
+                <SelectTrigger id="rows-per-page" className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>{[25, 50, 100].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
+              </Select>
+            </span>
+            <Button size="sm" variant="ghost" className="md:hidden" onClick={() => setSelectMode((v) => !v)}>
+              {selectMode ? "Done selecting" : "Select"}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
 
       {pending && (
@@ -1330,14 +1339,16 @@ function JobChange({ p, seed, onDone }: { p: PersonRow; seed: ReturnType<typeof 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           aria-expanded={open}
-          className="shrink-0 rounded-full border border-[var(--warning-ink)] px-1.5 py-0.5 t-small text-[var(--warning-ink)]"
+          className="shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
           Changed job
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 text-sm" onClick={(e) => e.stopPropagation()}>
         <p className="pb-2">{line}</p>
@@ -1397,16 +1408,17 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction, onPage = tru
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           data-item="people.views.saved"
           data-item-label="All views"
           aria-expanded={open}
-          className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", open && "rotate-180")} />
+          <ChevronDown aria-hidden="true" className={cn("transition-transform", open && "rotate-180")} />
           All views ({views.length})
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <Input aria-label="Search views" placeholder="Search views" className="h-8" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -1424,7 +1436,7 @@ function ViewsDoor({ views, viewId, user, onOpen, onSave, onAction, onPage = tru
             <h4 className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{current.name}</h4>
             <div className="flex flex-wrap gap-1">
               {[...(onPage ? ["Set as my default"] : []), "Rename", "Share with everyone", "Email me daily", "Email me weekly", "Copy a link", "Delete"].map((what) => (
-                <Button key={what} size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { onAction(what.toLowerCase(), current); setOpen(false) }}>
+                <Button key={what} size="sm" variant="outline" onClick={() => { onAction(what.toLowerCase(), current); setOpen(false) }}>
                   {what}
                 </Button>
               ))}
@@ -1465,16 +1477,17 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           data-item="people.columns.choose"
           data-item-label="Columns and density"
           aria-expanded={open}
-          className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", open && "rotate-180")} />
+          <ChevronDown aria-hidden="true" className={cn("transition-transform", open && "rotate-180")} />
           Columns and density · {shownIds.length} of {all.length}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80" data-container="people.columns.popover" data-container-label="Columns and density">
         <ul className="max-h-72 space-y-0.5 overflow-y-auto">
@@ -1504,18 +1517,22 @@ function ColumnsDoor({ all, shownIds, onChange, onReset, density, onDensity, pag
           })}
         </ul>
         <div className="mt-3 space-y-2 border-t pt-3">
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={onReset}>Reset to the {roleLabel} default</Button>
-          <div className="flex items-center gap-1.5 text-xs" data-item="people.density" data-item-label="Density">
-            <span className="text-muted-foreground">Density</span>
-            {(["Comfortable", "Compact"] as const).map((v) => (
-              <Button key={v} size="sm" variant={density === v ? "secondary" : "ghost"} aria-pressed={density === v} className="h-7 px-2 text-xs" onClick={() => onDensity(v)}>{v}</Button>
-            ))}
+          <Button size="sm" variant="outline" onClick={onReset}>Reset to the {roleLabel} default</Button>
+          <div className="flex flex-wrap items-center gap-2" data-item="people.density" data-item-label="Density">
+            <span className="text-xs text-muted-foreground">Density</span>
+            <ToggleGroup type="single" variant="outline" size="sm" spacing={2} value={density} onValueChange={(v) => { if (v) onDensity(v as "Comfortable" | "Compact") }}>
+              {(["Comfortable", "Compact"] as const).map((v) => (
+                <ToggleGroupItem key={v} value={v}>{v}</ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-muted-foreground">Rows per page</span>
-            {[25, 50, 100].map((n) => (
-              <Button key={n} size="sm" variant={pageSize === n ? "secondary" : "ghost"} aria-pressed={pageSize === n} className="h-7 px-2 text-xs" onClick={() => onPageSize(n)}>{n}</Button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Rows per page</span>
+            <ToggleGroup type="single" variant="outline" size="sm" spacing={2} value={String(pageSize)} onValueChange={(v) => { if (v) onPageSize(Number(v)) }}>
+              {[25, 50, 100].map((n) => (
+                <ToggleGroupItem key={n} value={String(n)}>{n}</ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
         </div>
       </PopoverContent>
