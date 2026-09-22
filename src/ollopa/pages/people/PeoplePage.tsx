@@ -1303,7 +1303,7 @@ function JobChange({ p, seed, onDone }: { p: PersonRow; seed: ReturnType<typeof 
         <button
           type="button"
           aria-expanded={open}
-          className="shrink-0 rounded-full border border-[var(--warning-ink)] px-1.5 py-0.5 t-small text-[var(--warning-ink)] dark:border-amber-700 dark:text-amber-300"
+          className="shrink-0 rounded-full border border-[var(--warning-ink)] px-1.5 py-0.5 t-small text-[var(--warning-ink)]"
           onClick={(e) => e.stopPropagation()}
         >
           Changed job
