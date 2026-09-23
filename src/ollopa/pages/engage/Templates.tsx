@@ -6,7 +6,6 @@
 // direction (IA-MAP 6.4h). "Used by" is a column, not a hover, because it is what a person needs
 // before they edit copy other people receive.
 import { useMemo, useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
@@ -16,8 +15,9 @@ import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, TableCard, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
+import { IndexPage } from "../../layouts"
+import { Chip } from "../../ui/Identity"
+import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */
 export interface CopyRow {
@@ -112,11 +112,11 @@ export function TemplatesPage({ session }: { session: Session }) {
       key: "name", header: "Template", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
       cell: (r) => (
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <RowOpen to={`/ollopa/templates/${r.id}`} onOpen={() => open(r)}>{r.name}</RowOpen>
-            <Chip family="templates" icon={false}>{r.kind}</Chip>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <RowOpen to={`/ollopa/templates/${r.id}`} onOpen={() => open(r)} className="truncate">{r.name}</RowOpen>
+            <Chip family="templates" icon={false} className="shrink-0">{r.kind}</Chip>
           </div>
-          <div className="t-small text-muted-foreground">{r.folder}</div>
+          <div className="t-small truncate text-muted-foreground">{r.folder}</div>
         </div>
       ),
     },
@@ -132,71 +132,73 @@ export function TemplatesPage({ session }: { session: Session }) {
     { keys: "k", label: "Previous template", run: () => moveRow(-1) },
   ], []))
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
-        <div>
-          <h2 className="t-title flex items-center gap-2">
-            <FamilyIcon of="templates" size="header" />
-            Templates and snippets
-          </h2>
-        </div>
-        <Button onClick={() => toast("New template · name it, then write the subject and body")}>New template</Button>
-      </div>
+  const table = (only: "table" | "rows") => (
+    <DataTable<CopyRow>
+      only={only}
+      rows={rows}
+      rowKey={(r) => r.id}
+      columns={columns}
+      sortKey={sort.key}
+      sortDir={sort.dir}
+      onSort={(k, dir) => setSort({ key: k, dir })}
+      rowActions={[{ label: () => "Open", onClick: open }]}
+      menu={(r) => [
+        { label: "Duplicate", onClick: () => toast(`Duplicated ${r.name}`) },
+        { label: "Rename", onClick: () => open(r) },
+        { label: "Move to folder", onClick: () => toast(`${r.name}: choose a folder`) },
+        {
+          label: r.usedBySteps.length
+            ? `Archive · used by ${n(r.usedBySteps.length)} steps`
+            : "Archive",
+          destructive: true,
+          onClick: () => toast(`${r.name} archived · ${n(r.usedBySteps.length)} steps keep the text they have today`),
+        },
+      ]}
+      menuLabel={(r) => r.name}
+      onOpen={open}
+      empty={<EmptyState title="No templates yet" body="Write one here, or save a step's copy as a template from the step that uses it." />}
+    />
+  )
 
-      {/* The page title is above the card; the card's header carries the toolbar and the count
-          and repeats no title. The phone cards are the same card's body at that width. */}
-      <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
-        <TableCard
-          count={`${n(rows.length)} shown of ${n(rowsAll.length)}`}
-          toolbar={<>
-            <Input
-              data-page-search aria-label="Search templates by name or body text" placeholder="Search name and body"
-              value={q} onChange={(e) => setQ(e.target.value)} className="w-64"
-            />
-            <Select value={folder} onValueChange={setFolder}>
-              <SelectTrigger className="w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Folder: all</SelectItem>
-                {folders.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={owner} onValueChange={setOwner}>
-              <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Mine">Owner: mine</SelectItem>
-                <SelectItem value="all">Owner: everyone</SelectItem>
-                {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </>}
-        >
-        <DataTable<CopyRow>
-          rows={rows}
-          rowKey={(r) => r.id}
-          columns={columns}
-          sortKey={sort.key}
-          sortDir={sort.dir}
-          onSort={(k, dir) => setSort({ key: k, dir })}
-          rowActions={[{ label: () => "Open", onClick: open }]}
-          menu={(r) => [
-            { label: "Duplicate", onClick: () => toast(`Duplicated ${r.name}`) },
-            { label: "Rename", onClick: () => open(r) },
-            { label: "Move to folder", onClick: () => toast(`${r.name}: choose a folder`) },
-            {
-              label: r.usedBySteps.length
-                ? `Archive · used by ${n(r.usedBySteps.length)} steps`
-                : "Archive",
-              destructive: true,
-              onClick: () => toast(`${r.name} archived · ${n(r.usedBySteps.length)} steps keep the text they have today`),
-            },
-          ]}
-          menuLabel={(r) => r.name}
-          onOpen={open}
-          empty={<EmptyState title="No templates yet" body="Write one here, or save a step's copy as a template from the step that uses it." />}
-        />
-        </TableCard>
-      </div>
-    </div>
+  return (
+    <IndexPage
+      family="templates"
+      title="Templates and snippets"
+      count={rowsAll.length}
+      actions={[{ kind: "primary", label: "New template", onClick: () => toast("New template · name it, then write the subject and body") }]}
+      shown={`${n(rows.length)} shown of ${n(rowsAll.length)}`}
+      controls={[
+        {
+          name: "Search", always: true,
+          node: <Input
+            data-page-search aria-label="Search templates by name or body text" placeholder="Search name and body"
+            value={q} onChange={(e) => setQ(e.target.value)} className="w-64"
+          />,
+        },
+        {
+          name: "Folder",
+          node: <Select value={folder} onValueChange={setFolder}>
+            <SelectTrigger className="w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Folder: all</SelectItem>
+              {folders.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>,
+        },
+        {
+          name: "Owner",
+          node: <Select value={owner} onValueChange={setOwner}>
+            <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Mine">Owner: mine</SelectItem>
+              <SelectItem value="all">Owner: everyone</SelectItem>
+              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+            </SelectContent>
+          </Select>,
+        },
+      ]}
+      table={table("table")}
+      rows={table("rows")}
+    />
   )
 }

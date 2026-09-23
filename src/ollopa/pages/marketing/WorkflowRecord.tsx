@@ -16,8 +16,9 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { useDisclosure } from "../../ui/useDisclosure"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { FAMILY, PERSON_FAMILY, RowGap, ink } from "./look"
+import { FAMILY, PERSON_FAMILY, RowGap, ink, inUsageOrder } from "./look"
 import { Separator } from "@/components/ui/separator"
 import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
@@ -49,6 +50,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   const seed = seedFor(session.business)
   const rows = useMarketing(session.business)
   const route = useRoute()
+  const d = useDisclosure("workflows")
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
 
   // What actions took on these people this session, from the one store every page reads: acting in
@@ -136,11 +138,13 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
   /* ------------------------------------------------------------------------------ the sections */
 
-  const sections: RecordSection[] = []
+  // Each section names the usage item it is about; the model ranks them and the page never
+  // hard-codes the order (LAYOUTS.md §7).
+  const parts: { item: string; section: RecordSection }[] = []
 
   if (w.sla) {
     const hours = windowHours(w.sla.windows.hot)
-    sections.push({
+    parts.push({ item: "wf.sla-running", section: {
       id: "sla", title: "The SLA",
       children: (
         <div className="space-y-2">
@@ -182,10 +186,10 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           </p>
         </div>
       ),
-    })
+    } })
   }
 
-  sections.push({
+  parts.push({ item: "wf.enrolment", section: {
     id: "enrolment", title: "Trigger and enrolment",
     children: (
       <div className="space-y-2 text-sm">
@@ -200,9 +204,9 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         </p>
       </div>
     ),
-  })
+  } })
 
-  sections.push({
+  parts.push({ item: "wf.rules", section: {
     id: "rules", title: "Rules and actions", count: w.rules.length,
     children: (
       <div className="space-y-3">
@@ -248,9 +252,9 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         {announcement && <Announcement text={`${announcement} Told today; the line expires in seven days.`} href={href("/ollopa")} />}
       </div>
     ),
-  })
+  } })
 
-  sections.push({
+  parts.push({ item: "wf.ceiling", section: {
     id: "ceiling", title: "The credit ceiling",
     children: (
       <div className="space-y-2">
@@ -277,14 +281,14 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         </div>
       </div>
     ),
-  })
+  } })
 
-  sections.push({
+  parts.push({ item: "wf.rules", section: {
     id: "suppression", title: "People this workflow never touches", count: w.suppress.length,
     children: <ul className="list-disc pl-4 text-sm text-muted-foreground">{w.suppress.map((s) => <li key={s}>{s}</li>)}</ul>,
-  })
+  } })
 
-  sections.push({
+  parts.push({ item: "wf.test", section: {
     id: "turn-on", title: "Test and turn on",
     children: (
       <Actions surface="page" items={[
@@ -314,7 +318,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         { kind: "secondary", label: "Test on one record", onClick: () => { setTested(false); setTestOpen(true) }, keys: "T" },
       ]} />
     ),
-  })
+  } })
 
   /* --------------------------------------------------- D-wf-runs: one door, two named sections */
 
@@ -462,7 +466,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           }],
           secondary: [{ label: "Test on one record", onClick: () => { setTested(false); setTestOpen(true) } }],
         }}
-        main={{ kind: "sections", label: "Workflow", sections }}
+        main={{ kind: "sections", label: "Workflow", sections: inUsageOrder(d, parts) }}
         side={[
           {
             id: "what-it-costs", title: "What it costs", tone: atCeiling ? "attention" : undefined,

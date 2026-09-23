@@ -34,7 +34,7 @@ const shot = async (name) => {
 const trail = () => page.evaluate(() => document.querySelector('nav[aria-label="Your path"]')?.innerText.replace(/\n/g, " › ") ?? "(none)")
 const lit = () => page.evaluate(() => document.querySelector(".ollopa-returned")?.innerText.replace(/\n/g, " ").slice(0, 60) ?? "(nothing lit)")
 const focused = () => page.evaluate(() => document.activeElement?.innerText?.replace(/\n/g, " ").slice(0, 60) ?? "(none)")
-const paneName = () => page.evaluate(() => document.querySelector("aside h2")?.textContent ?? "(no pane)")
+const paneName = () => page.evaluate(() => document.querySelector('aside[aria-label*=" beside "] h2')?.textContent ?? "(no pane)")
 const openBesideRow = () => page.evaluate(() => document.querySelector(".ollopa-beside-open")?.innerText.replace(/\n/g, " ").slice(0, 60) ?? "(no row marked)")
 /** Focus a control and press Enter: the keyboard's way of using it. */
 const press = async (find, key = "Enter") => {
@@ -155,7 +155,7 @@ console.log("chain 2 the deal's scroll:", scrollBefore, "→", scrollAfter, scro
 await shot("6-contact-next")
 
 // "Open the page": the contact record, with the deal and the row it came from on the trail.
-await press(`Array.from(document.querySelectorAll("aside button, aside a")).find((b) => b.textContent.trim() === "Open the page")`)
+await press(`Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button, aside[aria-label*=" beside "] a')).find((b) => b.textContent.trim() === "Open the page")`)
 await wait(900)
 console.log("chain 2 trail:", await trail())
 await shot("7-contact-record")
@@ -217,7 +217,9 @@ await page.evaluate(() => {
 })
 await page.goto(`${base}/#/ollopa/deals`, { waitUntil: "networkidle0" })
 await page.reload({ waitUntil: "networkidle0" })
-await wait(800)
+// Every deal at any close date is a long board: wait for the first card rather than for a clock.
+await page.waitForSelector('[data-page-active="true"] li[data-card-id]', { timeout: 15000 })
+await wait(400)
 
 const adminCard = await page.evaluate(() => {
   const el = Array.from(document.querySelectorAll('[data-page-active="true"] li[data-card-id]')).find((x) => x.offsetParent !== null)
@@ -233,9 +235,9 @@ for (let i = 0; i < 25 && !acted; i++) {
   await page.keyboard.press("BracketRight")
   await wait(220)
   acted = await page.evaluate(() => {
-    const name = document.querySelector("aside h2")?.textContent?.trim()
+    const name = document.querySelector('aside[aria-label*=" beside "] h2')?.textContent?.trim()
     // The one act the pane carries: winning and losing cannot be undone, so they stayed on the page.
-    const set = Array.from(document.querySelectorAll("aside button, aside a")).find((b) => b.textContent.trim() === "Set the next step")
+    const set = Array.from(document.querySelectorAll('aside[aria-label*=" beside "] button, aside[aria-label*=" beside "] a')).find((b) => b.textContent.trim() === "Set the next step")
     if (!name || !set) return null
     // The card on the board behind: the mounted page that is not the one on screen.
     const link = Array.from(document.querySelectorAll("a[data-item][data-item-label]"))
@@ -251,7 +253,7 @@ console.log("the card behind, before:", acted.before)
 
 // Type the next step in the pane and set it. The card on the board behind is mounted on the trail
 // and reads the same store, so it says the new step without the page being touched.
-await page.evaluate(() => document.querySelector("aside input")?.focus())
+await page.evaluate(() => document.querySelector('aside[aria-label*=" beside "] input')?.focus())
 await page.keyboard.type("Security review with the CISO")
 await press(`Array.from(document.querySelectorAll("aside button")).find((b) => b.textContent.trim() === "Set the next step")`)
 await wait(700)
@@ -295,7 +297,7 @@ for (const role of ["ae", "admin"]) {
   await page.evaluate(() => document.body.focus())
   await page.keyboard.press("BracketRight")
   await wait(1000)
-  const labels = await page.evaluate(() => Array.from(document.querySelectorAll("aside dl dt")).map((el) => el.textContent.trim()))
+  const labels = await page.evaluate(() => Array.from(document.querySelectorAll('aside[aria-label*=" beside "] dl dt')).map((el) => el.textContent.trim()))
   console.log(`the deal pane for the Meridian ${role}:`, labels.join(", ") || "(no pane)")
   await shot(`15-pane-fields-${role}`)
 }

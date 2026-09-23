@@ -25,8 +25,9 @@ import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
 import { Separator } from "@/components/ui/separator"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, TableCard, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
+import { IndexPage } from "../../layouts"
+import { Chip } from "../../ui/Identity"
+import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
 const KINDS_OF_LIST = [
@@ -205,19 +206,52 @@ export function ListsPage({ session }: { session: Session }) {
     window.setTimeout(() => setUndo((u) => (u?.id === l.id ? null : u)), 10_000)
   }
 
-  return (
-    <DoorGroup>
-      <div className="flex h-full flex-col">
-        <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
-          <div>
-            <h2 className="t-title flex items-center gap-2">
-              <FamilyIcon of="lists" size="header" />
-              Lists
-            </h2>
-          </div>
-          <Button onClick={() => setChooser((v) => !v)} aria-expanded={chooser}>New list</Button>
-        </div>
+  const table = (only: "table" | "rows") => (
+    <DataTable<List>
+      only={only}
+      bulkInFooter
+        rows={rows}
+        rowKey={(l) => l.id}
+        columns={columns}
+        sortKey={sort.key}
+        sortDir={sort.dir}
+        onSort={(k, dir) => setSort({ key: k, dir })}
+        rowActions={visibleActions}
+        menu={menu}
+        menuLabel={(l) => l.name}
+        onOpen={open}
+        selection={{
+          selected,
+          onChange: setSelected,
+          bar: (ids) => (
+            <>
+              <Button size="sm" variant="outline" onClick={() => { const first = lists.find((l) => l.id === ids[0]); if (first) setEnrolling(first) }}>
+                Add to sequence
+              </Button>
+              {hasCampaigns && <Button size="sm" variant="outline" onClick={() => toast(`${n(ids.length)} lists · pick a campaign`)}>Add to campaign</Button>}
+              <Button size="sm" variant="outline" onClick={() => toast(`Exported ${n(ids.length)} lists`)}>Export CSV</Button>
+              <Button size="sm" variant="outline" onClick={() => { ids.forEach((id) => engage.patchList(session.business, id, { archived: true })); setSelected([]); toast(`Archived ${n(ids.length)} lists`) }}>Archive</Button>
+              <Button size="sm" variant="ghost" style={{ color: "var(--danger-ink)" }} onClick={() => { ids.forEach((id) => engage.deleteList(session.business, id)); setSelected([]); toast(`Deleted ${n(ids.length)} lists · the people stay in People`) }}>
+                Delete {n(ids.length)} lists · the people stay in People
+              </Button>
+            </>
+          ),
+        }}
+        empty={
+          lists.length === 0
+            ? <EmptyState title="No lists yet" body="Make one from People, Companies, or here." action={<Button size="sm" onClick={() => setChooser(true)}>New list</Button>} />
+            : undefined
+        }
+          />
+  )
 
+  return (
+    <IndexPage
+      family="lists"
+      title="Lists"
+      count={lists.length}
+      actions={[{ kind: "primary", label: "New list", onClick: () => setChooser((v) => !v) }]}
+      above={<>
         {chooser && (
           <div className="mx-4 mt-3 rounded-lg border p-3 sm:mx-6">
             <h3 className="t-body font-medium">New list</h3>
@@ -240,124 +274,104 @@ export function ListsPage({ session }: { session: Session }) {
           </div>
         )}
 
-        {/* --------------------------------------------------------------------------- toolbar */}
-        <div className="px-4 pt-3 sm:px-6">
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Door id="lists.filters" label="Mode, source, archived" count={activeInDoor || undefined}>
-              <div className="grid gap-3 py-1 sm:grid-cols-3">
-                <div>
-                  <Label htmlFor="f-mode" className="text-xs">Mode</Label>
-                  <Select value={mode} onValueChange={setMode}>
-                    <SelectTrigger id="f-mode" className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="static">Static</SelectItem>
-                      <SelectItem value="segment">Segment</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="f-source" className="text-xs">Source</Label>
-                  <Select value={source} onValueChange={setSource}>
-                    <SelectTrigger id="f-source" className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="search">Search</SelectItem>
-                      <SelectItem value="csv">CSV</SelectItem>
-                      <SelectItem value="agent">Agent</SelectItem>
-                      <SelectItem value="manual">By hand</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <label className="flex items-end gap-2 pb-2 text-sm">
-                  <Checkbox checked={archived} onCheckedChange={(v) => setArchived(v === true)} />
-                  Show archived lists
-                </label>
-              </div>
-            </Door>
-            <Door id="lists.columns" label="Columns: visibility, source, created">
-              <div className="flex flex-wrap gap-4 py-1 text-sm">
-                {([["visibility", "Who can see it"], ["source", "Source"], ["created", "Created"]] as const).map(([k, label]) => (
-                  <label key={k} className="flex items-center gap-2">
-                    <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
-                    {label}
+      </>}
+      shown={`${n(rows.length)} shown of ${n(lists.length)}`}
+      controls={[
+        {
+          name: "Search", always: true,
+          node: <Input
+            data-page-search
+            aria-label="Search lists by name or owner"
+            placeholder="Search lists"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-56"
+          />,
+        },
+        {
+          name: "Kind",
+          node: <Select value={kind} onValueChange={setKind}>
+            <SelectTrigger className="w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Kind: all</SelectItem>
+              <SelectItem value="people">People</SelectItem>
+              <SelectItem value="companies">Companies</SelectItem>
+            </SelectContent>
+          </Select>,
+        },
+        {
+          name: "Owner",
+          node: <Select value={owner} onValueChange={setOwner}>
+            <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Mine">Owner: mine</SelectItem>
+              <SelectItem value="Team">Owner: the team</SelectItem>
+              <SelectItem value="all">Owner: all</SelectItem>
+              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+            </SelectContent>
+          </Select>,
+        },
+        {
+          name: "Mode, source, archived",
+          node: (
+            <DoorGroup>
+              <Door id="lists.filters" label="Mode, source, archived" count={activeInDoor || undefined}>
+                <div className="grid gap-3 py-1 sm:grid-cols-3">
+                  <div>
+                    <Label htmlFor="f-mode" className="text-xs">Mode</Label>
+                    <Select value={mode} onValueChange={setMode}>
+                      <SelectTrigger id="f-mode" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="static">Static</SelectItem>
+                        <SelectItem value="segment">Segment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="f-source" className="text-xs">Source</Label>
+                    <Select value={source} onValueChange={setSource}>
+                      <SelectTrigger id="f-source" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="search">Search</SelectItem>
+                        <SelectItem value="csv">CSV</SelectItem>
+                        <SelectItem value="agent">Agent</SelectItem>
+                        <SelectItem value="manual">By hand</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <label className="flex items-end gap-2 pb-2 text-sm">
+                    <Checkbox checked={archived} onCheckedChange={(v) => setArchived(v === true)} />
+                    Show archived lists
                   </label>
-                ))}
-              </div>
-            </Door>
-          </div>
-        </div>
+                </div>
+              </Door>
+            </DoorGroup>
+          ),
+        },
+        {
+          name: "Columns",
+          node: (
+            <DoorGroup>
+              <Door id="lists.columns" label="Columns: visibility, source, created">
+                <div className="flex flex-wrap gap-4 py-1 text-sm">
+                  {([["visibility", "Who can see it"], ["source", "Source"], ["created", "Created"]] as const).map(([k, label]) => (
+                    <label key={k} className="flex items-center gap-2">
+                      <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </Door>
+            </DoorGroup>
+          ),
+        },
+      ]}
+      table={table("table")}
+      rows={table("rows")}
+    >
 
-        {/* ----------------------------------------------------------------------------- table */}
-        {/* The page title is above the card; the card's header carries the toolbar and the count
-            and repeats no title. The phone cards are the same card's body at that width. */}
-        <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
-          <TableCard
-            count={`${n(rows.length)} shown of ${n(lists.length)}`}
-            toolbar={<>
-              <Input
-                data-page-search
-                aria-label="Search lists by name or owner"
-                placeholder="Search lists"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                className="w-56"
-              />
-              <Select value={kind} onValueChange={setKind}>
-                <SelectTrigger className="w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Kind: all</SelectItem>
-                  <SelectItem value="people">People</SelectItem>
-                  <SelectItem value="companies">Companies</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={owner} onValueChange={setOwner}>
-                <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Mine">Owner: mine</SelectItem>
-                  <SelectItem value="Team">Owner: the team</SelectItem>
-                  <SelectItem value="all">Owner: all</SelectItem>
-                  {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </>}
-          >
-          <DataTable<List>
-            rows={rows}
-            rowKey={(l) => l.id}
-            columns={columns}
-            sortKey={sort.key}
-            sortDir={sort.dir}
-            onSort={(k, dir) => setSort({ key: k, dir })}
-            rowActions={visibleActions}
-            menu={menu}
-            menuLabel={(l) => l.name}
-            onOpen={open}
-            selection={{
-              selected,
-              onChange: setSelected,
-              bar: (ids) => (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => { const first = lists.find((l) => l.id === ids[0]); if (first) setEnrolling(first) }}>
-                    Add to sequence
-                  </Button>
-                  {hasCampaigns && <Button size="sm" variant="outline" onClick={() => toast(`${n(ids.length)} lists · pick a campaign`)}>Add to campaign</Button>}
-                  <Button size="sm" variant="outline" onClick={() => toast(`Exported ${n(ids.length)} lists`)}>Export CSV</Button>
-                  <Button size="sm" variant="outline" onClick={() => { ids.forEach((id) => engage.patchList(session.business, id, { archived: true })); setSelected([]); toast(`Archived ${n(ids.length)} lists`) }}>Archive</Button>
-                  <Button size="sm" variant="ghost" style={{ color: "var(--danger-ink)" }} onClick={() => { ids.forEach((id) => engage.deleteList(session.business, id)); setSelected([]); toast(`Deleted ${n(ids.length)} lists · the people stay in People`) }}>
-                    Delete {n(ids.length)} lists · the people stay in People
-                  </Button>
-                </>
-              ),
-            }}
-            empty={
-              lists.length === 0
-                ? <EmptyState title="No lists yet" body="Make one from People, Companies, or here." action={<Button size="sm" onClick={() => setChooser(true)}>New list</Button>} />
-                : undefined
-            }
-          />
-          </TableCard>
-        </div>
 
         {/* ------------------------------------------------------------- delete, with its words */}
         {confirming && (<><Separator />
@@ -389,8 +403,7 @@ export function ListsPage({ session }: { session: Session }) {
             from={enrolling.name}
           />
         )}
-      </div>
-    </DoorGroup>
+    </IndexPage>
   )
 }
 

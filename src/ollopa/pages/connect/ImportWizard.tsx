@@ -218,6 +218,8 @@ export function ImportWizard({ session }: { session: Session }) {
   return (
     <>
       <Wizard
+        title="Import and enrich a file"
+        family="people"
         steps={steps}
         current={current}
         go={go}

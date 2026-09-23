@@ -19,8 +19,9 @@ import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { Actions } from "../../ui/Actions"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, TableCard, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { IndexPage } from "../../layouts"
+import { Chip } from "../../ui/Identity"
+import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
 /**
  * The words the status cell uses, and the bare state word behind each of them. Bounce guard is a
@@ -185,134 +186,132 @@ export function SequencesPage({ session }: { session: Session }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [rows]))
 
-  return (
-    <DoorGroup>
-      <div className="flex h-full flex-col">
-        <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
-          <div>
-            <h2 className="t-title flex items-center gap-2">
-              <FamilyIcon of="sequences" size="header" />
-              Sequences
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            {duplicateIsVisible && rows[0] && <Button variant="outline" onClick={() => duplicate(rows[0])}>Duplicate “{rows[0].name}”</Button>}
-            <Button onClick={create}>New sequence</Button>
-          </div>
-        </div>
-
-        {paused.length > 0 && (
-          <div className="px-4 pt-3 sm:px-6">
-            <HealthStrip lines={paused.map((s) => ({
-              kind: "error" as const,
-              text: `${s.name} auto-paused by bounce guard · ${s.bounceRate7d}% over 7 days, pauses at ${BOUNCE_GUARD.pausePercent}%`,
-              href: `#/ollopa/sequences/${s.id}`,
-            }))} />
-          </div>
-        )}
-
-        <div className="px-4 pt-3 sm:px-6">
-          <div>
-            <Door id="sequences.columns" label="Columns: opened, interested, meetings, created, mailbox, schedule">
-              <div className="flex flex-wrap gap-4 py-1 text-sm">
-                {([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const).map(([k, label]) => (
-                  <label key={k} className="flex items-center gap-2">
-                    <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </Door>
-          </div>
-        </div>
-
-        {/* The page title is above the card; the card's header carries the toolbar and the count
-            and repeats no title. The phone cards are the same card's body at that width. */}
-        <div className="mt-3 min-h-0 flex-1 overflow-auto px-4 pb-6 sm:px-6">
-          <TableCard
-            count={`${n(rows.length)} shown of ${n(b.counts.sequences)}`}
-            toolbar={<>
-              <Input
-                data-page-search aria-label="Search sequences by name or owner" placeholder="Search sequences"
-                value={q} onChange={(e) => setQ(e.target.value)} className="w-56"
+  const table = (only: "table" | "rows") => (
+    <DataTable<Sequence>
+      only={only}
+      bulkInFooter
+        rows={rows}
+        rowKey={(s) => s.id}
+        columns={columns}
+        sortKey={sort.key}
+        sortDir={sort.dir}
+        onSort={(k, dir) => setSort({ key: k, dir })}
+        rowActions={[
+          { label: (s) => (s.guardState === "auto-paused" ? "Review and resume" : s.status === "Active" ? "Pause" : "Resume"), onClick: pauseResume },
+          ...(duplicateIsVisible ? [{ label: () => "Duplicate", onClick: duplicate }] : []),
+          { label: () => "Open", onClick: open },
+        ]}
+        menu={menu}
+        menuLabel={(s) => s.name}
+        onOpen={open}
+        selection={{
+          selected, onChange: setSelected,
+          bar: (ids) => (
+            <>
+              <Actions
+                surface="card"
+                items={[
+                  { kind: "secondary", label: "Pause", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Paused", pausedBy: session.user })); setSelected([]); toast(`Paused ${n(ids.length)} sequences. Everyone keeps their place.`) } },
+                  { kind: "secondary", label: "Resume", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Active", pausedBy: null })); setSelected([]); toast(`Resumed ${n(ids.length)} sequences.`) } },
+                  {
+                    kind: "destructive",
+                    label: `Archive ${n(ids.length)}`,
+                    onClick: () => {
+                      const people = ids.reduce((sum, id) => sum + (sequences.find((s) => s.id === id)?.active ?? 0), 0)
+                      ids.forEach((id) => engage.patchSequence(session.business, id, { archivedAt: TODAY, status: "Paused" }))
+                      setSelected([])
+                      toast(`Archived ${n(ids.length)} sequences · ${n(people)} people marked finished`)
+                    },
+                    irreversible: {
+                      title: `Archive ${n(ids.length)} sequences?`,
+                      consequence: "Their people are marked finished and their scheduled emails are deleted. Replies and activity stay on the records.",
+                      confirmLabel: `Archive ${n(ids.length)}`,
+                    },
+                  },
+                ]}
               />
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-44" aria-label="Status"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Status: all</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Paused">Paused</SelectItem>
-                  <SelectItem value="Auto-paused">Auto-paused</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-              {showOwnerFilter && (
-                <Select value={owner} onValueChange={setOwner}>
-                  <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mine">Owner: mine</SelectItem>
-                    <SelectItem value="all">Owner: everyone</SelectItem>
-                    {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-            </>}
-          >
-          <DataTable<Sequence>
-            rows={rows}
-            rowKey={(s) => s.id}
-            columns={columns}
-            sortKey={sort.key}
-            sortDir={sort.dir}
-            onSort={(k, dir) => setSort({ key: k, dir })}
-            rowActions={[
-              { label: (s) => (s.guardState === "auto-paused" ? "Review and resume" : s.status === "Active" ? "Pause" : "Resume"), onClick: pauseResume },
-              ...(duplicateIsVisible ? [{ label: () => "Duplicate", onClick: duplicate }] : []),
-              { label: () => "Open", onClick: open },
-            ]}
-            menu={menu}
-            menuLabel={(s) => s.name}
-            onOpen={open}
-            selection={{
-              selected, onChange: setSelected,
-              bar: (ids) => (
-                <>
-                  <Actions
-                    surface="card"
-                    items={[
-                      { kind: "secondary", label: "Pause", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Paused", pausedBy: session.user })); setSelected([]); toast(`Paused ${n(ids.length)} sequences. Everyone keeps their place.`) } },
-                      { kind: "secondary", label: "Resume", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Active", pausedBy: null })); setSelected([]); toast(`Resumed ${n(ids.length)} sequences.`) } },
-                      {
-                        kind: "destructive",
-                        label: `Archive ${n(ids.length)}`,
-                        onClick: () => {
-                          const people = ids.reduce((sum, id) => sum + (sequences.find((s) => s.id === id)?.active ?? 0), 0)
-                          ids.forEach((id) => engage.patchSequence(session.business, id, { archivedAt: TODAY, status: "Paused" }))
-                          setSelected([])
-                          toast(`Archived ${n(ids.length)} sequences · ${n(people)} people marked finished`)
-                        },
-                        irreversible: {
-                          title: `Archive ${n(ids.length)} sequences?`,
-                          consequence: "Their people are marked finished and their scheduled emails are deleted. Replies and activity stay on the records.",
-                          confirmLabel: `Archive ${n(ids.length)}`,
-                        },
-                      },
-                    ]}
-                  />
-                </>
-              ),
-            }}
-            empty={
-              sequences.length === 0
-                ? <EmptyState title="No sequences yet" body="Start one here, or ask the outreach agent to propose one." action={<Button size="sm" onClick={create}>New sequence</Button>} />
-                : undefined
-            }
+            </>
+          ),
+        }}
+        empty={
+          sequences.length === 0
+            ? <EmptyState title="No sequences yet" body="Start one here, or ask the outreach agent to propose one." action={<Button size="sm" onClick={create}>New sequence</Button>} />
+            : undefined
+        }
           />
-          </TableCard>
-        </div>
-      </div>
-    </DoorGroup>
+  )
+
+  return (
+    <IndexPage
+      family="sequences"
+      title="Sequences"
+      count={b.counts.sequences}
+      actions={[
+        ...(duplicateIsVisible && rows[0] ? [{ kind: "secondary" as const, label: `Duplicate “${rows[0].name}”`, onClick: () => duplicate(rows[0]) }] : []),
+        { kind: "primary" as const, label: "New sequence", onClick: create },
+      ]}
+      above={paused.length > 0 ? (
+        <HealthStrip lines={paused.map((s) => ({
+          kind: "error" as const,
+          text: `${s.name} auto-paused by bounce guard · ${s.bounceRate7d}% over 7 days, pauses at ${BOUNCE_GUARD.pausePercent}%`,
+          href: `#/ollopa/sequences/${s.id}`,
+        }))} />
+      ) : undefined}
+      shown={`${n(rows.length)} shown of ${n(b.counts.sequences)}`}
+      controls={[
+        {
+          name: "Search", always: true,
+          node: <Input
+            data-page-search aria-label="Search sequences by name or owner" placeholder="Search sequences"
+            value={q} onChange={(e) => setQ(e.target.value)} className="w-56"
+          />,
+        },
+        {
+          name: "Status",
+          node: <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-44" aria-label="Status"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Status: all</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Paused">Paused</SelectItem>
+              <SelectItem value="Auto-paused">Auto-paused</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+              <SelectItem value="Archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>,
+        },
+        ...(showOwnerFilter ? [{
+          name: "Owner",
+          node: <Select value={owner} onValueChange={setOwner}>
+            <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Mine">Owner: mine</SelectItem>
+              <SelectItem value="all">Owner: everyone</SelectItem>
+              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+            </SelectContent>
+          </Select>,
+        }] : []),
+        {
+          name: "Columns",
+          node: (
+            <DoorGroup>
+              <Door id="sequences.columns" label="Columns: opened, interested, meetings, created, mailbox, schedule">
+                <div className="flex flex-wrap gap-4 py-1 text-sm">
+                  {([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const).map(([k, label]) => (
+                    <label key={k} className="flex items-center gap-2">
+                      <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </Door>
+            </DoorGroup>
+          ),
+        },
+      ]}
+      table={table("table")}
+      rows={table("rows")}
+    />
   )
 }
 

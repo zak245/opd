@@ -12,15 +12,14 @@ import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
 import { Door } from "../../ui/Door"
+import { IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 
@@ -68,14 +67,22 @@ export interface QuickLookSpec<T> {
 }
 
 export interface DataTableProps<T> {
+  /** The family whose icon and ink the page header wears. */
+  family: string
   title: string
   total?: number
   rows: T[]
   rowKey: (row: T) => string
   searchText: (row: T) => string
   searchHint?: string
-  /** Above the filter row: the renewal counters and the hand-off strip. */
-  strip?: ReactNode
+  /** The numbers this page is judged by, as one band above the card. */
+  figures?: SummaryFigure[]
+  /** Sections above the table: a hand-off waiting, a notice, a confirmation. Never filters. */
+  above?: ReactNode
+  /** A control this page has that is not a column filter — the renewal windows on Accounts. */
+  extraControls?: ToolbarControl[]
+  /** One line under the card: the sentence naming who can do what this seat cannot (rule 4). */
+  below?: ReactNode
   /** Level-one filters, as visible selects beside the search box. */
   chips: FilterDef<T>[]
   /** Level-two filters, behind one door named by what is inside it. */
@@ -214,122 +221,136 @@ export function DataTable<T>(p: DataTableProps<T>) {
     )
   }
 
-  // The toolbar: the search, the seat's filter chips and the column chooser, in the container's
-  // header where the rule puts them (DESIGN.md §5, containment).
-  const toolbar = (
-    <>
-      <Input
-        ref={search}
-        aria-label={p.searchHint ?? "Search"}
-        placeholder={p.searchHint ?? "Search"}
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        className="w-64"
-      />
-      {p.chips.map((f) => (
-        <Select key={f.id} value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
+  // The toolbar's controls, each named so the template's own door can label itself with what it
+  // holds. The template keeps five in front and puts the rest behind that door; this page does not
+  // decide what to hide (LAYOUTS.md §2).
+  const controls: ToolbarControl[] = [
+    {
+      name: "Search", always: true,
+      node: (
+        <Input
+          ref={search}
+          aria-label={p.searchHint ?? "Search"}
+          placeholder={p.searchHint ?? "Search"}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="w-64 max-w-full"
+        />
+      ),
+    },
+    ...(p.extraControls ?? []).map((c) => ({ ...c, always: true })),
+    ...[...p.chips, ...p.doorFilters].map((f, i) => ({
+      name: f.label,
+      // Five in front and no more (LAYOUTS.md §2): the search, this page's own filter, the seat's
+      // first chips and the columns. Whatever is left labels the door.
+      always: i < Math.max(0, 4 - (p.extraControls?.length ?? 0)) && i < p.chips.length,
+      node: (
+        <Select value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
           <SelectTrigger className="h-9 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{f.label}: all</SelectItem>
             {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
           </SelectContent>
         </Select>
+      ),
+    })),
+    // The column chooser is not a filter, so it never goes behind the "Filter by …" door.
+    { name: "Columns", always: true, node: <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} /> },
+    ...(p.views ? [{ name: "Views", always: true, node: p.views }] : []),
+  ]
+
+  const bulkBar = selected.length > 0 || allMatching ? (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="t-label tabular-nums">
+        {allMatching ? `All ${rows.length.toLocaleString()} matching selected` : `${selected.length} selected`}
+      </span>
+      {!allMatching && pageSelected && rows.length > shown.length && (
+        <Button size="sm" variant="ghost" onClick={() => setAllMatching(true)}>
+          Select all {rows.length.toLocaleString()} matching
+        </Button>
+      )}
+      {(p.bulk ?? []).map((a) => (
+        <Button key={a.label} size="sm" variant={a.destructive ? "ghost" : "outline"}
+          className={cn(a.destructive && "text-destructive hover:text-destructive")}
+          onClick={() => { a.onClick(selectedRows); clearSelection() }}>
+          {a.label}
+        </Button>
       ))}
-      <Badge variant="outline" className="tabular-nums">
-        {rows.length.toLocaleString()}{p.total ? ` of ${p.total.toLocaleString()}` : ""}
-      </Badge>
-      <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} />
-      {p.views}
-      {p.pageMenu && (
+      <Button size="sm" variant="ghost" onClick={clearSelection}>Clear</Button>
+    </div>
+  ) : undefined
+
+  /** The same rows as a divided list, for 400: a clipped table is what §5 forbids by name. */
+  const phoneRows = shown.map((r) => {
+    const id = p.rowKey(r)
+    return (
+      <div key={id} data-item={id} className="flex items-start gap-2 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          {p.columns[0]?.cell(r)}
+          {p.phoneSummary && <div className="t-small pt-0.5 break-words text-muted-foreground">{p.phoneSummary(r)}</div>}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {p.columns.slice(1).filter((c) => c.phone).map((c) => (
+              <span key={c.id} className="t-small text-muted-foreground">{c.cell(r)}</span>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1 pt-1">
+            {p.rowActions.map((a) => (
+              <Button key={a.id} size="sm" variant="ghost" onClick={() => a.onClick(r)}>{a.label(r)}</Button>
+            ))}
+            <Button size="sm" variant="ghost" onClick={() => { setGlancing(r) }}>Quick look</Button>
+          </div>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="min-w-0 max-w-full truncate">{p.pageMenu.label}</Button>
+            <Button size="icon" variant="ghost" className="size-8 shrink-0" aria-label={p.menuLabel(r)}>
+              <MoreHorizontal className="size-4" />
+            </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {p.pageMenu.items.map((i) => <DropdownMenuItem key={i.label} onSelect={i.onClick}>{i.label}</DropdownMenuItem>)}
+          <DropdownMenuContent align="end" className="max-w-xs">
+            {p.rowActions.map((a) => <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>)}
+            {p.menuActions.filter((a) => !a.destructive).map((a) => (
+              <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>
+            ))}
+            {p.menuActions.filter((a) => a.destructive).map((a) => (
+              <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)} className="whitespace-normal text-destructive">{a.label(r)}</DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
-      {p.primary && <Button size="sm" onClick={p.primary.onClick}>{p.primary.label}</Button>}
-    </>
-  )
+      </div>
+    )
+  })
 
   return (
-    <div className="flex h-full flex-col p-4 lg:p-5">
-      <Card className="flex min-h-0 flex-1 flex-col">
-        {/* The page's own name is in the header above; the card's header is the toolbar and the
-            count, one flex-wrap row, and carries no title of its own. */}
-        <CardHeader>
-          <div className="flex w-full flex-wrap items-center gap-2">{toolbar}</div>
-          {/* Whatever the page puts above its rows — the renewal counters, a hand-off waiting, a
-              confirmation, an undo — and, while rows are selected, what can be done to them. It is
-              part of the card's header, not a tinted bar of its own. */}
-          {(p.strip || p.doorFilters.length > 0 || selected.length > 0 || allMatching || activeFilters.length > 0) && (
-            <div className="w-full">
-      {p.strip && <div className="pb-2">{p.strip}</div>}
-
-      {/* While anything is selected the bar replaces the filter row, so the two never fight. */}
-      {selected.length > 0 || allMatching ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="t-label tabular-nums">
-            {allMatching ? `All ${rows.length.toLocaleString()} matching selected` : `${selected.length} selected`}
-          </span>
-          {!allMatching && pageSelected && rows.length > shown.length && (
-            <Button size="sm" variant="ghost" className="h-7 t-small" onClick={() => setAllMatching(true)}>
-              Select all {rows.length.toLocaleString()} matching
-            </Button>
-          )}
-          {(p.bulk ?? []).map((a) => (
-            <Button key={a.label} size="sm" variant={a.destructive ? "ghost" : "outline"}
-              className={cn("h-7 t-small", a.destructive && "text-destructive hover:bg-destructive/10 hover:text-destructive")}
-              onClick={() => { a.onClick(selectedRows); clearSelection() }}>
-              {a.label}
-            </Button>
-          ))}
-          <Button size="sm" variant="ghost" className="h-7 t-small" onClick={clearSelection}>Clear</Button>
-        </div>
-      ) : (
-        <div>
+    <IndexPage
+      family={p.family}
+      title={p.title}
+      count={p.total ?? p.rows.length}
+      actions={p.primary ? [{ kind: "primary", label: p.primary.label, onClick: p.primary.onClick }] : []}
+      more={(p.pageMenu?.items ?? []).map((i) => ({ kind: "secondary" as const, label: i.label, onClick: i.onClick }))}
+      controls={controls}
+      shown={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+      above={
+        <>
+          {p.figures?.length ? <SummaryStrip figures={p.figures} /> : null}
+          {p.above}
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               <span className="t-small text-muted-foreground">Matching all of: {activeFilters.map((f) => f.label).join(", ")}</span>
-              <Button size="sm" variant="ghost" className="h-7 t-small" onClick={() => p.onFiltersChange({})}>Clear</Button>
+              <Button size="sm" variant="ghost" onClick={() => p.onFiltersChange({})}>Clear</Button>
             </div>
           )}
-
-          {p.doorFilters.length > 0 && (
-            <div className="pt-1">
-              <Door
-                id={`${p.title.toLowerCase()}.filters`}
-                label={`Additional filters: ${Array.from(new Set(p.doorFilters.map((f) => f.name))).join(", ")}${doorActive ? ` · ${doorActive} on` : ""}`}
-                count={p.doorFilters.length}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  {p.doorFilters.map((f) => (
-                    <Select key={f.id} value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
-                      <SelectTrigger className="h-8 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{f.label}: all</SelectItem>
-                        {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  ))}
-                </div>
-              </Door>
-            </div>
-          )}
-        </div>
-      )}
-            </div>
-          )}
-        </CardHeader>
-        <Separator />
-        <CardContent className="flex min-h-0 flex-1 flex-col px-0">
-
+        </>
+      }
+      pager={rows.length > limit ? (
+        <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
+          Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
+        </Button>
+      ) : undefined}
+      bulk={bulkBar}
+      rows={phoneRows}
+      table={<>
       <div role="status" aria-live="polite" className="sr-only">{rows.length} rows match</div>
-
-      <div className="min-h-0 flex-1 overflow-auto">
-        <Table>
+      <Table>
           <TableHeader className="bg-card sticky top-0 z-10">
             <TableRow>
               {hasBulk && (
@@ -456,19 +477,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
             )}
           </TableBody>
         </Table>
-
-      </div>
-        </CardContent>
-        {rows.length > limit && <Separator />}
-        {rows.length > limit && (
-          <CardFooter>
-            <Button variant="outline" size="sm" className="mx-auto" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
-              Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
-            </Button>
-          </CardFooter>
-        )}
-      </Card>
-
+      </>}
+    >
+      {p.below}
       {glancing && (
         <QuickLook
           open
@@ -485,7 +496,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
           onOpen={() => { const row = glancing; setGlancing(null); p.quickLook.onOpen(row) }}
         />
       )}
-    </div>
+    </IndexPage>
   )
 }
 

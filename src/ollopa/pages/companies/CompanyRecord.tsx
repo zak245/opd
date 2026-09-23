@@ -782,27 +782,6 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
   // therefore prices itself in its own label. Finding the people at this company is a destination,
   // not a state change, so it is the link in the contacts section — where the people are — and the
   // F shortcut still runs it from anywhere on the page.
-  const primary = [
-    { label: `Research · ${CREDITS.research} credits`, onClick: runResearch, shortcut: "R", confirm: `Run the research agent on ${merged.name} for ${CREDITS.research} credits? Balance ${seed.credits.balance.toLocaleString()}.` },
-  ]
-
-  const secondary = [
-    { label: "Add to list", onClick: () => setListOpen(true), shortcut: "L" },
-    ...(customer && holdsAccounts ? [{ label: "Run a play", onClick: () => setPlayOpen(true), shortcut: "P" }] : []),
-    // Stopping every sequence at a company is not a thing to do by accident, and nothing puts the
-    // people back where they were, so it asks once with what it stops (DESIGN.md §2). Turning it
-    // back on is reversible and acts at once.
-    ...(canEdit
-      ? [merged.stage === "Do not prospect"
-          ? { label: "Allow prospecting again", onClick: () => changeStage("Cold") }
-          : {
-              label: "Mark do not prospect",
-              onClick: () => changeStage("Do not prospect"),
-              confirm: `Stops sequences for the ${v.inSequence.length} contact${v.inSequence.length === 1 ? "" : "s"} at ${merged.name}. The ${v.contacts.length} people stay on People.`,
-            }]
-      : []),
-  ]
-
   // The header drawn by the Actions primitive (DESIGN.md §1 and §2): Research is the one filled act
   // and prices itself on one line rather than asking; stopping prospecting confirms because nothing
   // puts the people back; removal is destructive and confirms with the verb.
@@ -864,8 +843,8 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
         fields={fields}
         headerActions={<Actions surface="page" items={headerItems} />}
         actions={{
-          primary,
-          secondary,
+          primary: [],
+          secondary: [],
           destructive: canEdit ? {
             label: "Remove company",
             consequence: removeConsequence,

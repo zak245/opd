@@ -10,8 +10,6 @@
 // inside a report. What goes where is asked of the usage model for this seat at this business, never
 // hard-coded: an item whose weekly number is zero is not part of this seat's job here and is removed,
 // not greyed.
-import { familyOf, iconOf } from "../../identity"
-const ReportsIcon = iconOf("reports")
 import { useEffect, useMemo, useState } from "react"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -25,8 +23,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor, TODAY, type Deal } from "../../data/seed"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
-import { Separator } from "@/components/ui/separator"
-import { Container } from "../../ui/Section"
+import { PageHeader, PageScroll, Section, SummaryStrip } from "../../layouts"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -321,12 +318,8 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
   /* ------------------------------------------------------------------------------------ render */
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="space-y-4 px-6 py-5">
-        <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("reports").ink }}>
-          <ReportsIcon className="size-5" aria-hidden="true" />
-          Reports
-        </h2>
+    <PageScroll>
+      <PageHeader family="reports" title="Reports" description={chip ? `Applied: ${chip} · ${range.label}` : undefined} />
 
         {/* The control bar. The fee statement sits on it beside Export, not inside the menu that
             confirms the decision: a charge disclosed only in the control that confirms it is the
@@ -491,32 +484,29 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             now. The overview is the content, so it is never behind a tab or a Run button — what is
             disclosed is the record-level detail behind the numbers, never the numbers. */}
         {one("rep.overview") && strip.length > 1 && (
-          <Container component="section" padded={false} heading="Overview" data-print-hide>
-            <Separator />
-            <ul>
-              {strip.map((t) => {
-                const locked = lockedTab(t.key)
-                return (
-                  <li key={t.key} className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b px-3 py-2 last:border-b-0">
-                    <span className="w-36 shrink-0 t-body font-medium">
-                      {t.label}
-                      {locked && <span className="ml-1 t-small font-normal text-muted-foreground">· {all.plan}</span>}
-                    </span>
-                    {tilesFor(t.key).slice(0, 5).map((tile) => (
-                      <span key={tile.id} className="t-small text-muted-foreground">
-                        {tile.label} <span className="font-medium tabular-nums text-foreground">{locked && !tile.alwaysPrints ? "—" : tile.value}</span>
+          <div data-print-hide>
+            <SummaryStrip figures={strip.map((t) => {
+              const locked = lockedTab(t.key)
+              const first = tilesFor(t.key)[0]
+              return {
+                label: locked ? `${t.label} · ${all.plan}` : t.label,
+                value: locked && !first?.alwaysPrints ? "—" : first?.value ?? "—",
+                note: (
+                  <span className="flex flex-wrap items-baseline gap-x-2">
+                    <span>{first?.label}</span>
+                    {tilesFor(t.key).slice(1, 4).map((tile) => (
+                      <span key={tile.id}>
+                        · {tile.label} <span className="font-medium tabular-nums text-foreground">{locked && !tile.alwaysPrints ? "—" : tile.value}</span>
                       </span>
                     ))}
-                    <span className="ml-auto">
-                      {report === t.key
-                        ? <span className="t-small text-muted-foreground">open</span>
-                        : <button type="button" className="t-small underline" onClick={() => setReport(t.key)}>Open the {t.label} report</button>}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-          </Container>
+                    {report === t.key
+                      ? <span>· open</span>
+                      : <span>· <button type="button" className="underline" onClick={() => setReport(t.key)}>Open the {t.label} report</button></span>}
+                  </span>
+                ),
+              }
+            })} />
+          </div>
         )}
 
         {/* The report. */}
@@ -607,7 +597,6 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
             }}
           />
         )}
-      </div>
 
       {/* Three panels, siblings on the page; one is open at a time. */}
       <RecordsPanel request={records} onOpenChange={(o) => { if (!o) setRecords(null) }} />
@@ -656,7 +645,7 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
               }]} />}
         </div>
       </Panel>
-    </div>
+    </PageScroll>
   )
 }
 

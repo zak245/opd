@@ -8,15 +8,14 @@ import { useMemo, useState } from "react"
 import { Actions, type Action } from "../../ui/Actions"
 import { href, navigate, useRoute } from "@/app/router"
 import { toast } from "../../templates/TablePage"
-import type { RecordDoor } from "../../templates/RecordPage"
-import { Door, DoorGroup } from "../../ui/Door"
+import { RecordPage, type RecordDoor } from "../../templates/RecordPage"
+import { Door } from "../../ui/Door"
 import { Chip } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Section"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Integration, type IntegrationError } from "../../data/seed"
 import type { Session } from "../../session"
 import { ago, day } from "../deal/format"
-import { ExpandDoors, Picker, n } from "./bits"
+import { Picker, n } from "./bits"
 import { useDraft } from "./drafts"
 import { MapStep, RulesStep, SyncStep } from "./ConnectWizard"
 import { KINDS, crmFieldsFor, draftKey, startingDraft, type ConnectDraft, type ObjectName } from "./connectData"
@@ -231,7 +230,6 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     },
   ]
 
-  const doorIds = doors.map((d) => d.id)
   const ribbon = justStarted
     ? justStarted === "paused"
       ? `${kind} is connected and paused`
@@ -240,57 +238,37 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
       ? `Paused by ${local.pausedBy || session.user}${local.pausedOn ? ` on ${day(local.pausedOn)}` : ""}`
       : null
 
+  /* The record's own contract: the template draws the header, the field strip, the sections, the
+     doors and every width (LAYOUTS.md §7). This page decides only what goes in each. */
   return (
-    <>
-      {/* A disabled fieldset makes every control on the page read-only at once, so a seat that may
-          read the CRM's page cannot change it by any route, and the sentence above names who can. */}
-      <fieldset disabled={readOnly} className="flex min-h-full min-w-0 flex-col border-0 p-0">
-        {readOnly && (
-          <div role="note" className="t-body border-b bg-card px-5 py-2 lg:px-6">
-            You can read this page. Changes to {kind} are made by {admin ? `${admin.user} (${admin.title})` : "the admin"}.
-          </div>
-        )}
-        <header className="border-b px-5 pt-4 lg:px-6">
-          <a href={href("/ollopa/settings/integrations")} className="t-small text-muted-foreground hover:underline">← Settings › Integrations</a>
-          <div className="mt-2 flex flex-wrap items-start gap-x-4 gap-y-2">
-            <div className="min-w-0">
-              <h2 className="t-section">{live?.name ?? `${kind}${kind === "Salesforce" ? ` (${draft.environment})` : ""}`}</h2>
-              <p className="t-body text-muted-foreground">{kind}{live?.environment ? ` · ${live.environment}` : ""}</p>
-            </div>
-            {/* A seat that may not change this connection is shown no controls at all; the line
-                above the header names who does (RULES.md rule 4). */}
-            {!readOnly && <Actions className="ml-auto" surface="page" items={headerActions} />}
-          </div>
-
-          {ribbon && (
-            <div role="status" aria-live="polite" className="t-body mt-3">{ribbon}</div>
-          )}
-
-          <Group as="dl" className="-mx-5 mt-3 grid grid-cols-2 gap-x-6 gap-y-3 border-t px-5 py-3 sm:grid-cols-3 xl:grid-cols-5 lg:-mx-6 lg:px-6">
-            {[
-              { label: "Status", value: <Chip status={status}>{status}</Chip> },
-              { label: "Last sync", value: live ? `${day(live.lastSync)} ${live.lastSync.slice(11)}` : "not yet" },
-              { label: "Next sync", value: paused ? "—, while paused" : live ? `every ${live.pollMinutes} minutes` : "every 15 minutes" },
-              { label: "Records synced today", value: n(live?.recordsToday ?? 0) },
-              { label: "Errors today", value: n(live?.errorsToday ?? 0) },
-            ].map((f) => (
-              <div key={f.label} className="min-w-0">
-                <dt className="t-small text-muted-foreground">{f.label}</dt>
-                <dd className="t-body mt-0.5">{f.value}</dd>
-              </div>
-            ))}
-          </Group>
-        </header>
-
-        <DoorGroup>
-          <div className="grid max-w-5xl gap-8 px-5 py-6 lg:px-6">
-            <Container
-              component="list"
-              padded={false}
-              heading="Errors, grouped by cause"
-              count={groups.length ? filtered.length : undefined}
-              actions={groups.length > 0 ? <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} /> : undefined}
-            >
+    <fieldset disabled={readOnly} className="flex min-h-full min-w-0 flex-col border-0 p-0">
+      <RecordPage
+        back={{ label: "Settings › Integrations", href: href("/ollopa/settings/integrations") }}
+        family="connect"
+        title={{ value: live?.name ?? `${kind}${kind === "Salesforce" ? ` (${draft.environment})` : ""}` }}
+        subtitle={{ label: `${kind}${live?.environment ? ` · ${live.environment}` : ""}`, href: href("/ollopa/settings/integrations") }}
+        ribbon={ribbon ? { tone: paused ? "warning" : "info", text: ribbon } : undefined}
+        noAccess={readOnly ? { message: `You can read this page. Changes to ${kind} are made by ${admin ? `${admin.user} (${admin.title})` : "the admin"}.`, who: admin ? [`${admin.user} (${admin.title})`] : ["the admin"] } : undefined}
+        headerActions={readOnly ? undefined : <Actions surface="page" items={headerActions} />}
+        actions={{ primary: [], secondary: [] }}
+        fields={[
+          { key: "status", label: "Status", value: <Chip status={status}>{status}</Chip> },
+          { key: "last", label: "Last sync", value: live ? `${day(live.lastSync)} ${live.lastSync.slice(11)}` : "not yet" },
+          { key: "next", label: "Next sync", value: paused ? "—, while paused" : live ? `every ${live.pollMinutes} minutes` : "every 15 minutes" },
+          { key: "today", label: "Records synced today", value: n(live?.recordsToday ?? 0) },
+          { key: "errors", label: "Errors today", value: n(live?.errorsToday ?? 0) },
+        ]}
+        side={[]}
+        doors={doors}
+        main={{
+          kind: "sections",
+          sections: [{
+            id: "int.errors",
+            title: "Errors, grouped by cause",
+            count: groups.length ? filtered.length : undefined,
+            action: groups.length > 0 ? <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} /> : undefined,
+            children: (
+              <>
               {groups.length === 0 ? (
                 <p className="t-body px-4 pb-3 text-muted-foreground">No errors held.</p>
               ) : (
@@ -359,24 +337,11 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                   })}
                 </div>
               )}
-            </Container>
-
-            <Container
-              component="section"
-              padded={false}
-              heading="Everything this connection is set to do"
-              actions={<ExpandDoors ids={doorIds} />}
-            >
-              <div className="border-t">
-                {doors.map((d) => (
-                  <Door key={d.id} id={d.id} label={d.label} count={d.count}>{d.content}</Door>
-                ))}
-              </div>
-            </Container>
-          </div>
-        </DoorGroup>
-      </fieldset>
-
-    </>
+              </>
+            ),
+          }],
+        }}
+      />
+    </fieldset>
   )
 }

@@ -21,7 +21,7 @@ import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
 import { FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Section"
+import { Section, SettingsPage as SettingsLayout } from "../../layouts"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -119,11 +119,12 @@ function StripLine({ item, label, children, state, word }: {
   word?: string
 }) {
   return (
-    // One <dt>/<dd> pair of the card's definition list. HTML allows the pair to be wrapped, which is
-    // what carries the usage-model id the rest of the product points this fact at.
-    <div data-item={item} data-item-label={label} className="grid gap-1 sm:grid-cols-4 sm:gap-4">
-      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-sm sm:col-span-3">
+    // One label/value pair of the strip. The pair is wrapped so it can carry the usage-model id the
+    // rest of the product points this fact at: the search jump, the `?row=` arrival and the trail
+    // all look for `[data-item]`, and a figure with no anchor would lose all three.
+    <div data-item={item} data-item-label={label} className="grid min-w-0 gap-1 @md:grid-cols-4 @md:gap-4">
+      <dt className="t-label text-muted-foreground">{label}</dt>
+      <dd className="t-body min-w-0 sm:col-span-3">
         {state && <Badge variant={STATE_BADGE[state]} className="mr-1.5 align-middle">{word}</Badge>}
         {children}
       </dd>
@@ -159,13 +160,18 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   return (
     // The facts that may never sit behind anything: one shadcn Card holding a definition list, so
     // every label/value pair is a <dt>/<dd> and the card's own padding is the only padding.
+    // The page's one band of decision-critical facts. It is not the layouts' `SummaryStrip`: that
+    // part takes figures with no room for the `data-item` anchor the search jump, the `?row=`
+    // arrival and the trail all read, and it collapses to one sideways-scrolling line at 400, which
+    // would put five of these six facts out of sight — the one thing rule 7 forbids. One band, no
+    // boxes inside it, which is what LAYOUTS.md §2 asks a summary strip to be.
     <Card
       role="region"
       aria-label="What this workspace costs and what can spend or stop it"
       data-container="strip"
       data-container-label="the strip"
     >
-      <CardContent>
+      <CardContent className="@container">
       <dl className="grid gap-3">
       {isAdmin ? (
         <>
@@ -377,13 +383,12 @@ function Area({ area, one, two, admin, register, flat, honest }: {
   const tabbed = !flat && !!TAB_GROUPS[area] && one.length > 0
 
   return (
-    <Container
+    <Section
       as="section"
-      component="section"
       id={`area-${slug(area)}`}
       className="scroll-mt-4"
       padded={false}
-      bodyClassName="px-3 pb-2.5 sm:px-4"
+      bodyClassName="@container px-3 pb-2.5 sm:px-4"
       heading={<>
         {AREA_FAMILY[area] && <FamilyIcon of={AREA_FAMILY[area]} />}
         {honest ? area : VAGUE_AREA[area] ?? area}
@@ -405,7 +410,7 @@ function Area({ area, one, two, admin, register, flat, honest }: {
           </Door>
         </div>
       )}
-    </Container>
+    </Section>
   )
 }
 
@@ -695,68 +700,36 @@ function SettingsBody({ session, node }: { session: Session; node?: string }) {
       )}
 
       <DoorGroup>
-        <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-6">
-          <div>
-            <h2 className="t-section flex items-center gap-2">
-              <FamilyIcon of="settings" size="header" />
-              Settings
-            </h2>
-            <p className="t-body text-muted-foreground">{seed.workspace.name}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <SettingsSearch rows={searchable} onJump={jump} inputRef={search} accelerators={accelerators} />
-            {together && <ExpandAll />}
-          </div>
-        </div>
-
-        {stripEl && <div className="mt-3 px-4 sm:px-6">{stripEl}</div>}
-
-        <div>
-          <div className="lg:flex lg:items-start">
-            {/* The in-page index is a table of contents, not navigation to other pages. */}
-            <nav aria-label="Areas" className="hidden shrink-0 lg:sticky lg:top-2 lg:block lg:w-56 lg:py-5 lg:pl-6">
-              <ul className="grid gap-0.5">
-                {areas.map((a) => (
-                  <li key={a.area}>
-                    {/* The library's vertical nav: a ghost Button over the anchor that already
-                        does the scrolling, so the link, its href and its behaviour are untouched. */}
-                    <Button variant="ghost" asChild className="h-auto w-full justify-start whitespace-normal py-1 text-left">
-                      <a href={`#area-${slug(a.area)}`}
-                        onClick={(e) => { e.preventDefault(); document.getElementById(`area-${slug(a.area)}`)?.scrollIntoView({ block: "start", behavior: "smooth" }) }}>
-                        {areaLabel(a.area)}
-                      </a>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-            <div className="min-w-0 flex-1">
-              <div className="px-4 pt-4 lg:hidden">
-                <Select onValueChange={(v) => document.getElementById(`area-${v}`)?.scrollIntoView({ block: "start" })}>
-                  <SelectTrigger className="h-9" aria-label="Jump to an area"><SelectValue placeholder="Jump to…" /></SelectTrigger>
-                  <SelectContent>{areas.map((a) => <SelectItem key={a.area} value={slug(a.area)}>{areaLabel(a.area)}</SelectItem>)}</SelectContent>
-                </Select>
+        {/* The Settings type: the index beside the panels above `lg` and above them below it, the
+            strip as the page's one band, the save bar in the template's footer (LAYOUTS.md §1). */}
+        <SettingsLayout
+          family="settings"
+          title="Settings"
+          description={seed.workspace.name}
+          actions={[]}
+          areas={areas.map((a) => ({ id: slug(a.area), name: areaLabel(a.area) }))}
+          onGo={(id) => document.getElementById(`area-${id}`)?.scrollIntoView({ block: "start", behavior: "smooth" })}
+          save={<SaveBar />}
+          above={
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <SettingsSearch rows={searchable} onJump={jump} inputRef={search} accelerators={accelerators} />
+                {together && <ExpandAll />}
               </div>
-
-              {/* A stack of containers on the canvas, one per area, with space between them. */}
-              <div className="grid gap-3 px-4 py-4 sm:px-6">
-                {areas.map((a) => (
-                  <Area key={a.area} area={a.area} one={a.one} two={a.two} admin={admin} register={register} flat={twoLevels} honest={honest} />
-                ))}
-              </div>
-
-              {!isAdmin && (
-                <p className="t-body px-4 py-6 text-muted-foreground sm:px-6">
-                  Workspace settings (team, email domains, prospecting rules, pipeline, agents, integrations, plan and billing) are managed by {admin}, {adminTitle}.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+              {stripEl}
+            </>
+          }
+        >
+          {areas.map((a) => (
+            <Area key={a.area} area={a.area} one={a.one} two={a.two} admin={admin} register={register} flat={twoLevels} honest={honest} />
+          ))}
+          {!isAdmin && (
+            <p className="t-body text-muted-foreground">
+              Workspace settings (team, email domains, prospecting rules, pipeline, agents, integrations, plan and billing) are managed by {admin}, {adminTitle}.
+            </p>
+          )}
+        </SettingsLayout>
       </DoorGroup>
-
-      <SaveBar />
 
       <CreditsPanel session={session} open={creditsOpen} onOpenChange={setCreditsOpen} />
       <MailboxPanel session={session} mailbox={panel?.kind === "mailbox" ? panel.mailbox : null} open={panel?.kind === "mailbox"} onOpenChange={() => setPanel(null)} />

@@ -105,12 +105,9 @@ export function HomePage({ session }: { session: Session }) {
             )}
           </>
         }
-        above={
-          <>
-            {d.weekly("home.health.setup") > 0 && <SetupDoor rows={data.setupRows} />}
-            <div className="flex justify-end empty:hidden" data-print-hide><ExpandAll /></div>
-          </>
-        }
+        // "Expand all" belongs on the greeting line, not on a row of its own above the cards.
+        trailing={<span data-print-hide><ExpandAll /></span>}
+        above={d.weekly("home.health.setup") > 0 ? <SetupDoor rows={data.setupRows} /> : undefined}
       >
         {tiles.map(render)}
       </HomeTemplate>

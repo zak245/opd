@@ -986,6 +986,8 @@ export function ConnectWizard({ session, id }: { session: Session; id?: string }
   return (
     <>
       <Wizard
+        title={kindDef ? `Connect ${kindDef.kind}` : "Connect an integration"}
+        family="connect"
         steps={steps}
         current={current}
         go={go}

@@ -13,10 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronsUpDown, ListPlus, MoreHorizontal, Phone, Send, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { FamilyIcon } from "../../ui/Identity"
-import { familyOf } from "../../identity"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -32,6 +29,7 @@ import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { QuickLook } from "../../templates/QuickLook"
 import { Actions } from "../../ui/Actions"
+import { IndexPage, type ToolbarControl } from "../../layouts"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -48,7 +46,7 @@ import { applyFilters, chipLabel, filtersFor, type Active, type FilterContext, t
 import { day, glanceFields, rowsFor, type PersonRow } from "./person"
 import type { PersonEdit } from "./edits"
 import { needsEnrichment, viewsFor, type PeopleView } from "./views"
-import { FilterChip, FiltersPanelBody, FiltersPanelFrame } from "./parts"
+import { FilterChip, FiltersPanelBody } from "./parts"
 import { EnrichPanel } from "./EnrichPanel"
 import { BulkSelection, CreditsDialog, ParodyColumns, ParodySelection, ParodySidebar, ParodyTabs, ParodyViewsDoor } from "./parody"
 
@@ -620,23 +618,13 @@ export function PeoplePage({ session }: { session: Session }) {
   const total = allRows.length
   const scoreModel = seed.scoreModels.find((m) => m.primary) ?? seed.scoreModels[0]
 
-  /**
-   * The one act this page exists for after reading it, filled, and the two rare ways of doing the
-   * same thing behind a "…" — they are 4% and 1% of an SDR's week, so they are not level one.
-   * Importing is a page of its own, so it is a link and goes through the trail.
-   */
+  /** The one act this page exists for, for the empty state; the header takes the same act as props. */
   const addPeople = (
-    <span className="flex items-center gap-1">
-      <Actions surface="page" items={[{
-        kind: "primary",
-        label: "Add people",
-        onClick: () => toast("Find people searches the database beside this table. It is a later case."),
-      }]} />
-      <Actions surface="page" layout="menu" items={[
-        { kind: "link", label: "Import CSV", href: href("/ollopa/import"), onClick: () => leaveFor("/ollopa/import", "people.add") },
-        ...(b.crm ? [{ kind: "secondary" as const, label: `Sync from ${b.crm} now`, onClick: () => toast(`Pulling changes from ${b.crm}.`) }] : []),
-      ]} />
-    </span>
+    <Actions surface="page" items={[{
+      kind: "primary",
+      label: "Add people",
+      onClick: () => toast("Find people searches the database beside this table. It is a later case."),
+    }]} />
   )
 
   /**
@@ -737,7 +725,9 @@ export function PeoplePage({ session }: { session: Session }) {
     return (
       <button
         type="button"
-        className="flex items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        // A header never clips to "Co": it is as wide as its own word, and the table scrolls
+        // sideways instead, which is what the library's own table container is for.
+        className="flex items-center gap-1 whitespace-nowrap rounded px-1 py-0.5 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         onClick={() => setSort(!on ? { key: c.key, dir: "asc" } : sort!.dir === "asc" ? { key: c.key, dir: "desc" } : null)}
       >
         <span>{c.header}</span>
@@ -750,14 +740,20 @@ export function PeoplePage({ session }: { session: Session }) {
   }
 
   if (allRows.length === 0) {
+    // The empty page is the same page: the template sets the width and the padding, not this file.
     return (
-      <div className="p-10">
-        <EmptyState
-          title="No people yet."
-          body="Find them in the database, or bring a CSV you already have."
-          action={<div className="flex gap-2">{addPeople}</div>}
-        />
-      </div>
+      <IndexPage
+        family="people"
+        title="People"
+        count={0}
+        table={
+          <EmptyState
+            title="No people yet."
+            body="Find them in the database, or bring a CSV you already have."
+            action={addPeople}
+          />
+        }
+      />
     )
   }
 
@@ -766,10 +762,18 @@ export function PeoplePage({ session }: { session: Session }) {
    * result count and the columns control (DESIGN.md §5 — a table's toolbar and its count belong to
    * the container, not to the canvas above it).
    */
-  const tableHeader = (
-    <div className="flex w-full flex-col gap-2">
-      <div className="flex w-full flex-wrap items-center gap-2" data-container="people.views.row" data-container-label="the views row" data-print-hide>
-        {rHead && d.level("people.views.saved") === 1 && chipViews.length > 0 && (
+  /**
+   * The toolbar's controls, in the card's header: the views, the search, the filter chips this seat
+   * reads weekly, the one door that holds the rest, and the count with the columns control at the
+   * trailing edge. The template decides how many sit in front and labels its own door; a filter
+   * that is on is marked `always`, because a cause the person cannot see is the thing rule 5 bans.
+   */
+  const controls: ToolbarControl[] = [
+    {
+      name: "Views",
+      node: (
+        <span className="flex flex-wrap items-center gap-2" data-container="people.views.row" data-container-label="the views row">
+          {rHead && d.level("people.views.saved") === 1 && chipViews.length > 0 && (
           <ToggleGroup
             type="single"
             variant="outline"
@@ -780,51 +784,52 @@ export function PeoplePage({ session }: { session: Session }) {
             onValueChange={(id) => { const v = chipViews.find((x) => x.id === id); if (v) openView(v) }}
           >
             {chipViews.map((v) => (
-              <ToggleGroupItem
-                key={v.id}
-                value={v.id}
-                data-item={`people.view.${v.id}`}
-                data-item-label={v.name}
-              >
+              <ToggleGroupItem key={v.id} value={v.id} data-item={`people.view.${v.id}`} data-item-label={v.name}>
                 {v.name}
                 {v.shipped && <span className="tabular-nums">{allRows.filter(needsEnrichment).length.toLocaleString()}</span>}
                 {viewId === v.id && edited && <span>· edited</span>}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
-        )}
-
-        {rDoors ? (
-          <ViewsDoor
-            views={views}
-            viewId={viewId}
-            user={session.user}
-            onOpen={openView}
-            onSave={(name) => { toast(`View saved · ${name}`); setViewId(null) }}
-            onAction={(what, v) => toast(`${v.name} · ${what}`)}
-            onPage={rContext}
-            shortcuts={rExpert}
-          />
-        ) : (
-          <ParodyViewsDoor
-            views={views}
-            viewId={viewId}
-            user={session.user}
-            onOpen={openView}
-            onDefault={rContext ? (v) => toast(`${v.name} is your default view.`) : null}
-            named={!rHead}
-          />
-        )}
-
-        {edited && view && (
-          <span className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => toast(`${view.name} saved with the filters you are looking at.`)}>Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => setActive(view.filters)}>Revert</Button>
-          </span>
-        )}
-      </div>
-
-      <div className="flex w-full flex-wrap items-center gap-2" data-print-hide>
+          )}
+          {rDoors ? (
+        <ViewsDoor
+          views={views}
+          viewId={viewId}
+          user={session.user}
+          onOpen={openView}
+          onSave={(name) => { toast(`View saved · ${name}`); setViewId(null) }}
+          onAction={(what, v) => toast(`${v.name} · ${what}`)}
+          onPage={rContext}
+          shortcuts={rExpert}
+        />
+      ) : (
+        <ParodyViewsDoor
+          views={views}
+          viewId={viewId}
+          user={session.user}
+          onOpen={openView}
+          onDefault={rContext ? (v) => toast(`${v.name} is your default view.`) : null}
+          named={!rHead}
+        />
+      )}
+        </span>
+      ),
+    },
+    ...(edited && view ? [{
+      name: "Unsaved view",
+      always: true,
+      node: (
+        <span className="flex items-center gap-1">
+          <Button size="sm" variant="outline" onClick={() => toast(`${view.name} saved with the filters you are looking at.`)}>Save</Button>
+          <Button size="sm" variant="ghost" onClick={() => setActive(view.filters)}>Revert</Button>
+        </span>
+      ),
+    }] : []),
+    {
+      name: "Search",
+      always: true,
+      node: (
         <Input
           ref={searchRef}
           data-item="people.search"
@@ -835,364 +840,374 @@ export function PeoplePage({ session }: { session: Session }) {
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
         />
-
-        {/* Level one for this seat, and any level-two filter that is active: a hidden cause is not allowed. */}
-        <span className="hidden flex-wrap items-center gap-2 md:flex" data-container="people.chips" data-container-label="the filter bar">
-          {[...chipFilters, ...activeElsewhere].map((f) => (
-            <FilterChip
-              key={f.id}
-              filter={f}
-              values={valuesOf(f)}
-              chosen={active[f.id] ?? []}
-              count={(v) => counts(f, v)}
-              onChange={(c) => setFilter(f.id, c)}
-              note={f.id === "people.f.score" && scoreModel ? (
-                <span className="text-xs text-muted-foreground">
-                  Threshold {scoreModel.threshold}, published {day(scoreModel.published)} by {scoreModel.publishedBy}
-                </span>
-              ) : undefined}
-            />
-          ))}
+      ),
+    },
+    ...[...chipFilters, ...activeElsewhere].map((f) => ({
+      name: f.label,
+      // A filter that is on is never behind a door: a hidden cause is not allowed.
+      always: (active[f.id]?.length ?? 0) > 0,
+      node: (
+        <span data-container="people.chips" data-container-label="the filter bar">
+          <FilterChip
+            filter={f}
+            values={valuesOf(f)}
+            chosen={active[f.id] ?? []}
+            count={(v) => counts(f, v)}
+            onChange={(c) => setFilter(f.id, c)}
+            note={f.id === "people.f.score" && scoreModel ? (
+              <span className="text-xs text-muted-foreground">
+                Threshold {scoreModel.threshold}, published {day(scoreModel.published)} by {scoreModel.publishedBy}
+              </span>
+            ) : undefined}
+          />
         </span>
-
-        {/* The one door that holds every filter, flat. On a phone it opens as a full-height sheet.
-            Before rule 2 the same control is "Show Filters", which opens a sidebar of groups. */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-item="people.filters.all"
-          data-item-label={rDoors ? "All filters" : "Show Filters"}
-          aria-expanded={rFlat ? panelOpen || pinned : showFilters}
-          onClick={() => {
-            if (!rFlat) { setShowFilters(!showFilters); return }
-            window.matchMedia("(max-width: 767px)").matches ? setPhoneFilters(true) : setPanelOpen(!panelOpen)
-          }}
-        >
-          <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (rFlat ? panelOpen || pinned : showFilters) && "rotate-180")} />
-          {!rFlat ? (
-            <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
-          ) : !rDoors ? (
-            <span>Filters</span>
-          ) : (
-            <>
-              <span className="md:hidden">Filters{activeCount ? ` · ${activeCount} active` : ""}</span>
-              <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
-            </>
-          )}
-        </Button>
-
-        {(activeCount > 0 || q) && (
-          <Button size="sm" variant="ghost" data-item="people.f.clear" data-item-label="Clear" onClick={clearAll}>Clear</Button>
-        )}
-
-        <span className="ml-auto flex items-center gap-3">
-          <Badge variant="outline" data-item="people.count" data-item-label="the result count" role="status" aria-live="polite" className="tabular-nums">
-            {settling ? "…" : `${sorted.length.toLocaleString()} of ${total.toLocaleString()}`}
-          </Badge>
-          {rDoors ? (
-            <ColumnsDoor
-              all={allColumns}
-              shownIds={shownColumnIds}
-              onChange={setColumns}
-              onReset={() => setColumns([])}
-              density={density}
-              onDensity={setDensity}
-              pageSize={pageSize}
-              onPageSize={(n) => { setPageSize(n); setShown(n) }}
-              roleLabel={seat?.title ?? "your seat"}
-            />
-          ) : (
-            <ParodyColumns
-              all={allColumns}
-              shownIds={shownColumnIds}
-              onChange={setColumns}
-              density={density}
-              onDensity={setDensity}
-              showDensity={rContent}
-            />
+      ),
+    })),
+    {
+      name: "every filter",
+      node: (
+        <span className="flex items-center gap-1">
+          {/* Every filter, flat, for reference while the table stays readable: a popover on a
+              desktop (LAYOUTS.md §3, "needed for reference only"), a sheet on a phone. */}
+          <Popover open={rFlat ? panelOpen : showFilters} onOpenChange={(o) => (rFlat ? setPanelOpen(o) : setShowFilters(o))} modal={false}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-item="people.filters.all"
+                data-item-label={rDoors ? "All filters" : "Show Filters"}
+                onClick={(e) => {
+                  if (rFlat && window.matchMedia("(max-width: 767px)").matches) { e.preventDefault(); setPhoneFilters(true) }
+                }}
+              >
+                <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (rFlat ? panelOpen : showFilters) && "rotate-180")} />
+                {!rFlat ? (
+                  <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
+                ) : !rDoors ? (
+                  <span>Filters</span>
+                ) : (
+                  <>
+                    <span className="md:hidden">Filters{activeCount ? ` · ${activeCount} active` : ""}</span>
+                    <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
+                  </>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="hidden max-h-[70vh] w-96 overflow-y-auto md:block"
+              data-container="people.filters.panel"
+              data-container-label={rDoors ? `All filters (${defs.length})` : "Filters"}
+              onOpenAutoFocus={(e) => { if (pinned) e.preventDefault() }}
+              onInteractOutside={(e) => { if (pinned) e.preventDefault() }}
+            >
+              <div className="flex items-center gap-1 pb-2">
+                <h3 className="flex-1 text-sm font-medium">{rDoors ? `All filters (${defs.length})` : "Filters"}</h3>
+                {rContext && (
+                  <Button
+                    size="icon"
+                    variant={pinned ? "secondary" : "ghost"}
+                    className="size-7"
+                    aria-pressed={pinned}
+                    aria-label={pinned ? "Unpin the filters panel" : "Pin the filters panel open"}
+                    data-item="people.filters.pin"
+                    data-item-label="Pin the filters panel"
+                    onClick={() => setPinned(!pinned)}
+                  >
+                    📌
+                  </Button>
+                )}
+              </div>
+              {filtersBody}
+            </PopoverContent>
+          </Popover>
+          {(activeCount > 0 || q) && (
+            <Button size="sm" variant="ghost" data-item="people.f.clear" data-item-label="Clear" onClick={clearAll}>Clear</Button>
           )}
         </span>
-      </div>
-    </div>
+      ),
+    },
+  ]
+
+  /** The trailing slot of the toolbar: the count this toolbar filters, and the columns control. */
+  const shown_ = (
+    <span className="flex items-center gap-3">
+      <Badge variant="outline" data-item="people.count" data-item-label="the result count" role="status" aria-live="polite" className="tabular-nums">
+        {settling ? "…" : `${sorted.length.toLocaleString()} of ${total.toLocaleString()}`}
+      </Badge>
+      {rDoors ? (
+        <ColumnsDoor
+          all={allColumns}
+          shownIds={shownColumnIds}
+          onChange={setColumns}
+          onReset={() => setColumns([])}
+          density={density}
+          onDensity={setDensity}
+          pageSize={pageSize}
+          onPageSize={(n) => { setPageSize(n); setShown(n) }}
+          roleLabel={seat?.title ?? "your seat"}
+        />
+      ) : (
+        <ParodyColumns
+          all={allColumns}
+          shownIds={shownColumnIds}
+          onChange={setColumns}
+          density={density}
+          onDensity={setDensity}
+          showDensity={rContent}
+        />
+      )}
+    </span>
   )
 
   const pad = density === "Compact" ? "py-1" : "py-2"
 
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* --------------------------------------------------------------------------- 1. header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-6">
-        <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("people").ink }}>
-          <FamilyIcon of="people" size="header" />
-          People <span className="font-normal tabular-nums text-muted-foreground">· {total.toLocaleString()}</span>
-        </h2>
-        <div data-print-hide>{addPeople}</div>
-      </div>
-
-      {/* the header rows now live in `tableHeader`, in the container's header */}
-      {/* --------------------------------------------- 3b. the tabs, and the strip above the results */}
-      {!rFlat && (
-        <ParodyTabs
-          total={total}
-          netNew={allRows.filter((p) => !p.enrichedOn).length}
-          saved={total - allRows.filter((p) => !p.enrichedOn).length}
-          tab={tab}
-          onTab={setTab}
-        />
-      )}
-
-      {/* The filters that produced these rows, on the printed page and nowhere else. */}
-      <p className="hidden px-6 pb-2 text-xs print:block">
-        {activeCount === 0 && !q ? "No filters" : [q && `Search: ${q}`, ...defs.filter((f) => active[f.id]?.length).map((f) => chipLabel(f, active[f.id]))].filter(Boolean).join(" · ")}
-      </p>
-
-      {/* ------------------------------------------------------------------------- 5. the table */}
-      <div className="flex min-h-0 flex-1 gap-4 px-4 pb-4 pt-3 lg:px-6">
-        {!rFlat && (
-          <ParodySidebar
-            popular={popularFilters}
-            rest={restFilters}
-            active={active}
-            values={valuesOf}
-            count={counts}
-            onChange={setFilter}
-            open={showFilters}
-            moreOpen={moreFilters}
-            onMore={setMoreFilters}
-            onSaveSearch={() => toast("Name this search to save it.")}
-          />
-        )}
-
-        {rFlat && (panelOpen || pinned) && (
-          <FiltersPanelFrame
-            title={rDoors ? `All filters (${defs.length})` : "Filters"}
-            pinned={pinned}
-            onPin={setPinned}
-            showPin={rContext}
-            onClose={() => { setPanelOpen(false); setPinned(false) }}
+  /** The desktop body. The template hides it at 400 and shows `rows` instead. */
+  const tableBody = (
+          <Table>
+      <TableHeader className="bg-card sticky top-0 z-10">
+        <TableRow>
+          <TableHead className="w-8 px-3">
+            <Checkbox
+              aria-label={`Select the ${page.length} people on this page`}
+              checked={page.length > 0 && page.every((p) => selected.includes(p.id))}
+              onCheckedChange={(v) => setSelected(v === true ? page.map((p) => p.id) : [])}
+            />
+          </TableHead>
+          {shownColumns.map((c) => (
+            <TableHead
+              key={c.id}
+              data-item={c.id}
+              data-item-label={c.header}
+              aria-sort={sort?.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+              className={cn("px-2", c.className)}
+            >
+              {sortHeader(c)}
+            </TableHead>
+          ))}
+          {/* Not sticky: a cell pinned to the right edge is as wide as the row's buttons and paints
+              over the headers behind it. The library's own scroller carries the column instead. */}
+          <TableHead style={{ width: 1 }} className="px-2"><span className="sr-only">Actions</span></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {page.map((p, i) => (
+          <TableRow
+            key={p.id}
+            ref={(el) => { rowRefs.current[i] = el }}
+            data-row={i}
+            /* The anchor a chain returns to: `follow` hands this id to the trail and the
+               shell scrolls to it, lights it for three seconds and puts focus back on it. */
+            data-item={p.id}
+            data-item-label={p.name}
+            tabIndex={i === focused ? 0 : -1}
+            aria-label={density === "Compact" ? `${p.name}, ${p.title}, ${p.company}` : undefined}
+            onFocus={() => setFocused(i)}
+            onKeyDown={(e) => onRowKey(e, p, i)}
+            onClick={(e) => { if ((e.target as HTMLElement).closest("a,button,input,[role=menuitem]")) return; rowRefs.current[i]?.focus(); setGlancing(p) }}
+            /* The row you are on is the library's own hover and its own selected state; the
+               page adds no background of its own. */
+            data-state={selected.includes(p.id) || allMatching ? "selected" : undefined}
+            className="group cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
           >
-            {filtersBody}
-          </FiltersPanelFrame>
-        )}
-
-        {/* The table lives in a container: the toolbar and the count in its header, the pager in
-            its footer, and the selection band the one container-low region inside it. Nothing here
-            sits naked on the canvas any more (DESIGN.md §5, containment). */}
-        <Card
-          className="flex min-w-0 flex-1 flex-col"
-          data-container="people.table.columns"
-          data-container-label="the table header"
-        >
-          {/* No title in here: the page's own heading is above the card, and the card's header
-              carries the toolbar — views, search, chips, the count, columns and density — and
-              nothing else (shadcn's CardHeader, as it ships). */}
-          <CardHeader>{tableHeader}</CardHeader>
-          <CardContent className="min-h-0 flex-1 overflow-auto px-0">
-          {/* The selection band: a group inside the container, never a second box. */}
-          {rStable ? (
-            count > 0 && (
-              <>
-                <div
-                  className="flex flex-wrap items-center gap-2 px-4 pb-2"
-                  data-container="people.bulk.bar"
-                  data-container-label="the selection bar"
-                  data-print-hide
-                >
-                  {selectionControls}
-                  <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
-                </div>
-                <Separator />
-              </>
-            )
-          ) : (
-            /* Before rule 6 the strip is simply always there, selection or no selection. */
-            <BulkSelection controls={selectionControls}>{bulkStrip}</BulkSelection>
-          )}
-
-          {/* Phone: the same items as cards, no level change. */}
-          <ul className="md:hidden">
-            {page.map((p, i) => (
-              <li key={p.id} className="px-4 py-3" data-item={p.id} data-item-label={p.name}>
-                {i > 0 && <Separator className="-mx-4 mb-3 w-auto" />}
-                <div className="flex items-start gap-2">
-                  {selectMode && (
-                    <input
-                      type="checkbox"
-                      aria-label={`Select ${p.name}`}
-                      className="mt-1"
-                      checked={selected.includes(p.id) || allMatching}
-                      onChange={() => toggleRow(p, i, false)}
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
+            <TableCell className={cn("px-3", pad)}>
+              <Checkbox
+                aria-label={`Select ${p.name}`}
+                checked={selected.includes(p.id) || allMatching}
+                onCheckedChange={() => toggleRow(p, i, false)}
+                onClick={(e) => { e.stopPropagation(); if (e.shiftKey) toggleRow(p, i, true) }}
+              />
+            </TableCell>
+            {shownColumns.map((c) => (
+              <TableCell key={c.id} className={cn("px-2 align-middle", pad, c.className)}>
+                <div className={c.width}>
+                {c.key === "name" ? (
+                  <span className="flex min-w-0 items-center gap-2">
                     <a
-                      className="font-medium underline-offset-4 hover:underline"
+                      className="min-w-0 underline-offset-4 hover:underline"
                       href={href(`/ollopa/people/${p.id}`)}
                       onClick={(e) => {
+                        e.stopPropagation()
+                        // A real href, so copy-link and open-in-a-new-tab still work; a plain
+                        // click is a step in a chain, so it goes through the trail instead.
                         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
                         e.preventDefault()
                         leaveFor(`/ollopa/people/${p.id}`, p.id)
                       }}
-                    >{p.name}</a>
-                    <div className="text-xs text-muted-foreground">{p.title} · {p.company}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                      <Badge variant="secondary" className={cn("t-small font-medium", STAGE_TONE[stageOf(p)])}>{stageOf(p)}</Badge>
-                      <span className="text-muted-foreground">{seqOf(p) || "Not in a sequence"}</span>
-                      <span className="text-muted-foreground">{p.lastContacted ? day(p.lastContacted) : "Never contacted"}</span>
-                      {p.phone && !isRevealed(p) && (
-                        <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => reveal(p)}>
-                          {rPrice ? `Reveal · ${CREDITS.revealPhone} credits${priceState(CREDITS.revealPhone).suffix}` : "Access mobile"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
+                    >
+                      {c.cell(p)}
+                    </a>
+                    {p.jobChange && d.weekly("people.job-change-update") > 0 && <JobChange p={p} onDone={(m) => offerUndo(m, () => toast("Put back as it was."))} seed={seed} />}
+                  </span>
+                ) : c.key === "stage" ? (
+                  <StagePicker value={stageOf(p)} inSequence={rPrice && Boolean(seqOf(p))} onChange={(s) => moveStage(p, s)} />
+                ) : c.key === "sequence" ? (
+                  seqOf(p) || <span className="text-muted-foreground">—</span>
+                ) : c.key === "phone" ? (
+                  isRevealed(p) ? <span className="tabular-nums">{p.phoneNumber ?? "On file"}</span>
+                    : p.phone ? (
+                      <Button size="sm" variant="outline" data-item="people.row.reveal-phone" data-item-label="Reveal phone" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); reveal(p) }}>
+                        {rPrice ? `Reveal · ${CREDITS.revealPhone} credits${priceState(CREDITS.revealPhone).suffix}` : "Access mobile"}
+                      </Button>
+                    ) : <span className="text-muted-foreground">No phone</span>
+                ) : c.cell(p)}
                 </div>
-              </li>
+              </TableCell>
             ))}
-          </ul>
-
-          {/* The library's table, as it ships: its own header, its own row hover, its own dividers.
-              Nothing is added to its internals — no vertical rules, no tinted head. */}
-          <Table className="hidden md:table">
-            <TableHeader className="bg-card sticky top-0 z-10">
-              <TableRow>
-                <TableHead className="w-8 px-3">
-                  <Checkbox
-                    aria-label={`Select the ${page.length} people on this page`}
-                    checked={page.length > 0 && page.every((p) => selected.includes(p.id))}
-                    onCheckedChange={(v) => setSelected(v === true ? page.map((p) => p.id) : [])}
-                  />
-                </TableHead>
-                {shownColumns.map((c) => (
-                  <TableHead
-                    key={c.id}
-                    data-item={c.id}
-                    data-item-label={c.header}
-                    aria-sort={sort?.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
-                    className={cn("px-2", c.className)}
-                  >
-                    {sortHeader(c)}
-                  </TableHead>
-                ))}
-                <TableHead className="bg-card sticky right-0 w-px px-2"><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {page.map((p, i) => (
-                <TableRow
-                  key={p.id}
-                  ref={(el) => { rowRefs.current[i] = el }}
-                  data-row={i}
-                  /* The anchor a chain returns to: `follow` hands this id to the trail and the
-                     shell scrolls to it, lights it for three seconds and puts focus back on it. */
-                  data-item={p.id}
-                  data-item-label={p.name}
-                  tabIndex={i === focused ? 0 : -1}
-                  aria-label={density === "Compact" ? `${p.name}, ${p.title}, ${p.company}` : undefined}
-                  onFocus={() => setFocused(i)}
-                  onKeyDown={(e) => onRowKey(e, p, i)}
-                  onClick={(e) => { if ((e.target as HTMLElement).closest("a,button,input,[role=menuitem]")) return; rowRefs.current[i]?.focus(); setGlancing(p) }}
-                  /* The row you are on is the library's own hover and its own selected state; the
-                     page adds no background of its own. */
-                  data-state={selected.includes(p.id) || allMatching ? "selected" : undefined}
-                  className="group cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            {/* The menu is always in the row; the named buttons come forward on hover and on
+                keyboard focus, over the row rather than taking a column's width from it. */}
+            {/* The menu is always at the right edge, whatever the table is scrolled to. The named
+                buttons come forward on hover and on keyboard focus, beside it, on the row's own
+                hovered surface — no border, no radius, no box of their own. */}
+            <TableCell style={{ width: 1 }} className={cn("bg-card group-hover:bg-muted sticky right-0 px-2", pad)} onClick={(e) => e.stopPropagation()}>
+              <div className="relative flex items-center justify-end">
+                <div
+                  className="bg-muted absolute top-1/2 right-full flex -translate-y-1/2 items-center gap-1 pr-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  data-container="people.row.actions"
+                  data-container-label="the row's buttons"
                 >
-                  <TableCell className={cn("px-3", pad)}>
-                    <Checkbox
-                      aria-label={`Select ${p.name}`}
-                      checked={selected.includes(p.id) || allMatching}
-                      onCheckedChange={() => toggleRow(p, i, false)}
-                      onClick={(e) => { e.stopPropagation(); if (e.shiftKey) toggleRow(p, i, true) }}
-                    />
-                  </TableCell>
-                  {shownColumns.map((c) => (
-                    <TableCell key={c.id} className={cn("px-2 align-middle", pad, c.className)}>
-                      <div className={c.width}>
-                      {c.key === "name" ? (
-                        <span className="flex min-w-0 items-center gap-2">
-                          <a
-                            className="min-w-0 underline-offset-4 hover:underline"
-                            href={href(`/ollopa/people/${p.id}`)}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // A real href, so copy-link and open-in-a-new-tab still work; a plain
-                              // click is a step in a chain, so it goes through the trail instead.
-                              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
-                              e.preventDefault()
-                              leaveFor(`/ollopa/people/${p.id}`, p.id)
-                            }}
-                          >
-                            {c.cell(p)}
-                          </a>
-                          {p.jobChange && d.weekly("people.job-change-update") > 0 && <JobChange p={p} onDone={(m) => offerUndo(m, () => toast("Put back as it was."))} seed={seed} />}
-                        </span>
-                      ) : c.key === "stage" ? (
-                        <StagePicker value={stageOf(p)} inSequence={rPrice && Boolean(seqOf(p))} onChange={(s) => moveStage(p, s)} />
-                      ) : c.key === "sequence" ? (
-                        seqOf(p) || <span className="text-muted-foreground">—</span>
-                      ) : c.key === "phone" ? (
-                        isRevealed(p) ? <span className="tabular-nums">{p.phoneNumber ?? "On file"}</span>
-                          : p.phone ? (
-                            <Button size="sm" variant="outline" data-item="people.row.reveal-phone" data-item-label="Reveal phone" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); reveal(p) }}>
-                              {rPrice ? `Reveal · ${CREDITS.revealPhone} credits${priceState(CREDITS.revealPhone).suffix}` : "Access mobile"}
-                            </Button>
-                          ) : <span className="text-muted-foreground">No phone</span>
-                      ) : c.cell(p)}
-                      </div>
-                    </TableCell>
+                  {[...rowButtons, ...(rDoors ? [] : [companyListAct])].map((a) => (
+                    <Button key={a.id} size="sm" variant="ghost" data-item={a.id} data-item-label={a.label(p)} className="h-7 whitespace-nowrap px-2 text-xs" onClick={() => a.run(p)}>
+                      {a.icon && <a.icon aria-hidden="true" className="size-3.5" />}{a.label(p)}
+                    </Button>
                   ))}
-                  {/* The menu is always in the row; the named buttons come forward on hover and on
-                      keyboard focus, over the row rather than taking a column's width from it. */}
-                  {/* The named buttons come forward on hover and on keyboard focus. They sit in the
-                      row's own cell, with no box of their own: the row's hover is the library's. */}
-                  <TableCell className={cn("px-2 text-right", pad)} onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      <div
-                        className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-                        data-container="people.row.actions"
-                        data-container-label="the row's buttons"
-                      >
-                        {[...rowButtons, ...(rDoors ? [] : [companyListAct])].map((a) => (
-                          <Button key={a.id} size="sm" variant="ghost" data-item={a.id} data-item-label={a.label(p)} className="h-7 whitespace-nowrap px-2 text-xs" onClick={() => a.run(p)}>
-                            {a.icon && <a.icon aria-hidden="true" className="size-3.5" />}{a.label(p)}
-                          </Button>
-                        ))}
-                      </div>
-                      <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </div>
+                <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
 
-          {sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}
-          </CardContent>
-          <Separator />
-          <CardFooter className="pt-3">
+  /** The same people as a divided list, for 400. The template draws the dividers. */
+  const rowList = (
+    <>
+            {page.map((p, i) => (
+        <li key={p.id} className="px-4 py-3" data-item={p.id} data-item-label={p.name}>
+          <div className="flex items-start gap-2">
+            {selectMode && (
+        <Checkbox
+          className="mt-1"
+          aria-label={`Select ${p.name}`}
+          checked={selected.includes(p.id) || allMatching}
+          onCheckedChange={() => toggleRow(p, i, false)}
+        />
+            )}
+            <div className="min-w-0 flex-1">
+        <a
+          className="font-medium underline-offset-4 hover:underline"
+          href={href(`/ollopa/people/${p.id}`)}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+            e.preventDefault()
+            leaveFor(`/ollopa/people/${p.id}`, p.id)
+          }}
+        >{p.name}</a>
+        <div className="text-xs text-muted-foreground">{p.title} · {p.company}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+          <Badge variant="secondary" className={cn("t-small font-medium", STAGE_TONE[stageOf(p)])}>{stageOf(p)}</Badge>
+          <span className="text-muted-foreground">{seqOf(p) || "Not in a sequence"}</span>
+          <span className="text-muted-foreground">{p.lastContacted ? day(p.lastContacted) : "Never contacted"}</span>
+          {p.phone && !isRevealed(p) && (
+            <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => reveal(p)}>
+              {rPrice ? `Reveal · ${CREDITS.revealPhone} credits${priceState(CREDITS.revealPhone).suffix}` : "Access mobile"}
+            </Button>
+          )}
+        </div>
+            </div>
+            <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
+          </div>
+        </li>
+      ))}
+    </>
+  )
+
+  return (
+    <>
+      <IndexPage
+        family="people"
+        title="People"
+        count={total}
+        actions={[{
+          kind: "primary",
+          label: "Add people",
+          onClick: () => toast("Find people searches the database beside this table. It is a later case."),
+        }]}
+        more={[
+          { kind: "link", label: "Import CSV", onClick: () => leaveFor("/ollopa/import", "people.add") },
+          ...(b.crm ? [{ kind: "secondary" as const, label: `Sync from ${b.crm} now`, onClick: () => toast(`Pulling changes from ${b.crm}.`) }] : []),
+        ]}
+        controls={controls}
+        shown={shown_}
+        above={
+          <>
+            {/* Before rule 2 the filters are a sidebar of groups, three deep. */}
+            {!rFlat && (
+              <ParodySidebar
+                popular={popularFilters}
+                rest={restFilters}
+                active={active}
+                values={valuesOf}
+                count={counts}
+                onChange={setFilter}
+                open={showFilters}
+                moreOpen={moreFilters}
+                onMore={setMoreFilters}
+                onSaveSearch={() => toast("Name this search to save it.")}
+              />
+            )}
+            {!rFlat && (
+              <ParodyTabs
+                total={total}
+                netNew={allRows.filter((p) => !p.enrichedOn).length}
+                saved={total - allRows.filter((p) => !p.enrichedOn).length}
+                tab={tab}
+                onTab={setTab}
+              />
+            )}
+            {/* The filters that produced these rows, on the printed page and nowhere else. */}
+            <p className="hidden pb-2 text-xs print:block">
+              {activeCount === 0 && !q ? "No filters" : [q && `Search: ${q}`, ...defs.filter((f) => active[f.id]?.length).map((f) => chipLabel(f, active[f.id]))].filter(Boolean).join(" · ")}
+            </p>
+          </>
+        }
+        table={<>{tableBody}{sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}</>}
+        rows={rowList}
+        pager={
+          <div className="flex w-full flex-wrap items-center justify-center gap-4">
             {sorted.length > shown && (
               <Button variant="outline" size="sm" onClick={() => setShown((n) => n + pageSize)}>
                 Show {Math.min(pageSize, sorted.length - shown)} more
               </Button>
             )}
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <label htmlFor="rows-per-page">Rows per page</label>
               <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setShown(Number(v)) }}>
                 <SelectTrigger id="rows-per-page" className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>{[25, 50, 100].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
               </Select>
             </span>
-            <Button size="sm" variant="ghost" className="md:hidden" onClick={() => setSelectMode((v) => !v)}>
+            <Button size="sm" variant="ghost" className="sm:hidden" onClick={() => setSelectMode((v) => !v)}>
               {selectMode ? "Done selecting" : "Select"}
             </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
+          </div>
+        }
+        bulk={
+          rStable
+            ? (count > 0 ? (
+              <span className="flex w-full flex-wrap items-center gap-2" data-container="people.bulk.bar" data-container-label="the selection bar" data-print-hide>
+                {selectionControls}
+                <span className="flex flex-wrap items-center gap-1.5">{bulkStrip}</span>
+              </span>
+            ) : undefined)
+            : <BulkSelection controls={selectionControls}>{bulkStrip}</BulkSelection>
+        }
+      >
       {pending && (
-        <Alert role="status" aria-live="assertive" className="mx-4 mb-4 w-auto lg:mx-6" data-print-hide>
+        <Alert role="status" aria-live="assertive" data-print-hide>
           <AlertDescription className="flex-row flex-wrap items-center gap-3">
             <span className="min-w-0 flex-1">{pending.text}</span>
             <Button size="sm" onClick={() => { pending.run(); setPending(null) }}>Spend</Button>
@@ -1203,13 +1218,14 @@ export function PeoplePage({ session }: { session: Session }) {
 
       {/* Undo, for ten seconds, on anything undoable. ⌘Z does the same. */}
       {undo && (
-        <Alert role="status" aria-live="polite" className="mx-4 mb-4 w-auto lg:mx-6" data-print-hide>
+        <Alert role="status" aria-live="polite" data-print-hide>
           <AlertDescription className="flex-row flex-wrap items-center gap-3">
             <span className="min-w-0 flex-1">{undo.text}</span>
             <Button size="sm" variant="outline" onClick={() => { undo.run(); setUndo(null) }}>Undo</Button>
           </AlertDescription>
         </Alert>
       )}
+      </IndexPage>
 
       {glancing && (
         <QuickLook
@@ -1253,7 +1269,7 @@ export function PeoplePage({ session }: { session: Session }) {
           onConfirm={() => toast(`${Math.max(count, 1)} people saved.`)}
         />
       )}
-    </div>
+    </>
   )
 }
 

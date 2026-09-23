@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { familyOf } from "../../identity"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Container } from "../../ui/Section"
+import { Section } from "../../layouts"
 import type { Series, Trend } from "./compute"
 import { shortDay } from "./format"
 import "./chart.css"
@@ -108,9 +108,8 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
   const every = Math.max(1, Math.ceil((weeks.length * 46) / plotW))
 
   return (
-    <Container
+    <Section
       className="ollopa-viz"
-      component="section"
       padded={false}
       heading={
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -250,6 +249,6 @@ export function Chart({ trend, compare, format, view, onViewChange, describedByI
 
       <Separator />
       <p id={describedById} className="px-3 py-1.5 t-small text-muted-foreground">{trend.summary}</p>
-    </Container>
+    </Section>
   )
 }

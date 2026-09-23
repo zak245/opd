@@ -147,7 +147,8 @@ export function TablePage<T>(p: TablePageProps<T>) {
           <TableHeader className="bg-muted sticky top-0">
             <TableRow>
               {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", chipColumn(c) && "min-w-36", c.className)}>{c.header}</TableHead>)}
-              {(p.rowActions || p.moreActions) && <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>}
+              {/* The first column takes the slack; without that the actions column absorbs it. */}
+              {(p.rowActions || p.moreActions) && <TableHead className="w-px whitespace-nowrap"><span className="sr-only">Actions</span></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>

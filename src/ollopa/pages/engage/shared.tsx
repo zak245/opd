@@ -75,8 +75,8 @@ export function CountRate({ label, count, of }: { label: string; count: number; 
 }
 
 /** A number in the header strip that is also a button: pressing it filters the table below. */
-export function CountButton({ label, count, active, onClick, tone }: {
-  label: string; count: number; active?: boolean; onClick: () => void; tone?: "warning" | "error"
+export function CountButton({ label, count, active, onClick, tone, className }: {
+  label: string; count: number; active?: boolean; onClick: () => void; tone?: "warning" | "error"; className?: string
 }) {
   return (
     <Button
@@ -89,6 +89,7 @@ export function CountButton({ label, count, active, onClick, tone }: {
         active && "border-foreground",
         tone === "warning" && "border-[color:var(--warning-ink)]",
         tone === "error" && "border-[color:var(--danger-ink)]",
+        className,
       )}
     >
       <span className="t-small block text-muted-foreground">{label}</span>
@@ -167,6 +168,14 @@ export interface DataTableProps<T> {
     bar: (ids: string[]) => ReactNode
   }
   empty?: ReactNode
+  /**
+   * Draw one half of the table only, so `IndexPage` can put the desktop table in the card's body
+   * and the divided row list in its 400 slot. Both halves are the same rows and the same handlers,
+   * so every `data-item` and every keyboard route is identical either way.
+   */
+  only?: "table" | "rows"
+  /** The selection bar is drawn by the page's footer instead of stuck inside the table. */
+  bulkInFooter?: boolean
 }
 
 export function DataTable<T>(p: DataTableProps<T>) {
@@ -188,18 +197,18 @@ export function DataTable<T>(p: DataTableProps<T>) {
   return (
     <div>
       {/* ------------------------------------------------------------- phone: one card per row */}
-      <ul className="sm:hidden">
+      {p.only !== "table" && (
+      <ul className={p.only === "rows" ? "" : "sm:hidden"}>
         {sorted.map((row, rowIndex) => {
           const key = p.rowKey(row)
           const primary = p.columns.find((c) => c.primary) ?? p.columns[0]
           return (
+            // The card is the row, so it behaves like the row above: focusable, Enter opens it, x
+            // selects it. The two controls inside it — select, and the name that opens the record —
+            // are siblings and never nested, because a control inside a control is invalid HTML
+            // with no defined keyboard activation. The select is a real checkbox with its own label.
             <Fragment key={`row-${key}`}>
             <Separator />
-            /* The card is the row, so it behaves like the row above: focusable, Enter opens it, x
-               selects it. The two controls inside it — select, and the name that opens the record —
-               are siblings of each other and never nested, because a control inside a control is
-               invalid HTML with no defined keyboard activation. The select is a real checkbox input
-               with its own label, so Space toggles it without anything being wired up. */
             <li
               key={key}
               className="flex items-start gap-2 px-4 py-3 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -239,9 +248,11 @@ export function DataTable<T>(p: DataTableProps<T>) {
           )
         })}
       </ul>
+      )}
 
       {/* --------------------------------------------------------------------- the table itself */}
-      <div className="hidden overflow-x-auto sm:block">
+      {p.only !== "rows" && (
+      <div className={cn("overflow-x-auto", p.only === "table" ? "block" : "hidden sm:block")}>
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow>
@@ -331,8 +342,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
           </TableBody>
         </Table>
       </div>
+      )}
 
-      {p.selection && selected.length > 0 && (
+      {p.selection && selected.length > 0 && !p.bulkInFooter && (
         <div
           role="region"
           aria-label={`${selected.length} selected`}

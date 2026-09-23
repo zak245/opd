@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Split } from "./SplitHandle"
 import { Measured } from "./frame"
-import { PageHeader, type PageHeaderProps } from "./parts"
+import { PageHeader, Toolbar, type PageHeaderProps, type ToolbarControl } from "./parts"
 
 /**
  * True below `sm`. Read rather than rendered twice: a template that draws both branches puts every
@@ -147,6 +147,11 @@ export interface BoardStage {
 
 export interface BoardPageProps extends PageHeaderProps {
   stages: BoardStage[]
+  /** Search, filters, views — through the same Toolbar an index uses, so a board gets the phone
+   *  rule too: one control in front and one door for the rest. */
+  controls?: ToolbarControl[]
+  /** Printed at the end of the toolbar row: "11 open of 214". */
+  shown?: ReactNode
   above?: ReactNode
   /** The column's width at 1440 and 1024. The board itself is fluid and has no maximum. */
   columnWidth?: string
@@ -157,7 +162,7 @@ export interface BoardPageProps extends PageHeaderProps {
  * At 400 it shows one stage at a time with a switcher — the behaviour no design system read for
  * memo 30 documents, so it is written down here.
  */
-export function BoardPage({ stages, above, columnWidth = "min-w-[18rem] max-w-[22rem] flex-1", ...header }: BoardPageProps) {
+export function BoardPage({ stages, controls, shown: shownCount, above, columnWidth = "min-w-[18rem] max-w-[22rem] flex-1", ...header }: BoardPageProps) {
   const phone = usePhone()
   const [only, setOnly] = useState(stages[0]?.id ?? "")
   useEffect(() => {
@@ -167,8 +172,12 @@ export function BoardPage({ stages, above, columnWidth = "min-w-[18rem] max-w-[2
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="px-4 pt-4 sm:px-6">
+      {/* One track, and it may be narrower than its content: without `minmax(0,1fr)` a grid track
+          sizes to its widest child's max-content, so one long door label makes the whole header
+          wider than a 400 screen and pushes the page's primary act off it. */}
+      <div className="grid gap-2 px-4 pt-4 [grid-template-columns:minmax(0,1fr)] sm:px-6">
         <PageHeader {...header} />
+        {controls?.length ? <Toolbar controls={controls} count={shownCount} /> : null}
         {above}
       </div>
 

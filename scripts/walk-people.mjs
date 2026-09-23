@@ -39,9 +39,24 @@ const lit = () => page.evaluate(() => {
   return els.map((e) => `[${e.getAttribute("data-item") ?? e.tagName}] ${e.innerText.replace(/\s+/g, " ").slice(0, 60)}`).join(" || ")
 })
 const focused = () => page.evaluate(() => (document.activeElement?.innerText || document.activeElement?.getAttribute("aria-label") || document.activeElement?.tagName || "(none)").replace(/\s+/g, " ").slice(0, 70))
-const paneTitle = () => page.evaluate(() => document.querySelector("aside h2")?.textContent ?? "(no pane)")
+const PANE = 'aside[aria-label*="beside"], aside[data-beside], [data-slot="beside"], aside'
+const paneTitle = () => page.evaluate((sel) => {
+  const pane = Array.from(document.querySelectorAll(sel)).find((a) => a.querySelector("h2") && /Open the page/.test(a.innerText ?? ""))
+  return pane?.querySelector("h2")?.textContent ?? "(no pane)"
+}, PANE)
 const paneCount = () => page.evaluate(() => document.querySelector("aside footer span")?.textContent ?? "(no list)")
 const besideMarked = () => page.evaluate(() => document.querySelector(".ollopa-beside-open")?.innerText.replace(/\s+/g, " ").slice(0, 60) ?? "(nothing marked)")
+
+/** A real pointer click on the first visible control whose text matches. The pane's "Open the page"
+ *  is a link now, and a link only follows the page's own handler on a real click. */
+const clickText = async (text) => {
+  const h = await page.evaluateHandle((t) => Array.from(document.querySelectorAll("a, button"))
+    .filter((e) => e.getClientRects().length)
+    .find((e) => (e.innerText ?? "").trim() === t), text)
+  const el = h.asElement()
+  if (!el) throw new Error(`no control reads "${text}"`)
+  await el.click()
+}
 
 await page.goto(base + "/#/", { waitUntil: "networkidle0" })
 await page.evaluate((r) => localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: r })), role)
@@ -79,10 +94,11 @@ if (onPhone) {
 }
 await wait(600)
 await shot("2-quicklook")
-console.log("quick look:", await page.evaluate(() => document.querySelector('[role="dialog"] h2, [role="dialog"] [data-title]')?.textContent ?? "(no drawer)"))
+// The quick look is the beside pane now, not a modal of its own (layouts README, overlays).
+console.log("quick look:", await paneTitle())
 
-// "Open" leaves for the record through the trail.
-await page.evaluate(() => Array.from(document.querySelectorAll('[role="dialog"] button')).find((b) => b.textContent.trim() === "Open")?.click())
+// "Open the page" leaves for the record through the trail.
+await clickText("Open the page")
 await wait(800)
 console.log("trail:", await trail())
 await shot("3-record")

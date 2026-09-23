@@ -32,3 +32,12 @@ export const PERSON_FAMILY = "people"
 export function RowGap() {
   return <li aria-hidden="true"><Separator /></li>
 }
+
+/**
+ * A record's sections in the order this seat reads them (LAYOUTS.md §7: "then sections in the usage
+ * order"). Each section names the usage item it is about; the model ranks them, and the page never
+ * hard-codes the order — which is what lets one record read differently for a marketer and an admin.
+ */
+export function inUsageOrder<S>(d: { weekly: (id: string) => number }, list: { item: string; section: S }[]): S[] {
+  return [...list].sort((a, b) => d.weekly(b.item) - d.weekly(a.item)).map((x) => x.section)
+}

@@ -1200,7 +1200,10 @@ export function Row({ row, admin, honest = true, idPrefix = "row-", stacked = fa
           {note && <p className="t-small pt-1.5 text-muted-foreground">{note}</p>}
         </>
       ) : (
-        <div className={cn("grid gap-1", !stacked && "sm:grid-cols-[minmax(11rem,16rem)_1fr] sm:items-baseline sm:gap-4")}>
+        // The label sits beside the value only when the row's own column is wide enough for both.
+        // A container query, not a viewport one: at 1024 the area index takes a third of the page,
+        // so the row is narrow there while the window is not.
+        <div className={cn("grid gap-1", !stacked && "@md:grid-cols-[minmax(11rem,16rem)_1fr] @md:items-baseline @md:gap-4")}>
           <div className="t-label">{row.label}</div>
           <div className="t-body min-w-0">
             {wrapped}

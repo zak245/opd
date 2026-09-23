@@ -1,4 +1,3 @@
-import { Container } from "../../ui/Section"
 // Workspace set-up: the only page a person sees once — and the one page an admin comes back to.
 //
 // Three questions on one screen, because the sidebar cannot be decided without them and because the
@@ -12,9 +11,9 @@ import { Container } from "../../ui/Section"
 // Start and Skip return along that crumb to the row instead of dropping the person on Home.
 import { useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Actions } from "../../ui/Actions"
-import { Chip, FamilyIcon } from "../../ui/Identity"
+import { WizardPage } from "../../layouts"
+import { Chip } from "../../ui/Identity"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -183,6 +182,7 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   const [seats, setSeats] = useState<Role[]>(start.seats)
   const [everything, setEverything] = useState(start.everything)
   const [doorOpen, setDoorOpen] = useState(false)
+  const [step, setStep] = useState("job")
   const [invites, setInvites] = useState<{ email: string; seat: Role }[]>([{ email: "", seat: "sdr" }])
 
   const answers: SetupAnswers = { firstJob, people, seats, everything }
@@ -191,14 +191,21 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
   const others = (["founder-led", "separated", "agency", "product-led"] as Profile[]).filter((p) => p !== profile)
 
   if (session.role !== "admin") {
+    // The same type at a dead end: one step, and the sentence naming who can change it (RULES.md
+    // rule 4). The template sets the measure; this page sets no width.
     return (
-      <div className="mx-auto max-w-xl px-6 py-16">
-        <h1 className="t-section">Your workspace is already set up</h1>
-        <p className="t-body mt-3 text-muted-foreground">
+      <WizardPage
+        family="settings"
+        title="How your team works"
+        actions={[]}
+        steps={[{ id: "done", name: "Your workspace is already set up" }]}
+        current="done"
+        footer={<Actions surface="form" items={[{ label: "Back to Home", kind: "secondary", onClick: () => navigate("/ollopa") }]} />}
+      >
+        <p className="t-body text-muted-foreground">
           {declared.user} set it up on {longDate(declared.on)}. They can change how your team works in Settings › How your team works.
         </p>
-        <Actions className="mt-6" surface="page" items={[{ label: "Back to Home", kind: "secondary", onClick: () => navigate("/ollopa") }]} />
-      </div>
+      </WizardPage>
     )
   }
 
@@ -221,8 +228,50 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
     navigate("/ollopa")
   }
 
+  /**
+   * The three questions, as the Wizard type draws them: a step list beside the card at `lg` and
+   * above it below, one card for the step you are on (LAYOUTS.md §1). The answers still save as they
+   * are made and the page still holds all three — the steps are how it is read, not a gate.
+   */
+  const steps = [
+    { id: "job", name: "What are you here to do first?", note: JOBS.find((j) => j.id === firstJob)?.label },
+    { id: "people", name: "How many people will use it?", note: SIZES.find((x) => x.id === people)?.label },
+    { id: "jobs", name: "Which of these jobs exist here?", note: everything ? "Everyone does everything" : `${new Set(seats).size || "No"} of the four` },
+  ]
+
+  const result = (
+    <div aria-live="polite" className="grid gap-3">
+      <Separator />
+      <h3 className="t-label">
+        {answered ? PROFILE_LABEL[profile] : "Answer the three questions and this will say what your team gets"}
+        {!answered && (firstJob || people || seats.length) ? ` · ${PROFILE_LABEL[profile]} so far` : ""}
+      </h3>
+      {(answered || firstJob || people || seats.length > 0) && (
+        <ProfileBlock profile={profile} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} />
+      )}
+      <div>
+        <h4>
+          <button className="t-label flex items-center gap-1" aria-expanded={doorOpen} onClick={() => setDoorOpen((v) => !v)}>
+            {doorOpen ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
+            The other three profiles: {others.map((x) => PROFILE_LABEL[x]).join(", ")}
+          </button>
+        </h4>
+        {doorOpen && (
+          <div className="mt-3 grid gap-4">
+            {others.map((x) => (
+              <div key={x}>
+                <div className="t-label">{PROFILE_LABEL[x]}</div>
+                <div className="mt-1"><ProfileBlock profile={x} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} /></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   return (
-    <div className={cn(!inShell && "min-h-screen bg-muted/30")}>
+    <>
       {!inShell && (
         <header className="relative flex h-14 items-center gap-3 bg-sidebar px-4">
           <span className="inline-block size-5 rounded-sm bg-foreground" aria-hidden="true" />
@@ -232,138 +281,108 @@ export function WorkspaceSetup({ session, inShell = false }: { session: Session;
         </header>
       )}
 
-      <div className="mx-auto max-w-3xl px-6 py-10">
-        <h1 className="t-title flex items-center gap-2">
-          <FamilyIcon of="settings" size="header" />
-          How your team works
-        </h1>
-
-        <Container component="form" as="section" heading="Your workspace" className="mt-8" bodyClassName="grid gap-3 px-4 pb-4 sm:grid-cols-3">
-          <label className="t-label">
-            <span className="text-muted-foreground">Workspace name</span>
-            <Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-          <label className="t-label">
-            <span className="text-muted-foreground">Timezone</span>
-            <Input className="mt-1" value={zone} onChange={(e) => setZone(e.target.value)} />
-          </label>
-          <label className="t-label">
-            <span className="text-muted-foreground">Currency</span>
-            <Input className="mt-1" value={currency} onChange={(e) => setCurrency(e.target.value)} />
-          </label>
-        </Container>
-
-        {/* One section per question, its options a library ToggleGroup: one choice at a time for
-            the first two, several for the third. Nothing here is a control drawn by hand. */}
-        <Container as="section" className="mt-4" aria-label="What are you here to do first?" heading="What are you here to do first?">
-          <ToggleGroup
-            type="single" variant="outline" className={GROUP} aria-label="What are you here to do first?"
-            value={firstJob ?? ""}
-            onValueChange={(v) => { if (!v) return; const id = v as NonNullable<SetupAnswers["firstJob"]>; setFirstJob(id); save({ firstJob: id }) }}
-          >
-            {JOBS.map((j) => <ToggleGroupItem key={j.id} value={j.id} className={ITEM}>{j.label}</ToggleGroupItem>)}
-          </ToggleGroup>
-        </Container>
-
-        <Container as="section" className="mt-4" aria-label="How many people will use it?" heading="How many people will use it?"
-          footer={<Chip status="new">{priceLine(people)}</Chip>}>
-          <ToggleGroup
-            type="single" variant="outline" className="flex-wrap justify-start" aria-label="How many people will use it?"
-            value={people ?? ""}
-            onValueChange={(v) => { if (!v) return; const id = v as NonNullable<SetupAnswers["people"]>; setPeople(id); save({ people: id }) }}
-          >
-            {SIZES.map((s) => <ToggleGroupItem key={s.id} value={s.id}>{s.label}</ToggleGroupItem>)}
-          </ToggleGroup>
-        </Container>
-
-        <Container as="section" className="mt-4" aria-label="Which of these jobs exist here?" heading="Which of these jobs exist here?">
-          <ToggleGroup
-            type="multiple" variant="outline" className={GROUP} aria-label="Which of these jobs exist here?"
-            value={everything ? [EVERY] : seats}
-            onValueChange={(next) => {
-              const was = everything ? [EVERY] : (seats as string[])
-              const added = next.find((v) => !was.includes(v))
-              const gone = was.find((v) => !next.includes(v))
-              if (added === EVERY) { setEverything(true); setSeats([]); save({ everything: true, seats: [] }); return }
-              if (gone === EVERY) { setEverything(false); save({ everything: false, seats }); return }
-              const kept = next.filter((v) => v !== EVERY) as Role[]
-              setSeats(kept); setEverything(false); save({ seats: kept, everything: false })
-            }}
-          >
-            {SEAT_JOBS.map((s) => <ToggleGroupItem key={s.id} value={s.id} className={ITEM}>{s.label}</ToggleGroupItem>)}
-            <ToggleGroupItem value={EVERY} className={ITEM}>We all do everything</ToggleGroupItem>
-          </ToggleGroup>
-        </Container>
-
-        <Container as="section" component="section" aria-live="polite" className="mt-4"
-          heading={<>
-            {answered ? PROFILE_LABEL[profile] : "Answer the three questions and this will say what your team gets"}
-            {!answered && (firstJob || people || seats.length) ? ` · ${PROFILE_LABEL[profile]} so far` : ""}
-          </>}>
-          {(answered || firstJob || people || seats.length > 0) && (
-            <div className="mt-3">
-              <ProfileBlock profile={profile} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} />
-            </div>
-          )}
-
-          <Separator className="mt-4" />
-          <div className="pt-3">
-            <h3>
-              <button
-                className="t-label flex items-center gap-1"
-                aria-expanded={doorOpen}
-                onClick={() => setDoorOpen((v) => !v)}
-              >
-                {doorOpen ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
-                The other three profiles: {others.map((p) => PROFILE_LABEL[p]).join(", ")}
-              </button>
-            </h3>
-            {doorOpen && (
-              <div className="mt-3 grid gap-4">
-                {others.map((p) => (
-                  <div key={p}>
-                    <div className="t-label">{PROFILE_LABEL[p]}</div>
-                    <div className="mt-1"><ProfileBlock profile={p} seats={everything ? (["sdr", "admin"] as Role[]) : [...seats, "admin" as Role]} /></div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Container>
-
-        <Container as="section" component="form" className="mt-4" heading="Invite the people you counted">
-          <div className="grid gap-2">
-            {invites.map((row, i) => (
-              <div key={i} className="flex flex-wrap gap-2">
-                <Input
-                  className="min-w-48 flex-1"
-                  placeholder="name@company.com"
-                  value={row.email}
-                  onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
-                />
-                <Select value={row.seat} onValueChange={(v) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: v as Role } : r)))}>
-                  <SelectTrigger aria-label="Seat" className="w-48"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(["sdr", "ae", "marketer", "cs", "admin"] as Role[]).map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
-          <Actions className="mt-2" surface="card" items={[{ label: "Add another person", kind: "secondary", onClick: () => setInvites([...invites, { email: "", seat: "sdr" }]) }]} />
-        </Container>
-
-        {/* The wizard's footer is a form bar: the primary at the leading edge, Skip after it. */}
-        <Separator className="mt-8" />
-        <div className="flex flex-wrap items-center gap-3 pt-6">
+      <WizardPage
+        family="settings"
+        title="How your team works"
+        description={workspace.name}
+        actions={[]}
+        steps={steps}
+        current={step}
+        onGo={setStep}
+        footer={
           <Actions surface="form" items={[
             { label: trail.length > 0 ? "Save the answers" : "Start", kind: "primary",
               disabledBecause: answered ? undefined : "Answer all three questions",
               onClick: () => finish({ skipped: false }) },
             { label: "Skip", kind: "secondary", onClick: () => finish({ skipped: true }) },
           ]} />
-        </div>
-      </div>
-    </div>
+        }
+      >
+        {step === "job" && (
+          <div className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="t-label">
+                <span className="text-muted-foreground">Workspace name</span>
+                <Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
+              </label>
+              <label className="t-label">
+                <span className="text-muted-foreground">Timezone</span>
+                <Input className="mt-1" value={zone} onChange={(e) => setZone(e.target.value)} />
+              </label>
+              <label className="t-label">
+                <span className="text-muted-foreground">Currency</span>
+                <Input className="mt-1" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+              </label>
+            </div>
+            <Separator />
+            <ToggleGroup
+              type="single" variant="outline" className={GROUP} aria-label="What are you here to do first?"
+              value={firstJob ?? ""}
+              onValueChange={(v) => { if (!v) return; const id = v as NonNullable<SetupAnswers["firstJob"]>; setFirstJob(id); save({ firstJob: id }) }}
+            >
+              {JOBS.map((j) => <ToggleGroupItem key={j.id} value={j.id} className={ITEM}>{j.label}</ToggleGroupItem>)}
+            </ToggleGroup>
+            {result}
+          </div>
+        )}
+
+        {step === "people" && (
+          <div className="grid gap-4">
+            <ToggleGroup
+              type="single" variant="outline" className="flex-wrap justify-start" aria-label="How many people will use it?"
+              value={people ?? ""}
+              onValueChange={(v) => { if (!v) return; const id = v as NonNullable<SetupAnswers["people"]>; setPeople(id); save({ people: id }) }}
+            >
+              {SIZES.map((x) => <ToggleGroupItem key={x.id} value={x.id}>{x.label}</ToggleGroupItem>)}
+            </ToggleGroup>
+            <p><Chip status="new">{priceLine(people)}</Chip></p>
+            {result}
+          </div>
+        )}
+
+        {step === "jobs" && (
+          <div className="grid gap-4">
+            <ToggleGroup
+              type="multiple" variant="outline" className={GROUP} aria-label="Which of these jobs exist here?"
+              value={everything ? [EVERY] : seats}
+              onValueChange={(next) => {
+                const was = everything ? [EVERY] : (seats as string[])
+                const added = next.find((v) => !was.includes(v))
+                const gone = was.find((v) => !next.includes(v))
+                if (added === EVERY) { setEverything(true); setSeats([]); save({ everything: true, seats: [] }); return }
+                if (gone === EVERY) { setEverything(false); save({ everything: false, seats }); return }
+                const kept = next.filter((v) => v !== EVERY) as Role[]
+                setSeats(kept); setEverything(false); save({ seats: kept, everything: false })
+              }}
+            >
+              {SEAT_JOBS.map((x) => <ToggleGroupItem key={x.id} value={x.id} className={ITEM}>{x.label}</ToggleGroupItem>)}
+              <ToggleGroupItem value={EVERY} className={ITEM}>We all do everything</ToggleGroupItem>
+            </ToggleGroup>
+            {result}
+            <Separator />
+            <div className="grid gap-2">
+              <h3 className="t-label">Invite the people you counted</h3>
+              {invites.map((row, i) => (
+                <div key={i} className="flex flex-wrap gap-2">
+                  <Input
+                    className="min-w-48 flex-1"
+                    placeholder="name@company.com"
+                    value={row.email}
+                    onChange={(e) => setInvites(invites.map((r, j) => (j === i ? { ...r, email: e.target.value } : r)))}
+                  />
+                  <Select value={row.seat} onValueChange={(v) => setInvites(invites.map((r, j) => (j === i ? { ...r, seat: v as Role } : r)))}>
+                    <SelectTrigger aria-label="Seat" className="w-48"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(["sdr", "ae", "marketer", "cs", "admin"] as Role[]).map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+              <Actions className="mt-1" surface="card" items={[{ label: "Add another person", kind: "secondary", onClick: () => setInvites([...invites, { email: "", seat: "sdr" }]) }]} />
+            </div>
+          </div>
+        )}
+      </WizardPage>
+    </>
   )
 }

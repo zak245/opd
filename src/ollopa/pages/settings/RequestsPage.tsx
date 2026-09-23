@@ -8,22 +8,24 @@
 // many people feel the change, and Cost is the monthly total on an upgrade row before it is opened.
 // Where nothing in the workspace is locked, the upgrade kind cannot occur and the Cost column is
 // removed rather than shown empty.
-import { Fragment, useMemo, useState } from "react"
-import { cn } from "@/lib/utils"
+import { useMemo, useState, type ReactNode } from "react"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Container } from "../../ui/Section"
+import { IndexPage, SummaryStrip } from "../../layouts"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
-import { Door, DoorGroup } from "../../ui/Door"
+import { DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { businessById } from "../../data/businesses"
 import { seedFor, type Request } from "../../data/seed"
 import type { Session } from "../../session"
-import { TablePage, type Column } from "../../templates/TablePage"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+/** One column of the queue. The template draws the card, the toolbar and the pager around it. */
+interface Column { key: string; header: string; className?: string; cell: (r: Request) => ReactNode }
 import { businessDaysBetween, day, money, plural } from "./format"
 import { toast } from "./state"
 
@@ -74,6 +76,8 @@ export function RequestsPage({ session }: { session: Session }) {
   const [kind, setKind] = useState("all")
   const [archived, setArchived] = useState("Open requests")
   const [investigated, setInvestigated] = useState<string[]>([])
+  const [q, setQ] = useState("")
+  const [limit, setLimit] = useState(15)
 
   const open = all.filter((r) => r.state !== "declined")
   const sorted = useMemo(() => {
@@ -99,13 +103,14 @@ export function RequestsPage({ session }: { session: Session }) {
   const oldest = open.length ? open.reduce((a, r) => (r.raisedOn < a.raisedOn ? r : a)) : null
   const captured = all.filter((r) => r.state === "captured" && !investigated.includes(r.id))
 
-  const columns: Column<Request>[] = [
+  // The order the queue is read in: what was asked, how long it has waited, where it stands. The
+  // three that decide are first, so the ones that overflow at a narrow width are the descriptive
+  // ones and never the state.
+  const columns: Column[] = [
     {
       key: "outcome", header: "Request",
       cell: (r) => <a className="block max-w-[20rem] truncate underline-offset-4 hover:underline" title={r.outcome} href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>,
     },
-    { key: "kind", header: "Kind", cell: (r) => (r.kind === "upgrade" ? "Locked feature" : "Workspace change"), className: "whitespace-nowrap" },
-    { key: "asked", header: "Asked by", cell: (r) => <span className="whitespace-nowrap">{r.requester.user}</span> },
     {
       key: "waiting", header: "Waiting",
       cell: (r) => {
@@ -115,6 +120,16 @@ export function RequestsPage({ session }: { session: Session }) {
           : <span className="whitespace-nowrap tabular-nums">{w.text}</span>
       },
     },
+    { key: "state", header: "State", cell: (r) => <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip> },
+    { key: "owner", header: "Decides", cell: (r) => <span className="whitespace-nowrap">{r.decisionOwner}</span> },
+    { key: "affects", header: "Affects", cell: (r) => <span className="tabular-nums">{r.affected.count}</span>, className: "text-right" },
+    ...(hasUpgrades ? [{
+      key: "cost", header: "Cost",
+      cell: (r: Request) => (r.upgrade ? <span className="whitespace-nowrap tabular-nums">{money(r.upgrade.monthlyTotal)} a month</span> : <span className="text-muted-foreground">—</span>),
+      className: "text-right",
+    }] : []),
+    { key: "kind", header: "Kind", cell: (r) => (r.kind === "upgrade" ? "Locked feature" : "Workspace change"), className: "whitespace-nowrap" },
+    { key: "asked", header: "Asked by", cell: (r) => <span className="whitespace-nowrap">{r.requester.user}</span> },
     {
       key: "touches", header: "What it touches", className: "max-w-[12rem]",
       cell: (r) => (
@@ -123,14 +138,6 @@ export function RequestsPage({ session }: { session: Session }) {
         </span>
       ),
     },
-    { key: "affects", header: "Affects", cell: (r) => <span className="tabular-nums">{r.affected.count}</span>, className: "text-right" },
-    ...(hasUpgrades ? [{
-      key: "cost", header: "Cost",
-      cell: (r: Request) => (r.upgrade ? <span className="whitespace-nowrap tabular-nums">{money(r.upgrade.monthlyTotal)} a month</span> : <span className="text-muted-foreground">—</span>),
-      className: "text-right",
-    }] : []),
-    { key: "owner", header: "Decides", cell: (r) => <span className="whitespace-nowrap">{r.decisionOwner}</span> },
-    { key: "state", header: "State", cell: (r) => <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip> },
   ]
 
   if (all.length === 0) {
@@ -144,158 +151,136 @@ export function RequestsPage({ session }: { session: Session }) {
     )
   }
 
-  return (
-    <div className="block sm:flex sm:h-full sm:flex-col">
-      <DoorGroup>
-        <div className="shrink-0 px-4 pt-5 sm:px-6">
-          <Card><CardContent className="py-3">
-          <p className="t-body">
-            <strong className="font-semibold">{plural(open.length, "waiting", "waiting")}</strong>
-            {" · "}
-            {past.length === 0
-              ? <span>none past {target} business days</span>
-              : <Chip status="overdue">{past.length} past {target} business days</Chip>}
-            {oldest && <> · oldest {businessDaysBetween(oldest.raisedOn)} days ({oldest.requester.user})</>}
-          </p>
-          <p className="t-small mt-0.5 text-muted-foreground">Nothing here closes on its own.</p>
-          </CardContent></Card>
+  const search = q.trim().toLowerCase()
+  const shown = rows.filter((r) => !search
+    || `${r.outcome} ${r.requester.user} ${r.reasonText} ${r.touches.map((t) => t.name).join(" ")}`.toLowerCase().includes(search))
+  const page = shown.slice(0, limit)
 
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+  const rowMenu = (r: Request) => [
+    { label: "Open", kind: "secondary" as const, onClick: () => navigate(`/ollopa/requests/${r.id}`) },
+    { label: r.state === "captured" ? "Approve to investigate" : "Hand over", kind: "secondary" as const,
+      onClick: () => toast(r.state === "captured"
+        ? `Approved to investigate. Nothing changes for anybody yet. ${r.requester.user} is told where they asked.`
+        : `Hand ${r.outcome} to somebody else, with one line saying why. The waiting clock does not restart.`) },
+    { label: "Decline with a reason", kind: "secondary" as const, onClick: () => toast(`Declining needs a reason. ${r.requester.user} reads it where they asked.`) },
+    { label: "Merge with another request", kind: "secondary" as const, onClick: () => toast("Both requesters are kept and both are told. The older raised date wins.") },
+    { label: "Archive", kind: "destructive" as const, onClick: () => toast(`${r.outcome} archived. The record, the reason and the history stay readable, and declined requests are kept for a year.`) },
+  ]
+
+  const pick = (label: string, value: string, set: (v: string) => void, options: { value: string; label: string }[]) => ({
+    name: label,
+    node: (
+      <Select value={value} onValueChange={set}>
+        <SelectTrigger className="w-48" aria-label={label}><SelectValue /></SelectTrigger>
+        <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+      </Select>
+    ),
+  })
+
+  return (
+    <DoorGroup>
+      {/* The Index type: the queue's toolbar and count in the card's header, the table above 640
+          and the same requests as a divided list at 400, the pager in the card's footer. */}
+      <IndexPage
+        family="requests"
+        title="Requests"
+        count={all.length}
+        description={`Sorted by what is past the ${target}-business-day answer target, then by how long it has waited.`}
+        actions={[
+          ...(captured.length > 0 ? [{
+            label: `Approve ${captured.length} to investigate`, kind: "secondary" as const,
+            onClick: () => { setInvestigated((v) => [...v, ...captured.map((r) => r.id)]); toast(`${captured.length} approved to investigate. Nothing changes for anybody yet.`) },
+          }] : []),
+          { label: "Export the queue", kind: "secondary" as const, onClick: () => toast(`Exported ${shown.length} requests as CSV.`) },
+        ]}
+        above={
+          <>
+            <SummaryStrip figures={[
+              { label: "Waiting", value: open.length, note: "nothing here closes on its own" },
+              { label: `Past ${target} business days`, value: past.length === 0 ? "None" : <Chip status="overdue">{past.length}</Chip> },
+              ...(oldest ? [{ label: "Oldest", value: `${businessDaysBetween(oldest.raisedOn)} days`, note: oldest.requester.user }] : []),
+            ]} />
             <ToggleGroup
-              type="single"
-              variant="outline"
-              size="sm"
-              aria-label="Filter by state"
-              value={chip}
-              onValueChange={(v) => setChip((v || "all") as typeof chip)}
-              className="flex-wrap"
+              type="single" variant="outline" size="sm" aria-label="Filter by state"
+              value={chip} onValueChange={(v) => setChip((v || "all") as typeof chip)} className="flex-wrap"
             >
               <ToggleGroupItem value="all">Everything ({all.length})</ToggleGroupItem>
-              {CHIP_ORDER.map((s) => {
-                const n = all.filter((r) => r.state === s).length
+              {CHIP_ORDER.map((st) => {
+                const n = all.filter((r) => r.state === st).length
                 if (n === 0) return null
-                return <ToggleGroupItem key={s} value={s}>{STATE_LABEL[s]} ({n})</ToggleGroupItem>
+                return <ToggleGroupItem key={st} value={st}>{STATE_LABEL[st]} ({n})</ToggleGroupItem>
               })}
             </ToggleGroup>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {captured.length > 0 && (
-              <Actions surface="card" items={[{
-                label: `Approve ${captured.length} to investigate`, kind: "secondary",
-                onClick: () => { setInvestigated((v) => [...v, ...captured.map((r) => r.id)]); toast(`${captured.length} approved to investigate. Nothing changes for anybody yet.`) },
-              }]} />
-            )}
-            <span className="flex-1" />
-            <Actions surface="card" items={[{ label: "Export the queue", kind: "secondary", onClick: () => toast(`Exported ${rows.length} requests as CSV.`) }]} />
-          </div>
-
-          <div className="mt-2">
-            <Door id="requests.filters" label="Additional filters: requester, decision owner, what it touches, kind, archived" count={5}>
-              <div className="flex flex-wrap gap-2 py-1">
-                <Select value={requester} onValueChange={setRequester}>
-                  <SelectTrigger className="h-8 w-48" aria-label="Requester"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Requester: anyone</SelectItem>
-                    {[...new Set(all.map((r) => r.requester.user))].map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={owner} onValueChange={setOwner}>
-                  <SelectTrigger className="h-8 w-48" aria-label="Decision owner"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Decision owner: anyone</SelectItem>
-                    {[...new Set(all.map((r) => r.decisionOwner))].map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={touches} onValueChange={setTouches}>
-                  <SelectTrigger className="h-8 w-48" aria-label="What it touches"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Touches: anything</SelectItem>
-                    {[...new Set(all.flatMap((r) => r.touches.map((t) => t.kind)))].map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={kind} onValueChange={setKind}>
-                  <SelectTrigger className="h-8 w-44" aria-label="Kind"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Kind: both</SelectItem>
-                    <SelectItem value="change">Workspace change</SelectItem>
-                    <SelectItem value="upgrade">Locked feature</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={archived} onValueChange={setArchived}>
-                  <SelectTrigger className="h-8 w-52" aria-label="Archived"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Open requests">Open requests</SelectItem>
-                    <SelectItem value="Everything, including declined">Everything, including declined</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </Door>
-          </div>
-        </div>
-
-        {/* At phone width the table becomes cards carrying the outcome, the waiting time, the
-            affected count, the cost where there is one, and the state. Nothing changes level. */}
-        <div className="px-4 pb-6 pt-4 sm:hidden">
-        <Container component="list" heading="The queue" count={`${rows.length} shown of ${all.length}`} padded={false} bodyClassName="px-0">
-        <ul>
-          {rows.map((r, i) => {
-            const w = waitingOf(r, target)
-            return (
-              <Fragment key={r.id}>
-              {i > 0 && <Separator />}
-              <li className="px-4 py-3">
-                <a className="text-sm font-medium underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}
-                </p>
-                <p className="t-body mt-1">{w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : w.text}</p>
-                <p className="text-sm">
-                  {plural(r.affected.count, "person", "people")} feel it
-                  {r.upgrade && <> · {money(r.upgrade.monthlyTotal)} a month</>}
-                </p>
-                <p className="t-small mt-1 flex items-center gap-1.5 text-muted-foreground">
-                  <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip>
-                  {r.decisionOwner} decides
-                </p>
-              </li>
-              </Fragment>
-            )
-          })}
-        </ul>
-        </Container>
-        </div>
-
-        <div className="hidden min-h-0 flex-1 sm:block">
-          <TablePage<Request>
-            family="requests"
-            title="The queue"
-            description={`Sorted by what is past the ${target}-business-day answer target, then by how long it has waited.`}
-            rows={rows}
-            total={all.length}
-            rowKey={(r) => r.id}
-            columns={columns}
-            searchText={(r) => `${r.outcome} ${r.requester.user} ${r.reasonText} ${r.touches.map((t) => t.name).join(" ")}`}
-            rowActions={[
-              { label: "Open", onClick: (r) => navigate(`/ollopa/requests/${r.id}`) },
-              { label: (r) => (r.state === "captured" ? "Approve to investigate" : "Hand over"), onClick: (r) => toast(r.state === "captured" ? `Approved to investigate. Nothing changes for anybody yet. ${r.requester.user} is told where they asked.` : `Hand ${r.outcome} to somebody else, with one line saying why. The waiting clock does not restart.`) },
-            ]}
-            moreActions={[
-              { label: "Decline with a reason", onClick: (r) => toast(`Declining needs a reason. ${r.requester.user} reads it where they asked.`) },
-              { label: "Merge with another request", onClick: () => toast("Both requesters are kept and both are told. The older raised date wins.") },
-              { label: "Archive", onClick: (r) => toast(`${r.outcome} archived. The record, the reason and the history stay readable, and declined requests are kept for a year.`) },
-            ]}
-            pageSize={15}
-          />
-        </div>
-      </DoorGroup>
-      <Separator />
-      <p className="t-small shrink-0 px-4 py-2 text-muted-foreground sm:px-6">
-        {b.name} · a request is raised where the problem was met, never here.{" "}
-        {hasUpgrades ? "An upgrade row carries its monthly total before it is opened." : `Nothing is locked on ${b.plan.name}, so the upgrade kind cannot occur here and its column is removed.`}
-      </p>
-    </div>
+          </>
+        }
+        controls={[
+          { name: "Search", always: true, node: (
+            <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
+          ) },
+          pick("Requester", requester, setRequester, [{ value: "all", label: "Requester: anyone" },
+            ...[...new Set(all.map((r) => r.requester.user))].map((u) => ({ value: u, label: u }))]),
+          pick("Decision owner", owner, setOwner, [{ value: "all", label: "Decision owner: anyone" },
+            ...[...new Set(all.map((r) => r.decisionOwner))].map((u) => ({ value: u, label: u }))]),
+          pick("What it touches", touches, setTouches, [{ value: "all", label: "Touches: anything" },
+            ...[...new Set(all.flatMap((r) => r.touches.map((t) => t.kind)))].map((k) => ({ value: k, label: k }))]),
+          pick("Kind", kind, setKind, [{ value: "all", label: "Kind: both" },
+            { value: "change", label: "Workspace change" }, { value: "upgrade", label: "Locked feature" }]),
+          pick("Archived", archived, setArchived, [{ value: "Open requests", label: "Open requests" },
+            { value: "Everything, including declined", label: "Everything, including declined" }]),
+        ]}
+        shown={`${shown.length} shown of ${all.length}`}
+        table={
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((c) => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
+                <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {page.map((r) => (
+                <TableRow key={r.id} data-item={r.id} data-item-label={r.outcome}>
+                  {columns.map((c) => <TableCell key={c.key} className={c.className}>{c.cell(r)}</TableCell>)}
+                  <TableCell className="text-right"><Actions surface="row" layout="menu" items={rowMenu(r)} /></TableCell>
+                </TableRow>
+              ))}
+              {page.length === 0 && (
+                <TableRow><TableCell colSpan={columns.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        }
+        rows={page.map((r) => {
+          const w = waitingOf(r, target)
+          return (
+            <div key={r.id} data-item={r.id} data-item-label={r.outcome} className="px-4 py-3">
+              <a className="t-label underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
+              <p className="t-small mt-1 text-muted-foreground">
+                {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}
+              </p>
+              <p className="t-body mt-1">{w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : w.text}</p>
+              <p className="t-body">
+                {plural(r.affected.count, "person", "people")} feel it
+                {r.upgrade && <> · {money(r.upgrade.monthlyTotal)} a month</>}
+              </p>
+              <p className="t-small mt-1 flex items-center gap-1.5 text-muted-foreground">
+                <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip>
+                {r.decisionOwner} decides
+              </p>
+            </div>
+          )
+        })}
+        pager={shown.length > limit ? (
+          <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + 15)}>
+            Show {Math.min(15, shown.length - limit)} more
+          </Button>
+        ) : undefined}
+      >
+        <p className="t-small px-1 text-muted-foreground">
+          {b.name} · a request is raised where the problem was met, never here.{" "}
+          {hasUpgrades ? "An upgrade row carries its monthly total before it is opened." : `Nothing is locked on ${b.plan.name}, so the upgrade kind cannot occur here and its column is removed.`}
+        </p>
+      </IndexPage>
+    </DoorGroup>
   )
 }
-
-export { day }

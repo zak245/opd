@@ -5,13 +5,12 @@
 // has not happened yet, descriptive buttons in the footer, and "Save and exit" on every step
 // (specs/15 §3.1 "Progress and buttons", specs/18 §3.1).
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
-import { ChevronRight, Copy } from "lucide-react"
+import { Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container } from "../../ui/Section"
+import { WizardPage, type WizardStep } from "../../layouts"
 import { useDoorState } from "../../ui/Door"
 import { toast } from "../../templates/TablePage"
 
@@ -135,43 +134,13 @@ function stateOf(s: StepState, current: number): { status: string; word: string;
   return { status: "none", word: "Not started" }
 }
 
-/** `tagged` marks the one copy the lesson view measures: the phone copy is the same list again. */
-function StepRows({ steps, current, go, tagged }: { steps: StepState[]; current: number; go: (n: number) => void; tagged?: boolean }) {
-  return (
-    <ol data-container={tagged ? "connect.steps" : undefined} data-container-label={tagged ? "the step list" : undefined} className="grid gap-1">
-      {steps.map((s) => {
-        const state = stateOf(s, current)
-        const words = (
-          <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <Chip status={state.status}>{state.word}</Chip>
-            {state.rest && <span className="t-small min-w-0 text-muted-foreground">{state.rest}</span>}
-          </span>
-        )
-        const openable = s.n !== current && (s.done || !s.blocked)
-        return (
-          <li key={s.n} className="px-2 py-1.5">
-            {openable ? (
-              <button type="button" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`} className="block text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => go(s.n)}>
-                <span className="t-label hover:underline">Step {s.n}: {s.name}</span>
-                {words}
-              </button>
-            ) : (
-              <span className="block" data-item={tagged ? `connect.steps.${s.n}` : undefined} data-item-label={`Step ${s.n}: ${s.name}`}>
-                <span className={cn("t-label", s.n === current && "text-foreground")} aria-current={s.n === current ? "step" : undefined}>Step {s.n}: {s.name}</span>
-                {words}
-              </span>
-            )}
-          </li>
-        )
-      })}
-    </ol>
-  )
-}
-
 export interface WizardProps {
   steps: StepState[]
   current: number
   go: (n: number) => void
+  /** The page's own name, for the header the template draws. */
+  title?: string
+  family?: string
   /** The one line under the heading, where the step spends or cannot be undone. Otherwise nothing. */
   constantLine?: string
   /** Saved as it is made, so this only leaves the page; it never decides anything. */
@@ -181,14 +150,12 @@ export interface WizardProps {
   children: ReactNode
 }
 
-export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer, children }: WizardProps) {
-  const step = steps.find((s) => s.n === current) ?? steps[0]
-  const heading = useRef<HTMLHeadingElement>(null)
-  const [stepsOpen, setStepsOpen] = useState(false)
-
-  // Focus moves to the step's heading on every step change, so a screen reader hears the progress first.
-  useEffect(() => { heading.current?.focus() }, [current])
-
+/**
+ * Both wizards, on the layout system's own wizard (LAYOUTS.md §1). The template owns the step list,
+ * the reading measure, the three widths and where the footer sits; this passes the steps, the step's
+ * body and the way on, and nothing else. The step's state words stay the ones the wizard used.
+ */
+export function Wizard({ steps, current, go, title = "Set-up", family = "connect", constantLine, onSaveAndExit, footer, children }: WizardProps) {
   // Cmd/Ctrl+S is Save and exit, and the button prints it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -198,59 +165,42 @@ export function Wizard({ steps, current, go, constantLine, onSaveAndExit, footer
     return () => window.removeEventListener("keydown", onKey)
   }, [onSaveAndExit])
 
-  return (
-    <div className="mx-auto grid max-w-5xl gap-6 px-4 py-6 lg:grid-cols-[16rem_1fr] lg:px-6">
-      {/* The step list: a nav with a heading, states in text, done steps as links. */}
-      <nav aria-labelledby="wiz-steps" className="lg:sticky lg:top-4 lg:self-start">
-        <h2 id="wiz-steps" className="t-small px-2 font-medium uppercase tracking-wide text-muted-foreground">
-          Steps · {steps.filter((s) => s.done).length} of {steps.length} done
-        </h2>
-        <div className="mt-2 hidden lg:block"><StepRows steps={steps} current={current} go={go} tagged /></div>
-        <div className="mt-2 lg:hidden">
-          {/* The phone's way into the step list is the library's own control: a ghost Button with
-              the step count as a Badge, nothing drawn by hand (DESIGN.md §4). */}
-          <Button
-            variant="ghost"
-            className="t-label h-auto w-full justify-start gap-2 whitespace-normal px-3 py-2 text-left"
-            aria-expanded={stepsOpen}
-            aria-controls="wiz-steps-phone"
-            onClick={() => setStepsOpen((v) => !v)}
-          >
-            <ChevronRight aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground transition-transform", stepsOpen && "rotate-90")} />
-            <Badge variant="secondary">{current} of {steps.length}</Badge>
-            <span className="min-w-0">{step.name} · {stepsOpen ? "Hide steps" : "Show steps"}</span>
-          </Button>
-          <div id="wiz-steps-phone" hidden={!stepsOpen} className="mt-2">
-            <StepRows steps={steps} current={current} go={go} />
-          </div>
-        </div>
-      </nav>
+  const wizardSteps: WizardStep[] = steps.map((s) => {
+    const state = stateOf(s, current)
+    return {
+      id: String(s.n),
+      name: s.name,
+      note: (
+        <span data-item={`connect.steps.${s.n}`} data-item-label={`Step ${s.n}: ${s.name}`}
+          className="flex flex-wrap items-center gap-1.5">
+          <Chip status={state.status}>{state.word}</Chip>
+          {state.rest && <span className="min-w-0 truncate">{state.rest}</span>}
+        </span>
+      ),
+    }
+  })
 
-      {/* One container per step: the step's name in its header, its questions in the body, the way
-          on in its footer. The step list beside it stays on the canvas, because it is navigation
-          rather than content (DESIGN.md §5, containment). */}
-      <Container
-        className="min-w-0"
-        component="form"
-        heading={
-          <span ref={heading} tabIndex={-1} className="focus-visible:outline-none">
-            Step {current} of {steps.length}: {step.name}
-          </span>
-        }
-        footer={
-          <div data-container="connect.footer" data-container-label="the footer" className="flex w-full flex-wrap items-center gap-3">
-            {footer}
-            <Actions className="ml-auto" surface="page" items={[{
-              kind: "secondary", label: "Save and exit", onClick: onSaveAndExit, keys: "⌘S",
-              dataItem: "wiz.save-exit", dataItemLabel: "Save and exit",
-            }]} />
-          </div>
-        }
-      >
-        {constantLine && <p className="t-body -mt-1 mb-4 text-muted-foreground">{constantLine}</p>}
-        <div className="grid gap-6 pb-2 [&>*]:min-w-0">{children}</div>
-      </Container>
-    </div>
+  return (
+    <WizardPage
+      family={family}
+      title={title}
+      count={`step ${current} of ${steps.length}`}
+      description={constantLine}
+      steps={wizardSteps}
+      current={String(current)}
+      onGo={(id) => go(Number(id))}
+      footer={
+        <div data-container="connect.footer" data-container-label="the footer" className="flex w-full flex-wrap items-center gap-3">
+          {footer}
+          <Actions className="ml-auto" surface="page" items={[{
+            kind: "secondary", label: "Save and exit", onClick: onSaveAndExit, keys: "⌘S",
+            dataItem: "wiz.save-exit", dataItemLabel: "Save and exit",
+          }]} />
+        </div>
+      }
+    >
+      <div data-container="connect.steps" data-container-label="the step list" className="grid gap-6 [&>*]:min-w-0">{children}</div>
+    </WizardPage>
   )
 }
 

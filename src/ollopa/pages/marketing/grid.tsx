@@ -1,18 +1,21 @@
 // The table Campaigns and Workflows share.
 //
-// It is TablePage's shape with the three things these two specs add and the template does not carry:
-// sortable headers that persist, a column chooser named for what it holds, and phone cards that carry
-// every column the desktop row carries. Nothing is hover-only: a row's actions show on hover and on
-// focus-within, and the same actions repeat in the row's "…" menu, whose accessible name is the list
-// of what is in it — no menu in this product is called "More actions".
-import { Fragment, useMemo, useRef, type ReactNode } from "react"
+// `IndexPage` asks a page for two bodies — the table for the desktop and the same things as a
+// divided list for 400 — so this is a hook rather than a component: one sort, one set of column
+// choices, one set of rows, drawn twice. The page passes the result straight to the template and
+// sets no width of its own (LAYOUTS.md §5, the layouts README, "Migrating a page").
+//
+// What it adds over the library's table: sortable headers that persist, a column chooser named for
+// what it holds, and a 400 row that carries every column the desktop row carries. Nothing is
+// hover-only: a row's actions show on hover and on focus-within, and the same actions repeat in the
+// row's "…" menu, whose accessible name is the list of what is in it.
+import { useMemo, useRef, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Separator } from "@/components/ui/separator"
 import { Actions, type Action } from "../../ui/Actions"
 import { usePref } from "./prefs"
 
@@ -51,7 +54,19 @@ export interface GridProps<T> {
   rowLabel?: (row: T) => string
 }
 
-export function Grid<T>(p: GridProps<T>) {
+export interface GridBodies {
+  /** The desktop body: the library's `Table`. Give it to `IndexPage`'s `table`. */
+  table: ReactNode
+  /** The same rows as a divided list for 400. Give it to `IndexPage`'s `rows`. */
+  rows: ReactNode
+  /** The column chooser, for the toolbar in the card's header. Null where nothing is optional. */
+  columns: ReactNode
+  /** How many rows are shown after the page's own filtering and this grid's sort. */
+  count: number
+}
+
+/** One grid, two bodies. The page renders neither itself; it hands both to the template. */
+export function useGrid<T>(p: GridProps<T>): GridBodies {
   const [sort, setSort] = usePref<{ key: string; dir: "asc" | "desc" }>(`${p.id}.sort`, p.defaultSort ?? { key: p.columns[0].key, dir: "asc" })
   const optional = p.columns.filter((c) => c.optional)
   const [ownHidden, setOwnHidden] = usePref<string[]>(`${p.id}.hidden`, optional.map((c) => c.key))
@@ -106,111 +121,107 @@ export function Grid<T>(p: GridProps<T>) {
     )
   }
 
-  if (p.rows.length === 0 && p.empty) return <>{p.empty}</>
+  const empty = p.rows.length === 0 ? p.empty : undefined
 
-  return (
-    <div>
-      {/* ---------------------------------------------------------------- the table, from tablet up */}
-      <div className="hidden overflow-x-auto md:block">
-        <Table>
-          <TableHeader className="bg-card sticky top-0 z-10">
-            <TableRow>
-              {shown.map((c) => (
-                <TableHead key={c.key} className={cn("t-label", c.className)}>
-                  {/* A sortable header is the library's ghost Button, as shadcn's own data table
-                      draws it — never a hand-rolled button (DESIGN.md §4). */}
-                  {c.sortBy ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="t-label -ml-2 h-7 px-2"
-                      aria-label={`Sort by ${c.header}`}
-                      onClick={() => setSort({ key: c.key, dir: sort.key === c.key && sort.dir === "asc" ? "desc" : "asc" })}
-                    >
-                      {c.header}
-                      {sort.key === c.key
-                        ? (sort.dir === "asc" ? <ArrowUp className="size-3" aria-hidden="true" /> : <ArrowDown className="size-3" aria-hidden="true" />)
-                        : <ChevronsUpDown className="size-3 opacity-40" aria-hidden="true" />}
-                    </Button>
-                  ) : c.header}
-                </TableHead>
-              ))}
-              <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody ref={body}>
-            {rows.map((row) => (
-              <TableRow
-                key={p.rowKey(row)}
-                // The row is tagged with its own id, so a page the trail is holding can scroll back
-                // to it, light it and focus it, and so the pane can mark the row it is reading.
-                data-item={p.rowKey(row)}
-                data-item-label={p.rowLabel?.(row)}
-                className="group cursor-pointer align-top"
-                tabIndex={0}
-                onClick={(e) => { (e.currentTarget as HTMLElement).focus(); p.onOpen?.(row) }}
-                onKeyDown={(e) => onRowKey(e, row)}
-              >
-                {/* A column that carries a sentence wraps onto a second line (its className says so);
-                    nothing is ever truncated behind a tooltip. */}
-                {shown.map((c) => <TableCell key={c.key} className={cn("t-body py-2", c.className)}>{c.cell(row)}</TableCell>)}
-                <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1">
-                    {/* The row's own acts, repeated in the menu beside them: nothing is hover-only,
-                        so they appear on hover and on focus and are reachable either way. */}
-                    {(p.actions?.(row) ?? []).length > 0 && (
-                      <div className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100">
-                        <Actions
-                          surface="card"
-                          items={(p.actions?.(row) ?? []).map((a): Action => ({ kind: "secondary", label: a.label, onClick: () => a.onClick(row) }))}
-                        />
-                      </div>
-                    )}
-                    {rowMenu(row)}
-                  </div>
-                </TableCell>
-              </TableRow>
+  const table = empty ?? (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader className="bg-card sticky top-0 z-10">
+          <TableRow>
+            {shown.map((c) => (
+              <TableHead key={c.key} className={cn("t-label", c.className)}>
+                {/* A sortable header is the library's ghost Button, as shadcn's own data table
+                    draws it — never a hand-rolled button (DESIGN.md §4). */}
+                {c.sortBy ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="t-label -ml-2 h-7 px-2"
+                    aria-label={`Sort by ${c.header}`}
+                    onClick={() => setSort({ key: c.key, dir: sort.key === c.key && sort.dir === "asc" ? "desc" : "asc" })}
+                  >
+                    {c.header}
+                    {sort.key === c.key
+                      ? (sort.dir === "asc" ? <ArrowUp className="size-3" aria-hidden="true" /> : <ArrowDown className="size-3" aria-hidden="true" />)
+                      : <ChevronsUpDown className="size-3 opacity-40" aria-hidden="true" />}
+                  </Button>
+                ) : c.header}
+              </TableHead>
             ))}
-            {rows.length === 0 && (
-              <TableRow><TableCell colSpan={shown.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* -------------------------- the phone: cards carrying every column the desktop row carries */}
-      {/* The phone: one list with dividers between rows when the page has contained it, and a card
-          each when it has not. A card inside a container reads as two groups where there is one. */}
-      <ul className="md:hidden">
-        {rows.map((row, i) => (
-          <Fragment key={p.rowKey(row)}>
-          {/* One list divided by the library, not a card per row: a card inside a card is two
-              groups where there is one thing (DESIGN.md §4). */}
-          {i > 0 && <li aria-hidden="true"><Separator /></li>}
-          <li
-            data-item={p.rowKey(row)}
-            data-item-label={p.rowLabel?.(row)}
-            className="px-4 py-3"
-          >
-            <div className="flex items-start gap-2">
-              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>
-              {rowMenu(row)}
-            </div>
-            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
-              {shown.slice(1).map((c) => (
-                <div key={c.key} className="min-w-0">
-                  <dt className="t-small text-muted-foreground">{c.header}</dt>
-                  <dd className="t-small min-w-0">{c.cell(row)}</dd>
+            <TableHead className="w-px"><span className="sr-only">Actions</span></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody ref={body}>
+          {rows.map((row) => (
+            <TableRow
+              key={p.rowKey(row)}
+              // The row is tagged with its own id, so a page the trail is holding can scroll back
+              // to it, light it and focus it, and so the pane can mark the row it is reading.
+              data-item={p.rowKey(row)}
+              data-item-label={p.rowLabel?.(row)}
+              className="group cursor-pointer align-top"
+              tabIndex={0}
+              onClick={(e) => { (e.currentTarget as HTMLElement).focus(); p.onOpen?.(row) }}
+              onKeyDown={(e) => onRowKey(e, row)}
+            >
+              {/* A column that carries a sentence wraps onto a second line (its className says so);
+                  nothing is ever truncated behind a tooltip. */}
+              {shown.map((c) => <TableCell key={c.key} className={cn("t-body py-2", c.className)}>{c.cell(row)}</TableCell>)}
+              <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-end gap-1">
+                  {/* The row's own acts, repeated in the menu beside them: nothing is hover-only,
+                      so they appear on hover and on focus and are reachable either way. */}
+                  {(p.actions?.(row) ?? []).length > 0 && (
+                    <div className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100">
+                      <Actions
+                        surface="card"
+                        items={(p.actions?.(row) ?? []).map((a): Action => ({ kind: "secondary", label: a.label, onClick: () => a.onClick(row) }))}
+                      />
+                    </div>
+                  )}
+                  {rowMenu(row)}
                 </div>
-              ))}
-            </dl>
-          </li>
-          </Fragment>
-        ))}
-        {rows.length === 0 && <li className="t-body py-8 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</li>}
-      </ul>
+              </TableCell>
+            </TableRow>
+          ))}
+          {rows.length === 0 && (
+            <TableRow><TableCell colSpan={shown.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
+
+  // 400: the same rows as a divided list, carrying every column the desktop row carries. The
+  // template draws the rule between them, so nothing here draws one.
+  const phoneRows = empty ?? (
+    <>
+      {rows.map((row) => (
+        <div key={p.rowKey(row)} data-item={p.rowKey(row)} data-item-label={p.rowLabel?.(row)} className="px-4 py-3">
+          <div className="flex items-start gap-2">
+            <button type="button" className="min-w-0 flex-1 text-left" onClick={() => p.onOpen?.(row)}>{p.cardTitle(row)}</button>
+            {rowMenu(row)}
+          </div>
+          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
+            {shown.slice(1).map((c) => (
+              <div key={c.key} className="min-w-0">
+                <dt className="t-small text-muted-foreground">{c.header}</dt>
+                <dd className="t-small min-w-0">{c.cell(row)}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+      {rows.length === 0 && <div className="t-body px-4 py-8 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</div>}
+    </>
+  )
+
+  return {
+    table,
+    rows: phoneRows,
+    count: rows.length,
+    columns: <GridColumns columns={p.columns} hidden={hidden} onHidden={setHidden} />,
+  }
 }
 
 /**

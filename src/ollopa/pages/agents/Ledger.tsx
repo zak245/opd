@@ -15,7 +15,7 @@ import { href } from "@/app/router"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Separator } from "@/components/ui/separator"
 import { Chip } from "../../ui/Identity"
-import { Container } from "../../ui/Section"
+import { Section } from "../../layouts"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { SectionHeader } from "../../ui/SectionHeader"
@@ -149,7 +149,7 @@ export function Ledger(p: LedgerProps) {
         </SelectContent>
       </Select>
       <Select value={f.who} onValueChange={(v) => set({ who: v })}>
-        <SelectTrigger data-item="act.filter-contact" data-item-label="Filter by contact or company" className="h-8 w-48" aria-label="Contact or company"><SelectValue /></SelectTrigger>
+        <SelectTrigger data-item="act.filter-contact" data-item-label="Filter by contact or company" className="h-8 w-56" aria-label="Contact or company"><SelectValue /></SelectTrigger>
         <SelectContent className="max-h-72">
           <SelectItem value="all">Any contact or company</SelectItem>
           {whoOptions.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
@@ -179,11 +179,8 @@ export function Ledger(p: LedgerProps) {
 
   return (
     <DoorGroup>
-    <Container
-      aria-labelledby="agents-activity"
+    <Section
       data-container="ledger" data-container-label="the activity ledger"
-      className="mt-8"
-      component="list"
       padded={false}
       heading={teammates ? "Activity" : "Your contacts’ activity"}
       count={p.events.length}
@@ -227,7 +224,6 @@ export function Ledger(p: LedgerProps) {
         </div>
       </>}
     >
-      <h2 id="agents-activity" className="sr-only">Activity</h2>
 
       <div className="px-4">
       {!teammates && admin && (
@@ -328,7 +324,7 @@ export function Ledger(p: LedgerProps) {
         </div>
       </Panel>
       </div>
-    </Container>
+    </Section>
     </DoorGroup>
   )
 }

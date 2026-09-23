@@ -158,7 +158,7 @@ export function CompanyContactsToolbar({ companyId, contacts, companyName, child
   const { stages, titles } = useMemo(() => optionsOf(contacts), [contacts])
   // One row that wraps: the card's action slot is a plain block, so the toolbar brings its own.
   return (
-    <div className="flex max-w-[30rem] flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Input
         className="h-8 w-48"
         aria-label={`Find a person at ${companyName}`}

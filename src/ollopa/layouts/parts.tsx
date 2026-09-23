@@ -3,7 +3,7 @@
 // Each part is a thin composition of shadcn as shipped. None of them declares a colour, a radius,
 // a shadow or a spacing scale of its own: the library carries the look, `identity.ts` carries the
 // six families and five statuses, and `Actions` carries the action grammar.
-import { useId, useMemo, useState, type ReactNode } from "react"
+import { useId, useMemo, useState, useSyncExternalStore, type ReactNode } from "react"
 import { SlidersHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,21 @@ import { Actions, type Action } from "../ui/Actions"
 import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 
+/** True below `sm`. Read, never rendered twice: two branches put every control in the DOM twice. */
+const PHONE = "(max-width: 639px)"
+export function usePhone() {
+  return useSyncExternalStore(
+    (f) => {
+      if (typeof window === "undefined" || !window.matchMedia) return () => {}
+      const m = window.matchMedia(PHONE)
+      m.addEventListener("change", f)
+      return () => m.removeEventListener("change", f)
+    },
+    () => typeof window !== "undefined" && window.matchMedia?.(PHONE).matches === true,
+    () => false,
+  )
+}
+
 // ---------------------------------------------------------------------------------- PageHeader
 
 export interface PageHeaderProps {
@@ -35,6 +50,8 @@ export interface PageHeaderProps {
   actions?: Action[]
   /** Acts that go behind the "…" menu. */
   more?: Action[]
+  /** A control that belongs on the title line rather than among the acts: "Expand all". */
+  trailing?: ReactNode
   className?: string
 }
 
@@ -42,7 +59,7 @@ export interface PageHeaderProps {
  * The top line of a page: the family icon and title, the count, the one primary act and the "…".
  * Never filters — those are the Toolbar's, inside the card (LAYOUTS.md §2).
  */
-export function PageHeader({ family, title, count, description, actions, more, className }: PageHeaderProps) {
+export function PageHeader({ family, title, count, description, actions, more, trailing, className }: PageHeaderProps) {
   return (
     <div className={cn("flex flex-wrap items-start justify-between gap-x-4 gap-y-2", className)}>
       <div className="min-w-0">
@@ -57,9 +74,10 @@ export function PageHeader({ family, title, count, description, actions, more, c
         </h2>
         {description && <p className="t-body text-muted-foreground">{description}</p>}
       </div>
-      {(actions?.length || more?.length) && (
+      {(actions?.length || more?.length || trailing) && (
         <div className="flex shrink-0 items-center gap-2">
           {actions?.length ? <Actions surface="page" items={actions} /> : null}
+          {trailing}
           {more?.length ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -118,15 +136,19 @@ export function Toolbar({ controls, count, max = 5, className }: {
 }) {
   const [open, setOpen] = useState(false)
   const id = useId()
+  const phone = usePhone()
   const shown = useMemo(() => {
     const always = controls.filter((c) => c.always)
     const rest = controls.filter((c) => !c.always)
-    const room = Math.max(0, max - always.length)
+    // At 400 a toolbar of five rows is the page. One thing in front — the search — and one door
+    // for the rest, so the content starts on the first screen (LAYOUTS.md §5).
+    const room = phone ? 0 : Math.max(0, max - always.length)
     return { front: [...always, ...rest.slice(0, room)], behind: rest.slice(room) }
-  }, [controls, max])
+  }, [controls, max, phone])
 
-  const label = shown.behind.length === 0 ? "" :
-    `Filter by ${shown.behind.map((c) => c.name.toLowerCase()).join(", ")}`
+  const label = shown.behind.length === 0 ? "" : phone
+    ? "Filters and views"
+    : `Filter by ${shown.behind.map((c) => c.name.toLowerCase()).join(", ")}`
 
   return (
     <div className={cn("flex w-full min-w-0 flex-col gap-2", className)}>
@@ -171,11 +193,13 @@ export interface SummaryFigure {
  * text on the page's own surface, so it does not compete with the sections under it.
  */
 export function SummaryStrip({ figures, className }: { figures: SummaryFigure[]; className?: string }) {
+  const phone = usePhone()
   if (figures.length === 0) return null
   return (
-    <div className={cn("flex flex-wrap items-baseline gap-x-8 gap-y-2 py-2", className)}>
+    // One line at 400, scrolled rather than wrapped: a strip that wraps to four rows is a block.
+    <div className={cn("flex items-baseline gap-x-8 gap-y-2 py-2", phone ? "overflow-x-auto" : "flex-wrap", className)}>
       {figures.map((f) => (
-        <div key={f.label} className="min-w-0">
+        <div key={f.label} className={cn("min-w-0", phone && "shrink-0")}>
           <div className="t-label text-muted-foreground">{f.label}</div>
           <div className="t-section tabular-nums">
             {f.href ? <a className="underline-offset-4 hover:underline" href={f.href}>{f.value}</a> : f.value}

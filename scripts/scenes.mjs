@@ -101,6 +101,8 @@ const PAGES = [
   // The wizard's step is in the address, so the last step is a place, not four clicks.
   rest("connect-5", "Connect wizard", "Connect an integration, the last step", "/ollopa/connect/salesforce?step=5", "meridian:admin"),
   rest("import", "Import wizard", "Import and enrich", "/ollopa/import", "meridian:sdr"),
+  rest("integration", "Integrations", "A connected integration", "/ollopa/integrations/int-1", "meridian:admin"),
+  rest("job", "Integrations", "An enrichment job report", "/ollopa/enrichment/local-import", "meridian:sdr"),
   rest("developer", "Developer", "The developer page", "/ollopa/developer/api", "meridian:admin"),
   rest("setup", "Set-up", "Workspace set-up", "/ollopa/setup", "meridian:admin"),
   rest("signin", "Sign in", "The sign-in page", "/ollopa/signin", "meridian:admin"),

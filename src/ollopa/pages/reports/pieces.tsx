@@ -10,20 +10,28 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDoorState } from "../../ui/Door"
-import { Container, Section } from "../../ui/Section"
+import { Section } from "../../layouts"
 import { money as usd, type Plan } from "../../ui/gate"
 import { toast } from "../../templates/TablePage"
 import type { Tile } from "./compute"
 
 /* ----------------------------------------------------------------------------------- the tiles */
 
+/** One column per tile above `lg`, so the strip is full and the rules divide numbers, not space. */
+const COLUMNS: Record<number, string> = {
+  1: "lg:grid-cols-1", 2: "lg:grid-cols-2", 3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6",
+}
+
 export function TileRow({ tiles, onRecords }: { tiles: Tile[]; onRecords?: (t: Tile) => void }) {
   return (
     // Two per row on a phone, then one row across: sourced and influenced must stay side by side.
-    <Container as="ul" component="section" padded={false}
-      bodyClassName={cn("grid grid-cols-2 sm:grid-cols-3", tiles.length >= 6 ? "lg:grid-cols-6" : "lg:grid-cols-5")}>
+    // The row has exactly as many columns as there are tiles, so no cell of it is empty at rest
+    // (LAYOUTS.md §6) and the divider stops where the numbers stop.
+    <Section padded={false}
+      bodyClassName={cn("grid grid-cols-2 divide-x sm:grid-cols-3", COLUMNS[Math.min(tiles.length, 6)] ?? "lg:grid-cols-6")}>
       {tiles.map((t) => (
-        <li key={t.id} className={cn("border-r p-3 last:border-r-0", t.tone === "warning" && "border-l-2 border-l-[color:var(--warning)]")}>
+        <div key={t.id} className={cn("p-3", t.tone === "warning" && "border-l-2 border-l-[color:var(--warning)]")}>
           <div className="t-small text-muted-foreground">{t.label}</div>
           {/* A count is a link to its records; a zero is data, not a door. */}
           {t.records && onRecords ? (
@@ -45,9 +53,9 @@ export function TileRow({ tiles, onRecords }: { tiles: Tile[]; onRecords?: (t: T
               <span aria-hidden="true">{t.delta.arrow} </span>{t.delta.text}
             </p>
           )}
-        </li>
+        </div>
       ))}
-    </Container>
+    </Section>
   )
 }
 
@@ -115,8 +123,7 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
   }
 
   return (
-    <Container
-      component="table"
+    <Section
       padded={false}
       heading={caption}
       count={rows.length}
@@ -185,7 +192,7 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
           </table>
         </div>
       )}
-    </Container>
+    </Section>
   )
 }
 

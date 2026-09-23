@@ -280,6 +280,7 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
   return (
     <RecordPage
       back={{ label: "Requests", href: href("/ollopa/requests") }}
+      family="requests"
       title={{ value: request.outcome }}
       subtitle={{ label: `${request.requester.user} · ${request.requester.seat}`, href: href("/ollopa/settings/team") }}
       chips={
@@ -297,29 +298,34 @@ export function RequestRecord({ session, id }: { session: Session; id?: string }
             : undefined
       }
       fields={fields}
-      actions={{
-        primary: live === "captured"
-          ? [{
-              label: "Approve to investigate",
-              onClick: () => { setState("investigating"); toast(`Approved to investigate. Nothing changes for anybody yet. ${request.requester.user} is told where they asked.`) },
-            }]
-          : implemented
-            ? [{ label: "Mark it shipped", onClick: () => { setState("shipped"); toast("Marked shipped. The announcement line is written and the verify count starts.") } }]
-            : [{
-                label: canImplement ? `Approve · ${plural(request.affected.count, "person", "people")} see the change · ${request.rollback.replace(/\.$/, "")}` : "Write the rollback path first",
-                confirm: canImplement ? consequence : undefined,
-                onClick: () => {
-                  if (!canImplement) { toast("Still missing: the affected count and the rollback path."); return }
-                  setState("approved")
-                  toast("Approved to implement. The announcement line is written for the affected people.")
+      actions={{ primary: [], secondary: [] }}
+      /* The header's controls as one Actions row: the page says what each control is and the
+         primitive decides how it is drawn and whether it asks first (LAYOUTS.md §2, DESIGN.md §1). */
+      headerActions={
+        <Actions surface="page" items={[
+          live === "captured"
+            ? { label: "Approve to investigate", kind: "primary" as const,
+                onClick: () => { setState("investigating"); toast(`Approved to investigate. Nothing changes for anybody yet. ${request.requester.user} is told where they asked.`) } }
+            : implemented
+              ? { label: "Mark it shipped", kind: "primary" as const,
+                  onClick: () => { setState("shipped"); toast("Marked shipped. The announcement line is written and the verify count starts.") } }
+              : {
+                  label: canImplement ? `Approve · ${plural(request.affected.count, "person", "people")} see the change` : "Approve",
+                  kind: "primary" as const,
+                  disabledBecause: canImplement ? undefined : "Write the affected count and the rollback path first",
+                  irreversible: canImplement
+                    ? { title: "Approve this change?", consequence, confirmLabel: "Approve the change" }
+                    : undefined,
+                  onClick: () => {
+                    setState("approved")
+                    toast("Approved to implement. The announcement line is written for the affected people.")
+                  },
                 },
-              }],
-        secondary: [
-          { label: "Decline", onClick: () => setDeclining(true) },
-          { label: "Hand the decision over", onClick: () => toast("Handed over with one line saying why. The waiting clock does not restart, because the requester's week does not restart.") },
-          { label: "Copy out", onClick: () => { navigator.clipboard?.writeText(`${request.outcome}\n${request.requester.user}\n${location.href}`); toast("Copied the request and its link, for a tracker of your own.") } },
-        ],
-      }}
+          { label: "Decline", kind: "secondary" as const, onClick: () => setDeclining(true) },
+          { label: "Hand the decision over", kind: "secondary" as const, onClick: () => toast("Handed over with one line saying why. The waiting clock does not restart, because the requester's week does not restart.") },
+          { label: "Copy out", kind: "secondary" as const, onClick: () => { navigator.clipboard?.writeText(`${request.outcome}\n${request.requester.user}\n${location.href}`); toast("Copied the request and its link, for a tracker of your own.") } },
+        ]} />
+      }
       main={{ kind: "sections", sections }}
       side={[
         {

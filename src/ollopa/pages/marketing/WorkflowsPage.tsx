@@ -17,6 +17,7 @@ import { href, useRoute } from "@/app/router"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { IndexPage, type ToolbarControl } from "../../layouts"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { FAMILY, ink } from "./look"
@@ -30,7 +31,7 @@ import { gate } from "../../ui/gate"
 import { businessById } from "../../data/businesses"
 import { TODAY, seedFor, type Workflow } from "../../data/seed"
 import type { Session } from "../../session"
-import { Grid, type GridColumn } from "./grid"
+import { useGrid, type GridColumn } from "./grid"
 import { breachedRows, enrolled7d, notRoutedRuns, runsOf } from "./derive"
 import { ago, day, num } from "./format"
 import { patchRow, addRow, useMarketing } from "./store"
@@ -88,39 +89,54 @@ export function WorkflowsPage({ session }: { session: Session }) {
 
   if (lock.locked) {
     return (
-      <div className="flex h-full flex-col">
-        <div className="px-6 pt-5">
-          <h2 className="t-title">Workflows</h2>
-          <p className="text-sm text-muted-foreground">Route what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 px-6 py-3">
-          <Locked feature="Workflows" plan={lock.plan} pricePerMonth={lock.pricePerMonth} what={lock.what}>
-            <Actions surface="page" items={[{ kind: "primary", label: "Create a workflow" }]} />
-          </Locked>
-          <span className="text-sm tabular-nums text-muted-foreground">{num(rows.workflows.length)} workflows</span>
-        </div>
-        <p className="px-6 pb-3 text-xs text-muted-foreground">
-          Without it: assign an owner by hand from People, and route by saved view.
-        </p>
-        {/* The real shape and the real count, values withheld — never a screenshot and never a chart.
-            The card's own edge divides it from the lock above; nothing here draws a rule. */}
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader><TableRow>{COLUMN_NAMES.map((c) => <TableHead key={c}>{c}</TableHead>)}</TableRow></TableHeader>
-            <TableBody>
-              {rows.workflows.length === 0 ? (
-                <TableRow><TableCell colSpan={COLUMN_NAMES.length} className="py-10 text-center text-sm text-muted-foreground">No workflows yet. The first one anybody creates puts this page in the sidebar.</TableCell></TableRow>
-              ) : rows.workflows.map((w) => (
-                <TableRow key={w.id}>
-                  <TableCell className="font-medium">{w.name}</TableCell>
-                  {COLUMN_NAMES.slice(1, -1).map((c) => <TableCell key={c} className="text-muted-foreground">—</TableCell>)}
-                  <TableCell><Badge variant="secondary">{lock.plan}</Badge></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      <IndexPage
+        family={FAMILY}
+        title="Workflows"
+        count={rows.workflows.length}
+        description="Route what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
+        above={
+          <div className="flex flex-wrap items-center gap-3">
+            <Locked feature="Workflows" plan={lock.plan} pricePerMonth={lock.pricePerMonth} what={lock.what}>
+              <Actions surface="page" items={[{ kind: "primary", label: "Create a workflow" }]} />
+            </Locked>
+            <span className="t-body text-muted-foreground">
+              Without it: assign an owner by hand from People, and route by saved view.
+            </span>
+          </div>
+        }
+        /* The real shape and the real count, values withheld — never a screenshot and never a chart. */
+        table={
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow>{COLUMN_NAMES.map((c) => <TableHead key={c} className="t-label">{c}</TableHead>)}</TableRow></TableHeader>
+              <TableBody>
+                {rows.workflows.length === 0 ? (
+                  <TableRow><TableCell colSpan={COLUMN_NAMES.length} className="t-body py-10 text-center text-muted-foreground">No workflows yet. The first one anybody creates puts this page in the sidebar.</TableCell></TableRow>
+                ) : rows.workflows.map((w) => (
+                  <TableRow key={w.id}>
+                    <TableCell className="font-medium">{w.name}</TableCell>
+                    {COLUMN_NAMES.slice(1, -1).map((c) => <TableCell key={c} className="text-muted-foreground">—</TableCell>)}
+                    <TableCell><Badge variant="secondary">{lock.plan}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        }
+        rows={
+          <>
+            {rows.workflows.map((w) => (
+              <div key={w.id} className="flex items-center justify-between gap-2 px-4 py-3">
+                <span className="t-body min-w-0 truncate font-medium">{w.name}</span>
+                <Badge variant="secondary">{lock.plan}</Badge>
+              </div>
+            ))}
+            {rows.workflows.length === 0 && (
+              <p className="t-body px-4 py-8 text-center text-muted-foreground">No workflows yet. The first one anybody creates puts this page in the sidebar.</p>
+            )}
+          </>
+        }
+      />
     )
   }
 
@@ -195,118 +211,117 @@ export function WorkflowsPage({ session }: { session: Session }) {
     open(`/ollopa/workflows/${w.id}`, w.id)
   }
 
+  /* -------------------------------------------------------------------------------- the bodies */
+
+  // One grid, two bodies: the table for the desktop and the same rows as a divided list for 400.
+  // The page sets no width and draws no phone branch of its own (LAYOUTS.md §5).
+  const grid = useGrid<Workflow>({
+    id: "workflows",
+    rows: filtered,
+    rowKey: (w) => w.id,
+    columns,
+    // The order the page is read in: what has breached, then what could not be routed, then name.
+    defaultSort: { key: "breached", dir: "desc" },
+    actions: (w) => [{
+      label: w.status === "on" ? "Turn off" : "Turn on",
+      onClick: () => {
+        const runs = runsOf(seed.workflowRuns, w.id)
+        patchRow(session.business, "workflows", w.id, { status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
+        toast(w.status === "on"
+          ? `${w.name} stops enrolling. The ${num(breachedRows(w, runs).length + (w.sla?.running ?? 0))} people already running finish their steps.`
+          : `${w.name} is on. It enrols up to ${num(w.limits.perDay)} people a day; the rest wait.`)
+      },
+    }],
+    menu: (w) => [
+      { label: "Open", onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
+      { label: "Test on one record", onClick: () => open(`/ollopa/workflows/${w.id}?open=test`, w.id) },
+      { label: "Duplicate", onClick: () => {
+        const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
+        addRow(session.business, "workflows", copy)
+        toast(`${copy.name} created, off. The copy does not carry the run history or the enrolments.`)
+      } },
+      { label: "Archive", destructive: true, separatorBefore: true, onClick: () => toast(`${w.name} archived. It stops enrolling for good; the run history is kept and the rule stays readable.`) },
+    ],
+    menuName: "Open, test on one record, duplicate, archive",
+    onOpen: (w) => open(`/ollopa/workflows/${w.id}`, w.id),
+    rowLabel: (w) => w.name,
+    cardTitle: (w) => <span className="font-medium">{w.name}</span>,
+    empty: (
+      <EmptyState
+        title="No workflows"
+        body="A workflow routes what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
+        action={<Actions surface="card" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />}
+      />
+    ),
+  })
+
+  /* ------------------------------------------------------------------------------- the toolbar */
+
+  // The template keeps five in front and puts the rest behind one door it labels itself.
+  const controls: ToolbarControl[] = [
+    {
+      name: "Search",
+      always: true,
+      node: <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />,
+    },
+    {
+      name: "Status",
+      node: (
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="t-small h-8 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">On ({on}) · Off ({off})</SelectItem>
+            <SelectItem value="On">On ({on})</SelectItem>
+            <SelectItem value="Off">Off ({off})</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      name: "Folder",
+      node: (
+        <Select value={folder} onValueChange={setFolder}>
+          <SelectTrigger className="t-small h-8 w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Folder: all</SelectItem>
+            {[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    ...secondary.map((f) => ({
+      name: f.label,
+      node: (
+        <Select value={f.value} onValueChange={f.set}>
+          <SelectTrigger className="t-small h-8 w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{f.label}: all</SelectItem>
+            {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ),
+    })),
+  ]
+
+  /* -------------------------------------------------------------------------------- the render */
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5">
-        <div className="min-w-0">
-          <h2 className="t-title inline-flex min-w-0 items-center gap-2" style={{ color: familyOf(FAMILY).ink }}>
-            <FamilyIcon of={FAMILY} size="header" />
-            Workflows
-          </h2>
-          <p className="t-body text-muted-foreground">Which rule is firing, on whom, and what it is about to cost.</p>
-        </div>
-        <Actions surface="page" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />
-      </div>
-
-      {rows.workflows.length === 0 ? (
-        <div className="px-6 py-10">
-          <EmptyState
-            title="No workflows"
-            body="A workflow routes what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
-            action={<Actions surface="card" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />}
-          />
-        </div>
-      ) : (
-        <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3 max-sm:px-4">
-          {/* The page title is above the card; the card's header carries only the toolbar and the
-              count, and the rows sit inside it with dividers. */}
-          <TableCard
-            count={filtered.length === rows.workflows.length ? num(rows.workflows.length) : `${num(filtered.length)} shown of ${num(rows.workflows.length)}`}
-            toolbar={
-              <div className="hidden flex-wrap items-center gap-2 md:flex">
-                <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="t-small h-8 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">On ({on}) · Off ({off})</SelectItem>
-                    <SelectItem value="On">On ({on})</SelectItem>
-                    <SelectItem value="Off">Off ({off})</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={folder} onValueChange={setFolder}>
-                  <SelectTrigger className="t-small h-8 w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Folder: all</SelectItem>
-                    {[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            }
-          >
-          {/* The phone keeps the search in the body: the header there is the title and the count. */}
-          <div className="px-4 pt-3 md:hidden">
-            <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8" />
-          </div>
-          <div className="px-4 py-2">
-            <Door id="workflows.filters" label="Additional filters: trigger, owner, folder, archived" count={activeBehind || undefined}>
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                {secondary.map((f) => (
-                  <Select key={f.key} value={f.value} onValueChange={f.set}>
-                    <SelectTrigger className="h-8 w-44 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{f.label}: all</SelectItem>
-                      {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                ))}
-              </div>
-            </Door>
-          </div>
-
-          <Grid<Workflow>
-            id="workflows"
-            rows={filtered}
-            rowKey={(w) => w.id}
-            columns={columns}
-            // The order the page is read in: what has breached, then what could not be routed, then name.
-            defaultSort={{ key: "breached", dir: "desc" }}
-            actions={(w) => [{
-              label: w.status === "on" ? "Turn off" : "Turn on",
-              onClick: () => {
-                const runs = runsOf(seed.workflowRuns, w.id)
-                patchRow(session.business, "workflows", w.id, { status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
-                toast(w.status === "on"
-                  ? `${w.name} stops enrolling. The ${num(breachedRows(w, runs).length + (w.sla?.running ?? 0))} people already running finish their steps.`
-                  : `${w.name} is on. It enrols up to ${num(w.limits.perDay)} people a day; the rest wait.`)
-              },
-            }]}
-            menu={(w) => [
-              { label: "Open", onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
-              { label: "Test on one record", onClick: () => open(`/ollopa/workflows/${w.id}?open=test`, w.id) },
-              { label: "Duplicate", onClick: () => {
-                const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
-                addRow(session.business, "workflows", copy)
-                toast(`${copy.name} created, off. The copy does not carry the run history or the enrolments.`)
-              } },
-              { label: "Archive", destructive: true, separatorBefore: true, onClick: () => toast(`${w.name} archived. It stops enrolling for good; the run history is kept and the rule stays readable.`) },
-            ]}
-            menuName="Open, test on one record, duplicate, archive"
-            onOpen={(w) => open(`/ollopa/workflows/${w.id}`, w.id)}
-            rowLabel={(w) => w.name}
-            cardTitle={(w) => <span className="font-medium">{w.name}</span>}
-          />
-          </TableCard>
-        </div>
-      )}
-
+    <IndexPage
+      family={FAMILY}
+      title="Workflows"
+      count={rows.workflows.length}
+      description="Which rule is firing, on whom, and what it is about to cost."
+      actions={[{ kind: "primary", label: "Create a workflow", onClick: create }]}
+      controls={rows.workflows.length === 0 ? undefined : controls}
+      shown={filtered.length === rows.workflows.length ? num(rows.workflows.length) : `${num(filtered.length)} shown of ${num(rows.workflows.length)}`}
+      table={grid.table}
+      rows={grid.rows}
+    >
       {session.role !== "admin" && (
-        <>
-          <Separator />
-          <p className="t-small px-6 py-2 text-muted-foreground">
-            Territories and permission profiles are the admin's: {admin} sets them in Settings › Team and access.
-          </p>
-        </>
+        <p className="t-small text-muted-foreground">
+          Territories and permission profiles are the admin's: {admin} sets them in Settings › Team and access.
+        </p>
       )}
-    </div>
+    </IndexPage>
   )
 }

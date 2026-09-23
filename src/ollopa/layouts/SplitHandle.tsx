@@ -31,6 +31,9 @@ export interface SplitProps {
   defaultSize?: number
   minSize?: number
   maxSize?: number
+  /** Floors in pixels, so neither pane can be dragged narrow enough to stack its own rows. */
+  minListPx?: number
+  minDetailPx?: number
   /** At this width and below the split collapses to one pane; the caller decides which to show. */
   className?: string
 }
@@ -39,7 +42,10 @@ export interface SplitProps {
  * A two-pane split with a real handle. Both panes are always in the DOM, so a selection survives
  * the split being dragged shut and re-opened.
  */
-export function Split({ id, list, detail, defaultSize = 38, minSize = 22, maxSize = 62, className }: SplitProps) {
+export function Split({
+  id, list, detail, defaultSize = 38, minSize = 22, maxSize = 62,
+  minListPx = 320, minDetailPx = 480, className,
+}: SplitProps) {
   const session = useSession()
   const who = session ? `${session.business}.${session.user}` : "anon"
   const panel = useRef<PanelImperativeHandle>(null)
@@ -73,12 +79,12 @@ export function Split({ id, list, detail, defaultSize = 38, minSize = 22, maxSiz
   return (
     <ResizablePanelGroup orientation="horizontal" className={cn("min-h-0", className)}>
       {/* react-resizable-panels reads a bare number as pixels; a percentage has to say so. */}
-      <ResizablePanel panelRef={panel} defaultSize={`${start.current}%`} minSize={`${minSize}%`} maxSize={`${maxSize}%`}
+      <ResizablePanel panelRef={panel} defaultSize={`${start.current}%`} minSize={`${minListPx}px`} maxSize={`${maxSize}%`}
                       onResize={(size) => remember(size.asPercentage)} className="min-w-0">
         {list}
       </ResizablePanel>
       <SplitHandle onNudge={nudge} onReset={reset} />
-      <ResizablePanel minSize={`${100 - maxSize}%`} className="min-w-0">{detail}</ResizablePanel>
+      <ResizablePanel minSize={`${minDetailPx}px`} className="min-w-0">{detail}</ResizablePanel>
     </ResizablePanelGroup>
   )
 }

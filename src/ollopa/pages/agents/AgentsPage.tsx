@@ -15,7 +15,7 @@ import { useLesson } from "@/learn/context"
 import { Actions } from "../../ui/Actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { Container } from "../../ui/Section"
+import { PageHeader, PageScroll, Section } from "../../layouts"
 import { ApproveBar } from "../../ui/ApproveBar"
 import { DoorGroup, useDoorState } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -223,7 +223,8 @@ export function AgentsPage({ session }: { session: Session }) {
 
   if (agents.length === 0 || agentsOn === 0) {
     return (
-      <div className="mx-auto max-w-5xl p-4 sm:p-6">
+      <PageScroll>
+        <PageHeader family="agents" title="Agents" />
         <p className="t-body">No agents are on at {b.name}.</p>
         <div className="mt-4">
           <EmptyState
@@ -236,7 +237,7 @@ export function AgentsPage({ session }: { session: Session }) {
               : undefined}
           />
         </div>
-      </div>
+      </PageScroll>
     )
   }
 
@@ -258,7 +259,15 @@ export function AgentsPage({ session }: { session: Session }) {
     `${queue.length} waiting for you. ${exceptions.length} ${exceptions.length === 1 ? "exception" : "exceptions"}.`
 
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6">
+    <PageScroll>
+      <PageHeader
+        family="agents"
+        title="Agents"
+        count={queue.length > 0 ? `${queue.length} waiting for you` : undefined}
+        actions={session.role === "admin"
+          ? [{ kind: "link", label: "Agent settings", href: href("/ollopa/settings/agents") }]
+          : undefined}
+      />
       {/* Step 0 and step 1: Apollo's top bar, with the balance pill and the second "power-up" meter. */}
       {!rules.r1 && <ParodyTopBar spend={spend} showCredits={!rules.r7} showAssistant />}
       {!rules.r7 && <ParodyNote className="mb-3" />}
@@ -277,9 +286,7 @@ export function AgentsPage({ session }: { session: Session }) {
       />}
 
       {/* Waiting for you. Only the irreversible and the costly; everything else is in the ledger. */}
-      {rules.r7 && <Container
-        className="mt-8"
-        component="list"
+      {rules.r7 && <Section
         padded={false}
         heading="Waiting for you"
         count={queue.length}
@@ -378,7 +385,7 @@ export function AgentsPage({ session }: { session: Session }) {
           </>
         )}
         </div>
-      </Container>}
+      </Section>}
 
       {result && <Alert role="status" className="mt-6 py-2"><AlertDescription className="t-small">{result}</AlertDescription></Alert>}
 
@@ -447,7 +454,7 @@ export function AgentsPage({ session }: { session: Session }) {
         onApproveAll={approveAll}
         onDeclineAll={declineAll}
       />
-    </div>
+    </PageScroll>
   )
 }
 

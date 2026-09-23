@@ -7,7 +7,6 @@
 //
 // The record behind a row is the company record. This page builds no second one.
 import { useMemo, useState, type ReactNode } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
@@ -18,8 +17,8 @@ import { cn } from "@/lib/utils"
 
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
-import { Door } from "../../ui/Door"
 import { Separator } from "@/components/ui/separator"
+import { Rows, Section, type SummaryFigure, type ToolbarControl } from "../../layouts"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
@@ -132,55 +131,59 @@ export function AccountsPage({ session }: { session: Session }) {
   const toggleWindow = (days: number) =>
     setState({ windows: state.windows.includes(days) ? state.windows.filter((w) => w !== days) : [...state.windows, days] })
 
-  const strip: ReactNode = (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="t-small text-muted-foreground">Renewals due</span>
-        {/* Each window turns itself on and off inside one set, so the set is a ToggleGroup. */}
-        <ToggleGroup
-          type="multiple"
-          variant="outline"
-          size="sm"
-          spacing={2}
-          className="flex-wrap"
-          value={state.windows.map(String)}
-          onValueChange={(next) => setState({ windows: next.map(Number) })}
-        >
-          {[30, 60, 90].map((days) => {
-            const { n, value } = windowCount(days)
-            return (
-              <ToggleGroupItem key={days} value={String(days)} className="tabular-nums">
-                {days} days · {n} · {money(value, b.currency)}
-              </ToggleGroupItem>
-            )
-          })}
-        </ToggleGroup>
-        <Badge variant="outline" className="tabular-nums">
-          Value at risk · {money(valueAtRisk, b.currency)} · {atRisk.length} account{atRisk.length === 1 ? "" : "s"}
-        </Badge>
-        {session.role === "ae" && hasAe && (
-          <Actions surface="card" items={[{ kind: "secondary", label: "Send hand-off", onClick: () => toast("Pick a customer success manager; the account joins their queue.") }]} />
-        )}
-      </div>
+  /** The numbers this page is judged by, as one band above the card (LAYOUTS.md §2). */
+  const figures: SummaryFigure[] = [
+    ...[30, 60, 90].map((days) => {
+      const { n, value } = windowCount(days)
+      return { label: `Renewals · ${days} days`, value: money(value, b.currency), note: `${n} account${n === 1 ? "" : "s"}` }
+    }),
+    { label: "Value at risk", value: money(valueAtRisk, b.currency), note: `${atRisk.length} account${atRisk.length === 1 ? "" : "s"}` },
+  ]
 
-      {/* Object state: the strip exists only while a hand-off is waiting. */}
+  /** Narrowing the table to a renewal window is a filter, so it sits with the other filters. */
+  const windowControl: ToolbarControl[] = [{
+    name: "Renewals due",
+    node: (
+      <ToggleGroup
+        type="multiple"
+        variant="outline"
+        size="sm"
+        spacing={2}
+        className="flex-wrap"
+        aria-label="Renewals due"
+        value={state.windows.map(String)}
+        onValueChange={(next) => setState({ windows: next.map(Number) })}
+      >
+        {[30, 60, 90].map((days) => (
+          <ToggleGroupItem key={days} value={String(days)} className="tabular-nums">
+            {days} days · {windowCount(days).n}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    ),
+  }]
+
+  /** What sits above the table: a hand-off waiting for this seat, and what just happened. */
+  const above: ReactNode = (
+    <>
       {handoffs.length > 0 && (
-        <Door id="accounts.handoffs" label="Hand-offs waiting for you" count={handoffs.length} defaultOpen>
-          <ul className="space-y-2">
-            {handoffs.map((v, i) => {
+        <Section heading="Hand-offs waiting for you" count={handoffs.length}>
+          <Rows>
+            {handoffs.map((v) => {
               const h = v.account!.handoff!
               return (
-                <li key={v.company.id} className={i === 0 ? "" : "pt-2"}>
-                  {i > 0 && <Separator className="mb-2" />}
-                  <div className="t-label">{v.account!.name}</div>
-                  <div className="t-small text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
-                  <p className="pt-1 t-small">Why they bought: {h.whyTheyBought}</p>
-                  <Actions className="mt-2" surface="card" items={[{ kind: "secondary", label: "Accept the hand-off", onClick: () => setPending({ kind: "accept", row: v }) }]} />
-                </li>
+                <div key={v.company.id} className="flex flex-wrap items-start justify-between gap-2 py-2 first:pt-0">
+                  <div className="min-w-0">
+                    <div className="t-label">{v.account!.name}</div>
+                    <div className="t-small text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
+                    <p className="t-small pt-1">Why they bought: {h.whyTheyBought}</p>
+                  </div>
+                  <Actions surface="card" items={[{ kind: "secondary", label: "Accept the hand-off", onClick: () => setPending({ kind: "accept", row: v }) }]} />
+                </div>
               )
             })}
-          </ul>
-        </Door>
+          </Rows>
+        </Section>
       )}
 
       {notice && <Notice text={notice.text} undo={notice.undo} onDone={() => setNotice(null)} />}
@@ -227,7 +230,7 @@ export function AccountsPage({ session }: { session: Session }) {
           onCancel={() => setPending(null)}
         />
       )}
-    </div>
+    </>
   )
 
   /* ------------------------------------------------------------------------------- the columns */
@@ -281,7 +284,7 @@ export function AccountsPage({ session }: { session: Session }) {
     { id: "acct.last-touch", header: "Last touch", className: "whitespace-nowrap", sortValue: (v) => v.account!.lastTouch, cell: (v) => ago(v.account!.lastTouch) },
     {
       id: "acct.next-step", header: "Next step", sortValue: (v) => v.account!.nextStep.due,
-      className: "max-w-[11rem] overflow-hidden",
+      className: "min-w-[12rem] whitespace-normal",
       cell: (v) => (
         <NextStepCell
           value={v.account!.nextStep}
@@ -398,13 +401,17 @@ export function AccountsPage({ session }: { session: Session }) {
   return (
     <>
       <DataTable<CompanyView>
+        family="accounts"
         title="Accounts"
         total={all.length}
         rows={rows}
         rowKey={(v) => v.company.id}
         searchHint="Search a name, a domain, a champion or an owner"
         searchText={(v) => `${v.account!.name} ${v.account!.domain} ${v.account!.champion} ${v.account!.owner}`}
-        strip={strip}
+        figures={figures}
+        above={above}
+        extraControls={windowControl}
+        primary={session.role === "ae" && hasAe ? { label: "Send hand-off", onClick: () => toast("Pick a customer success manager; the account joins their queue.") } : undefined}
         chips={chips}
         doorFilters={doorFilters}
         columns={columns}

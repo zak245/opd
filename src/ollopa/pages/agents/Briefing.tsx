@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { href } from "@/app/router"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Section, SummaryStrip } from "../../layouts"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Locked } from "../../ui/Locked"
@@ -64,35 +65,44 @@ export function Briefing(p: BriefingProps) {
     <>
       {/* The briefing is one container: what has happened, then the two bands a person reads before
           deciding anything. A band is container-low, never a second box (DESIGN.md §5). */}
-      <Card aria-labelledby="agents-briefing" data-container="briefing" data-container-label="the briefing" className="gap-3 py-4">
-      <CardHeader className="px-4">
-        <h2 id="agents-briefing" className="sr-only">Briefing</h2>
-        {p.workspace && <CardTitle data-item="brief.workspace" data-item-label="Which client workspace this page shows"
-          className="t-small font-medium uppercase tracking-wider text-muted-foreground">{p.workspace}</CardTitle>}
-        <CardDescription data-item="brief.digest" data-item-label="Since you last looked" className="t-body text-foreground">{p.sentence}</CardDescription>
-      </CardHeader>
+      <Section
+        data-container="briefing" data-container-label="the briefing"
+        heading={p.workspace
+          ? <span data-item="brief.workspace" data-item-label="Which client workspace this page shows">{p.workspace}</span>
+          : "Since you last looked"}
+      >
+      <div className="grid gap-3">
+      <p data-item="brief.digest" data-item-label="Since you last looked" className="t-body">{p.sentence}</p>
 
-      <CardContent className="grid gap-3 px-4">
-      {/* Spend is decision-critical, so it is here at every width and on every role's page. */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <Progress
-          data-item="brief.credits-week" data-item-label="Credits this week against the cap"
-          value={pct}
-          // The accent is the bar; past the cap it is the danger role. Both are the library's own
-          // tokens on its own slot — nothing here paints a colour of its own (DESIGN.md §5).
-          className={cn("w-40", pct > 85 && "[&_[data-slot=progress-indicator]]:bg-destructive")}
-          aria-label={`${spend.week.toLocaleString()} credits this week of the agents' ${spend.weekCap.toLocaleString()} weekly cap`}
-        />
-        <span className="t-body tabular-nums">
-          {spend.week.toLocaleString()} credits this week of {spend.weekCap.toLocaleString()}
-        </span>
-        {d.atLevelOne("brief.credits-today") && (
-          <span data-item="brief.credits-today" data-item-label="Credits spent today"
-            className="t-body tabular-nums text-muted-foreground">{spend.today.toLocaleString()} today</span>
-        )}
-        <span data-item="credits.balance" data-item-label="Workspace credit balance"
-          className="t-body tabular-nums text-muted-foreground">Workspace balance {spend.balance.toLocaleString()}</span>
-      </div>
+      {/* Spend is decision-critical, so it is here at every width and on every role's page: the
+          numbers the page is judged by as one band, with the week's meter under its own figure. */}
+      <SummaryStrip className="py-0" figures={[
+        {
+          label: "Credits this week",
+          value: (
+            <span data-item="brief.credits-week" data-item-label="Credits this week against the cap" className="grid gap-1">
+              <span>{spend.week.toLocaleString()} of {spend.weekCap.toLocaleString()}</span>
+              <Progress
+                value={pct}
+                // The accent is the bar; past the cap it is the danger role. Both are the library's
+                // own tokens on its own slot — nothing here paints a colour of its own.
+                className={cn("w-40", pct > 85 && "[&_[data-slot=progress-indicator]]:bg-destructive")}
+                aria-label={`${spend.week.toLocaleString()} credits this week of the agents' ${spend.weekCap.toLocaleString()} weekly cap`}
+              />
+            </span>
+          ),
+        },
+        ...(d.atLevelOne("brief.credits-today")
+          ? [{
+            label: "Spent today",
+            value: <span data-item="brief.credits-today" data-item-label="Credits spent today">{spend.today.toLocaleString()}</span>,
+          }]
+          : []),
+        {
+          label: "Workspace balance",
+          value: <span data-item="credits.balance" data-item-label="Workspace credit balance">{spend.balance.toLocaleString()}</span>,
+        },
+      ]} />
 
       {/* Exceptions exist only while something is paused or capped. Nothing here when nothing is wrong. */}
       {p.exceptions.length > 0 && (
@@ -131,23 +141,24 @@ export function Briefing(p: BriefingProps) {
           </AlertDescription>
         </Alert>
       )}
-      </CardContent>
+      </div>
 
-      <CardFooter className="px-4">
-        <p className="t-small text-muted-foreground">
-          <span data-item="set.link" data-item-label="Agent settings, or who can change them">{settingsLink}</span>{" "}
+      <p className="t-small pt-1 text-muted-foreground">
+          {/* The admin's own way in is the page header's; this line is for the seat that has none. */}
+          {session.role !== "admin" && (
+            <><span data-item="set.link" data-item-label="Agent settings, or who can change them">{settingsLink}</span>{" "}</>
+          )}
           {!rules.r4 && (
             <a data-item="set.scoring-link" data-item-label="Scoring rules, or who can change them"
               className="underline underline-offset-4" href={href("/ollopa/settings/scoring")}>Scoring rules →</a>
           )}{" "}
-          {seed.agents.length > 0 && <>Second approval above {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits.toLocaleString()} credits in one action.</>}
-        </p>
-      </CardFooter>
-      </Card>
+        {seed.agents.length > 0 && <>Second approval above {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits.toLocaleString()} credits in one action.</>}
+      </p>
+      </Section>
 
       {/* The one place a card per thing is right: each agent is read on its own, so each tile is its
           own container and every tile in the set has the same structure (DESIGN.md §5). */}
-      <ul className={cn("mt-4 grid gap-3", d.atLevelOne("brief.status") ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-3")}>
+      <ul className={cn("grid items-stretch gap-3", d.atLevelOne("brief.status") ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-3")}>
         {p.agents.map((a) => {
           const paused = p.pausedHere[a.id] || !a.on
           const track = p.trackOf(a)
@@ -169,7 +180,7 @@ export function Briefing(p: BriefingProps) {
                 </CardTitle>
                 <CardAction><Chip status={paused ? "paused" : "active"}>{paused ? "Paused" : "On"}</Chip></CardAction>
               </CardHeader>
-              <CardContent className="grid gap-2 px-4">
+              <CardContent className="flex flex-1 flex-col gap-2 px-4">
               <p className="t-small tabular-nums text-muted-foreground">
                 {p.runsToday(a)} runs today · {a.spentToday.toLocaleString()} of {a.capPerDay.toLocaleString()} credits today
               </p>
@@ -213,7 +224,7 @@ export function Briefing(p: BriefingProps) {
 
               {/* A seat that may not pause an agent sees no control at all, not a grey one. */}
               {p.canPause && (
-                <Actions className="mt-3" surface="card" items={[{
+                <Actions className="mt-auto pt-1" surface="card" items={[{
                   kind: "secondary",
                   label: paused ? "Resume" : "Pause",
                   onClick: () => p.onPause(a, !paused),
@@ -237,17 +248,17 @@ export function Briefing(p: BriefingProps) {
                 Scoring agent
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-2 px-4">
+            <CardContent className="flex flex-1 flex-col gap-2 px-4">
             <p className="t-small">Never without a person: changing the primary score model</p>
             {third.locked ? (
-              <div className="mt-3">
+              <div className="mt-auto pt-1">
                 <Locked feature="A third agent" plan={third.plan} pricePerMonth={third.pricePerMonth} what={third.what}>
                   <Actions surface="card" items={[{ kind: "secondary", label: "Turn the scoring agent on" }]} />
                 </Locked>
                 <p className="t-small mt-1.5 tabular-nums text-muted-foreground">{third.plan} · {dollars(third.pricePerMonth)} a month for this workspace.</p>
               </div>
             ) : (
-              <p className="t-small mt-3">
+              <p className="t-small mt-auto pt-1">
                 {session.role === "admin"
                   ? <a className="underline underline-offset-4" href={href("/ollopa/settings/agents")}>Turn the scoring agent on</a>
                   : <>{p.admin ? `${p.admin.user}, ${p.admin.title}` : "Your admin"} can turn the scoring agent on.</>}

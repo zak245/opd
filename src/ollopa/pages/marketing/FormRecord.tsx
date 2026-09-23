@@ -17,7 +17,7 @@ import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { FAMILY, PERSON_FAMILY, RowGap, ink } from "./look"
+import { FAMILY, PERSON_FAMILY, RowGap, ink, inUsageOrder } from "./look"
 import { Separator } from "@/components/ui/separator"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
@@ -110,8 +110,9 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
 
   const fieldsLabel = `Fields: ${askedFields.length} asked, ${enrichedFields.length} enriched`
 
-  const sections: RecordSection[] = [
-    {
+  // Each section names the usage item it is about; the model ranks them (LAYOUTS.md §7).
+  const parts: { item: string; section: RecordSection }[] = [
+    { item: "form.cap", section: {
       id: "enrichment", title: "Enrichment on submission",
       children: (
         <div className="space-y-2">
@@ -142,8 +143,8 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
           </div>
         </div>
       ),
-    },
-    {
+    } },
+    { item: "form.routing", section: {
       id: "routing", title: "Routing",
       children: (
         <div className="space-y-2 text-sm">
@@ -174,8 +175,8 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
           </p>
         </div>
       ),
-    },
-    {
+    } },
+    { item: "form.row", section: {
       id: "reporting", title: "Reporting",
       children: (
         <p className="text-sm">
@@ -188,9 +189,9 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
           </a>
         </p>
       ),
-    },
-    ...(fieldsAtLevelOne ? [{ id: "fields", title: fieldsLabel, children: fieldList }] : []),
-    {
+    } },
+    ...(fieldsAtLevelOne ? [{ item: "form.fields", section: { id: "fields", title: fieldsLabel, children: fieldList } }] : []),
+    { item: "form.submissions", section: {
       // Who filled it in lives inside the form, whatever the count, and a row opens that person
       // beside the form rather than replacing it.
       id: "submissions", title: "Submissions", count: f.submissions.length,
@@ -236,7 +237,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
             </ul>
           </div>
         ),
-    },
+    } },
   ]
 
   const doors: RecordDoor[] = fieldsAtLevelOne ? [] : [{ id: "form.fields", label: fieldsLabel, count: f.fields.length, content: fieldList }]
@@ -256,7 +257,7 @@ export function FormRecord({ session, id }: { session: Session; id?: string }) {
           { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
         ],
       }}
-      main={{ kind: "sections", label: "Form", sections }}
+      main={{ kind: "sections", label: "Form", sections: inUsageOrder(d, parts) }}
       side={[{
         id: "spend", title: "Enrichment spend",
         children: (

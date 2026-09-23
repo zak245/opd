@@ -293,5 +293,8 @@ export function applyFilters(
 /** How the chip reads once a value is chosen: "Title: VP Sales, CRO". */
 export function chipLabel(f: FilterDef, chosen: string[]): string {
   if (!chosen || chosen.length === 0) return f.label
-  return `${f.label}: ${chosen.slice(0, 2).join(", ")}${chosen.length > 2 ? ` +${chosen.length - 2}` : ""}`
+  const values = `${chosen.slice(0, 2).join(", ")}${chosen.length > 2 ? ` +${chosen.length - 2}` : ""}`
+  // A yes/no filter's one value is its own name — "Not in a sequence: Not in a sequence" says it
+  // twice and costs a phone a whole row for nothing.
+  return chosen.length === 1 && chosen[0] === f.label ? f.label : `${f.label}: ${values}`
 }

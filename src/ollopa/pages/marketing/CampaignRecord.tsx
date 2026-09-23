@@ -27,7 +27,7 @@ import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FAMILY, PERSON_FAMILY, ink } from "./look"
+import { FAMILY, PERSON_FAMILY, ink, inUsageOrder } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -91,14 +91,14 @@ function Previews({ c }: { c: Campaign }) {
     </>
   )
   return (
-    <div className="flex flex-wrap items-start gap-4">
-      <figure className="min-w-0 flex-1">
+    <div className="flex flex-wrap items-stretch gap-4">
+      <figure className="flex min-w-0 flex-1 flex-col">
         <figcaption className="t-label pb-1 text-muted-foreground">Desktop</figcaption>
-        <div className="t-body min-h-40 rounded-md border p-3">{body}</div>
+        <div className="t-body h-full rounded-md border p-3">{body}</div>
       </figure>
-      <figure>
+      <figure className="flex flex-col">
         <figcaption className="t-label pb-1 text-muted-foreground">Phone, 400 px</figcaption>
-        <div className="t-small min-h-40 w-[200px] rounded-md border p-2">{body}</div>
+        <div className="t-small h-full w-[200px] rounded-md border p-2 max-sm:w-full">{body}</div>
       </figure>
     </div>
   )
@@ -249,6 +249,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     doors.push({
       id: "campaign.links", label: `Links clicked · ${num(clicks)}`, count: c.links.length,
       content: (
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow><TableHead>Link</TableHead><TableHead className="text-right">Clicks</TableHead><TableHead className="text-right">Of delivered</TableHead></TableRow>
@@ -263,6 +264,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
             ))}
           </TableBody>
         </Table>
+        </div>
       ),
     })
   }
@@ -373,7 +375,9 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   const recipientsBlock = (
     <div className="space-y-2">
       <p className="t-body text-muted-foreground">The first {num(recipientPool.length)} of {num(recipients)}.</p>
-      {/* The library's table: it draws the rule between rows, so nothing here draws one. */}
+      {/* The library's table: it draws the rule between rows, so nothing here draws one. A table
+          wider than the card scrolls in its own box rather than being cut off (LAYOUTS.md §5). */}
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow><TableHead>Person</TableHead><TableHead>Company</TableHead><TableHead>Opened</TableHead><TableHead>Replied</TableHead></TableRow>
@@ -399,6 +403,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 
@@ -588,12 +593,20 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
           kind: "sections",
           label: "Campaign",
           sections: [
-            { id: "results", title: "Results", children: <><Funnel c={c} />{buildAudienceFrom}</> },
-            { id: "audience", title: "Audience", children: audienceBlock },
-            // The count in the heading is what the section holds; the line under it says of how many.
-            ...(recipients > 0 ? [{ id: "recipients", title: "Recipients", count: recipientPool.length, action: recipientSearch, children: recipientsBlock }] : []),
-            { id: "content", title: "Content", children: <Previews c={c} /> },
-            { id: "schedule", title: c.kind === "Lifecycle" ? "Trigger" : "Schedule", children: scheduleSection },
+            // In the order this seat reads them, from the usage model (LAYOUTS.md §7).
+            ...inUsageOrder(d, [
+              { item: "camp.detail.funnel", section: { id: "results", title: "Results", children: <><Funnel c={c} />{buildAudienceFrom}</> } },
+              { item: "camp.detail.audience", section: { id: "audience", title: "Audience", children: audienceBlock } },
+              { item: "camp.detail.content", section: { id: "content", title: "Content", children: <Previews c={c} /> } },
+              {
+                item: c.kind === "Lifecycle" ? "camp.detail.trigger" : "camp.detail.schedule",
+                section: { id: "schedule", title: c.kind === "Lifecycle" ? "Trigger" : "Schedule", children: scheduleSection },
+              },
+              // The count in the heading is what the section holds; the line under it says of how many.
+              ...(recipients > 0
+                ? [{ item: "camp.detail.recipients", section: { id: "recipients", title: "Recipients", count: recipientPool.length, action: recipientSearch, children: recipientsBlock } }]
+                : []),
+            ]),
           ],
         }}
         side={[

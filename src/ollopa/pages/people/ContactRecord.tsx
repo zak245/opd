@@ -242,7 +242,9 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             },
           }]} />
         )
-        : f.value,
+        // An email is one long word: it wraps inside its own column rather than running under the
+        // field beside it, which at 400 is the only place there is room for it.
+        : <span className="break-words">{f.value}</span>,
     editor: f.label === "Stage" ? "select" : "readonly",
     tone: f.label === "Do not contact" && (p.doNotContact || p.doNotCall) ? "warning" : undefined,
     edit: f.label === "Stage" && canEdit
@@ -455,8 +457,11 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             count: visible.length,
             action: (
               // The same inline TabsList the deal record's timeline uses: one row, never wrapped.
+              // `w-0 min-w-full` keeps the strip from setting the card's width: at 400 it scrolls
+              // inside its own box rather than making the card, and so the page, wider than the
+              // screen (LAYOUTS.md §5, one line that scrolls rather than a second row).
               <Tabs value={filter} onValueChange={(v) => { if (v) setFilter(v) }}>
-                <TabsList aria-label="Activity filters" className="w-fit">
+                <TabsList aria-label="Activity filters" className="w-fit max-w-[13rem] justify-start overflow-x-auto sm:max-w-none">
                   {FILTERS.map((f) => (
                     <TabsTrigger key={f.key} value={f.key}>{f.label}</TabsTrigger>
                   ))}
@@ -527,6 +532,12 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             ),
           }],
         }}
+        /**
+         * The side rail: the related things, in the order they belong to the contact. LAYOUTS §7
+         * puts the *sections* in the usage order — the rail is related things, and ranking it by
+         * the model's column numbers put the score above the people at the company, which is not
+         * what a person opens a contact for.
+         */
         side={[
           {
             id: "colleagues",

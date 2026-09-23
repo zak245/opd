@@ -20,8 +20,9 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { useDisclosure } from "../../ui/useDisclosure"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { FAMILY, PERSON_FAMILY, RowGap } from "./look"
+import { FAMILY, PERSON_FAMILY, RowGap, inUsageOrder } from "./look"
 import { Separator } from "@/components/ui/separator"
 import { RowNote, useTick } from "../engage/shared"
 import { ActedNote, actOn, undoable } from "./acted"
@@ -44,6 +45,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
   const seed = seedFor(session.business)
   const rows = useMarketing(session.business)
   const route = useRoute()
+  const d = useDisclosure("campaigns")
   const admin = b.roles.find((r) => r.role === "admin")?.user ?? "your admin"
   const sdr = b.roles.find((r) => r.role === "sdr")?.user ?? admin
 
@@ -337,14 +339,20 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           kind: "sections",
           label: "Audience",
           sections: [
-            { id: "size", title: "Size and who is suppressed", children: sizeBlock },
-            {
-              id: "people",
-              title: openCount ? `${num(openCount.count)} ${openCount.label}` : "People in this audience",
-              count: people.length,
-              action: peopleTools,
-              children: peopleBlock,
-            },
+            // In the order this seat reads them, from the usage model (LAYOUTS.md §7).
+            ...inUsageOrder(d, [
+              { item: "aud.suppressed", section: { id: "size", title: "Size and who is suppressed", children: sizeBlock } },
+              {
+                item: "aud.list",
+                section: {
+                  id: "people",
+                  title: openCount ? `${num(openCount.count)} ${openCount.label}` : "People in this audience",
+                  count: people.length,
+                  action: peopleTools,
+                  children: peopleBlock,
+                },
+              },
+            ]),
           ],
         }}
         side={[{

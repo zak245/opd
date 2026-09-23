@@ -5,7 +5,7 @@
 // and results are read against each other. The thing nobody may lose sight of is whether sending is
 // on or stopped and why, so the status, the button that changes it, its consequence and the bounce
 // guard's two thresholds are in the header without a click, in every state.
-import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { ArrowLeft, Clock, Linkedin, Mail, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -38,8 +38,8 @@ import { AddToSequencePanel } from "./AddToSequence"
 import { statusOf, totalPeople } from "./Sequences"
 import { useEdits } from "../../edits"
 import { Actions, type Action } from "../../ui/Actions"
+import { RecordPage } from "../../templates/RecordPage"
 import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Container } from "../../ui/Section"
 import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
@@ -95,6 +95,8 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
   const [adding, setAdding] = useState(false)
   const [fixed, setFixed] = useState(false)
   const [live, setLive] = useState<string | null>(null)
+  // The record owns the people search, so the section's card header can carry it.
+  const [peopleQ, setPeopleQ] = useState("")
   const [, openSettings] = useDoorState("seq.settings")
 
   const say = (msg: string) => { setLive(msg); toast(msg) }
@@ -113,6 +115,17 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
   const steps = data.stepsOf(seq.id)
   const enrollments = data.enrollmentsOf(seq.id)
   const changes = data.changesOf(seq.id)
+  // The same predicate the people table filters with, so the section's count and its rows agree.
+  const peopleCount = (() => {
+    const needle = peopleQ.trim().toLowerCase()
+    const byId = new Map(seed.contacts.map((c) => [c.id, c]))
+    return enrollments.filter((e) => {
+      const c = byId.get(e.contactId)
+      if (peopleFilter !== "all" && e.status !== peopleFilter) return false
+      if (needle && !`${c?.name ?? ""} ${c?.company ?? ""}`.toLowerCase().includes(needle)) return false
+      return true
+    }).length
+  })()
   const st = statusOf(seq)
   const canEdit = seq.owner === session.user || session.role === "admin"
   const feeder = data.lists.find((l) => l.feeds.some((f) => f.name === seq.name))
@@ -150,195 +163,166 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
 
   return (
     <DoorGroup>
-      <div className="flex min-h-full flex-col">
-        {/* ------------------------------------------------------------------------- the header */}
-        <header className="px-4 pt-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <BackToSequences />
-            <RenderCount label="page" count={renders} />
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-start gap-x-3 gap-y-2">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                {renaming && canEdit ? (
-                  <Input
-                    autoFocus aria-label="Sequence name" className="t-title h-9 w-72"
-                    value={name} onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { engage.patchSequence(session.business, seq.id, { name }); engage.logChange(session.business, seq.id, session.user, `Renamed the sequence to ${name}`); setRenaming(false); say(`Renamed to ${name}`) }
-                      if (e.key === "Escape") { setName(seq.name); setRenaming(false) }
-                    }}
-                    onBlur={() => { engage.patchSequence(session.business, seq.id, { name }); setRenaming(false) }}
-                  />
-                ) : (
-                  <h2 className="t-section flex min-w-0 items-center gap-2 truncate">
-                    <FamilyIcon of="sequences" size="header" />
-                    {canEdit
-                      ? <Button variant="ghost" className="h-auto px-1 py-0 text-inherit" onClick={() => { setName(seq.name); setRenaming(true) }}>{seq.name}<span className="sr-only"> — rename</span></Button>
-                      : seq.name}
-                  </h2>
-                )}
-                <Chip status={st.word}>{st.label}</Chip>
-              </div>
-              <p className="t-small text-muted-foreground">
-                {seq.owner} · {seq.sharedWith === "Everyone" ? "Shared with the workspace" : "Only you"}
-                {seq.archivedAt && <> · archived {day(seq.archivedAt)}</>}
-              </p>
-            </div>
-
-            {/* One filled control: the act this page exists for. Pausing sits beside it as a
-                comparable act, and the rest group into a menu with the end of the sequence last
-                (DESIGN.md §1). Nothing is written under Pause: it is free and it can be undone. */}
-            <div className="ml-auto flex flex-wrap items-center gap-2" data-print-hide>
-              <Actions
-                surface="page"
-                items={[
-                  { kind: "primary", label: "Add people", onClick: () => setAddingPeople(true) },
-                  {
-                    kind: "secondary",
-                    label: seq.guardState === "auto-paused" ? "Review and resume" : seq.status === "Active" ? "Pause" : "Resume",
-                    onClick: pauseResume,
-                    disabledBecause: resumeBlocked ? "Remove the bounced people or fix the data first" : undefined,
-                  },
-                ]}
-              />
-              {canEdit && (
-                <Actions
-                  surface="page"
-                  layout="menu"
-                  items={[
-                    { kind: "secondary", label: "Duplicate", onClick: () => say(`Copied ${seq.name}: steps and settings, nobody in it`) },
-                    { kind: "secondary", label: "Export people (CSV)", onClick: () => say(`Exported ${n(enrollments.length)} people from ${seq.name}`) },
-                    ...(seq.archivedAt ? [] : [{
-                      kind: "destructive" as const,
-                      label: "Archive",
-                      onClick: () => {
-                        engage.patchSequence(session.business, seq.id, { archivedAt: TODAY, status: "Paused" })
-                        engage.logChange(session.business, seq.id, session.user, "Archived the sequence")
-                        say(`${seq.name} archived`)
-                      },
-                      irreversible: {
-                        title: `Archive ${seq.name}?`,
-                        consequence: `${n(seq.active + seq.paused)} people are marked finished and their scheduled emails are deleted. Their replies and activity stay on their records.`,
-                        confirmLabel: "Archive the sequence",
-                      },
-                    }]),
-                    ...(seq.status === "Draft" && total === 0 ? [{
-                      kind: "destructive" as const,
-                      label: "Delete draft",
-                      onClick: () => { engage.patchSequence(session.business, seq.id, { archivedAt: TODAY }); navigate("/ollopa/sequences") },
-                      irreversible: {
-                        title: `Delete ${seq.name}?`,
-                        consequence: "The draft and its steps go. Nothing has been sent from it, so nobody is affected.",
-                        confirmLabel: "Delete the draft",
-                      },
-                    }] : []),
-                  ] as Action[]}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* The health line: the rate, both thresholds, and what to do before it pauses. */}
-          <StatusLine
-            className="mt-3"
-            status={seq.guardState === "auto-paused" ? "Auto-paused" : seq.guardState === "warning" ? "Warning" : "None"}
-            word={seq.guardState === "auto-paused" ? "Auto-paused" : seq.guardState === "warning" ? "Close to the limit" : "Sending"}
-          >
-            Bounce rate {seq.bounceRate7d}% over 7 days · Bounce guard warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%.
-            {seq.guardState === "auto-paused" && (
-              <>
-                <span className="mt-2 flex flex-wrap items-center gap-2">
-                  <Actions
-                    surface="card"
-                    items={[
-                      { kind: "secondary", label: `Remove ${n(seq.bounced)} bounced people`, onClick: () => { setFixed(true); say(`Removed ${n(seq.bounced)} bounced people from ${seq.name}`) } },
-                      { kind: "secondary", label: `Retry ${n(seq.notSent)} not-sent people`, onClick: () => { setFixed(true); setPeopleFilter("Not sent"); say(`Retrying ${n(seq.notSent)} not-sent people`) } },
-                    ]}
-                  />
-                  <label className="flex items-center gap-2 text-xs">
-                    <Checkbox checked={fixed} onCheckedChange={(v) => setFixed(v === true)} />
-                    I have fixed the data
-                  </label>
-                </span>
-              </>
-            )}
-            {" "}
-            <FollowLink
-              className="underline"
-              to="/ollopa/settings/email-sending?row=mail.bounce-guard"
-              route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.bounce-guard"
-            >Bounce guard thresholds (Settings)</FollowLink>
-            {session.role !== "admin" && <span className="t-small"> · RevOps admins change them</span>}
-          </StatusLine>
-
-          {!canEdit && (
-            <p className="t-body mt-2 text-muted-foreground">
-              Owned by {seq.owner}; only the owner and RevOps admins change the steps and the settings.
-            </p>
-          )}
-
-          {/* Counts: each is a number and a button that filters the people below it. */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {counts.map((c) => (
-              <CountButton
-                key={c.key} label={c.label} count={c.value} tone={c.tone}
-                active={peopleFilter === c.key}
-                onClick={() => { setPeopleFilter(peopleFilter === c.key ? "all" : c.key); document.getElementById("seq-people")?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
-              />
-            ))}
-          </div>
-
-          {feeder && (
-            <p className="mt-2 text-sm">
-              Fed by <BesideLink className="underline" kind="list" id={feeder.id}>{feeder.name}</BesideLink>
-              {feeder.feeds.some((f) => f.auto && f.name === seq.name) && " · new matches added automatically"}
-            </p>
-          )}
-
-          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 xl:grid-cols-6">
-            <CountRate label="Sent" count={seq.sent} />
-            <CountRate label="Delivered" count={seq.delivered} of={seq.sent || 1} />
-            <CountRate label="Opened" count={seq.opened} of={seq.delivered || 1} />
-            <CountRate label="Replied" count={seq.replied} of={seq.delivered || 1} />
-            <CountRate label="Interested" count={seq.interested} of={seq.delivered || 1} />
-            <CountRate label="Meetings" count={seq.meetings} of={seq.delivered || 1} />
-          </div>
-
-          {/* The five things that decide whether an email goes out today, read-only, with their door. */}
-          <p className="t-body mt-3 text-muted-foreground">
-            Sends from {seq.mailboxRotation.length ? `${seq.mailboxRotation.length} mailboxes in rotation` : seq.mailbox}
-            {mailboxToday(session, seq)} · {seq.schedule} · {seq.ruleset} rules · {seq.priority} priority
-          </p>
-          <div className="mt-2 mb-3">
-            <SendingSettings session={session} seq={seq} canEdit={canEdit} onSaid={say} />
-          </div>
-
-          <Separator className="mt-2" />
-          <nav aria-label="Sections of this sequence" className="flex gap-1 overflow-x-auto py-2" data-print-hide>
-            {[["seq-steps", "Steps"], ["seq-people", "People"], ["seq-results", "Results"], ["seq-settings", "Settings"], ["seq-history", "History"]].map(([anchor, label]) => (
-              <Button
-                key={anchor} variant="ghost" size="sm" className="whitespace-nowrap"
-                onClick={() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              >{label}</Button>
-            ))}
-          </nav>
-          <p className="sr-only" role="status" aria-live="polite">{live}</p>
-        </header>
-        <Separator />
-
-        {/* -------------------------------------------------------------------------- the steps */}
-        <div id="seq-steps" className="px-4 pt-5 sm:px-6">
-          {/* One container for the set, with the steps as rows and a divider between them — never a
-              card per step, because the smallest enclosing box wins (DESIGN.md §5, containment). */}
-          <Container
-            component="section"
-            padded={false}
-            heading="Steps"
-            count={steps.length}
-            actions={canEdit ? <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} /> : undefined}
-          >
+    <RecordPage
+      family="sequences"
+      back={{ label: "Sequences", href: href("/ollopa/sequences") }}
+      title={{
+        value: seq.name,
+        onRename: canEdit ? (v: string) => {
+          engage.patchSequence(session.business, seq.id, { name: v })
+          engage.logChange(session.business, seq.id, session.user, `Renamed the sequence to ${v}`)
+          say(`Renamed to ${v}`)
+        } : undefined,
+      }}
+      chips={<>
+        <Chip status={st.word}>{st.label}</Chip>
+        <RenderCount label="page" count={renders} />
+      </>}
+      fields={[
+        {
+          key: "guard", label: "Sending", wide: true,
+          // The health line: the rate, both thresholds, and what to do before it pauses.
+          value: (
+    <StatusLine
+      className="mt-3"
+      status={seq.guardState === "auto-paused" ? "Auto-paused" : seq.guardState === "warning" ? "Warning" : "None"}
+      word={seq.guardState === "auto-paused" ? "Auto-paused" : seq.guardState === "warning" ? "Close to the limit" : "Sending"}
+    >
+      Bounce rate {seq.bounceRate7d}% over 7 days · Bounce guard warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%.
+      {seq.guardState === "auto-paused" && (
+        <>
+          <span className="mt-2 flex flex-wrap items-center gap-2">
+            <Actions
+              surface="card"
+              items={[
+                { kind: "secondary", label: `Remove ${n(seq.bounced)} bounced people`, onClick: () => { setFixed(true); say(`Removed ${n(seq.bounced)} bounced people from ${seq.name}`) } },
+                { kind: "secondary", label: `Retry ${n(seq.notSent)} not-sent people`, onClick: () => { setFixed(true); setPeopleFilter("Not sent"); say(`Retrying ${n(seq.notSent)} not-sent people`) } },
+              ]}
+            />
+            <label className="flex items-center gap-2 text-xs">
+              <Checkbox checked={fixed} onCheckedChange={(v) => setFixed(v === true)} />
+              I have fixed the data
+            </label>
+          </span>
+        </>
+      )}
+      {" "}
+      <FollowLink
+        className="underline"
+        to="/ollopa/settings/email-sending?row=mail.bounce-guard"
+        route={`/ollopa/sequences/${seq.id}`} title={h1Of("sequences", seq.name)} anchor="seq.link.bounce-guard"
+      >Bounce guard thresholds (Settings)</FollowLink>
+      {session.role !== "admin" && <span className="t-small"> · RevOps admins change them</span>}
+    </StatusLine>
+          ),
+        },
+        {
+          key: "counts", label: "People", wide: true,
+          value: (
+    <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+      {counts.map((c) => (
+        <CountButton
+          key={c.key} label={c.label} count={c.value} tone={c.tone} className="shrink-0"
+          active={peopleFilter === c.key}
+          onClick={() => { setPeopleFilter(peopleFilter === c.key ? "all" : c.key); document.getElementById("seq-people")?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
+        />
+      ))}
+    </div>
+          ),
+        },
+        {
+          key: "results", label: "Results", wide: true,
+          value: (
+    <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 xl:grid-cols-6">
+      <CountRate label="Sent" count={seq.sent} />
+      <CountRate label="Delivered" count={seq.delivered} of={seq.sent || 1} />
+      <CountRate label="Opened" count={seq.opened} of={seq.delivered || 1} />
+      <CountRate label="Replied" count={seq.replied} of={seq.delivered || 1} />
+      <CountRate label="Interested" count={seq.interested} of={seq.delivered || 1} />
+      <CountRate label="Meetings" count={seq.meetings} of={seq.delivered || 1} />
+    </div>
+          ),
+        },
+        {
+          key: "sends", label: "Sends", wide: true,
+          value: (<>
+    <p className="t-body mt-3 text-muted-foreground">
+      Sends from {seq.mailboxRotation.length ? `${seq.mailboxRotation.length} mailboxes in rotation` : seq.mailbox}
+      {mailboxToday(session, seq)} · {seq.schedule} · {seq.ruleset} rules · {seq.priority} priority
+    </p>
+    {feeder && (
+      <p className="mt-2 text-sm">
+        Fed by <BesideLink className="underline" kind="list" id={feeder.id}>{feeder.name}</BesideLink>
+        {feeder.feeds.some((f) => f.auto && f.name === seq.name) && " · new matches added automatically"}
+      </p>
+    )}
+          </>),
+        },
+        ...(canEdit ? [] : [{
+          key: "owner", label: "Owner", wide: true,
+          value: `Owned by ${seq.owner}; only the owner and RevOps admins change the steps and the settings.`,
+        }]),
+      ]}
+      actions={{ primary: [], secondary: [] }}
+      headerActions={
+      <div className="flex flex-wrap items-center gap-2" data-print-hide>
+        <Actions
+          surface="page"
+          items={[
+            { kind: "primary", label: "Add people", onClick: () => setAddingPeople(true) },
+            {
+              kind: "secondary",
+              label: seq.guardState === "auto-paused" ? "Review and resume" : seq.status === "Active" ? "Pause" : "Resume",
+              onClick: pauseResume,
+              disabledBecause: resumeBlocked ? "Remove the bounced people or fix the data first" : undefined,
+            },
+          ]}
+        />
+        {canEdit && (
+          <Actions
+            surface="page"
+            layout="menu"
+            items={[
+              { kind: "secondary", label: "Duplicate", onClick: () => say(`Copied ${seq.name}: steps and settings, nobody in it`) },
+              { kind: "secondary", label: "Export people (CSV)", onClick: () => say(`Exported ${n(enrollments.length)} people from ${seq.name}`) },
+              ...(seq.archivedAt ? [] : [{
+                kind: "destructive" as const,
+                label: "Archive",
+                onClick: () => {
+                  engage.patchSequence(session.business, seq.id, { archivedAt: TODAY, status: "Paused" })
+                  engage.logChange(session.business, seq.id, session.user, "Archived the sequence")
+                  say(`${seq.name} archived`)
+                },
+                irreversible: {
+                  title: `Archive ${seq.name}?`,
+                  consequence: `${n(seq.active + seq.paused)} people are marked finished and their scheduled emails are deleted. Their replies and activity stay on their records.`,
+                  confirmLabel: "Archive the sequence",
+                },
+              }]),
+              ...(seq.status === "Draft" && total === 0 ? [{
+                kind: "destructive" as const,
+                label: "Delete draft",
+                onClick: () => { engage.patchSequence(session.business, seq.id, { archivedAt: TODAY }); navigate("/ollopa/sequences") },
+                irreversible: {
+                  title: `Delete ${seq.name}?`,
+                  consequence: "The draft and its steps go. Nothing has been sent from it, so nobody is affected.",
+                  confirmLabel: "Delete the draft",
+                },
+              }] : []),
+            ] as Action[]}
+          />
+        )}
+      </div>
+      }
+      main={{
+        kind: "sections",
+        sections: [
+          {
+            id: "seq-steps",
+            title: "Steps",
+            count: steps.length,
+            action: canEdit ? <Actions surface="card" items={[{ kind: "secondary", label: "Add a step", onClick: () => setAdding((v) => !v), keys: "a" }]} /> : undefined,
+            children: (<>
           {adding && canEdit && (
             <div className="mx-4 mb-3 flex flex-wrap gap-2">
               {(["Email", "Call task", "LinkedIn task", "Wait"] as const).map((kind) => (
@@ -405,85 +389,104 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               </span>
             </div></>
           )}
-          </Container>
+            </>),
+          },
+          {
+            id: "seq-people",
+            title: "People",
+            count: peopleCount,
+            action: (
+              <>
+                <Input aria-label="Find a person in this sequence" placeholder="Find a person" value={peopleQ} onChange={(e) => setPeopleQ(e.target.value)} className="h-9 w-48" />
+                <Select value={peopleFilter} onValueChange={setPeopleFilter}>
+                  <SelectTrigger className="h-9 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Status: all</SelectItem>
+                    {["Active", "Paused", "Finished", "Replied", "Bounced", "Not sent"].map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Actions surface="card" items={[{ kind: "secondary", label: "Add people", onClick: () => setAddingPeople(true) }]} />
+              </>
+            ),
+            children: (
+              <SequencePeople
+                session={session} seq={seq} steps={steps} enrollments={enrollments}
+                filter={peopleFilter} q={peopleQ} onAdd={() => setAddingPeople(true)} onSaid={say}
+                pageRenders={renders}
+              />
+            ),
+          },
+        ],
+      }}
+      side={[]}
+      doors={[
+        { id: "seq.results", label: "Results by step and by audience", openByDefault: d.level("seq.results.by-step") === 1, content: (
+<Door id="seq.results" label="Results by step and by audience" defaultOpen={d.level("seq.results.by-step") === 1}>
+        <div className="overflow-x-auto">
+          <table className="w-full divide-y text-xs">
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                <th className="py-1 pr-3 font-normal">Step</th>
+                {["Sent", "Delivered", "Opened", "Replied", "Interested", "Bounced", "Unsubscribed"].map((h) => <th key={h} className="py-1 pr-3 font-normal">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {steps.filter((s) => s.kind === "Email").map((s) => (
+                <tr key={s.id}>
+                  <td className="py-1 pr-3">{s.order}. {s.subject || "Untitled email"}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.sent)}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.delivered)} · {rate(s.stats.delivered, s.stats.sent)}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.opened)} · {rate(s.stats.opened, s.stats.delivered)}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.replied)} · {rate(s.stats.replied, s.stats.delivered)}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(Math.round(s.stats.replied * 0.4))}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.bounced)} · {rate(s.stats.bounced, s.stats.sent)}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.unsubscribed)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <h4 className="pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">By audience</h4>
+          <table className="w-full divide-y text-xs">
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                <th className="py-1 pr-3 font-normal">Group</th><th className="py-1 pr-3 font-normal">People</th><th className="py-1 pr-3 font-normal">Replied</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audienceRows(session, enrollments).map((row) => (
+                <tr key={row.label}>
+                  <td className="py-1 pr-3">{row.label}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(row.people)}</td>
+                  <td className="py-1 pr-3 tabular-nums">{n(row.replied)} · {rate(row.replied, row.people)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-
-        {/* ------------------------------------------------------------------------- the people */}
-        <SequencePeople
-          session={session} seq={seq} steps={steps} enrollments={enrollments}
-          filter={peopleFilter} onFilter={setPeopleFilter} onAdd={() => setAddingPeople(true)} onSaid={say}
-          pageRenders={renders}
-        />
-
-        {/* ------------------------------------------------------- results and history, in place */}
-        <div className="space-y-3 px-4 pb-10 sm:px-6">
-          <Container component="section" as="div" id="seq-results" padded={false} bodyClassName="px-4 pb-3">
-            <div>
-              <Door id="seq.results" label="Results by step and by audience" defaultOpen={d.level("seq.results.by-step") === 1}>
-                <div className="overflow-x-auto">
-                  <table className="w-full divide-y text-xs">
-                    <thead>
-                      <tr className="text-left text-muted-foreground">
-                        <th className="py-1 pr-3 font-normal">Step</th>
-                        {["Sent", "Delivered", "Opened", "Replied", "Interested", "Bounced", "Unsubscribed"].map((h) => <th key={h} className="py-1 pr-3 font-normal">{h}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {steps.filter((s) => s.kind === "Email").map((s) => (
-                        <tr key={s.id}>
-                          <td className="py-1 pr-3">{s.order}. {s.subject || "Untitled email"}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(s.stats.sent)}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(s.stats.delivered)} · {rate(s.stats.delivered, s.stats.sent)}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(s.stats.opened)} · {rate(s.stats.opened, s.stats.delivered)}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(s.stats.replied)} · {rate(s.stats.replied, s.stats.delivered)}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(Math.round(s.stats.replied * 0.4))}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(s.stats.bounced)} · {rate(s.stats.bounced, s.stats.sent)}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(s.stats.unsubscribed)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <h4 className="pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">By audience</h4>
-                  <table className="w-full divide-y text-xs">
-                    <thead>
-                      <tr className="text-left text-muted-foreground">
-                        <th className="py-1 pr-3 font-normal">Group</th><th className="py-1 pr-3 font-normal">People</th><th className="py-1 pr-3 font-normal">Replied</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {audienceRows(session, enrollments).map((row) => (
-                        <tr key={row.label}>
-                          <td className="py-1 pr-3">{row.label}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(row.people)}</td>
-                          <td className="py-1 pr-3 tabular-nums">{n(row.replied)} · {rate(row.replied, row.people)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => say(`Exported the results of ${seq.name}`)}>Export CSV</Button>
-              </Door>
-            </div>
-          </Container>
-
-          <Container component="section" as="div" id="seq-history" padded={false} bodyClassName="px-4 pb-3">
-            <div>
-              <Door id="seq.history" label="Change history" count={changes.length} defaultOpen={d.level("seq.history") === 1}>
-                <ul className="space-y-1 py-1">
-                  {changes.map((c) => (
-                    <li key={c.id} className="grid grid-cols-[6rem_9rem_1fr] gap-2 text-xs">
-                      <span className="tabular-nums text-muted-foreground">{day(c.when)}</span>
-                      <span className="text-muted-foreground">{c.who}</span>
-                      <span>{c.what}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Door>
-            </div>
-          </Container>
-        </div>
-
+        <Button size="sm" variant="outline" className="mt-3" onClick={() => say(`Exported the results of ${seq.name}`)}>Export CSV</Button>
+      </Door>
+        ) },
+        { id: "seq.settings", label: canEdit ? "Change sending settings" : "Sending settings", content: (
+    <div className="mt-2 mb-3">
+      <SendingSettings session={session} seq={seq} canEdit={canEdit} onSaid={say} />
+    </div>
+        ) },
+        { id: "seq.history", label: "Change history", count: changes.length, openByDefault: d.level("seq.history") === 1, content: (
+<Door id="seq.history" label="Change history" count={changes.length} defaultOpen={d.level("seq.history") === 1}>
+        <ul className="space-y-1 py-1">
+          {changes.map((c) => (
+            <li key={c.id} className="grid grid-cols-[6rem_9rem_1fr] gap-2 text-xs">
+              <span className="tabular-nums text-muted-foreground">{day(c.when)}</span>
+              <span className="text-muted-foreground">{c.who}</span>
+              <span>{c.what}</span>
+            </li>
+          ))}
+        </ul>
+      </Door>
+        ) },
+      ]}
+    />
         {addingPeople && (
           <AddToSequencePanel
             open
@@ -497,7 +500,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
             lockSequence
           />
         )}
-      </div>
+    <p className="sr-only" role="status" aria-live="polite">{live}</p>
     </DoorGroup>
   )
 }
@@ -906,7 +909,7 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
   // Controls are absent, never greyed: a disabled control teaches nothing and invites a wasted click.
   if (!canEdit) {
     return (
-      <Container component="form" as="div" id="seq-settings" padded={false} bodyClassName="px-4 pb-3">
+      <div id="seq-settings">
         <Door id="seq.settings" label="Sending settings">
           <dl className="grid gap-x-6 gap-y-2 py-1 sm:grid-cols-2">
             <div><dt className="t-small text-muted-foreground">Sending mailbox</dt>
@@ -923,12 +926,12 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
           </dl>
           <p className="t-small pt-2 text-muted-foreground">{seq.owner} and RevOps admins change these.</p>
         </Door>
-      </Container>
+      </div>
     )
   }
 
   return (
-    <Container component="form" as="div" id="seq-settings" padded={false} bodyClassName="px-4 pb-3">
+    <div id="seq-settings">
       <Door id="seq.settings" label="Change sending settings">
         <div className="grid gap-4 py-1 sm:grid-cols-2">
           <div>
@@ -1044,21 +1047,22 @@ function SendingSettings({ session, seq, canEdit, onSaid }: {
           </div>
         )}
       </Door>
-    </Container>
+    </div>
   )
 }
 
 /* -------------------------------------------------------------------------------- the people */
 
-function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, onAdd, onSaid, pageRenders }: {
+function SequencePeople({ session, seq, steps, enrollments, filter, q, onSaid, onAdd, pageRenders }: {
   session: Session
   seq: Sequence
   steps: SequenceStep[]
   enrollments: Enrollment[]
   filter: string
-  onFilter: (v: string) => void
   onAdd: () => void
   onSaid: (msg: string) => void
+  /** The record owns the search box; this is what it holds. */
+  q: string
   /** Development only: the page's render count, shown here where the rows are, for the same check. */
   pageRenders: number
 }) {
@@ -1071,7 +1075,6 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
   const personEdits = useEdits("person")
   // Keep the ten-second Undo honest while one is on screen.
   useTick(Object.values(personEdits).some(undoable))
-  const [q, setQ] = useState("")
   const [selected, setSelected] = useState<string[]>([])
   const [sort, setSort] = usePersisted<{ key: string; dir: "asc" | "desc" }>(`ollopa.seq.people.sort.${session.user}`, { key: "next", dir: "asc" })
   const showMailbox = d.level("seq.settings.mailbox") === 1
@@ -1186,29 +1189,11 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
 
   const nameOf = (e: Enrollment) => byId.get(e.contactId)?.name ?? e.contactId
 
+  const rowRendersShown = rowRenders
+
   return (
-    <div id="seq-people" className="px-4 pt-6 sm:px-6">
-      {/* The enrolled people are a table in a container, with the search that keeps them findable
-          inside the record in the container's header (DESIGN.md §5, containment). */}
-      <Container
-        component="table"
-        padded={false}
-        heading="People"
-        count={n(rows.length)}
-        actions={<>
-          <RenderCount label="page" count={pageRenders} />
-          <RenderCount label="rows" count={rowRenders} />
-          <Input aria-label="Find a person in this sequence" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-48" />
-          <Select value={filter} onValueChange={onFilter}>
-            <SelectTrigger className="h-9 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Status: all</SelectItem>
-              {["Active", "Paused", "Finished", "Replied", "Bounced", "Not sent"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Actions surface="card" items={[{ kind: "secondary", label: "Add people", onClick: onAdd }]} />
-        </>}
-      >
+    <>
+      <RenderCount label="rows" count={rowRendersShown} />
       <DataTable<Enrollment>
         rows={shown}
         rowKey={(e) => e.id}
@@ -1273,8 +1258,7 @@ function SequencePeople({ session, seq, steps, enrollments, filter, onFilter, on
         }}
         empty={<EmptyState title="Nobody in this sequence yet" body="Add people, or add them from People and Lists." action={<Button size="sm" onClick={onAdd}>Add people</Button>} />}
       />
-      </Container>
-    </div>
+    </>
   )
 }
 

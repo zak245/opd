@@ -9,7 +9,10 @@
 // There is no Closed lost column: a lost deal is archived with a reason and leaves the board and the
 // forecast. Delete is not on the card; it is on the record, where its consequence is visible without
 // a click, and in the bulk bar, where it names what goes.
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { MoreHorizontal } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -25,11 +28,11 @@ import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Container, Group } from "../../ui/Section"
-import { BoardPage, PageHeader, type BoardStage, type PageHeaderProps } from "../../layouts"
+import { BoardPage, IndexPage, PageHeader, SummaryStrip, type BoardStage, type PageHeaderProps, type ToolbarControl } from "../../layouts"
 import { Divider } from "../../ui/Divider"
 import { inkOf } from "../../ui/Identity"
 import { useEdits } from "../../edits"
-import { TablePage, toast } from "../../templates/TablePage"
+import { toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -213,6 +216,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const [railOpen, setRailOpen] = useDoorState("deals.closed-won")
 
   const [q, setQ] = useState("")
+  /** How many rows the table shows before "Show 25 more". The board shows every card in its column. */
+  const [limit, setLimit] = useState(25)
   const [edits, setEdits] = useState<Record<string, Partial<Deal>>>({})
   const [addedDeals, setAddedDeals] = useState<Deal[]>([])
   const [selected, setSelected] = useState<string[]>([])
@@ -469,26 +474,21 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   const strip = (
     <div className="space-y-1.5">
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:flex sm:flex-wrap sm:items-baseline sm:gap-x-8">
-        {figures.map((f) => (
-          <div key={f.key}>
-            <dt className="t-label text-muted-foreground">{f.label}</dt>
-            <dd className="t-body font-semibold tabular-nums">
-              {moneyShort(f.amount, currency)} <span className="font-normal text-muted-foreground">· {f.count}</span>
-            </dd>
-          </div>
-        ))}
-        {/* Observed and required on one line: either number alone is unreadable (spec 08 §3). */}
-        {one("deals.forecast.coverage") && observed.coverage !== null && required.required !== null && (
-          <div className="col-span-2">
-            <dt className="t-label text-muted-foreground">Coverage</dt>
-            <dd className="t-body font-semibold tabular-nums">
-              {observed.coverage.toFixed(1)}x{" "}
-              <span className="font-normal text-muted-foreground">· this team’s {required.line.toLowerCase()}</span>
-            </dd>
-          </div>
-        )}
-      </dl>
+      {/* The numbers this board is judged by, through the shared part: one band, and one line that
+          scrolls sideways at 400 rather than wrapping into a block (LAYOUTS.md §2). */}
+      <SummaryStrip
+        figures={[
+          ...figures.map((f) => ({
+            label: f.label,
+            value: moneyShort(f.amount, currency),
+            note: `· ${f.count}`,
+          })),
+          // Observed and required on one line: either number alone is unreadable (spec 08 §3).
+          ...(one("deals.forecast.coverage") && observed.coverage !== null && required.required !== null
+            ? [{ label: "Coverage", value: `${observed.coverage.toFixed(1)}x`, note: `· this team’s ${required.line.toLowerCase()}` }]
+            : []),
+        ]}
+      />
       {teamTotals.length > 0 && (
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {teamTotals.map((t) => (
@@ -642,47 +642,102 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   const visibleColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
 
-  const table = (
-    <TablePage<Deal>
-      family="deals"
-      title={`${SCOPE_LABEL[scope]} · closing ${period_.words}`}
-      total={b.counts.openDeals}
-      rows={sorted}
-      rowKey={(r) => r.id}
-      searchText={(r) => `${r.name} ${r.company} ${r.owner} ${r.nextStep ?? ""}`}
-      primary={{ label: "New deal", onClick: () => setNewPanel(true) }}
-      columns={visibleColumns.map((c) => ({
-        key: c.key,
-        header: c.header,
-        // The stage is a state word, so the template draws it as a status chip from the one status
-        // set rather than this page picking a colour (DESIGN.md §5).
-        status: c.key === "stage" ? (r: Deal) => r.stage : undefined,
-        cell: (r: Deal) =>
-          c.key === "warnings"
-            ? (warningsOf(r, seed).length === 0
-                ? <span className="text-muted-foreground">—</span>
-                : <span className="flex flex-wrap gap-1">
-                    {warningsOf(r, seed).map((w) => <Chip key={w.kind} status={warningStatus(w.kind)}>{chipText(w)}</Chip>)}
-                  </span>)
-            : c.cell(r, { currency }),
-      }))}
-      moreActions={[
-        { label: "Open the deal record", onClick: (r) => leaveFor(`/ollopa/deals/${r.id}`, r.id) },
-        { label: "Log a call or note", onClick: (r) => setLogFor(r.id) },
-        { label: "Close won…", onClick: (r) => setWonFor(r.id) },
-        { label: "Mark lost and archive…", onClick: (r) => setLostFor(r.id) },
-      ]}
-      quickLook={{
-        title: (r) => r.name,
-        fields: (r) => dealGlanceFields(r, currency, dealLevel.atLevelOne),
-        editable: (r) =>
-          r.owner === session.user
-            ? { label: "Stage", value: r.stage, options: ALL_STAGES, onChange: (v) => move(r.id, v as DealStage) }
-            : { label: `Comment for ${r.owner}`, value: "", multiline: true, onChange: (v) => toast(`Comment for ${r.owner} on ${r.name}: “${v.slice(0, 40)}”.`) },
-        onOpen: (r) => leaveFor(`/ollopa/deals/${r.id}`, r.id),
-      }}
-    />
+  /* ---------------------------------------------------------------------------- the table view */
+
+  /** What the row's "…" offers, the same list on the table and on the phone list. */
+  const rowMenu = (r: Deal) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon-sm" variant="ghost" aria-label={`Actions for ${r.name}`} onClick={(e) => e.stopPropagation()}>
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => setGlance(r.id)}>Quick look</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => leaveFor(`/ollopa/deals/${r.id}`, r.id)}>Open the deal record</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setLogFor(r.id)}>Log a call or note</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setWonFor(r.id)}>Close won…</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setLostFor(r.id)}>Mark lost and archive…</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
+
+  /** One cell's content. The stage and the warnings are state words, so they are status chips. */
+  const cellFor = (c: TableCol, r: Deal) =>
+    c.key === "stage"
+      ? <Chip status={r.stage} />
+      : c.key === "warnings"
+        ? (warningsOf(r, seed).length === 0
+            ? <span className="text-muted-foreground">—</span>
+            : <span className="flex flex-wrap gap-1">
+                {warningsOf(r, seed).map((w) => <Chip key={w.kind} status={warningStatus(w.kind)}>{chipText(w)}</Chip>)}
+              </span>)
+        : c.cell(r, { currency })
+
+  const tableBody = (
+    <Table>
+      <TableHeader className="sticky top-0 bg-muted">
+        <TableRow>
+          {visibleColumns.map((c, i) => (
+            <TableHead key={c.key} className={cn("t-label", i === 0 && "w-full", (c.key === "stage" || c.key === "warnings") && "min-w-36")}>{c.header}</TableHead>
+          ))}
+          <TableHead className="w-px whitespace-nowrap"><span className="sr-only">Actions</span></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {sorted.slice(0, limit).map((r) => (
+          <TableRow
+            key={r.id}
+            data-item={r.id}
+            data-item-label={r.name}
+            className={cn("group cursor-pointer hover:bg-muted focus-visible:bg-muted", glance === r.id && "bg-muted")}
+            tabIndex={0}
+            onClick={(e) => { e.currentTarget.focus(); setGlance(r.id) }}
+            onKeyDown={(e) => {
+              if (e.target !== e.currentTarget) return
+              if (e.key === "Enter") { e.preventDefault(); setGlance(r.id) }
+              if (e.key.toLowerCase() === "o") { e.preventDefault(); leaveFor(`/ollopa/deals/${r.id}`, r.id) }
+            }}
+          >
+            {visibleColumns.map((c) => (
+              <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", (c.key === "stage" || c.key === "warnings") && "min-w-36 whitespace-nowrap")}>
+                {cellFor(c, r)}
+              </TableCell>
+            ))}
+            <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-end">{rowMenu(r)}</div>
+            </TableCell>
+          </TableRow>
+        ))}
+        {sorted.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={visibleColumns.length + 1} className="t-body py-10 text-center text-muted-foreground">
+              Nothing matches. Clear the search or the filters.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  )
+
+  /* The same deals as a divided list for 400: the name reads first and every other column is
+     labelled, because a table with its last columns cut off is the one thing LAYOUTS.md §5 forbids. */
+  const tableRows = sorted.slice(0, limit).map((r) => (
+    <div key={r.id} data-item={r.id} data-item-label={r.name} className="flex items-start gap-2 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <button type="button" className="t-body text-left font-medium hover:underline" onClick={() => setGlance(r.id)}>{r.name}</button>
+        <dl className="mt-1 grid grid-cols-[minmax(5rem,auto)_minmax(0,1fr)] gap-x-3 gap-y-0.5">
+          {visibleColumns.filter((c) => c.key !== "deal").map((c) => (
+            <div key={c.key} className="col-span-2 grid grid-cols-subgrid items-baseline">
+              <dt className="t-small text-muted-foreground">{c.header}</dt>
+              <dd className="t-small min-w-0">{cellFor(c, r)}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      {rowMenu(r)}
+    </div>
+  ))
 
   /* --------------------------------------------------------------------------------- the render */
 
@@ -696,12 +751,14 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const headerProps: PageHeaderProps = {
     family: "deals",
     title: "Deals",
-    count: `${SCOPE_LABEL[scope]} · closing ${period_.words}`,
+    // Which deals, in words: a line under the title, not a count beside it. At 400 a title row
+    // carrying the scope, the period and the primary act pushes the act off the screen.
+    description: `${SCOPE_LABEL[scope]} · closing ${period_.words}`,
     // The one act this page exists for, so the one filled control on it (DESIGN.md §1). The table
     // carries its own primary, so the page header only holds it on the board.
-    actions: view === "board" && !workspaceEmpty
-      ? [{ label: "New deal", kind: "primary", onClick: () => setNewPanel(true) }]
-      : undefined,
+    actions: workspaceEmpty
+      ? undefined
+      : [{ label: "New deal", kind: "primary", onClick: () => setNewPanel(true) }],
     more: [
       { label: "Export this view as CSV", kind: "secondary", onClick: () => exportCsv(sorted, visibleColumns, currency) },
       { label: "Import deals from CSV", kind: "secondary", onClick: () => setImportOpen(true) },
@@ -719,59 +776,70 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
    * search, the two counting chips, the filters behind their door and the forecast strip. It is the
    * template's `above`, so the board and the table put it in the same place.
    */
-  const above = (
-    <div className="space-y-2 pt-2">
-      <div className="flex flex-wrap items-center gap-2">
-        {pipelines.length > 1 && (
-          <Select value={pipelineName} onValueChange={setPipelineName}>
-            <SelectTrigger className="h-8 w-48" aria-label="Pipeline"><SelectValue /></SelectTrigger>
-            <SelectContent>{pipelines.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
-          </Select>
-        )}
+  /**
+   * The controls, written once. The board lays them along its own row above the stages; the table
+   * hands the same list to `IndexPage`, which puts them in the card's header and sends the sixth
+   * and beyond behind one door it labels itself (LAYOUTS.md §2). One definition, two placements, so
+   * switching view never changes what a person can filter by.
+   */
+  const toolbarControls: ToolbarControl[] = [
+    { name: "Search", always: true, node: (
+      <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44" />
+    ) },
+    ...(pipelines.length > 1 ? [{ name: "Pipeline", node: (
+      <Select value={pipelineName} onValueChange={setPipelineName}>
+        <SelectTrigger className="h-8 w-48" aria-label="Pipeline"><SelectValue /></SelectTrigger>
+        <SelectContent>{pipelines.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
+      </Select>
+    ) }] : []),
+    ...(used("deals.filter.scope") ? [{ name: "Whose deals", node: (
+      <Segmented label="Whose deals" value={scope} onChange={setScope}
+        options={(["mine", "team", "all"] as Scope[]).map((k) => ({ key: k, text: SCOPE_LABEL[k] }))} />
+    ) }] : []),
+    { name: "Closing period", node: (
+      <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+        <SelectTrigger className="h-8 w-48" aria-label="Closing period"><SelectValue /></SelectTrigger>
+        <SelectContent>{PERIODS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
+      </Select>
+    ) },
+    ...(one("deals.filter.owner") ? [{ name: "Owner", node: (
+      <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
+        <SelectTrigger className="h-8 w-44" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Owner: all</SelectItem>
+          {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    ) }] : []),
+    ...(one("deals.filter.forecast") ? [{ name: "Forecast category", node: (
+      <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
+        <SelectTrigger className="h-8 w-44" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Forecast: all</SelectItem>
+          {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    ) }] : []),
+  ]
 
-        {used("deals.filter.scope") && (
-          <Segmented label="Whose deals" value={scope} onChange={setScope}
-            options={(["mine", "team", "all"] as Scope[]).map((k) => ({ key: k, text: SCOPE_LABEL[k] }))} />
-        )}
+  /**
+   * The strip: four sums for the AE and the admin, a door for the seats that glance at it. One
+   * section, shadcn's Card, so the sums read as one thing and the box is the library's.
+   */
+  const stripBlock = (
+    <Container>
+      {one("deals.forecast.strip")
+        ? strip
+        : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
+    </Container>
+  )
 
-        <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-          <SelectTrigger className="h-8 w-48" aria-label="Closing period"><SelectValue /></SelectTrigger>
-          <SelectContent>{PERIODS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
-        </Select>
+  const viewToggle = used("deals.view.toggle") ? (
+    <Segmented label="Board or table" value={view} onChange={setView}
+      options={[{ key: "board" as const, text: "Board" }, { key: "table" as const, text: "Table" }]} />
+  ) : null
 
-        {view === "board" && (
-          <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44" />
-        )}
-
-        {/* The owner filter is the control a manager's one-to-ones run on, so it sits beside scope. */}
-        {one("deals.filter.owner") && (
-          <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
-            <SelectTrigger className="h-8 w-44" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Owner: all</SelectItem>
-              {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-
-        {one("deals.filter.forecast") && (
-          <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
-            <SelectTrigger className="h-8 w-44" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Forecast: all</SelectItem>
-              {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-
-        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
-          {used("deals.view.toggle") && (
-            <Segmented label="Board or table" value={view} onChange={setView}
-              options={[{ key: "board" as const, text: "Board" }, { key: "table" as const, text: "Table" }]} />
-          )}
-
-          <ExpandAll />
-
+  const viewPopover = (
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-auto max-w-full whitespace-normal py-1 text-left">View: table columns, card order, density, saved views</Button>
@@ -823,30 +891,31 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               )}
             </PopoverContent>
           </Popover>
-        </div>
-      </div>
+  )
 
-      {/* Two counting chips at level one: the number is read without opening anything. */}
-      <div className="flex flex-wrap items-center gap-2">
-        {(one("deals.filter.no-next-step") || one("deals.filter.comments")) && (
-          <ToggleGroup
-            type="multiple"
-            variant="outline"
-            size="sm"
-            spacing={2}
-            aria-label="Filters you can read the count of"
-            value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
-            onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
-          >
-            {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
-            {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
-          </ToggleGroup>
-        )}
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-          {rows.filter(isOpen).length.toLocaleString()} open of {b.counts.openDeals.toLocaleString()} in this workspace
-        </span>
-      </div>
+  /** Two counting chips: the number is read without opening anything. A toolbar control. */
+  const countingChips = (
+    <ToggleGroup
+      type="multiple"
+      variant="outline"
+      size="sm"
+      spacing={2}
+      aria-label="Filters you can read the count of"
+      value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
+      onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
+    >
+      {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
+      {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
+    </ToggleGroup>
+  )
 
+  /**
+   * The filters behind their door. Disclosure, not toolbar: the door is labelled by what is inside
+   * it and its state persists per person, so it sits above the card on the board and the table
+   * alike rather than inside the toolbar's own door, which would be a door inside a door.
+   */
+  const chipsAndFilters = (
+    <>
       <Door id="deals.filters" label={filterDoorLabel}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {used("deals.filter.warnings") && (
@@ -945,14 +1014,38 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           <Button size="sm" variant="ghost" className="mt-2 h-7 px-2 text-xs" onClick={() => setFilters(NO_FILTERS)}>Clear {filtersOn(filters)} filter{filtersOn(filters) === 1 ? "" : "s"}</Button>
         )}
       </Door>
+    </>
+  )
 
-      {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it.
-          One section, shadcn's Card, so the sums read as one thing and the box is the library's. */}
-      <Container>
-        {one("deals.forecast.strip")
-          ? strip
-          : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
-      </Container>
+  /**
+   * The table's `above`: the chips, the filters door and the strip. Its filter controls live in the
+   * card's header instead, which is where an index's toolbar belongs (LAYOUTS.md §2).
+   */
+  /**
+   * Everything the toolbar carries, board and table alike: the filters, which view, how to look,
+   * and the two counting chips. The template's `Toolbar` keeps five in front at 1440 and exactly
+   * one — the search — at 400, with the rest behind a door it labels itself, so the board opens on
+   * its stage switcher and its cards rather than on eight rows of controls (LAYOUTS.md §5).
+   */
+  const allControls: ToolbarControl[] = [
+    ...toolbarControls,
+    ...(used("deals.view.toggle") ? [{ name: "Board or table", node: <>{viewToggle}</> }] : []),
+    { name: "View: columns, order, density, saved views", node: <>{viewPopover}</> },
+    ...(one("deals.filter.no-next-step") || one("deals.filter.comments") ? [{ name: "What needs you", node: <>{countingChips}</> }] : []),
+    { name: "Expand all", node: <ExpandAll /> },
+  ]
+
+  const tableAbove = <div className="space-y-2 pt-2">{chipsAndFilters}{stripBlock}</div>
+
+  /**
+   * What sits between the toolbar and the stages: the filters door and the forecast strip. The
+   * controls themselves are `controls` now, so the board at 400 opens on its stage switcher and its
+   * cards rather than on rows of selects (LAYOUTS.md §5).
+   */
+  const above = (
+    <div className="space-y-2">
+      {chipsAndFilters}
+      {stripBlock}
 
       {/* Board only: the table says its own emptiness in its own words. */}
       {view === "board" && !workspaceEmpty && rows.length === 0 && anyFilter && (
@@ -969,35 +1062,55 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       <div className="flex h-full min-h-0 flex-col">
         <div aria-live="polite" className="sr-only">{say}</div>
 
-        {workspaceEmpty || view === "table" ? (
+        {workspaceEmpty ? (
           <>
             <div className="px-4 pt-4 sm:px-6">
               <PageHeader {...headerProps} />
-              {above}
             </div>
-            {workspaceEmpty ? (
-              <div className="px-4 pb-6 sm:px-6">
-                <EmptyState
-                  title="No deals yet"
-                  body="A deal is an opportunity with an amount, a close date and a next step. Create one, or bring the pipeline you already have."
-                  action={
-                    <Actions surface="card" items={[
-                      { label: "New deal", kind: "primary", onClick: () => setNewPanel(true) },
-                      { label: "Import CSV", kind: "secondary", onClick: () => setImportOpen(true) },
-                    ]} />
-                  }
-                />
-              </div>
-            ) : (
-              <div className="min-h-0 flex-1">{table}</div>
-            )}
+            <div className="px-4 pb-6 sm:px-6">
+              <EmptyState
+                title="No deals yet"
+                body="A deal is an opportunity with an amount, a close date and a next step. Create one, or bring the pipeline you already have."
+                action={
+                  <Actions surface="card" items={[
+                    { label: "New deal", kind: "primary", onClick: () => setNewPanel(true) },
+                    { label: "Import CSV", kind: "secondary", onClick: () => setImportOpen(true) },
+                  ]} />
+                }
+              />
+            </div>
           </>
+        ) : view === "table" ? (
+          // The table is an index: one page header, the controls in the card's header, the rows in
+          // its body, the pager in its footer, and the same deals as a divided list at 400. The
+          // page sets no width — the template does (LAYOUTS.md §1 and §6).
+          <div className="min-h-0 flex-1">
+            <IndexPage
+              {...headerProps}
+              controls={allControls}
+              shown={`${sorted.length.toLocaleString()} shown of ${b.counts.openDeals.toLocaleString()}`}
+              above={tableAbove}
+              table={tableBody}
+              rows={tableRows}
+              pager={sorted.length > limit ? (
+                <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + 25)}>
+                  Show {Math.min(25, sorted.length - limit)} more
+                </Button>
+              ) : undefined}
+            />
+          </div>
         ) : (
           // The board is the one fluid template (LAYOUTS.md §6): it sets the measure, the column
           // width and the one-stage-at-a-time switcher at 400, so this page sets no width of its
           // own and hands over the stages and the parts.
           <div className="min-h-0 flex-1">
-            <BoardPage {...headerProps} above={above} stages={stages} />
+            <BoardPage
+              {...headerProps}
+              controls={allControls}
+              shown={`${rows.filter(isOpen).length.toLocaleString()} open of ${b.counts.openDeals.toLocaleString()}`}
+              above={above}
+              stages={stages}
+            />
           </div>
         )}
 

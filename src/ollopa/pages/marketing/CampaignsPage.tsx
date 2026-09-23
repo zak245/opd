@@ -1,5 +1,5 @@
-// Campaigns · Audiences · Forms (`P-campaigns`): one page, one table, three objects, a policy line
-// above (specs/10-campaigns.md §3 and §6).
+// Campaigns · Audiences · Forms (`P-campaigns`): one index, one table, three objects, the sending
+// policy as the page's summary strip (specs/10-campaigns.md §3 and §6, LAYOUTS.md §1).
 //
 // The one thing the marketer must never lose sight of is what is about to go out, to how many people,
 // and what it cost last time. So the bounce guard's two thresholds and the observed rate, the daily
@@ -8,7 +8,6 @@
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,12 +18,12 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
+import { IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
 import { FAMILY, ink } from "./look"
-import { TableCard, useTick } from "../engage/shared"
+import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
 import { toast } from "../../templates/TablePage"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { Door } from "../../ui/Door"
+import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -32,9 +31,7 @@ import { businessById } from "../../data/businesses"
 import { BOUNCE_GUARD, CAMPAIGN_CHECKS, TODAY, seedFor, type Audience, type Campaign, type Form } from "../../data/seed"
 import type { Session } from "../../session"
 import type { Business } from "../../usage/model"
-import { familyOf } from "../../identity"
-import { Separator } from "@/components/ui/separator"
-import { Grid, GridColumns, type GridColumn } from "./grid"
+import { useGrid, type GridColumn } from "./grid"
 import { usePref } from "./prefs"
 import { addRow, patchRow, removeRow, useMarketing } from "./store"
 import { netSize, rulesApplied, suppressionCounts, suppressedTotal } from "./derive"
@@ -68,49 +65,6 @@ export function DeliveryCell({ c }: { c: Campaign }) {
         {past === "pause" && ` — past the ${BOUNCE_GUARD.pausePercent}% pause threshold`}
       </div>
     </div>
-  )
-}
-
-/* ------------------------------------------------------------------------------- the policy line */
-
-function PolicyLine({ business, admin, from }: { business: Business; admin: string; from: (anchor?: string) => Origin }) {
-  const seed = seedFor(business)
-  const policy = seed.sendPolicy
-  const guard = seed.bounceGuard
-  // A workspace with no campaign cap has no marketing domain either: its domains belong to outbound
-  // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
-  const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
-  return (
-    <>
-    {/* The card's first row, not a tinted full-bleed band: the library's rule divides it from the
-        table below (DESIGN.md §4). */}
-    <p id="campaigns-policy" className="t-small flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pb-2">
-      <span>Bounce guard: warn {guard.warnPercent}%, pause {guard.pausePercent}%</span>
-      <span aria-hidden="true">·</span>
-      <span
-        className={guard.observedPercent >= guard.warnPercent ? "font-medium" : ""}
-        style={guard.observedPercent >= guard.warnPercent ? ink("warning") : undefined}
-      >
-        observed {guard.observedPercent}% this week
-      </span>
-      <span aria-hidden="true">·</span>
-      {policy.dailyCap > 0
-        ? <span>{num(policy.usedToday)} of {num(policy.dailyCap)} sends used today</span>
-        : <span>No campaign sending set up yet</span>}
-      <span aria-hidden="true">·</span>
-      {domain
-        ? <span>{domain.domain} {domain.spf && domain.dkim && domain.dmarc ? "healthy" : "needs SPF, DKIM or DMARC"}</span>
-        : <span>No marketing domain — {admin} can add one in Settings › Email sending</span>}
-      {/* A destination, so a real link; it keeps this page on the trail behind it. */}
-      <a
-        className="underline" href={href("/ollopa/settings/email-sending?row=mail.bounce-guard")}
-        onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/settings/email-sending?row=mail.bounce-guard", from("campaigns-policy")) } }}
-      >
-        Sending policy
-      </a>
-    </p>
-    <Separator />
-    </>
   )
 }
 
@@ -163,10 +117,6 @@ export function CampaignsPage({ session }: { session: Session }) {
     { id: "camp.filter.audience", key: "audience", label: "Audience", value: audience, set: setAudience, options: rows.audiences.map((a) => a.name) },
     { id: "camp.filter.date", key: "date", label: "Date", value: when, set: setWhen, options: ["Sent in the last 30 days", "Sending or scheduled"] },
   ]
-  const levelOneFilters = filterControls.filter((f) => at(f.id))
-  const behindTheDoor = filterControls.filter((f) => !at(f.id))
-  const activeCount = filterControls.filter((f) => f.value !== "all").length
-  const activeBehind = behindTheDoor.filter((f) => f.value !== "all").length
 
   const Filter = ({ f }: { f: (typeof filterControls)[number] }) => (
     <Select value={f.value} onValueChange={f.set}>
@@ -299,8 +249,7 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   // The column choices are the page's, not the table's, because the phone shows them inside the one
   // door that replaces the filter row, and both must move together.
-  const optionalCampaignColumns = campaignColumns.filter((c) => c.optional)
-  const [hiddenColumns, setHiddenColumns] = usePref<string[]>("campaigns.hidden", optionalCampaignColumns.map((c) => c.key))
+  const [hiddenColumns, setHiddenColumns] = usePref<string[]>("campaigns.hidden", campaignColumns.filter((c) => c.optional).map((c) => c.key))
 
   const audienceColumns: GridColumn<Audience>[] = [
     { key: "name", header: "Audience", sortBy: (a) => a.name, className: "min-w-[11rem] whitespace-normal", cell: (a) => (
@@ -371,187 +320,181 @@ export function CampaignsPage({ session }: { session: Session }) {
     { key: "forms", label: "Forms", count: rows.forms.length },
   ]
 
-  const filterRow = (
-    <>
-      <Input aria-label="Search campaigns, subjects and audiences" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-      {view === "campaigns" && levelOneFilters.map((f) => <Filter key={f.key} f={f} />)}
-    </>
-  )
+  /* ------------------------------------------------------------------------------- the bodies */
 
-  const doorLabel = `Additional filters: ${behindTheDoor.map((f) => f.label.toLowerCase()).join(", ")}`
+  // One grid per view. The hook gives back both bodies the template asks for — the table for the
+  // desktop and the same rows as a divided list for 400 — so this page sets no width and draws no
+  // phone branch of its own (LAYOUTS.md §5).
+  const campaignGrid = useGrid<Campaign>({
+    id: "campaigns",
+    rows: campaigns,
+    rowKey: (c) => c.id,
+    columns: campaignColumns,
+    defaultSort: { key: "name", dir: "asc" },
+    actions: rowActions,
+    menu: rowMenu,
+    hidden: hiddenColumns,
+    onHidden: setHiddenColumns,
+    menuName: "Read it beside this table, open, duplicate, compare, export results, archive, delete draft",
+    onOpen: (c) => open(`/ollopa/campaigns/${c.id}`, c.id),
+    rowLabel: (c) => c.name,
+    cardTitle: (c) => <span className="font-medium">{c.name} · {c.kind}</span>,
+    empty: (
+      <EmptyState
+        title="No campaigns yet"
+        body={`A campaign sends one email to an audience built from your lists. Start with an audience, or create an email campaign.${
+          seed.sendPolicy.dailyCap === 0 ? ` This workspace has no marketing domain: ${admin} can add one in Settings › Email sending.` : ""
+        }`}
+        action={
+          <Actions surface="card" items={[
+            { kind: "primary", label: "Create an email campaign", onClick: () => setNewPanel(true) },
+            { kind: "secondary", label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") },
+          ]} />
+        }
+      />
+    ),
+  })
 
+  const audienceGrid = useGrid<Audience>({
+    id: "audiences",
+    rows: audiences,
+    rowKey: (a) => a.id,
+    columns: audienceColumns,
+    defaultSort: { key: "name", dir: "asc" },
+    actions: (a) => [{ label: "Rebuild now", onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } }],
+    menu: (a) => [
+      { label: "Read it beside this table", onClick: () => beside("audience", a.id) },
+      { label: "Open", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
+      { label: "Hand to sales", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
+      { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
+      { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
+    ],
+    menuName: "Read it beside this table, open, hand to sales, freeze, delete audience",
+    onOpen: (a) => open(`/ollopa/audiences/${a.id}`, a.id),
+    rowLabel: (a) => a.name,
+    cardTitle: (a) => <span className="font-medium">{a.name}</span>,
+  })
+
+  const formGrid = useGrid<Form>({
+    id: "forms",
+    rows: forms,
+    rowKey: (f) => f.id,
+    columns: formColumns,
+    defaultSort: { key: "submissions", dir: "desc" },
+    actions: (f) => [{ label: f.status === "Live" ? "Turn off" : "Turn on", onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } }],
+    menu: (f) => [
+      { label: "Read it beside this table", onClick: () => beside("form", f.id) },
+      { label: "Open", onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
+      { label: "Copy the form link", onClick: () => toast(`Link to ${f.name} copied.`) },
+      { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
+    ],
+    menuName: "Read it beside this table, open, copy the form link, export submissions",
+    onOpen: (f) => open(`/ollopa/forms/${f.id}`, f.id),
+    rowLabel: (f) => f.name,
+    cardTitle: (f) => <span className="font-medium">{f.name}</span>,
+  })
+
+  const grid = view === "campaigns" ? campaignGrid : view === "audiences" ? audienceGrid : formGrid
   const shownRows = view === "campaigns" ? campaigns.length : view === "audiences" ? audiences.length : forms.length
   const totalRows = view === "campaigns" ? rows.campaigns.length : view === "audiences" ? rows.audiences.length : rows.forms.length
 
+  /* ------------------------------------------------------------------------------ the toolbar */
+
+  // In the order the usage model ranks them; the template keeps five in front and puts the rest
+  // behind one door it labels itself. The model decides the order, the template decides the cut.
+  const controls: ToolbarControl[] = [
+    {
+      name: "View",
+      always: true,
+      node: (
+        // The view switch is state, not a door: three objects on one table (IA-MAP 3, P-campaigns),
+        // and it is first because it says what the rest of the toolbar is filtering.
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          aria-label="What this table shows"
+          value={view}
+          onValueChange={(v) => { if (v) setView(v as View) }}
+        >
+          {views.map((v) => (
+            <ToggleGroupItem key={v.key} value={v.key}>
+              {v.label} <span className="tabular-nums">{v.count}</span>
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      ),
+    },
+    {
+      name: "Search",
+      always: true,
+      node: <Input aria-label="Search campaigns, subjects and audiences" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />,
+    },
+    ...(view === "campaigns"
+      ? [
+        ...[...filterControls].sort((a, b) => d.weekly(b.id) - d.weekly(a.id)).map((f) => ({ name: f.label, node: <Filter f={f} /> })),
+        { name: "Columns", always: true, node: grid.columns },
+      ]
+      : []),
+  ]
+
+  /* ------------------------------------------------------------------------------- the policy */
+
+  const policy = seed.sendPolicy
+  const guard = seed.bounceGuard
+  // A workspace with no campaign cap has no marketing domain either: its domains belong to outbound
+  // (Halyard sends for its clients). Saying otherwise would be a claim the workspace cannot back.
+  const domain = policy.dailyCap > 0 ? seed.domains[0] : undefined
+  const figures: SummaryFigure[] = [
+    {
+      label: "Bounce guard",
+      value: (
+        // A destination, so a real link; it keeps this page on the trail behind it.
+        <a
+          id="campaigns-policy"
+          href={href("/ollopa/settings/email-sending?row=mail.bounce-guard")}
+          onClick={(ev) => { if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); follow("/ollopa/settings/email-sending?row=mail.bounce-guard", from("campaigns-policy")) } }}
+        >
+          <span style={guard.observedPercent >= guard.warnPercent ? ink("warning") : undefined}>
+            {guard.observedPercent}% this week
+          </span>
+        </a>
+      ),
+      note: `warns at ${guard.warnPercent}% · pauses at ${guard.pausePercent}%`,
+    },
+    policy.dailyCap > 0
+      ? { label: "Sends today", value: `${num(policy.usedToday)} of ${num(policy.dailyCap)}`, note: "the daily cap" }
+      : { label: "Sends today", value: "None", note: "none set up yet" },
+    domain
+      ? { label: "Marketing domain", value: domain.domain, note: domain.spf && domain.dkim && domain.dmarc ? "SPF, DKIM and DMARC pass" : "needs SPF, DKIM or DMARC" }
+      : { label: "Marketing domain", value: "None", note: `${admin} can add one in Settings › Email sending` },
+  ]
+
+  /* -------------------------------------------------------------------------------- the render */
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-4">
-        <div className="min-w-0">
-          <h2 className="t-title inline-flex min-w-0 items-center gap-2" style={{ color: familyOf(FAMILY).ink }}>
-            <FamilyIcon of={FAMILY} size="header" />
-            Campaigns
-          </h2>
-          <p className="t-body text-muted-foreground">One send to an audience, or a lifecycle campaign that runs on a trigger.</p>
-        </div>
-        <Actions surface="page" items={[
+    <>
+      <IndexPage
+        family={FAMILY}
+        title="Campaigns"
+        count={totalRows}
+        description="One send to an audience, or a lifecycle campaign that runs on a trigger."
+        actions={[
           { kind: "primary", label: "New campaign", onClick: () => setNewPanel(true) },
           ...(view === "audiences" ? [{ kind: "secondary" as const, label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") }] : []),
           ...(view === "forms" ? [{ kind: "secondary" as const, label: "New form", onClick: () => toast("New form: name it, add the fields, and choose where submissions go.") }] : []),
-        ]} />
-      </div>
-
-      {nothing ? (
-        <div className="px-6 py-10">
-          <EmptyState
-            title="No campaigns yet"
-            body={`A campaign sends one email to an audience built from your lists. Start with an audience, or create an email campaign.${
-              seed.sendPolicy.dailyCap === 0 ? ` This workspace has no marketing domain: ${admin} can add one in Settings › Email sending.` : ""
-            }`}
-            action={
-              <Actions surface="card" items={[
-                { kind: "primary", label: "Create an email campaign", onClick: () => setNewPanel(true) },
-                { kind: "secondary", label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") },
-              ]} />
-            }
-          />
-        </div>
-      ) : (
-        <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3 max-sm:px-4">
-          {/* The page title is above the card; the card's header carries only the toolbar — the
-              view switch, the search, the filters, the count and the column chooser. */}
-          <TableCard
-            count={shownRows === totalRows ? num(totalRows) : `${num(shownRows)} shown of ${num(totalRows)}`}
-            toolbar={<>
-              {/* The view switch is state, not a door: three objects on one table (IA-MAP 3,
-                  P-campaigns), and it is the first thing in the toolbar because it says what the
-                  rest of the toolbar is filtering. */}
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                aria-label="What this table shows"
-                value={view}
-                onValueChange={(v) => { if (v) setView(v as View) }}
-              >
-                {views.map((v) => (
-                  <ToggleGroupItem key={v.key} value={v.key}>
-                    {v.label} <span className="tabular-nums">{v.count}</span>
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              <div className="hidden flex-wrap items-center gap-2 md:flex">
-                {filterRow}
-                {view === "campaigns" && <GridColumns columns={campaignColumns} hidden={hiddenColumns} onHidden={setHiddenColumns} />}
-              </div>
-            </>}
-          >
-          {/* Decision-critical, above everything, on every plan: the guard, the observed rate, the cap. */}
-          <PolicyLine business={session.business} admin={admin} from={from} />
-
-          {/* From tablet up: the door that ends the filter row, named for what is behind it. */}
-          {view === "campaigns" && behindTheDoor.length > 0 && (
-            <div className="hidden px-4 py-2 md:block">
-              <Door id="campaigns.filters" label={doorLabel} count={activeBehind || undefined}>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {behindTheDoor.map((f) => <Filter key={f.key} f={f} />)}
-                </div>
-              </Door>
-            </div>
-          )}
-
-          {/* The phone: one door replacing two, with the same values. */}
-          <div className="px-4 py-3 md:hidden">
-            <div className="pb-2">{<Input aria-label="Search campaigns" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8" />}</div>
-            {view === "campaigns" && (
-              <Door id="campaigns.filters.phone" label="Filters and columns" count={activeCount || undefined}>
-                <div className="grid gap-2 pt-1">{filterControls.map((f) => <Filter key={f.key} f={f} />)}</div>
-                <fieldset className="pt-3">
-                  <legend className="pb-2 text-xs font-medium">Columns you can add</legend>
-                  <div className="space-y-2">
-                    {optionalCampaignColumns.map((c) => (
-                      <label key={c.key} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={!hiddenColumns.includes(c.key)}
-                          onCheckedChange={(v) => setHiddenColumns(v ? hiddenColumns.filter((k) => k !== c.key) : [...hiddenColumns, c.key])}
-                        />
-                        {c.header}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              </Door>
-            )}
-          </div>
-
-          {view === "campaigns" && (
-            <Grid<Campaign>
-              id="campaigns"
-              rows={campaigns}
-              rowKey={(c) => c.id}
-              columns={campaignColumns}
-              defaultSort={{ key: "name", dir: "asc" }}
-              actions={rowActions}
-              menu={rowMenu}
-              hidden={hiddenColumns}
-              onHidden={setHiddenColumns}
-              menuName="Read it beside this table, open, duplicate, compare, export results, archive, delete draft"
-              onOpen={(c) => open(`/ollopa/campaigns/${c.id}`, c.id)}
-              rowLabel={(c) => c.name}
-              cardTitle={(c) => <span className="font-medium">{c.name} · {c.kind}</span>}
-            />
-          )}
-          {view === "audiences" && (
-            <Grid<Audience>
-              id="audiences"
-              rows={audiences}
-              rowKey={(a) => a.id}
-              columns={audienceColumns}
-              defaultSort={{ key: "name", dir: "asc" }}
-              actions={(a) => [{ label: "Rebuild now", onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } }]}
-              menu={(a) => [
-                { label: "Read it beside this table", onClick: () => beside("audience", a.id) },
-                { label: "Open", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
-                { label: "Hand to sales", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
-                { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
-                { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
-              ]}
-              menuName="Read it beside this table, open, hand to sales, freeze, delete audience"
-              onOpen={(a) => open(`/ollopa/audiences/${a.id}`, a.id)}
-              rowLabel={(a) => a.name}
-              cardTitle={(a) => <span className="font-medium">{a.name}</span>}
-            />
-          )}
-          {view === "forms" && (
-            <Grid<Form>
-              id="forms"
-              rows={forms}
-              rowKey={(f) => f.id}
-              columns={formColumns}
-              defaultSort={{ key: "submissions", dir: "desc" }}
-              actions={(f) => [{ label: f.status === "Live" ? "Turn off" : "Turn on", onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } }]}
-              menu={(f) => [
-                { label: "Read it beside this table", onClick: () => beside("form", f.id) },
-                { label: "Open", onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
-                { label: "Copy the form link", onClick: () => toast(`Link to ${f.name} copied.`) },
-                { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
-              ]}
-              menuName="Read it beside this table, open, copy the form link, export submissions"
-              onOpen={(f) => open(`/ollopa/forms/${f.id}`, f.id)}
-              rowLabel={(f) => f.name}
-              cardTitle={(f) => <span className="font-medium">{f.name}</span>}
-            />
-          )}
-          </TableCard>
-        </div>
-      )}
-
-      {!isAdmin && (
-        <>
-          <Separator />
-          <p className="t-small px-6 py-2 text-muted-foreground">
+        ]}
+        above={<SummaryStrip figures={figures} />}
+        controls={nothing ? undefined : controls}
+        shown={shownRows === totalRows ? num(totalRows) : `${num(shownRows)} shown of ${num(totalRows)}`}
+        table={grid.table}
+        rows={grid.rows}
+      >
+        {!isAdmin && (
+          <p className="t-small text-muted-foreground">
             Owners and sending policy are the admin's: {admin} can change an owner or the bounce guard.
           </p>
-        </>
-      )}
+        )}
+      </IndexPage>
 
       {/* ------------------------------------------------------------------ new campaign: which kind */}
       <Panel id="campaign-new" title="New campaign" open={newPanel} onOpenChange={setNewPanel}>
@@ -627,6 +570,6 @@ export function CampaignsPage({ session }: { session: Session }) {
       >
         <p className="text-sm">Deletes the draft and its test sends.</p>
       </Panel>
-    </div>
+    </>
   )
 }

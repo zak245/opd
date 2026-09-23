@@ -466,6 +466,10 @@ export function RecordPage(p: RecordPageProps) {
     </>
   )
 
+  // A rail is two cards or more. One card beside a full-height main column is a third of the page
+  // left empty, so it goes under instead.
+  const railed = p.side.length >= 2
+
   return (
     <DoorGroup>
       <Measured className="flex min-h-full flex-col">
@@ -490,15 +494,17 @@ export function RecordPage(p: RecordPageProps) {
                     onBlur={() => { p.title.onRename!(name); setRenaming(false) }}
                   />
                 ) : (
-                  <h2 className="t-title inline-flex min-w-0 items-center gap-2 truncate" style={{ color: familyOf(p.family).ink }}>
+                  <h2 className="t-title flex min-w-0 max-w-full items-center gap-2" style={{ color: familyOf(p.family).ink }}>
                     <FamilyIcon of={p.family} size="header" />
                     {p.title.onRename ? (
-                      <button type="button" className="group/title inline-flex items-center gap-1.5 rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => setRenaming(true)}>
-                        {p.title.value}
-                        <Pencil aria-hidden="true" className="size-3.5 text-muted-foreground opacity-0 group-hover/title:opacity-100 group-focus-visible/title:opacity-100" />
+                      // The name is as long as the thing is named; the masthead is as wide as the
+                      // page. It truncates rather than pushing the record off the right edge.
+                      <button type="button" className="group/title inline-flex min-w-0 max-w-full items-center gap-1.5 rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => setRenaming(true)}>
+                        <span className="min-w-0 truncate">{p.title.value}</span>
+                        <Pencil aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground opacity-0 group-hover/title:opacity-100 group-focus-visible/title:opacity-100" />
                         <span className="sr-only">Rename</span>
                       </button>
-                    ) : p.title.value}
+                    ) : <span className="min-w-0 truncate">{p.title.value}</span>}
                   </h2>
                 )}
                 {p.chips}
@@ -543,7 +549,10 @@ export function RecordPage(p: RecordPageProps) {
               canvas is contained (DESIGN.md §5). */}
           <Card className="mt-3 mb-4 py-4">
             <CardContent className="px-4">
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
+              {/* Four columns from 1024 up: at three, a field that must keep its date beside it
+                  (`span: 2`) wraps out of the first row and leaves the right third of the strip
+                  empty. Two at 400, four wherever there is room. */}
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
                 {shown.map((f) => <FieldCell key={f.key} field={f} />)}
               </dl>
             </CardContent>
@@ -563,8 +572,18 @@ export function RecordPage(p: RecordPageProps) {
         </div>
 
         {/* ------------------------------------------------------- body: main, side cards, doors */}
-        <div className="flex flex-1 flex-col gap-6 px-5 pt-5 pb-56 lg:grid lg:pb-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:px-6">
-          <div className="order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-span-2">
+        {/* Three panes at 1440, two at 1024: at 1024 the side rail stacks under the main column
+            (LAYOUTS.md §5), so the split starts at xl and not at lg. And a rail with fewer than
+            two cards is not a rail — it would leave the right third of the page empty at rest,
+            which §6 forbids — so it stacks under at full width at every size. */}
+        <div className={cn(
+          "flex flex-1 flex-col gap-6 px-5 pt-5 pb-56",
+          railed && "xl:grid xl:pb-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start xl:px-6",
+          !railed && "xl:pb-6 xl:px-6",
+        )}>
+          {/* Stacked, the record's own work comes first and the rail follows it: the rail stacks
+              *under* the main column (LAYOUTS.md §5), at 1024 and at 400 alike. */}
+          <div className={cn("order-1 min-w-0", railed && "xl:order-none xl:col-start-1 xl:row-span-2")}>
             {p.tab ? (
               <Tabs defaultValue="main">
                 <TabsList>
@@ -577,11 +596,14 @@ export function RecordPage(p: RecordPageProps) {
             ) : mainBody}
           </div>
 
-          <SideRail className="order-1 gap-3 lg:order-none lg:col-start-2 lg:row-start-1">
+          <SideRail className={cn(
+            "order-2 gap-3",
+            railed ? "xl:order-none xl:col-start-2 xl:row-start-1" : "sm:grid-cols-2",
+          )}>
             {p.side.map((c) => <SideCard key={c.id} card={c} />)}
           </SideRail>
 
-          <div className="order-3 lg:order-none lg:col-start-2 lg:row-start-2">
+          <div className={cn("order-3", railed && "xl:order-none xl:col-start-2 xl:row-start-2")}>
             {doors.length > 0 && (
               // The doors are a section of the record like any other, so they are a Card: the
               // "expand all" control is the card's own action, the doors are its content. This cell

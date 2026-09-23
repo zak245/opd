@@ -406,13 +406,19 @@ export function CompaniesPage({ session }: { session: Session }) {
   return (
     <>
       <DataTable<CompanyView>
+        family="companies"
         title="Companies"
         total={b.counts.companies}
         rows={rows}
         rowKey={(v) => v.company.id}
         searchHint="Search a company, a domain or a person"
         searchText={(v) => `${v.company.name} ${v.company.domain} ${v.company.industry} ${v.contacts.map((c) => `${c.name} ${c.email}`).join(" ")}`}
-        strip={notice || pending ? strip : undefined}
+        above={notice || pending ? strip : undefined}
+        below={(!canChangeOwner || (Boolean(b.crm) && !canPushCrm)) && admin ? (
+          <p className="t-small text-muted-foreground">
+            {!canChangeOwner ? "Owner changes" : `Pushes to ${crmName}`}: ask {admin.user} ({admin.title}).
+          </p>
+        ) : undefined}
         chips={chips}
         doorFilters={doorFilters}
         columns={columns}
@@ -470,13 +476,6 @@ export function CompaniesPage({ session }: { session: Session }) {
           ),
         }}
       />
-
-      {/* One line in body contrast where the seat cannot do something, naming who can (rule 4). */}
-      {(!canChangeOwner || (Boolean(b.crm) && !canPushCrm)) && admin && (
-        <p className="px-5 pb-3 t-small text-muted-foreground lg:px-6">
-          {!canChangeOwner ? "Owner changes" : `Pushes to ${crmName}`}: ask {admin.user} ({admin.title}).
-        </p>
-      )}
 
       {/* `X-findcos`: the database, flat. The two exclusions sit above the filters and restate the
           count as they are turned on and off, because the number in front of you must be the number
