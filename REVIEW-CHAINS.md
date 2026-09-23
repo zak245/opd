@@ -1,11 +1,101 @@
 # Stage 3 review: the chains
 
-Round 14 is the current review — the layout system, judged from the `see` scenes. Rounds 13 through
+Round 15 is the current review — the layout fixes, judged from the `see` scenes. Rounds 14 through
 1 are kept below, in order.
 
 ---
 
-# Round 14 — the layout system
+# Round 15 — the layout fixes, judged from the scenes
+
+Judged from the images in `shots/see/` — **319 images**, fresh manifest, no scene re-run. Then
+chains 1, 3 and 7 on my own preview on 4180 with `review-chains.mjs`.
+
+**Consoles silent** on all six chain runs. **No page scrolls sideways** at any width in any theme
+(`pageScrollsSideways` false on all 319), and **no card nests** anywhere.
+
+The harness caveat from round 14 still applies: `see`'s "clipped" count is mostly `sr-only` spans
+(42 of Agents' 44). The number to read is `sideways`.
+
+## Round 14's worst five, re-checked first
+
+| # | Round-14 finding | Now | Evidence |
+|---|---|---|---|
+| 1 | Inbox tab strip clipped by 287 px | **Fixed** | The intents are a `Select` reading "Interested · 4", then search, then "4 shown", then one door. `sideways` 0 at 1440, 1024 and 400. `inbox-1440-light.png` |
+| 2 | Accounts table scrolled sideways 111 px at 1440 | **Fixed at 1440, not at 1024** | 1440 `sideways` 0. At 1024 it is still 1 and the image shows a cut column head "C…" with "N…" values. `accounts-1024-light.png` |
+| 3 | Sequence results table clipped at 400 | **Fixed** | `RowsTable` turns it into a key/value grid — Sent 462, Delivered 453 · 98%, Opened 150 · 33%. `sideways` 3 → 1. `sequence-400-light.png` |
+| 4 | Deals Table view unreachable at 400 | **Fixed** | A Board/Table `ToggleGroup` is on the page with Table selected, rows as divided key/value lists. `deals-table-400-light.png` |
+| 5 | People phone toolbar cost six rows | **Fixed** | Search plus one door, "Filters and views · 4 on". Two rows; the first person sits at about 330 px instead of 500. `people-400-light.png` |
+
+Four fixed outright, one fixed at the width it was reported at and still failing one width down.
+
+## Page by page
+
+A = type and contract (§1, §2, §7) · B = width, alignment, nothing empty · C = 1024 and 400 ·
+D = affordances · E = overlays · F = console.
+
+| Scene | Type | A | B | C | D | E | F |
+|---|---|---|---|---|---|---|---|
+| `home` | Home | ✓ tiles flow by height, Approvals capped at three with a door | ? the status badges are still a third band above the title | ✓ | ✓ | ✓ | ✓ |
+| `people` `companies` `lists` `sequences` `templates` | Index | ✓ | ✓ | ✓ search + one door at 400 | ✓ | ✓ | ✓ |
+| `person` `company` `deal` `campaign` `audience` `form` `job` | Record | ✓ acts on the name line | ✓ | ✓ `RowsTable` at 400 | ✓ | ✓ | ✓ |
+| `sequence` | Record | **!** the People figures are six bordered boxes, not a band | ✓ at 1440 | ✓ results now a grid | ✓ | ✓ | ✓ |
+| `workflow` | Record | **!** the side rail carries a decision | ✓ acts on the name line, one filled | ✓ | ✓ | ✓ | ✓ |
+| `inbox` | Master-detail | ✓ | ✓ nothing clipped | ✓ | ✓ grip, `role="separator"`, arrows resize | ✓ | ✓ |
+| `tasks-queue` `tasks-list` | Queue / Index | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `deals-board` | Board | ✓ one door, summary band | ✓ | ✓ 2 cards at 400, stage switcher | ✓ `DragGrip` + "Move to" | ✓ | ✓ |
+| `deals-table` | Index | ✓ | ? the summary band is cut mid-word at 400 | ✓ reachable now | ✓ | ✓ | ✓ |
+| `accounts` | Index | **!** seven controls in front of the door where §2 allows five | ✓ at 1440 | **!** table clipped at 1024 | ✓ | ✓ | ✓ |
+| `campaigns` `workflows` `requests` | Index | ✓ | ✓ 56–152 px chrome | ✓ | ✓ | ✓ | ✓ |
+| `reports` | Index-ish | **!** a band and a row of boxes stacked | ✓ tab strip from `SectionFilter` | ✓ | ✓ | ✓ | ✓ |
+| `agents` | Queue | **!** two red alert bands stacked | ✓ exceptions are the page alert now, card holds a band | ✓ | ✓ | ✓ | ✓ |
+| `settings` ×14 | Settings | ✓ | ✓ 14 panels, 0 nested | ✓ | ✓ | ✓ | ✓ |
+| `connect-1` `connect-5` `import` `setup` | Wizard | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `integration` `developer` | Record / Settings | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `act-*` (17 scenes) | — | ✓ | ✓ | ✓ | ✓ | ✓ 0 nested overlays | ✓ |
+
+## The new worst five
+
+1. **`accounts-1024-light.png` — the index is still clipped one width down, and its toolbar breaks
+   §2.** The table cuts a column head to "C…" and its values to "N…" at 1024. Above it sit seven
+   controls in front of the door — search, three day-range chips, Health band, Columns, Owner —
+   where §2 allows five before the rest go behind one. The two faults share a cause: this page has
+   more to show than its width, at both levels.
+2. **`reports-1440-light.png` — a summary band and a row of boxes, stacked.** "Pipeline 56 Created ·
+   Sequences 10,002 Sent · Forecast €2.4m Best case" is a correct band; directly beneath it four
+   figures sit in a bordered card divided into cells. §2 says the numbers a page is judged by are
+   one band, never boxes. Here they are both, twice.
+3. **`sequence-400-light.png` — the People figures are six bordered boxes.** Active 231, Paused 16,
+   Finished 204, Replied 10, Bounced 9, Not sent 23, each in its own box, wrapping to two rows. The
+   same §2 rule, and the page above it already proves the team can draw a band.
+4. **`workflow-1440-light.png` — the side rail carries a decision.** "Could not route · 1 · 1 records
+   reached nobody" sits in the rail in a colour-bordered callout with an "Open the run history"
+   button. §2: "The rail never carries the record's own decisions." It is also the one box on the
+   page drawn with a hue-bordered outline rather than the library's card.
+5. **`agents-1440-light.png` — two red alert bands, one above the other.** The shell's "Needs you
+   now" with its icon and heading, then the page's "2 exceptions" directly under the title with
+   neither. Both earn an alert by §2, but the second reads as a weaker copy of the first, and the
+   page opens on two blocks of red before any content.
+
+Two lesser ones worth the note: **`deals-table-400-light.png`**, where the summary band is cut
+mid-word ("Clos… €34") with no affordance; and **`home-1440-light.png`**, where the status badges
+still sit in a band of their own between the Alert and the title — the round-13 item, unchanged.
+
+## The chains
+
+| Chain | Chain card | Disclosure card |
+|---|---|---|
+| 1 · Sequence › person | **18**/18 | **17**/18 |
+| 3 · Company › person | **18**/18 | **17**/18 |
+| 7 · Inbox, Tasks, Home | **18**/18 | **17**/18 |
+
+Walkers read 1 of 34, 1 of 24, 1 of 4 and 14 → 13; the pane action lands on the row with its Undo;
+arrival focuses the lit `h1`; the crumb returns to the lit row; consoles silent. The standing
+A-failure is unchanged: at 400 the contact record's header collapses and "Move sequence" and
+"Add a note" become two filled controls on one surface.
+
+---
+
+# Round 14 — the layout system (superseded)
 
 I read `LAYOUTS.md` and `src/ollopa/layouts/README.md`, then ran **`npm run see`** rather than my own
 driver: 64 scenes, **301 images**, 0 failed, written to `shots/see/` with `index.html` and
