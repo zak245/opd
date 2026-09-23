@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "./QuickLook"
 import { Separator } from "@/components/ui/separator"
+import { MetaLine } from "../layouts/MetaLine"
 
 export interface Column<T> {
   key: string
@@ -178,14 +179,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
                     {c.status ? <Chip status={c.status(r)} /> : c.cell(r)}
                     {/* What did not fit reads under the row's own name, never off the right edge. */}
                     {i === 0 && fit.folded.length > 0 && (
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
-                        {fit.folded.map((f) => (
-                          <span key={f.key} className="inline-flex items-center gap-1">
-                            <span className="opacity-70">{f.header}</span>
-                            {f.status ? <Chip status={f.status(r)} /> : f.cell(r)}
-                          </span>
-                        ))}
-                      </div>
+                      <MetaLine values={fit.folded.map((f) => ({ key: f.key, label: f.header, value: f.status ? <Chip status={f.status(r)} /> : f.cell(r) }))} />
                     )}
                   </TableCell>
                 ))}

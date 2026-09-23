@@ -273,7 +273,7 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                 <p className="t-body px-4 pb-3 text-muted-foreground">No errors held.</p>
               ) : (
                 <div className="grid">
-                  <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-[14rem_14rem_1fr]">
+                  <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,14rem)_1fr]">
                     <Picker label="When" value={windowPick} options={WINDOWS} onChange={setWindowPick} />
                     <Picker label="Object" value={objectPick} options={objectNames} onChange={setObjectPick} />
                     <div className="flex items-end">

@@ -29,6 +29,7 @@ interface Column { key: string; header: string; className?: string; cell: (r: Re
 import { businessDaysBetween, day, money, plural } from "./format"
 import { toast } from "./state"
 import { useFitColumns } from "../../layouts/columns"
+import { MetaLine } from "../../layouts/MetaLine"
 
 export const STATE_LABEL: Record<Request["state"], string> = {
   captured: "Needs a decision",
@@ -250,14 +251,7 @@ export function RequestsPage({ session }: { session: Session }) {
                       {c.cell(r)}
                       {/* What did not fit reads here, under the row's own name. */}
                       {i === 0 && fit.folded.length > 0 && (
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
-                          {fit.folded.map((f) => (
-                            <span key={f.key} className="inline-flex items-center gap-1">
-                              <span className="opacity-70">{f.header}</span>
-                              {f.cell(r)}
-                            </span>
-                          ))}
-                        </div>
+                        <MetaLine values={fit.folded.map((f) => ({ key: f.key, label: f.header, value: f.cell(r) }))} />
                       )}
                     </TableCell>
                   ))}

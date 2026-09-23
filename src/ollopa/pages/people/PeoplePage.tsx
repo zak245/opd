@@ -50,6 +50,7 @@ import { FilterChip, FiltersPanelBody } from "./parts"
 import { EnrichPanel } from "./EnrichPanel"
 import { BulkSelection, CreditsDialog, ParodyColumns, ParodySelection, ParodySidebar, ParodyTabs, ParodyViewsDoor } from "./parody"
 import { useFitColumns } from "../../layouts/columns"
+import { MetaLine } from "../../layouts/MetaLine"
 
 /* -------------------------------------------------------------------------------- what persists */
 
@@ -1062,14 +1063,7 @@ export function PeoplePage({ session }: { session: Session }) {
                 {/* A column that does not fit at this width is read here, under the row's own name
                     — the same place the 400 list puts it, never cut off the right edge. */}
                 {c.key === "name" && folded.length > 0 && (
-                  <div className="flex min-w-0 flex-wrap break-words items-center gap-x-3 gap-y-0.5 pt-0.5 t-small text-muted-foreground">
-                    {folded.map((f) => (
-                      <span key={f.id} className="inline-flex items-center gap-1">
-                        <span className="opacity-70">{f.header}</span>
-                        {f.cell(p)}
-                      </span>
-                    ))}
-                  </div>
+                  <MetaLine values={folded.map((f) => ({ key: f.id, label: f.header, value: f.cell(p) }))} />
                 )}
               </TableCell>
             ))}

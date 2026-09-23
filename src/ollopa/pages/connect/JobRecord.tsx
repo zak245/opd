@@ -13,7 +13,7 @@ import { businessById } from "../../data/businesses"
 import { CREDITS, TODAY, seedFor, type EnrichmentJob } from "../../data/seed"
 import type { Session } from "../../session"
 import { day } from "../deal/format"
-import { Consequence, n, pct } from "./bits"
+import { n, pct } from "./bits"
 import { useDraft } from "./drafts"
 
 const SOURCE_WORDS: Record<EnrichmentJob["source"], string> = {
@@ -85,6 +85,7 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
           { key: "matched", label: "Matched", value: `${n(job.matched)} · ${pct(job.rows ? job.matched / job.rows : 0)}` },
           { key: "credits", label: "Credits", value: n(job.credits) },
           { key: "cph", label: "Cost per hit", value: hits ? `${n(costPerHit)} credits` : "—" },
+          { key: "charged", label: "Charged", value: `${n(chargedRows)} rows · ${n(freeRows)} free` },
         ]}
         actions={{
           primary: [{ label: "Export the job report", onClick: () => toast(`Exported ${job.byField.length} field rows and ${n(job.rows)} row records as CSV`) }],
@@ -114,18 +115,6 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                   ]}
                   empty="No field was asked for."
                 />
-              ),
-            },
-            {
-              id: "charging",
-              title: "What was charged and what was not",
-              children: (
-                <div className="grid gap-2 t-body">
-                  <p>{n(chargedRows)} rows were charged. {n(freeRows)} returned nothing and were free.</p>
-                  <p className="text-muted-foreground">
-                    {job.charging.note || "Only matched rows are charged. A mobile that returned for a do-not-call number was charged and cannot be called. Nothing here is refunded."}
-                  </p>
-                </div>
               ),
             },
             ...(unmatchedCount > 0
@@ -224,20 +213,19 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
         }}
         side={[
           {
-            id: "where-from",
-            title: "Where this job came from",
+            id: "credits", title: "Credits",
             children: (
-              <div className="grid gap-2 t-body">
-                <p>{SOURCE_WORDS[job.source]}{job.keyId ? ` · ${seed.apiKeys.find((k) => k.id === job.keyId)?.name ?? job.keyId}` : ""}</p>
-                {job.keyId && <a className="t-small underline" href={href("/ollopa/developer/api")}>The key that ran it</a>}
-                <p className="t-small text-muted-foreground">Balance now {n(seed.credits.balance)} · cap {n(seed.credits.monthlyCap)} a month at {b.name}.</p>
-              </div>
+              <dl className="grid grid-cols-[minmax(6rem,auto)_minmax(0,1fr)] gap-x-3 gap-y-1 t-body">
+                <dt className="text-muted-foreground">Balance now</dt><dd className="tabular-nums">{n(seed.credits.balance)}</dd>
+                <dt className="text-muted-foreground">Cap a month</dt><dd className="tabular-nums">{n(seed.credits.monthlyCap)}</dd>
+                {job.keyId && (
+                  <>
+                    <dt className="text-muted-foreground">Ran by</dt>
+                    <dd><a className="underline" href={href("/ollopa/developer/api")}>{seed.apiKeys.find((k) => k.id === job.keyId)?.name ?? job.keyId}</a></dd>
+                  </>
+                )}
+              </dl>
             ),
-          },
-          {
-            id: "fee",
-            title: "The fee, in one line",
-            children: <Consequence tone="plain">A row that returned nothing was not charged. A charge for a number that cannot be called is not refunded.</Consequence>,
           },
         ]}
         doors={[{

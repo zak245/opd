@@ -7,6 +7,8 @@ export type { PageHeaderProps, ToolbarControl, SummaryFigure, SectionProps } fro
 
 // Which columns a table draws at this width (LAYOUTS.md §5, §6)
 export { useColumnFit, useFitColumns, useBand } from "./columns"
+export { MetaLine } from "./MetaLine"
+export type { MetaValue } from "./MetaLine"
 export type { ColumnPriority, Band } from "./columns"
 
 // The filter on a section inside a record: tabs above `md`, one Select below it

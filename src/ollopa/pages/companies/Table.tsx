@@ -23,6 +23,7 @@ import { IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 import { useFitColumns, type ColumnPriority } from "../../layouts/columns"
+import { MetaLine } from "../../layouts/MetaLine"
 
 /* ------------------------------------------------------------------------------------- the parts */
 
@@ -419,14 +420,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                         {/* A column that does not fit at this width is read here instead, under the
                             row's own name — never cut off the right-hand edge. */}
                         {i === 0 && folded.length > 0 && (
-                          <div className="hidden min-w-0 flex-wrap break-words items-center gap-x-3 gap-y-0.5 pt-0.5 t-small text-muted-foreground md:flex">
-                            {folded.map((f) => (
-                              <span key={f.id} className="inline-flex items-center gap-1">
-                                <span className="opacity-70">{f.header}</span>
-                                {f.cell(r)}
-                              </span>
-                            ))}
-                          </div>
+                          <MetaLine values={folded.map((f) => ({ key: f.id, label: f.header, value: f.cell(r) }))} />
                         )}
                       </TableCell>
                     ))}

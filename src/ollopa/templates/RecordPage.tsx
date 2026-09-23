@@ -561,6 +561,9 @@ export function RecordPage(p: RecordPageProps) {
 
             <div className="ml-auto hidden flex-wrap items-center gap-2 lg:flex" data-print-hide>
               {p.headerActions ?? <Actions actions={p.actions} confirming={confirming} setConfirming={setConfirming} />}
+              {/* Opening everything is a control over the whole record, so it sits on the record's
+                  own header line — the same place on every record, and never in a card of its own. */}
+              {doors.length > 0 && <ExpandAll />}
             </div>
           </div>
 
@@ -641,15 +644,11 @@ export function RecordPage(p: RecordPageProps) {
           </SideRail>
 
           <div className={cn("order-3", railed && "xl:order-none xl:col-start-2 xl:row-start-2")}>
+            {/* A card with no door in it is an empty region at rest (LAYOUTS.md §6), so there is
+                no card unless there is something to open. "Expand all" lives on the record's own
+                header line, where the contact record already has it. */}
             {doors.length > 0 && (
-              // The doors are a section of the record like any other, so they are a Card: the
-              // "expand all" control is the card's own action, the doors are its content. This cell
-              // is a sibling of the side cards, not a child of one, so nothing nests.
               <Card className="gap-0 py-2">
-                <CardHeader className="items-center px-2 [.border-b]:pb-2">
-                  <CardTitle className="sr-only">More about this record</CardTitle>
-                  <CardAction className="self-center"><ExpandAll /></CardAction>
-                </CardHeader>
                 <CardContent className="px-2">
                   {doors.map((d) => (
                     d.container === "drawer"

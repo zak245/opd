@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table"
 import { usePhone } from "./parts"
 import { useFitColumns } from "./columns"
+import { MetaLine } from "./MetaLine"
 
 export interface RowsColumn<T> {
   key: string
@@ -97,14 +98,7 @@ export function RowsTable<T>({ columns, rows, rowKey, rowProps, empty, className
                 <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", c.className)}>
                   {c.cell(r)}
                   {i === 0 && fit.folded.length > 0 && (
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
-                      {fit.folded.map((f) => (
-                        <span key={f.key} className="inline-flex items-center gap-1">
-                          <span className="opacity-70">{f.header}</span>
-                          {f.cell(r)}
-                        </span>
-                      ))}
-                    </div>
+                    <MetaLine values={fit.folded.map((f) => ({ key: f.key, label: f.header, value: f.cell(r) }))} />
                   )}
                 </TableCell>
               ))}

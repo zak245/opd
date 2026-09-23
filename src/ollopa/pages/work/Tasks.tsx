@@ -27,6 +27,7 @@ import { Chip } from "../../ui/Identity"
 import { PageHeader, QueuePage } from "../../layouts"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
+import { useDeclareAlerts } from "../../shell/banner"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -149,6 +150,16 @@ export function Tasks({ session }: { session: Session }) {
     later: openRows.filter((t) => !isToday(t.due) && !isOverdue(t.due)).length,
     tomorrow: openRows.filter((t) => t.due === tomorrow()).length,
   }
+
+  // A contact stuck at a step needs a decision, not a line under the title: it goes in the page's
+  // one Alert with the act that opens them (LAYOUTS.md §2).
+  const stuck = openRows.filter((t) => !!t.sequence && isOverdue(t.due)).length
+  useDeclareAlerts(stuck > 0 ? [{
+    id: "tasks.stuck",
+    text: `${stuck} sequence ${stuck === 1 ? "contact is" : "contacts are"} stuck waiting at a step.`,
+    danger: true,
+    acts: [{ label: "Show them", onClick: () => { setMode("list"); setFilters((f) => ({ ...f, due: "Overdue" })) } }],
+  }] : [])
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -524,13 +535,7 @@ export function Tasks({ session }: { session: Session }) {
           <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "All open" })) }}>{counts.later} later</button>
         </span>
         {!teamView && admin && (
-          <span className="t-small block pt-0.5">Your tasks. {admin.user} ({admin.title}) can see and reassign everyone's.</span>
-        )}
-        {counts.overdue > 0 && (
-          // A line with its word, in the danger ink, rather than a sentence painted red.
-          <span className="t-small block pt-0.5" style={{ color: "var(--danger-ink)" }}>
-            {counts.overdue} sequence {counts.overdue === 1 ? "contact is" : "contacts are"} stuck waiting at a step.
-          </span>
+          <span className="t-small block pt-0.5">Your tasks. {admin.user} can see and reassign everyone's.</span>
         )}
         {import.meta.env.DEV && (
           <span data-renders="tasks" className="mt-1 inline-block rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums">
@@ -665,39 +670,34 @@ export function Tasks({ session }: { session: Session }) {
               <span className="ml-auto t-small tabular-nums text-muted-foreground">{rows.length} shown</span>
             </div>
 
-            <div className="flex flex-wrap gap-4 pt-1">
-              {behind.length > 0 && (
-                <div className="min-w-64 flex-1">
-                  <Door id="tasks.filters" label={`Additional filters: ${behind.map((f) => f.label.toLowerCase()).join(", ")}`} count={activeBehind || undefined}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {behind.map((f) => <FilterSelect key={f.key} f={f} />)}
-                      {teamView && d.level("tasks.filter-owner") !== 1 && (
-                        <Select value={owner} onValueChange={setOwner}>
-                          <SelectTrigger className="h-8 w-44 text-xs" aria-label="Owner"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Everyone">Everyone</SelectItem>
-                            {seatsOf(session.business).filter((x) => x.role !== "marketer").map((x) => (
-                              <SelectItem key={x.user} value={x.user}>{x.user === session.user ? `${x.user} (me)` : x.user}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                  </Door>
-                </div>
-              )}
-              <div className="min-w-64 flex-1">
-                <Door id="tasks.options" label="Table options: columns, export">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-2 t-body">
-                      <Checkbox checked={showOwnerColumn} disabled={!teamView} onCheckedChange={() => setOwner((o) => (o === "Everyone" ? session.user : "Everyone"))} />
-                      Owner column
-                    </label>
-                    <Actions surface="card" items={[{ kind: "secondary", label: "Export CSV", onClick: () => say(`${rows.length} tasks exported as CSV.`) }]} />
-                  </div>
-                </Door>
+            {/* One door, labelled by what is inside it (LAYOUTS.md §2): the filters this seat does
+                not use weekly, and what the table itself carries. Two doors stacked under a toolbar
+                are two doors. */}
+            <Door
+              id="tasks.filters"
+              label={`Filters and options: ${[...behind.map((f) => f.label.toLowerCase()), ...(teamView && d.level("tasks.filter-owner") !== 1 ? ["owner"] : []), "columns", "export"].join(", ")}`}
+              count={activeBehind || undefined}
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                {behind.map((f) => <FilterSelect key={f.key} f={f} />)}
+                {teamView && d.level("tasks.filter-owner") !== 1 && (
+                  <Select value={owner} onValueChange={setOwner}>
+                    <SelectTrigger className="h-8 w-44 text-xs" aria-label="Owner"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Everyone">Everyone</SelectItem>
+                      {seatsOf(session.business).filter((x) => x.role !== "marketer").map((x) => (
+                        <SelectItem key={x.user} value={x.user}>{x.user === session.user ? `${x.user} (me)` : x.user}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <label className="flex items-center gap-2 t-body">
+                  <Checkbox checked={showOwnerColumn} disabled={!teamView} onCheckedChange={() => setOwner((o) => (o === "Everyone" ? session.user : "Everyone"))} />
+                  Owner column
+                </label>
+                <Actions surface="card" items={[{ kind: "secondary", label: "Export CSV", onClick: () => say(`${rows.length} tasks exported as CSV.`) }]} />
               </div>
-            </div>
+            </Door>
             </div>
             )}
             footer={selection.length > 0 ? (

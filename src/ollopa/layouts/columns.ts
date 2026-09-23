@@ -125,7 +125,18 @@ export function useFitColumns<T>(columns: T[], opts?: {
   useLayoutEffect(() => {
     const box = ref.current
     if (!box) return
+    // A table is asked to shrink before anything is taken out of it: the actions column takes its
+    // content and never the slack, and a text column truncates rather than holding a column open.
+    // Only when the table at those minimums is still wider than the box does a column fold.
+    const shrink = () => {
+      const table = box.querySelector("table")
+      if (!table) return
+      table.style.tableLayout = "auto"
+      table.style.width = "100%"
+    }
+
     const check = () => {
+      shrink()
       // shadcn's Table brings its own `overflow-x-auto` container, so the box around it never
       // overflows — the scroller inside it does, and that is the thing to measure and to kill.
       const inner = box.querySelector<HTMLElement>('[data-slot="table-container"]')
@@ -136,10 +147,10 @@ export function useFitColumns<T>(columns: T[], opts?: {
       if (needs - room > 1) {
         setDropped((d) => (d < order.length ? d + 1 : d))
         if (dropped >= order.length) setTight(true)
-      } else if (dropped > 0 && room - needs > 96) {
+      } else if (dropped > 0 && room - needs > 200) {
         setTight(false)
-        // Room to spare: put one back. The gap is wide enough that a column coming back cannot
-        // immediately push the table over again, so this cannot oscillate.
+        // Room to spare: put one back. The gap has to be wider than a column, or the one that
+        // comes back pushes the table over and the pair flip for ever.
         setDropped((d) => Math.max(0, d - 1))
       }
     }

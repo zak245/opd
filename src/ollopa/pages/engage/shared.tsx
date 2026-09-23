@@ -25,6 +25,7 @@ import { navItem } from "../../nav"
 import type { Page } from "../../usage/model"
 import { TODAY } from "../../data/seed"
 import { useFitColumns } from "../../layouts/columns"
+import { MetaLine } from "../../layouts/MetaLine"
 
 export { toast } from "../../templates/TablePage"
 
@@ -327,30 +328,27 @@ export function DataTable<T>(p: DataTableProps<T>) {
                       {c.cell(row)}
                       {/* What did not fit the box reads here, under the row's own name. */}
                       {i === 0 && fit.folded.length > 0 && (
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
-                          {fit.folded.map((f) => (
-                            <span key={f.key} className="inline-flex items-center gap-1">
-                              <span className="opacity-70">{f.header}</span>
-                              {f.cell(row)}
-                            </span>
-                          ))}
-                        </div>
+                        <MetaLine values={fit.folded.map((f) => ({ key: f.key, label: f.header, value: f.cell(row) }))} />
                       )}
                     </TableCell>
                   ))}
-                  <TableCell className="sticky right-0 bg-inherit py-1 pr-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      {(p.rowActions ?? []).map((a, i) => (
-                        <Button
-                          key={i}
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-                          onClick={() => a.onClick(row)}
-                        >
-                          {a.label(row)}
-                        </Button>
-                      ))}
+                  {/* The named acts are laid over the row rather than in it, so a seat with four
+                      of them does not hold a 285 px column open and push real columns out. */}
+                  <TableCell style={{ width: 1 }} className="sticky right-0 bg-inherit py-1 pr-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative flex items-center justify-end gap-1">
+                      <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 bg-inherit opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
+                        {(p.rowActions ?? []).map((a, i) => (
+                          <Button
+                            key={i}
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 whitespace-nowrap"
+                            onClick={() => a.onClick(row)}
+                          >
+                            {a.label(row)}
+                          </Button>
+                        ))}
+                      </div>
                       <RowMenu row={row} p={p} />
                     </div>
                   </TableCell>

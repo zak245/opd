@@ -46,6 +46,7 @@ import { ago, day, daysBetween, money } from "../deal/format"
 import { DealCard, chipText, type CardFlags } from "./DealCard"
 import { coverageFor } from "../reports/coverage"
 import { useFitColumns, type ColumnPriority } from "../../layouts/columns"
+import { MetaLine } from "../../layouts/MetaLine"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
   WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText, warningStatus,
@@ -729,14 +730,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
                 {cellFor(c, r)}
                 {/* A column that does not fit at this width is read here, under the deal's name. */}
                 {i === 0 && foldedColumns.length > 0 && (
-                  <div className="flex min-w-0 flex-wrap break-words items-center gap-x-3 gap-y-0.5 pt-0.5 t-small font-normal text-muted-foreground">
-                    {foldedColumns.map((f) => (
-                      <span key={f.key} className="inline-flex items-center gap-1">
-                        <span className="opacity-70">{f.header}</span>
-                        {cellFor(f, r)}
-                      </span>
-                    ))}
-                  </div>
+                  <MetaLine values={foldedColumns.map((f) => ({ key: f.key, label: f.header, value: cellFor(f, r) }))} />
                 )}
               </TableCell>
             ))}

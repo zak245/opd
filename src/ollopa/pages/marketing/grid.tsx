@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Actions, type Action } from "../../ui/Actions"
 import { usePref } from "./prefs"
 import { useFitColumns } from "../../layouts/columns"
+import { MetaLine } from "../../layouts/MetaLine"
 
 export interface GridColumn<T> {
   key: string
@@ -175,23 +176,18 @@ export function useGrid<T>(p: GridProps<T>): GridBodies {
                   {c.cell(row)}
                   {/* What did not fit reads here, under the row's own name. */}
                   {i === 0 && fit.folded.length > 0 && (
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
-                      {fit.folded.map((f) => (
-                        <span key={f.key} className="inline-flex items-center gap-1">
-                          <span className="opacity-70">{f.header}</span>
-                          {f.cell(row)}
-                        </span>
-                      ))}
-                    </div>
+                    <MetaLine values={fit.folded.map((f) => ({ key: f.key, label: f.header, value: f.cell(row) }))} />
                   )}
                 </TableCell>
               ))}
-              <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-end gap-1">
+              {/* The named acts are laid over the row rather than in it, so they cannot hold a
+                  column open and push real columns out. */}
+              <TableCell style={{ width: 1 }} className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
+                <div className="relative flex items-center justify-end gap-1">
                   {/* The row's own acts, repeated in the menu beside them: nothing is hover-only,
                       so they appear on hover and on focus and are reachable either way. */}
                   {(p.actions?.(row) ?? []).length > 0 && (
-                    <div className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100">
+                    <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 bg-inherit opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 focus-within:opacity-100 md:flex">
                       <Actions
                         surface="card"
                         items={(p.actions?.(row) ?? []).map((a): Action => ({ kind: "secondary", label: a.label, onClick: () => a.onClick(row) }))}
