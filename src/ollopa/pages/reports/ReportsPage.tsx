@@ -23,7 +23,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor, TODAY, type Deal } from "../../data/seed"
 import { Panel } from "../../ui/Panel"
 import { Actions } from "../../ui/Actions"
-import { PageHeader, PageScroll, Section, SummaryStrip } from "../../layouts"
+import { PageHeader, PageScroll, Section, SectionFilter, SummaryStrip } from "../../layouts"
 import { Locked } from "../../ui/Locked"
 import { gate } from "../../ui/gate"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -39,7 +39,7 @@ import {
   previousOf, rangeFor, scopeChip, sequencesReport, sortByCategoryThenRisk, weeksOf,
   type ActivityRow, type CampaignRow, type PipelineRow, type RangeKey, type Scope, type SequenceRow, type Tile,
 } from "./compute"
-import { count as fmtCount, day, money, weekStart } from "./format"
+import { count as fmtCount, day, money, moneyShort, weekStart } from "./format"
 
 /** The freshness line, per seed. A stale number acted on is a wrong decision. */
 const DATA_AS_OF = "Data as of 13 Sep 2026, 08:00 · refreshes hourly"
@@ -305,50 +305,45 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
 
   const chip = scopeChip(scope)
 
-  /** The reports this seat reads most weeks, plus the one open now, in the tabs' own order. */
-  const strip = tabs.filter((t) => one(t.item) || t.key === report)
+  /** The reports this seat reads most weeks, other than the one whose numbers are already below. */
+  const others = tabs.filter((t) => one(t.item) && t.key !== report)
 
   const tilesFor = (key: ReportKey): Tile[] =>
     key === "activity" ? activity.tiles
       : key === "pipeline" ? pipeline.tiles
         : key === "sequences" ? sequences.tiles
           : key === "campaigns" ? campaigns.tiles
-            : forecast.categories.filter((c) => c.counted || c.name === "Best case").map((c) => ({ id: c.name, label: c.name, value: money(c.amount, forecast.currency), under: `${c.count} deals` }))
+            : forecast.categories.filter((c) => c.counted || c.name === "Best case").map((c) => ({ id: c.name, label: c.name, value: moneyShort(c.amount, forecast.currency), under: `${c.count} deals` }))
 
   /* ------------------------------------------------------------------------------------ render */
 
   return (
     <PageScroll>
-      <PageHeader family="reports" title="Reports" description={chip ? `Applied: ${chip} · ${range.label}` : undefined} />
+      {/* Export and Print are acts on the page, not filters, so they sit in the header and the
+          Actions primitive decides how many stay in front (DESIGN.md §1). */}
+      <PageHeader
+        family="reports"
+        title="Reports"
+        description={chip ? `Applied: ${chip} · ${range.label}` : undefined}
+        actions={[
+          { kind: "secondary", label: "Export", onClick: openExport, keys: "e" },
+          { kind: "secondary", label: "Print", onClick: () => { window.print(); toast("Sent to the printer with every door open and the filters as a caption.") }, keys: "p" },
+        ]}
+      />
 
         {/* The control bar. The fee statement sits on it beside Export, not inside the menu that
             confirms the decision: a charge disclosed only in the control that confirms it is the
             FTC's named mechanism, and a fee is decision-critical whether or not you have decided. */}
         <div className="space-y-3">
-          <div role="tablist" aria-label="Reports" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
-            {tabs.map((t) => {
-              const locked = lockedTab(t.key)
-              const button = (
-                <Button
-                  key={t.key}
-                  role="tab"
-                  variant={report === t.key ? "default" : "ghost"}
-                  size="sm"
-                  aria-selected={report === t.key}
-                  aria-keyshortcuts={t.key1to5}
-                  onClick={() => setReport(t.key)}
-                  className="whitespace-nowrap"
-                >
-                  {t.label}
-                </Button>
-              )
-              return locked ? (
-                <Locked key={t.key} feature={`The ${t.label} report`} plan={all.plan} pricePerMonth={all.pricePerMonth} what={all.what}>
-                  {button}
-                </Locked>
-              ) : button
-            })}
-          </div>
+          {/* Which report. A strip where there is room, one Select on a phone — five report names
+              never fit across 400 px, and §5 says a thing is shaped differently, never clipped.
+              A report this plan does not carry names the plan that does (DESIGN.md §1). */}
+          <SectionFilter
+            label="Reports"
+            options={tabs.map((t) => ({ key: t.key, label: lockedTab(t.key) ? `${t.label} · ${all.plan}` : t.label }))}
+            value={report}
+            onChange={(k) => setReport(k as ReportKey)}
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Range, with compare and the custom range inside it: compare depends on the range. */}
@@ -468,42 +463,29 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
               </label>
             )}
 
-            {/* Two comparable acts, neither of which spends or changes anything: both outlined,
-                and neither carries a line (DESIGN.md §1 and §3). */}
-            <Actions surface="card" items={[
-              { kind: "secondary", label: "Export", onClick: openExport, keys: "e" },
-              { kind: "secondary", label: "Print", onClick: () => { window.print(); toast("Sent to the printer with every door open and the filters as a caption.") }, keys: "p" },
-            ]} />
-            <span className="ml-auto t-small text-muted-foreground">{DATA_AS_OF}</span>
           </div>
 
-          {chip && <p className="t-small text-muted-foreground">Applied: {chip} · {range.label}</p>}
+          {/* A caption about the data, not a control, so it is never part of the control row — which
+              keeps that row to its two controls at 400. What is applied is on the header's own line. */}
+          <p className="t-small text-muted-foreground sm:text-right">{DATA_AS_OF}</p>
         </div>
 
-        {/* The overview strip: the tile row of every report this seat reads weekly, plus the one open
-            now. The overview is the content, so it is never behind a tab or a Run button — what is
-            disclosed is the record-level detail behind the numbers, never the numbers. */}
-        {one("rep.overview") && strip.length > 1 && (
+        {/* The overview strip: the headline number of every other report this seat reads weekly, each
+            a door into it. The report that is open is not here — its numbers, with their deltas, are in
+            the card directly below, and a number is drawn once. */}
+        {one("rep.overview") && others.length > 0 && (
           <div data-print-hide>
-            <SummaryStrip figures={strip.map((t) => {
+            <SummaryStrip figures={others.map((t) => {
               const locked = lockedTab(t.key)
               const first = tilesFor(t.key)[0]
               return {
                 label: locked ? `${t.label} · ${all.plan}` : t.label,
-                value: locked && !first?.alwaysPrints ? "—" : first?.value ?? "—",
-                note: (
-                  <span className="flex flex-wrap items-baseline gap-x-2">
-                    <span>{first?.label}</span>
-                    {tilesFor(t.key).slice(1, 4).map((tile) => (
-                      <span key={tile.id}>
-                        · {tile.label} <span className="font-medium tabular-nums text-foreground">{locked && !tile.alwaysPrints ? "—" : tile.value}</span>
-                      </span>
-                    ))}
-                    {report === t.key
-                      ? <span>· open</span>
-                      : <span>· <button type="button" className="underline" onClick={() => setReport(t.key)}>Open the {t.label} report</button></span>}
-                  </span>
+                value: (
+                  <button type="button" className="underline-offset-4 hover:underline" onClick={() => setReport(t.key)}>
+                    {locked && !first?.alwaysPrints ? "—" : first?.value ?? "—"}
+                  </button>
                 ),
+                note: first?.label,
               }
             })} />
           </div>

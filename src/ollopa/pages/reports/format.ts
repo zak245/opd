@@ -21,12 +21,21 @@ export function money(amount: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount)
 }
 
-/** A tile value: $412K rather than $412,000 once it stops fitting. Full precision stays in the table. */
+const SYMBOL: Record<string, string> = { USD: "$", EUR: "€", GBP: "£" }
+
+/**
+ * A summary figure: "€2.4m" rather than "€2,409,600" once it stops fitting. Full precision stays in
+ * the report and its table. The spelling is the one the Deals board strip uses, so a sum reads the
+ * same wherever the product prints one.
+ */
 export function moneyShort(amount: number, currency = "USD"): string {
-  const abs = Math.abs(amount)
-  if (abs >= 1_000_000) return money(Math.round(amount / 100_000) / 10, currency).replace(/(\.\d)?$/, "") + "M"
-  if (abs >= 10_000) return money(Math.round(amount / 1_000), currency) + "K"
-  return money(amount, currency)
+  const sym = SYMBOL[currency] ?? `${currency} `
+  const a = Math.abs(Math.round(amount))
+  const body =
+    a >= 1_000_000 ? `${(a / 1_000_000).toFixed(a >= 10_000_000 ? 0 : 1)}m`
+      : a >= 1_000 ? `${Math.round(a / 1_000)}k`
+        : `${a}`
+  return `${amount < 0 ? "-" : ""}${sym}${body}`
 }
 
 export function count(n: number): string {

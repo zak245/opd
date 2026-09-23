@@ -10,10 +10,11 @@
 // forecast. Delete is not on the card; it is on the record, where its consequence is visible without
 // a click, and in the bulk bar, where it names what goes.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, SlidersHorizontal } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -27,7 +28,7 @@ import { follow } from "../../chain"
 import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { Container, Group } from "../../ui/Section"
+import { Group } from "../../ui/Section"
 import { BoardPage, IndexPage, PageHeader, SummaryStrip, type BoardStage, type PageHeaderProps, type ToolbarControl } from "../../layouts"
 import { Divider } from "../../ui/Divider"
 import { inkOf } from "../../ui/Identity"
@@ -211,7 +212,19 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const [pipelineName, setPipelineName] = usePersisted(`${b.id}.${session.role}.pipeline`, pipelineDefault)
   const [density, setDensity] = usePersisted<"comfortable" | "compact">(`${b.id}.${session.role}.density`, "comfortable")
   const [order, setOrder] = usePersisted<Order>(`${b.id}.${session.role}.order`, "close")
-  const [columns, setColumns] = usePersisted<string[]>(`${b.id}.${session.role}.columns`, DEFAULT_COLUMNS)
+  // No choice made yet is `null`, not a copy of the default set: the default can then follow the
+  // scope, and a person who has picked their own columns keeps them whatever the scope.
+  const [columnChoice, setColumns] = usePersisted<string[] | null>(`${b.id}.${session.role}.columns`, null)
+  // An index is one full-width column and is never clipped (LAYOUTS.md §5 and §6), so the default
+  // set has to fit the 1,134 px a table gets at 1440. Four columns came out, each because another
+  // column already says it: Owner on "Mine" prints the same name on every row (it stays on "My
+  // team" and "All", where it tells the rows apart); Forecast is counted by the band above the
+  // table; the last touch and the days in stage are what the Warnings column names when they
+  // matter. Every one of them is in the picker at every scope.
+  const OUT_OF_DEFAULT = ["forecast", "touch", "days"]
+  const columns = columnChoice ?? DEFAULT_COLUMNS.filter(
+    (k) => !OUT_OF_DEFAULT.includes(k) && !(scope === "mine" && k === "owner"),
+  )
   const [filters, setFilters] = usePersisted<Filters>(`${b.id}.${session.role}.filters`, NO_FILTERS)
   const [railOpen, setRailOpen] = useDoorState("deals.closed-won")
 
@@ -634,10 +647,6 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const anyFilter = filtersOn(filters) > 0 || q.trim().length > 0
   const clearAll = () => { setFilters(NO_FILTERS); setQ("") }
 
-  const filterDoorLabel =
-    "Filters: warnings, no next step, owner, forecast category, amount, company, created, archived and its reason, custom fields" +
-    (filtersOn(filters) ? ` · ${filtersOn(filters)} filter${filtersOn(filters) === 1 ? "" : "s"} on` : "")
-
   /* ---------------------------------------------------------------------------------- the table */
 
   const visibleColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
@@ -667,11 +676,19 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     c.key === "stage"
       ? <Chip status={r.stage} />
       : c.key === "warnings"
-        ? (warningsOf(r, seed).length === 0
-            ? <span className="text-muted-foreground">—</span>
-            : <span className="flex flex-wrap gap-1">
-                {warningsOf(r, seed).map((w) => <Chip key={w.kind} status={warningStatus(w.kind)}>{chipText(w)}</Chip>)}
-              </span>)
+        ? (() => {
+            // One line, like the open risks on Accounts: the count and the worst one named, so a
+            // row is the same height as every other row and the column fits the table. The card on
+            // the board and the quick look still carry every warning in full.
+            const ws = warningsOf(r, seed)
+            if (ws.length === 0) return <span className="text-muted-foreground">—</span>
+            const worst = ws.find((w) => warningStatus(w.kind) === "blocked") ?? ws[0]
+            return (
+              <Chip status={warningStatus(worst.kind)}>
+                {ws.length > 1 ? `${ws.length} · ${worst.kind}` : chipText(worst)}
+              </Chip>
+            )
+          })()
         : c.cell(r, { currency })
 
   const tableBody = (
@@ -760,6 +777,15 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       ? undefined
       : [{ label: "New deal", kind: "primary", onClick: () => setNewPanel(true) }],
     more: [
+      // The view switch has a second route that no width can take away (LAYOUTS.md §5): the
+      // toolbar carries the Board/Table switch, and the "…" carries the same move in words.
+      ...(used("deals.view.toggle")
+        ? [{
+            label: view === "board" ? "Show the deals as a table" : "Show the deals as a board",
+            kind: "secondary" as const,
+            onClick: () => setView(view === "board" ? "table" : "board"),
+          }]
+        : []),
       { label: "Export this view as CSV", kind: "secondary", onClick: () => exportCsv(sorted, visibleColumns, currency) },
       { label: "Import deals from CSV", kind: "secondary", onClick: () => setImportOpen(true) },
       { label: "Print the board", kind: "secondary", onClick: () => window.print() },
@@ -771,24 +797,25 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     ],
   }
 
+  // The numbers this board is judged by: one band on the page's own surface, never a box
+  // (LAYOUTS.md §2). The seats that only glance at the forecast get the same band behind a door.
+  const stripBlock = one("deals.forecast.strip")
+    ? strip
+    : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>
+
   /**
-   * Everything between the page header and the stages: the pipeline, scope and period controls, the
-   * search, the two counting chips, the filters behind their door and the forecast strip. It is the
-   * template's `above`, so the board and the table put it in the same place.
+   * One door in the card's toolbar, and nothing above the card but the summary band.
+   *
+   * The board and the table used to stack two doors: the page's own "Filters: warnings, no next
+   * step, …" bar above the card, and the toolbar's overflow door inside it. LAYOUTS.md §2 wants one
+   * door, inside the toolbar, labelled by what it holds. So everything that is not the search and
+   * the view switch is a group in the list below, the door prints the group count, and the page
+   * puts no filters above the card.
    */
-  /**
-   * The controls, written once. The board lays them along its own row above the stages; the table
-   * hands the same list to `IndexPage`, which puts them in the card's header and sends the sixth
-   * and beyond behind one door it labels itself (LAYOUTS.md §2). One definition, two placements, so
-   * switching view never changes what a person can filter by.
-   */
-  const toolbarControls: ToolbarControl[] = [
-    { name: "Search", always: true, node: (
-      <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44" />
-    ) },
+  const doorGroups: { name: string; node: ReactNode }[] = [
     ...(pipelines.length > 1 ? [{ name: "Pipeline", node: (
       <Select value={pipelineName} onValueChange={setPipelineName}>
-        <SelectTrigger className="h-8 w-48" aria-label="Pipeline"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-8 w-full" aria-label="Pipeline"><SelectValue /></SelectTrigger>
         <SelectContent>{pipelines.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
       </Select>
     ) }] : []),
@@ -798,13 +825,13 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     ) }] : []),
     { name: "Closing period", node: (
       <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-        <SelectTrigger className="h-8 w-48" aria-label="Closing period"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-8 w-full" aria-label="Closing period"><SelectValue /></SelectTrigger>
         <SelectContent>{PERIODS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
       </Select>
     ) },
     ...(one("deals.filter.owner") ? [{ name: "Owner", node: (
       <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
-        <SelectTrigger className="h-8 w-44" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
+        <SelectTrigger className="h-8 w-full" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Owner: all</SelectItem>
           {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
@@ -813,25 +840,194 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     ) }] : []),
     ...(one("deals.filter.forecast") ? [{ name: "Forecast category", node: (
       <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
-        <SelectTrigger className="h-8 w-44" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
+        <SelectTrigger className="h-8 w-full" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Forecast: all</SelectItem>
           {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
         </SelectContent>
       </Select>
     ) }] : []),
+    ...(one("deals.filter.no-next-step") || one("deals.filter.comments") ? [{ name: "What needs you", node: (
+      /* Two counting chips: the number is read without opening anything further. */
+      <ToggleGroup
+        type="multiple"
+        variant="outline"
+        size="sm"
+        spacing={2}
+        className="flex flex-wrap items-center gap-2"
+        aria-label="Filters you can read the count of"
+        value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
+        onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
+      >
+        {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
+        {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
+      </ToggleGroup>
+    ) }] : []),
+    { name: "Filters", node: (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {used("deals.filter.warnings") && (
+          <fieldset className="sm:col-span-2">
+            <legend className="pb-1 text-xs font-medium">Warnings</legend>
+            <ToggleGroup
+              type="multiple"
+              variant="outline"
+              size="sm"
+              spacing={2}
+              aria-label="Warnings"
+              className="flex flex-wrap items-center gap-2"
+              value={filters.warnings}
+              onValueChange={(v) => setFilters({ ...filters, warnings: v as WarningKind[] })}
+            >
+              {WARNING_KINDS.map((k) => <ToggleGroupItem key={k} value={k}>{k} ({facets[k]})</ToggleGroupItem>)}
+            </ToggleGroup>
+          </fieldset>
+        )}
+
+        <div className="flex items-center gap-2">
+          <Checkbox id="f-nostep" checked={filters.noNextStep} onCheckedChange={(v) => setFilters({ ...filters, noNextStep: Boolean(v) })} />
+          <label htmlFor="f-nostep" className="text-xs">No next step ({noNextStepCount})</label>
+        </div>
+
+        {!one("deals.filter.owner") && (
+          <label className="text-xs">Owner
+            <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
+              <SelectTrigger className="mt-1 h-8" aria-label="Owner"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All owners</SelectItem>{owners.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+            </Select>
+          </label>
+        )}
+
+        {!one("deals.filter.forecast") && (
+          <label className="text-xs">Forecast category
+            <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
+              <SelectTrigger className="mt-1 h-8" aria-label="Forecast category"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All categories</SelectItem>{FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+            </Select>
+          </label>
+        )}
+
+        <div className="text-xs">
+          Amount between
+          <div className="mt-1 flex items-center gap-1">
+            <Input aria-label="Smallest amount" type="number" className="h-8" value={filters.amountMin} onChange={(e) => setFilters({ ...filters, amountMin: e.target.value })} />
+            <span className="text-muted-foreground">and</span>
+            <Input aria-label="Largest amount" type="number" className="h-8" value={filters.amountMax} onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })} />
+          </div>
+        </div>
+
+        <label className="text-xs">Company
+          <Input aria-label="Company" className="mt-1 h-8" value={filters.company} onChange={(e) => setFilters({ ...filters, company: e.target.value })} />
+        </label>
+
+        <label className="text-xs">Created
+          <Select value={filters.created || "any"} onValueChange={(v) => setFilters({ ...filters, created: v === "any" ? "" : (v as Filters["created"]) })}>
+            <SelectTrigger className="mt-1 h-8" aria-label="Created"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any time</SelectItem>
+              <SelectItem value="30">In the last 30 days</SelectItem>
+              <SelectItem value="quarter">This quarter</SelectItem>
+            </SelectContent>
+          </Select>
+        </label>
+
+        <div className="text-xs">
+          <div className="flex items-center gap-2">
+            <Checkbox id="f-archived" checked={filters.archived} onCheckedChange={(v) => setFilters({ ...filters, archived: Boolean(v), lostReason: "" })} />
+            <label htmlFor="f-archived">Archived deals and the reason each was lost</label>
+          </div>
+          {filters.archived && (
+            <Select value={filters.lostReason || "all"} onValueChange={(v) => setFilters({ ...filters, lostReason: v === "all" ? "" : v })}>
+              <SelectTrigger className="mt-1 h-8" aria-label="Lost reason"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Every reason</SelectItem>{LOST_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {used("deals.filter.custom") && customDefs.length > 0 && (
+          <div className="text-xs">
+            Custom field
+            <div className="mt-1 flex gap-1">
+              <Select value={filters.custom || customDefs[0].label} onValueChange={(v) => setFilters({ ...filters, custom: v })}>
+                <SelectTrigger className="h-8" aria-label="Custom field"><SelectValue /></SelectTrigger>
+                <SelectContent>{customDefs.map((f) => <SelectItem key={f.id} value={f.label}>{f.label}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input aria-label="Custom field value" className="h-8" value={filters.customValue}
+                onChange={(e) => setFilters({ ...filters, customValue: e.target.value, custom: filters.custom || customDefs[0].label })} />
+            </div>
+          </div>
+        )}
+      </div>
+    ) },
+    { name: "Card and row order", node: (
+      <Select value={order} onValueChange={(v) => setOrder(v as Order)}>
+        <SelectTrigger className="h-8 w-full" aria-label="Order"><SelectValue /></SelectTrigger>
+        <SelectContent>{ORDERS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
+      </Select>
+    ) },
+    { name: "Card density", node: (
+      <ToggleGroup type="single" variant="outline" size="sm" aria-label="Card density"
+        value={density} onValueChange={(v) => { if (v) setDensity(v as typeof density) }}>
+        {(["comfortable", "compact"] as const).map((v) => (
+          <ToggleGroupItem key={v} value={v}>{v === "comfortable" ? "Comfortable" : "Compact"}</ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    ) },
+    { name: `Table columns, ${columns.length} of ${TABLE_COLUMNS.length}`, node: (
+      <ul className="max-h-40 space-y-1 overflow-y-auto">
+        {TABLE_COLUMNS.map((c) => (
+          <li key={c.key} className="flex items-center gap-2">
+            <Checkbox id={`col-${c.key}`} checked={columns.includes(c.key)}
+              onCheckedChange={(v) => setColumns(v ? [...columns, c.key] : columns.filter((k) => k !== c.key))} />
+            <label htmlFor={`col-${c.key}`} className="text-xs">{c.header}</label>
+          </li>
+        ))}
+      </ul>
+    ) },
+    ...(used("deals.view.saved") ? [{ name: "Saved views", node: (
+      <ul className="space-y-1">
+        {seed.savedViews.filter((v) => v.object === "deal").map((v) => (
+          <li key={v.id}>
+            <button className="text-xs underline underline-offset-4"
+              onClick={() => { setScope("mine"); setPeriod("quarter"); toast(`${v.name} applied · Mine, closing this quarter`) }}>
+              {v.name}
+            </button>
+          </li>
+        ))}
+        {seed.savedViews.filter((v) => v.object === "deal").length === 0 && <li className="text-xs text-muted-foreground">Nothing saved yet.</li>}
+      </ul>
+    ) }] : []),
+    { name: "Every door on the board", node: <ExpandAll className="-ml-2" /> },
   ]
 
-  /**
-   * The strip: four sums for the AE and the admin, a door for the seats that glance at it. One
-   * section, shadcn's Card, so the sums read as one thing and the box is the library's.
-   */
-  const stripBlock = (
-    <Container>
-      {one("deals.forecast.strip")
-        ? strip
-        : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
-    </Container>
+  const filtersOnNow = filtersOn(filters)
+
+  /** The door itself: a short label, the count of what is behind it, and the filters that are on. */
+  const filtersAndViews = (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8">
+          <SlidersHorizontal aria-hidden="true" />
+          Filters and views
+          <Badge variant="outline" className="tabular-nums">{doorGroups.length}</Badge>
+          {filtersOnNow > 0 && (
+            <span className="tabular-nums text-muted-foreground">· {filtersOnNow} on</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="max-h-[70vh] w-[min(88vw,32rem)] space-y-3 overflow-y-auto text-sm">
+        {doorGroups.map((g) => (
+          <div key={g.name}>
+            <div className="pb-1 text-xs font-medium">{g.name}</div>
+            {g.node}
+          </div>
+        ))}
+        {filtersOnNow > 0 && (
+          <Button size="sm" variant="ghost" className="-ml-2 h-7 px-2 text-xs" onClick={() => setFilters(NO_FILTERS)}>
+            Clear {filtersOnNow} filter{filtersOnNow === 1 ? "" : "s"}
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 
   const viewToggle = used("deals.view.toggle") ? (
@@ -839,212 +1035,31 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       options={[{ key: "board" as const, text: "Board" }, { key: "table" as const, text: "Table" }]} />
   ) : null
 
-  const viewPopover = (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-auto max-w-full whitespace-normal py-1 text-left">View: table columns, card order, density, saved views</Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 space-y-3 text-sm">
-              <div>
-                <div className="pb-1 text-xs font-medium">Card and row order</div>
-                <Select value={order} onValueChange={(v) => setOrder(v as Order)}>
-                  <SelectTrigger className="h-8" aria-label="Order"><SelectValue /></SelectTrigger>
-                  <SelectContent>{ORDERS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="pb-1 text-xs font-medium">Card density</div>
-                <ToggleGroup type="single" variant="outline" size="sm" aria-label="Card density"
-                  value={density} onValueChange={(v) => { if (v) setDensity(v as typeof density) }}>
-                  {(["comfortable", "compact"] as const).map((v) => (
-                    <ToggleGroupItem key={v} value={v}>{v === "comfortable" ? "Comfortable" : "Compact"}</ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-              <div>
-                <div className="pb-1 text-xs font-medium">Table columns, {columns.length} of {TABLE_COLUMNS.length}</div>
-                <ul className="max-h-40 space-y-1 overflow-y-auto">
-                  {TABLE_COLUMNS.map((c) => (
-                    <li key={c.key} className="flex items-center gap-2">
-                      <Checkbox id={`col-${c.key}`} checked={columns.includes(c.key)}
-                        onCheckedChange={(v) => setColumns(v ? [...columns, c.key] : columns.filter((k) => k !== c.key))} />
-                      <label htmlFor={`col-${c.key}`} className="text-xs">{c.header}</label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {used("deals.view.saved") && (
-                <div>
-                  <div className="pb-1 text-xs font-medium">Saved views</div>
-                  <ul className="space-y-1">
-                    {seed.savedViews.filter((v) => v.object === "deal").map((v) => (
-                      <li key={v.id}>
-                        <button className="text-xs underline underline-offset-4"
-                          onClick={() => { setScope("mine"); setPeriod("quarter"); toast(`${v.name} applied · Mine, closing this quarter`) }}>
-                          {v.name}
-                        </button>
-                      </li>
-                    ))}
-                    {seed.savedViews.filter((v) => v.object === "deal").length === 0 && <li className="text-xs text-muted-foreground">Nothing saved yet.</li>}
-                  </ul>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
-  )
-
-  /** Two counting chips: the number is read without opening anything. A toolbar control. */
-  const countingChips = (
-    <ToggleGroup
-      type="multiple"
-      variant="outline"
-      size="sm"
-      spacing={2}
-      aria-label="Filters you can read the count of"
-      value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
-      onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
-    >
-      {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
-      {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
-    </ToggleGroup>
-  )
-
   /**
-   * The filters behind their door. Disclosure, not toolbar: the door is labelled by what is inside
-   * it and its state persists per person, so it sits above the card on the board and the table
-   * alike rather than inside the toolbar's own door, which would be a door inside a door.
-   */
-  const chipsAndFilters = (
-    <>
-      <Door id="deals.filters" label={filterDoorLabel}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {used("deals.filter.warnings") && (
-            <fieldset className="sm:col-span-2 lg:col-span-3">
-              <legend className="pb-1 text-xs font-medium">Warnings</legend>
-              <ToggleGroup
-                type="multiple"
-                variant="outline"
-                size="sm"
-                spacing={2}
-                aria-label="Warnings"
-                className="flex flex-wrap items-center gap-2"
-                value={filters.warnings}
-                onValueChange={(v) => setFilters({ ...filters, warnings: v as WarningKind[] })}
-              >
-                {WARNING_KINDS.map((k) => <ToggleGroupItem key={k} value={k}>{k} ({facets[k]})</ToggleGroupItem>)}
-              </ToggleGroup>
-            </fieldset>
-          )}
-
-          <div className="flex items-center gap-2">
-            <Checkbox id="f-nostep" checked={filters.noNextStep} onCheckedChange={(v) => setFilters({ ...filters, noNextStep: Boolean(v) })} />
-            <label htmlFor="f-nostep" className="text-xs">No next step ({noNextStepCount})</label>
-          </div>
-
-          {!one("deals.filter.owner") && (
-            <label className="text-xs">Owner
-              <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
-                <SelectTrigger className="mt-1 h-8" aria-label="Owner"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="all">All owners</SelectItem>{owners.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-            </label>
-          )}
-
-          {!one("deals.filter.forecast") && (
-            <label className="text-xs">Forecast category
-              <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
-                <SelectTrigger className="mt-1 h-8" aria-label="Forecast category"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="all">All categories</SelectItem>{FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-              </Select>
-            </label>
-          )}
-
-          <div className="text-xs">
-            Amount between
-            <div className="mt-1 flex items-center gap-1">
-              <Input aria-label="Smallest amount" type="number" className="h-8" value={filters.amountMin} onChange={(e) => setFilters({ ...filters, amountMin: e.target.value })} />
-              <span className="text-muted-foreground">and</span>
-              <Input aria-label="Largest amount" type="number" className="h-8" value={filters.amountMax} onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })} />
-            </div>
-          </div>
-
-          <label className="text-xs">Company
-            <Input aria-label="Company" className="mt-1 h-8" value={filters.company} onChange={(e) => setFilters({ ...filters, company: e.target.value })} />
-          </label>
-
-          <label className="text-xs">Created
-            <Select value={filters.created || "any"} onValueChange={(v) => setFilters({ ...filters, created: v === "any" ? "" : (v as Filters["created"]) })}>
-              <SelectTrigger className="mt-1 h-8" aria-label="Created"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any time</SelectItem>
-                <SelectItem value="30">In the last 30 days</SelectItem>
-                <SelectItem value="quarter">This quarter</SelectItem>
-              </SelectContent>
-            </Select>
-          </label>
-
-          <div className="text-xs">
-            <div className="flex items-center gap-2">
-              <Checkbox id="f-archived" checked={filters.archived} onCheckedChange={(v) => setFilters({ ...filters, archived: Boolean(v), lostReason: "" })} />
-              <label htmlFor="f-archived">Archived deals and the reason each was lost</label>
-            </div>
-            {filters.archived && (
-              <Select value={filters.lostReason || "all"} onValueChange={(v) => setFilters({ ...filters, lostReason: v === "all" ? "" : v })}>
-                <SelectTrigger className="mt-1 h-8" aria-label="Lost reason"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Every reason</SelectItem>{LOST_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {used("deals.filter.custom") && customDefs.length > 0 && (
-            <div className="text-xs">
-              Custom field
-              <div className="mt-1 flex gap-1">
-                <Select value={filters.custom || customDefs[0].label} onValueChange={(v) => setFilters({ ...filters, custom: v })}>
-                  <SelectTrigger className="h-8" aria-label="Custom field"><SelectValue /></SelectTrigger>
-                  <SelectContent>{customDefs.map((f) => <SelectItem key={f.id} value={f.label}>{f.label}</SelectItem>)}</SelectContent>
-                </Select>
-                <Input aria-label="Custom field value" className="h-8" value={filters.customValue}
-                  onChange={(e) => setFilters({ ...filters, customValue: e.target.value, custom: filters.custom || customDefs[0].label })} />
-              </div>
-            </div>
-          )}
-        </div>
-        {filtersOn(filters) > 0 && (
-          <Button size="sm" variant="ghost" className="mt-2 h-7 px-2 text-xs" onClick={() => setFilters(NO_FILTERS)}>Clear {filtersOn(filters)} filter{filtersOn(filters) === 1 ? "" : "s"}</Button>
-        )}
-      </Door>
-    </>
-  )
-
-  /**
-   * The table's `above`: the chips, the filters door and the strip. Its filter controls live in the
-   * card's header instead, which is where an index's toolbar belongs (LAYOUTS.md §2).
-   */
-  /**
-   * Everything the toolbar carries, board and table alike: the filters, which view, how to look,
-   * and the two counting chips. The template's `Toolbar` keeps five in front at 1440 and exactly
-   * one — the search — at 400, with the rest behind a door it labels itself, so the board opens on
-   * its stage switcher and its cards rather than on eight rows of controls (LAYOUTS.md §5).
+   * What the toolbar carries, board and table alike. All three stay in front at every width, so the
+   * toolbar never opens a second door of its own: the search, the view switch a phone must be able
+   * to reach (LAYOUTS.md §5), and the one door that holds the rest.
    */
   const allControls: ToolbarControl[] = [
-    ...toolbarControls,
-    ...(used("deals.view.toggle") ? [{ name: "Board or table", node: <>{viewToggle}</> }] : []),
-    { name: "View: columns, order, density, saved views", node: <>{viewPopover}</> },
-    ...(one("deals.filter.no-next-step") || one("deals.filter.comments") ? [{ name: "What needs you", node: <>{countingChips}</> }] : []),
-    { name: "Expand all", node: <ExpandAll /> },
+    { name: "Search", always: true, pin: true, node: (
+      <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44 max-w-full" />
+    ) },
+    // Pinned, all three: the toolbar's own door would otherwise open on a second door at 400, and
+    // the view switch has to be reachable at every width (LAYOUTS.md §5). The "…" menu carries the
+    // switch in words as well, so a phone has two routes to the table.
+    ...(viewToggle ? [{ name: "Board or table", always: true, pin: true, node: <>{viewToggle}</> }] : []),
+    { name: "Filters and views", always: true, pin: true, node: filtersAndViews },
   ]
 
-  const tableAbove = <div className="space-y-2 pt-2">{chipsAndFilters}{stripBlock}</div>
+  const tableAbove = <div className="pt-2">{stripBlock}</div>
 
   /**
-   * What sits between the toolbar and the stages: the filters door and the forecast strip. The
-   * controls themselves are `controls` now, so the board at 400 opens on its stage switcher and its
-   * cards rather than on rows of selects (LAYOUTS.md §5).
+   * What sits between the toolbar and the stages: the forecast band, and nothing else. Every
+   * control is in the toolbar now, so the board at 400 opens on its stage switcher and its cards
+   * rather than on a door, a second door and rows of selects (LAYOUTS.md §2 and §5).
    */
   const above = (
     <div className="space-y-2">
-      {chipsAndFilters}
       {stripBlock}
 
       {/* Board only: the table says its own emptiness in its own words. */}

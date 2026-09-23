@@ -47,12 +47,58 @@ export interface BriefingProps {
   onResume: (id: string) => void
 }
 
+/**
+ * The exceptions: the page's Alert part, above the cards and never inside one (LAYOUTS.md §2).
+ * One line per exception with its own acts on that line, and nothing here when nothing is wrong.
+ */
+export function Exceptions({ rules, exceptions, onResume }: {
+  rules: RuleFlags
+  exceptions: Exception[]
+  onResume: (id: string) => void
+}) {
+  if (exceptions.length === 0) return null
+  const capLine = exceptions.findIndex((x) => x.id.startsWith("cap-"))
+  const pauseLine = exceptions.findIndex((x) => !x.id.startsWith("cap-"))
+  return (
+    <Alert variant={pauseLine >= 0 ? "destructive" : "default"} className="mb-3">
+      <AlertTitle className="line-clamp-none">
+        {exceptions.length} {exceptions.length === 1 ? "exception" : "exceptions"}
+      </AlertTitle>
+      <AlertDescription className="grid gap-1.5">
+        {exceptions.map((x, i) => (
+          <div key={x.id}
+            data-item={i === capLine ? "exc.cap-reached" : i === pauseLine ? "exc.paused" : `exc.line.${x.id}`}
+            data-item-label={i === capLine ? "An agent stopped at its credit cap" : "Outreach paused and why"}
+            data-container={`exception.${x.id}`} data-container-label="the exception line"
+            className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="w-full min-w-0 sm:flex-1">{x.text}</span>
+            {/* Rule 5: the control sits on the line it belongs to, not in a row under the block. */}
+            {/* Two comparable acts, so neither is filled (DESIGN.md §1). */}
+            {x.resume && rules.r5 && (
+              <Actions surface="card" items={[
+                { kind: "secondary", label: "Resume", onClick: () => onResume(x.id), dataItem: i === pauseLine ? "exc.resume" : `exc.resume.${x.id}`, dataItemLabel: "Resume or keep paused" },
+                { kind: "secondary", label: "Keep paused", onClick: () => document.dispatchEvent(new CustomEvent("ollopa:toast", { detail: "Kept paused. Nothing is sent." })) },
+              ]} />
+            )}
+            {x.href && <a className="underline underline-offset-4" href={href(x.href)}>{x.hrefLabel}</a>}
+          </div>
+        ))}
+        {!rules.r5 && exceptions.some((x) => x.resume) && (
+          <div className="pt-1">
+            <Actions surface="card" items={[{
+              kind: "secondary", label: "Resume paused items",
+              onClick: () => onResume(exceptions.find((x) => x.resume)!.id),
+              dataItem: "exc.resume", dataItemLabel: "Resume or keep paused",
+            }]} />
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
 export function Briefing(p: BriefingProps) {
   const { seed, session, d, spend, rules } = p
-  // The exception lines the parody kept as failure reasons on a workflow run: the same two things,
-  // now at level one, so they keep their ids across the step (rule 7).
-  const capLine = p.exceptions.findIndex((x) => x.id.startsWith("cap-"))
-  const pauseLine = p.exceptions.findIndex((x) => !x.id.startsWith("cap-"))
   const third = gate("agents.third", session.business)
   const missing = p.agents.length < 3
   const settingsLink = session.role === "admin"
@@ -104,43 +150,6 @@ export function Briefing(p: BriefingProps) {
         },
       ]} />
 
-      {/* Exceptions exist only while something is paused or capped. Nothing here when nothing is wrong. */}
-      {p.exceptions.length > 0 && (
-        <Alert variant={pauseLine >= 0 ? "destructive" : "default"}>
-          <AlertTitle className="line-clamp-none">
-            {p.exceptions.length} {p.exceptions.length === 1 ? "exception" : "exceptions"}
-          </AlertTitle>
-          <AlertDescription className="grid gap-1.5">
-          {p.exceptions.map((x, i) => (
-            <div key={x.id}
-              data-item={i === capLine ? "exc.cap-reached" : i === pauseLine ? "exc.paused" : `exc.line.${x.id}`}
-              data-item-label={i === capLine ? "An agent stopped at its credit cap" : "Outreach paused and why"}
-              data-container={`exception.${x.id}`} data-container-label="the exception line"
-              className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="w-full min-w-0 sm:flex-1">{x.text}</span>
-              {/* Rule 5: the control sits on the line it belongs to, not in a row under the block. */}
-              {/* Two comparable acts, so neither is filled (DESIGN.md §1). */}
-              {x.resume && rules.r5 && (
-                <Actions surface="card" items={[
-                  { kind: "secondary", label: "Resume", onClick: () => p.onResume(x.id), dataItem: i === pauseLine ? "exc.resume" : `exc.resume.${x.id}`, dataItemLabel: "Resume or keep paused" },
-                  { kind: "secondary", label: "Keep paused", onClick: () => document.dispatchEvent(new CustomEvent("ollopa:toast", { detail: "Kept paused. Nothing is sent." })) },
-                ]} />
-              )}
-              {x.href && <a className="underline underline-offset-4" href={href(x.href)}>{x.hrefLabel}</a>}
-            </div>
-          ))}
-          {!rules.r5 && p.exceptions.some((x) => x.resume) && (
-            <div className="pt-1">
-              <Actions surface="card" items={[{
-                kind: "secondary", label: "Resume paused items",
-                onClick: () => p.onResume(p.exceptions.find((x) => x.resume)!.id),
-                dataItem: "exc.resume", dataItemLabel: "Resume or keep paused",
-              }]} />
-            </div>
-          )}
-          </AlertDescription>
-        </Alert>
-      )}
       </div>
 
       <p className="t-small pt-1 text-muted-foreground">
@@ -201,11 +210,12 @@ export function Briefing(p: BriefingProps) {
               {a.id === "research" && p.watch && (
                 <>
                   <Separator />
-                  <div className="t-small flex flex-wrap items-center gap-2">
-                    <span className="min-w-0 flex-1 tabular-nums">
+                  {/* The switch takes its own row: beside the sentence it squeezed it to five lines. */}
+                  <div className="t-small grid gap-2">
+                    <span className="tabular-nums">
                       Watching “{p.watch.list}”: {p.watch.done} companies read, {p.watch.credits.toLocaleString()} credits so far
                     </span>
-                    <label className="flex shrink-0 items-center gap-1.5">
+                    <label className="flex items-center gap-1.5">
                       <Switch checked={p.watching} onCheckedChange={p.onWatch} aria-label={`Watch “${p.watch.list}”`} />
                       <span>{p.watching ? "Watching" : "Off"}</span>
                     </label>

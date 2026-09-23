@@ -2,8 +2,16 @@
 // The contract is LAYOUTS.md; the usage is README.md beside this file.
 
 // The parts (LAYOUTS.md §2)
-export { PageHeader, StatusRow, Toolbar, SummaryStrip, Section, Container, Group, Rows, SideRail, PageFooter } from "./parts"
+export { PageHeader, StatusRow, Toolbar, SummaryStrip, Section, Container, Group, Rows, SideRail, PageFooter, usePhone } from "./parts"
 export type { PageHeaderProps, ToolbarControl, SummaryFigure, SectionProps } from "./parts"
+
+// The filter on a section inside a record: tabs above `md`, one Select below it
+export { SectionFilter } from "./SectionFilter"
+export type { SectionFilterProps, SectionFilterOption } from "./SectionFilter"
+
+// A table that becomes a divided list below `md` (LAYOUTS.md §5)
+export { RowsTable } from "./RowsTable"
+export type { RowsTableProps, RowsColumn } from "./RowsTable"
 
 // The frame: the measure a template sets, never a page
 export { Measured, PageScroll, type Measure } from "./frame"

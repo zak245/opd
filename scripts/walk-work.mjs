@@ -339,9 +339,9 @@ await page.goto(base + "/#/", { waitUntil: "networkidle0" })
 await page.evaluate(() => localStorage.setItem("ollopa.session", JSON.stringify({ business: "meridian", role: "sdr" })))
 await go("/ollopa/inbox")
 
-/** The group tabs and their counts: what the page says is still waiting. */
+/** The meaning in view and its count: what the page says is still waiting. */
 const counts = () => page.evaluate(() =>
-  Array.from(document.querySelectorAll('[data-page-active="true"] [role="tab"]')).map((t) => t.textContent.trim()).join(" · "))
+  document.querySelector('[data-page-active="true"] [data-inbox-group]')?.textContent.trim() ?? "(no group control)")
 
 /** The state of the open thread and of its row in the list, in one line each. */
 const sending = () => page.evaluate(() => {
@@ -382,13 +382,11 @@ console.log("G counts after:       ", await counts())
 console.log("G thread moved on to: ", await page.evaluate(() => document.querySelector('[data-page-active="true"] section[aria-label^="Thread"] h2')?.textContent ?? ""))
 await shot("g2-sent")
 
-// The reply that was answered is in Handled, and its row says so. Handled may sit behind the
-// tab that holds the groups this seat does not open on, so take either way in.
-if (!(await clickReal('[data-page-active="true"] [role="tab"]', "Handled"))) {
-  await clickReal('[data-page-active="true"] [role="tab"]', "Out of office")
-  await wait(400)
-  await clickReal('[role="menuitem"]', "Handled")
-}
+// The reply that was answered is in Handled, and its row says so. The meanings are one Select, so
+// open it and pick Handled.
+await page.click('[data-page-active="true"] [data-inbox-group]')
+await wait(300)
+await clickReal('[role="option"]', "Handled")
 await wait(700)
 console.log("G in Handled:         ", await page.evaluate(() => {
   const row = Array.from(document.querySelectorAll('[data-page-active="true"] [role="row"]'))

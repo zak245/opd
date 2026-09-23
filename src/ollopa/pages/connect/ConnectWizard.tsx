@@ -23,6 +23,7 @@ import { day } from "../deal/format"
 import { ruleOn, useLesson } from "../../../learn/context"
 import { Check, Code, Consequence, Picker, Radio, Wizard, about, n, type StepState } from "./bits"
 import { Actions, type Action } from "../../ui/Actions"
+import { RowsTable } from "../../layouts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { Chip } from "../../ui/Identity"
@@ -439,38 +440,44 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
               <Input className="mt-1" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="email, owner, amount…" />
             </label>
 
-            <div data-item="wiz.mapping" data-item-label="the field pairs" className="min-w-0 overflow-x-auto">
-              <table data-container="connect.pairs" data-container-label="the field pair table" data-open="true" className="w-full min-w-[40rem] border-collapse t-body">
-                <caption className="sr-only">Field pairs for {object}: the ollopA field, the direction, the {draft.kind} field, the write rule and the state of each pair.</caption>
-                <thead>
-                  <tr className="border-b text-left t-small text-muted-foreground">
-                    <th scope="col" className="py-2 pr-3 font-medium">ollopA field</th>
-                    <th scope="col" className="py-2 pr-3 font-medium">Direction</th>
-                    <th scope="col" className="py-2 pr-3 font-medium">{draft.kind} field</th>
-                    <th scope="col" className="py-2 pr-3 font-medium">Write rule</th>
-                    <th scope="col" className="py-2 font-medium">State</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {shown.map((p) => (
-                    <tr key={p.id} className="border-b align-top">
-                      <td className="py-2 pr-3">{p.ollopa}</td>
-                      <td className="py-2 pr-3">
-                        <select aria-label={`Direction for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.direction} onChange={(e) => setPair(p.id, { direction: e.target.value as FieldPair["direction"] })}>
-                          <option value="both">Both ways</option><option value="pull">Pull only</option><option value="push">Push only</option>
-                        </select>
-                      </td>
-                      <td className="py-2 pr-3">
-                        <select aria-label={`${draft.kind} field for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.remote} onChange={(e) => setPair(p.id, { remote: e.target.value })}>
-                          {remoteFields.map((f) => <option key={f.name} value={f.name}>{f.name}{f.required ? " (required)" : ""}</option>)}
-                        </select>
-                      </td>
-                      <td className="py-2 pr-3">
-                        <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
-                          {WRITE_RULES.map((w) => <option key={w} value={w}>{w}</option>)}
-                        </select>
-                      </td>
-                      <td className="py-2 t-small">
+            {/* The same columns as a table where there is room and a divided list at 400: a table
+                inside a record is never clipped (LAYOUTS.md §5). */}
+            <div data-item="wiz.mapping" data-item-label="the field pairs"
+                 data-container="connect.pairs" data-container-label="the field pair table" data-open="true"
+                 className="min-w-0">
+              <RowsTable
+                rows={shown}
+                rowKey={(p) => p.id}
+                columns={[
+                  { key: "ollopa", header: "ollopA field", lead: true, cell: (p) => p.ollopa },
+                  {
+                    key: "direction", header: "Direction",
+                    cell: (p) => (
+                      <select aria-label={`Direction for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.direction} onChange={(e) => setPair(p.id, { direction: e.target.value as FieldPair["direction"] })}>
+                        <option value="both">Both ways</option><option value="pull">Pull only</option><option value="push">Push only</option>
+                      </select>
+                    ),
+                  },
+                  {
+                    key: "remote", header: `${draft.kind} field`,
+                    cell: (p) => (
+                      <select aria-label={`${draft.kind} field for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.remote} onChange={(e) => setPair(p.id, { remote: e.target.value })}>
+                        {remoteFields.map((f) => <option key={f.name} value={f.name}>{f.name}{f.required ? " (required)" : ""}</option>)}
+                      </select>
+                    ),
+                  },
+                  {
+                    key: "writeRule", header: "Write rule",
+                    cell: (p) => (
+                      <select data-item={p.id === shown[0]?.id ? "wiz.write-rule" : undefined} data-item-label="the write rule" aria-label={`Write rule for ${p.ollopa}`} className="h-8 rounded-md border bg-card px-1 t-small" value={p.writeRule} onChange={(e) => setPair(p.id, { writeRule: e.target.value })}>
+                        {WRITE_RULES.map((w) => <option key={w} value={w}>{w}</option>)}
+                      </select>
+                    ),
+                  },
+                  {
+                    key: "state", header: "State",
+                    cell: (p) => (
+                      <div className="t-small">
                         <div className="flex flex-wrap items-center gap-2">
                           <span>{p.state === "suggested" ? "Suggested" : p.state === "edited" ? "Edited" : "Mapped"}</span>
                           <Actions surface="card" items={[{ kind: "destructive", label: "Remove", onClick: () => setRemoving(removing === p.id ? null : p.id) }]} />
@@ -484,11 +491,11 @@ export function MapStep({ session, draft, save }: { session: Session; draft: Con
                             ]} />
                           </div>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
             </div>
 
             <Actions surface="page" items={[{

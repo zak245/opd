@@ -25,7 +25,7 @@ import { TODAY, seedFor, type Agent, type AgentEvent } from "../../data/seed"
 import { clientWorkspace } from "../../map"
 import type { Session } from "../../session"
 import { toast } from "../../templates/TablePage"
-import { Briefing } from "./Briefing"
+import { Briefing, Exceptions } from "./Briefing"
 import { Ledger, NO_FILTERS, type Filters } from "./Ledger"
 import { WaitingItem } from "./WaitingItem"
 import { BatchPanel } from "./BatchPanel"
@@ -271,6 +271,9 @@ export function AgentsPage({ session }: { session: Session }) {
       {/* Step 0 and step 1: Apollo's top bar, with the balance pill and the second "power-up" meter. */}
       {!rules.r1 && <ParodyTopBar spend={spend} showCredits={!rules.r7} showAssistant />}
       {!rules.r7 && <ParodyNote className="mb-3" />}
+
+      {/* The Alert part: only what needs a decision, above the cards (LAYOUTS.md §2). */}
+      {rules.r7 && <Exceptions rules={rules} exceptions={exceptions} onResume={(id) => { setResumed((was) => [...was, id]); toast("Resumed.") }} />}
 
       {rules.r7 && <Briefing
         rules={rules}

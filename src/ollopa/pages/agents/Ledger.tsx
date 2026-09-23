@@ -330,7 +330,17 @@ export function Ledger(p: LedgerProps) {
 }
 
 function columnTemplate(contact: boolean, outcome: boolean, surface: boolean, actor = true, credits = true): string {
-  return ["6.5rem", actor && "9.5rem", "minmax(0,1fr)", contact && "10rem", outcome && "9.5rem", surface && "5.5rem", credits && "4.5rem"].filter(Boolean).join(" ")
+  // Every column but the time and the credits may give width back, so seven columns still fit the
+  // card at 1024 instead of pushing the page 81 px sideways. Nothing is dropped; the text truncates.
+  return [
+    "5.5rem",
+    actor && "minmax(0,9.5rem)",
+    "minmax(0,1fr)",
+    contact && "minmax(0,10rem)",
+    outcome && "minmax(0,9.5rem)",
+    surface && "minmax(0,5.5rem)",
+    credits && "4.5rem",
+  ].filter(Boolean).join(" ")
 }
 
 function Row({ rules, e, seed, session, local, undone, onUndo, showContact, showOutcome, showSurface, focused }: {

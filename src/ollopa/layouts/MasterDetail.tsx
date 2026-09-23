@@ -225,11 +225,22 @@ export function BoardPage({ stages, controls, shown: shownCount, above, columnWi
 // ---------------------------------------------------------------------------------- HomePage
 
 /**
- * A grid of summary tiles, each a door to an index or a record (LAYOUTS.md §1). The template owns
- * the grid so every tile is the same width and no region of the page is empty at rest.
+ * A grid of summary tiles, each a door to an index or a record (LAYOUTS.md §1).
+ *
+ * Two columns of equal count leave the shorter one empty below the fold — §6 says no region of a
+ * page is empty at rest. So the tiles are laid out in a **masonry column flow**: the browser fills
+ * by height, not by count, and a tall tile on the right no longer leaves the lower left blank.
+ * A tile that must span both columns marks itself `data-wide` — `<Section data-wide>` — and the
+ * grid gives it the full width above `lg`.
  */
 export function HomeGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("grid items-start gap-4 lg:grid-cols-2", className)}>{children}</div>
+    <div className={cn(
+      // `columns` flows by height. Each tile avoids being split across a column break, and a wide
+      // tile leaves the flow entirely by spanning all of it.
+      "gap-4 lg:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid",
+      "[&>[data-wide]]:column-span-all",
+      className,
+    )}>{children}</div>
   )
 }

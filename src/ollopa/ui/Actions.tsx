@@ -17,7 +17,7 @@
 // What it cannot decide, and the page still must: whether a seat may act at all. A seat that cannot
 // act gets no control and one sentence naming who can (RULES.md rule 4) — so the page leaves the
 // item out of the list rather than passing it here disabled.
-import { useState, type ReactNode } from "react"
+import { useState, useSyncExternalStore, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
@@ -103,6 +103,27 @@ const COLOURED = /(^|[\s:])(bg|text|border|ring|decoration|fill|stroke|from|via|
 /** A pane carries the three acts the chain runs most, and nothing that cannot be undone. */
 const PANE_MAX = 3
 
+/**
+ * A page header holds one primary and at most two comparable acts beside it; three or more
+ * comparable acts drop to a menu (DESIGN.md §1). Below 768 px only the primary stays out.
+ */
+const PAGE_SECONDARIES = 2
+const NARROW = "(max-width: 767px)"
+
+/** True below 768. Read rather than drawn twice, so the same act is not in the row and the menu. */
+function useNarrow() {
+  return useSyncExternalStore(
+    (f) => {
+      if (typeof window === "undefined" || !window.matchMedia) return () => {}
+      const m = window.matchMedia(NARROW)
+      m.addEventListener("change", f)
+      return () => m.removeEventListener("change", f)
+    },
+    () => typeof window !== "undefined" && window.matchMedia?.(NARROW).matches === true,
+    () => false,
+  )
+}
+
 const said = new Set<string>()
 function warn(key: string, message: string) {
   if (!import.meta.env.DEV || said.has(key)) return
@@ -147,9 +168,12 @@ export function readActions(items: Action[], surface: Surface): Action[] {
         "A reversible, free act carries no sentence. Dropping the line.")
     }
 
-    if (a.irreversible && a.kind === "primary") {
+    // The rule is about a *destructive* act, not about one that cannot be undone. "Pull now" on an
+    // integration cannot be undone and removes nothing — it is the right filled control on its page,
+    // and it was being warned about because the test read `irreversible` instead of the kind.
+    if (a.kind === "destructive" && kind === "primary") {
       warn(`destructive-primary:${a.label}`,
-        `"${a.label}" cannot be undone and is marked primary. A destructive act is never the filled ` +
+        `"${a.label}" is destructive and is drawn as the primary. A destructive act is never the filled ` +
         "control on a surface (DESIGN.md §1); it is the affirmative inside its own confirmation.")
     }
 
@@ -209,8 +233,9 @@ export function Confirm({ open, onOpenChange, title, consequence, confirmLabel, 
 function Shortcut({ keys, kind }: { keys?: string; kind?: ActionKind }) {
   if (!keys) return null
   return (
+    // A printed key is no use to a thumb, and it costs width a phone does not have.
     <Kbd className={cn(
-      "ml-1.5",
+      "ml-1.5 max-md:hidden",
       kind === "primary" && "bg-primary-foreground/15 text-primary-foreground/80",
     )}>{keys}</Kbd>
   )
@@ -295,6 +320,63 @@ function One({ action, surface, layout, onIrreversible }: {
   )
 }
 
+/**
+ * The "…" a page header keeps its remaining acts in. A consequence line has no room beside an act
+ * that is not drawn, so in here it is the item's own description — the words still travel with the
+ * act (DESIGN.md §2), they just move from beside it to under it.
+ */
+function Overflow({ rest, ending, size, onIrreversible }: {
+  rest: Action[]
+  ending: Action[]
+  size: "sm" | "default"
+  onIrreversible: (a: Action) => void
+}) {
+  const item = (a: Action, destructive?: boolean) => {
+    const line = lineFor(a)
+    return (
+      <DropdownMenuItem
+        key={a.label}
+        variant={destructive ? "destructive" : undefined}
+        id={a.id}
+        aria-label={a["aria-label"]}
+        data-item={a.dataItem}
+        data-item-label={a.dataItemLabel}
+        {...a.attrs}
+        disabled={!!a.disabledBecause}
+        className={line || a.disabledBecause ? "flex-col items-start gap-0.5" : undefined}
+        onSelect={() => (a.irreversible ? onIrreversible(a) : a.onClick?.())}
+      >
+        <span className="flex w-full items-center gap-2">
+          {a.label}
+          {a.cost && <span className="ml-auto pl-4 text-xs text-muted-foreground">{a.cost}</span>}
+        </span>
+        {(line || a.disabledBecause) && (
+          <span className="t-small text-muted-foreground">{a.disabledBecause ?? line}</span>
+        )}
+      </DropdownMenuItem>
+    )
+  }
+  return (
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size={size === "sm" ? "icon-sm" : "icon"} aria-label="More acts for this page">
+              <MoreHorizontal className="size-4" aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>More acts for this page</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="max-w-xs">
+        {rest.map((a) => item(a))}
+        {ending.length > 0 && rest.length > 0 && <DropdownMenuSeparator />}
+        {ending.map((a) => item(a, true))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function Actions({ items, layout, surface = "page", menuLabel, className }: {
   items: Action[]
   layout?: Layout
@@ -336,6 +418,7 @@ export function Actions({ items, layout, surface = "page", menuLabel, className 
     }
   }
 
+  const narrow = useNarrow()
   const how: Layout = layout === "menu" ? "menu" : place.layout
   const list = readActions(items, surface)
   if (list.length === 0) return null
@@ -405,6 +488,16 @@ export function Actions({ items, layout, surface = "page", menuLabel, className 
   const ending = list.filter((a) => a.kind === "destructive")
   const doing = list.filter((a) => a.kind !== "destructive")
 
+  // A page header holds one primary and at most two comparable acts; the rest go behind one "…",
+  // with the destructive act last after a rule (DESIGN.md §1). Below 768 only the primary stays
+  // out, so a phone never shows two filled controls on one surface.
+  const room = surface === "page" ? (narrow ? 0 : PAGE_SECONDARIES) : Infinity
+  const primary = surface === "page" ? doing.find((a) => a.kind === "primary") ?? doing[0] : undefined
+  const beside = surface === "page" ? doing.filter((a) => a !== primary) : doing
+  const out = surface === "page" ? [primary, ...beside.slice(0, room)].filter(Boolean) as Action[] : doing
+  const behind = surface === "page" ? beside.slice(room) : []
+  const menued = surface === "page" && (behind.length > 0 || ending.length > 0)
+
   return (
     <>
       <div className={cn(
@@ -413,9 +506,12 @@ export function Actions({ items, layout, surface = "page", menuLabel, className 
           : cn("flex flex-wrap items-start gap-2", place.align === "trailing" ? "justify-end" : "justify-start"),
         className,
       )}>
-        {doing.map((a) => <One key={a.label} action={a} surface={surface} layout={how} onIrreversible={irreversible} />)}
+        {out.map((a) => <One key={a.label} action={a} surface={surface} layout={how} onIrreversible={irreversible} />)}
+        {menued && (
+          <Overflow rest={behind} ending={ending} size={SIZE[surface]} onIrreversible={irreversible} />
+        )}
         {/* The gap. A destructive act is never next to a benign one (memo 26, part B). */}
-        {ending.length > 0 && (
+        {!menued && surface !== "page" && ending.length > 0 && (
           <div className={cn(how === "stack" ? "mt-2 flex w-full flex-col gap-3" : "ml-2 flex items-stretch gap-2")}>
             {/* The gap is drawn by the library's rule, never by a border of our own. */}
             <Separator orientation={how === "stack" ? "horizontal" : "vertical"} className={how === "stack" ? undefined : "data-[orientation=vertical]:h-auto"} />

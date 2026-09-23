@@ -41,6 +41,7 @@ import { Actions, type Action } from "../../ui/Actions"
 import { RecordPage } from "../../templates/RecordPage"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { type Col, BesideLink, CountButton, CountRate, DataTable, FollowLink, RowNote, ago, day, h1Of, n, rate, toast, undoable, useKeys, usePersisted, useTick } from "./shared"
+import { RowsTable } from "../../layouts/RowsTable"
 
 const STEP_ICON = { Email: Mail, "Call task": Phone, "LinkedIn task": Linkedin, Wait: Clock }
 const VARIABLES = ["{{first_name}}", "{{company}}", "{{title}}", "{{signal}}", "{{owner}}"]
@@ -219,10 +220,12 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         {
           key: "counts", label: "People", wide: true,
           value: (
-    <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+    // Six counts wrap onto two rows at 400 rather than scrolling off the side: they are the
+    // filters for the list below, so every one of them has to be reachable (LAYOUTS.md §5).
+    <div className="mt-3 flex flex-wrap gap-2 pb-1">
       {counts.map((c) => (
         <CountButton
-          key={c.key} label={c.label} count={c.value} tone={c.tone} className="shrink-0"
+          key={c.key} label={c.label} count={c.value} tone={c.tone}
           active={peopleFilter === c.key}
           onClick={() => { setPeopleFilter(peopleFilter === c.key ? "all" : c.key); document.getElementById("seq-people")?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
         />
@@ -264,6 +267,8 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
         }]),
       ]}
       actions={{ primary: [], secondary: [] }}
+      // One list, so the header has one primary and one "…": two Actions side by side gave a phone
+      // two menus in a row (DESIGN.md §1). The page surface decides what stays out.
       headerActions={
       <div className="flex flex-wrap items-center gap-2" data-print-hide>
         <Actions
@@ -276,13 +281,7 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
               onClick: pauseResume,
               disabledBecause: resumeBlocked ? "Remove the bounced people or fix the data first" : undefined,
             },
-          ]}
-        />
-        {canEdit && (
-          <Actions
-            surface="page"
-            layout="menu"
-            items={[
+            ...(canEdit ? ([
               { kind: "secondary", label: "Duplicate", onClick: () => say(`Copied ${seq.name}: steps and settings, nobody in it`) },
               { kind: "secondary", label: "Export people (CSV)", onClick: () => say(`Exported ${n(enrollments.length)} people from ${seq.name}`) },
               ...(seq.archivedAt ? [] : [{
@@ -309,9 +308,9 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
                   confirmLabel: "Delete the draft",
                 },
               }] : []),
-            ] as Action[]}
-          />
-        )}
+            ] as Action[]) : []),
+          ]}
+        />
       </div>
       }
       main={{
@@ -422,48 +421,33 @@ export function SequenceRecord({ session, id }: { session: Session; id?: string 
       doors={[
         { id: "seq.results", label: "Results by step and by audience", openByDefault: d.level("seq.results.by-step") === 1, content: (
 <Door id="seq.results" label="Results by step and by audience" defaultOpen={d.level("seq.results.by-step") === 1}>
-        <div className="overflow-x-auto">
-          <table className="w-full divide-y text-xs">
-            <thead>
-              <tr className="text-left text-muted-foreground">
-                <th className="py-1 pr-3 font-normal">Step</th>
-                {["Sent", "Delivered", "Opened", "Replied", "Interested", "Bounced", "Unsubscribed"].map((h) => <th key={h} className="py-1 pr-3 font-normal">{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {steps.filter((s) => s.kind === "Email").map((s) => (
-                <tr key={s.id}>
-                  <td className="py-1 pr-3">{s.order}. {s.subject || "Untitled email"}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.sent)}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.delivered)} · {rate(s.stats.delivered, s.stats.sent)}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.opened)} · {rate(s.stats.opened, s.stats.delivered)}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.replied)} · {rate(s.stats.replied, s.stats.delivered)}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(Math.round(s.stats.replied * 0.4))}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.bounced)} · {rate(s.stats.bounced, s.stats.sent)}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(s.stats.unsubscribed)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* One set of columns, two shapes: a table where there is room, a divided list below `md`.
+            Never a scroller that cuts the last columns off (LAYOUTS.md §5). */}
+        <RowsTable
+          rows={steps.filter((s) => s.kind === "Email")}
+          rowKey={(s) => s.id}
+          columns={[
+            { key: "step", header: "Step", lead: true, cell: (s) => `${s.order}. ${s.subject || "Untitled email"}` },
+            { key: "sent", header: "Sent", cell: (s) => n(s.stats.sent) },
+            { key: "delivered", header: "Delivered", cell: (s) => `${n(s.stats.delivered)} · ${rate(s.stats.delivered, s.stats.sent)}` },
+            { key: "opened", header: "Opened", cell: (s) => `${n(s.stats.opened)} · ${rate(s.stats.opened, s.stats.delivered)}` },
+            { key: "replied", header: "Replied", cell: (s) => `${n(s.stats.replied)} · ${rate(s.stats.replied, s.stats.delivered)}` },
+            { key: "interested", header: "Interested", cell: (s) => n(Math.round(s.stats.replied * 0.4)) },
+            { key: "bounced", header: "Bounced", cell: (s) => `${n(s.stats.bounced)} · ${rate(s.stats.bounced, s.stats.sent)}` },
+            { key: "unsubscribed", header: "Unsubscribed", cell: (s) => n(s.stats.unsubscribed) },
+          ]}
+        />
 
-          <h4 className="pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">By audience</h4>
-          <table className="w-full divide-y text-xs">
-            <thead>
-              <tr className="text-left text-muted-foreground">
-                <th className="py-1 pr-3 font-normal">Group</th><th className="py-1 pr-3 font-normal">People</th><th className="py-1 pr-3 font-normal">Replied</th>
-              </tr>
-            </thead>
-            <tbody>
-              {audienceRows(session, enrollments).map((row) => (
-                <tr key={row.label}>
-                  <td className="py-1 pr-3">{row.label}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(row.people)}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(row.replied)} · {rate(row.replied, row.people)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h4 className="pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">By audience</h4>
+        <RowsTable
+          rows={audienceRows(session, enrollments)}
+          rowKey={(row) => row.label}
+          columns={[
+            { key: "group", header: "Group", lead: true, cell: (row) => row.label },
+            { key: "people", header: "People", cell: (row) => n(row.people) },
+            { key: "replied", header: "Replied", cell: (row) => `${n(row.replied)} · ${rate(row.replied, row.people)}` },
+          ]}
+        />
         <Button size="sm" variant="outline" className="mt-3" onClick={() => say(`Exported the results of ${seq.name}`)}>Export CSV</Button>
       </Door>
         ) },

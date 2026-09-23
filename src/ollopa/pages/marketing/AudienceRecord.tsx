@@ -237,7 +237,8 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
           ? <>Mode: live · refreshes daily 06:00 · new matches are added to {builtFor ?? "no campaign yet"}</>
           : <>Frozen at {num(a.size)} on {day(a.frozenAt)}</>}
       </p>
-      <Actions surface="page" items={[{
+      {/* A section body is a card surface, not the page's. */}
+      <Actions className="justify-start" surface="card" items={[{
         kind: "secondary",
         label: a.mode === "live" ? "Freeze" : "Make live",
         onClick: () => {
@@ -258,7 +259,7 @@ export function AudienceRecord({ session, id }: { session: Session; id?: string 
     <>
       {/* Search once the list is longer than a screenful of names (over ten). */}
       {pool.length > 10 && (
-        <Input aria-label="Find a person in this audience" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48" />
+        <Input aria-label="Find a person in this audience" placeholder="Find a person" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-48 max-sm:w-28" />
       )}
       {openCount && <Actions surface="card" items={[{ kind: "secondary", label: "Show everybody", onClick: () => { setRecords(null); setQ("") } }]} />}
     </>

@@ -9,6 +9,7 @@ import { Actions, type Action } from "../../ui/Actions"
 import { href, navigate, useRoute } from "@/app/router"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, type RecordDoor } from "../../templates/RecordPage"
+import { RowsTable } from "../../layouts"
 import { Door } from "../../ui/Door"
 import { Chip } from "../../ui/Identity"
 import { businessById } from "../../data/businesses"
@@ -101,6 +102,8 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     return `${per("Contacts")} contact, ${per("Companies")} company, ${per("Deals")} deal fields · ${suggested} suggested · ${required} required ${kind} field${required === 1 ? "" : "s"} unmapped`
   })()
 
+  // Pulling is what an admin opens this page to do, so it is the one filled control on the header.
+  // Inside the sync-history door it is one of two comparable acts, so there it is a secondary.
   const pullNow: Action = {
     kind: "secondary", label: "Pull now",
     onClick: () => toast("Pull started · it appears in the sync history"),
@@ -186,26 +189,20 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
     content: (
       <div className="grid gap-3">
         <Actions surface="card" items={[pullNow, pushNow]} />
-        <div className="min-w-0 overflow-x-auto">
-          <table className="w-full min-w-[34rem] border-collapse t-body">
-            <caption className="sr-only">The last {runs.length} sync runs, newest first.</caption>
-            <thead><tr className="border-b text-left t-small text-muted-foreground">
-              <th scope="col" className="py-1 pr-3 font-medium">Started</th><th scope="col" className="py-1 pr-3 font-medium">Object</th>
-              <th scope="col" className="py-1 pr-3 font-medium">Direction</th><th scope="col" className="py-1 pr-3 font-medium">Pulled</th>
-              <th scope="col" className="py-1 pr-3 font-medium">Pushed</th><th scope="col" className="py-1 font-medium">Failed</th>
-            </tr></thead>
-            <tbody>
-              {runs.slice(0, 12).map((r) => (
-                <tr key={r.id} className="border-b">
-                  <td className="py-1 pr-3">{day(r.started)} {r.started.slice(11)}</td>
-                  <td className="py-1 pr-3">{r.object}</td><td className="py-1 pr-3">{r.direction}</td>
-                  <td className="py-1 pr-3 tabular-nums">{n(r.pulled)}</td><td className="py-1 pr-3 tabular-nums">{n(r.pushed)}</td>
-                  <td className="py-1 tabular-nums">{r.failed ? n(r.failed) : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* A table inside a record is a divided list at 400, never a clipped one (LAYOUTS.md §5). */}
+        <RowsTable
+          rows={runs.slice(0, 12)}
+          rowKey={(r) => r.id}
+          columns={[
+            { key: "started", header: "Started", lead: true, cell: (r) => `${day(r.started)} ${r.started.slice(11)}` },
+            { key: "object", header: "Object", cell: (r) => r.object },
+            { key: "direction", header: "Direction", cell: (r) => r.direction },
+            { key: "pulled", header: "Pulled", cell: (r) => n(r.pulled) },
+            { key: "pushed", header: "Pushed", cell: (r) => n(r.pushed) },
+            { key: "failed", header: "Failed", cell: (r) => (r.failed ? n(r.failed) : "—") },
+          ]}
+          empty="Nothing has run yet."
+        />
       </div>
     ),
   })
@@ -213,14 +210,16 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
   const disconnectConsequence = `Stops syncing. Records already in ${kind} stay. Records pulled into ollopA stay and lose their link.`
 
   /**
-   * The header's acts. Pausing is reversible, so it acts at once and is outlined like the rest.
-   * Disconnecting is the one act that cannot be taken back: text in the destructive colour, last,
-   * after a gap, with everything it does inside its own confirmation and the verb on the affirmative
+   * The header's acts, in the order `Actions` draws them: the primary first, then the comparable
+   * acts, then the destructive one last. Pulling is what an admin comes here for, so it is the one
+   * filled control; the rest drop into the "…" as the room runs out, and on a phone the bar holds
+   * the primary and the menu. Disconnecting is the one act that cannot be taken back, so it sits
+   * last with everything it does inside its own confirmation and the verb on the affirmative
    * (DESIGN.md §1 and §2) — which is why no sentence sits beside it any more.
    */
   const headerActions: Action[] = [
+    { ...pullNow, kind: "primary" },
     { kind: "secondary", label: paused ? "Resume syncing" : "Pause syncing", onClick: () => { saveLocal({ paused: !paused, pausedBy: session.user, pausedOn: TODAY }); toast(paused ? `${kind} is syncing again` : `${kind} paused by ${session.user}`) } },
-    pullNow,
     pushNow,
     { kind: "link", label: "Re-run setup", href: href(`/ollopa/connect/${slug}?step=1`), onClick: () => navigate(`/ollopa/connect/${slug}?step=1`) },
     {
@@ -266,7 +265,8 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
             id: "int.errors",
             title: "Errors, grouped by cause",
             count: groups.length ? filtered.length : undefined,
-            action: groups.length > 0 ? <Actions surface="card" items={[{ kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) }]} /> : undefined,
+            // The count sits on the heading line, so the act sits with the section's other acts in
+            // the band below it rather than colliding with the heading at 400 (LAYOUTS.md §2).
             children: (
               <>
               {groups.length === 0 ? (
@@ -277,11 +277,14 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                     <Picker label="When" value={windowPick} options={WINDOWS} onChange={setWindowPick} />
                     <Picker label="Object" value={objectPick} options={objectNames} onChange={setObjectPick} />
                     <div className="flex items-end">
-                      <Actions surface="card" items={[{
-                        kind: "secondary",
-                        label: `Retry all ${filtered.length} · 100 at a time, ${Math.max(1, Math.ceil(filtered.length / 100))} pass${Math.ceil(filtered.length / 100) === 1 ? "" : "es"}`,
-                        onClick: () => groups.forEach(retryGroup),
-                      }]} />
+                      <Actions className="justify-start" surface="card" items={[
+                        {
+                          kind: "secondary",
+                          label: `Retry all ${filtered.length} · 100 at a time, ${Math.max(1, Math.ceil(filtered.length / 100))} pass${Math.ceil(filtered.length / 100) === 1 ? "" : "es"}`,
+                          onClick: () => groups.forEach(retryGroup),
+                        },
+                        { kind: "secondary", label: "Export as CSV", onClick: () => toast(`Exported ${filtered.length} error rows as CSV`) },
+                      ]} />
                     </div>
                   </div>
 
@@ -306,30 +309,21 @@ export function IntegrationRecord({ session, id }: { session: Session; id?: stri
                         </div>
                         <div className="mt-2">
                           <Door id={`int.error.${id}.${group.cause.slice(0, 24)}`} label={`The ${group.rows.length} records this happened to`} count={group.rows.length}>
-                            <div className="min-w-0 overflow-x-auto">
-                              <table className="w-full min-w-[40rem] border-collapse t-small">
-                                <caption className="sr-only">{group.cause}: the records it happened to, with the message, the fix and the number of attempts.</caption>
-                                <thead><tr className="border-b text-left text-muted-foreground">
-                                  <th scope="col" className="py-1 pr-3 font-medium">When</th><th scope="col" className="py-1 pr-3 font-medium">Object</th>
-                                  <th scope="col" className="py-1 pr-3 font-medium">Record</th><th scope="col" className="py-1 pr-3 font-medium">Direction</th>
-                                  <th scope="col" className="py-1 pr-3 font-medium">Message</th><th scope="col" className="py-1 pr-3 font-medium">Fix</th>
-                                  <th scope="col" className="py-1 font-medium">Attempts</th>
-                                </tr></thead>
-                                <tbody>
-                                  {group.rows.map((row) => (
-                                    <tr key={row.id} className="border-b">
-                                      <td className="py-1 pr-3">{day(row.at)} {row.at.slice(11)}</td>
-                                      <td className="py-1 pr-3">{row.object}</td>
-                                      <td className="py-1 pr-3"><a className="underline" href={href("/ollopa/people")}>{row.record}</a></td>
-                                      <td className="py-1 pr-3">{row.direction}</td>
-                                      <td className="py-1 pr-3">{retrying.includes(row.id) ? "Retrying…" : row.message}</td>
-                                      <td className="py-1 pr-3">{row.fix}</td>
-                                      <td className="py-1 tabular-nums">{row.attempts}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
+                            {/* The same columns, a divided list at 400 (LAYOUTS.md §5). */}
+                            <RowsTable
+                              rows={group.rows}
+                              rowKey={(row) => row.id}
+                              columns={[
+                                { key: "record", header: "Record", lead: true, cell: (row) => <a className="underline" href={href("/ollopa/people")}>{row.record}</a> },
+                                { key: "when", header: "When", cell: (row) => `${day(row.at)} ${row.at.slice(11)}` },
+                                { key: "object", header: "Object", cell: (row) => row.object },
+                                { key: "direction", header: "Direction", cell: (row) => row.direction },
+                                // The two wordy columns wrap rather than push the table sideways.
+                                { key: "message", header: "Message", className: "whitespace-normal", cell: (row) => (retrying.includes(row.id) ? "Retrying…" : row.message) },
+                                { key: "fix", header: "Fix", className: "whitespace-normal", cell: (row) => row.fix },
+                                { key: "attempts", header: "Attempts", cell: (row) => row.attempts },
+                              ]}
+                            />
                           </Door>
                         </div>
                       </div>

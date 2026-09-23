@@ -224,6 +224,16 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
   const reviewable = waiting.filter(canApprove)
   const review = totals(reviewable)
 
+  // LAYOUTS.md §1: a Home tile is a summary, and a door. Three items sit on it — the batches arrive
+  // with the ones that spend the most first, so the first three are those — and the rest are one door
+  // to the waiting list on Agents. The heading still counts every one of them.
+  const CAP = 3
+  let room = CAP
+  const onTile = batches
+    .map((b) => { const items = b.items.slice(0, room); room -= items.length; return { ...b, items, whole: items.length === b.items.length } })
+    .filter((b) => b.items.length > 0)
+  const rest = waiting.length - (CAP - room)
+
   return (
     <Section
       id="home-approvals"
@@ -280,7 +290,7 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
 
       {waiting.length === 0 && <Nothing text="No agent actions waiting." link={{ label: "Agents", to: "/ollopa/agents" }} />}
 
-      {batches.map((batch) => {
+      {onTile.map((batch) => {
         const approvable = batch.items.filter(canApprove)
         const unread = approvable.filter((e) => !read[e.id]).length
         const t = totals(approvable)
@@ -288,7 +298,7 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
           <div key={batch.key} className="pb-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1">
               <p className="min-w-0 text-xs text-muted-foreground">{batch.heading}</p>
-              {approvable.length >= 2 && (
+              {batch.whole && approvable.length >= 2 && (
                 <span className="ml-auto flex flex-wrap items-center gap-2">
                   <Actions
                     surface="card"
@@ -322,6 +332,17 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
           </div>
         )
       })}
+
+      {rest > 0 && (
+        /* The rest of the queue, on the page that holds it. A destination, so a link and never a
+           button (DESIGN.md §1), and `follow` so the trail comes back to this tile. */
+        <p className="pb-3 t-body">
+          <button type="button" className="underline underline-offset-4"
+                  onClick={() => follow("/ollopa/agents", originHere("home-approvals"))}>
+            {rest} more waiting · Agents
+          </button>
+        </p>
+      )}
 
       <Door id="home.agents.week" label="What agents did this week" count={logged.length + decidedNow.length}>
         <Rows>

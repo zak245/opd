@@ -63,6 +63,8 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   const [testOpen, setTestOpen] = useState(route.query.get("open") === "test")
   const [testPerson, setTestPerson] = useState(seed.contacts[0]?.id ?? "")
   const [tested, setTested] = useState(false)
+  /** The last test this session ran: what it said and when. Only this section can show it. */
+  const [lastTest, setLastTest] = useState<{ name: string; enrolled: boolean; at: string } | null>(null)
   const [newCeiling, setNewCeiling] = useState("")
   const [announcement, setAnnouncement] = useState<string | null>(null)
   const [filterRule, setFilterRule] = useState("all")
@@ -240,7 +242,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
           </p>
         )}
 
-        <Actions surface="page" items={[{
+        <Actions className="justify-start" surface="card" items={[{
           kind: "secondary",
           label: w.routing?.skipAway ? "Keep people who are away in the rotation" : "Skip people who are away",
           onClick: () => {
@@ -289,34 +291,25 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   } })
 
   parts.push({ item: "wf.test", section: {
-    id: "turn-on", title: "Test and turn on",
+    id: "turn-on", title: "The last test and the status",
+    // Turning it on or off and testing it are the record's own acts, so they sit on the name line
+    // and only there (LAYOUTS.md §7). What is left here is what only this section can show.
     children: (
-      <Actions surface="page" items={[
-        {
-          kind: "primary",
-          label: w.status === "on" ? "Turn off" : "Turn on",
-          onClick: () => {
-            patch({ status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
-            toast(w.status === "on"
-              ? `${w.name} stops enrolling. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`
-              : `${w.name} is on. ${num(matchNow)} people match the filter today.`)
-          },
-          // Neither direction can be undone: what was not routed while it was off was not routed,
-          // and what it enrols while it is on is enrolled. So both carry the confirmation.
-          irreversible: w.status === "on"
-            ? {
-              title: `Turn ${w.name} off?`,
-              consequence: `Nothing new is enrolled or routed until it is on again; anything that arrives meanwhile reaches nobody. The ${num(w.sla?.running ?? 0)} people already running finish their steps.`,
-              confirmLabel: "Turn it off",
-            }
-            : {
-              title: `Turn ${w.name} on?`,
-              consequence: `${num(matchNow)} people match the filter today and start being enrolled and routed, spending up to ${num(w.ceiling.perDay)} credits a day. The daily limit is ${num(w.limits.perDay)}, so the rest wait.`,
-              confirmLabel: "Turn it on",
-            },
-        },
-        { kind: "secondary", label: "Test on one record", onClick: () => { setTested(false); setTestOpen(true) }, keys: "T" },
-      ]} />
+      <div className="grid gap-2 t-body">
+        <p>
+          {w.status === "on"
+            ? <>On since {ago(w.statusChangedOn)}, turned on by {w.statusChangedBy}.</>
+            : <>Off since {ago(w.statusChangedOn)}, turned off by {w.statusChangedBy}. Nothing is enrolled or routed while it is off.</>}
+        </p>
+        <p className="text-muted-foreground">
+          {lastTest
+            ? <>Tested on {lastTest.name} at {lastTest.at}: {lastTest.enrolled ? "would be enrolled" : "would not be enrolled"}. Nothing was written and nothing was sent.</>
+            : <>Not tested in this session.</>}
+        </p>
+        <Actions className="justify-start" surface="card" items={[
+          { kind: "secondary", label: "Open the run history", onClick: showRuns, keys: "E" },
+        ]} />
+      </div>
     ),
   } })
 
@@ -510,7 +503,20 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
       {/* A test that really is a test: it prints what it would do and does none of it. */}
       <Panel id="workflow-test" title="Test on one record" open={testOpen} onOpenChange={setTestOpen}
-        footer={<Actions surface="dialog" layout="stack" items={[{ kind: "primary", label: "Run the test", onClick: () => { setTested(true); toast("Tested. Nothing was written, nothing was sent, no credits were spent.") } }]} />}
+        footer={<Actions surface="dialog" layout="stack" items={[{
+          kind: "primary", label: "Run the test",
+          onClick: () => {
+            setTested(true)
+            if (person) {
+              setLastTest({
+                name: person.name,
+                enrolled: w.enrolment.every((f) => matches(person, f)),
+                at: new Date().toTimeString().slice(0, 5),
+              })
+            }
+            toast("Tested. Nothing was written, nothing was sent, no credits were spent.")
+          },
+        }]} />}
       >
         <div className="space-y-3">
           <div>

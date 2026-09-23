@@ -828,6 +828,8 @@ export function PeoplePage({ session }: { session: Session }) {
     }] : []),
     {
       name: "Search",
+      // The one control a phone keeps in front; everything else is in the door beside it.
+      pin: true,
       always: true,
       node: (
         <Input

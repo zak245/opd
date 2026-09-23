@@ -24,6 +24,7 @@ import { back as goBack, follow, useTrail } from "../../chain"
 import { openBeside } from "../../beside"
 import { toast } from "../../templates/TablePage"
 import { RecordPage, CardRow, type RecordCard, type RecordDoor, type RecordField } from "../../templates/RecordPage"
+import { SectionFilter } from "../../layouts"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Container, Group } from "../../ui/Section"
@@ -1120,28 +1121,29 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
     </div>
   )
 
+  // The section filter from the layout system: a tab strip where there is room, one Select below
+  // `md`, where six words in a 350 px card used to clip at "Meetin…" (LAYOUTS.md §5).
   const filterChips = (
-    <TabsList data-item="timeline.filter" data-item-label="Timeline filters" className="w-fit">
-      {FILTERS.map((f) => (
-        <TabsTrigger key={f.key} value={f.key}
-          data-item={f.key === "note" && r2 ? "timeline.note-list" : undefined}
-          data-item-label={f.key === "note" && r2 ? "Notes" : undefined}>
-          {f.label}
-        </TabsTrigger>
-      ))}
-    </TabsList>
+    <div data-item="timeline.filter" data-item-label="Timeline filters">
+      <SectionFilter
+        label="Timeline filters"
+        options={FILTERS.map((f) => ({ key: f.key, label: f.label }))}
+        value={active.key}
+        onChange={setFilter}
+      />
+    </div>
   )
 
-  /** The strip and the list it filters, as one Tabs: the panel really is what the tab controls. */
+  /** The strip and the list it filters: one filter, one list, and the list says what is on. */
   const timeline = (listClass: string, bodyClass: string) => (
-    <Tabs value={active.key} onValueChange={(v) => { if (v) setFilter(v) }}>
+    <>
       <div className={listClass}>{filterChips}</div>
-      <TabsContent value={active.key} className={bodyClass}>
+      <div className={bodyClass}>
         {pinnedNote}
         {timelineItems}
         {loadOlder}
-      </TabsContent>
-    </Tabs>
+      </div>
+    </>
   )
 
   const pinnedNote = pinned ? (

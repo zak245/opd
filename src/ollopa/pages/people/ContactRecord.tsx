@@ -32,6 +32,7 @@ import { ago, day, glanceSplit, rowsFor, type PersonRow } from "./person"
 import { CallLog } from "./CallLog"
 import { EnrichPanel } from "./EnrichPanel"
 import type { PersonEdit } from "./edits"
+import { SectionFilter } from "../../layouts/SectionFilter"
 
 type Kind = "email" | "call" | "meeting" | "note" | "sequence" | "agent" | "task"
 
@@ -456,17 +457,14 @@ export function ContactRecord({ session, id }: { session: Session; id?: string }
             title: "Activity",
             count: visible.length,
             action: (
-              // The same inline TabsList the deal record's timeline uses: one row, never wrapped.
-              // `w-0 min-w-full` keeps the strip from setting the card's width: at 400 it scrolls
-              // inside its own box rather than making the card, and so the page, wider than the
-              // screen (LAYOUTS.md §5, one line that scrolls rather than a second row).
-              <Tabs value={filter} onValueChange={(v) => { if (v) setFilter(v) }}>
-                <TabsList aria-label="Activity filters" className="w-fit max-w-[13rem] justify-start overflow-x-auto sm:max-w-none">
-                  {FILTERS.map((f) => (
-                    <TabsTrigger key={f.key} value={f.key}>{f.label}</TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+              // Tabs where there is room, one Select where there is not — the shared part, so every
+              // record's section filter behaves the same way.
+              <SectionFilter
+                label="Activity filters"
+                options={FILTERS.map((f) => ({ key: f.key, label: f.label }))}
+                value={filter}
+                onChange={setFilter}
+              />
             ),
             children: (
               <div className="space-y-3">

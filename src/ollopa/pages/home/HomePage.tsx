@@ -61,13 +61,12 @@ export function HomePage({ session }: { session: Session }) {
   const phone = [left[0], right[0], ...left.slice(1), ...right.slice(1)].filter(Boolean) as SectionKey[]
   const order = (k: SectionKey) => phone.indexOf(k) + 1
 
-  // The template owns the grid (LAYOUTS.md §6), and a grid fills row by row: the work queue and what
-  // waits for a decision are zipped, so the first lands in the left column and the second in the right.
-  const tiles: SectionKey[] = []
-  for (let i = 0; i < Math.max(left.length, right.length); i++) {
-    if (left[i]) tiles.push(left[i])
-    if (right[i]) tiles.push(right[i])
-  }
+  // The template owns the grid (LAYOUTS.md §6) and flows the tiles by height, not by count: it fills
+  // the first column, then the next. So the page hands them over in reading order — the work queue,
+  // then what waits for a decision — and the template decides where the break falls. Zipping them
+  // pair by pair, as a row-by-row grid needed, would put a tall tile beside a short one and leave the
+  // rest of that row empty.
+  const tiles: SectionKey[] = [...left, ...right]
 
   const lines = healthLines(data, d)
 

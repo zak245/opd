@@ -86,6 +86,68 @@ table or a divided list. `Rows` divides children with the library's own rule.
 `Container` is the same component under its older name, kept because 27 files adopted it.
 `Group` is a band inside a section with **no tint and no border**.
 
+### `RowsTable`
+
+A table where there is room and a **divided list below `md`**. LAYOUTS.md §5 says a table becomes a
+divided list at 400 and is never clipped; this is the part that keeps that promise for tables
+*inside* records, not only on index pages. One set of column definitions draws both shapes.
+
+| Column field | Meaning |
+|---|---|
+| `key`, `header`, `cell` | As on any table. |
+| `lead` | This column is the row's own name; it heads the stacked form. Defaults to the first. |
+| `phone: false` | Leave this column out of the stacked form, where it repeats the lead. |
+| `className` | Applied to the head and the cell. |
+
+```tsx
+<RowsTable
+  rows={steps}
+  rowKey={(s) => s.id}
+  columns={[
+    { key: "step", header: "Step", lead: true, cell: (s) => s.name },
+    { key: "sent", header: "Sent", cell: (s) => s.sent },
+    { key: "opened", header: "Opened", cell: (s) => `${s.opened} · ${rate(s)}` },
+  ]}
+  empty="No steps have sent yet." />
+```
+
+Use it for every table inside a record. An index page gets the same behaviour from `IndexPage`'s
+`table` and `rows` pair.
+
+### `SectionFilter`
+
+The filter on a section **inside a record** — a contact's activity, a deal's timeline. An inline
+`TabsList` above `md`; below it, one `Select` naming the filter that is on, because six words in a
+350 px card clip at "Meetin…" and §5 says a thing is never clipped, only shaped differently.
+
+```tsx
+<SectionFilter label="Activity filters" options={FILTERS} value={filter} onChange={setFilter} />
+```
+
+Each option is `{ key, label, count? }`; a count is printed beside the label in both shapes.
+
+### A record's section header (`RecordSection`)
+
+`templates/RecordPage`'s sections take three optional slots beside the heading, laid out the way the
+index `Toolbar` lays out its controls:
+
+| Slot | What it holds | Where it sits |
+|---|---|---|
+| `search` | The section's own search. | **Always in front**, at every width. |
+| `action` | The section's controls — a `SectionFilter`, a button. | Beside the heading above `md`; under it below, and inside the "…" on a phone when there is also a `menu`. |
+| `menu` | `{ label, onClick, destructive? }[]` — acts that belong to the section, not to a row. | Behind one "…" at the heading's end. |
+
+The heading itself wraps inside its own column, so a long title and its count never spill into the
+action column.
+
+```tsx
+{ id: "person.activity", title: "Activity", count: 3,
+  search: <Input aria-label="Search this activity" className="h-8 w-40" />,
+  action: <SectionFilter label="Activity filters" options={FILTERS} value={f} onChange={setF} />,
+  menu: [{ label: "Export as CSV", onClick: exportCsv }],
+  children: … }
+```
+
 ### `SideRail`
 
 Related things on a record: narrower than the main column at 1440, stacked under it at 1024 and
@@ -173,6 +235,18 @@ the template, so every queue in the product is walked the same way.
   id: s.id, name: s.name, note: `${s.count} · ${money(s.total)}`, cards: <>{s.deals.map(card)}</>,
 }))} />
 ```
+
+### `HomeGrid`, and the `data-wide` tile
+
+`HomePage` lays its tiles out with `HomeGrid`, which flows them **by height, not by count**: above
+`lg` the tiles are a two-column masonry flow, so a tall tile on the right no longer leaves the lower
+left empty (§6, nothing empty at rest). A tile that must span both columns says so itself:
+
+```tsx
+<Section heading="Pipeline" data-wide>…</Section>
+```
+
+`data-wide` is the only thing a page passes; the grid does the rest.
 
 ### `HomePage`, `WizardPage`, `SettingsPage`, `FormSheet`
 

@@ -116,8 +116,13 @@ export interface ToolbarControl {
   /** Used for the door's label and as the key. Say what the control is for: "Stage", "Owner". */
   name: string
   node: ReactNode
-  /** Keep it out in front whatever the count: the search always is. */
+  /** Keep it out in front whatever the count: an applied filter is, so its cause is visible. */
   always?: boolean
+  /**
+   * Keep it out in front even on a phone, where everything else goes in the door. Exactly one
+   * control should carry this — the search — because a phone toolbar is one control and one door.
+   */
+  pin?: boolean
 }
 
 /**
@@ -138,11 +143,16 @@ export function Toolbar({ controls, count, max = 5, className }: {
   const id = useId()
   const phone = usePhone()
   const shown = useMemo(() => {
+    // At 400 a toolbar of six rows is the page. One thing in front — the search — and one door
+    // for everything else, including the filters that are on: the door's own count says how many
+    // ("Filters and views · 4 on"), so the cause is still visible without costing four rows.
+    if (phone) {
+      const pinned = controls.filter((c) => c.pin)
+      return { front: pinned, behind: controls.filter((c) => !c.pin) }
+    }
     const always = controls.filter((c) => c.always)
     const rest = controls.filter((c) => !c.always)
-    // At 400 a toolbar of five rows is the page. One thing in front — the search — and one door
-    // for the rest, so the content starts on the first screen (LAYOUTS.md §5).
-    const room = phone ? 0 : Math.max(0, max - always.length)
+    const room = Math.max(0, max - always.length)
     return { front: [...always, ...rest.slice(0, room)], behind: rest.slice(room) }
   }, [controls, max, phone])
 
@@ -150,12 +160,17 @@ export function Toolbar({ controls, count, max = 5, className }: {
     ? "Filters and views"
     : `Filter by ${shown.behind.map((c) => c.name.toLowerCase()).join(", ")}`
 
+
+  // On a phone the count and the columns control go inside the door too: a toolbar that costs six
+  // rows before the first row of the list is the page (LAYOUTS.md §5).
+  const countOut = phone ? undefined : count
+
   return (
     <div className={cn("flex w-full min-w-0 flex-col gap-2", className)}>
       <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
-        {shown.front.map((c) => <div key={c.name} className="shrink-0">{c.node}</div>)}
-        {count !== undefined && (
-          <span className="t-label ml-auto shrink-0 tabular-nums text-muted-foreground">{count}</span>
+        {shown.front.map((c) => <div key={c.name} className={cn("shrink-0", phone && "w-full")}>{c.node}</div>)}
+        {countOut !== undefined && (
+          <span className="t-label ml-auto shrink-0 tabular-nums text-muted-foreground">{countOut}</span>
         )}
       </div>
       {shown.behind.length > 0 && (
@@ -165,12 +180,17 @@ export function Toolbar({ controls, count, max = 5, className }: {
               <ChevronRight className={cn("transition-transform", open && "rotate-90")} aria-hidden="true" />
               <SlidersHorizontal aria-hidden="true" />
               {label}
-              <Badge variant="outline" className="ml-1">{shown.behind.length}</Badge>
+              <Badge variant="outline" className="ml-1">
+                {phone ? `${shown.behind.filter((c) => c.always).length || shown.behind.length} on` : shown.behind.length}
+              </Badge>
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent id={id} className="pt-2">
-            <div className="flex flex-wrap items-center gap-2">
-              {shown.behind.map((c) => <div key={c.name}>{c.node}</div>)}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              {shown.behind.map((c) => <div key={c.name} className="min-w-0">{c.node}</div>)}
+              {phone && count !== undefined && (
+                <span className="t-label tabular-nums text-muted-foreground">{count}</span>
+              )}
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -235,17 +255,21 @@ export function Section({
   return (
     <Card className={cn("gap-3 py-4", className)} {...rest}>
       {(heading || actions) && (
-        <CardHeader className="min-w-0 flex-wrap items-start gap-2 px-4 [grid-template-columns:minmax(0,1fr)] sm:[grid-template-columns:auto_minmax(0,1fr)]">
+        <CardHeader className="min-w-0 flex-wrap items-start gap-2 px-4 [grid-template-columns:minmax(0,1fr)] md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]">
           {heading && (
-            <CardTitle className="t-section inline-flex items-baseline gap-2">
-              {heading}
+            // A heading is as long as the thing is called. It wraps inside its own column rather
+            // than spilling into the action column, where its count ended up under a button.
+            <CardTitle className="t-section flex min-w-0 flex-wrap items-baseline gap-2">
+              <span className="min-w-0">{heading}</span>
               {count !== undefined && (
                 <span className="t-label font-normal tabular-nums text-muted-foreground">{count}</span>
               )}
             </CardTitle>
           )}
           {actions && (
-            <CardAction className="col-start-1 row-start-2 flex w-full min-w-0 flex-wrap items-center gap-2 justify-self-start sm:col-start-2 sm:row-start-1 sm:justify-self-end">
+            // Below `md` the section's controls drop under the heading and take the full width;
+            // above it they sit at the trailing edge of the same line.
+            <CardAction className="col-start-1 row-start-2 flex w-full min-w-0 flex-wrap items-center gap-2 justify-self-start md:col-start-2 md:row-start-1 md:w-auto md:justify-self-end">
               {actions}
             </CardAction>
           )}

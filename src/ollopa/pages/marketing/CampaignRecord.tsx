@@ -26,7 +26,7 @@ import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Separator } from "@/components/ui/separator"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { RowsTable } from "../../layouts"
 import { FAMILY, PERSON_FAMILY, ink, inUsageOrder } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -249,22 +249,15 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
     doors.push({
       id: "campaign.links", label: `Links clicked · ${num(clicks)}`, count: c.links.length,
       content: (
-        <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow><TableHead>Link</TableHead><TableHead className="text-right">Clicks</TableHead><TableHead className="text-right">Of delivered</TableHead></TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...c.links].sort((a, z) => z.clicks - a.clicks).map((l) => (
-              <TableRow key={l.url}>
-                <TableCell className="max-w-0 truncate"><span title={l.url}>{l.url}</span></TableCell>
-                <TableCell className="text-right tabular-nums">{num(l.clicks)}</TableCell>
-                <TableCell className="text-right tabular-nums">{pct(l.clicks, c.delivered)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        </div>
+        <RowsTable
+          rows={[...c.links].sort((a, z) => z.clicks - a.clicks)}
+          rowKey={(l) => l.url}
+          columns={[
+            { key: "link", header: "Link", lead: true, className: "max-w-0 truncate", cell: (l) => <span title={l.url}>{l.url}</span> },
+            { key: "clicks", header: "Clicks", className: "text-right", cell: (l) => num(l.clicks) },
+            { key: "of", header: "Of delivered", className: "text-right", cell: (l) => pct(l.clicks, c.delivered) },
+          ]}
+        />
       ),
     })
   }
@@ -368,42 +361,38 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
       placeholder="Find a person"
       value={recipientQ}
       onChange={(e) => setRecipientQ(e.target.value)}
-      className="h-8 w-48"
+      className="h-8 w-48 max-sm:w-28"
     />
   ) : undefined
 
   const recipientsBlock = (
     <div className="space-y-2">
       <p className="t-body text-muted-foreground">The first {num(recipientPool.length)} of {num(recipients)}.</p>
-      {/* The library's table: it draws the rule between rows, so nothing here draws one. A table
-          wider than the card scrolls in its own box rather than being cut off (LAYOUTS.md §5). */}
-      <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow><TableHead>Person</TableHead><TableHead>Company</TableHead><TableHead>Opened</TableHead><TableHead>Replied</TableHead></TableRow>
-        </TableHeader>
-        <TableBody>
-          {recipientRows.map((p) => (
-            <TableRow key={p.id} data-item={p.id} data-item-label={p.name}>
-              <TableCell>
+      {/* A table where there is room, the same columns as a divided list at 400 (LAYOUTS.md §5). */}
+      <RowsTable
+        rows={recipientRows}
+        rowKey={(p) => p.id}
+        rowProps={(p) => ({ "data-item": p.id, "data-item-label": p.name })}
+        columns={[
+          {
+            key: "person", header: "Person", lead: true,
+            cell: (p) => (
+              <>
                 <span className="inline-flex items-center gap-1.5">
                   <FamilyIcon of={PERSON_FAMILY} />
                   <button type="button" className="underline" onClick={(ev) => readPerson(p.id, recipientIds, ev.currentTarget)}>{p.name}</button>
                 </span>
                 {/* What an action from the pane beside this list did to this person, in place. */}
                 {personEdits[p.id]?.note && <RowNote kind="person" id={p.id} note={String(personEdits[p.id].note)} at={personEdits[p.id].at} />}
-              </TableCell>
-              <TableCell>{p.company}</TableCell>
-              <TableCell className="tabular-nums">{p.opens}</TableCell>
-              <TableCell className="tabular-nums">{p.replies}</TableCell>
-            </TableRow>
-          ))}
-          {recipientRows.length === 0 && (
-            <TableRow><TableCell colSpan={4} className="py-4 text-center text-muted-foreground">Nobody here matches “{recipientQ}”.</TableCell></TableRow>
-          )}
-        </TableBody>
-      </Table>
-      </div>
+              </>
+            ),
+          },
+          { key: "company", header: "Company", cell: (p) => p.company },
+          { key: "opened", header: "Opened", cell: (p) => p.opens },
+          { key: "replied", header: "Replied", cell: (p) => p.replies },
+        ]}
+        empty={<>Nobody here matches “{recipientQ}”.</>}
+      />
     </div>
   )
 
@@ -438,7 +427,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
               ? <>Mode: live · refreshes daily 06:00 · new matches are added to {audience.usedBy[0] ?? "no campaign yet"}</>
               : <>Frozen at {num(audience.size)} on {day(audience.frozenAt)}</>}
           </p>
-          <Actions surface="page" items={[
+          <Actions className="justify-start" surface="card" items={[
             {
               kind: "secondary",
               label: audience.mode === "live" ? "Freeze" : "Make live",
@@ -499,7 +488,7 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
         // One primary per surface: whichever of pause, resume or schedule this campaign is at.
         // Resuming and scheduling both send, and a send cannot be undone, so each carries its
         // confirmation with the verb in the affirmative and the consequence above it.
-        <Actions surface="page" items={[
+        <Actions className="justify-start" surface="card" items={[
           // The page header already carries the filled control for whichever of these applies, so
           // here the same acts are outline: one filled control per surface, and never the same act
           // filled twice on one page (DESIGN.md §1).

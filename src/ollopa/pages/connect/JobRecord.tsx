@@ -8,6 +8,7 @@ import { Actions } from "../../ui/Actions"
 import { href, navigate } from "@/app/router"
 import { toast } from "../../templates/TablePage"
 import { RecordPage } from "../../templates/RecordPage"
+import { RowsTable } from "../../layouts"
 import { businessById } from "../../data/businesses"
 import { CREDITS, TODAY, seedFor, type EnrichmentJob } from "../../data/seed"
 import type { Session } from "../../session"
@@ -98,30 +99,21 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
               title: "By field",
               count: job.byField.length,
               children: (
-                <div className="min-w-0 overflow-x-auto">
-                  <table className="w-full min-w-[40rem] border-collapse t-body">
-                    <caption className="sr-only">Each field: attempted, matched, hit rate, credits and cost per hit, in the order the fields were requested.</caption>
-                    <thead><tr className="border-b text-left t-small text-muted-foreground">
-                      <th scope="col" className="py-2 pr-3 font-medium">Field</th><th scope="col" className="py-2 pr-3 font-medium">Attempted</th>
-                      <th scope="col" className="py-2 pr-3 font-medium">Matched</th><th scope="col" className="py-2 pr-3 font-medium">Hit rate</th>
-                      <th scope="col" className="py-2 pr-3 font-medium">Credits</th><th scope="col" className="py-2 pr-3 font-medium">Cost per hit</th>
-                      <th scope="col" className="py-2 font-medium">Returned by</th>
-                    </tr></thead>
-                    <tbody>
-                      {job.byField.map((f, i) => (
-                        <tr key={f.field} className="border-b">
-                          <th scope="row" className="py-2 pr-3 text-left font-normal">{f.field}</th>
-                          <td className="py-2 pr-3 tabular-nums">{n(job.rows)}</td>
-                          <td className="py-2 pr-3 tabular-nums">{n(f.hit)}</td>
-                          <td className="py-2 pr-3">{f.hit} of {n(job.rows)} · {pct(job.rows ? f.hit / job.rows : 0)}</td>
-                          <td className="py-2 pr-3 tabular-nums">{n(f.hit * f.cost)}</td>
-                          <td className="py-2 pr-3 tabular-nums">{f.cost}</td>
-                          <td className="py-2">{job.providers[i % job.providers.length]}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                /* A table inside a record is a divided list at 400 (LAYOUTS.md §5). */
+                <RowsTable
+                  rows={job.byField.map((f, i) => ({ ...f, provider: job.providers[i % job.providers.length] }))}
+                  rowKey={(f) => f.field}
+                  columns={[
+                    { key: "field", header: "Field", lead: true, cell: (f) => f.field },
+                    { key: "attempted", header: "Attempted", cell: () => n(job.rows) },
+                    { key: "matched", header: "Matched", cell: (f) => n(f.hit) },
+                    { key: "rate", header: "Hit rate", cell: (f) => `${f.hit} of ${n(job.rows)} · ${pct(job.rows ? f.hit / job.rows : 0)}` },
+                    { key: "credits", header: "Credits", cell: (f) => n(f.hit * f.cost) },
+                    { key: "cph", header: "Cost per hit", cell: (f) => f.cost },
+                    { key: "provider", header: "Returned by", cell: (f) => f.provider },
+                  ]}
+                  empty="No field was asked for."
+                />
               ),
             },
             {
@@ -141,19 +133,6 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                   id: "unmatched",
                   title: "Unmatched rows",
                   count: unmatchedCount,
-                  action: (
-                    <Actions surface="card" items={[{
-                      kind: "destructive",
-                      label: dropped ? "Dropped" : `Drop these ${n(unmatchedCount)} from the list`,
-                      onClick: () => { setDropped(true); toast(`Dropped ${n(unmatchedCount)} rows from ${seed.lists[0]?.name ?? "the list"}`) },
-                      disabledBecause: dropped ? "Already dropped" : undefined,
-                      irreversible: {
-                        title: `Drop these ${n(unmatchedCount)} from the list?`,
-                        consequence: `Removes ${n(unmatchedCount)} from "${seed.lists[0]?.name ?? "the list"}". The records stay in the workspace, and nothing is refunded.`,
-                        confirmLabel: `Drop ${n(unmatchedCount)} from the list`,
-                      },
-                    }]} />
-                  ),
                   children: (
                     <div className="grid gap-3">
                       <ul className="grid gap-1 t-body">
@@ -162,17 +141,33 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
                         ))}
                         {unmatchedCount > unmatched.length && <li className="text-muted-foreground">and {n(unmatchedCount - unmatched.length)} more, in the door at the foot of this page</li>}
                       </ul>
-                      <Actions surface="card" items={[{
-                        kind: "secondary", label: "Run the unmatched rows again",
-                        cost: `about ${n(rerunCost)} credits`,
-                        consequence: "Only rows that return are charged",
-                        onClick: () => toast(`Started a second job on ${n(unmatchedCount)} rows · linked to this one`),
-                        irreversible: {
-                          title: "Run the unmatched rows again?",
-                          consequence: `${n(unmatchedCount)} rows, a different provider order: ${[...job.providers].reverse().join(" → ")}. About ${n(rerunCost)} credits, and only rows that return are charged.`,
-                          confirmLabel: `Run ${n(unmatchedCount)} again · about ${n(rerunCost)} credits`,
+                      {/* Both acts of this section, in the body: the long destructive label ran past
+                          the card's edge at 400 while it sat on the heading line. `Actions` puts the
+                          destructive one last, after the gap (DESIGN.md §1). */}
+                      <Actions className="justify-start" surface="card" items={[
+                        {
+                          kind: "secondary", label: "Run the unmatched rows again",
+                          cost: `about ${n(rerunCost)} credits`,
+                          consequence: "Only rows that return are charged",
+                          onClick: () => toast(`Started a second job on ${n(unmatchedCount)} rows · linked to this one`),
+                          irreversible: {
+                            title: "Run the unmatched rows again?",
+                            consequence: `${n(unmatchedCount)} rows, a different provider order: ${[...job.providers].reverse().join(" → ")}. About ${n(rerunCost)} credits, and only rows that return are charged.`,
+                            confirmLabel: `Run ${n(unmatchedCount)} again · about ${n(rerunCost)} credits`,
+                          },
                         },
-                      }]} />
+                        {
+                          kind: "destructive",
+                          label: dropped ? "Dropped" : `Drop these ${n(unmatchedCount)} from the list`,
+                          onClick: () => { setDropped(true); toast(`Dropped ${n(unmatchedCount)} rows from ${seed.lists[0]?.name ?? "the list"}`) },
+                          disabledBecause: dropped ? "Already dropped" : undefined,
+                          irreversible: {
+                            title: `Drop these ${n(unmatchedCount)} from the list?`,
+                            consequence: `Removes ${n(unmatchedCount)} from "${seed.lists[0]?.name ?? "the list"}". The records stay in the workspace, and nothing is refunded.`,
+                            confirmLabel: `Drop ${n(unmatchedCount)} from the list`,
+                          },
+                        },
+                      ]} />
                     </div>
                   ),
                 }]
@@ -250,25 +245,19 @@ export function JobRecord({ session, id }: { session: Session; id?: string }) {
           label: `All rows · ${n(job.rows)}`,
           count: job.rows,
           content: (
-            <div className="min-w-0 overflow-x-auto">
-              <table className="w-full min-w-[30rem] border-collapse t-small">
-                <caption className="sr-only">Every row in the job, with what came back and what it cost.</caption>
-                <thead><tr className="border-b text-left text-muted-foreground">
-                  <th scope="col" className="py-1 pr-3 font-medium">Row</th><th scope="col" className="py-1 pr-3 font-medium">Person</th>
-                  <th scope="col" className="py-1 pr-3 font-medium">Returned</th><th scope="col" className="py-1 font-medium">Credits</th>
-                </tr></thead>
-                <tbody>
-                  {seed.contacts.slice(0, Math.min(40, job.rows)).map((c, i) => (
-                    <tr key={c.id} className="border-b">
-                      <td className="py-1 pr-3 tabular-nums">{i + 1}</td>
-                      <td className="py-1 pr-3">{c.name} · {c.company}</td>
-                      <td className="py-1 pr-3">{c.enrichedOn ? job.fields.join(", ") : "nothing"}</td>
-                      <td className="py-1 tabular-nums">{c.enrichedOn ? costPerHit : 0}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {job.rows > 40 && <p className="pt-2 t-small text-muted-foreground">The first 40 of {n(job.rows)}. Export the report for all of them.</p>}
+            <div className="min-w-0">
+              <RowsTable
+                rows={seed.contacts.slice(0, Math.min(40, job.rows)).map((c, i) => ({ ...c, no: i + 1 }))}
+                rowKey={(c) => c.id}
+                columns={[
+                  { key: "person", header: "Person", lead: true, cell: (c) => `${c.name} · ${c.company}` },
+                  { key: "row", header: "Row", cell: (c) => c.no },
+                  { key: "returned", header: "Returned", cell: (c) => (c.enrichedOn ? job.fields.join(", ") : "nothing") },
+                  { key: "credits", header: "Credits", cell: (c) => (c.enrichedOn ? costPerHit : 0) },
+                ]}
+                empty="No row ran."
+              />
+              {job.rows > 40 && <p className="px-4 pt-2 t-small text-muted-foreground">The first 40 of {n(job.rows)}. Export the report for all of them.</p>}
             </div>
           ),
         }]}

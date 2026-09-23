@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { back, routeKey, useTrail } from "../chain"
 import { Door, DoorGroup, ExpandAll } from "../ui/Door"
 import { FamilyIcon } from "../ui/Identity"
@@ -35,7 +35,7 @@ import { SectionHeader } from "../ui/SectionHeader"
 import type { QuickLookEditable, QuickLookField } from "./QuickLook"
 import { Divider } from "../ui/Divider"
 import { Measured } from "../layouts/frame"
-import { SideRail } from "../layouts/parts"
+import { SideRail, usePhone } from "../layouts/parts"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Separator } from "@/components/ui/separator"
 
@@ -100,7 +100,15 @@ export interface RecordSection {
   id: string
   title: string
   count?: number
+  /** The section's own controls, beside the heading above `md` and under it below. */
   action?: ReactNode
+  /**
+   * The section's search. It stays in front at every width — a phone keeps one control out and puts
+   * the rest behind the "…", exactly as the index toolbar does (LAYOUTS.md §2).
+   */
+  search?: ReactNode
+  /** Acts that belong to the section rather than to a row: behind one "…" at the heading's end. */
+  menu?: { label: string; onClick: () => void; destructive?: boolean }[]
   children: ReactNode
   /** A brief's sections say who wrote them; a generated section is marked apart from a written one. */
   authored?: "written" | "generated"
@@ -332,14 +340,43 @@ export function CardRow({ title, meta, actions, children }: {
 
 /** A section of a record is a container with its heading, and its doors open inside it. */
 function Section({ section }: { section: RecordSection }) {
+  // On a phone the heading takes its own line and the controls take the next, laid out the way the
+  // index toolbar lays its out: the search in front, everything else behind the "…".
+  const phone = usePhone()
+  const acts = section.action || section.search || section.menu?.length
   return (
     <Card id={section.id} className="gap-3 py-4">
-      <CardHeader className="gap-0 px-4">
-        <CardTitle className="t-section inline-flex items-baseline gap-2">
-          {section.title}
+      <CardHeader className={cn(
+        "min-w-0 gap-2 px-4 [grid-template-columns:minmax(0,1fr)]",
+        acts && "md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]",
+      )}>
+        <CardTitle className="t-section flex min-w-0 flex-wrap items-baseline gap-2">
+          <span className="min-w-0">{section.title}</span>
           {section.count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{section.count}</span>}
         </CardTitle>
-        {section.action && <CardAction>{section.action}</CardAction>}
+        {acts && (
+          <CardAction className="col-start-1 row-start-2 flex w-full min-w-0 flex-wrap items-center gap-2 justify-self-start md:col-start-2 md:row-start-1 md:w-auto md:justify-self-end">
+            {section.search}
+            {(!phone || !section.menu?.length) && section.action}
+            {(section.menu?.length || (phone && section.action)) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label={`More for ${section.title}`}>
+                    <MoreHorizontal className="size-4" aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {phone && section.action && <div className="p-1">{section.action}</div>}
+                  {section.menu?.map((m) => (
+                    <DropdownMenuItem key={m.label} variant={m.destructive ? "destructive" : undefined} onSelect={m.onClick}>
+                      {m.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent className="px-4">
       {section.authored && (
@@ -635,6 +672,13 @@ function Actions({ actions, confirming, setConfirming, compact }: {
   setConfirming: (v: string | null) => void
   compact?: boolean
 }) {
+  // One primary and at most two comparable acts on the line; the rest go behind one "…" with the
+  // destructive act last after a rule (DESIGN.md §1). Below 768 only the primary stays out, so a
+  // phone never carries two filled controls on one surface.
+  const room = compact ? 0 : 2
+  const out = actions.secondary.slice(0, room)
+  const behind = actions.secondary.slice(room)
+
   const ask = (a: RecordAction, variant: "default" | "outline") =>
     confirming === a.label ? (
       <span key={a.label} className="flex flex-wrap items-center gap-2 rounded-md border px-2 py-1">
@@ -648,26 +692,47 @@ function Actions({ actions, confirming, setConfirming, compact }: {
       </Button>
     )
 
+  // The destructive act asks before it acts, wherever it was pressed from.
+  const asking = confirming === "__destructive" && actions.destructive
+
   return (
     <>
       {actions.primary.map((a) => ask(a, "default"))}
-      {actions.secondary.map((a) => ask(a, "outline"))}
-      {/* Rule 7: the destructive action is here with its consequence in words, not in a "…" menu. */}
-      {actions.destructive && (
-        confirming === "__destructive" ? (
-          <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
-            <span className="t-small [color:var(--danger-ink)]">{actions.destructive.consequence}</span>
-            <Button size="sm" variant="destructive" onClick={() => { actions.destructive!.onConfirm(); setConfirming(null) }}>{actions.destructive.label}</Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirming("__destructive")}>
-              {actions.destructive.label}
+      {out.map((a) => ask(a, "outline"))}
+      {(behind.length > 0 || actions.destructive) && !asking && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label="More acts for this record">
+              <MoreHorizontal className="size-4" aria-hidden="true" />
             </Button>
-            <span className={cn("t-small text-muted-foreground", compact ? "order-first w-full" : "max-w-[22rem]")}>{actions.destructive.consequence}</span>
-          </span>
-        )
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-w-xs">
+            {behind.map((a) => (
+              <DropdownMenuItem key={a.label} onSelect={() => (a.confirm ? setConfirming(a.label) : a.onClick())}
+                                className={a.confirm ? "flex-col items-start gap-0.5" : undefined}>
+                <span>{a.label}</span>
+                {a.confirm && <span className="t-small text-muted-foreground">{a.confirm}</span>}
+              </DropdownMenuItem>
+            ))}
+            {behind.length > 0 && actions.destructive && <DropdownMenuSeparator />}
+            {/* Rule 7: the destructive act still says what it does — in here the words are the
+                item's own description rather than a line beside it. */}
+            {actions.destructive && (
+              <DropdownMenuItem variant="destructive" className="flex-col items-start gap-0.5"
+                                onSelect={() => setConfirming("__destructive")}>
+                <span>{actions.destructive.label}</span>
+                <span className="t-small text-muted-foreground">{actions.destructive.consequence}</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      {asking && (
+        <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
+          <span className="t-small [color:var(--danger-ink)]">{actions.destructive!.consequence}</span>
+          <Button size="sm" variant="destructive" onClick={() => { actions.destructive!.onConfirm(); setConfirming(null) }}>{actions.destructive!.label}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>
+        </span>
       )}
     </>
   )

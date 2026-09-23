@@ -272,7 +272,7 @@ export function AccountsPage({ session }: { session: Session }) {
     },
     { id: "acct.value", header: "Contract value", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.value, cell: (v) => money(v.account!.value, b.currency) },
     {
-      id: "acct.risks", header: "Open risks", className: "min-w-40", sortValue: (v) => v.account!.risks.filter((r) => !r.resolved).length,
+      id: "acct.risks", header: "Open risks", className: "min-w-36", sortValue: (v) => v.account!.risks.filter((r) => !r.resolved).length,
       cell: (v) => {
         const open = v.account!.risks.filter((r) => !r.resolved)
         if (open.length === 0) return <span className="text-muted-foreground">None</span>
@@ -316,7 +316,14 @@ export function AccountsPage({ session }: { session: Session }) {
   // Removed, not disabled, where the workspace has no CRM (rule 4).
   const allColumns = columnDefs.filter((c) => (b.crm ? true : c.id !== "acct.crm-sync"))
 
-  const defaultColumnIds = allColumns.filter((c) => c.always || d.level(c.id) === 1).map((c) => c.id)
+  // An index is one full-width column (LAYOUTS.md §6), so the default set has to fit at 1440. Seven
+  // columns did not: the table scrolled sideways on the widest screen. The last touch is the one
+  // the renewal, the risks and the next step already speak for, so it comes out of the default set
+  // and stays in the column picker.
+  const DEFAULT_OUT = ["acct.last-touch"]
+  const defaultColumnIds = allColumns
+    .filter((c) => c.always || (d.level(c.id) === 1 && !DEFAULT_OUT.includes(c.id)))
+    .map((c) => c.id)
   const chosenIds = state.columns ?? defaultColumnIds
   const columns = allColumns.filter((c) => chosenIds.includes(c.id) || c.always)
 
@@ -406,7 +413,7 @@ export function AccountsPage({ session }: { session: Session }) {
         total={all.length}
         rows={rows}
         rowKey={(v) => v.company.id}
-        searchHint="Search a name, a domain, a champion or an owner"
+        searchHint="Search accounts"
         searchText={(v) => `${v.account!.name} ${v.account!.domain} ${v.account!.champion} ${v.account!.owner}`}
         figures={figures}
         above={above}
