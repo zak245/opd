@@ -22,7 +22,7 @@ import { Door } from "../../ui/Door"
 import { IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
-import { useColumnFit, type ColumnPriority } from "../../layouts/columns"
+import { useFitColumns, type ColumnPriority } from "../../layouts/columns"
 
 /* ------------------------------------------------------------------------------------- the parts */
 
@@ -205,8 +205,8 @@ export function DataTable<T>(p: DataTableProps<T>) {
     return () => window.removeEventListener("keydown", onKey)
   }, [glancing, rows, p])
 
-  // Which columns the table draws at this width, and which fold into the row's meta line.
-  const { shown: cols, folded } = useColumnFit(p.columns, (c) => c.priority)
+  // Which columns fit the box the table is in, and which fold into the row's meta line.
+  const { ref: fitRef, shown: cols, folded } = useFitColumns(p.columns, { priorityOf: (c) => c.priority })
 
   const header = (col: Col<T>) => {
     const sorted = p.sort.id === col.id
@@ -360,6 +360,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
       ) : undefined}
       bulk={bulkBar}
       rows={phoneRows}
+      tableRef={fitRef}
       table={<>
       <div role="status" aria-live="polite" className="sr-only">{rows.length} rows match</div>
       <Table>

@@ -6,7 +6,7 @@ export { PageHeader, StatusRow, Toolbar, SummaryStrip, Section, Container, Group
 export type { PageHeaderProps, ToolbarControl, SummaryFigure, SectionProps } from "./parts"
 
 // Which columns a table draws at this width (LAYOUTS.md §5, §6)
-export { useColumnFit, useBand } from "./columns"
+export { useColumnFit, useFitColumns, useBand } from "./columns"
 export type { ColumnPriority, Band } from "./columns"
 
 // The filter on a section inside a record: tabs above `md`, one Select below it

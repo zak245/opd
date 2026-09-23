@@ -132,8 +132,9 @@ const ACTS = [
   act("act-row-menu", "People", "A row's menu, open", "/ollopa/people", "meridian:sdr", [
     openMenu(1), wait(400),
   ]),
+  // The destructive act lives in the header's "…" now (DESIGN.md §1), so the menu opens first.
   act("act-dialog", "Deals", "An irreversible act asking first", "/ollopa/deals/d-118", "meridian:ae", [
-    openDialog("Delete deal"), wait(600),
+    clickText("More acts"), wait(400), openDialog("Delete deal"), wait(600),
   ]),
   act("act-door", "Settings", "A door, open", "/ollopa/settings", "meridian:admin", [
     openDoor(), wait(500),
@@ -150,12 +151,13 @@ const ACTS = [
   act("act-quick-look", "People", "The quick look over the table", "/ollopa/people", "meridian:sdr", [
     quickLook(1), wait(600),
   ]),
-  act("act-divider-left", "Inbox", "The inbox split, dragged 200 px left", "/ollopa/inbox", "meridian:sdr", [
-    dragDivider(-200), wait(400),
-  ]),
-  act("act-divider-right", "Inbox", "The inbox split, dragged 200 px right", "/ollopa/inbox", "meridian:sdr", [
-    dragDivider(200), wait(400),
-  ]),
+  // At 400 the inbox is one pane and there is no divider to drag, so these two run wide only.
+  { id: "act-divider-left", page: "Inbox", caption: "The inbox split, dragged 200 px left",
+    route: "/ollopa/inbox", seat: "meridian:sdr", steps: [dragDivider(-200), wait(400)],
+    widths: [1440, 1024], themes: ["light"] },
+  { id: "act-divider-right", page: "Inbox", caption: "The inbox split, dragged 200 px right",
+    route: "/ollopa/inbox", seat: "meridian:sdr", steps: [dragDivider(200), wait(400)],
+    widths: [1440, 1024], themes: ["light"] },
   act("act-card-drag", "Deals", "A deal card mid-drag", "/ollopa/deals", "meridian:ae", [
     wait(800), dragCard(1, 2), wait(400),
   ]),

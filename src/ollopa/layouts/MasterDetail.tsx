@@ -153,7 +153,11 @@ export interface BoardPageProps extends PageHeaderProps {
   /** Printed at the end of the toolbar row: "11 open of 214". */
   shown?: ReactNode
   above?: ReactNode
-  /** The column's width at 1440 and 1024. The board itself is fluid and has no maximum. */
+  /**
+   * The column's width, if a board ever needs to say. It should not: the default shares the width
+   * between the stages with a 10 rem floor, so four fit at 1024 and five at 1440, and the board
+   * scrolls only when the count makes fitting impossible.
+   */
   columnWidth?: string
 }
 
@@ -162,7 +166,7 @@ export interface BoardPageProps extends PageHeaderProps {
  * At 400 it shows one stage at a time with a switcher — the behaviour no design system read for
  * memo 30 documents, so it is written down here.
  */
-export function BoardPage({ stages, controls, shown: shownCount, above, columnWidth = "min-w-[18rem] max-w-[22rem] flex-1", ...header }: BoardPageProps) {
+export function BoardPage({ stages, controls, shown: shownCount, above, columnWidth = "min-w-40 max-w-[22rem] flex-1", ...header }: BoardPageProps) {
   const phone = usePhone()
   const [only, setOnly] = useState(stages[0]?.id ?? "")
   useEffect(() => {

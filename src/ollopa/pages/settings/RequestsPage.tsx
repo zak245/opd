@@ -28,6 +28,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface Column { key: string; header: string; className?: string; cell: (r: Request) => ReactNode }
 import { businessDaysBetween, day, money, plural } from "./format"
 import { toast } from "./state"
+import { useFitColumns } from "../../layouts/columns"
 
 export const STATE_LABEL: Record<Request["state"], string> = {
   captured: "Needs a decision",
@@ -106,6 +107,7 @@ export function RequestsPage({ session }: { session: Session }) {
   // The order the queue is read in: what was asked, how long it has waited, where it stands. The
   // three that decide are first, so the ones that overflow at a narrow width are the descriptive
   // ones and never the state.
+  // Fold whatever does not fit the box the table is in (LAYOUTS.md §5, §6).
   const columns: Column[] = [
     {
       key: "outcome", header: "Request",
@@ -139,6 +141,8 @@ export function RequestsPage({ session }: { session: Session }) {
       ),
     },
   ]
+  // Fold whatever does not fit the box the table is in (LAYOUTS.md §5, §6).
+  const fit = useFitColumns(columns)
 
   if (all.length === 0) {
     return (
@@ -229,23 +233,39 @@ export function RequestsPage({ session }: { session: Session }) {
             { value: "Everything, including declined", label: "Everything, including declined" }]),
         ]}
         shown={`${shown.length} shown of ${all.length}`}
+        tableRef={fit.ref}
         table={
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map((c) => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
+                {fit.shown.map((c) => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
                 <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {page.map((r) => (
                 <TableRow key={r.id} data-item={r.id} data-item-label={r.outcome}>
-                  {columns.map((c) => <TableCell key={c.key} className={c.className}>{c.cell(r)}</TableCell>)}
+                  {fit.shown.map((c, i) => (
+                    <TableCell key={c.key} className={c.className}>
+                      {c.cell(r)}
+                      {/* What did not fit reads here, under the row's own name. */}
+                      {i === 0 && fit.folded.length > 0 && (
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
+                          {fit.folded.map((f) => (
+                            <span key={f.key} className="inline-flex items-center gap-1">
+                              <span className="opacity-70">{f.header}</span>
+                              {f.cell(r)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </TableCell>
+                  ))}
                   <TableCell className="text-right"><Actions surface="row" layout="menu" items={rowMenu(r)} /></TableCell>
                 </TableRow>
               ))}
               {page.length === 0 && (
-                <TableRow><TableCell colSpan={columns.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={fit.shown.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

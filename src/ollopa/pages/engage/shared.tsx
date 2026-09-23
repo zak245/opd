@@ -24,6 +24,7 @@ import { clearEdit, type Edit } from "../../edits"
 import { navItem } from "../../nav"
 import type { Page } from "../../usage/model"
 import { TODAY } from "../../data/seed"
+import { useFitColumns } from "../../layouts/columns"
 
 export { toast } from "../../templates/TablePage"
 
@@ -184,6 +185,10 @@ export interface DataTableProps<T> {
 }
 
 export function DataTable<T>(p: DataTableProps<T>) {
+  // Fold whatever does not fit the box this table is in — an index at 1440 and the same table in a
+  // 694 px record column obey the same rule (LAYOUTS.md §5, §6).
+  const fit = useFitColumns(p.columns)
+
   const sorted = useMemo(() => {
     const col = p.columns.find((c) => c.key === p.sortKey)
     if (!col?.sort) return p.rows
@@ -257,7 +262,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
       {/* --------------------------------------------------------------------- the table itself */}
       {p.only !== "rows" && (
-      <div className={cn("overflow-x-auto", p.only === "table" ? "block" : "hidden sm:block")}>
+      <div ref={fit.ref} className={cn("w-full min-w-0", p.only === "table" ? "block" : "hidden sm:block")}>
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow>
@@ -270,7 +275,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                   />
                 </TableHead>
               )}
-              {p.columns.map((c) => (
+              {fit.shown.map((c) => (
                 <TableHead
                   key={c.key}
                   className={c.className}
@@ -317,7 +322,22 @@ export function DataTable<T>(p: DataTableProps<T>) {
                       <Checkbox checked={selected.includes(key)} onCheckedChange={() => toggle(key)} aria-label={`Select ${p.menuLabel(row)}`} />
                     </TableCell>
                   )}
-                  {p.columns.map((c) => <TableCell key={c.key} className={cn("py-2 align-top", c.className)}>{c.cell(row)}</TableCell>)}
+                  {fit.shown.map((c, i) => (
+                    <TableCell key={c.key} className={cn("py-2 align-top", c.className)}>
+                      {c.cell(row)}
+                      {/* What did not fit the box reads here, under the row's own name. */}
+                      {i === 0 && fit.folded.length > 0 && (
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
+                          {fit.folded.map((f) => (
+                            <span key={f.key} className="inline-flex items-center gap-1">
+                              <span className="opacity-70">{f.header}</span>
+                              {f.cell(row)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </TableCell>
+                  ))}
                   <TableCell className="sticky right-0 bg-inherit py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {(p.rowActions ?? []).map((a, i) => (

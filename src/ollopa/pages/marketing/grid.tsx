@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Actions, type Action } from "../../ui/Actions"
 import { usePref } from "./prefs"
+import { useFitColumns } from "../../layouts/columns"
 
 export interface GridColumn<T> {
   key: string
@@ -74,7 +75,10 @@ export function useGrid<T>(p: GridProps<T>): GridBodies {
   const setHidden = p.onHidden ?? setOwnHidden
   const body = useRef<HTMLTableSectionElement>(null)
 
-  const shown = p.columns.filter((c) => !c.optional || !hidden.includes(c.key))
+  const chosen = p.columns.filter((c) => !c.optional || !hidden.includes(c.key))
+  // Fold whatever does not fit the box the table is in (LAYOUTS.md §5, §6).
+  const fit = useFitColumns(chosen)
+  const shown = fit.shown
 
   const rows = useMemo(() => {
     const col = p.columns.find((c) => c.key === sort.key)
@@ -124,7 +128,7 @@ export function useGrid<T>(p: GridProps<T>): GridBodies {
   const empty = p.rows.length === 0 ? p.empty : undefined
 
   const table = empty ?? (
-    <div className="overflow-x-auto">
+    <div ref={fit.ref} className="overflow-x-auto">
       <Table>
         <TableHeader className="bg-card sticky top-0 z-10">
           <TableRow>
@@ -166,7 +170,22 @@ export function useGrid<T>(p: GridProps<T>): GridBodies {
             >
               {/* A column that carries a sentence wraps onto a second line (its className says so);
                   nothing is ever truncated behind a tooltip. */}
-              {shown.map((c) => <TableCell key={c.key} className={cn("t-body py-2", c.className)}>{c.cell(row)}</TableCell>)}
+              {shown.map((c, i) => (
+                <TableCell key={c.key} className={cn("t-body py-2", c.className)}>
+                  {c.cell(row)}
+                  {/* What did not fit reads here, under the row's own name. */}
+                  {i === 0 && fit.folded.length > 0 && (
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
+                      {fit.folded.map((f) => (
+                        <span key={f.key} className="inline-flex items-center gap-1">
+                          <span className="opacity-70">{f.header}</span>
+                          {f.cell(row)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </TableCell>
+              ))}
               <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-1">
                   {/* The row's own acts, repeated in the menu beside them: nothing is hover-only,

@@ -12,7 +12,7 @@
 //
 // What leaves the table is not removed: it joins the row's meta line under the name, which is the
 // same place the 400 divided list already puts it, and it stays in the column picker.
-import { useSyncExternalStore } from "react"
+import { useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 
 /** 1 is essential, 3 drops first. A column with no priority is treated as 2. */
 export type ColumnPriority = 1 | 2 | 3
@@ -74,4 +74,84 @@ export function useColumnFit<T>(columns: T[], priorityOf: (column: T) => ColumnP
     folded.splice(folded.indexOf(columns[0]), 1)
   }
   return { band, shown, folded }
+}
+
+/* ------------------------------------------------------------------ measuring, not guessing */
+
+/**
+ * Fold columns until the table fits **its container**, not the viewport.
+ *
+ * The width band a page is in says nothing about the room a table actually has: the same index is
+ * 1134 px wide at 1440 and 694 px inside a record's main column, and a page that folds by viewport
+ * gets one of the two wrong. So this measures: it renders, asks whether the table is wider than the
+ * box around it, and folds one more column each time it is, lowest priority and right-most first.
+ *
+ * What folds is not removed — the caller draws `folded` under the row's own name, which is where
+ * the 400 divided list already puts it, and the column picker still lists every column.
+ *
+ * ```tsx
+ * const { ref, shown, folded } = useFitColumns(columns, { priorityOf: (c) => c.priority })
+ * <div ref={ref}><Table>…{shown.map(…)}</Table></div>
+ * ```
+ */
+export function useFitColumns<T>(columns: T[], opts?: {
+  /** 1 never folds, 3 folds first. Without it the right-most column folds first. */
+  priorityOf?: (column: T) => ColumnPriority | undefined
+  /** Columns that must stay whatever happens. The first column is always kept. */
+  keep?: (column: T) => boolean
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [dropped, setDropped] = useState(0)
+  // True when everything that may fold has folded and the table still does not fit. A caller that
+  // has another shape — `RowsTable` has a divided list — uses it instead of clipping.
+  const [tight, setTight] = useState(false)
+
+  // Worst first: the highest priority number, then the right-most. The first column is the row's
+  // own name and never folds.
+  const order = useMemo(() => {
+    const foldable = columns
+      .map((c, i) => ({ c, i }))
+      .filter(({ c, i }) => i > 0 && !(opts?.keep?.(c) ?? false))
+    return foldable
+      .sort((a, b) => ((opts?.priorityOf?.(b.c) ?? 2) - (opts?.priorityOf?.(a.c) ?? 2)) || (b.i - a.i))
+      .map(({ c }) => c)
+    // The identity of a column set is its length and its order, which the caller rebuilds each render.
+  }, [columns, opts])
+
+  const hidden = new Set(order.slice(0, Math.min(dropped, order.length)))
+  const shown = columns.filter((c) => !hidden.has(c))
+  const folded = columns.filter((c) => hidden.has(c))
+
+  useLayoutEffect(() => {
+    const box = ref.current
+    if (!box) return
+    const check = () => {
+      // shadcn's Table brings its own `overflow-x-auto` container, so the box around it never
+      // overflows — the scroller inside it does, and that is the thing to measure and to kill.
+      const inner = box.querySelector<HTMLElement>('[data-slot="table-container"]')
+      const scroller = inner ?? box
+      const room = scroller.clientWidth
+      const needs = scroller.scrollWidth
+      if (room === 0) return
+      if (needs - room > 1) {
+        setDropped((d) => (d < order.length ? d + 1 : d))
+        if (dropped >= order.length) setTight(true)
+      } else if (dropped > 0 && room - needs > 96) {
+        setTight(false)
+        // Room to spare: put one back. The gap is wide enough that a column coming back cannot
+        // immediately push the table over again, so this cannot oscillate.
+        setDropped((d) => Math.max(0, d - 1))
+      }
+    }
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(box)
+    return () => ro.disconnect()
+  })
+
+  // A column set that changed under us starts again, or a page keeps yesterday's folding.
+  const key = columns.length
+  useLayoutEffect(() => { setDropped(0) }, [key])
+
+  return { ref, shown, folded, tight }
 }

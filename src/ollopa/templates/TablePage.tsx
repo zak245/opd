@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { IndexPage } from "../layouts/IndexPage"
+import { useFitColumns } from "../layouts/columns"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
@@ -75,6 +76,9 @@ export function TablePage<T>(p: TablePageProps<T>) {
   const [limit, setLimit] = useState(p.pageSize ?? 25)
   const [glancing, setGlancing] = useState<T | null>(null)
 
+  // Fold whatever does not fit the box the table is actually in (LAYOUTS.md §5, §6).
+  const fit = useFitColumns(p.columns)
+
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return p.rows.filter((r) => {
@@ -142,11 +146,12 @@ export function TablePage<T>(p: TablePageProps<T>) {
           ) })),
         ]}
         shown={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+        tableRef={fit.ref}
         table={(
         <Table>
           <TableHeader className="bg-muted sticky top-0">
             <TableRow>
-              {p.columns.map((c) => <TableHead key={c.key} className={cn("t-label", chipColumn(c) && "min-w-36", c.className)}>{c.header}</TableHead>)}
+              {fit.shown.map((c) => <TableHead key={c.key} className={cn("t-label", chipColumn(c) && "min-w-36", c.className)}>{c.header}</TableHead>)}
               {/* The first column takes the slack; without that the actions column absorbs it. */}
               {(p.rowActions || p.moreActions) && <TableHead className="w-px whitespace-nowrap"><span className="sr-only">Actions</span></TableHead>}
             </TableRow>
@@ -166,11 +171,22 @@ export function TablePage<T>(p: TablePageProps<T>) {
                 onClick={p.quickLook ? (e) => { e.currentTarget.focus(); setGlancing(r) } : undefined}
                 onKeyDown={p.quickLook ? (e) => { if (e.key === "Enter" && e.target === e.currentTarget) { e.preventDefault(); setGlancing(r) } } : undefined}
               >
-                {p.columns.map((c) => (
+                {fit.shown.map((c, i) => (
                   <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", chipColumn(c) && "min-w-36 whitespace-nowrap", c.className)}>
                     {/* A column that shows a state word draws it as a status chip, from the one set,
                         always with the word in it. */}
                     {c.status ? <Chip status={c.status(r)} /> : c.cell(r)}
+                    {/* What did not fit reads under the row's own name, never off the right edge. */}
+                    {i === 0 && fit.folded.length > 0 && (
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
+                        {fit.folded.map((f) => (
+                          <span key={f.key} className="inline-flex items-center gap-1">
+                            <span className="opacity-70">{f.header}</span>
+                            {f.status ? <Chip status={f.status(r)} /> : f.cell(r)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </TableCell>
                 ))}
                 {(p.rowActions || p.moreActions) && (
@@ -209,7 +225,7 @@ export function TablePage<T>(p: TablePageProps<T>) {
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <TableRow><TableCell colSpan={p.columns.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={fit.shown.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

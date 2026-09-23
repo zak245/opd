@@ -45,7 +45,7 @@ import { STAGE_FORECAST, STAGE_PROBABILITY, TODAY, seedFor, type Deal, type Deal
 import { ago, day, daysBetween, money } from "../deal/format"
 import { DealCard, chipText, type CardFlags } from "./DealCard"
 import { coverageFor } from "../reports/coverage"
-import { useColumnFit, type ColumnPriority } from "../../layouts/columns"
+import { useFitColumns, type ColumnPriority } from "../../layouts/columns"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
   WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText, warningStatus,
@@ -657,7 +657,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   const chosenColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
   // Which of those the table draws at this width, and which fold under the deal's name.
-  const { shown: visibleColumns, folded: foldedColumns } = useColumnFit(chosenColumns, (c) => c.priority)
+  const { ref: fitRef, shown: visibleColumns, folded: foldedColumns } = useFitColumns(chosenColumns, { priorityOf: (c) => c.priority })
 
   /* ---------------------------------------------------------------------------- the table view */
 
@@ -1124,6 +1124,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               controls={allControls}
               shown={`${sorted.length.toLocaleString()} shown of ${b.counts.openDeals.toLocaleString()}`}
               above={tableAbove}
+              tableRef={fitRef}
               table={tableBody}
               rows={tableRows}
               pager={sorted.length > limit ? (
@@ -1144,6 +1145,11 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               shown={`${rows.filter(isOpen).length.toLocaleString()} open of ${b.counts.openDeals.toLocaleString()}`}
               above={above}
               stages={stages}
+              // The stages share the width and scroll only when they cannot fit. The template's own
+              // floor is 18rem, which five stages cannot make fit in the 1,136 px a board gets at
+              // 1440, so the board scrolled sideways on the widest screen. 10rem is the largest step
+              // on the scale that still lets four stages fit at 1024 (LAYOUTS.md §5 and §6).
+             
             />
           </div>
         )}

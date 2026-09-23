@@ -18,6 +18,8 @@ export interface IndexPageProps extends PageHeaderProps {
   shown?: ReactNode
   /** The desktop body: a shadcn Table. Hidden at 400, where `rows` is shown instead. */
   table: ReactNode
+  /** The box the table is measured against, so its columns can fold to fit it. */
+  tableRef?: React.Ref<HTMLDivElement>
   /** The same things as a divided list, for 400. Falls back to the table when a page has none. */
   rows?: ReactNode
   /** The pager, in the card's footer. */
@@ -30,7 +32,7 @@ export interface IndexPageProps extends PageHeaderProps {
 }
 
 export function IndexPage({
-  controls, shown, table, rows, pager, bulk, above, children, ...header
+  controls, shown, table, tableRef, rows, pager, bulk, above, children, ...header
 }: IndexPageProps) {
   return (
     <PageScroll footer={bulk ? <PageFooter>{bulk}</PageFooter> : undefined}>
@@ -48,7 +50,7 @@ export function IndexPage({
         <CardContent className="px-0">
           {/* One set of things, drawn twice: a table where there is room, a divided list where
               there is not. Never a table with its last columns cut off. */}
-          <div className={cn(rows ? "hidden sm:block" : "block")}>{table}</div>
+          <div ref={tableRef} className={cn("w-full min-w-0", rows ? "hidden sm:block" : "block")}>{table}</div>
           {rows && <div className="sm:hidden [&>*+*]:border-t [&>*+*]:border-border">{rows}</div>}
         </CardContent>
         {pager && <><Separator /><CardFooter className="justify-center px-4 py-3">{pager}</CardFooter></>}

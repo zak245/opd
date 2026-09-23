@@ -12,6 +12,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
 import { usePhone } from "./parts"
+import { useFitColumns } from "./columns"
 
 export interface RowsColumn<T> {
   key: string
@@ -49,6 +50,8 @@ export interface RowsTableProps<T> {
  */
 export function RowsTable<T>({ columns, rows, rowKey, rowProps, empty, className }: RowsTableProps<T>) {
   const phone = usePhone()
+  // The same rule an index obeys: fold what does not fit the box, not what a viewport says.
+  const fit = useFitColumns(columns)
   const lead = columns.find((c) => c.lead) ?? columns[0]
   const rest = columns.filter((c) => c !== lead && c.phone !== false)
 
@@ -56,10 +59,11 @@ export function RowsTable<T>({ columns, rows, rowKey, rowProps, empty, className
     return <div className={cn("t-body px-4 py-6 text-center text-muted-foreground", className)}>{empty}</div>
   }
 
-  // Below `md` the same columns are a stack per row. No scroller, so nothing is cut off.
-  if (phone) {
+  // Below `md`, and wherever the columns cannot be made to fit, the same columns are a stack per
+  // row. No scroller, so nothing is ever cut off (LAYOUTS.md §5).
+  if (phone || fit.tight) {
     return (
-      <div className={cn("[&>*+*]:border-t [&>*+*]:border-border", className)}>
+      <div ref={fit.ref} className={cn("[&>*+*]:border-t [&>*+*]:border-border", className)}>
         {rows.map((r) => (
           <div key={rowKey(r)} className="px-4 py-3" {...(rowProps?.(r) ?? {})}>
             <div className="t-body font-medium">{lead.cell(r)}</div>
@@ -78,21 +82,36 @@ export function RowsTable<T>({ columns, rows, rowKey, rowProps, empty, className
   }
 
   return (
-    <Table className={className}>
-      <TableHeader>
-        <TableRow>
-          {columns.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((r) => (
-          <TableRow key={rowKey(r)} {...(rowProps?.(r) ?? {})}>
-            {columns.map((c) => (
-              <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", c.className)}>{c.cell(r)}</TableCell>
-            ))}
+    // A plain box: shadcn's Table brings its own scroller, and two nested ones help nobody.
+    <div ref={fit.ref} className="w-full min-w-0">
+      <Table className={className}>
+        <TableHeader>
+          <TableRow>
+            {fit.shown.map((c) => <TableHead key={c.key} className={cn("t-label", c.className)}>{c.header}</TableHead>)}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {rows.map((r) => (
+            <TableRow key={rowKey(r)} {...(rowProps?.(r) ?? {})}>
+              {fit.shown.map((c, i) => (
+                <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", c.className)}>
+                  {c.cell(r)}
+                  {i === 0 && fit.folded.length > 0 && (
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 break-words pt-0.5 t-small font-normal text-muted-foreground">
+                      {fit.folded.map((f) => (
+                        <span key={f.key} className="inline-flex items-center gap-1">
+                          <span className="opacity-70">{f.header}</span>
+                          {f.cell(r)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }

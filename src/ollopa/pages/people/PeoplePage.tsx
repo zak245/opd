@@ -49,7 +49,7 @@ import { needsEnrichment, viewsFor, type PeopleView } from "./views"
 import { FilterChip, FiltersPanelBody } from "./parts"
 import { EnrichPanel } from "./EnrichPanel"
 import { BulkSelection, CreditsDialog, ParodyColumns, ParodySelection, ParodySidebar, ParodyTabs, ParodyViewsDoor } from "./parody"
-import { useColumnFit } from "../../layouts/columns"
+import { useFitColumns } from "../../layouts/columns"
 
 /* -------------------------------------------------------------------------------- what persists */
 
@@ -244,7 +244,7 @@ export function PeoplePage({ session }: { session: Session }) {
     .filter((c): c is ColumnDef => Boolean(c))
   // Which of those the table draws at this width, and which fold into the row's meta line. The
   // column picker still lists every one of them (LAYOUTS.md §5).
-  const { shown: cols, folded } = useColumnFit(shownColumns, (c) => c.priority)
+  const { ref: fitRef, shown: cols, folded } = useFitColumns(shownColumns, { priorityOf: (c) => c.priority })
 
   // The lesson view opens the place a change happens in, by id, so the change can be seen. The panel
   // and the common version's sidebar are not `Door`s, so they answer the same event themselves.
@@ -1192,6 +1192,7 @@ export function PeoplePage({ session }: { session: Session }) {
             </p>
           </>
         }
+        tableRef={fitRef}
         table={<>{tableBody}{sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}</>}
         rows={rowList}
         pager={
