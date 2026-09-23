@@ -1,11 +1,123 @@
 # Stage 3 review: the chains
 
-Round 13 is the current review — the last confirmation of the shadcn pass. Rounds 12 through 1 are
-kept below, in order.
+Round 14 is the current review — the layout system, judged from the `see` scenes. Rounds 13 through
+1 are kept below, in order.
 
 ---
 
-# Round 13 — the last confirmation of the shadcn pass
+# Round 14 — the layout system
+
+I read `LAYOUTS.md` and `src/ollopa/layouts/README.md`, then ran **`npm run see`** rather than my own
+driver: 64 scenes, **301 images**, 0 failed, written to `shots/see/` with `index.html` and
+`manifest.json`. I judged the scenes from the images and used the manifest's measurements to find
+what to look at. Then I re-walked chains 1, 3 and 7 on my own preview.
+
+**Consoles: silent** — all 301 scene loads and all six chain runs.
+
+**One caveat about the harness, so nobody chases it.** `see`'s "clipped" count is dominated by
+`sr-only` spans, which are clipped by design: 42 of Agents' 44 and 42 of the sequence record's 45
+are `<span>` "Toggle Sidebar" and its kin, each over by 98 px. The number to read is **`sideways`**,
+and that one is honest. No page scrolls sideways at any width, at any theme — `pageScrollsSideways`
+is false on all 301.
+
+## Page by page
+
+A = declared type and its contract (§1, §2, §7) · B = width, alignment, nothing empty · C = 1024 and
+400 behaviour · D = affordances · E = overlays · F = console.
+
+| Scene | Type | A | B | C | D | E | F |
+|---|---|---|---|---|---|---|---|
+| `home` | Home | ✓ header, status row, section cards | ✓ 155 px chrome | ✓ one column at 400 | ✓ | ✓ | ✓ |
+| `people` `companies` `lists` `sequences` `templates` | Index | ✓ header holds title, count, primary, "…"; filters in the card | ✓ 125 px | ✓ divided list at 400 | ✓ row acts at rest | ✓ | ✓ |
+| `person` `company` `deal` `campaign` `job` | Record | ✓ name, subtitle, acts on one line; level-one strip; sections | ✓ | ✓ rail stacks at 1024 | ✓ | ✓ | ✓ |
+| `sequence` | Record | ✓ | ✓ at 1440 | **!** a results table clipped at 400 | ✓ | ✓ | ✓ |
+| `inbox` | Master-detail | **!** the tab strip overflows the list pane | **!** 287 px of tabs hidden at 1440 | ✓ one pane at 400, selection kept | ✓ **grip, `role="separator"`, `tabindex=0`, `col-resize`, arrows resize 431→655 px** | ✓ | ✓ |
+| `tasks-queue` | Queue | ✓ position, previous, next from the template | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `tasks-list` | Index | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `deals-board` | Board | ✓ | ✓ fluid, 12 cards, 0 nested | ✓ **3 cards at 400 — one stage with a switcher** | ✓ `DragGrip` and a "Move to" menu | ✓ | ✓ |
+| `deals-table` | Index | ✓ at 1440 | ✓ | **!** unreachable at 400 | ✓ | ✓ | ✓ |
+| `accounts` | Index | ✓ | **!** table scrolls sideways 111 px at 1440 | ✓ | ✓ | ✓ | ✓ |
+| `campaigns` `workflows` `requests` | Index | ✓ | ✓ 56–152 px chrome | ✓ | ✓ | ✓ | ✓ |
+| `reports` | Index-ish | ✓ | ✓ | ? 3 sideways scrollers at 400, all charts | ✓ | ✓ | ✓ |
+| `agents` | Queue | ✓ header, cards, Alert inside a card | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `settings` ×14 | Settings | ✓ area index beside at `lg`, above below | ✓ 14 panels, 0 nested | ✓ | ✓ | ✓ | ✓ |
+| `connect-1` `connect-5` `import` | Wizard | ✓ step list beside at `lg` | ✓ 860 px measure | ✓ | ✓ | ✓ | ✓ |
+| `integration` `developer` | Record / Settings | ✓ | ✓ | ? 6 and 2 sideways at 400 | ✓ | ✓ | ✓ |
+| `setup` `signin` | Wizard / — | ✓ outside the shell | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `act-*` (17 scenes) | — | ✓ | ✓ | ✓ | ✓ | ✓ **0 nested cards in every overlay scene** | ✓ |
+
+## What the images show, check by check
+
+**A — the contracts hold.** Every index and record I looked at has the family icon and title, the
+count beside it, one primary act and a "…", and **no filters in the header** — they are in the
+card's toolbar, with the sixth and beyond behind one self-labelling door ("Filters and views · 6",
+"Filters: warnings, no next step, owner, forecast category …"). Summary figures are a band, not
+boxes: Agents' "Credits this week 89,087 of 189,000 · Workspace balance 1,840,000" is one line with
+a progress bar, where round 11 had a grey box. Sections are cards and **nothing nests**: 0 nested
+cards in all 301 scenes, including the board, where a deal card inside a stage column is the
+allowed case and the manifest still reports 0 because the column is not a `Card`.
+
+**B — width and alignment.** Chrome is down again: 125 px on indexes and records, 56 px where there
+is no alert, 152–155 px on the admin pages. Nothing is empty at rest. Two failures, both tables too
+wide for their container at the widest width — see the worst five.
+
+**C — the three widths.** At 1024 the side rail stacks. At 400 an index is a divided row list
+(`people-400-light.png` — Mateo Novak, Viktor Kowalski, Yara Nakamura as rows, no clipped table),
+master-detail keeps its selection and collapses to one pane, **the board shows one stage with a
+switcher** (12 cards → 3, "Qualified" as the switch), the sidebar is a sheet, and the bottom bar
+carries four pages plus "All pages". Nothing scrolls sideways at the page level anywhere.
+
+**D — affordances.** The Inbox split is the strongest piece: the divider is visible at rest with an
+inner grip, `role="separator"`, `tabindex="0"`, `cursor: col-resize`, `aria-valuenow="38"`, and the
+arrow keys actually move it — I measured the list pane going 431 px → 655 px on six presses. Row
+actions are visible without hover: a People row shows "Sequence · List · Call task · Mark do not
+contact · Actions for Mateo Novak" at rest. The board card carries a `DragGrip` with a "Move to"
+menu as the second route.
+
+**E — overlays.** One at a time, never nested, in all seventeen `act-*` scenes. **The quick look is
+the beside pane**: `act-quick-look` leaves focus in "From People · Mateo Novak · Open the page …",
+which is the pane, not a dialog. No modal quick look survives.
+
+**F — console.** Nothing, on any of the 301 loads.
+
+## The worst five
+
+1. **`inbox-1440-light.png` — the Inbox tab strip is clipped by 287 px.** "Interested (4) ·
+   Question (2) · Not now (1) · Unsubscr…" runs off the list pane's edge at the *widest* width. Five
+   tabs, a search box and a filter door are crammed into a 430 px pane; §2 says the sixth control
+   goes behind one door, and here the tabs simply overflow instead.
+2. **`accounts-1440-light.png` — the table scrolls sideways by 111 px at 1440.** An index is meant
+   to be one full-width column (§6); this one needs a horizontal scroll on the largest screen, which
+   means the column set is wrong rather than the layout.
+3. **`sequence-400-light.png` — a results table clipped at 400 by 216 px.** "Step · Sent ·
+   Delivered · Opened · Replied · Interested · Bounced · Uns…" sits in an `overflow-x-auto` div.
+   §5 says a table becomes a divided list at 400 and is never clipped; the rule was applied to
+   indexes and not to the tables inside records. (The status filter row scrolling beside it is
+   allowed — §2 says the status row scrolls on a phone.)
+4. **`deals-table-400-light.png` — the Table view is unreachable at 400.** `see` reports "no control
+   called Table"; I checked the "…" menu too and there is none. §5 says nothing is removed at any
+   width, and `deals-table` is a declared Index type in §1.
+5. **`people-400-light.png` — the phone toolbar costs six rows.** Search, then four filter chips each
+   on its own line with its own ×, then the count and columns, then the door: about 290 px of card
+   before the first person. The control count obeys §2; the stacking does not obey "nothing is
+   removed at any width, only how much is visible at once" in spirit.
+
+## The chains
+
+| Chain | Chain card | Disclosure card |
+|---|---|---|
+| 1 · Sequence › person | **18**/18 | **17**/18 |
+| 3 · Company › person | **18**/18 | **17**/18 |
+| 7 · Inbox, Tasks, Home | **18**/18 | **17**/18 |
+
+Walkers read 1 of 34, 1 of 24, 1 of 4 and 14 → 13; the pane action still lands on the row with its
+Undo; arrival focuses the lit `h1`; the crumb returns to the lit row; both consoles silent. The one
+standing A-failure is unchanged: at 400 the contact record's header collapses and "Move sequence"
+and "Add a note" become two filled controls on one surface.
+
+---
+
+# Round 13 — the last confirmation of the shadcn pass (superseded)
 
 Home, the sequence record, the deal record, the contact record and the connect wizard, at 1440 and
 400 in both themes, on my own `npx vite preview --port 4180`. **20 screenshots** under
