@@ -114,6 +114,32 @@ divided list at 400 and is never clipped; this is the part that keeps that promi
 Use it for every table inside a record. An index page gets the same behaviour from `IndexPage`'s
 `table` and `rows` pair.
 
+### What a page needs decided: `declareAlerts`
+
+A page says what needs deciding; the shell folds it into the **one** Alert it already draws, after
+the workspace's own items (LAYOUTS.md §2).
+
+```tsx
+useDeclareAlerts(exceptions.map((e) => ({
+  id: e.id, text: e.text, danger: true,
+  acts: [{ label: "Resume", onClick: () => resume(e) }],
+})))
+```
+
+`declareAlerts(items)` returns its own cleanup; `useDeclareAlerts(items)` clears on unmount.
+
+**How the Alert collapses.** Four things that need deciding is four lines of chrome, and chrome is
+not the page. So:
+
+| | Shown |
+|---|---|
+| The most urgent | in full, with its acts |
+| The rest | one line each — truncated, never wrapped — up to four lines at a desktop, one on a phone |
+| Beyond that | `"3 more · Show"`, a door inside the Alert that expands in place |
+
+Chrome stays under about 200 px at 400 with four items. The order is the urgency order: the
+workspace's own items first, then the page's, in the order the page declared them.
+
 ### Column priorities: `useColumnFit`
 
 An index is one full-width column (§6) and nothing is removed as the page narrows (§5) — so a table

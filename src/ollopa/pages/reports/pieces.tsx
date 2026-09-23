@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDoorState } from "../../ui/Door"
-import { Section, SummaryStrip } from "../../layouts"
+import { RowsTable, Section, SummaryStrip } from "../../layouts"
 import { money as usd, type Plan } from "../../ui/gate"
 import { toast } from "../../templates/TablePage"
 import type { Tile } from "./compute"
@@ -105,6 +105,9 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
     })
   }, [rows, sort, columns])
 
+  const sortable = columns.filter((c) => c.sort)
+  const sortedBy = sort ? columns.find((c) => c.key === sort.key) : undefined
+
   const toggleSort = (key: string) => {
     const next = sort?.key === key ? { key, dir: (sort.dir === 1 ? -1 : 1) as 1 | -1 } : { key, dir: -1 as const }
     setSort(next)
@@ -120,10 +123,27 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
           {aside}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 px-2 t-small">Columns: {shown.length} of {columns.length}</Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2 t-small">Columns and sort: {shown.length} of {columns.length}{sorted !== rows && sortedBy ? ` · ${sortedBy.header}` : ""}</Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64">
-              <ul className="grid gap-2">
+              {sortable.length > 0 && (
+                <div className="mb-2 border-b pb-2">
+                  <div className="t-small text-muted-foreground">Sort by</div>
+                  <ul className="mt-1 grid">
+                    {sortable.map((c) => (
+                      <li key={c.key}>
+                        <button type="button" onClick={() => toggleSort(c.key)}
+                                className={cn("w-full rounded px-2 py-1 text-left t-body hover:bg-muted", sort?.key === c.key && "font-medium")}>
+                          {c.header}
+                          {sort?.key === c.key && <span aria-hidden="true"> {sort.dir === 1 ? "↑" : "↓"}</span>}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="t-small text-muted-foreground">Columns</div>
+              <ul className="mt-1 grid gap-2">
                 {columns.map((c) => (
                   <li key={c.key} className="flex items-center gap-2">
                     <Checkbox
@@ -146,6 +166,21 @@ export function BreakdownTable<T>({ caption, rows, rowKey, columns, storageKey, 
     >
       {rows.length === 0 ? (
         <div className="border-t px-3 py-8 text-center t-body text-muted-foreground">{empty ?? "Nothing in this range."}</div>
+      ) : !expand ? (
+        // No doors inside the row, so the shared part draws it: it folds a column that does not fit
+        // into the row's meta line and becomes a divided list on a phone, never a scroller
+        // (LAYOUTS.md §5). Sorting is in the card header, so it survives both shapes.
+        <RowsTable
+          rows={sorted}
+          rowKey={rowKey}
+          columns={shown.map((c, i) => ({
+            key: c.key,
+            header: c.header,
+            cell: c.cell,
+            lead: i === 0,
+            className: c.align === "right" ? "text-right" : undefined,
+          }))}
+        />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-max t-body">

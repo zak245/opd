@@ -46,6 +46,11 @@ function matches(c: Contact, f: { field: string; op: string; value: string }): b
   return true
 }
 
+/** Mon, Tue, Wed, Thu, Fri as "Mon–Fri": a run of days is one value, not five. */
+function dayRange(days: string[]): string {
+  return days.length > 2 ? `${days[0]}–${days[days.length - 1]}` : days.join(", ")
+}
+
 export function WorkflowRecord({ session, id }: { session: Session; id?: string }) {
   const b = businessById(session.business)
   const seed = seedFor(session.business)
@@ -148,6 +153,9 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
     { key: "status", label: "Status", value: <Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>, under: `${w.statusChangedBy}, ${ago(w.statusChangedOn)}` },
     { key: "owner", label: "Owner", value: w.owner, under: `Told when it errors: ${w.owner}` },
     { key: "ceiling", label: "Credit ceiling", value: <span className={cn("tabular-nums", atCeiling && "font-medium")} style={atCeiling ? ink("warning") : undefined}>{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} today</span>, under: `${num(w.ceiling.perRun)} a run at most` },
+    // A two-hour clock running at 23:00 is a breach nobody could have prevented, so the hours the
+    // clock runs in are a value on this record and not a setting to go and look up (rule 5).
+    { key: "hours", label: "Business hours", value: `${w.hours.from}–${w.hours.to} ${dayRange(w.hours.days)}, ${b.timezone}` },
     { key: "edited", label: "Last edited", value: `${w.editedBy}, ${day(w.editedOn)}` },
   ]
 
@@ -194,11 +202,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
               ))}
             </ul>
           )}
-          {/* A two-hour clock running at 23:00 is a breach nobody could have prevented, so the hours
-              the clock runs in are read here and not in Settings (rule 5). */}
-          <p className="pt-1 text-sm text-muted-foreground">
-            Business hours {w.hours.from}–{w.hours.to}, {w.hours.days.join(", ")}, {b.timezone} · the clock {w.hours.clockPauses ? "pauses outside them" : "keeps running outside them"}.
-          </p>
         </div>
       ),
     } })
@@ -214,8 +217,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         </ul>
         <p className="tabular-nums">{num(matchNow)} people match the filter today.</p>
         <p className="text-muted-foreground">
-          {w.limits.reEnrol ? "The same person can be enrolled again; the second enrolment starts at rule 1." : "The same person is enrolled once and never again."}{" "}
-          The daily limit is {num(w.limits.perDay)}; past it the rest wait for tomorrow rather than being dropped.
+          Re-enrolment: {w.limits.reEnrol ? "allowed" : "once only"} · Daily limit: <span className="tabular-nums">{num(w.limits.perDay)}</span>
         </p>
       </div>
     ),
@@ -275,9 +277,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
       <div className="space-y-2">
         <p className={cn("t-body tabular-nums", atCeiling && "font-medium")} style={atCeiling ? ink("warning") : undefined}>
           {num(w.ceiling.perDay)} a day · {num(w.ceiling.spentToday)} used{atCeiling ? " · reached" : ""} · at most {num(w.ceiling.perRun)} a run
-        </p>
-        <p className="text-sm text-muted-foreground">
-          At the ceiling, enrichment stops. People are still enrolled and still routed, marked “not enriched — daily ceiling reached”.
         </p>
         <div className="flex flex-wrap items-end gap-2">
           <div>
@@ -457,7 +456,7 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
         back={{ label: "Workflows", href: href("/ollopa/workflows") }}
         title={{ value: w.name, onRename: (v) => { patch({ name: v, editedBy: session.user, editedOn: TODAY }); toast("Saved · Workflow name") } }}
         chips={<Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>}
-        ribbon={atCeiling ? { tone: "warning", text: `At the ceiling: ${num(w.ceiling.perDay)} a day, ${num(w.ceiling.spentToday)} used. Enrolment and routing continue; enrichment does not.` } : undefined}
+        ribbon={atCeiling ? { tone: "warning", text: `At the ceiling: ${num(w.ceiling.perDay)} a day, ${num(w.ceiling.spentToday)} used.` } : undefined}
         fields={fields}
         actions={{
           primary: [{
@@ -480,7 +479,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
               <ul className="space-y-1 text-sm">
                 <li className="tabular-nums">{num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} credits used today</li>
                 <li className="tabular-nums">{num(w.ceiling.perRun)} credits a run at most</li>
-                <li className="text-xs text-muted-foreground">At the ceiling: enrichment stops, routing continues.</li>
               </ul>
             ),
           },

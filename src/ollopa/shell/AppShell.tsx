@@ -35,7 +35,8 @@ import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY, type Kind } from "./notifications"
-import { useBanner, usePageAlerts } from "./banner"
+import { useBanner, usePageAlerts, type AlertItem } from "./banner"
+import { usePhone } from "../layouts/parts"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
 const COLLAPSE_KEY = "ollopa.sidebar"
@@ -172,6 +173,9 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const banner = useBanner()
   const pageAlerts = usePageAlerts()
   const [newsRead, setNewsRead] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  // A phone has room for one thing that needs deciding; everything else is behind the door.
+  const narrowShell = usePhone()
   const trail = useTrail()
   const route = useRoute()
   const heading = useRef<HTMLHeadingElement>(null)
@@ -286,6 +290,24 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
   const alerts = notes.filter((n) => n.interrupting && !dismissed.includes(n.id))
   const news = newsRead ? undefined : banner.news
+
+  /**
+   * Everything that needs a decision, in one list and in one shape, workspace first. The most
+   * urgent is the first: it reads in full with its acts, and the rest are one line each.
+   */
+  const said: AlertItem[] = [
+    ...(expiring ? [{ id: "__session", text: "Your session ends in 5 minutes.", acts: [{ label: "Stay signed in", onClick: () => setExpiring(false) }] }] : []),
+    ...alerts.map((n) => ({
+      id: n.id,
+      text: n.title,
+      danger: DANGER_KINDS.has(n.kind),
+      href: href(n.target),
+      acts: [{ label: "Dismiss", onClick: () => setDismissed((d) => [...d, n.id]) }],
+    })),
+    ...pageAlerts,
+  ]
+  // One in full on a phone, four lines at a desktop; the rest are behind the door.
+  const room = narrowShell ? 1 : 4
   // The bottom bar is the sidebar at phone width, so it carries only pages the sidebar carries:
   // the seat's four, in the fixed order, topped up from the sidebar when the profile left one out.
   const inSidebarPages = entries.map((e) => e.item.page)
@@ -408,29 +430,21 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
             with the library's gap. */}
         {/* One Alert, and only what needs a decision is in it — the workspace's items first, then
-            whatever the page has declared through `declareAlerts` (LAYOUTS.md §2). */}
-        {(expiring || alerts.length > 0 || pageAlerts.length > 0) && (
+            whatever the page has declared through `declareAlerts` (LAYOUTS.md §2). Four things that
+            need deciding is four lines of chrome, so past the first the rest collapse: the most
+            urgent reads in full, a few read as one line each, and the remainder sit behind
+            "N more · Show", a door inside the Alert. */}
+        {said.length > 0 && (
           <div className="px-3 pb-1 pt-1.5">
-            <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) || pageAlerts.some((a) => a.danger) ? "destructive" : "default"} className="py-1.5">
+            <Alert variant={said.some((a) => a.danger) ? "destructive" : "default"} className="py-1.5">
               <TriangleAlert />
               <AlertTitle>Needs you now</AlertTitle>
               <AlertDescription>
-                {expiring && (
-                  <p className="flex flex-wrap items-baseline gap-x-2">
-                    <span>Your session ends in 5 minutes.</span>
-                    <button type="button" className="underline underline-offset-4" onClick={() => setExpiring(false)}>Stay signed in</button>
-                  </p>
-                )}
-                {alerts.map((n) => (
-                  <p key={n.id} className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="min-w-0">{n.title}</span>
-                    <a className="shrink-0 underline underline-offset-4" href={href(n.target)}>Open</a>
-                    <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</button>
-                  </p>
-                ))}
-                {pageAlerts.map((a) => (
-                  <p key={a.id} className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="min-w-0">{a.text}</span>
+                {(moreOpen ? said : said.slice(0, room)).map((a, i) => (
+                  // The most urgent reads in full; the rest are one line each, so four things that
+                  // need deciding cost four lines and not eight.
+                  <p key={a.id} className={cn("flex items-baseline gap-x-2", i === 0 ? "flex-wrap" : "min-w-0")}>
+                    <span className={cn("min-w-0", i > 0 && "truncate")}>{a.text}</span>
                     {a.href && <a className="shrink-0 underline underline-offset-4" href={a.href}>Open</a>}
                     {a.acts?.map((act) => (
                       <button key={act.label} type="button" className="shrink-0 underline underline-offset-4" onClick={act.onClick}>
@@ -439,6 +453,18 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                     ))}
                   </p>
                 ))}
+                {said.length > room && (
+                  <p>
+                    <button
+                      type="button"
+                      className="underline underline-offset-4"
+                      aria-expanded={moreOpen}
+                      onClick={() => setMoreOpen((o) => !o)}
+                    >
+                      {moreOpen ? "Show fewer" : `${said.length - room} more · Show`}
+                    </button>
+                  </p>
+                )}
               </AlertDescription>
             </Alert>
           </div>

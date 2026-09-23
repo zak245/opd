@@ -143,7 +143,10 @@ export function useFitColumns<T>(columns: T[], opts?: {
       const scroller = inner ?? box
       const room = scroller.clientWidth
       const needs = scroller.scrollWidth
-      if (room === 0) return
+      // A table that mounts hidden — inside a closed door, behind a tab — has no box to measure.
+      // Come back on the next frame rather than deciding from a zero, and keep coming back until
+      // it is on screen, or a door that opens later gets yesterday's answer for ever.
+      if (room === 0) { again = requestAnimationFrame(check); return }
       if (needs - room > 1) {
         setDropped((d) => (d < order.length ? d + 1 : d))
         if (dropped >= order.length) setTight(true)
@@ -154,10 +157,24 @@ export function useFitColumns<T>(columns: T[], opts?: {
         setDropped((d) => Math.max(0, d - 1))
       }
     }
+    let again = 0
     check()
+    // The box may never resize while the thing inside it does — a door opening changes the
+    // scroller, not the column it sits in — so both are watched.
     const ro = new ResizeObserver(check)
     ro.observe(box)
-    return () => ro.disconnect()
+    const inner = box.querySelector('[data-slot="table-container"]')
+    if (inner) ro.observe(inner)
+    const table = box.querySelector("table")
+    if (table) ro.observe(table)
+    // One more look after the first paint: fonts and the library's own styles land after mount,
+    // and the first measurement is taken before either.
+    const settle = requestAnimationFrame(check)
+    return () => {
+      ro.disconnect()
+      cancelAnimationFrame(settle)
+      cancelAnimationFrame(again)
+    }
   })
 
   // A column set that changed under us starts again, or a page keeps yesterday's folding.
