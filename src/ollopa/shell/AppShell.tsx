@@ -4,11 +4,12 @@
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { AlertTriangle, ChevronLeft, CircleAlert, Grid3x3, Info, Megaphone, Search, TriangleAlert, X } from "lucide-react"
+import { AlertTriangle, ChevronLeft, CircleAlert, Grid3x3, Info, Megaphone, Minus, Plus, Search, TriangleAlert, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Kbd } from "@/components/ui/kbd"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { href, navigate, useRoute } from "@/app/router"
@@ -358,17 +359,41 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
             trail.length > 0 ? "shrink-0 whitespace-nowrap max-sm:sr-only" : "truncate",
           )} style={{ color: familyOf(page).ink }}>{trail.length > 0 ? crumbName(title) : title}</h1>
           {client && <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">{client} · client workspace</Badge>}
+          {/* Below 1280 the words do not fit beside the search and the workspace channels, and a
+              page that overflows its own viewport is worse than an icon. Same control, same name,
+              with a tooltip that says it. */}
           {canAdd && (
-            <Button variant="outline" size="sm" className="shrink-0" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>
+            <>
+              <Button variant="outline" size="sm" className="hidden shrink-0 xl:inline-flex" onClick={() => { addToSidebar(page); refresh() }}>Add to sidebar</Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon-sm" className="shrink-0 xl:hidden" aria-label="Add to sidebar" onClick={() => { addToSidebar(page); refresh() }}>
+                    <Plus aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Add to sidebar</TooltipContent>
+              </Tooltip>
+            </>
           )}
           {added && inSidebar && (
-            <Button variant="ghost" size="sm" className="shrink-0" onClick={() => { removeFromSidebar(page); refresh() }}>Remove from sidebar</Button>
+            <>
+              <Button variant="ghost" size="sm" className="hidden shrink-0 xl:inline-flex" onClick={() => { removeFromSidebar(page); refresh() }}>Remove from sidebar</Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" className="shrink-0 xl:hidden" aria-label="Remove from sidebar" onClick={() => { removeFromSidebar(page); refresh() }}>
+                    <Minus aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove from sidebar</TooltipContent>
+              </Tooltip>
+            </>
           )}
           <div className={cn("min-w-0 flex-1", (canAdd || added) && "h-0 basis-full md:h-auto md:basis-auto")} />
-          <Button variant="outline" size="sm" className="hidden w-64 justify-start text-muted-foreground lg:flex" onClick={() => setPalette(true)}>
-            <Search className="size-4" aria-hidden="true" />
-            Search or jump to…
-            <Kbd className="ml-auto">⌘K</Kbd>
+          {/* It gives width back before anything else does: a floor, not a fixed size. */}
+          <Button variant="outline" size="sm" className="hidden w-64 min-w-40 shrink justify-start overflow-hidden text-muted-foreground lg:flex" onClick={() => setPalette(true)}>
+            <Search className="size-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 truncate">Search or jump to…</span>
+            <Kbd className="ml-auto shrink-0">⌘K</Kbd>
           </Button>
           <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Search or jump to" onClick={() => setPalette(true)}>
             <Search className="size-4" aria-hidden="true" />
