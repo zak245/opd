@@ -173,8 +173,8 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -193,8 +193,8 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -413,8 +413,8 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 1,
+      "clipped": 9,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -433,8 +433,8 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 1,
+      "clipped": 9,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -614,7 +614,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -634,7 +634,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -654,7 +654,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -674,7 +674,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -774,7 +774,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -794,7 +794,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -854,7 +854,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 11,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -874,7 +874,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 11,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -894,7 +894,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 13,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -914,7 +914,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 13,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1014,7 +1014,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 4,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1034,7 +1034,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 4,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1453,8 +1453,8 @@
       "chrome": 125,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 2,
-      "sideways": 1,
+      "clipped": 6,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1473,8 +1473,8 @@
       "chrome": 125,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 2,
-      "sideways": 1,
+      "clipped": 6,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1493,7 +1493,7 @@
       "chrome": 125,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 13,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1513,7 +1513,7 @@
       "chrome": 125,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 13,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1534,7 +1534,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1554,7 +1554,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1614,7 +1614,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1634,7 +1634,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1654,7 +1654,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1674,7 +1674,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1814,7 +1814,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1834,7 +1834,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1854,7 +1854,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1874,7 +1874,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1894,7 +1894,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1914,7 +1914,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2093,8 +2093,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 19,
-      "sideways": 1,
+      "clipped": 16,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2113,8 +2113,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 19,
-      "sideways": 1,
+      "clipped": 16,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2134,7 +2134,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2154,7 +2154,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2414,7 +2414,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2434,7 +2434,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2454,7 +2454,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2474,7 +2474,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2530,8 +2530,8 @@
     "file": "workflow-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 56,
-      "cards": 11,
+      "chrome": 125,
+      "cards": 10,
       "nestedCards": 0,
       "clipped": 4,
       "sideways": 0,
@@ -2550,8 +2550,8 @@
     "file": "workflow-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 56,
-      "cards": 11,
+      "chrome": 125,
+      "cards": 10,
       "nestedCards": 0,
       "clipped": 4,
       "sideways": 0,
@@ -2570,8 +2570,8 @@
     "file": "workflow-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 56,
-      "cards": 11,
+      "chrome": 125,
+      "cards": 10,
       "nestedCards": 0,
       "clipped": 6,
       "sideways": 0,
@@ -2590,8 +2590,8 @@
     "file": "workflow-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 56,
-      "cards": 11,
+      "chrome": 125,
+      "cards": 10,
       "nestedCards": 0,
       "clipped": 6,
       "sideways": 0,
@@ -2610,8 +2610,8 @@
     "file": "workflow-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 56,
-      "cards": 11,
+      "chrome": 125,
+      "cards": 10,
       "nestedCards": 0,
       "clipped": 5,
       "sideways": 0,
@@ -2630,8 +2630,8 @@
     "file": "workflow-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 56,
-      "cards": 11,
+      "chrome": 125,
+      "cards": 10,
       "nestedCards": 0,
       "clipped": 5,
       "sideways": 0,
@@ -2654,7 +2654,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 5,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2674,7 +2674,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 5,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2694,7 +2694,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 5,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2714,7 +2714,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 5,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2734,7 +2734,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2754,7 +2754,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2771,7 +2771,7 @@
     "notes": [],
     "measured": {
       "chrome": 152,
-      "cards": 4,
+      "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 0,
@@ -2791,7 +2791,7 @@
     "notes": [],
     "measured": {
       "chrome": 152,
-      "cards": 4,
+      "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 0,
@@ -2811,7 +2811,7 @@
     "notes": [],
     "measured": {
       "chrome": 152,
-      "cards": 4,
+      "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 0,
@@ -2831,7 +2831,7 @@
     "notes": [],
     "measured": {
       "chrome": 152,
-      "cards": 4,
+      "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 0,
@@ -2851,7 +2851,7 @@
     "notes": [],
     "measured": {
       "chrome": 220,
-      "cards": 4,
+      "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 1,
@@ -2871,7 +2871,7 @@
     "notes": [],
     "measured": {
       "chrome": 220,
-      "cards": 4,
+      "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 1,
@@ -2890,7 +2890,7 @@
     "file": "agents-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 205,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2910,7 +2910,7 @@
     "file": "agents-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 205,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2930,7 +2930,7 @@
     "file": "agents-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 296,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2950,7 +2950,7 @@
     "file": "agents-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 296,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2970,7 +2970,7 @@
     "file": "agents-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 220,
+      "chrome": 410,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2990,7 +2990,7 @@
     "file": "agents-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 220,
+      "chrome": 410,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -5733,8 +5733,8 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
     }
@@ -5773,8 +5773,8 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
     }
@@ -5813,8 +5813,8 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
     }
@@ -5888,17 +5888,15 @@
     "width": 1440,
     "theme": "light",
     "file": "act-dialog-1440-light.png",
-    "notes": [
-      "no act called \"Delete deal\""
-    ],
+    "notes": [],
     "measured": {
       "chrome": 125,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 7,
+      "clipped": 8,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "body"
+      "focused": "button \"Cancel\""
     }
   },
   {
@@ -5910,17 +5908,15 @@
     "width": 400,
     "theme": "light",
     "file": "act-dialog-400-light.png",
-    "notes": [
-      "no act called \"Delete deal\""
-    ],
+    "notes": [],
     "measured": {
       "chrome": 148,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "body"
+      "focused": "button \"Cancel\""
     }
   },
   {
@@ -6097,8 +6093,8 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleMateo NovakOpen the pageTitle\""
     }
@@ -6149,17 +6145,15 @@
     "caption": "The inbox split, dragged 200 px left",
     "route": "/ollopa/inbox",
     "seat": "meridian:sdr",
-    "width": 400,
+    "width": 1024,
     "theme": "light",
-    "file": "act-divider-left-400-light.png",
-    "notes": [
-      "the inbox split has no draggable divider"
-    ],
+    "file": "act-divider-left-1024-light.png",
+    "notes": [],
     "measured": {
-      "chrome": 148,
-      "cards": 1,
+      "chrome": 125,
+      "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 9,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -6191,17 +6185,15 @@
     "caption": "The inbox split, dragged 200 px right",
     "route": "/ollopa/inbox",
     "seat": "meridian:sdr",
-    "width": 400,
+    "width": 1024,
     "theme": "light",
-    "file": "act-divider-right-400-light.png",
-    "notes": [
-      "the inbox split has no draggable divider"
-    ],
+    "file": "act-divider-right-1024-light.png",
+    "notes": [],
     "measured": {
-      "chrome": 148,
-      "cards": 1,
+      "chrome": 125,
+      "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 9,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -6221,8 +6213,8 @@
       "chrome": 125,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 2,
-      "sideways": 1,
+      "clipped": 6,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "a \"Gatehouse Systems · Platform\""
     }
@@ -6242,7 +6234,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "a \"Gatehouse Systems · Platform\""
     }
