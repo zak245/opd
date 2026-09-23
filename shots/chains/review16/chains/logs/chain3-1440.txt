@@ -1,0 +1,112 @@
+
+=== CHAIN 3 · company › search a person inside it › beside › act › next › back (1440) ===
+  1. Northwind Analytics, the biggest account in the seed
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      (none)
+    focus     BODY "Skip to content ollopA Home Prospect People Companies Engage"
+    lit       (nothing lit)
+    row mark  (none)
+    mounted   /ollopa/companies/co-1*@0
+    h-scroll  doc=1440
+    [page header] Northwind Analytics · Companies · filled=1 (Research R) · destructive=0 · links=2 · sentences=2
+      B-SENTENCE "northwindanalytics.com" → "Northwind Analytics Current client Watch Marcus Adeyemi owns this company — you can read it"
+      B-SENTENCE "Research R" → "12 credits · Charged once"
+    contacts  {"heading":"","search":[],"filters":[],"paging":""}
+  [shot] shots/chains/review16/chains/03-company/01-company-1440.png
+    search box (NONE — there is no search inside the company)
+    after "a" 10 contact rows
+  [shot] shots/chains/review16/chains/03-company/02-searched-1440.png
+    keyboard  -1 tabs from the search box to the row → (never reached)
+  2. the contact beside the company
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      "Petra Okonkwo" / "CMO · Northwind Analytics" w=448 doors=0 trans=0.2s
+    buttons   Choose a sequence | Create a call task | Move to a sequence
+    walker    1 of 24
+    body      
+    focus     DIV "Petra Okonkwo CMO · Northwind Analytics Open the page Title "  [inside the pane]
+    lit       (nothing lit)
+    row mark  Petra Okonkwo Create a call task Stop the sequence CMO · Cold · in Churned re-en
+    mounted   /ollopa/companies/co-1*@1271
+    h-scroll  doc=1440
+    [page header] Northwind Analytics · Companies · filled=1 (Research R) · destructive=0 · links=2 · sentences=2
+      B-SENTENCE "northwindanalytics.com" → "Northwind Analytics Current client Watch Marcus Adeyemi owns this company — you can read it"
+      B-SENTENCE "Research R" → "12 credits · Charged once"
+    [pane] Petra Okonkwo · filled=0 · destructive=0 · links=1 · sentences=0
+      A-CHECK disabled: "Move to a sequence" — beside it: Choose a sequence above
+  [shot] shots/chains/review16/chains/03-company/03-beside-1440.png
+    picker    "Choose a sequence" → "Q4 enterprise outbound"
+    pressed   Create a call task
+    row was   Petra Okonkwo Create a call task Stop the sequence CMO · Cold · in Churned re-engagement · yesterday
+    row now   Petra Okonkwo Create a call task Stop the sequence CMO · Cold · in Churned re-engagement · yesterday Done · call task due today · owned by Elena Vasquez Undo
+    effect    landed on the row
+  3. after the action — is the effect visible where it was caused?
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      "Petra Okonkwo" / "CMO · Northwind Analytics" w=448 doors=0 trans=0.2s
+    buttons   Q4 enterprise outbound | Create a call task | Move to Q4 enterprise outbound | Undo
+    walker    1 of 24
+    body      
+    focus     BUTTON[Sequence to move Petra Okonkwo to] "Q4 enterprise outbound"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Petra Okonkwo Create a call task Stop the sequence CMO · Cold · in Churned re-en
+    mounted   /ollopa/companies/co-1*@1271
+    h-scroll  doc=1440
+    [page header] Northwind Analytics · Companies · filled=1 (Research R) · destructive=0 · links=2 · sentences=2
+      B-SENTENCE "northwindanalytics.com" → "Northwind Analytics Current client Watch Marcus Adeyemi owns this company — you can read it"
+      B-SENTENCE "Research R" → "12 credits · Charged once"
+    [pane] Petra Okonkwo · filled=0 · destructive=0 · links=1 · sentences=1
+      B-SENTENCE "Undo" → "Done · call task due today · owned by Elena Vasquez"
+    page says ly First value, and the goals agreed at the start Ten people enrolled in a live sequence · Within 30 days of kickoff Confirmed 9 Sep by null Give th
+  [shot] shots/chains/review16/chains/03-company/04-acted-1440.png
+  4. ] — the next contact at this company
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      "Rosa Okonkwo" / "Sales Director · Northwind Analytics" w=448 doors=0 trans=0.2s
+    buttons   Choose a sequence | Create a call task | Add to a sequence
+    walker    2 of 24
+    body      
+    focus     BUTTON[Sequence to add Rosa Okonkwo to] "Choose a sequence"  [inside the pane]
+    lit       (nothing lit)
+    row mark  Rosa Okonkwo Create a call task Add to Q4 enterprise outbound Sales Director · M
+    mounted   /ollopa/companies/co-1*@1271
+    h-scroll  doc=1440
+    [page header] Northwind Analytics · Companies · filled=1 (Research R) · destructive=0 · links=2 · sentences=2
+      B-SENTENCE "northwindanalytics.com" → "Northwind Analytics Current client Watch Marcus Adeyemi owns this company — you can read it"
+      B-SENTENCE "Research R" → "12 credits · Charged once"
+    [pane] Rosa Okonkwo · filled=0 · destructive=0 · links=1 · sentences=0
+      A-CHECK disabled: "Add to a sequence" — beside it: Choose a sequence above
+  [shot] shots/chains/review16/chains/03-company/05-next-1440.png
+  5. Open the page
+    hash      #/ollopa/people/c-18
+    h1        Rosa Okonkwo
+    trail     Northwind Analytics
+    pane      (none)
+    focus     H1 "Rosa Okonkwo"
+    lit       Rosa Okonkwo
+    row mark  (none)
+    mounted   /ollopa/companies/co-1 hidden inert@2885 , /ollopa/people/c-18*@0
+    h-scroll  doc=1440
+    [page header] Rosa Okonkwo · filled=0 · destructive=0 · links=2 · sentences=1
+      B-SENTENCE "Sales Director · Northwind Analytics" → "Rosa Okonkwo Owned by Daniel Okafor; only the owner can change or remove it"
+  [shot] shots/chains/review16/chains/03-company/06-page-1440.png
+  6. back on the company
+    hash      #/ollopa/companies/co-1
+    h1        Northwind Analytics · Companies
+    trail     (empty)
+    pane      (none)
+    focus     BUTTON "Rosa Okonkwo"
+    lit       Rosa Okonkwo Create a call task Add to Q4 enterprise outbound Sales Director · M
+    row mark  (none)
+    mounted   /ollopa/companies/co-1*@2885
+    h-scroll  doc=1440
+    [page header] Northwind Analytics · Companies · filled=1 (Research R) · destructive=0 · links=2 · sentences=2
+      B-SENTENCE "northwindanalytics.com" → "Northwind Analytics Current client Watch Marcus Adeyemi owns this company — you can read it"
+      B-SENTENCE "Research R" → "12 credits · Charged once"
+  [shot] shots/chains/review16/chains/03-company/07-back-1440.png
+  [console] nothing — no warning, no error, no failed request
