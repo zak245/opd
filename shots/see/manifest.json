@@ -334,7 +334,7 @@
       "cards": 7,
       "nestedCards": 0,
       "clipped": 5,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -354,7 +354,7 @@
       "cards": 7,
       "nestedCards": 0,
       "clipped": 5,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -533,7 +533,7 @@
       "chrome": 125,
       "cards": 18,
       "nestedCards": 0,
-      "clipped": 7,
+      "clipped": 8,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -553,7 +553,7 @@
       "chrome": 125,
       "cards": 18,
       "nestedCards": 0,
-      "clipped": 7,
+      "clipped": 8,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -893,8 +893,8 @@
       "chrome": 125,
       "cards": 4,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 1,
+      "clipped": 13,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -913,8 +913,8 @@
       "chrome": 125,
       "cards": 4,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 1,
+      "clipped": 13,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -934,7 +934,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 45,
-      "sideways": 3,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -954,7 +954,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 45,
-      "sideways": 3,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1013,9 +1013,9 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 1,
-      "pageScrollsSideways": true,
+      "pageScrollsSideways": false,
       "focused": "body"
     }
   },
@@ -1033,9 +1033,9 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 1,
-      "pageScrollsSideways": true,
+      "pageScrollsSideways": false,
       "focused": "body"
     }
   },
@@ -1094,7 +1094,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
     }
@@ -1114,7 +1114,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
     }
@@ -1134,7 +1134,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 9,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
     }
@@ -1154,7 +1154,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 9,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
     }
@@ -1174,7 +1174,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1194,7 +1194,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1451,7 +1451,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 12,
+      "cards": 11,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -1471,7 +1471,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 12,
+      "cards": 11,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -1491,7 +1491,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 12,
+      "cards": 11,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -1511,7 +1511,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 12,
+      "cards": 11,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -1531,7 +1531,7 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 3,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 2,
@@ -1551,7 +1551,7 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 3,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 2,
@@ -1571,10 +1571,10 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1591,10 +1591,10 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1611,7 +1611,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 1,
@@ -1631,7 +1631,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
       "sideways": 1,
@@ -1651,10 +1651,10 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 0,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1671,10 +1671,10 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 0,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1733,7 +1733,7 @@
       "chrome": 125,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 8,
+      "clipped": 9,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1753,7 +1753,7 @@
       "chrome": 125,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 8,
+      "clipped": 9,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1828,15 +1828,13 @@
     "width": 1440,
     "theme": "dark",
     "file": "campaigns-1440-dark.png",
-    "notes": [
-      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
-    ],
+    "notes": [],
     "measured": {
-      "chrome": null,
-      "cards": 0,
+      "chrome": 56,
+      "cards": 1,
       "nestedCards": 0,
-      "clipped": 0,
-      "sideways": 0,
+      "clipped": 3,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1895,7 +1893,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 3,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1915,7 +1913,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 3,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1975,7 +1973,7 @@
       "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 11,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1995,7 +1993,7 @@
       "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 11,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2015,8 +2013,8 @@
       "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
-      "clipped": 11,
-      "sideways": 1,
+      "clipped": 6,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2035,8 +2033,8 @@
       "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
-      "clipped": 11,
-      "sideways": 1,
+      "clipped": 6,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2055,8 +2053,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 20,
-      "sideways": 1,
+      "clipped": 19,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2075,8 +2073,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 20,
-      "sideways": 1,
+      "clipped": 19,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2095,7 +2093,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 20,
+      "clipped": 19,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2115,7 +2113,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 20,
+      "clipped": 19,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2162,6 +2160,246 @@
     }
   },
   {
+    "scene": "audience",
+    "page": "Campaigns",
+    "caption": "An audience record",
+    "route": "/ollopa/audiences/aud-1",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "light",
+    "file": "audience-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "audience",
+    "page": "Campaigns",
+    "caption": "An audience record",
+    "route": "/ollopa/audiences/aud-1",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "dark",
+    "file": "audience-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "audience",
+    "page": "Campaigns",
+    "caption": "An audience record",
+    "route": "/ollopa/audiences/aud-1",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "light",
+    "file": "audience-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "audience",
+    "page": "Campaigns",
+    "caption": "An audience record",
+    "route": "/ollopa/audiences/aud-1",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "dark",
+    "file": "audience-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "audience",
+    "page": "Campaigns",
+    "caption": "An audience record",
+    "route": "/ollopa/audiences/aud-1",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "light",
+    "file": "audience-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "audience",
+    "page": "Campaigns",
+    "caption": "An audience record",
+    "route": "/ollopa/audiences/aud-1",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "dark",
+    "file": "audience-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 5,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "form",
+    "page": "Campaigns",
+    "caption": "A form record",
+    "route": "/ollopa/forms/form-1",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "light",
+    "file": "form-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "form",
+    "page": "Campaigns",
+    "caption": "A form record",
+    "route": "/ollopa/forms/form-1",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "dark",
+    "file": "form-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "form",
+    "page": "Campaigns",
+    "caption": "A form record",
+    "route": "/ollopa/forms/form-1",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "light",
+    "file": "form-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "form",
+    "page": "Campaigns",
+    "caption": "A form record",
+    "route": "/ollopa/forms/form-1",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "dark",
+    "file": "form-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "form",
+    "page": "Campaigns",
+    "caption": "A form record",
+    "route": "/ollopa/forms/form-1",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "light",
+    "file": "form-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "form",
+    "page": "Campaigns",
+    "caption": "A form record",
+    "route": "/ollopa/forms/form-1",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "dark",
+    "file": "form-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
     "scene": "workflows",
     "page": "Workflows",
     "caption": "Workflows at rest",
@@ -2191,7 +2429,15 @@
     "theme": "dark",
     "file": "workflows-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4233/#/ollopa/workflows"
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "workflows",
@@ -2203,7 +2449,15 @@
     "theme": "light",
     "file": "workflows-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4233/#/ollopa/workflows"
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "workflows",
@@ -2215,7 +2469,15 @@
     "theme": "dark",
     "file": "workflows-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4233/#/ollopa/workflows"
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "workflows",
@@ -2227,7 +2489,15 @@
     "theme": "light",
     "file": "workflows-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4233/#/ollopa/workflows"
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "workflows",
@@ -2239,7 +2509,135 @@
     "theme": "dark",
     "file": "workflows-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4233/#/ollopa/workflows"
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflow",
+    "page": "Workflows",
+    "caption": "A workflow record",
+    "route": "/ollopa/workflows/wf-1",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "light",
+    "file": "workflow-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 11,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflow",
+    "page": "Workflows",
+    "caption": "A workflow record",
+    "route": "/ollopa/workflows/wf-1",
+    "seat": "meridian:marketer",
+    "width": 1440,
+    "theme": "dark",
+    "file": "workflow-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 11,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflow",
+    "page": "Workflows",
+    "caption": "A workflow record",
+    "route": "/ollopa/workflows/wf-1",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "light",
+    "file": "workflow-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 11,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflow",
+    "page": "Workflows",
+    "caption": "A workflow record",
+    "route": "/ollopa/workflows/wf-1",
+    "seat": "meridian:marketer",
+    "width": 1024,
+    "theme": "dark",
+    "file": "workflow-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 11,
+      "nestedCards": 0,
+      "clipped": 6,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflow",
+    "page": "Workflows",
+    "caption": "A workflow record",
+    "route": "/ollopa/workflows/wf-1",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "light",
+    "file": "workflow-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 11,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "workflow",
+    "page": "Workflows",
+    "caption": "A workflow record",
+    "route": "/ollopa/workflows/wf-1",
+    "seat": "meridian:marketer",
+    "width": 400,
+    "theme": "dark",
+    "file": "workflow-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 11,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "requests",
@@ -2250,15 +2648,13 @@
     "width": 1440,
     "theme": "light",
     "file": "requests-1440-light.png",
-    "notes": [
-      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
-    ],
+    "notes": [],
     "measured": {
-      "chrome": null,
-      "cards": 0,
+      "chrome": 152,
+      "cards": 1,
       "nestedCards": 0,
-      "clipped": 0,
-      "sideways": 0,
+      "clipped": 5,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2458,7 +2854,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 3,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2478,7 +2874,7 @@
       "cards": 4,
       "nestedCards": 0,
       "clipped": 3,
-      "sideways": 3,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2538,7 +2934,7 @@
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
-      "sideways": 2,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2558,7 +2954,7 @@
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
-      "sideways": 2,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2673,7 +3069,15 @@
     "theme": "dark",
     "file": "settings-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings",
@@ -2685,7 +3089,15 @@
     "theme": "light",
     "file": "settings-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings",
@@ -2697,7 +3109,15 @@
     "theme": "dark",
     "file": "settings-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-you",
@@ -2709,7 +3129,15 @@
     "theme": "light",
     "file": "settings-you-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/you"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-you",
@@ -2721,7 +3149,15 @@
     "theme": "dark",
     "file": "settings-you-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/you"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-you",
@@ -2733,7 +3169,15 @@
     "theme": "light",
     "file": "settings-you-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/you"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-you",
@@ -2745,7 +3189,15 @@
     "theme": "dark",
     "file": "settings-you-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/you"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-you",
@@ -2757,7 +3209,15 @@
     "theme": "light",
     "file": "settings-you-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/you"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-you",
@@ -2769,7 +3229,15 @@
     "theme": "dark",
     "file": "settings-you-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/you"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-workspace",
@@ -2781,7 +3249,15 @@
     "theme": "light",
     "file": "settings-workspace-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/workspace"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-workspace",
@@ -2793,7 +3269,15 @@
     "theme": "dark",
     "file": "settings-workspace-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/workspace"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-workspace",
@@ -2805,7 +3289,15 @@
     "theme": "light",
     "file": "settings-workspace-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/workspace"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-workspace",
@@ -2817,7 +3309,15 @@
     "theme": "dark",
     "file": "settings-workspace-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/workspace"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-workspace",
@@ -2829,7 +3329,15 @@
     "theme": "light",
     "file": "settings-workspace-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/workspace"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-workspace",
@@ -2841,7 +3349,15 @@
     "theme": "dark",
     "file": "settings-workspace-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/workspace"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-how-your-team-works",
@@ -2853,7 +3369,15 @@
     "theme": "light",
     "file": "settings-how-your-team-works-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/how-your-team-works"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-how-your-team-works",
@@ -2865,7 +3389,15 @@
     "theme": "dark",
     "file": "settings-how-your-team-works-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/how-your-team-works"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-how-your-team-works",
@@ -2877,7 +3409,15 @@
     "theme": "light",
     "file": "settings-how-your-team-works-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/how-your-team-works"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-how-your-team-works",
@@ -2889,7 +3429,15 @@
     "theme": "dark",
     "file": "settings-how-your-team-works-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/how-your-team-works"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-how-your-team-works",
@@ -2901,7 +3449,15 @@
     "theme": "light",
     "file": "settings-how-your-team-works-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/how-your-team-works"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-how-your-team-works",
@@ -2913,7 +3469,15 @@
     "theme": "dark",
     "file": "settings-how-your-team-works-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/how-your-team-works"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-team",
@@ -2924,10 +3488,16 @@
     "width": 1440,
     "theme": "light",
     "file": "settings-team-1440-light.png",
-    "notes": [
-      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
-    ],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/team"
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-team",
@@ -2939,7 +3509,15 @@
     "theme": "dark",
     "file": "settings-team-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/team"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-team",
@@ -2951,7 +3529,15 @@
     "theme": "light",
     "file": "settings-team-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/team"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-team",
@@ -2963,7 +3549,15 @@
     "theme": "dark",
     "file": "settings-team-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/team"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-team",
@@ -2975,7 +3569,15 @@
     "theme": "light",
     "file": "settings-team-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/team"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-team",
@@ -2987,7 +3589,15 @@
     "theme": "dark",
     "file": "settings-team-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/team"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-email-sending",
@@ -2999,7 +3609,15 @@
     "theme": "light",
     "file": "settings-email-sending-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/email-sending"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-email-sending",
@@ -3151,7 +3769,15 @@
     "theme": "light",
     "file": "settings-prospecting-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/prospecting"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-prospecting",
@@ -3163,7 +3789,15 @@
     "theme": "dark",
     "file": "settings-prospecting-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/prospecting"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-prospecting",
@@ -3175,7 +3809,15 @@
     "theme": "light",
     "file": "settings-prospecting-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/prospecting"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-prospecting",
@@ -3187,7 +3829,15 @@
     "theme": "dark",
     "file": "settings-prospecting-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/prospecting"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-pipeline",
@@ -3239,7 +3889,15 @@
     "theme": "light",
     "file": "settings-pipeline-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/pipeline"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-pipeline",
@@ -3251,7 +3909,15 @@
     "theme": "dark",
     "file": "settings-pipeline-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/pipeline"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-pipeline",
@@ -3263,7 +3929,15 @@
     "theme": "light",
     "file": "settings-pipeline-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/pipeline"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-pipeline",
@@ -3275,7 +3949,15 @@
     "theme": "dark",
     "file": "settings-pipeline-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/pipeline"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-sequences",
@@ -3287,7 +3969,15 @@
     "theme": "light",
     "file": "settings-sequences-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/sequences"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-sequences",
@@ -3299,7 +3989,15 @@
     "theme": "dark",
     "file": "settings-sequences-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/sequences"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-sequences",
@@ -3311,7 +4009,15 @@
     "theme": "light",
     "file": "settings-sequences-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/sequences"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-sequences",
@@ -3323,7 +4029,15 @@
     "theme": "dark",
     "file": "settings-sequences-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/sequences"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-sequences",
@@ -3335,7 +4049,15 @@
     "theme": "light",
     "file": "settings-sequences-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/sequences"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-sequences",
@@ -3347,7 +4069,15 @@
     "theme": "dark",
     "file": "settings-sequences-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/sequences"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-scoring",
@@ -3359,7 +4089,15 @@
     "theme": "light",
     "file": "settings-scoring-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/scoring"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-scoring",
@@ -3371,7 +4109,15 @@
     "theme": "dark",
     "file": "settings-scoring-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/scoring"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-scoring",
@@ -3383,7 +4129,15 @@
     "theme": "light",
     "file": "settings-scoring-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/scoring"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-scoring",
@@ -3395,7 +4149,15 @@
     "theme": "dark",
     "file": "settings-scoring-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/scoring"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-scoring",
@@ -3407,7 +4169,15 @@
     "theme": "light",
     "file": "settings-scoring-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/scoring"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-scoring",
@@ -3419,7 +4189,15 @@
     "theme": "dark",
     "file": "settings-scoring-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/scoring"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-agents",
@@ -3431,7 +4209,15 @@
     "theme": "light",
     "file": "settings-agents-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/agents"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-agents",
@@ -3443,7 +4229,15 @@
     "theme": "dark",
     "file": "settings-agents-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/agents"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-agents",
@@ -3454,10 +4248,16 @@
     "width": 1024,
     "theme": "light",
     "file": "settings-agents-1024-light.png",
-    "notes": [
-      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
-    ],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/agents"
+    "notes": [],
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-agents",
@@ -3469,7 +4269,15 @@
     "theme": "dark",
     "file": "settings-agents-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/agents"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-agents",
@@ -3481,7 +4289,15 @@
     "theme": "light",
     "file": "settings-agents-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/agents"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-agents",
@@ -3493,7 +4309,15 @@
     "theme": "dark",
     "file": "settings-agents-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/agents"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-integrations",
@@ -3505,7 +4329,15 @@
     "theme": "light",
     "file": "settings-integrations-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/integrations"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-integrations",
@@ -3517,7 +4349,15 @@
     "theme": "dark",
     "file": "settings-integrations-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/integrations"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-integrations",
@@ -3529,7 +4369,15 @@
     "theme": "light",
     "file": "settings-integrations-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/integrations"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-integrations",
@@ -3541,7 +4389,15 @@
     "theme": "dark",
     "file": "settings-integrations-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/integrations"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 11,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-integrations",
@@ -3553,7 +4409,15 @@
     "theme": "light",
     "file": "settings-integrations-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/integrations"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-integrations",
@@ -3565,7 +4429,15 @@
     "theme": "dark",
     "file": "settings-integrations-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/integrations"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-developer",
@@ -3577,7 +4449,15 @@
     "theme": "light",
     "file": "settings-developer-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/developer"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-developer",
@@ -3589,7 +4469,15 @@
     "theme": "dark",
     "file": "settings-developer-1440-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/developer"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-developer",
@@ -3601,7 +4489,15 @@
     "theme": "light",
     "file": "settings-developer-1024-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/developer"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-developer",
@@ -3613,7 +4509,15 @@
     "theme": "dark",
     "file": "settings-developer-1024-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/developer"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 13,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-developer",
@@ -3625,7 +4529,15 @@
     "theme": "light",
     "file": "settings-developer-400-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/developer"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-developer",
@@ -3637,7 +4549,15 @@
     "theme": "dark",
     "file": "settings-developer-400-dark.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/developer"
+    "measured": {
+      "chrome": 220,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 12,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-plan",
@@ -3649,7 +4569,15 @@
     "theme": "light",
     "file": "settings-plan-1440-light.png",
     "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/settings/plan"
+    "measured": {
+      "chrome": 152,
+      "cards": 14,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "settings-plan",
@@ -3805,7 +4733,7 @@
       "chrome": 152,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3825,7 +4753,7 @@
       "chrome": 152,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3880,14 +4808,12 @@
     "width": 1440,
     "theme": "light",
     "file": "connect-5-1440-light.png",
-    "notes": [
-      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
-    ],
+    "notes": [],
     "measured": {
-      "chrome": null,
-      "cards": 0,
+      "chrome": 152,
+      "cards": 1,
       "nestedCards": 0,
-      "clipped": 0,
+      "clipped": 2,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3927,7 +4853,7 @@
       "chrome": 152,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3947,7 +4873,7 @@
       "chrome": 152,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4010,7 +4936,7 @@
       "clipped": 2,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "span \"Step 1 of 5: File and columns\""
+      "focused": "body"
     }
   },
   {
@@ -4030,7 +4956,7 @@
       "clipped": 2,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "span \"Step 1 of 5: File and columns\""
+      "focused": "body"
     }
   },
   {
@@ -4050,7 +4976,7 @@
       "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "span \"Step 1 of 5: File and columns\""
+      "focused": "body"
     }
   },
   {
@@ -4070,7 +4996,7 @@
       "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "span \"Step 1 of 5: File and columns\""
+      "focused": "body"
     }
   },
   {
@@ -4090,7 +5016,7 @@
       "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "span \"Step 1 of 5: File and columns\""
+      "focused": "body"
     }
   },
   {
@@ -4110,7 +5036,7 @@
       "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "span \"Step 1 of 5: File and columns\""
+      "focused": "body"
     }
   },
   {
@@ -4127,8 +5053,8 @@
       "chrome": 152,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 2,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -4147,8 +5073,8 @@
       "chrome": 152,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 9,
-      "sideways": 2,
+      "clipped": 3,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -4167,7 +5093,7 @@
       "chrome": 152,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 5,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4187,7 +5113,7 @@
       "chrome": 152,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 5,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4207,8 +5133,8 @@
       "chrome": 220,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 10,
-      "sideways": 6,
+      "clipped": 4,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -4227,8 +5153,128 @@
       "chrome": 220,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 10,
-      "sideways": 6,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "job",
+    "page": "Integrations",
+    "caption": "An enrichment job report",
+    "route": "/ollopa/enrichment/local-import",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "job-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "job",
+    "page": "Integrations",
+    "caption": "An enrichment job report",
+    "route": "/ollopa/enrichment/local-import",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "dark",
+    "file": "job-1440-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "job",
+    "page": "Integrations",
+    "caption": "An enrichment job report",
+    "route": "/ollopa/enrichment/local-import",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "light",
+    "file": "job-1024-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "job",
+    "page": "Integrations",
+    "caption": "An enrichment job report",
+    "route": "/ollopa/enrichment/local-import",
+    "seat": "meridian:sdr",
+    "width": 1024,
+    "theme": "dark",
+    "file": "job-1024-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "job",
+    "page": "Integrations",
+    "caption": "An enrichment job report",
+    "route": "/ollopa/enrichment/local-import",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "job-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
+  },
+  {
+    "scene": "job",
+    "page": "Integrations",
+    "caption": "An enrichment job report",
+    "route": "/ollopa/enrichment/local-import",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "dark",
+    "file": "job-400-dark.png",
+    "notes": [],
+    "measured": {
+      "chrome": 148,
+      "cards": 7,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -4607,8 +5653,8 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
-      "sideways": 1,
+      "clipped": 9,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -4647,10 +5693,10 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
-      "sideways": 1,
+      "clipped": 9,
+      "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"My prospects to work\""
+      "focused": "input[Search people by name, title, company or email] \"\""
     }
   },
   {
@@ -4670,7 +5716,7 @@
       "clipped": 2,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"My prospects to work\""
+      "focused": "input[Search people by name, title, company or email] \"\""
     }
   },
   {
@@ -4687,7 +5733,7 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 9,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
@@ -4727,7 +5773,7 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 9,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
@@ -4767,7 +5813,7 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 9,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
@@ -4807,10 +5853,10 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
-      "sideways": 1,
+      "clipped": 9,
+      "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div#radix-_r_1g_ \"Quick lookEnterOpen the full recordoSequ\""
+      "focused": "div#radix-_r_p_ \"Quick lookEnterOpen the full recordoSequ\""
     }
   },
   {
@@ -4830,7 +5876,7 @@
       "clipped": 2,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div#radix-_r_s_ \"Quick lookEnterOpen the full recordoSequ\""
+      "focused": "div#radix-_r_1e_ \"Quick lookEnterOpen the full recordoSequ\""
     }
   },
   {
@@ -4842,15 +5888,17 @@
     "width": 1440,
     "theme": "light",
     "file": "act-dialog-1440-light.png",
-    "notes": [],
+    "notes": [
+      "no act called \"Delete deal\""
+    ],
     "measured": {
       "chrome": 125,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 8,
+      "clipped": 7,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"Cancel\""
+      "focused": "body"
     }
   },
   {
@@ -4862,15 +5910,17 @@
     "width": 400,
     "theme": "light",
     "file": "act-dialog-400-light.png",
-    "notes": [],
+    "notes": [
+      "no act called \"Delete deal\""
+    ],
     "measured": {
       "chrome": 148,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 9,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"Cancel\""
+      "focused": "body"
     }
   },
   {
@@ -5047,7 +6097,7 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 9,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "div \"From PeopleMateo NovakOpen the pageTitle\""
@@ -5070,7 +6120,7 @@
       "clipped": 2,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"My prospects to work\""
+      "focused": "input[Search people by name, title, company or email] \"\""
     }
   },
   {
@@ -5082,10 +6132,16 @@
     "width": 1440,
     "theme": "light",
     "file": "act-divider-left-1440-light.png",
-    "notes": [
-      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
-    ],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/inbox"
+    "notes": [],
+    "measured": {
+      "chrome": 125,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 5,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "act-divider-left",
@@ -5096,8 +6152,18 @@
     "width": 400,
     "theme": "light",
     "file": "act-divider-left-400-light.png",
-    "notes": [],
-    "error": "net::ERR_CONNECTION_REFUSED at http://localhost:4200/#/ollopa/inbox"
+    "notes": [
+      "the inbox split has no draggable divider"
+    ],
+    "measured": {
+      "chrome": 148,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 2,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "body"
+    }
   },
   {
     "scene": "act-divider-right",
@@ -5114,7 +6180,7 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -5136,7 +6202,7 @@
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -5153,7 +6219,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 12,
+      "cards": 11,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -5173,12 +6239,12 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 3,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 1,
+      "sideways": 2,
       "pageScrollsSideways": false,
-      "focused": "body"
+      "focused": "a \"Gatehouse Systems · Platform\""
     }
   },
   {
@@ -5216,7 +6282,7 @@
       "cards": 8,
       "nestedCards": 0,
       "clipped": 6,
-      "sideways": 1,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h1 \"Mateo Novak\""
     }
@@ -5235,8 +6301,8 @@
       "chrome": 125,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
-      "sideways": 1,
+      "clipped": 9,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "tr \"Mateo NovakVP SalesChanged jobWayfare Sy\""
     }
@@ -5278,7 +6344,7 @@
       "clipped": 10,
       "sideways": 2,
       "pageScrollsSideways": false,
-      "focused": "div#radix-_r_1k_ \"SidebarDisplays the mobile sidebar.ollop\""
+      "focused": "div#radix-_r_1g_ \"SidebarDisplays the mobile sidebar.ollop\""
     }
   },
   {
