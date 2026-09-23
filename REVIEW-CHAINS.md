@@ -1,11 +1,89 @@
 # Stage 3 review: the chains
 
-Round 15 is the current review — the layout fixes, judged from the `see` scenes. Rounds 14 through
-1 are kept below, in order.
+Round 16 is the current review — the fold, the bands and the one alert. Rounds 15 through 1 are
+kept below, in order.
 
 ---
 
-# Round 15 — the layout fixes, judged from the scenes
+# Round 16 — the fold, the bands and the one alert
+
+Judged from the images in `shots/see/` — **319 images**, fresh manifest, no scene re-run. Then
+chains 1, 3 and 7 on my own preview on 4180.
+
+**Consoles silent** on all six chain runs. **No page scrolls sideways** at any width in any theme,
+and **no card nests**, on all 319.
+
+## Round 15's worst five, re-checked first
+
+| # | Round-15 finding | Now | Evidence |
+|---|---|---|---|
+| 1 | Accounts clipped at 1024, seven controls before the door | **Fixed, both halves** | `useFitColumns` folds Contract value and Next step into one MetaLine under the account name; four columns fit and `sideways` is 0 at 1440, 1024 and 400. The toolbar is search, one renewals ToggleGroup, Health band, Columns, Owner — five, then the door. `accounts-1024-light.png` |
+| 2 | Reports: a band and a row of boxes stacked | **Fixed** | One band: "Emails sent 1,328 ↓50 · Calls made 442 ↓53 · Meetings booked 458 · Tasks done 485 ↑62". The bordered four-cell card is gone; cards 4 → 3. `reports-1440-light.png` |
+| 3 | Sequence: the People figures were six boxes | **Fixed** | One label-and-value band — Active 231, Paused 16, Finished 204, Replied 10, Bounced 9, Not sent 23 — wrapping to two rows, which §2 allows. `sequence-400-light.png` |
+| 4 | The workflow's side rail carried a decision | **Fixed** | "1 record reached nobody · Open the run history" is now the page Alert. The rail holds "What it costs" and "What changed", facts only. `Expand all` moved onto the name line. `workflow-1440-light.png` |
+| 5 | Agents: two red alert bands | **Fixed, and it cost something** | One Alert — but see the new list. `agents-1440-light.png` |
+
+Five for five. One of them traded a duplicate for a size problem.
+
+## Page by page
+
+A = type and contract (§1, §2, §7) · B = width, alignment, nothing empty · C = 1024 and 400 ·
+D = affordances · E = overlays · F = console.
+
+| Scene | Type | A | B | C | D | E | F |
+|---|---|---|---|---|---|---|---|
+| `home` | Home | ✓ | ? status badges still a third band above the title | ✓ | ✓ | ✓ | ✓ |
+| `people` `companies` `lists` `sequences` `templates` `deals-table` | Index | ✓ | ✓ columns fold, 0 sideways at every width | ✓ | ✓ | ✓ | ✓ |
+| `person` `company` `deal` `campaign` `audience` `form` `job` | Record | ✓ acts on the name line, values not sentences | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sequence` | Record | ✓ People is a band now | ✓ at 1440 | **!** the results table still scrolls 125 px at 1024 | ✓ | ✓ | ✓ |
+| `workflow` | Record | ✓ rail carries facts only | ✓ one filled on the name line | ✓ | ✓ | **!** explanatory prose beside two controls (DESIGN §3) | ✓ |
+| `inbox` | Master-detail | ✓ | ✓ | ✓ | ✓ grip, `role="separator"`, arrows resize | ✓ | ✓ |
+| `tasks-queue` `tasks-list` | Queue / Index | ✓ one door | ? chrome 152 → 197 px at 400, the stuck line joined the Alert | ✓ 0 sideways | ✓ | ✓ | ✓ |
+| `deals-board` | Board | ✓ stages share the width | ✓ | ? the stage strip scrolls at 1024, which the board is allowed | ✓ | ✓ | ✓ |
+| `accounts` | Index | ✓ five controls then the door | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `reports` | Index-ish | ✓ one band | ✓ at 1440 | **!** the "By rep" table scrolls 198 px at 400 | ✓ | ✓ | ✓ |
+| `agents` | Queue | ✓ one alert | **!** that alert is 140 px at 1440 and about 330 px at 400 | **!** 410 px of chrome at 400 | ✓ | ✓ | ✓ |
+| `settings` ×14 `connect` `import` `setup` `integration` `developer` | Settings / Wizard / Record | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `act-*` (17 scenes) | — | ✓ | ✓ | ✓ | ✓ | ✓ 0 nested | ✓ |
+
+## The new worst five
+
+1. **`agents-400-light.png` — one alert, and it is now a wall.** `declareAlerts` merges the page's
+   two exceptions into the shell's alert, so the single Alert carries four messages with seven
+   links between them. Chrome went 152 → **205 px at 1440, 296 at 1024 and 410 at 400**, where the
+   alert fills the top half of the screen and the word "Agents" does not appear until y≈440.
+   **This is a system defect, not a page one**: `shell/banner.ts` has no cap and no collapse, so
+   any page that declares an alert inherits the behaviour. Tasks shows it too, 148 → 197 px at 400.
+2. **`reports-400-light.png` — the "By rep" table scrolls 198 px at 400.** `RowsTable` was applied to
+   Reports' chart section but not to this table, so §5's "a divided list, never a clipped table"
+   is unmet on the one page built for comparing numbers.
+3. **`sequence-1024-light.png` — the results table scrolls 125 px at 1024.** `RowsTable` folds at
+   400 and not at 1024, so a table that is fine at 1440 and fine at 400 is clipped in between.
+   **Also a system defect**: the fold has one breakpoint where the layout has three widths.
+4. **`workflow-1440-light.png` — education next to controls.** Above "Raise the ceiling to": *"At
+   the ceiling, enrichment stops. People are still enrolled and still routed, marked 'not enriched
+   — daily ceiling reached'."* And under the SLA list: *"Business hours 08:00–18:00, Mon, Tue, Wed,
+   Thu, Fri, Europe/Berlin · the clock pauses outside them."* Neither is one of DESIGN §3's three
+   reasons; both are teaching.
+5. **`home-1440-light.png` — the status badges are still a band of their own** between the Alert and
+   the title, carried unchanged since round 13. Chrome 155 px at 1440 and 178 at 400.
+
+## The chains
+
+| Chain | Chain card | Disclosure card |
+|---|---|---|
+| 1 · Sequence › person | **18**/18 | **17**/18 |
+| 3 · Company › person | **18**/18 | **17**/18 |
+| 7 · Inbox, Tasks, Home | **18**/18 | **17**/18 |
+
+Walkers read 1 of 34, 1 of 24, 1 of 4 and 14 → 13; the pane action lands on the row with its Undo;
+arrival focuses the lit `h1`; the crumb returns to the lit row; consoles silent. The standing
+A-failure is unchanged: at 400 the contact record's header collapses and "Move sequence" and "Add a
+note" become two filled controls on one surface.
+
+---
+
+# Round 15 — the layout fixes, judged from the scenes (superseded)
 
 Judged from the images in `shots/see/` — **319 images**, fresh manifest, no scene re-run. Then
 chains 1, 3 and 7 on my own preview on 4180 with `review-chains.mjs`.
