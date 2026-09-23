@@ -216,10 +216,11 @@ export function SummaryStrip({ figures, className }: { figures: SummaryFigure[];
   const phone = usePhone()
   if (figures.length === 0) return null
   return (
-    // One line at 400, scrolled rather than wrapped: a strip that wraps to four rows is a block.
-    <div className={cn("flex items-baseline gap-x-8 gap-y-2 py-2", phone ? "overflow-x-auto" : "flex-wrap", className)}>
+    // A band, at every width. On a phone it wraps onto two or three rows rather than scrolling:
+    // a figure cut mid-word ("Clos…") is a number nobody can read (LAYOUTS.md §2).
+    <div className={cn("flex flex-wrap items-baseline py-2", phone ? "gap-x-6 gap-y-1" : "gap-x-8 gap-y-2", className)}>
       {figures.map((f) => (
-        <div key={f.label} className={cn("min-w-0", phone && "shrink-0")}>
+        <div key={f.label} className="min-w-0">
           <div className="t-label text-muted-foreground">{f.label}</div>
           <div className="t-section tabular-nums">
             {f.href ? <a className="underline-offset-4 hover:underline" href={f.href}>{f.value}</a> : f.value}

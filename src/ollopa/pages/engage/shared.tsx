@@ -78,22 +78,27 @@ export function CountRate({ label, count, of }: { label: string; count: number; 
 export function CountButton({ label, count, active, onClick, tone, className }: {
   label: string; count: number; active?: boolean; onClick: () => void; tone?: "warning" | "error"; className?: string
 }) {
+  // A summary is one band, never a row of boxes (LAYOUTS.md §2). These figures are also the
+  // filters for the list below, so each is a control — a ghost one, marked when it is the filter
+  // that is on, with no border of its own.
   return (
     <Button
       type="button"
-      variant={active ? "secondary" : "outline"}
+      variant={active ? "secondary" : "ghost"}
       onClick={onClick}
       aria-pressed={active}
       className={cn(
         "h-auto flex-col items-start gap-0 px-2.5 py-1.5 font-normal",
-        active && "border-foreground",
-        tone === "warning" && "border-[color:var(--warning-ink)]",
-        tone === "error" && "border-[color:var(--danger-ink)]",
+        !active && "border border-transparent",
+        active && "border border-foreground",
         className,
       )}
     >
       <span className="t-small block text-muted-foreground">{label}</span>
-      <span className="t-body block font-medium tabular-nums">{n(count)}</span>
+      <span
+        className="t-body block font-medium tabular-nums"
+        style={tone === "warning" ? { color: "var(--warning-ink)" } : tone === "error" ? { color: "var(--danger-ink)" } : undefined}
+      >{n(count)}</span>
       <span className="sr-only">filter people by {label.toLowerCase()}</span>
     </Button>
   )

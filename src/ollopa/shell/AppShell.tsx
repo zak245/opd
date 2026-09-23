@@ -35,7 +35,7 @@ import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY, type Kind } from "./notifications"
-import { useBanner } from "./banner"
+import { useBanner, usePageAlerts } from "./banner"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
 const COLLAPSE_KEY = "ollopa.sidebar"
@@ -170,6 +170,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const [, setTick] = useState(0)
   const refresh = () => setTick((t) => t + 1)
   const banner = useBanner()
+  const pageAlerts = usePageAlerts()
   const [newsRead, setNewsRead] = useState(false)
   const trail = useTrail()
   const route = useRoute()
@@ -406,10 +407,11 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
 
         {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
             with the library's gap. */}
-        {/* One Alert, and only what needs a decision is in it. */}
-        {(expiring || alerts.length > 0) && (
+        {/* One Alert, and only what needs a decision is in it — the workspace's items first, then
+            whatever the page has declared through `declareAlerts` (LAYOUTS.md §2). */}
+        {(expiring || alerts.length > 0 || pageAlerts.length > 0) && (
           <div className="px-3 pb-1 pt-1.5">
-            <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) ? "destructive" : "default"} className="py-1.5">
+            <Alert variant={alerts.some((n) => DANGER_KINDS.has(n.kind)) || pageAlerts.some((a) => a.danger) ? "destructive" : "default"} className="py-1.5">
               <TriangleAlert />
               <AlertTitle>Needs you now</AlertTitle>
               <AlertDescription>
@@ -424,6 +426,17 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
                     <span className="min-w-0">{n.title}</span>
                     <a className="shrink-0 underline underline-offset-4" href={href(n.target)}>Open</a>
                     <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => setDismissed((d) => [...d, n.id])}>Dismiss</button>
+                  </p>
+                ))}
+                {pageAlerts.map((a) => (
+                  <p key={a.id} className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="min-w-0">{a.text}</span>
+                    {a.href && <a className="shrink-0 underline underline-offset-4" href={a.href}>Open</a>}
+                    {a.acts?.map((act) => (
+                      <button key={act.label} type="button" className="shrink-0 underline underline-offset-4" onClick={act.onClick}>
+                        {act.label}
+                      </button>
+                    ))}
                   </p>
                 ))}
               </AlertDescription>

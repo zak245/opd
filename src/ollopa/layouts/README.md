@@ -114,6 +114,26 @@ divided list at 400 and is never clipped; this is the part that keeps that promi
 Use it for every table inside a record. An index page gets the same behaviour from `IndexPage`'s
 `table` and `rows` pair.
 
+### Column priorities: `useColumnFit`
+
+An index is one full-width column (§6) and nothing is removed as the page narrows (§5) — so a table
+never scrolls sideways inside its card. Each column declares how hard it fights for its place:
+
+| `priority` | Drawn from |
+|---|---|
+| `1` | every width — the row's name and the one or two facts it is read for |
+| `2` | 1280 px |
+| `3` | 1536 px |
+| unset | treated as `2` |
+
+```tsx
+const { shown, folded } = useColumnFit(columns, (c) => c.priority)
+```
+
+What leaves the table is **not removed**: `folded` is rendered under the row's name as a meta line
+(`label value · label value`), which is where the 400 divided list already puts it, and the column
+picker still lists every column. Applied on People, Companies, Accounts and the Deals table.
+
 ### `SectionFilter`
 
 The filter on a section **inside a record** — a contact's activity, a deal's timeline. An inline

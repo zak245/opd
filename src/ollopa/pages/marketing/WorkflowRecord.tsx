@@ -19,6 +19,7 @@ import { Actions } from "../../ui/Actions"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { FAMILY, PERSON_FAMILY, RowGap, ink, inUsageOrder } from "./look"
+import { useDeclareAlerts } from "../../shell/banner"
 import { Separator } from "@/components/ui/separator"
 import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
@@ -87,12 +88,25 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   // A deep link to "this workflow's exceptions" reproduces the view: the door opens and the page
   // lands on the block the link names.
   useEffect(() => {
-    if (at === "runs") { showRuns(); return }
+    if (at === "runs" || at === "exceptions") { showRuns(); return }
     if (at) document.getElementById(at)?.scrollIntoView({ block: "start" })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [at])
 
   const runs = useMemo(() => runsOf(seed.workflowRuns, w?.id ?? ""), [seed.workflowRuns, w?.id])
+  const exceptions = notRoutedRuns(runs)
+
+  /**
+   * The one decision this record has. The side rail holds related things and never the record's own
+   * decisions (LAYOUTS.md §2), so the line is declared to the shell and drawn in the one page Alert,
+   * above the sections, with its act on the line.
+   */
+  useDeclareAlerts(exceptions.length > 0 ? [{
+    id: `wf.not-routed.${w?.id ?? ""}`,
+    text: `${num(exceptions.length)} record${exceptions.length === 1 ? "" : "s"} reached nobody.`,
+    danger: true,
+    acts: [{ label: "Open the run history", onClick: showRuns }],
+  }] : [])
 
   if (!w) {
     return (
@@ -103,7 +117,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
   }
 
   const enrolled = enrolledRuns(runs)
-  const exceptions = notRoutedRuns(runs)
   const breached = breachedRows(w, runs)
   const breachedIds = breached.map((r) => r.run.personId)
   const away = seed.users.filter((u) => typeof u.availability === "object" && (w.routing?.pool ?? []).includes(u.name))
@@ -470,18 +483,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
                 <li className="text-xs text-muted-foreground">At the ceiling: enrichment stops, routing continues.</li>
               </ul>
             ),
-          },
-          {
-            id: "exceptions", title: "Could not route", count: exceptions.length,
-            tone: exceptions.length > 0 ? "attention" : undefined,
-            children: exceptions.length === 0
-              ? <p className="text-sm text-muted-foreground">Everything reached somebody.</p>
-              : (
-                <div className="space-y-2">
-                  <p className="text-sm">{num(exceptions.length)} records reached nobody.</p>
-                  <Actions surface="card" items={[{ kind: "secondary", label: "Open the run history", onClick: showRuns, keys: "E" }]} />
-                </div>
-              ),
           },
           {
             id: "edits", title: "What changed", count: seed.workflowEdits.filter((e) => e.workflowId === w.id).length,

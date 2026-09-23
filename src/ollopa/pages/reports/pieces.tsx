@@ -10,52 +10,41 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDoorState } from "../../ui/Door"
-import { Section } from "../../layouts"
+import { Section, SummaryStrip } from "../../layouts"
 import { money as usd, type Plan } from "../../ui/gate"
 import { toast } from "../../templates/TablePage"
 import type { Tile } from "./compute"
 
 /* ----------------------------------------------------------------------------------- the tiles */
 
-/** One column per tile above `lg`, so the strip is full and the rules divide numbers, not space. */
-const COLUMNS: Record<number, string> = {
-  1: "lg:grid-cols-1", 2: "lg:grid-cols-2", 3: "lg:grid-cols-3",
-  4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6",
-}
-
+/**
+ * The numbers this report is judged by. LAYOUTS.md §2: one band of text, never a row of boxes, and
+ * one to a page — so this is the page's `SummaryStrip`, and each figure is still the door into the
+ * records behind it. What the number means and how it moved sit beside it as the figure's note.
+ */
 export function TileRow({ tiles, onRecords }: { tiles: Tile[]; onRecords?: (t: Tile) => void }) {
   return (
-    // Two per row on a phone, then one row across: sourced and influenced must stay side by side.
-    // The row has exactly as many columns as there are tiles, so no cell of it is empty at rest
-    // (LAYOUTS.md §6) and the divider stops where the numbers stop.
-    <Section padded={false}
-      bodyClassName={cn("grid grid-cols-2 divide-x sm:grid-cols-3", COLUMNS[Math.min(tiles.length, 6)] ?? "lg:grid-cols-6")}>
-      {tiles.map((t) => (
-        <div key={t.id} className={cn("p-3", t.tone === "warning" && "border-l-2 border-l-[color:var(--warning)]")}>
-          <div className="t-small text-muted-foreground">{t.label}</div>
-          {/* A count is a link to its records; a zero is data, not a door. */}
-          {t.records && onRecords ? (
-            <button
-              type="button"
-              aria-label={`${t.value} ${t.label.toLowerCase()} — open the records behind this number`}
-              onClick={() => onRecords(t)}
-              className="mt-0.5 flex items-baseline gap-1 rounded t-title underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              {t.value}
-              <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
-            </button>
-          ) : (
-            <div className="mt-0.5 t-title">{t.value}</div>
-          )}
-          {t.under && <p className="mt-0.5 t-small text-muted-foreground">{t.under}</p>}
-          {t.delta && (
-            <p className="mt-0.5 t-small text-muted-foreground">
-              <span aria-hidden="true">{t.delta.arrow} </span>{t.delta.text}
-            </p>
-          )}
-        </div>
-      ))}
-    </Section>
+    <SummaryStrip figures={tiles.map((t) => ({
+      label: t.label,
+      value: t.records && onRecords ? (
+        <button
+          type="button"
+          aria-label={`${t.value} ${t.label.toLowerCase()} — open the records behind this number`}
+          onClick={() => onRecords(t)}
+          className="inline-flex items-baseline gap-1 rounded underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          {t.value}
+          <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
+        </button>
+      ) : t.value,
+      note: t.under || t.delta ? (
+        <>
+          {t.under}
+          {t.under && t.delta && " · "}
+          {t.delta && <><span aria-hidden="true">{t.delta.arrow} </span>{t.delta.text}</>}
+        </>
+      ) : undefined,
+    }))} />
   )
 }
 

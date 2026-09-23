@@ -49,6 +49,7 @@ import { needsEnrichment, viewsFor, type PeopleView } from "./views"
 import { FilterChip, FiltersPanelBody } from "./parts"
 import { EnrichPanel } from "./EnrichPanel"
 import { BulkSelection, CreditsDialog, ParodyColumns, ParodySelection, ParodySidebar, ParodyTabs, ParodyViewsDoor } from "./parody"
+import { useColumnFit } from "../../layouts/columns"
 
 /* -------------------------------------------------------------------------------- what persists */
 
@@ -241,6 +242,9 @@ export function PeoplePage({ session }: { session: Session }) {
   const shownColumns = shownColumnIds
     .map((id) => allColumns.find((c) => c.id === id))
     .filter((c): c is ColumnDef => Boolean(c))
+  // Which of those the table draws at this width, and which fold into the row's meta line. The
+  // column picker still lists every one of them (LAYOUTS.md §5).
+  const { shown: cols, folded } = useColumnFit(shownColumns, (c) => c.priority)
 
   // The lesson view opens the place a change happens in, by id, so the change can be seen. The panel
   // and the common version's sidebar are not `Door`s, so they answer the same event themselves.
@@ -977,7 +981,7 @@ export function PeoplePage({ session }: { session: Session }) {
               onCheckedChange={(v) => setSelected(v === true ? page.map((p) => p.id) : [])}
             />
           </TableHead>
-          {shownColumns.map((c) => (
+          {cols.map((c) => (
             <TableHead
               key={c.id}
               data-item={c.id}
@@ -1021,7 +1025,7 @@ export function PeoplePage({ session }: { session: Session }) {
                 onClick={(e) => { e.stopPropagation(); if (e.shiftKey) toggleRow(p, i, true) }}
               />
             </TableCell>
-            {shownColumns.map((c) => (
+            {cols.map((c) => (
               <TableCell key={c.id} className={cn("px-2 align-middle", pad, c.className)}>
                 <div className={c.width}>
                 {c.key === "name" ? (
@@ -1055,6 +1059,18 @@ export function PeoplePage({ session }: { session: Session }) {
                     ) : <span className="text-muted-foreground">No phone</span>
                 ) : c.cell(p)}
                 </div>
+                {/* A column that does not fit at this width is read here, under the row's own name
+                    — the same place the 400 list puts it, never cut off the right edge. */}
+                {c.key === "name" && folded.length > 0 && (
+                  <div className="flex min-w-0 flex-wrap break-words items-center gap-x-3 gap-y-0.5 pt-0.5 t-small text-muted-foreground">
+                    {folded.map((f) => (
+                      <span key={f.id} className="inline-flex items-center gap-1">
+                        <span className="opacity-70">{f.header}</span>
+                        {f.cell(p)}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </TableCell>
             ))}
             {/* The menu is always in the row; the named buttons come forward on hover and on

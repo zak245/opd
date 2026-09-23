@@ -30,6 +30,7 @@ import { Ledger, NO_FILTERS, type Filters } from "./Ledger"
 import { WaitingItem } from "./WaitingItem"
 import { BatchPanel } from "./BatchPanel"
 import { ParodyAsk, ParodyChat, ParodyCredits, ParodyNote, ParodyTopBar, ParodyWorkflow } from "./Parody"
+import { useDeclareAlerts } from "../../shell/banner"
 import {
   adminOf, batchOf, byAgent, canPause as mayPause, consequenceFor, draftFor, exceptionsOf, lastSeen, mailboxPaused,
   markSeen, overSecondApproval, queuesFor, queueOwner, ruleFlags, runsOf, since, spendOf, trackRecord, watchOf,
@@ -79,6 +80,17 @@ export function AgentsPage({ session }: { session: Session }) {
   const agents = seed.agents
   const agentsOn = agents.filter((a) => a.on && !pausedHere[a.id]).length
   const exceptions = exceptionsOf(seed, agents, pausedHere).filter((x) => !resumed.includes(x.id))
+  // What this page needs decided, said once, in the shell's Alert.
+  useDeclareAlerts(rules.r7 ? exceptions.map((x) => ({
+    id: x.id,
+    text: x.text,
+    danger: !x.id.startsWith("cap-"),
+    href: x.href ? href(x.href) : undefined,
+    acts: x.resume && rules.r5 ? [
+      { label: "Resume", onClick: () => { setResumed((was) => [...was, x.id]); toast("Resumed.") } },
+      { label: "Keep paused", onClick: () => toast("Kept paused. Nothing is sent.") },
+    ] : undefined,
+  })) : [])
   const spend = spendOf(seed, session.business)
   const batch = batchOf(queue, seed, session)
   const watch = watchOf(seed)
@@ -273,7 +285,8 @@ export function AgentsPage({ session }: { session: Session }) {
       {!rules.r7 && <ParodyNote className="mb-3" />}
 
       {/* The Alert part: only what needs a decision, above the cards (LAYOUTS.md §2). */}
-      {rules.r7 && <Exceptions rules={rules} exceptions={exceptions} onResume={(id) => { setResumed((was) => [...was, id]); toast("Resumed.") }} />}
+      {/* The exceptions are what this page needs decided, so they go in the shell's one Alert
+          rather than a second red band under it (LAYOUTS.md §2). Declared, not drawn. */}
 
       {rules.r7 && <Briefing
         rules={rules}

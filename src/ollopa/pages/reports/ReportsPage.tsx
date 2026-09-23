@@ -305,8 +305,6 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
 
   const chip = scopeChip(scope)
 
-  /** The reports this seat reads most weeks, other than the one whose numbers are already below. */
-  const others = tabs.filter((t) => one(t.item) && t.key !== report)
 
   const tilesFor = (key: ReportKey): Tile[] =>
     key === "activity" ? activity.tiles
@@ -469,27 +467,6 @@ export function ReportsPage({ session, entry }: { session: Session; entry?: Repo
               keeps that row to its two controls at 400. What is applied is on the header's own line. */}
           <p className="t-small text-muted-foreground sm:text-right">{DATA_AS_OF}</p>
         </div>
-
-        {/* The overview strip: the headline number of every other report this seat reads weekly, each
-            a door into it. The report that is open is not here — its numbers, with their deltas, are in
-            the card directly below, and a number is drawn once. */}
-        {one("rep.overview") && others.length > 0 && (
-          <div data-print-hide>
-            <SummaryStrip figures={others.map((t) => {
-              const locked = lockedTab(t.key)
-              const first = tilesFor(t.key)[0]
-              return {
-                label: locked ? `${t.label} · ${all.plan}` : t.label,
-                value: (
-                  <button type="button" className="underline-offset-4 hover:underline" onClick={() => setReport(t.key)}>
-                    {locked && !first?.alwaysPrints ? "—" : first?.value ?? "—"}
-                  </button>
-                ),
-                note: first?.label,
-              }
-            })} />
-          </div>
-        )}
 
         {/* The report. */}
         {lockedTab(report) ? (

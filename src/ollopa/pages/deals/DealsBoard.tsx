@@ -45,6 +45,7 @@ import { STAGE_FORECAST, STAGE_PROBABILITY, TODAY, seedFor, type Deal, type Deal
 import { ago, day, daysBetween, money } from "../deal/format"
 import { DealCard, chipText, type CardFlags } from "./DealCard"
 import { coverageFor } from "../reports/coverage"
+import { useColumnFit, type ColumnPriority } from "../../layouts/columns"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
   WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText, warningStatus,
@@ -135,27 +136,32 @@ function usePersisted<T>(key: string, initial: T): [T, (next: T) => void] {
 
 /* ------------------------------------------------------------------------------ table columns */
 
-interface TableCol { key: string; header: string; cell: (d: Deal, ctx: { currency: string }) => ReactNode; on: boolean }
+/**
+ * `priority` is how hard a column fights for its place (LAYOUTS.md §5): 1 is drawn at every width,
+ * 2 from 1280, 3 from 1536. What leaves the table joins the row's meta line under the deal's name;
+ * it is not removed, and the columns control still lists it.
+ */
+interface TableCol { key: string; header: string; cell: (d: Deal, ctx: { currency: string }) => ReactNode; on: boolean; priority?: ColumnPriority }
 
 const TABLE_COLUMNS: TableCol[] = [
-  { key: "deal", header: "Deal", on: true, cell: (d) => <span className="font-medium">{d.name}</span> },
-  { key: "company", header: "Company", on: true, cell: (d) => d.company },
+  { key: "deal", priority: 1 as const, header: "Deal", on: true, cell: (d) => <span className="font-medium">{d.name}</span> },
+  { key: "company", priority: 1 as const, header: "Company", on: true, cell: (d) => d.company },
   // The table draws this one as a status chip (see `status` on the columns below); this is what a
   // CSV export and any other reader of the column gets.
-  { key: "stage", header: "Stage", on: true, cell: (d) => <Chip status={d.stage} /> },
-  { key: "amount", header: "Amount", on: true, cell: (d, c) => <span className="tabular-nums">{money(d.amount, d.currency || c.currency)}</span> },
-  { key: "forecast", header: "Forecast", on: true, cell: (d) => d.forecast },
-  { key: "close", header: "Close date", on: true, cell: (d) => <span className="tabular-nums">{day(d.closeDate)}</span> },
-  { key: "next", header: "Next step and its date", on: true, cell: (d) => (d.nextStep ? `${d.nextStep} · ${day(d.nextStepDue)}` : <span style={{ color: statusInk("warning") }}>No next step</span>) },
-  { key: "owner", header: "Owner", on: true, cell: (d) => d.owner },
-  { key: "touch", header: "Last touch and last reply", on: true, cell: (d) => `${daysBetween(d.lastActivity)}d · ${d.lastProspectActivityAt ? `${daysBetween(d.lastProspectActivityAt)}d` : "never"}` },
-  { key: "warnings", header: "Warnings", on: true, cell: () => null },
-  { key: "days", header: "Days in stage", on: true, cell: (d) => <span className="tabular-nums">{daysBetween(d.stageEnteredAt)}</span> },
-  { key: "probability", header: "Probability", on: false, cell: (d) => `${d.probability}%` },
-  { key: "weighted", header: "Weighted amount", on: false, cell: (d, c) => <span className="tabular-nums">{money(Math.round((d.amount * d.probability) / 100), d.currency || c.currency)}</span> },
-  { key: "pipeline", header: "Pipeline", on: false, cell: (d) => d.pipeline },
-  { key: "created", header: "Created", on: false, cell: (d) => <span className="tabular-nums">{day(d.createdAt)}</span> },
-  { key: "type", header: "Deal type", on: false, cell: (d) => d.dealType },
+  { key: "stage", priority: 1 as const, header: "Stage", on: true, cell: (d) => <Chip status={d.stage} /> },
+  { key: "amount", priority: 2 as const, header: "Amount", on: true, cell: (d, c) => <span className="tabular-nums">{money(d.amount, d.currency || c.currency)}</span> },
+  { key: "forecast", priority: 3 as const, header: "Forecast", on: true, cell: (d) => d.forecast },
+  { key: "close", priority: 2 as const, header: "Close date", on: true, cell: (d) => <span className="tabular-nums">{day(d.closeDate)}</span> },
+  { key: "next", priority: 3 as const, header: "Next step and its date", on: true, cell: (d) => (d.nextStep ? `${d.nextStep} · ${day(d.nextStepDue)}` : <span style={{ color: statusInk("warning") }}>No next step</span>) },
+  { key: "owner", priority: 3 as const, header: "Owner", on: true, cell: (d) => d.owner },
+  { key: "touch", priority: 3 as const, header: "Last touch and last reply", on: true, cell: (d) => `${daysBetween(d.lastActivity)}d · ${d.lastProspectActivityAt ? `${daysBetween(d.lastProspectActivityAt)}d` : "never"}` },
+  { key: "warnings", priority: 3 as const, header: "Warnings", on: true, cell: () => null },
+  { key: "days", priority: 3 as const, header: "Days in stage", on: true, cell: (d) => <span className="tabular-nums">{daysBetween(d.stageEnteredAt)}</span> },
+  { key: "probability", priority: 3 as const, header: "Probability", on: false, cell: (d) => `${d.probability}%` },
+  { key: "weighted", priority: 3 as const, header: "Weighted amount", on: false, cell: (d, c) => <span className="tabular-nums">{money(Math.round((d.amount * d.probability) / 100), d.currency || c.currency)}</span> },
+  { key: "pipeline", priority: 3 as const, header: "Pipeline", on: false, cell: (d) => d.pipeline },
+  { key: "created", priority: 3 as const, header: "Created", on: false, cell: (d) => <span className="tabular-nums">{day(d.createdAt)}</span> },
+  { key: "type", priority: 3 as const, header: "Deal type", on: false, cell: (d) => d.dealType },
 ]
 const DEFAULT_COLUMNS = TABLE_COLUMNS.filter((c) => c.on).map((c) => c.key)
 
@@ -649,7 +655,9 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   /* ---------------------------------------------------------------------------------- the table */
 
-  const visibleColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
+  const chosenColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
+  // Which of those the table draws at this width, and which fold under the deal's name.
+  const { shown: visibleColumns, folded: foldedColumns } = useColumnFit(chosenColumns, (c) => c.priority)
 
   /* ---------------------------------------------------------------------------- the table view */
 
@@ -696,7 +704,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       <TableHeader className="sticky top-0 bg-muted">
         <TableRow>
           {visibleColumns.map((c, i) => (
-            <TableHead key={c.key} className={cn("t-label", i === 0 && "w-full", (c.key === "stage" || c.key === "warnings") && "min-w-36")}>{c.header}</TableHead>
+            <TableHead key={c.key} className={cn("t-label", (c.key === "stage" || c.key === "warnings") && "min-w-36")}>{c.header}</TableHead>
           ))}
           <TableHead className="w-px whitespace-nowrap"><span className="sr-only">Actions</span></TableHead>
         </TableRow>
@@ -716,9 +724,20 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               if (e.key.toLowerCase() === "o") { e.preventDefault(); leaveFor(`/ollopa/deals/${r.id}`, r.id) }
             }}
           >
-            {visibleColumns.map((c) => (
+            {visibleColumns.map((c, i) => (
               <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", (c.key === "stage" || c.key === "warnings") && "min-w-36 whitespace-nowrap")}>
                 {cellFor(c, r)}
+                {/* A column that does not fit at this width is read here, under the deal's name. */}
+                {i === 0 && foldedColumns.length > 0 && (
+                  <div className="flex min-w-0 flex-wrap break-words items-center gap-x-3 gap-y-0.5 pt-0.5 t-small font-normal text-muted-foreground">
+                    {foldedColumns.map((f) => (
+                      <span key={f.key} className="inline-flex items-center gap-1">
+                        <span className="opacity-70">{f.header}</span>
+                        {cellFor(f, r)}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </TableCell>
             ))}
             <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>

@@ -22,6 +22,7 @@ import { Door } from "../../ui/Door"
 import { IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
+import { useColumnFit, type ColumnPriority } from "../../layouts/columns"
 
 /* ------------------------------------------------------------------------------------- the parts */
 
@@ -36,6 +37,12 @@ export interface Col<T> {
   phone?: boolean
   /** The identifying column: always shown, never removable in the columns popover. */
   always?: boolean
+  /**
+   * How hard this column fights for its place (LAYOUTS.md §5): 1 is drawn at every width, 2 from
+   * 1280, 3 from 1536. What leaves the table joins the row's meta line under the name — it is not
+   * removed, and the columns popover still lists it. Unset means 2.
+   */
+  priority?: ColumnPriority
 }
 
 export interface FilterDef<T> {
@@ -198,6 +205,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
     return () => window.removeEventListener("keydown", onKey)
   }, [glancing, rows, p])
 
+  // Which columns the table draws at this width, and which fold into the row's meta line.
+  const { shown: cols, folded } = useColumnFit(p.columns, (c) => c.priority)
+
   const header = (col: Col<T>) => {
     const sorted = p.sort.id === col.id
     return (
@@ -226,7 +236,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
   // decide what to hide (LAYOUTS.md §2).
   const controls: ToolbarControl[] = [
     {
-      name: "Search", always: true,
+      // Pinned as well as always: on a phone the toolbar is one control and one door, and the one
+      // control is the search (LAYOUTS.md §5).
+      name: "Search", always: true, pin: true,
       node: (
         <Input
           ref={search}
@@ -354,7 +366,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
           <TableHeader className="bg-card sticky top-0 z-10">
             <TableRow>
               {hasBulk && (
-                <TableHead className="w-8 pl-4 lg:pl-6">
+                <TableHead className="w-8 pl-4 xl:pl-6">
                   <Checkbox
                     aria-label={`Select this page (${shown.length})`}
                     checked={pageSelected}
@@ -362,7 +374,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                   />
                 </TableHead>
               )}
-              {p.columns.map(header)}
+              {cols.map(header)}
               <TableHead className="bg-card sticky right-0 z-20 w-12"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
@@ -386,7 +398,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                     }}
                   >
                     {hasBulk && (
-                      <TableCell className="py-2 pl-4 lg:pl-6" onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="py-2 pl-4 xl:pl-6" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           aria-label={`Select row ${id}`}
                           checked={allMatching || selected.includes(id)}
@@ -394,7 +406,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
                         />
                       </TableCell>
                     )}
-                    {p.columns.map((c, i) => (
+                    {cols.map((c, i) => (
                       <TableCell
                         key={c.id}
                         className={cn("py-2", c.className, !c.phone && "hidden md:table-cell", i === 0 && "max-w-[8rem] md:max-w-none")}
@@ -403,12 +415,24 @@ export function DataTable<T>(p: DataTableProps<T>) {
                         {i === 0 && p.phoneSummary && (
                           <div className="pt-0.5 t-small break-words text-muted-foreground md:hidden">{p.phoneSummary(r)}</div>
                         )}
+                        {/* A column that does not fit at this width is read here instead, under the
+                            row's own name — never cut off the right-hand edge. */}
+                        {i === 0 && folded.length > 0 && (
+                          <div className="hidden min-w-0 flex-wrap break-words items-center gap-x-3 gap-y-0.5 pt-0.5 t-small text-muted-foreground md:flex">
+                            {folded.map((f) => (
+                              <span key={f.id} className="inline-flex items-center gap-1">
+                                <span className="opacity-70">{f.header}</span>
+                                {f.cell(r)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </TableCell>
                     ))}
                     {/* The row's actions are in the DOM at all times and change opacity, never presence.
                         They are laid over the row rather than in it, so a seat with four of them does
                         not widen the table, and the "…" stays pinned to the right edge. */}
-                    <TableCell className="bg-card sticky right-0 z-10 w-12 py-1 pr-2 lg:pr-5" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="bg-card sticky right-0 z-10 w-12 py-1 pr-2 xl:pr-5" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex items-center justify-end gap-1">
                         <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 bg-card opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
                         {p.rowActions.map((a) => (

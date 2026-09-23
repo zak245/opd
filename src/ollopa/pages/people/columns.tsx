@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { day, sizeBand, type PersonRow } from "./person"
 import type { FilterContext } from "./filters"
+import type { ColumnPriority } from "../../layouts/columns"
 
 export interface ColumnDef {
   /** The usage item id, which decides whether the column is in the seat's default set. */
@@ -23,6 +24,12 @@ export interface ColumnDef {
   /** How wide the cell may grow before it truncates, so a wide value cannot push the row off-screen. */
   width?: string
   applies?: (ctx: FilterContext) => boolean
+  /**
+   * How hard this column fights for its place (LAYOUTS.md §5): 1 is drawn at every width, 2 from
+   * 1280, 3 from 1536. What leaves the table joins the row's meta line under the name; it is not
+   * removed, and the columns popover still lists it. Unset means 2.
+   */
+  priority?: ColumnPriority
 }
 
 const dash = <span className="text-muted-foreground">—</span>
@@ -52,7 +59,7 @@ const EMAIL_TONE: Record<string, string> = {
  */
 export function nameColumn(compact: boolean): ColumnDef {
   return {
-    id: "people.col.name", key: "name", header: "Name", width: "max-w-[14rem]",
+    id: "people.col.name", priority: 1 as const, key: "name", header: "Name", width: "max-w-[14rem]",
     sort: (p) => p.name,
     cell: (p) => (
       <span className="block min-w-0">
@@ -66,7 +73,7 @@ export function nameColumn(compact: boolean): ColumnDef {
 export function columnsFor(ctx: FilterContext, compact: boolean): ColumnDef[] {
   const all: ColumnDef[] = [
     nameColumn(compact),
-    { id: "people.col.company", key: "company", header: "Company", width: "max-w-[11rem] truncate", sort: (p) => p.company, cell: (p) => <span className="block truncate">{p.company}</span> },
+    { id: "people.col.company", priority: 1 as const, key: "company", header: "Company", width: "max-w-[11rem] truncate", sort: (p) => p.company, cell: (p) => <span className="block truncate">{p.company}</span> },
     {
       id: "people.col.email", key: "email", header: "Email", sort: (p) => p.email, width: "max-w-[13rem]",
       cell: (p) => (
@@ -76,22 +83,22 @@ export function columnsFor(ctx: FilterContext, compact: boolean): ColumnDef[] {
         </span>
       ),
     },
-    { id: "people.col.stage", key: "stage", header: "Stage", className: "min-w-36 whitespace-nowrap", sort: (p) => p.stage, cell: () => null },
-    { id: "people.col.sequence", key: "sequence", header: "Sequence", width: "max-w-[10rem] truncate", sort: (p) => p.inSequence ?? "", cell: (p) => p.inSequence ?? dash },
-    { id: "people.col.last-contacted", key: "lastContacted", header: "Last contacted", className: "tabular-nums", sort: (p) => p.lastContacted ?? "", cell: (p) => (p.lastContacted ? day(p.lastContacted) : dash) },
-    { id: "people.col.last-activity", key: "lastActivity", header: "Last activity", className: "tabular-nums", sort: (p) => p.lastActivity, cell: (p) => day(p.lastActivity) },
-    { id: "people.col.owner", key: "owner", header: "Owner", width: "max-w-[9rem] truncate", sort: (p) => p.owner, cell: (p) => <span className="block truncate">{p.owner}</span> },
-    { id: "people.col.phone", key: "phone", header: "Phone", sort: (p) => (p.phoneRevealed ? 0 : p.phone ? 1 : 2), cell: () => null },
+    { id: "people.col.stage", priority: 1 as const, key: "stage", header: "Stage", className: "min-w-36 whitespace-nowrap", sort: (p) => p.stage, cell: () => null },
+    { id: "people.col.sequence", priority: 3 as const, key: "sequence", header: "Sequence", width: "max-w-[10rem] truncate", sort: (p) => p.inSequence ?? "", cell: (p) => p.inSequence ?? dash },
+    { id: "people.col.last-contacted", priority: 3 as const, key: "lastContacted", header: "Last contacted", className: "tabular-nums", sort: (p) => p.lastContacted ?? "", cell: (p) => (p.lastContacted ? day(p.lastContacted) : dash) },
+    { id: "people.col.last-activity", priority: 3 as const, key: "lastActivity", header: "Last activity", className: "tabular-nums", sort: (p) => p.lastActivity, cell: (p) => day(p.lastActivity) },
+    { id: "people.col.owner", priority: 3 as const, key: "owner", header: "Owner", width: "max-w-[9rem] truncate", sort: (p) => p.owner, cell: (p) => <span className="block truncate">{p.owner}</span> },
+    { id: "people.col.phone", priority: 3 as const, key: "phone", header: "Phone", sort: (p) => (p.phoneRevealed ? 0 : p.phone ? 1 : 2), cell: () => null },
     {
-      id: "people.col.signals", key: "signals", header: "Signals", sort: (p) => -p.signals.length, width: "max-w-[11rem]",
+      id: "people.col.signals", priority: 3 as const, key: "signals", header: "Signals", sort: (p) => -p.signals.length, width: "max-w-[11rem]",
       cell: (p) => p.signals.length === 0 ? dash : (
         <span className="flex flex-wrap gap-1">{p.signals.map((s) => <Badge key={s.kind} variant="outline" title={`${s.kind} · ${s.detail}`} className="max-w-[9rem] font-normal"><span className="block w-full truncate">{s.kind}</span></Badge>)}</span>
       ),
     },
-    { id: "people.col.score", key: "score", header: "Score", className: "tabular-nums", sort: (p) => -p.score, cell: (p) => p.score },
-    { id: "people.col.location", key: "location", header: "Location", width: "max-w-[11rem] truncate", sort: (p) => p.location.city, cell: (p) => `${p.location.city}, ${p.location.country}` },
-    { id: "people.col.lists", key: "lists", header: "Lists", width: "max-w-[12rem] truncate", sort: (p) => p.lists[0] ?? "", cell: (p) => (p.lists.length ? p.lists.join(", ") : dash) },
-    { id: "people.col.seniority", key: "seniority", header: "Seniority", sort: (p) => p.seniority, cell: (p) => p.seniority },
+    { id: "people.col.score", priority: 3 as const, key: "score", header: "Score", className: "tabular-nums", sort: (p) => -p.score, cell: (p) => p.score },
+    { id: "people.col.location", priority: 3 as const, key: "location", header: "Location", width: "max-w-[11rem] truncate", sort: (p) => p.location.city, cell: (p) => `${p.location.city}, ${p.location.country}` },
+    { id: "people.col.lists", priority: 3 as const, key: "lists", header: "Lists", width: "max-w-[12rem] truncate", sort: (p) => p.lists[0] ?? "", cell: (p) => (p.lists.length ? p.lists.join(", ") : dash) },
+    { id: "people.col.seniority", priority: 3 as const, key: "seniority", header: "Seniority", sort: (p) => p.seniority, cell: (p) => p.seniority },
     { id: "people.col.department", key: "department", header: "Department", sort: (p) => p.department, cell: (p) => p.department },
     { id: "people.col.company-size", key: "companySize", header: "Company size", sort: (p) => p.co?.employees ?? 0, cell: (p) => sizeBand(p.co?.employees) },
     { id: "people.col.industry", key: "industry", header: "Industry", sort: (p) => p.co?.industry ?? "", cell: (p) => p.co?.industry ?? dash },

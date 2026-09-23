@@ -140,26 +140,32 @@ export function AccountsPage({ session }: { session: Session }) {
     { label: "Value at risk", value: money(valueAtRisk, b.currency), note: `${atRisk.length} account${atRisk.length === 1 ? "" : "s"}` },
   ]
 
-  /** Narrowing the table to a renewal window is a filter, so it sits with the other filters. */
+  /**
+   * Narrowing the table to a renewal window is a filter, so it sits with the other filters — and it
+   * is one control, not three. Three separate pills counted as three against the five the toolbar
+   * may hold in front (LAYOUTS.md §2), so the windows are one joined segmented control with the
+   * word in front of them.
+   */
   const windowControl: ToolbarControl[] = [{
     name: "Renewals due",
     node: (
-      <ToggleGroup
-        type="multiple"
-        variant="outline"
-        size="sm"
-        spacing={2}
-        className="flex-wrap"
-        aria-label="Renewals due"
-        value={state.windows.map(String)}
-        onValueChange={(next) => setState({ windows: next.map(Number) })}
-      >
-        {[30, 60, 90].map((days) => (
-          <ToggleGroupItem key={days} value={String(days)} className="tabular-nums">
-            {days} days · {windowCount(days).n}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="t-label text-muted-foreground">Renewals</span>
+        <ToggleGroup
+          type="multiple"
+          variant="outline"
+          size="sm"
+          aria-label="Renewals due"
+          value={state.windows.map(String)}
+          onValueChange={(next) => setState({ windows: next.map(Number) })}
+        >
+          {[30, 60, 90].map((days) => (
+            <ToggleGroupItem key={days} value={String(days)} className="tabular-nums">
+              {days}d · {windowCount(days).n}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
     ),
   }]
 
@@ -237,7 +243,7 @@ export function AccountsPage({ session }: { session: Session }) {
 
   const columnDefs: Col<CompanyView>[] = [
     {
-      id: "acct.name", header: "Account", always: true, phone: true, sortValue: (v) => v.account!.name.toLowerCase(),
+      id: "acct.name", priority: 1 as const, header: "Account", always: true, phone: true, sortValue: (v) => v.account!.name.toLowerCase(),
       cell: (v) => (
         /* The row's own id on the name, so a return from the record lands on the name and the
            keyboard carries on from there rather than from the row's checkbox. */
@@ -254,7 +260,7 @@ export function AccountsPage({ session }: { session: Session }) {
       ),
     },
     {
-      id: "acct.health", header: "Health", phone: true, className: "min-w-36 whitespace-nowrap", sortValue: (v) => v.account!.health,
+      id: "acct.health", priority: 1 as const, header: "Health", phone: true, className: "min-w-36 whitespace-nowrap", sortValue: (v) => v.account!.health,
       cell: (v) => (
         <span className="inline-flex items-baseline gap-1.5">
           <span className="font-medium tabular-nums">{v.account!.health}</span>
@@ -262,15 +268,15 @@ export function AccountsPage({ session }: { session: Session }) {
         </span>
       ),
     },
-    { id: "acct.health-trend", header: "30-day change", className: "whitespace-nowrap", sortValue: (v) => v.account!.healthDelta30, cell: (v) => delta(v.account!.healthDelta30) },
+    { id: "acct.health-trend", priority: 3 as const, header: "30-day change", className: "whitespace-nowrap", sortValue: (v) => v.account!.healthDelta30, cell: (v) => delta(v.account!.healthDelta30) },
     {
-      id: "acct.renewal", header: "Renewal", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.account!.renewal,
+      id: "acct.renewal", priority: 1 as const, header: "Renewal", phone: true, className: "whitespace-nowrap", sortValue: (v) => v.account!.renewal,
       cell: (v) => {
         const n = daysLeft(v.account!.renewal)
         return <span className={cn(n >= 0 && n < 30 && "font-medium [color:var(--warning-ink)]")}>{renewalText(v.account!.renewal)}</span>
       },
     },
-    { id: "acct.value", header: "Contract value", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.value, cell: (v) => money(v.account!.value, b.currency) },
+    { id: "acct.value", priority: 3 as const, header: "Contract value", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.value, cell: (v) => money(v.account!.value, b.currency) },
     {
       id: "acct.risks", header: "Open risks", className: "min-w-36", sortValue: (v) => v.account!.risks.filter((r) => !r.resolved).length,
       cell: (v) => {
@@ -281,7 +287,7 @@ export function AccountsPage({ session }: { session: Session }) {
         return <Chip status={churn ? "blocked" : "warning"}>{open.length} · {(churn ?? open[0]).type}</Chip>
       },
     },
-    { id: "acct.last-touch", header: "Last touch", className: "whitespace-nowrap", sortValue: (v) => v.account!.lastTouch, cell: (v) => ago(v.account!.lastTouch) },
+    { id: "acct.last-touch", priority: 3 as const, header: "Last touch", className: "whitespace-nowrap", sortValue: (v) => v.account!.lastTouch, cell: (v) => ago(v.account!.lastTouch) },
     {
       id: "acct.next-step", header: "Next step", sortValue: (v) => v.account!.nextStep.due,
       className: "min-w-[12rem] whitespace-normal",
@@ -293,15 +299,15 @@ export function AccountsPage({ session }: { session: Session }) {
       ),
     },
     {
-      id: "acct.signals", header: "Expansion signals", sortValue: (v) => v.account!.signals.filter((s) => !s.dismissed).length,
+      id: "acct.signals", priority: 3 as const, header: "Expansion signals", sortValue: (v) => v.account!.signals.filter((s) => !s.dismissed).length,
       cell: (v) => {
         const live = v.account!.signals.filter((s) => !s.dismissed)
         return live.length === 0 ? <span className="text-muted-foreground">—</span> : <span>{live.length} · {live[0].kind}</span>
       },
     },
-    { id: "acct.seats", header: "Seats", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.seatsActive / v.account!.seatsBought, cell: (v) => `${v.account!.seatsActive} of ${v.account!.seatsBought}` },
-    { id: "acct.usage", header: "Usage, 30 days", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.usage30, cell: (v) => `${v.account!.usage30} · ${v.account!.usageDelta30 >= 0 ? "up" : "down"} ${Math.abs(v.account!.usageDelta30)}%` },
-    { id: "acct.owner", header: "Owner", sortValue: (v) => v.account!.owner, cell: (v) => v.account!.owner },
+    { id: "acct.seats", priority: 3 as const, header: "Seats", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.seatsActive / v.account!.seatsBought, cell: (v) => `${v.account!.seatsActive} of ${v.account!.seatsBought}` },
+    { id: "acct.usage", priority: 3 as const, header: "Usage, 30 days", className: "whitespace-nowrap tabular-nums", sortValue: (v) => v.account!.usage30, cell: (v) => `${v.account!.usage30} · ${v.account!.usageDelta30 >= 0 ? "up" : "down"} ${Math.abs(v.account!.usageDelta30)}%` },
+    { id: "acct.owner", priority: 3 as const, header: "Owner", sortValue: (v) => v.account!.owner, cell: (v) => v.account!.owner },
     { id: "acct.champion", header: "Champion", sortValue: (v) => v.account!.champion, cell: (v) => v.account!.champion },
     { id: "acct.plan", header: "Plan", sortValue: (v) => v.account!.plan, cell: (v) => v.account!.plan },
     { id: "acct.forecast", header: "Forecast", sortValue: (v) => v.account!.forecast, cell: (v) => v.account!.forecast },
@@ -336,7 +342,10 @@ export function AccountsPage({ session }: { session: Session }) {
     { id: "view.plan", name: "plan", label: "Plan", options: ["Starter", "Growth", "Scale"], get: (v) => v.account!.plan },
     { id: "view.churned", name: "churned accounts", label: "Churned accounts", options: ["Included"], get: () => "Included" },
   ]
-  const chips = filterDefs.filter((f) => f.id !== "view.churned" && d.level(f.id) === 1)
+  // The health band is the one filter in front. Owner joins the risk type and the plan behind the
+  // door: with the search, the renewal windows and the columns the toolbar was already at seven
+  // controls, and five is the most that may sit in front (LAYOUTS.md §2).
+  const chips = filterDefs.filter((f) => f.id !== "view.churned" && f.id !== "view.owner" && d.level(f.id) === 1)
   const doorFilters = filterDefs.filter((f) => !chips.includes(f)).sort((x, y) => d.weekly(y.id) - d.weekly(x.id))
 
   /* ------------------------------------------------------------------------------- the actions */
