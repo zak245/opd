@@ -1,8 +1,10 @@
 // P-inbox — replies from sequences, grouped by what the person meant.
 //
-// The page is master-detail: the table on the left, the thread as the open half of the page on the
-// right. Nothing else. It opens on Interested, longest-waiting first, because an interested person
-// who is waiting is the one thing this seat may never lose sight of.
+// The page is master-detail: it fills the `MasterDetail` template (src/ollopa/layouts) with the
+// table on the left and the thread as the open half of the page on the right, and the template owns
+// the measure, the real `Split` handle between them and the collapse to one pane at 400. Nothing
+// else. It opens on Interested, longest-waiting first, because an interested person who is waiting
+// is the one thing this seat may never lose sight of.
 //
 // Which groups get a tab, which filters sit beside search and which row actions are visible is asked
 // of the usage model, never hard-coded: `useDisclosure("inbox")` answers for this seat at this
@@ -19,8 +21,8 @@ import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
 import { openBeside, openBesideNested } from "../../beside"
 import { Actions, type Action, type ActionKind } from "../../ui/Actions"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { familyOf } from "../../identity"
+import { Chip } from "../../ui/Identity"
+import { MasterDetail } from "../../layouts"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
 import { Container, Group } from "../../ui/Section"
@@ -115,7 +117,6 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
   // On a phone the thread is a page reached by tapping a row — except when the link named a thread,
   // which is a person asking for that thread and not for the list.
   const [onPhoneThread, setOnPhoneThread] = useState(!!thread)
-  const [width, setWidth] = useState(() => Number(recall(session, "width", "420")))
 
   useEffect(() => { remember(session, "group", group) }, [session, group])
 
@@ -127,7 +128,6 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
     booked.current = true
     setBooking(linked)
   }, [book, linked])
-  useEffect(() => { remember(session, "width", String(width)) }, [session, width])
 
   const inGroup = useCallback((r: InboxReply, g: GroupKey) => (g === "Handled" ? r.handled : !r.handled && r.outcome === g), [])
   const counts = useMemo(() => Object.fromEntries(GROUPS.map((g) => [g.key, rows.filter((r) => inGroup(r, g.key)).length])) as Record<GroupKey, number>, [rows, inGroup])
@@ -481,52 +481,47 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
     )
   }
 
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* --------------------------------------------------------------------------- the header */}
-      <div className={cn("shrink-0 px-4 pt-4 sm:px-6", onPhoneThread && "hidden md:block")}>
-        <h2 className="t-title flex items-center gap-2">
-          <FamilyIcon of="inbox" size="header" label={familyOf("inbox").name} />
-          Inbox
-          {import.meta.env.DEV && (
-            <span data-renders="inbox" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
-              inbox renders: {renders}
-            </span>
-          )}
-        </h2>
-        <p className="t-body text-muted-foreground">Replies from your sequences, grouped by what the person meant.</p>
-        <p className="t-body pt-0.5 tabular-nums">
-          {waitingCount} waiting{longest > 0 && <> · longest {longest} d</>}
-        </p>
-        {session.business === "meridian" && (
-          <p className="t-small pt-0.5 text-muted-foreground">
-            You see replies to your mailbox. {admin?.user ?? "Your admin"} can widen this in Settings › Team and access.
-          </p>
-        )}
-        {!calendar && (
-          <p className="t-small pt-0.5 text-muted-foreground">
-            No calendar is connected.{" "}
-            <button type="button" className="underline underline-offset-4"
-                    onClick={() => follow("/ollopa/settings/integrations?row=int.calendar", originHere(open?.contactId))}>
-              Connect a calendar to book from here
-            </button>.
-          </p>
-        )}
-      </div>
+  /* The page header's one line under the title. The template draws the title, the family icon and
+     the count; everything the header used to say in its own paragraphs is said here. */
+  const description = (
+    <>
+      <span className="block">Replies from your sequences, grouped by what the person meant.</span>
+      <span className="block pt-0.5 tabular-nums text-foreground">
+        {waitingCount} waiting{longest > 0 && <> · longest {longest} d</>}
+      </span>
+      {session.business === "meridian" && (
+        <span className="t-small block pt-0.5">
+          You see replies to your mailbox. {admin?.user ?? "Your admin"} can widen this in Settings › Team and access.
+        </span>
+      )}
+      {!calendar && (
+        <span className="t-small block pt-0.5">
+          No calendar is connected.{" "}
+          <button type="button" className="underline underline-offset-4"
+                  onClick={() => follow("/ollopa/settings/integrations?row=int.calendar", originHere(open?.contactId))}>
+            Connect a calendar to book from here
+          </button>.
+        </span>
+      )}
+      {import.meta.env.DEV && (
+        <span data-renders="inbox" className="mt-1 inline-block rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums">
+          inbox renders: {renders}
+        </span>
+      )}
+    </>
+  )
 
-      {/* ------------------------------------------- the two containers this page is made of */}
-      <DoorGroup>
-        <div className="flex min-h-0 flex-1 gap-4 px-4 pb-4 pt-3 sm:px-6">
-          {/* The replies: one container, with the tabs, the search and the filter door in its
-              header, its rows divided inside it, and what is selected in its footer. Never a card
-              per row, and never a box inside it (DESIGN.md §5, containment). */}
+  /* The master: the replies, one container, with the tabs, the search and the filter door in its
+     header, its rows divided inside it, and what is selected in its footer. Never a card per row,
+     and never a box inside it (DESIGN.md §5, containment). */
+  const listPane = (
           <Container
             component="list"
             as="div"
             role="grid"
             aria-label={`${group} replies`}
             padded={false}
-            className={cn("flex min-w-0 flex-1 flex-col", onPhoneThread && "hidden md:flex")}
+            className="flex h-full min-h-0 min-w-0 flex-col"
             actions={(
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 {/* One row: the tabs as shipped (inline, never wrapped), the groups that do not fit
@@ -644,48 +639,39 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
               ? <div className="p-6">{q || activeFilters.length ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({}) } }]} />} /> : emptyBody}</div>
               : filtered.map((r) => <Row key={r.id} r={r} />)}
           </Container>
+  )
 
-        {/* The thread is the open half of the page, not a disclosure: on the phone it is a page. */}
-        {open && (
-          <>
-            <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Thread width"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowLeft") { e.preventDefault(); setWidth((w) => Math.min(720, w + 20)) }
-                if (e.key === "ArrowRight") { e.preventDefault(); setWidth((w) => Math.max(320, w - 20)) }
-              }}
-              onPointerDown={(e) => {
-                const startX = e.clientX
-                const startW = width
-                const move = (ev: PointerEvent) => setWidth(Math.max(320, Math.min(720, startW - (ev.clientX - startX))))
-                const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up) }
-                window.addEventListener("pointermove", move)
-                window.addEventListener("pointerup", up)
-              }}
-              className="hidden w-1 shrink-0 cursor-col-resize rounded focus-visible:bg-foreground focus-visible:outline-none md:block"
-            />
-            <div className={cn("min-h-0 min-w-0 flex-1 md:flex-none", onPhoneThread ? "block" : "hidden md:block")} style={{ width: undefined }}>
-              <div className="h-full md:w-[var(--thread-w)]" style={{ ["--thread-w" as string]: `${width}px` }}>
-                <Thread
-                  session={session}
-                  disclosure={d}
-                  reply={open}
-                  meantBy={changes[open.id]?.meantBy === "you" ? "you" : classifier(open)}
-                  say={say}
-                  onBook={() => setBooking(open)}
-                  onBack={() => setOnPhoneThread(false)}
-                  focusComposer={focusComposer}
-                  onOpenContact={(opener) => doAction("open-contact", open, undefined, opener)}
-                  onOpenDeal={(opener) => doAction("create-deal", open, undefined, opener)}
-                />
-              </div>
-            </div>
-          </>
-        )}
-        </div>
+  /* The detail: the thread as the open half of the page, never a disclosure. The template puts the
+     real `Split` handle between the two and, at 400, shows one of them and keeps the selection. */
+  const detailPane = open ? (
+    <Thread
+      session={session}
+      disclosure={d}
+      reply={open}
+      meantBy={changes[open.id]?.meantBy === "you" ? "you" : classifier(open)}
+      say={say}
+      onBook={() => setBooking(open)}
+      focusComposer={focusComposer}
+      onOpenContact={(opener) => doAction("open-contact", open, undefined, opener)}
+      onOpenDeal={(opener) => doAction("create-deal", open, undefined, opener)}
+    />
+  ) : null
+
+  return (
+    <>
+      <DoorGroup>
+        <MasterDetail
+          id="inbox"
+          family="inbox"
+          title="Inbox"
+          count={waitingCount}
+          description={description}
+          list={listPane}
+          detail={detailPane}
+          selected={onPhoneThread && !!open}
+          onBack={() => setOnPhoneThread(false)}
+          backLabel="Back to the list"
+        />
       </DoorGroup>
 
       {booking && (
@@ -703,7 +689,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
         />
       )}
       {bar}
-    </div>
+    </>
   )
 }
 

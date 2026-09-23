@@ -37,6 +37,9 @@ export function closeBeside() {
   announce()
 }
 
+/** The pane's current target, read outside React. For an effect that must not see a stale render. */
+export function besideTarget(): BesideTarget | null { return state.target }
+
 export function useBeside(): BesideTarget | null {
   return useSyncExternalStore(
     (l) => { listeners.add(l); return () => listeners.delete(l) },
@@ -77,12 +80,36 @@ export function besideStep(by: 1 | -1) {
   if (!t?.list) return
   const index = t.list.index + by
   if (index < 0 || index >= t.list.ids.length) return
+  // A quick look walks the opener's own list — the ids here are places in it, not objects — so the
+  // opener is asked to step and the pane is told where it now is.
+  if (t.kind === "quick-look") {
+    stepQuickLook?.(by)
+    state = { target: { ...t, list: { ids: t.list.ids, index } }, parent: null }
+    announce()
+    return
+  }
   state = {
     target: { ...t, id: t.list.ids[index], list: { ids: t.list.ids, index } },
     parent: null,
   }
   announce()
 }
+
+/**
+ * Pane kinds registered by the core rather than by a page folder — the quick look is one, because
+ * every index page can open one. Kept here rather than in `Product.tsx` so the pane, the quick look
+ * and the registry do not import one another in a circle.
+ */
+const core: Record<string, BesideComponent> = {}
+export function registerBeside(kind: string, component: BesideComponent) { core[kind] = component }
+export function coreBesides(): Record<string, BesideComponent> { return core }
+
+/**
+ * How the pane steps a quick look. Set once by the quick look itself, so this file does not have to
+ * know what a quick look is.
+ */
+let stepQuickLook: ((by: 1 | -1) => void) | null = null
+export function setQuickLookStepper(f: (by: 1 | -1) => void) { stepQuickLook = f }
 
 /* ------------------------------------------------------------------ what a page folder registers */
 

@@ -18,12 +18,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { quickLookFamily, quickLookOpen } from "../templates/QuickLook"
 import { Separator } from "@/components/ui/separator"
 import { href as hashHref, useRoute } from "@/app/router"
 import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
 import { clearHighlight, crumbName, findAnchor, follow, showReturn } from "../chain"
 import { clearEdit, useEdit } from "../edits"
 import { besides } from "../Product"
+import { coreBesides } from "../beside"
 import type { Session } from "../session"
 import type { Page } from "../usage/model"
 import { useDisclosure } from "./useDisclosure"
@@ -45,7 +47,7 @@ function reducedMotion() {
 
 /** The name and context for a target, from the renderer the owning folder registered. */
 function headFor(session: Session, target: BesideTarget): BesideHead {
-  const C = besides[target.kind]
+  const C = besides[target.kind] ?? coreBesides()[target.kind]
   return C?.head?.({ session, id: target.id, target }) ?? { name: target.id, context: "", route: "" }
 }
 
@@ -320,15 +322,20 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     ?? (typeof recorded?.note === "string"
       ? { note: recorded.note, onUndo: () => clearEdit(shown.kind, shown.id) }
       : null)
-  const Body = besides[shown.kind]
+  const Body = besides[shown.kind] ?? coreBesides()[shown.kind]
   const list = shown.list
   const hasPrev = !!list && list.index > 0
   const hasNext = !!list && list.index < list.ids.length - 1
   const parentHead = parent ? headFor(session, parent) : null
+  // A quick look is of a record, so it wears that record's family, not the look's own kind.
+  const family = (shown.kind === "quick-look" ? quickLookFamily() : undefined) ?? shown.kind
 
   const declarePage = (page: Page) => { declaredPage.current = page }
 
   const openPage = () => {
+    // A quick look has no route of its own: "Open the page" is the opener's own move, which is what
+    // keeps the trail (LAYOUTS.md §3, the quick look is the pane).
+    if (shown.kind === "quick-look") { quickLookOpen(); return }
     if (!head.route) return
     // The trail remembers the row this pane came from, so the crumb lands back on it.
     follow(head.route, { route: route.raw, title: pageTitle, anchor: shown.id })
@@ -349,7 +356,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
       <Card ref={panel} tabIndex={-1} className="m-2 flex h-[calc(100%-1rem)] w-[calc(min(100vw,28rem)-1rem)] flex-col gap-0 overflow-hidden py-0 shadow-lg outline-none max-sm:m-0 max-sm:h-full max-sm:w-full max-sm:rounded-none max-sm:border-0">
         {/* A thin bar in the object's family hue, so the pane says what it is holding before it is
             read (DESIGN.md §5). */}
-        <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(shown.kind).fill }} />
+        <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />
         <header className="shrink-0 px-4 py-3">
           {parentHead && (
             <Button variant="ghost" size="xs" className="-ml-2 mb-1 text-muted-foreground" onClick={besideBack}>
@@ -362,7 +369,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
             From {crumbName(pageTitle)}{fromRow ? ` · row ${fromRow}` : ""}
           </p>
           <div className="flex items-start gap-2">
-            <FamilyIcon of={shown.kind} size="header" className="mt-0.5" label={familyOf(shown.kind).name} />
+            <FamilyIcon of={family} size="header" className="mt-0.5" label={familyOf(family).name} />
             <div className="min-w-0 flex-1">
               <h2 className="t-section truncate">{head.name}</h2>
               {head.context && <p className="t-small truncate text-muted-foreground">{head.context}</p>}
@@ -380,7 +387,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
           </div>
           {/* A destination, not a state change, so it is a real link (DESIGN.md §1). Its click is
               still the product's, which is what keeps the trail. */}
-          {head.route && (
+          {(head.route || shown.kind === "quick-look") && (
             <Actions
               className="mt-2"
               surface="pane"

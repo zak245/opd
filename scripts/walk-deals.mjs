@@ -71,16 +71,17 @@ console.log("the card:", card.name, card.id)
 await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).focus(), card.id)
 await page.keyboard.press("Enter")
 await wait(700)
-console.log("Enter on the card:", await page.evaluate(() => `hash=${location.hash} drawer=${!!document.querySelector('[role="dialog"]')}`))
+// The quick look is the beside pane now (LAYOUTS.md §3), so it is an aside, not a dialog.
+console.log("Enter on the card:", await page.evaluate(() => `hash=${location.hash} pane=${!!document.querySelector("aside[data-beside]")}`))
 console.log("the card says:", await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).getAttribute("aria-label"), card.id))
 await shot("2-quicklook")
 
 // The drawer walks its own column with [ and ], the same keys and the same "n of m" as the pane.
 const drawer = () => page.evaluate(() => {
-  const sheet = document.querySelector('[role="dialog"]')
-  if (!sheet) return "(no drawer)"
-  const count = Array.from(sheet.querySelectorAll("span")).find((el) => /^\d+ of \d+$/.test(el.textContent.trim()))
-  return `${sheet.querySelector("h2, [data-slot='sheet-title']")?.textContent?.trim()} · ${count?.textContent.trim() ?? "(no n of m)"}`
+  const pane = document.querySelector("aside[data-beside]")
+  if (!pane) return "(no pane)"
+  const count = Array.from(pane.querySelectorAll("span")).find((el) => /^\d+ of \d+$/.test(el.textContent.trim()))
+  return `${pane.querySelector("h2")?.textContent?.trim()} · ${count?.textContent.trim() ?? "(no n of m)"}`
 })
 console.log("the drawer opened on:", await drawer())
 await page.keyboard.press("BracketRight")
@@ -92,7 +93,7 @@ await wait(400)
 console.log("after [ in the drawer:", await drawer())
 
 // The drawer opens with the one editable field focused, so Tab down to "Open" and press it.
-await press(`Array.from(document.querySelectorAll('[role="dialog"] button, [role="dialog"] a')).find((b) => b.textContent.trim() === "Open")`)
+await press(`Array.from(document.querySelectorAll('aside[data-beside] button, aside[data-beside] a')).find((b) => /^Open the page$/.test(b.textContent.trim()))`)
 await wait(900)
 console.log("chain 1 trail:", await trail())
 await shot("3-record")
@@ -110,7 +111,7 @@ await shot("4-back")
 await page.evaluate((id) => document.querySelector(`li[data-card-id="${id}"]`).focus(), card.id)
 await page.keyboard.press("Enter")
 await wait(600)
-await press(`Array.from(document.querySelectorAll('[role="dialog"] button, [role="dialog"] a')).find((b) => b.textContent.trim() === "Open")`)
+await press(`Array.from(document.querySelectorAll('aside[data-beside] button, aside[data-beside] a')).find((b) => /^Open the page$/.test(b.textContent.trim()))`)
 await wait(900)
 const dealRoute = await page.evaluate(() => location.hash)
 console.log("the deal:", dealRoute)

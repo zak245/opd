@@ -4,6 +4,7 @@
 // the SLA window and submissions nobody could route are the things nobody else will notice. The
 // enrichment spend is on the surface because at the cap enrichment stops while submissions keep arriving.
 import { Chip } from "../../ui/Identity"
+import { Rows } from "../../layouts"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
@@ -79,15 +80,15 @@ export function Campaigns({ data, d, order }: { data: HomeData; d: Disclosure; o
       {c.audiences.length > 0 && (
         <div className="pt-1">
           <Door id="home.campaigns.audiences" label="Audiences that changed" count={c.audiences.length} defaultOpen={audiencesOpen}>
-            <ul className="divide-y">
+            <Rows>
               {c.audiences.map((a) => (
-                <li key={a.id} data-item={a.id} data-item-label={a.name} className="flex items-center gap-3 py-1.5 text-xs">
+                <div key={a.id} data-item={a.id} data-item-label={a.name} className="flex items-center gap-3 py-1.5 text-xs">
                   <button type="button" className="min-w-0 flex-1 text-left underline underline-offset-2" onClick={(e) => openBeside({ kind: "audience", id: a.id, list: { ids: c.audiences.map((x) => x.id), index: c.audiences.indexOf(a) }, opener: e.currentTarget })}>{a.name}</button>
                   <span className="shrink-0 text-muted-foreground">{a.type} · rebuilt {a.lastRebuilt}</span>
                   <span className="shrink-0 tabular-nums">{count(a.size)}</span>
-                </li>
+                </div>
               ))}
-            </ul>
+            </Rows>
           </Door>
         </div>
       )}

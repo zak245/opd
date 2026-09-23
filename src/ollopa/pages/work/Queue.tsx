@@ -4,11 +4,13 @@
 // so the list's filters and row doors stay at level two either way and nothing nests. It is the
 // opening body for the SDR and the AE seats (PLAN.md, the S1 walk decision of 15 September 2026).
 //
+// It is the detail half of `QueuePage` (src/ollopa/layouts): the template sets the measure, draws
+// the page header and owns the previous/next walk, and the order itself is the list beside this.
+//
 // It renders the call and LinkedIn panels directly as its own body, so working a call block is
 // page → panel → next panel, never page → door → panel. The outcome buttons, the snooze options and
 // the contact are all on screen, so the queue has no inner door at all.
-import { useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -32,6 +34,8 @@ export interface QueueProps {
   session: Session
   /** The current list, in its current order. The queue takes it as it is. */
   tasks: Task[]
+  /** Where in that list the queue is. The walk belongs to the template, so the index is the page's. */
+  index: number
   /** "due" is the default and stays the default; "score" is the scoring agent's, chosen by a person. */
   sort: "due" | "score"
   onSort: (s: "due" | "score") => void
@@ -56,15 +60,11 @@ const CALL_OUTCOMES = ["Connected", "Voicemail", "No answer", "Wrong number"]
 
 export function Queue(p: QueueProps) {
   const contactOf = contactIndex(p.session.business)
-  const [i, setI] = useState(0)
+  const i = p.index
   const [note, setNote] = useState("")
   const [email, setEmail] = useState("")
   const [meetingOpen, setMeetingOpen] = useState(false)
   const mailbox = mailboxOf(p.session)
-
-  // The queue always restarts at the first open task, because order is the point.
-  useEffect(() => { setI(0) }, [p.sort])
-  useEffect(() => { if (i > 0 && i >= p.tasks.length) setI(Math.max(0, p.tasks.length - 1)) }, [i, p.tasks.length])
 
   const task = p.tasks[i]
   // Done, snooze and skip take the task off the list, so the same index is already the next task.
@@ -104,26 +104,21 @@ export function Queue(p: QueueProps) {
   return (
     // Queue mode is one container holding the task being worked: where you are in its header, the
     // task flat inside it, and what is behind it in the footer. The call log and the LinkedIn step
-    // are bands inside it, never boxes (DESIGN.md §5, containment).
+    // are bands inside it, never boxes (DESIGN.md §5, containment). Previous and next are not here:
+    // the walk belongs to `QueuePage`, so every queue in the product is walked the same way.
     <Container
       component="section"
       as="section"
       aria-label={`Task ${i + 1} of ${p.tasks.length}`}
       padded={false}
-      className="mx-4 mb-4 flex min-h-0 flex-1 flex-col sm:mx-6"
-      bodyClassName="min-h-0 flex-1 overflow-y-auto"
+      className="flex min-h-0 flex-col"
+      bodyClassName="min-h-0"
       heading={(
         <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="tabular-nums">Task {i + 1} of {p.tasks.length}</span>
           <Chip family="tasks">{task.kind}</Chip>
           <span className="t-body font-normal">{task.contact}, {task.company}</span>
         </span>
-      )}
-      actions={(
-        <div className="flex items-center gap-1">
-          <Button size="icon-sm" variant="ghost" aria-label="Previous task" disabled={i === 0} onClick={() => setI((n) => n - 1)}><ChevronLeft className="size-4" /></Button>
-          <Button size="icon-sm" variant="ghost" aria-label="Next task" disabled={i >= p.tasks.length - 1} onClick={() => setI((n) => n + 1)}><ChevronRight className="size-4" /></Button>
-        </div>
       )}
       footer={behind}
     >
@@ -147,7 +142,7 @@ export function Queue(p: QueueProps) {
 
       {/* -------------------------------------------------------------------------- the task */}
       <div className="px-4 py-4">
-        <div className="mx-auto max-w-3xl space-y-5">
+        <div className="space-y-5">
           <div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h3 className="t-section">{task.step ? `Step ${task.step.n} of ${task.step.of} · ${task.title}` : task.title}</h3>
@@ -268,7 +263,7 @@ export function Queue(p: QueueProps) {
           skipping are the other two the person came for. A call has four comparable outcomes
           instead, and four comparable acts are never one filled and three outlined. */}
       <CardFooter className="border-t px-4 pt-3">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {task.kind === "Call" ? (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="t-small text-muted-foreground">Done:</span>

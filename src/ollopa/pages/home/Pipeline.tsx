@@ -13,6 +13,7 @@ import type { Deal } from "../../data/seed"
 import type { HomeData } from "./data"
 import { day } from "./format"
 import { Nothing, Row, RowList, Section } from "./rows"
+import { Rows } from "../../layouts"
 
 function Stat({ label, value, sub, to }: { label: string; value: string; sub?: string; to?: string }) {
   const body = (
@@ -110,15 +111,15 @@ export function Pipeline({ data, d, order, hasReports }: { data: HomeData; d: Di
       </div>
 
       {hasReports && perRep.length > 0 && (
-        <ul className="mt-2 divide-y t-body">
+        <Rows className="mt-2 t-body">
           {perRep.map((r) => (
-            <li key={r.rep} className="flex items-center gap-3 px-3 py-1.5">
+            <div key={r.rep} className="flex items-center gap-3 px-3 py-1.5">
               <span className="min-w-0 flex-1">{r.rep === data.user ? `${r.rep} (you)` : r.rep}</span>
               <span className="shrink-0 text-xs text-muted-foreground">{r.count} deals</span>
               <span className="shrink-0 tabular-nums">{m(r.total)}</span>
-            </li>
+            </div>
           ))}
-        </ul>
+        </Rows>
       )}
 
       {closing && (

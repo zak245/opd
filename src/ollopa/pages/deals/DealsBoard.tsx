@@ -10,27 +10,24 @@
 // forecast. Delete is not on the card; it is on the record, where its consequence is visible without
 // a click, and in the bulk bar, where it names what goes.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { href, useRoute } from "@/app/router"
 import { follow } from "../../chain"
 import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Container, Group } from "../../ui/Section"
+import { BoardPage, PageHeader, type BoardStage, type PageHeaderProps } from "../../layouts"
 import { Divider } from "../../ui/Divider"
-import { FamilyIcon, inkOf } from "../../ui/Identity"
-import { familyOf } from "../../identity"
+import { inkOf } from "../../ui/Identity"
 import { useEdits } from "../../edits"
 import { TablePage, toast } from "../../templates/TablePage"
 import { QuickLook, type QuickLookEditable } from "../../templates/QuickLook"
@@ -113,16 +110,14 @@ function Segmented<T extends string>({ label, value, options, onChange }: {
   )
 }
 
-/** One board is rendered, never two: a hidden copy would duplicate every card for the keyboard. */
-function usePhone(): boolean {
-  const [phone, setPhone] = useState(() => (typeof window === "undefined" ? false : !window.matchMedia("(min-width: 768px)").matches))
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)")
-    const on = () => setPhone(!mq.matches)
-    mq.addEventListener("change", on)
-    return () => mq.removeEventListener("change", on)
-  }, [])
-  return phone
+/**
+ * `BoardPage` draws the wide board and the phone's one-stage-at-a-time copy together, so the same
+ * card can be in the document twice with one of the two hidden. Every keyboard move below asks for
+ * the copy that is actually on screen rather than the first one in the document.
+ */
+function onScreen(selector: string): HTMLElement | null {
+  const all = Array.from(document.querySelectorAll<HTMLElement>(selector))
+  return all.find((el) => el.offsetParent !== null) ?? all[0] ?? null
 }
 
 /** View, scope, period, filters, columns and density, per user per workspace (spec 08 §6). */
@@ -227,9 +222,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   const [focusId, setFocusId] = useState<string | null>(null)
   const [editingNext, setEditingNext] = useState<string | null>(null)
   const [refusal, setRefusal] = useState<{ id: string; text: string } | null>(null)
-  const [phoneStage, setPhoneStage] = useState<DealStage>(OPEN_STAGES[0])
   const [say, setSay] = useState("")
-  const phone = usePhone()
 
   const [newPanel, setNewPanel] = useState(false)
   const [logFor, setLogFor] = useState<string | null>(null)
@@ -387,14 +380,14 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
       const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
       const onACard = Boolean(active?.dataset.cardId) || active === document.body
-      const cardEl = focusId ? (document.querySelector(`[data-card-id="${focusId}"]`) as HTMLElement | null) : null
+      const cardEl = focusId ? onScreen(`[data-card-id="${focusId}"]`) : null
       const focusCard = (el: Element | null | undefined) => { if (el instanceof HTMLElement) { el.focus(); setFocusId(el.dataset.cardId ?? null) } }
 
       if (key === "j" || key === "k") {
         if (!onACard) return
         e.preventDefault()
         const list = cardEl?.parentElement
-        if (!list) { focusCard(document.querySelector("[data-card-id]")); return }
+        if (!list) { focusCard(onScreen("[data-card-id]")); return }
         focusCard(key === "j" ? cardEl?.nextElementSibling : cardEl?.previousElementSibling)
         return
       }
@@ -411,8 +404,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         }
         if (!cardEl || !onACard) return
         e.preventDefault()
-        const lists = Array.from(document.querySelectorAll("[data-stage-list]"))
-        const at = lists.indexOf(cardEl.parentElement as Element)
+        const lists = Array.from(document.querySelectorAll<HTMLElement>("[data-stage-list]")).filter((el) => el.offsetParent !== null)
+        const at = lists.indexOf(cardEl.parentElement as HTMLElement)
         const to = lists[at + step]
         focusCard(to?.querySelector("[data-card-id]"))
         return
@@ -541,7 +534,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     />
   )
 
-  const column = (stage: DealStage, className?: string) => {
+  /**
+   * Everything under a stage's heading. The heading, the count and the column's width belong to
+   * `BoardPage` now (LAYOUTS.md §6: the board is fluid and the template sets it, never the page),
+   * so what is left here is the summary band, the rule under it and the list that takes the drop.
+   */
+  const columnBody = (stage: DealStage) => {
     const list = byStage(stage)
     const sum = sumOf(list)
     const stale = list.filter((x) => warningsOf(x, seed).some((w) => w.kind === "No activity" || w.kind === "Stalled in stage")).length
@@ -549,20 +547,9 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
     const doorParts = [weightedInHeader ? null : "Weighted total", one("deals.column.stale-count") ? null : "stale deals"].filter(Boolean)
     const summary = weightedInHeader || one("deals.column.stale-count") || doorParts.length > 0
     return (
-      // A stage is a container: its name and its total are the container's header, and the
-      // weighted total and the stale count are a band at the top of the card's body, separated from
-      // the deals by the library's rule rather than by a tinted bar of our own.
-      <Container
-        key={stage}
-        component="section"
-        heading={stage}
-        count={`${list.length} · ${moneyShort(sum, currency)}`}
-        padded={false}
-        className={cn("flex min-h-0 w-full shrink-0 flex-col md:w-[17rem]", target === stage && carrying && "ring-2 ring-ring", className)}
-        bodyClassName="flex min-h-0 flex-1 flex-col"
-      >
+      <>
         {summary && (
-          <Group className="space-y-0.5 px-4 pb-2">
+          <Group className="space-y-0.5">
             {weightedInHeader && <div className="t-small tabular-nums text-muted-foreground">Weighted {moneyShort(weightedOf(list), currency)}</div>}
             {one("deals.column.stale-count") && <div className="t-small tabular-nums text-muted-foreground">{stale} not moving</div>}
             {doorParts.length > 0 && (
@@ -584,7 +571,11 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           data-stage-list
           data-stage={stage}
           aria-label={`${stage}, ${list.length} deals, ${moneySpoken(sum, currency)}`}
-          className={cn("min-h-24 flex-1 space-y-2 overflow-y-auto p-2", carrying && "outline-dashed outline-1 outline-muted-foreground/40")}
+          className={cn(
+            "min-h-24 space-y-2 p-2",
+            carrying && "outline-dashed outline-1 outline-muted-foreground/40",
+            target === stage && carrying && "ring-2 ring-ring",
+          )}
           onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move" }}
           onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData("text/plain"); if (id) move(id, stage) }}
         >
@@ -596,34 +587,47 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
             </li>
           )}
         </ul>
-      </Container>
+      </>
     )
   }
 
-  /* ---------------------------------------------------------------------------------- the rail */
+  /* ------------------------------------------------------------------------------- the stages */
 
+  // Closed won is still the one column that can be put away — it is what has already gone right,
+  // so it carries the success ink, with the word and never the colour alone. It is a stage of the
+  // board like any other now, so the phone's switcher reaches it the way it reached the old chip.
   const railSum = sumOf(wonRows)
-  const rail = !used("deals.board.closed-won-rail") ? null : railOpen ? (
-    <div className="flex min-h-0 flex-col">
-      <Button variant="link" size="sm" className="h-auto self-end px-2 py-1 text-muted-foreground" aria-expanded={true} onClick={() => setRailOpen(false)}>
-        Collapse Closed won
-      </Button>
-      {column(WON_STAGE)}
-    </div>
-  ) : (
-    <Button
-      variant="outline"
-      className="h-auto w-12 shrink-0 self-stretch py-3"
-      aria-expanded={false}
-      onClick={() => setRailOpen(true)}
-    >
-      {/* Won is the one thing on this board that has already gone right, so it carries the success
-          ink — with the word, never the colour alone. */}
-      <span className="t-small [writing-mode:vertical-rl] tabular-nums" style={{ color: statusInk("closed won") }}>
-        Closed won · {wonRows.length} · {moneyShort(railSum, currency)}
-      </span>
-    </Button>
-  )
+  const stages: BoardStage[] = [
+    ...OPEN_STAGES.map((s) => ({
+      id: s,
+      name: s,
+      note: `${byStage(s).length} · ${moneyShort(sumOf(byStage(s)), currency)}`,
+      cards: columnBody(s),
+    })),
+    ...(used("deals.board.closed-won-rail")
+      ? [{
+          id: WON_STAGE,
+          name: WON_STAGE,
+          note: `${wonRows.length} · ${moneyShort(railSum, currency)}`,
+          cards: railOpen ? (
+            <>
+              <Button variant="link" size="sm" className="h-auto self-end px-2 py-1 text-muted-foreground"
+                      aria-expanded={true} onClick={() => setRailOpen(false)}>
+                Collapse Closed won
+              </Button>
+              {columnBody(WON_STAGE)}
+            </>
+          ) : (
+            <Button variant="outline" className="h-auto w-full justify-start py-3"
+                    aria-expanded={false} onClick={() => setRailOpen(true)}>
+              <span className="t-small tabular-nums" style={{ color: statusInk("closed won") }}>
+                Closed won · {wonRows.length} · {moneyShort(railSum, currency)}
+              </span>
+            </Button>
+          ),
+        }]
+      : []),
+  ]
 
   /* --------------------------------------------------------------------------------- the header */
 
@@ -684,333 +688,317 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   const workspaceEmpty = seed.deals.length === 0
 
-  return (
-    <DoorGroup>
-      <div className="flex h-full min-h-0 flex-col">
-        <div aria-live="polite" className="sr-only">{say}</div>
+  /**
+   * What the page header carries, whichever view is on: the family icon and title, the scope and
+   * period the board is showing, the one primary act and the "…" (LAYOUTS.md §2). The board hands
+   * these to `BoardPage`; the table and the empty workspace draw the same part themselves.
+   */
+  const headerProps: PageHeaderProps = {
+    family: "deals",
+    title: "Deals",
+    count: `${SCOPE_LABEL[scope]} · closing ${period_.words}`,
+    // The one act this page exists for, so the one filled control on it (DESIGN.md §1). The table
+    // carries its own primary, so the page header only holds it on the board.
+    actions: view === "board" && !workspaceEmpty
+      ? [{ label: "New deal", kind: "primary", onClick: () => setNewPanel(true) }]
+      : undefined,
+    more: [
+      { label: "Export this view as CSV", kind: "secondary", onClick: () => exportCsv(sorted, visibleColumns, currency) },
+      { label: "Import deals from CSV", kind: "secondary", onClick: () => setImportOpen(true) },
+      { label: "Print the board", kind: "secondary", onClick: () => window.print() },
+      // Settings is a page, so this is a `follow`: the crumb comes back to this board rather than
+      // to whatever the sidebar would have shown.
+      { label: "Edit stages in Settings", kind: "secondary", onClick: () => leaveFor("/ollopa/settings/pipeline?row=pipe.stages", "deals.more") },
+      // The shell owns the list and opens it on "?"; this is the same panel, not a copy.
+      { label: "Keyboard shortcuts", kind: "secondary", onClick: () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true })) },
+    ],
+  }
 
-        <div className="space-y-2 px-4 pt-4 sm:px-6">
-          {/* The page says what it is before any filter does: the title, its family glyph and its
-              family ink, at the top of the scale (DESIGN.md §5). Without it the board opened flat
-              and the only "where am I" was the 14 px strip in the shell. */}
-          <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf("deals").ink }}>
-            <FamilyIcon of="deals" size="header" />
-            Deals
-            <span className="t-body font-normal tabular-nums text-muted-foreground">
-              {SCOPE_LABEL[scope]} · closing {period_.words}
-            </span>
-          </h2>
+  /**
+   * Everything between the page header and the stages: the pipeline, scope and period controls, the
+   * search, the two counting chips, the filters behind their door and the forecast strip. It is the
+   * template's `above`, so the board and the table put it in the same place.
+   */
+  const above = (
+    <div className="space-y-2 pt-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {pipelines.length > 1 && (
+          <Select value={pipelineName} onValueChange={setPipelineName}>
+            <SelectTrigger className="h-8 w-48" aria-label="Pipeline"><SelectValue /></SelectTrigger>
+            <SelectContent>{pipelines.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
+          </Select>
+        )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            {pipelines.length > 1 && (
-              <Select value={pipelineName} onValueChange={setPipelineName}>
-                <SelectTrigger className="h-8 w-48" aria-label="Pipeline"><SelectValue /></SelectTrigger>
-                <SelectContent>{pipelines.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
-              </Select>
-            )}
+        {used("deals.filter.scope") && (
+          <Segmented label="Whose deals" value={scope} onChange={setScope}
+            options={(["mine", "team", "all"] as Scope[]).map((k) => ({ key: k, text: SCOPE_LABEL[k] }))} />
+        )}
 
-            {used("deals.filter.scope") && (
-              <Segmented label="Whose deals" value={scope} onChange={setScope}
-                options={(["mine", "team", "all"] as Scope[]).map((k) => ({ key: k, text: SCOPE_LABEL[k] }))} />
-            )}
+        <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+          <SelectTrigger className="h-8 w-48" aria-label="Closing period"><SelectValue /></SelectTrigger>
+          <SelectContent>{PERIODS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
+        </Select>
 
-            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-              <SelectTrigger className="h-8 w-48" aria-label="Closing period"><SelectValue /></SelectTrigger>
-              <SelectContent>{PERIODS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
-            </Select>
+        {view === "board" && (
+          <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44" />
+        )}
 
-            {view === "board" && (
-              <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44" />
-            )}
+        {/* The owner filter is the control a manager's one-to-ones run on, so it sits beside scope. */}
+        {one("deals.filter.owner") && (
+          <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
+            <SelectTrigger className="h-8 w-44" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Owner: all</SelectItem>
+              {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
 
-            {/* The owner filter is the control a manager's one-to-ones run on, so it sits beside scope. */}
-            {one("deals.filter.owner") && (
-              <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
-                <SelectTrigger className="h-8 w-44" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Owner: all</SelectItem>
-                  {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
+        {one("deals.filter.forecast") && (
+          <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
+            <SelectTrigger className="h-8 w-44" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Forecast: all</SelectItem>
+              {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
 
-            {one("deals.filter.forecast") && (
-              <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
-                <SelectTrigger className="h-8 w-44" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Forecast: all</SelectItem>
-                  {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+          {used("deals.view.toggle") && (
+            <Segmented label="Board or table" value={view} onChange={setView}
+              options={[{ key: "board" as const, text: "Board" }, { key: "table" as const, text: "Table" }]} />
+          )}
 
-            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
-              {used("deals.view.toggle") && (
-                <Segmented label="Board or table" value={view} onChange={setView}
-                  options={[{ key: "board" as const, text: "Board" }, { key: "table" as const, text: "Table" }]} />
+          <ExpandAll />
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-auto max-w-full whitespace-normal py-1 text-left">View: table columns, card order, density, saved views</Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 space-y-3 text-sm">
+              <div>
+                <div className="pb-1 text-xs font-medium">Card and row order</div>
+                <Select value={order} onValueChange={(v) => setOrder(v as Order)}>
+                  <SelectTrigger className="h-8" aria-label="Order"><SelectValue /></SelectTrigger>
+                  <SelectContent>{ORDERS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <div className="pb-1 text-xs font-medium">Card density</div>
+                <ToggleGroup type="single" variant="outline" size="sm" aria-label="Card density"
+                  value={density} onValueChange={(v) => { if (v) setDensity(v as typeof density) }}>
+                  {(["comfortable", "compact"] as const).map((v) => (
+                    <ToggleGroupItem key={v} value={v}>{v === "comfortable" ? "Comfortable" : "Compact"}</ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+              <div>
+                <div className="pb-1 text-xs font-medium">Table columns, {columns.length} of {TABLE_COLUMNS.length}</div>
+                <ul className="max-h-40 space-y-1 overflow-y-auto">
+                  {TABLE_COLUMNS.map((c) => (
+                    <li key={c.key} className="flex items-center gap-2">
+                      <Checkbox id={`col-${c.key}`} checked={columns.includes(c.key)}
+                        onCheckedChange={(v) => setColumns(v ? [...columns, c.key] : columns.filter((k) => k !== c.key))} />
+                      <label htmlFor={`col-${c.key}`} className="text-xs">{c.header}</label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {used("deals.view.saved") && (
+                <div>
+                  <div className="pb-1 text-xs font-medium">Saved views</div>
+                  <ul className="space-y-1">
+                    {seed.savedViews.filter((v) => v.object === "deal").map((v) => (
+                      <li key={v.id}>
+                        <button className="text-xs underline underline-offset-4"
+                          onClick={() => { setScope("mine"); setPeriod("quarter"); toast(`${v.name} applied · Mine, closing this quarter`) }}>
+                          {v.name}
+                        </button>
+                      </li>
+                    ))}
+                    {seed.savedViews.filter((v) => v.object === "deal").length === 0 && <li className="text-xs text-muted-foreground">Nothing saved yet.</li>}
+                  </ul>
+                </div>
               )}
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
-              <ExpandAll />
+      {/* Two counting chips at level one: the number is read without opening anything. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(one("deals.filter.no-next-step") || one("deals.filter.comments")) && (
+          <ToggleGroup
+            type="multiple"
+            variant="outline"
+            size="sm"
+            spacing={2}
+            aria-label="Filters you can read the count of"
+            value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
+            onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
+          >
+            {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
+            {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
+          </ToggleGroup>
+        )}
+        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+          {rows.filter(isOpen).length.toLocaleString()} open of {b.counts.openDeals.toLocaleString()} in this workspace
+        </span>
+      </div>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-auto max-w-full whitespace-normal py-1 text-left">View: table columns, card order, density, saved views</Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-80 space-y-3 text-sm">
-                  <div>
-                    <div className="pb-1 text-xs font-medium">Card and row order</div>
-                    <Select value={order} onValueChange={(v) => setOrder(v as Order)}>
-                      <SelectTrigger className="h-8" aria-label="Order"><SelectValue /></SelectTrigger>
-                      <SelectContent>{ORDERS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <div className="pb-1 text-xs font-medium">Card density</div>
-                    <ToggleGroup type="single" variant="outline" size="sm" aria-label="Card density"
-                      value={density} onValueChange={(v) => { if (v) setDensity(v as typeof density) }}>
-                      {(["comfortable", "compact"] as const).map((v) => (
-                        <ToggleGroupItem key={v} value={v}>{v === "comfortable" ? "Comfortable" : "Compact"}</ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
-                  </div>
-                  <div>
-                    <div className="pb-1 text-xs font-medium">Table columns, {columns.length} of {TABLE_COLUMNS.length}</div>
-                    <ul className="max-h-40 space-y-1 overflow-y-auto">
-                      {TABLE_COLUMNS.map((c) => (
-                        <li key={c.key} className="flex items-center gap-2">
-                          <Checkbox id={`col-${c.key}`} checked={columns.includes(c.key)}
-                            onCheckedChange={(v) => setColumns(v ? [...columns, c.key] : columns.filter((k) => k !== c.key))} />
-                          <label htmlFor={`col-${c.key}`} className="text-xs">{c.header}</label>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {used("deals.view.saved") && (
-                    <div>
-                      <div className="pb-1 text-xs font-medium">Saved views</div>
-                      <ul className="space-y-1">
-                        {seed.savedViews.filter((v) => v.object === "deal").map((v) => (
-                          <li key={v.id}>
-                            <button className="text-xs underline underline-offset-4"
-                              onClick={() => { setScope("mine"); setPeriod("quarter"); toast(`${v.name} applied · Mine, closing this quarter`) }}>
-                              {v.name}
-                            </button>
-                          </li>
-                        ))}
-                        {seed.savedViews.filter((v) => v.object === "deal").length === 0 && <li className="text-xs text-muted-foreground">Nothing saved yet.</li>}
-                      </ul>
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
-
-              {/* The one act this page exists for, so the one filled control on it (DESIGN.md §1). */}
-              {view === "board" && (
-                <Actions surface="card" items={[{ label: "New deal", kind: "primary", onClick: () => setNewPanel(true) }]} />
-              )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8" data-item="deals.more" data-item-label="Import, export, print and stages" aria-label="Import, export, print and stages"><MoreHorizontal className="size-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => exportCsv(sorted, visibleColumns, currency)}>Export this view as CSV</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setImportOpen(true)}>Import deals from CSV</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => window.print()}>Print the board</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {/* Settings is a page, so this is a `follow`: the crumb comes back to this board
-                      with the menu button lit, not to whatever the sidebar would have shown. */}
-                  <DropdownMenuItem onSelect={() => leaveFor("/ollopa/settings/pipeline?row=pipe.stages", "deals.more")}>Edit stages in Settings</DropdownMenuItem>
-                  {/* The shell owns the list and opens it on "?"; this is the same panel, not a copy. */}
-                  <DropdownMenuItem onSelect={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }))}>
-                    Keyboard shortcuts
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* Two counting chips at level one: the number is read without opening anything. */}
-          <div className="flex flex-wrap items-center gap-2">
-            {(one("deals.filter.no-next-step") || one("deals.filter.comments")) && (
+      <Door id="deals.filters" label={filterDoorLabel}>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {used("deals.filter.warnings") && (
+            <fieldset className="sm:col-span-2 lg:col-span-3">
+              <legend className="pb-1 text-xs font-medium">Warnings</legend>
               <ToggleGroup
                 type="multiple"
                 variant="outline"
                 size="sm"
                 spacing={2}
-                aria-label="Filters you can read the count of"
-                value={[filters.noNextStep ? "noNextStep" : "", filters.comments ? "comments" : ""].filter(Boolean)}
-                onValueChange={(v) => setFilters({ ...filters, noNextStep: v.includes("noNextStep"), comments: v.includes("comments") })}
+                aria-label="Warnings"
+                className="flex flex-wrap items-center gap-2"
+                value={filters.warnings}
+                onValueChange={(v) => setFilters({ ...filters, warnings: v as WarningKind[] })}
               >
-                {one("deals.filter.no-next-step") && <ToggleGroupItem value="noNextStep">No next step ({noNextStepCount})</ToggleGroupItem>}
-                {one("deals.filter.comments") && <ToggleGroupItem value="comments">Comments waiting for you ({commentsCount})</ToggleGroupItem>}
+                {WARNING_KINDS.map((k) => <ToggleGroupItem key={k} value={k}>{k} ({facets[k]})</ToggleGroupItem>)}
               </ToggleGroup>
-            )}
-            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-              {rows.filter(isOpen).length.toLocaleString()} open of {b.counts.openDeals.toLocaleString()} in this workspace
-            </span>
+            </fieldset>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Checkbox id="f-nostep" checked={filters.noNextStep} onCheckedChange={(v) => setFilters({ ...filters, noNextStep: Boolean(v) })} />
+            <label htmlFor="f-nostep" className="text-xs">No next step ({noNextStepCount})</label>
           </div>
 
-          <Door id="deals.filters" label={filterDoorLabel}>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {used("deals.filter.warnings") && (
-                <fieldset className="sm:col-span-2 lg:col-span-3">
-                  <legend className="pb-1 text-xs font-medium">Warnings</legend>
-                  <ToggleGroup
-                    type="multiple"
-                    variant="outline"
-                    size="sm"
-                    spacing={2}
-                    aria-label="Warnings"
-                    className="flex flex-wrap items-center gap-2"
-                    value={filters.warnings}
-                    onValueChange={(v) => setFilters({ ...filters, warnings: v as WarningKind[] })}
-                  >
-                    {WARNING_KINDS.map((k) => <ToggleGroupItem key={k} value={k}>{k} ({facets[k]})</ToggleGroupItem>)}
-                  </ToggleGroup>
-                </fieldset>
-              )}
+          {!one("deals.filter.owner") && (
+            <label className="text-xs">Owner
+              <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
+                <SelectTrigger className="mt-1 h-8" aria-label="Owner"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="all">All owners</SelectItem>{owners.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            </label>
+          )}
 
-              <div className="flex items-center gap-2">
-                <Checkbox id="f-nostep" checked={filters.noNextStep} onCheckedChange={(v) => setFilters({ ...filters, noNextStep: Boolean(v) })} />
-                <label htmlFor="f-nostep" className="text-xs">No next step ({noNextStepCount})</label>
-              </div>
+          {!one("deals.filter.forecast") && (
+            <label className="text-xs">Forecast category
+              <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
+                <SelectTrigger className="mt-1 h-8" aria-label="Forecast category"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="all">All categories</SelectItem>{FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+              </Select>
+            </label>
+          )}
 
-              {!one("deals.filter.owner") && (
-                <label className="text-xs">Owner
-                  <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
-                    <SelectTrigger className="mt-1 h-8" aria-label="Owner"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="all">All owners</SelectItem>{owners.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                  </Select>
-                </label>
-              )}
+          <div className="text-xs">
+            Amount between
+            <div className="mt-1 flex items-center gap-1">
+              <Input aria-label="Smallest amount" type="number" className="h-8" value={filters.amountMin} onChange={(e) => setFilters({ ...filters, amountMin: e.target.value })} />
+              <span className="text-muted-foreground">and</span>
+              <Input aria-label="Largest amount" type="number" className="h-8" value={filters.amountMax} onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })} />
+            </div>
+          </div>
 
-              {!one("deals.filter.forecast") && (
-                <label className="text-xs">Forecast category
-                  <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
-                    <SelectTrigger className="mt-1 h-8" aria-label="Forecast category"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="all">All categories</SelectItem>{FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                  </Select>
-                </label>
-              )}
+          <label className="text-xs">Company
+            <Input aria-label="Company" className="mt-1 h-8" value={filters.company} onChange={(e) => setFilters({ ...filters, company: e.target.value })} />
+          </label>
 
-              <div className="text-xs">
-                Amount between
-                <div className="mt-1 flex items-center gap-1">
-                  <Input aria-label="Smallest amount" type="number" className="h-8" value={filters.amountMin} onChange={(e) => setFilters({ ...filters, amountMin: e.target.value })} />
-                  <span className="text-muted-foreground">and</span>
-                  <Input aria-label="Largest amount" type="number" className="h-8" value={filters.amountMax} onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })} />
-                </div>
-              </div>
+          <label className="text-xs">Created
+            <Select value={filters.created || "any"} onValueChange={(v) => setFilters({ ...filters, created: v === "any" ? "" : (v as Filters["created"]) })}>
+              <SelectTrigger className="mt-1 h-8" aria-label="Created"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any time</SelectItem>
+                <SelectItem value="30">In the last 30 days</SelectItem>
+                <SelectItem value="quarter">This quarter</SelectItem>
+              </SelectContent>
+            </Select>
+          </label>
 
-              <label className="text-xs">Company
-                <Input aria-label="Company" className="mt-1 h-8" value={filters.company} onChange={(e) => setFilters({ ...filters, company: e.target.value })} />
-              </label>
+          <div className="text-xs">
+            <div className="flex items-center gap-2">
+              <Checkbox id="f-archived" checked={filters.archived} onCheckedChange={(v) => setFilters({ ...filters, archived: Boolean(v), lostReason: "" })} />
+              <label htmlFor="f-archived">Archived deals and the reason each was lost</label>
+            </div>
+            {filters.archived && (
+              <Select value={filters.lostReason || "all"} onValueChange={(v) => setFilters({ ...filters, lostReason: v === "all" ? "" : v })}>
+                <SelectTrigger className="mt-1 h-8" aria-label="Lost reason"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="all">Every reason</SelectItem>{LOST_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
+          </div>
 
-              <label className="text-xs">Created
-                <Select value={filters.created || "any"} onValueChange={(v) => setFilters({ ...filters, created: v === "any" ? "" : (v as Filters["created"]) })}>
-                  <SelectTrigger className="mt-1 h-8" aria-label="Created"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any time</SelectItem>
-                    <SelectItem value="30">In the last 30 days</SelectItem>
-                    <SelectItem value="quarter">This quarter</SelectItem>
-                  </SelectContent>
+          {used("deals.filter.custom") && customDefs.length > 0 && (
+            <div className="text-xs">
+              Custom field
+              <div className="mt-1 flex gap-1">
+                <Select value={filters.custom || customDefs[0].label} onValueChange={(v) => setFilters({ ...filters, custom: v })}>
+                  <SelectTrigger className="h-8" aria-label="Custom field"><SelectValue /></SelectTrigger>
+                  <SelectContent>{customDefs.map((f) => <SelectItem key={f.id} value={f.label}>{f.label}</SelectItem>)}</SelectContent>
                 </Select>
-              </label>
-
-              <div className="text-xs">
-                <div className="flex items-center gap-2">
-                  <Checkbox id="f-archived" checked={filters.archived} onCheckedChange={(v) => setFilters({ ...filters, archived: Boolean(v), lostReason: "" })} />
-                  <label htmlFor="f-archived">Archived deals and the reason each was lost</label>
-                </div>
-                {filters.archived && (
-                  <Select value={filters.lostReason || "all"} onValueChange={(v) => setFilters({ ...filters, lostReason: v === "all" ? "" : v })}>
-                    <SelectTrigger className="mt-1 h-8" aria-label="Lost reason"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="all">Every reason</SelectItem>{LOST_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-                  </Select>
-                )}
+                <Input aria-label="Custom field value" className="h-8" value={filters.customValue}
+                  onChange={(e) => setFilters({ ...filters, customValue: e.target.value, custom: filters.custom || customDefs[0].label })} />
               </div>
-
-              {used("deals.filter.custom") && customDefs.length > 0 && (
-                <div className="text-xs">
-                  Custom field
-                  <div className="mt-1 flex gap-1">
-                    <Select value={filters.custom || customDefs[0].label} onValueChange={(v) => setFilters({ ...filters, custom: v })}>
-                      <SelectTrigger className="h-8" aria-label="Custom field"><SelectValue /></SelectTrigger>
-                      <SelectContent>{customDefs.map((f) => <SelectItem key={f.id} value={f.label}>{f.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <Input aria-label="Custom field value" className="h-8" value={filters.customValue}
-                      onChange={(e) => setFilters({ ...filters, customValue: e.target.value, custom: filters.custom || customDefs[0].label })} />
-                  </div>
-                </div>
-              )}
             </div>
-            {filtersOn(filters) > 0 && (
-              <Button size="sm" variant="ghost" className="mt-2 h-7 px-2 text-xs" onClick={() => setFilters(NO_FILTERS)}>Clear {filtersOn(filters)} filter{filtersOn(filters) === 1 ? "" : "s"}</Button>
-            )}
-          </Door>
+          )}
         </div>
+        {filtersOn(filters) > 0 && (
+          <Button size="sm" variant="ghost" className="mt-2 h-7 px-2 text-xs" onClick={() => setFilters(NO_FILTERS)}>Clear {filtersOn(filters)} filter{filtersOn(filters) === 1 ? "" : "s"}</Button>
+        )}
+      </Door>
 
-        {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it.
-            One section, shadcn's Card, so the sums read as one thing and the box is the library's. */}
-        <Container className="mx-4 mb-3 sm:mx-6">
-          {one("deals.forecast.strip")
-            ? strip
-            : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
-        </Container>
+      {/* The strip: four sums for the AE and the admin, a door for the seats that glance at it.
+          One section, shadcn's Card, so the sums read as one thing and the box is the library's. */}
+      <Container>
+        {one("deals.forecast.strip")
+          ? strip
+          : <Door id="deals.strip" label={`Forecast for ${period_.words}: commit, best case, pipeline, closed won`}>{strip}</Door>}
+      </Container>
 
-        {workspaceEmpty ? (
-          <div className="px-4 pb-6 sm:px-6">
-            <EmptyState
-              title="No deals yet"
-              body="A deal is an opportunity with an amount, a close date and a next step. Create one, or bring the pipeline you already have."
-              action={
-                <Actions surface="card" items={[
-                  { label: "New deal", kind: "primary", onClick: () => setNewPanel(true) },
-                  { label: "Import CSV", kind: "secondary", onClick: () => setImportOpen(true) },
-                ]} />
-              }
-            />
-          </div>
-        ) : view === "table" ? (
-          <div className="min-h-0 flex-1">{table}</div>
-        ) : (
+      {/* Board only: the table says its own emptiness in its own words. */}
+      {view === "board" && !workspaceEmpty && rows.length === 0 && anyFilter && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed px-3 py-2 text-sm">
+          <span>Nothing matches. Clear the search or the filters.</span>
+          <Button size="sm" variant="outline" className="h-7" onClick={clearAll}>Clear search and filters</Button>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <DoorGroup>
+      <div className="flex h-full min-h-0 flex-col">
+        <div aria-live="polite" className="sr-only">{say}</div>
+
+        {workspaceEmpty || view === "table" ? (
           <>
-            {rows.length === 0 && anyFilter && (
-              <div className="px-4 pb-3 sm:px-6">
-                <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed px-3 py-2 text-sm">
-                  <span>Nothing matches. Clear the search or the filters.</span>
-                  <Button size="sm" variant="outline" className="h-7" onClick={clearAll}>Clear search and filters</Button>
-                </div>
-              </div>
-            )}
-
-            {/* Phone: one column with a row of stage chips, each carrying its count and sum. */}
-            {phone ? (
-            <div className="min-h-0 flex-1 px-4 pb-4">
-              <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2">
-                {OPEN_STAGES.map((s) => (
-                  <Toggle key={s} variant="outline" size="sm" className="shrink-0" pressed={phoneStage === s}
-                    onPressedChange={(on) => { if (on) setPhoneStage(s) }}>
-                    {s} · {byStage(s).length} · {moneyShort(sumOf(byStage(s)), currency)}
-                  </Toggle>
-                ))}
-                {used("deals.board.closed-won-rail") && (
-                  <Toggle variant="outline" size="sm" className="shrink-0" pressed={phoneStage === WON_STAGE}
-                    onPressedChange={(on) => { if (on) setPhoneStage(WON_STAGE) }}>
-                    {WON_STAGE} · {wonRows.length} · {moneyShort(railSum, currency)}
-                  </Toggle>
-                )}
-              </div>
-              {column(phoneStage, "h-full")}
+            <div className="px-4 pt-4 sm:px-6">
+              <PageHeader {...headerProps} />
+              {above}
             </div>
+            {workspaceEmpty ? (
+              <div className="px-4 pb-6 sm:px-6">
+                <EmptyState
+                  title="No deals yet"
+                  body="A deal is an opportunity with an amount, a close date and a next step. Create one, or bring the pipeline you already have."
+                  action={
+                    <Actions surface="card" items={[
+                      { label: "New deal", kind: "primary", onClick: () => setNewPanel(true) },
+                      { label: "Import CSV", kind: "secondary", onClick: () => setImportOpen(true) },
+                    ]} />
+                  }
+                />
+              </div>
             ) : (
-            <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto px-4 pb-4 sm:px-6">
-              {OPEN_STAGES.map((s) => column(s))}
-              {rail}
-            </div>
+              <div className="min-h-0 flex-1">{table}</div>
             )}
           </>
+        ) : (
+          // The board is the one fluid template (LAYOUTS.md §6): it sets the measure, the column
+          // width and the one-stage-at-a-time switcher at 400, so this page sets no width of its
+          // own and hands over the stages and the parts.
+          <div className="min-h-0 flex-1">
+            <BoardPage {...headerProps} above={above} stages={stages} />
+          </div>
         )}
 
         {/* Bulk: what applies to the selection, and delete naming what goes with it. */}

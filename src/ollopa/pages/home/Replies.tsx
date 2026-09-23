@@ -5,6 +5,7 @@
 // because it cannot be undone from a toast.
 import { useState } from "react"
 import { Actions, type Action } from "../../ui/Actions"
+import { Rows } from "../../layouts"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -158,9 +159,9 @@ export function Replies({ data, d, order }: { data: HomeData; d: Disclosure; ord
       {other.length > 0 && (
         <div className="pt-1">
           <Door id="home.replies.other" label="Not now and out-of-office replies" count={other.length}>
-            <ul className="divide-y">
+            <Rows>
               {other.map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                <div key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{r.contact}</span>
                     <span className="text-muted-foreground"> · {r.company} · {r.outcome}</span>
@@ -176,9 +177,9 @@ export function Replies({ data, d, order }: { data: HomeData; d: Disclosure; ord
                       { kind: "secondary", label: "Snooze", onClick: () => leave(r, "snoozed", `Snoozed · ${r.contact} comes back on ${r.returnsOn ?? r.followUpOn ?? "the date they gave"}.`) },
                     ]) as Action[]}
                   />
-                </li>
+                </div>
               ))}
-            </ul>
+            </Rows>
           </Door>
         </div>
       )}

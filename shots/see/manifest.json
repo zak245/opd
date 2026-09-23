@@ -648,13 +648,15 @@
     "width": 1024,
     "theme": "light",
     "file": "lists-1024-light.png",
-    "notes": [],
+    "notes": [
+      "console: SecurityError: Failed to read the 'localStorage' property from 'Window': Access "
+    ],
     "measured": {
-      "chrome": 125,
-      "cards": 1,
+      "chrome": null,
+      "cards": 0,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 1,
+      "clipped": 0,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1133,7 +1135,7 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 9,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
@@ -1153,7 +1155,7 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 9,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
@@ -1171,7 +1173,7 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -1191,7 +1193,7 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -1211,7 +1213,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 1,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 0,
@@ -1231,7 +1233,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 1,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 0,
@@ -1251,7 +1253,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 1,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 0,
@@ -1271,7 +1273,7 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 1,
+      "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 0,
@@ -1451,8 +1453,8 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 16,
-      "nestedCards": 11,
+      "cards": 12,
+      "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
       "pageScrollsSideways": false,
@@ -1471,8 +1473,8 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 16,
-      "nestedCards": 11,
+      "cards": 12,
+      "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
       "pageScrollsSideways": false,
@@ -1491,8 +1493,8 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 16,
-      "nestedCards": 11,
+      "cards": 12,
+      "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
       "pageScrollsSideways": false,
@@ -1511,8 +1513,8 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 16,
-      "nestedCards": 11,
+      "cards": 12,
+      "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
       "pageScrollsSideways": false,
@@ -1531,10 +1533,10 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 4,
-      "nestedCards": 2,
+      "cards": 3,
+      "nestedCards": 0,
       "clipped": 2,
-      "sideways": 0,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1551,10 +1553,10 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 4,
-      "nestedCards": 2,
+      "cards": 3,
+      "nestedCards": 0,
       "clipped": 2,
-      "sideways": 0,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1576,7 +1578,7 @@
       "clipped": 3,
       "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "button \"Table\""
+      "focused": "body"
     }
   },
   {
@@ -1596,7 +1598,7 @@
       "clipped": 3,
       "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "button \"Table\""
+      "focused": "body"
     }
   },
   {
@@ -1616,7 +1618,7 @@
       "clipped": 3,
       "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "button \"Table\""
+      "focused": "body"
     }
   },
   {
@@ -1636,7 +1638,7 @@
       "clipped": 3,
       "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "button \"Table\""
+      "focused": "body"
     }
   },
   {
@@ -1653,10 +1655,10 @@
       "chrome": 148,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 1,
+      "clipped": 2,
+      "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"Table\""
+      "focused": "body"
     }
   },
   {
@@ -1673,10 +1675,10 @@
       "chrome": 148,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 1,
+      "clipped": 2,
+      "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"Table\""
+      "focused": "body"
     }
   },
   {
@@ -5491,12 +5493,12 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 1,
+      "cards": 2,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 2,
+      "clipped": 10,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "button#quicklook-edit \"Approaching\""
+      "focused": "div \"From PeopleMateo NovakOpen the pageTitle\""
     }
   },
   {
@@ -5533,10 +5535,10 @@
       "chrome": 125,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 14,
       "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div[Thread width] \"\""
+      "focused": "body"
     }
   },
   {
@@ -5548,10 +5550,12 @@
     "width": 400,
     "theme": "light",
     "file": "act-divider-left-400-light.png",
-    "notes": [],
+    "notes": [
+      "the inbox split has no draggable divider"
+    ],
     "measured": {
       "chrome": 148,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -5574,9 +5578,9 @@
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
-      "sideways": 0,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div[Thread width] \"\""
+      "focused": "body"
     }
   },
   {
@@ -5588,10 +5592,12 @@
     "width": 400,
     "theme": "light",
     "file": "act-divider-right-400-light.png",
-    "notes": [],
+    "notes": [
+      "the inbox split has no draggable divider"
+    ],
     "measured": {
       "chrome": 148,
-      "cards": 2,
+      "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
@@ -5611,8 +5617,8 @@
     "notes": [],
     "measured": {
       "chrome": 125,
-      "cards": 16,
-      "nestedCards": 11,
+      "cards": 12,
+      "nestedCards": 0,
       "clipped": 2,
       "sideways": 1,
       "pageScrollsSideways": false,
@@ -5631,10 +5637,10 @@
     "notes": [],
     "measured": {
       "chrome": 148,
-      "cards": 4,
-      "nestedCards": 2,
+      "cards": 3,
+      "nestedCards": 0,
       "clipped": 2,
-      "sideways": 0,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }

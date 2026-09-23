@@ -34,6 +34,8 @@ import { Panel } from "../ui/Panel"
 import { SectionHeader } from "../ui/SectionHeader"
 import type { QuickLookEditable, QuickLookField } from "./QuickLook"
 import { Divider } from "../ui/Divider"
+import { Measured } from "../layouts/frame"
+import { SideRail } from "../layouts/parts"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Separator } from "@/components/ui/separator"
 
@@ -466,7 +468,7 @@ export function RecordPage(p: RecordPageProps) {
 
   return (
     <DoorGroup>
-      <div className="flex min-h-full flex-col">
+      <Measured className="flex min-h-full flex-col">
         {/* ------------------------------------------------------------------ header */}
         <header className="px-5 pt-4 lg:px-6">
           <BackToIndex label={p.back.label} to={p.back.href} compact />
@@ -575,9 +577,9 @@ export function RecordPage(p: RecordPageProps) {
             ) : mainBody}
           </div>
 
-          <div className="order-1 space-y-3 lg:order-none lg:col-start-2 lg:row-start-1">
+          <SideRail className="order-1 gap-3 lg:order-none lg:col-start-2 lg:row-start-1">
             {p.side.map((c) => <SideCard key={c.id} card={c} />)}
-          </div>
+          </SideRail>
 
           <div className="order-3 lg:order-none lg:col-start-2 lg:row-start-2">
             {doors.length > 0 && (
@@ -600,7 +602,7 @@ export function RecordPage(p: RecordPageProps) {
             )}
           </div>
         </div>
-      </div>
+      </Measured>
     </DoorGroup>
   )
 }

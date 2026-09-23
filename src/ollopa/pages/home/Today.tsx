@@ -5,6 +5,7 @@
 // happens leaves an undo line, and nothing reorders while you work.
 import { useEffect, useRef } from "react"
 import { Chip } from "../../ui/Identity"
+import { Rows } from "../../layouts"
 import { Actions } from "../../ui/Actions"
 import { openBeside } from "../../beside"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
@@ -148,9 +149,9 @@ export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order
       {later.length > 0 && (
         <div className="pt-1">
           <Door id="home.tasks.later" label="Tomorrow and later" count={later.length}>
-            <ul className="divide-y">
+            <Rows>
               {later.map((t) => (
-                <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                <div key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                   <Chip family="tasks" className="w-[4.5rem] shrink-0 justify-center">{t.kind}</Chip>
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{t.contact}</span>
@@ -158,9 +159,9 @@ export function Today({ data, d, order }: { data: HomeData; d: Disclosure; order
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">{day(t.due)}</span>
                   <Actions surface="card" className="shrink-0" items={[{ kind: "secondary", label: "Done", onClick: () => done(t) }]} />
-                </li>
+                </div>
               ))}
-            </ul>
+            </Rows>
           </Door>
         </div>
       )}

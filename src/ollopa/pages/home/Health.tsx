@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Door, type Disclosure, type HealthLine } from "../../ui"
 import type { HomeData, SetupRow } from "./data"
 import { count } from "./format"
+import { Rows } from "../../layouts"
 
 const RANK = { error: 0, warning: 1, info: 2 }
 
@@ -107,11 +108,11 @@ export function SetupDoor({ rows }: { rows: SetupRow[] }) {
   const answered = rows.filter((r) => declared[r.id])
 
   return (
-    <div className="border-b px-4 py-1 sm:px-6">
+    <div>
       <Door id="home.health.setup" label={`Not set up yet: ${nouns}`} count={live.length}>
-        <ul className="divide-y">
+        <Rows>
           {live.map((r) => (
-            <li key={r.id} data-item={r.id} data-item-label={r.noun} className="flex flex-wrap items-center gap-2 py-1.5 text-xs">
+            <div key={r.id} data-item={r.id} data-item-label={r.noun} className="flex flex-wrap items-center gap-2 py-1.5 text-xs">
               <span className="min-w-0 flex-1">{r.text}</span>
               {/* A set-up step is a page in Settings: the trail keeps Home and this row, so
                   finishing it comes back to the door still open and the row lit. */}
@@ -129,10 +130,10 @@ export function SetupDoor({ rows }: { rows: SetupRow[] }) {
                   {r.declare}
                 </Button>
               )}
-            </li>
+            </div>
           ))}
           {answered.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-2 py-1.5 text-xs text-muted-foreground">
+            <div key={r.id} className="flex flex-wrap items-center gap-2 py-1.5 text-xs text-muted-foreground">
               <span className="min-w-0 flex-1">{r.noun}: {declared[r.id]}</span>
               <Button
                 size="sm"
@@ -142,9 +143,9 @@ export function SetupDoor({ rows }: { rows: SetupRow[] }) {
               >
                 Change this
               </Button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </Rows>
       </Door>
     </div>
   )

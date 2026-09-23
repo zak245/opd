@@ -7,7 +7,11 @@
 // things that appear by state are the strip, the overdue block and the set-up door.
 //
 // There is no layout editor, no widget library and no chart. Those were removed, not hidden.
+//
+// The page is the Home template (LAYOUTS.md §1): it declares its type, fills the page header and
+// hands over the tiles. The measure and the grid are the template's, never this file's.
 import { useMemo } from "react"
+import { HomePage as HomeTemplate } from "../../layouts"
 import { DoorGroup, ExpandAll, HealthStrip, useDisclosure } from "../../ui"
 import type { Session } from "../../session"
 import { useRenderCount } from "../work/register"
@@ -52,9 +56,18 @@ export function HomePage({ session }: { session: Session }) {
   const right = (["approvals", "pipeline", "accounts", "week"] as SectionKey[])
     .filter((k, i, all) => has[k] && all.indexOf(k) === i && !left.includes(k))
 
-  // One column on a phone: the first section, then what waits for a decision, then the rest.
+  // One column on a phone: the first section, then what waits for a decision, then the rest. The
+  // template's grid places the tiles above `lg`, so the order a tile carries is the phone's alone.
   const phone = [left[0], right[0], ...left.slice(1), ...right.slice(1)].filter(Boolean) as SectionKey[]
   const order = (k: SectionKey) => phone.indexOf(k) + 1
+
+  // The template owns the grid (LAYOUTS.md §6), and a grid fills row by row: the work queue and what
+  // waits for a decision are zipped, so the first lands in the left column and the second in the right.
+  const tiles: SectionKey[] = []
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    if (left[i]) tiles.push(left[i])
+    if (right[i]) tiles.push(right[i])
+  }
 
   const lines = healthLines(data, d)
 
@@ -75,31 +88,32 @@ export function HomePage({ session }: { session: Session }) {
 
   return (
     <DoorGroup>
-      {/* One row above the page, never two: the health items and the workspace notice share it. */}
+      {/* One row above the page, never two: the health items and the workspace notice share it. It
+          publishes to the shell and draws nothing here. */}
       <HealthStrip lines={lines} announcement={data.announcement ?? undefined} />
-      {d.weekly("home.health.setup") > 0 && <SetupDoor rows={data.setupRows} />}
 
-      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
-        <header className="flex flex-wrap items-end gap-x-4 gap-y-1 pb-4">
-          <div className="min-w-0">
-            <h2 className="t-title">
-              {greeting()}, {firstName(session.user)}
-              {import.meta.env.DEV && (
-                <span data-renders="home" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
-                  home renders: {renders}
-                </span>
-              )}
-            </h2>
-            <p className="text-sm text-muted-foreground">{headerDate()} · {data.business.name}</p>
-          </div>
-          <div className="ml-auto" data-print-hide><ExpandAll /></div>
-        </header>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-          <div className="contents lg:flex lg:flex-col lg:gap-6">{left.map(render)}</div>
-          <div className="contents lg:flex lg:flex-col lg:gap-6">{right.map(render)}</div>
-        </div>
-      </div>
+      <HomeTemplate
+        family="home"
+        title={`${greeting()}, ${firstName(session.user)}`}
+        description={
+          <>
+            {headerDate()} · {data.business.name}
+            {import.meta.env.DEV && (
+              <span data-renders="home" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
+                home renders: {renders}
+              </span>
+            )}
+          </>
+        }
+        above={
+          <>
+            {d.weekly("home.health.setup") > 0 && <SetupDoor rows={data.setupRows} />}
+            <div className="flex justify-end empty:hidden" data-print-hide><ExpandAll /></div>
+          </>
+        }
+      >
+        {tiles.map(render)}
+      </HomeTemplate>
     </DoorGroup>
   )
 }

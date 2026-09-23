@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { IndexPage } from "../layouts/IndexPage"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Button } from "@/components/ui/button"
@@ -87,42 +87,62 @@ export function TablePage<T>(p: TablePageProps<T>) {
     })
   }, [p, q, active])
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5">
-        <div>
-          <h2 className="t-title inline-flex items-center gap-2" style={{ color: familyOf(p.family).ink }}>
-            <FamilyIcon of={p.family} size="header" />
-            {p.title}
-          </h2>
-          {p.description && <p className="t-body text-muted-foreground">{p.description}</p>}
-        </div>
-        {p.primary && <Button onClick={p.primary.onClick}>{p.primary.label}</Button>}
+  // A row as it reads at 400: the first column is the name, the rest are labelled, and the row's
+  // own menu is where it is on the table. Never a table with its last columns cut off.
+  const phoneRow = (r: T) => (
+    <div key={p.rowKey(r)} data-item={p.rowKey(r)} className="flex items-start gap-2 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <div className="t-body font-medium">{p.columns[0]?.status ? <Chip status={p.columns[0].status(r)} /> : p.columns[0]?.cell(r)}</div>
+        <dl className="mt-1 grid grid-cols-[minmax(5rem,auto)_minmax(0,1fr)] gap-x-3 gap-y-0.5">
+          {p.columns.slice(1).map((c) => (
+            <div key={c.key} className="col-span-2 grid grid-cols-subgrid items-baseline">
+              <dt className="t-small text-muted-foreground">{c.header}</dt>
+              <dd className="t-small min-w-0">{c.status ? <Chip status={c.status(r)} /> : c.cell(r)}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-3">
-      {/* The table sits in a shadcn Card: the toolbar in its header, the pager in its footer. The
-          page's own name is the h2 above — the card never says it twice, so the header is one full
-          width toolbar row and no CardTitle. */}
-      <Card className="gap-0 overflow-hidden py-0">
-        <CardHeader className="gap-2 px-4 py-3 [grid-template-columns:1fr]">
-          <div className="flex w-full flex-wrap items-center gap-2">
-            <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
-            {(p.filters ?? []).map((f) => (
-              <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
-                <SelectTrigger className="w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{f.label}: all</SelectItem>
-                  {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                </SelectContent>
-              </Select>
+      {p.moreActions && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon-sm" variant="ghost" aria-label={p.quickLook ? `Actions for ${p.quickLook.title(r)}` : "More actions"}><MoreHorizontal className="size-4" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {p.quickLook && <DropdownMenuItem onSelect={() => setGlancing(r)}>Quick look</DropdownMenuItem>}
+            {(p.rowActions ?? []).map((a, i) => <DropdownMenuItem key={i} onSelect={() => a.onClick(r)}>{lbl(a, r)}</DropdownMenuItem>)}
+            {p.rowActions && p.rowActions.length > 0 && <DropdownMenuSeparator />}
+            {p.moreActions.map((a) => (
+              <DropdownMenuItem key={a.label} onSelect={() => a.onClick(r)} className={a.destructive ? "text-destructive" : undefined}>{a.label}</DropdownMenuItem>
             ))}
-            <span className="t-label ml-auto shrink-0 tabular-nums text-muted-foreground">
-              {rows.length.toLocaleString()} shown{p.total ? ` of ${p.total.toLocaleString()}` : ""}
-            </span>
-          </div>
-        </CardHeader>
-        <Separator />
-        <CardContent className="px-0">
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  )
+
+  return (
+    <>
+      <IndexPage
+        family={p.family ?? "home"}
+        title={p.title}
+        description={p.description}
+        actions={p.primary ? [{ kind: "primary", label: p.primary.label, onClick: p.primary.onClick }] : undefined}
+        controls={[
+          { name: "Search", always: true, node: (
+            <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
+          ) },
+          ...(p.filters ?? []).map((f) => ({ name: f.label, node: (
+            <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
+              <SelectTrigger className="w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{f.label}: all</SelectItem>
+                {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) })),
+        ]}
+        shown={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+        table={(
         <Table>
           <TableHeader className="bg-muted sticky top-0">
             <TableRow>
@@ -192,31 +212,26 @@ export function TablePage<T>(p: TablePageProps<T>) {
             )}
           </TableBody>
         </Table>
-        </CardContent>
-        {rows.length > limit && (
-          <>
-          <Separator />
-          <CardFooter className="justify-center px-4 py-3">
-            <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
-              Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
-            </Button>
-          </CardFooter>
-          </>
         )}
-      </Card>
-        {p.quickLook && glancing && (
-          <QuickLook
-            open
-            onOpenChange={(o) => { if (!o) setGlancing(null) }}
-            family={p.family}
-            title={p.quickLook.title(glancing)}
-            fields={p.quickLook.fields(glancing)}
-            editable={p.quickLook.editable?.(glancing)}
-            onOpen={() => { const row = glancing; setGlancing(null); p.quickLook!.onOpen(row) }}
-          />
-        )}
-      </div>
-    </div>
+        rows={rows.slice(0, limit).map(phoneRow)}
+        pager={rows.length > limit ? (
+          <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
+            Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
+          </Button>
+        ) : undefined}
+      />
+      {p.quickLook && glancing && (
+        <QuickLook
+          open
+          onOpenChange={(o) => { if (!o) setGlancing(null) }}
+          family={p.family ?? "home"}
+          title={p.quickLook.title(glancing)}
+          fields={p.quickLook.fields(glancing)}
+          editable={p.quickLook.editable?.(glancing)}
+          onOpen={() => { const row = glancing; setGlancing(null); p.quickLook!.onOpen(row) }}
+        />
+      )}
+    </>
   )
 }
 

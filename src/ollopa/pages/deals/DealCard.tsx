@@ -16,6 +16,7 @@ import {
   DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { href } from "@/app/router"
+import { DragGrip } from "../../layouts"
 import { Chip } from "../../ui/Identity"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Divider } from "../../ui/Divider"
@@ -188,6 +189,17 @@ export function DealCard(p: DealCardProps) {
       >
       <CardHeader className={cn("gap-0 [grid-template-columns:minmax(0,1fr)]", flags.compact ? "px-2 pt-2" : "px-2.5 pt-2.5")}>
       <div className="flex items-start gap-2">
+        {/* The grip is first in the header, so the pointer finds it where every board puts it and
+            the keyboard reaches it before the card's own content. Its "Move to" menu is the route
+            that is not a drag, and it calls the same stage move the drop does — so the consequence
+            line, the toast and the owner gate all still fire (LAYOUTS.md §4). */}
+        {p.canEdit && !closed && (
+          <DragGrip
+            label={deal.name}
+            places={p.stages.filter((s) => s !== deal.stage).map((s) => ({ id: s, name: s }))}
+            onMove={(id) => p.onMove(id as DealStage)}
+          />
+        )}
         <span onClick={(e) => e.stopPropagation()} className="pt-0.5">
           <Checkbox checked={p.selected} aria-label={`Select ${deal.name}`} onCheckedChange={(v) => p.onSelect(Boolean(v))} />
         </span>

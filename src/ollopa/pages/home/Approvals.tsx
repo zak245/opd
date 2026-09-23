@@ -22,6 +22,7 @@ import type { Session } from "../../session"
 import { consequenceOf, proposalOf, wordsOf, type Batch, type HomeData } from "./data"
 import { count, plural, when } from "./format"
 import { Nothing, Row, RowList, Section, UndoLine, useUndo } from "./rows"
+import { Rows } from "../../layouts"
 
 type Decision = "approved" | "declined"
 
@@ -323,17 +324,17 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
       })}
 
       <Door id="home.agents.week" label="What agents did this week" count={logged.length + decidedNow.length}>
-        <ul className="divide-y">
+        <Rows>
           {decidedNow.map((e) => (
-            <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5 text-xs">
+            <div key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5 text-xs">
               <span className="min-w-0 flex-1">{proposalOf(e)}</span>
               <span className="shrink-0 text-muted-foreground">
                 {decided[e.id] === "approved" ? "Approved" : "Declined"} by {session.user}{mine(e) ? "" : ` for ${e.ownerId}`}
               </span>
-            </li>
+            </div>
           ))}
           {logged.slice(0, 12).map((e) => (
-            <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5 text-xs">
+            <div key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5 text-xs">
               <span className="w-20 shrink-0 text-muted-foreground">{when(e.when)}</span>
               <span className="min-w-0 flex-1">{e.summary}</span>
               <span className="shrink-0 tabular-nums text-muted-foreground">{e.credits ? `${count(e.credits)} credits` : "no credits"}</span>
@@ -348,9 +349,9 @@ export function Approvals({ data, d, session, order }: { data: HomeData; d: Disc
                   Undo
                 </Button>
               )}
-            </li>
+            </div>
           ))}
-        </ul>
+        </Rows>
         <p className="pt-2 text-xs text-muted-foreground">
           <button type="button" className="underline underline-offset-4"
                   onClick={() => follow("/ollopa/agents", originHere("home-approvals"))}>

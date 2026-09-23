@@ -23,8 +23,8 @@ import { href, useRoute } from "@/app/router"
 import { closeBeside, openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
 import { Container } from "../../ui/Section"
-import { Chip, FamilyIcon } from "../../ui/Identity"
-import { familyOf } from "../../identity"
+import { Chip } from "../../ui/Identity"
+import { PageHeader, QueuePage } from "../../layouts"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { Panel } from "../../ui/Panel"
@@ -114,6 +114,10 @@ export function Tasks({ session }: { session: Session }) {
   const [editing, setEditing] = useState<string | null>(null)
   /** Done on a call task first shows the four outcome buttons inline, which write the disposition. */
   const [outcoming, setOutcoming] = useState<string | null>(null)
+  /** Where the queue is. The previous/next walk is the template's, so the index lives here. */
+  const [qi, setQi] = useState(0)
+  /** At 400 the template shows one pane: the task, until a person steps back to the order. */
+  const [onPhoneTask, setOnPhoneTask] = useState(true)
   const searchRef = useRef<HTMLInputElement>(null)
 
   // The route "Open the LinkedIn step" and "Open the meeting" name. Arriving with it open opens
@@ -167,6 +171,11 @@ export function Tasks({ session }: { session: Session }) {
   }, [mine, openRows, q, filters, contactOf])
 
   const queueRows = sort === "score" && scores ? scoreOrder(rows, contactOf) : rows
+
+  // The queue always restarts at the first open task, because order is the point; and when a task
+  // leaves the list the index never points past the end.
+  useEffect(() => { setQi(0) }, [sort])
+  useEffect(() => { if (qi > 0 && qi >= queueRows.length) setQi(Math.max(0, queueRows.length - 1)) }, [qi, queueRows.length])
 
   /* ------------------------------------------------------------------------------- the actions */
 
@@ -497,80 +506,134 @@ export function Tasks({ session }: { session: Session }) {
 
   const switchLabel = mode === "queue" ? `All tasks (${rows.length})` : `Work the queue (${queueRows.length})`
 
+  /* One header for both bodies. The template draws it in queue mode; the list draws the same part
+     itself, so the page says the same thing whichever body it is showing. */
+  const header = {
+    family: "tasks",
+    title: "Tasks",
+    count: onScreen.length,
+    description: (
+      <>
+        <span className="block tabular-nums text-foreground">
+          <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Today" })) }}>{counts.today} due today</button>
+          {" · "}
+          <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Overdue" })) }}>
+            {counts.overdue > 0 ? <Chip status="overdue">{counts.overdue} overdue</Chip> : <>{counts.overdue} overdue</>}
+          </button>
+          {" · "}
+          <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "All open" })) }}>{counts.later} later</button>
+        </span>
+        {!teamView && admin && (
+          <span className="t-small block pt-0.5">Your tasks. {admin.user} ({admin.title}) can see and reassign everyone's.</span>
+        )}
+        {counts.overdue > 0 && (
+          // A line with its word, in the danger ink, rather than a sentence painted red.
+          <span className="t-small block pt-0.5" style={{ color: "var(--danger-ink)" }}>
+            {counts.overdue} sequence {counts.overdue === 1 ? "contact is" : "contacts are"} stuck waiting at a step.
+          </span>
+        )}
+        {import.meta.env.DEV && (
+          <span data-renders="tasks" className="mt-1 inline-block rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums">
+            tasks renders: {renders}
+          </span>
+        )}
+      </>
+    ),
+    // The page's own two controls: making a task is the act this page exists for, and the switch is
+    // the other thing the person came for. In queue mode the whole page is the one task, and Done is
+    // the act it exists for, so making a task steps back to an outline there (DESIGN.md §1).
+    actions: ([
+      { kind: mode === "queue" ? "secondary" : "primary", label: "New task", keys: "n", onClick: () => setNewTask(true) },
+      { kind: "secondary", label: switchLabel, keys: "w", onClick: () => setMode(mode === "queue" ? "list" : "queue") },
+    ]) as Action[],
+  }
+
+  /* The queue's master: the order itself, so what is being worked is read against what is behind
+     it. The rows carry no `data-item` of their own — the task being worked is the one a pane reads. */
+  const queueList = (
+    <Container
+      component="list"
+      as="div"
+      role="list"
+      aria-label="The queue, in order"
+      padded={false}
+      className="flex h-full min-h-0 min-w-0 flex-col"
+      heading="In order"
+      count={queueRows.length}
+      bodyClassName="min-h-0 flex-1 divide-y overflow-y-auto"
+    >
+      {queueRows.map((t, n) => (
+        <button
+          key={t.id}
+          type="button"
+          role="listitem"
+          aria-current={n === qi ? "true" : undefined}
+          onClick={() => { setQi(n); setOnPhoneTask(true) }}
+          className={cn(
+            "block w-full px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            n === qi ? "bg-muted" : "hover:bg-muted/50",
+          )}
+        >
+          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="t-body font-medium">{t.contact}</span>
+            <Chip family="tasks">{t.kind}</Chip>
+            {isOverdue(t.due)
+              ? <Chip status="overdue" className="tabular-nums">{dueLabel(t.due)}</Chip>
+              : <span className="t-small tabular-nums text-muted-foreground">{dueLabel(t.due)}</span>}
+          </span>
+          <span className="t-small block truncate text-muted-foreground">
+            {t.step ? `Step ${t.step.n} of ${t.step.of} · ${t.step.title}` : t.title}
+          </span>
+        </button>
+      ))}
+    </Container>
+  )
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 px-4 pt-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="t-title flex items-center gap-2">
-              <FamilyIcon of="tasks" size="header" label={familyOf("tasks").name} />
-              Tasks
-              {import.meta.env.DEV && (
-                <span data-renders="tasks" className="ml-2 rounded border px-1.5 py-0.5 font-mono t-small font-normal tabular-nums text-muted-foreground">
-                  tasks renders: {renders}
-                </span>
-              )}
-            </h2>
-            <p className="t-body tabular-nums">
-              <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Today" })) }}>{counts.today} due today</button>
-              {" · "}
-              <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "Overdue" })) }}>
-                {counts.overdue > 0 ? <Chip status="overdue">{counts.overdue} overdue</Chip> : <>{counts.overdue} overdue</>}
-              </button>
-              {" · "}
-              <button className="underline underline-offset-4" onClick={() => { setMode("list"); setFilters((f) => ({ ...f, due: "All open" })) }}>{counts.later} later</button>
-            </p>
-            {!teamView && admin && (
-              <p className="t-small pt-0.5 text-muted-foreground">Your tasks. {admin.user} ({admin.title}) can see and reassign everyone's.</p>
-            )}
-            {counts.overdue > 0 && (
-              // A line with its word, in the danger ink, rather than a sentence painted red.
-              <p className="t-small pt-0.5" style={{ color: "var(--danger-ink)" }}>
-                {counts.overdue} sequence {counts.overdue === 1 ? "contact is" : "contacts are"} stuck waiting at a step.
-              </p>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* The page's own two controls: making a task is the act this page exists for, and the
-                switch is the other thing the person came for. */}
-            <Actions
-              surface="page"
-              items={([
-                // In queue mode the whole page is the one task, and Done is the act it exists for,
-                // so making a task steps back to an outline here (DESIGN.md §1).
-                { kind: mode === "queue" ? "secondary" : "primary", label: "New task", keys: "n", onClick: () => setNewTask(true) },
-                { kind: "secondary", label: switchLabel, keys: "w", onClick: () => setMode(mode === "queue" ? "list" : "queue") },
-              ]) as Action[]}
-            />
-          </div>
-        </div>
-      </div>
-
       {mode === "queue" ? (
-        <div className="flex min-h-0 flex-1 flex-col pt-3">
-          <Queue
-            session={session}
-            tasks={queueRows}
-            sort={sort}
-            onSort={(s) => setSort(s)}
-            scores={scores}
-            dueTomorrow={counts.tomorrow}
-            onDone={done}
-            onSnooze={(t) => snooze(t)}
-            onSkip={skip}
-            onOpenContact={openContact}
-            onOpenDeal={openDeal}
-            onSeeList={() => setMode("list")}
-            onSnoozeRest={() => {
-              const rest = rows.filter((t) => t.kind === "LinkedIn")
-              rest.forEach((t) => recordEdit("task", t.id, { snoozed: true, until: nextMonday() }))
-              say(`${rest.length} LinkedIn ${rest.length === 1 ? "task" : "tasks"} snoozed to Monday.`,
-                () => rest.forEach((t) => clearEdit("task", t.id)))
-            }}
-            say={say}
-          />
-        </div>
+        <QueuePage
+          id="tasks.queue"
+          {...header}
+          list={queueList}
+          selected={onPhoneTask}
+          onBack={() => setOnPhoneTask(false)}
+          backLabel="Back to the queue"
+          position={queueRows.length > 0 ? `${Math.min(qi + 1, queueRows.length)} of ${queueRows.length}` : undefined}
+          onPrevious={() => setQi((n) => Math.max(0, n - 1))}
+          onNext={() => setQi((n) => Math.min(queueRows.length - 1, n + 1))}
+          hasPrevious={qi > 0}
+          hasNext={qi < queueRows.length - 1}
+          detail={(
+            <Queue
+              session={session}
+              tasks={queueRows}
+              index={qi}
+              sort={sort}
+              onSort={(s) => setSort(s)}
+              scores={scores}
+              dueTomorrow={counts.tomorrow}
+              onDone={done}
+              onSnooze={(t) => snooze(t)}
+              onSkip={skip}
+              onOpenContact={openContact}
+              onOpenDeal={openDeal}
+              onSeeList={() => setMode("list")}
+              onSnoozeRest={() => {
+                const rest = rows.filter((t) => t.kind === "LinkedIn")
+                rest.forEach((t) => recordEdit("task", t.id, { snoozed: true, until: nextMonday() }))
+                say(`${rest.length} LinkedIn ${rest.length === 1 ? "task" : "tasks"} snoozed to Monday.`,
+                  () => rest.forEach((t) => clearEdit("task", t.id)))
+              }}
+              say={say}
+            />
+          )}
+        />
       ) : (
+        <>
+        <div className="shrink-0 px-4 pt-4 sm:px-6">
+          <PageHeader {...header} />
+        </div>
         <DoorGroup>
           {/* The list is one container: its toolbar and its count in the header, its rows divided
               inside it, and what is selected in its footer (DESIGN.md §5, containment). */}
@@ -675,6 +738,7 @@ export function Tasks({ session }: { session: Session }) {
           </div>
           </Container>
         </DoorGroup>
+        </>
       )}
 
       {/* -------------------------------------------------------------------------- the panels */}

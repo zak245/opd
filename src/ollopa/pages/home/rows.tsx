@@ -4,10 +4,9 @@
 // Nothing here is hover-only: a row's actions are buttons in the row, visible on focus as well as
 // hover, and repeated in the row's "…" menu with the key that runs them. J and K move, Enter opens,
 // and the letters are the ones the menu prints.
-import { Children, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { useRef, useState, type KeyboardEvent, type ReactNode } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
@@ -16,7 +15,7 @@ import {
 import { follow } from "../../chain"
 import { originHere } from "../work/register"
 import { FamilyIcon } from "../../ui/Identity"
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Rows, Section as CardSection } from "../../layouts"
 
 /* ------------------------------------------------------------------------------------- section */
 
@@ -31,7 +30,12 @@ export interface SectionProps {
   children: ReactNode
 }
 
-const ORDER = ["", "order-1", "order-2", "order-3", "order-4", "order-5", "order-6", "order-7", "order-8"]
+// Where the section sits when the page is one column. Above `lg` the template's grid places it, so
+// these are the phone's order and nothing else.
+const ORDER = [
+  "", "max-lg:order-1", "max-lg:order-2", "max-lg:order-3", "max-lg:order-4",
+  "max-lg:order-5", "max-lg:order-6", "max-lg:order-7", "max-lg:order-8",
+]
 
 /** The family a Home section is a window on, from the page it links to. */
 function familyForSection(id: string, to?: string): string {
@@ -41,33 +45,34 @@ function familyForSection(id: string, to?: string): string {
 
 export function Section({ id, title, count, link, order = 0, children }: SectionProps) {
   return (
-    // The id is the anchor a chain that left from inside this section comes back to, when what it
-    // left was the section itself rather than one row.
-    // Home is a set of containers, one per section, each with its heading and its count in the
-    // header (DESIGN.md §5, containment). The rows inside are divided, not carded.
-    // A section of Home is a shadcn Card: its heading and count in the header, its rows inside.
-    <Card id={id} aria-label={title} data-section={id} className={cn("min-w-0 gap-3 py-4", ORDER[order] ?? "")}>
-      <CardHeader className="gap-0 px-4">
-        <CardTitle className="t-section inline-flex items-baseline gap-2">
-          <span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>
-          {count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{count}</span>}
-        </CardTitle>
-        {link && (
-          <CardAction>
-            {/* The whole page this section is a window on. It is a move, not a jump: the trail
-                keeps Home and the section, so the crumb comes back to it. */}
-            <button
-              type="button"
-              className="t-small text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              onClick={() => follow(link.to, originHere(id))}
-            >
-              {link.label}
-            </button>
-          </CardAction>
-        )}
-      </CardHeader>
-      <CardContent className="px-0">{children}</CardContent>
-    </Card>
+    // A tile of Home is the library's `Section` (LAYOUTS.md §2): one card, the heading and the count
+    // on it, the rows divided inside. Home adds only what is Home's — the family icon the tile is a
+    // window on, the page it links to, and the anchor a chain comes back to. The id is that anchor,
+    // for a chain that left the section itself rather than one row.
+    <CardSection
+      id={id}
+      aria-label={title}
+      data-section={id}
+      className={cn("min-w-0", ORDER[order] ?? "")}
+      padded={false}
+      count={count}
+      heading={
+        <span className="inline-flex items-center gap-1.5"><FamilyIcon of={familyForSection(id, link?.to)} />{title}</span>
+      }
+      actions={link && (
+        /* The whole page this section is a window on. It is a move, not a jump: the trail keeps
+           Home and the section, so the crumb comes back to it. */
+        <button
+          type="button"
+          className="t-small text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          onClick={() => follow(link.to, originHere(id))}
+        >
+          {link.label}
+        </button>
+      )}
+    >
+      {children}
+    </CardSection>
   )
 }
 
@@ -95,8 +100,8 @@ export function RowList({ label, children, className }: { label: string; childre
     if (next) { next.focus(); e.preventDefault() }
   }
 
-  // The rows are the card's own rows: no second box around them, and the library's `Separator`
-  // between them rather than a border drawn by hand (DESIGN.md §4).
+  // The rows are the card's own rows: no second box around them, and the library's `Rows` divides
+  // them rather than a border drawn by hand (DESIGN.md §4, LAYOUTS.md §2).
   return (
     <div
       ref={list}
@@ -109,15 +114,9 @@ export function RowList({ label, children, className }: { label: string; childre
         if (e.key === "ArrowUp" || e.key.toLowerCase() === "k") move(e, -1)
       }}
     >
-      {divided(children)}
+      <Rows>{children}</Rows>
     </div>
   )
-}
-
-/** The library's rule between one row and the next, and nowhere else. */
-function divided(children: ReactNode): ReactNode {
-  return Children.toArray(children).flatMap((child, i) =>
-    i === 0 ? [child] : [<Separator key={`sep-${i}`} />, child])
 }
 
 function typing(target: EventTarget | null): boolean {
