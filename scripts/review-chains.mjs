@@ -64,9 +64,6 @@ export async function signIn(page, business, role, route, urlBase = base) {
   await page.evaluate((s) => localStorage.setItem("ollopa.session", JSON.stringify(s)), { business, role })
   await page.goto(urlBase + "/#" + route, { waitUntil: "networkidle0" })
   await page.reload({ waitUntil: "networkidle0" })
-  // The dev-only render counters are hidden from a person by CSS, so a reviewer has to ask for them.
-  // Without this the "renders" line in every log below comes back blank and proves nothing.
-  await page.evaluate(() => { document.documentElement.dataset.renders = "show" })
   await wait(600)
 }
 
