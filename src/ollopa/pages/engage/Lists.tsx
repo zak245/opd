@@ -9,9 +9,6 @@
 // Export and Duplicate, and the Meridian admin gets the row and the criticals and nothing else.
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -22,7 +19,7 @@ import { engage, useEngage } from "./store"
 import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
-import { IndexPage, type IndexColumn } from "../../layouts"
+import { IndexPage, type FilterBarProps, type IndexColumn } from "../../layouts"
 import { Chip } from "../../ui/Identity"
 import { RowMenuButton, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
@@ -205,106 +202,45 @@ export function ListsPage({ session }: { session: Session }) {
   )
 
   /**
-   * The filtering pattern (LAYOUTS.md §2): the search, the two filters this seat sets most, and
-   * everything else — mode, source, the archive, the columns — behind the one door. Each one says
-   * what it is set to, so the count is always explainable and the empty state can name the cause.
+   * The filtering pattern (LAYOUTS.md §2). The page declares data only — a name, a kind, the
+   * options, the value and what changes it — and the pattern draws every control, decides how many
+   * fit the row, writes the applied line and derives "Clear all".
    */
   const SOURCE_LABEL: Record<string, string> = { search: "Search", csv: "CSV", agent: "Agent", manual: "By hand" }
-  const filters = {
-    search: { value: q, onChange: setQ, placeholder: "Search lists by name or owner" },
-    controls: [
+  const filters: FilterBarProps = {
+    search: { value: q, onChange: setQ },
+    filters: [
       {
-        name: "Kind",
-        value: kind === "all" ? undefined : kind === "people" ? "People" : "Companies",
-        onClear: () => setKind("all"),
-        node: (
-          <Select value={kind} onValueChange={setKind}>
-            <SelectTrigger className="h-8 w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Kind: all</SelectItem>
-              <SelectItem value="people">People</SelectItem>
-              <SelectItem value="companies">Companies</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
+        kind: "one", name: "Kind", value: kind, onChange: setKind,
+        options: [{ value: "people", label: "People" }, { value: "companies", label: "Companies" }],
       },
       {
-        name: "Owner",
-        value: owner === "all" ? undefined : owner === "Mine" ? "mine" : owner === "Team" ? "the team" : owner,
-        onClear: () => setOwner("all"),
-        node: (
-          <Select value={owner} onValueChange={setOwner}>
-            <SelectTrigger className="h-8 w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Mine">Owner: mine</SelectItem>
-              <SelectItem value="Team">Owner: the team</SelectItem>
-              <SelectItem value="all">Owner: all</SelectItem>
-              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ),
+        kind: "one", name: "Owner", value: owner, onChange: setOwner,
+        options: [
+          { value: "Mine", label: "mine" },
+          { value: "Team", label: "the team" },
+          ...b.roles.map((r) => ({ value: r.user, label: r.user })),
+        ],
+      },
+      {
+        kind: "one", name: "Mode", value: mode, onChange: setMode,
+        options: [{ value: "static", label: "Static" }, { value: "segment", label: "Segment" }],
+      },
+      {
+        kind: "one", name: "Source", value: source, onChange: setSource,
+        options: Object.entries(SOURCE_LABEL).map(([value, label]) => ({ value, label })),
+      },
+      {
+        kind: "toggle", name: "Archived", value: archived, onChange: setArchived,
+        onLabel: "shown", offLabel: "hidden",
       },
     ],
-    behind: [
-      {
-        name: "Mode", group: "filters" as const,
-        value: mode === "all" ? undefined : mode === "static" ? "Static" : "Segment",
-        onClear: () => setMode("all"),
-        node: (
-          <Select value={mode} onValueChange={setMode}>
-            <SelectTrigger className="h-8 w-44" aria-label="Mode"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Mode: all</SelectItem>
-              <SelectItem value="static">Static</SelectItem>
-              <SelectItem value="segment">Segment</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
-      },
-      {
-        name: "Source", group: "filters" as const,
-        value: source === "all" ? undefined : SOURCE_LABEL[source],
-        onClear: () => setSource("all"),
-        node: (
-          <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="h-8 w-44" aria-label="Source"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Source: all</SelectItem>
-              <SelectItem value="search">Search</SelectItem>
-              <SelectItem value="csv">CSV</SelectItem>
-              <SelectItem value="agent">Agent</SelectItem>
-              <SelectItem value="manual">By hand</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
-      },
-      {
-        name: "Archived", group: "filters" as const,
-        value: archived ? "shown" : undefined,
-        onClear: () => setArchived(false),
-        node: (
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={archived} onCheckedChange={(v) => setArchived(v === true)} />
-            Show archived lists
-          </label>
-        ),
-      },
-      {
-        name: "Columns", group: "columns" as const,
-        node: (
-          <div className="flex flex-wrap gap-4 text-sm">
-            {([["visibility", "Who can see it"], ["source", "Source"], ["created", "Created"]] as const).map(([k, label]) => (
-              <label key={k} className="flex items-center gap-2">
-                <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
-                {label}
-              </label>
-            ))}
-          </div>
-        ),
-      },
-    ],
+    display: {
+      columns: ([["visibility", "Who can see it"], ["source", "Source"], ["created", "Created"]] as const)
+        .map(([id, label]) => ({ id, label, on: cols[id] })),
+      onColumns: (ids) => setCols({ visibility: ids.includes("visibility"), source: ids.includes("source"), created: ids.includes("created") }),
+    },
     count: { shown: rows.length, total: lists.length, noun: "lists" },
-    onClearAll: () => { setQ(""); setKind("all"); setOwner("all"); setMode("all"); setSource("all"); setArchived(false) },
     doorId: "lists",
   }
 

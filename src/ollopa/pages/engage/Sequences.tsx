@@ -5,9 +5,6 @@
 // person or by bounce guard, and both states, and what resuming will do, are readable at every width.
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
 import { follow } from "../../chain"
 import { EmptyState } from "../../ui/EmptyState"
@@ -18,7 +15,7 @@ import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { Actions } from "../../ui/Actions"
-import { IndexPage, type IndexColumn } from "../../layouts"
+import { IndexPage, type FilterBarProps, type IndexColumn } from "../../layouts"
 import { Chip } from "../../ui/Identity"
 import { RowMenuButton, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
@@ -209,61 +206,28 @@ export function SequencesPage({ session }: { session: Session }) {
     />
   )
 
-  /** The filtering pattern: the search, the two filters this seat sets, the columns in the door. */
-  const filters = {
-    search: { value: q, onChange: setQ, placeholder: "Search sequences by name or owner" },
-    controls: [
+  /** The filtering pattern (LAYOUTS.md §2). Data only: the pattern draws every control. */
+  const filters: FilterBarProps = {
+    search: { value: q, onChange: setQ },
+    filters: [
       {
-        name: "Status",
-        value: status === "all" ? undefined : status,
-        onClear: () => setStatus("all"),
-        node: (
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="h-8 w-44" aria-label="Status"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Status: all</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Paused">Paused</SelectItem>
-              <SelectItem value="Auto-paused">Auto-paused</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
-              <SelectItem value="Archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
+        kind: "one", name: "Status", value: status, onChange: setStatus,
+        options: ["Active", "Paused", "Auto-paused", "Draft", "Archived"].map((v) => ({ value: v, label: v })),
       },
       ...(showOwnerFilter ? [{
-        name: "Owner",
-        value: owner === "all" ? undefined : owner === "Mine" ? "mine" : owner,
-        onClear: () => setOwner("all"),
-        node: (
-          <Select value={owner} onValueChange={setOwner}>
-            <SelectTrigger className="h-8 w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Mine">Owner: mine</SelectItem>
-              <SelectItem value="all">Owner: everyone</SelectItem>
-              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ),
+        kind: "one" as const, name: "Owner", value: owner, onChange: setOwner,
+        options: [{ value: "Mine", label: "mine" }, ...b.roles.map((r) => ({ value: r.user, label: r.user }))],
       }] : []),
     ],
-    behind: [
-      {
-        name: "Columns", group: "columns" as const,
-        node: (
-          <div className="flex flex-wrap gap-4 text-sm">
-            {([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const).map(([k, label]) => (
-              <label key={k} className="flex items-center gap-2">
-                <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
-                {label}
-              </label>
-            ))}
-          </div>
-        ),
-      },
-    ],
+    display: {
+      columns: ([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const)
+        .map(([id, label]) => ({ id, label, on: cols[id] })),
+      onColumns: (ids) => setCols({
+        opened: ids.includes("opened"), interested: ids.includes("interested"), meetings: ids.includes("meetings"),
+        created: ids.includes("created"), mailbox: ids.includes("mailbox"), schedule: ids.includes("schedule"),
+      }),
+    },
     count: { shown: rows.length, total: b.counts.sequences, noun: "sequences" },
-    onClearAll: () => { setQ(""); setStatus("all"); setOwner("all") },
     doorId: "sequences",
   }
 

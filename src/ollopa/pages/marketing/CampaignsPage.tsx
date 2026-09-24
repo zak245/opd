@@ -11,13 +11,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { href, useRoute } from "@/app/router"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
-import { IndexPage, SummaryStrip, type IndexColumn, type SummaryFigure } from "../../layouts"
+import { IndexPage, SummaryStrip, type FilterBarProps, type IndexColumn, type SummaryFigure } from "../../layouts"
 import { FAMILY, ink } from "./look"
 import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
@@ -116,16 +115,6 @@ export function CampaignsPage({ session }: { session: Session }) {
     { id: "camp.filter.audience", key: "audience", label: "Audience", value: audience, set: setAudience, options: rows.audiences.map((a) => a.name) },
     { id: "camp.filter.date", key: "date", label: "Date", value: when, set: setWhen, options: ["Sent in the last 30 days", "Sending or scheduled"] },
   ]
-
-  const Filter = ({ f }: { f: (typeof filterControls)[number] }) => (
-    <Select value={f.value} onValueChange={f.set}>
-      <SelectTrigger className="h-8 w-44 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">{f.label}: all</SelectItem>
-        {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-      </SelectContent>
-    </Select>
-  )
 
   const campaigns = useMemo(() => rows.campaigns.filter((c) => {
     const needle = q.trim().toLowerCase()
@@ -368,16 +357,17 @@ export function CampaignsPage({ session }: { session: Session }) {
   // One row: search, the filters this seat sets most, the door, the count. Everything the usage
   // model ranks below the first three falls into the door with the columns.
   const ranked = [...filterControls].sort((a, b) => d.weekly(b.id) - d.weekly(a.id))
-  const filters = nothing ? undefined : {
-    search: { value: q, onChange: setQ, placeholder: "Search campaigns, subjects and audiences" },
-    controls: view === "campaigns"
-      ? ranked.slice(0, 3).map((f) => ({ name: f.label, value: f.value === "all" ? undefined : f.value, onClear: () => f.set("all"), node: <Filter f={f} /> }))
-      : [],
-    behind: view === "campaigns"
-      ? ranked.slice(3).map((f) => ({ name: f.label, group: "filters" as const, value: f.value === "all" ? undefined : f.value, onClear: () => f.set("all"), node: <Filter f={f} /> }))
+  const filters: FilterBarProps | undefined = nothing ? undefined : {
+    search: { value: q, onChange: setQ },
+    // Only the campaigns table has filters of its own; audiences and forms are searched and
+    // counted the same way, and their row is the same row with no named filters on it.
+    filters: view === "campaigns"
+      ? ranked.map((f) => ({
+          kind: "one" as const, name: f.label, value: f.value, onChange: f.set,
+          options: f.options.map((o) => ({ value: o, label: o })),
+        }))
       : [],
     count: { shown: shownRows, total: totalRows, noun: view },
-    onClearAll: () => { setQ(""); for (const f of filterControls) f.set("all") },
     doorId: `campaigns.filters.${view}`,
   }
 

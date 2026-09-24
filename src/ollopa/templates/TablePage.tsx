@@ -58,6 +58,8 @@ export interface TablePageProps<T> {
   family?: string
   description?: string
   total?: number
+  /** What the page is a list of, so the count and the search box say what they are about. */
+  noun?: string
   rows: T[]
   rowKey: (row: T) => string
   columns: Column<T>[]
@@ -132,21 +134,18 @@ export function TablePage<T>(p: TablePageProps<T>) {
         title={p.title}
         description={p.description}
         actions={p.primary ? [{ kind: "primary", label: p.primary.label, onClick: p.primary.onClick }] : undefined}
-        controls={[
-          { name: "Search", always: true, node: (
-            <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
-          ) },
-          ...(p.filters ?? []).map((f) => ({ name: f.label, node: (
-            <Select key={f.key} value={active[f.key] ?? "all"} onValueChange={(v) => setActive((a) => ({ ...a, [f.key]: v }))}>
-              <SelectTrigger className="w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{f.label}: all</SelectItem>
-                {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          ) })),
-        ]}
-        shown={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+        filters={{
+          search: { value: q, onChange: setQ },
+          filters: (p.filters ?? []).map((f) => ({
+            kind: "one" as const,
+            name: f.label,
+            value: active[f.key] ?? "all",
+            onChange: (v: string) => setActive((a) => ({ ...a, [f.key]: v })),
+            options: f.options.map((o) => ({ value: o, label: o })),
+          })),
+          count: { shown: rows.length, total: p.total ?? p.rows.length, noun: p.noun ?? "rows" },
+          doorId: `table.${p.title}`,
+        }}
         tableRef={fit.ref}
         table={(
         <Table>

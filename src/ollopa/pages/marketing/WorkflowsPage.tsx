@@ -9,7 +9,6 @@ import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -176,18 +175,6 @@ export function WorkflowsPage({ session }: { session: Session }) {
   /* -------------------------------------------------------------------------------- the render */
 
   /** A named filter that says what it is set to, so the count can always be accounted for. */
-  const pick = (name: string, value: string, set: (v: string) => void, options: { value: string; label: string }[]) => ({
-    name,
-    value: value === "all" ? undefined : value,
-    onClear: () => set("all"),
-    node: (
-      <Select value={value} onValueChange={set}>
-        <SelectTrigger className="w-44" aria-label={name}><SelectValue placeholder={name} /></SelectTrigger>
-        <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-      </Select>
-    ),
-  })
-
   const rowMenu = (w: Workflow) => [
     { label: w.status === "on" ? "Turn off" : "Turn on", kind: "secondary" as const, onClick: () => {
       const runs = runsOf(seed.workflowRuns, w.id)
@@ -231,26 +218,20 @@ export function WorkflowsPage({ session }: { session: Session }) {
       description="Which rule is firing, on whom, and what it is about to cost."
       actions={[{ kind: "primary", label: "Create a workflow", onClick: create }]}
       filters={rows.workflows.length === 0 ? undefined : {
-        search: { value: q, onChange: setQ, placeholder: "Search workflows, triggers and rules" },
-        controls: [
-          pick("Status", status, setStatus, [
-            { value: "all", label: `On (${on}) · Off (${off})` },
-            { value: "On", label: `On (${on})` },
-            { value: "Off", label: `Off (${off})` },
-          ]),
-          pick("Trigger", trigger, setTrigger, [{ value: "all", label: "Trigger: all" },
-            ...[...new Set(rows.workflows.map((w) => w.trigger))].map((o) => ({ value: o, label: o }))]),
-          pick("Owner", owner, setOwner, [{ value: "all", label: "Owner: all" },
-            ...[...new Set(rows.workflows.map((w) => w.owner))].map((o) => ({ value: o, label: o }))]),
-        ],
-        behind: [
-          { ...pick("Folder", folder, setFolder, [{ value: "all", label: "Folder: all" },
-            ...[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => ({ value: o, label: o }))]), group: "filters" as const },
-          { ...pick("Archived", archived, setArchived, [{ value: "all", label: "Archived: not archived" },
-            { value: "Archived only", label: "Archived only" }, { value: "Not archived", label: "Not archived" }]), group: "filters" as const },
+        search: { value: q, onChange: setQ },
+        filters: [
+          { kind: "one", name: "Status", value: status, onChange: setStatus,
+            options: [{ value: "On", label: `on (${on})` }, { value: "Off", label: `off (${off})` }] },
+          { kind: "one", name: "Trigger", value: trigger, onChange: setTrigger,
+            options: [...new Set(rows.workflows.map((w) => w.trigger))].map((o) => ({ value: o, label: o })) },
+          { kind: "one", name: "Owner", value: owner, onChange: setOwner,
+            options: [...new Set(rows.workflows.map((w) => w.owner))].map((o) => ({ value: o, label: o })) },
+          { kind: "one", name: "Folder", value: folder, onChange: setFolder,
+            options: [...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => ({ value: o, label: o })) },
+          { kind: "one", name: "Archived", value: archived, onChange: setArchived,
+            options: [{ value: "Archived only", label: "only the archived" }, { value: "Not archived", label: "not archived" }] },
         ],
         count: { shown: filtered.length, total: rows.workflows.length, noun: "workflows" },
-        onClearAll: () => { setQ(""); setStatus("all"); setTrigger("all"); setOwner("all"); setFolder("all"); setArchived("all") },
         doorId: "workflows.filters",
       }}
       beside={(w) => ({ kind: "workflow", id: w.id })}

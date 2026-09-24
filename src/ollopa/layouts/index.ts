@@ -3,7 +3,7 @@
 
 // The parts (LAYOUTS.md §2)
 export { PageHeader, StatusRow, Toolbar, SummaryStrip, Section, Container, Group, Rows, SideRail, PageFooter, usePhone } from "./parts"
-export type { PageHeaderProps, ToolbarControl, SummaryFigure, SectionProps } from "./parts"
+export type { PageHeaderProps, SummaryFigure, SectionProps } from "./parts"
 
 // Which columns a table draws at this width (LAYOUTS.md §5, §6)
 export { useColumnFit, useFitColumns, useBand } from "./columns"
@@ -14,8 +14,14 @@ export type { MetaValue } from "./MetaLine"
 export type { ColumnPriority, Band } from "./columns"
 
 // The one filtering pattern: the row, the door, the applied line, the count, the motion (LAYOUTS.md §2)
-export { FilterBar, AppliedLine, ResultCount, FilterEmpty, useSettle, useReducedMotion, MOTION, motionVars, DOOR_LABEL } from "./filters"
-export type { FilterBarProps, FilterControl, FilterGroup, FilterSearch, DoorItem, ResultCountProps, AppliedLineProps, FilterEmptyProps } from "./filters"
+export {
+  FilterBar, FilterControl, AppliedLine, ResultCount, FilterEmpty, filtersOn, filterSignature,
+  readFilter, clearFilter, useSettle, useReducedMotion, MOTION, motionVars, DOOR_LABEL, ANY,
+} from "./filters"
+export type {
+  FilterBarProps, Filter, FilterOption, OneFilter, ManyFilter, ToggleFilter, RangeFilter, TextFilter,
+  FilterGroup, FilterSearch, DisplaySpec, ViewsSpec, ResultCountProps, AppliedLineProps, FilterEmptyProps,
+} from "./filters"
 
 // The filter on a section inside a record: tabs above `md`, one Select below it
 export { SectionFilter } from "./SectionFilter"

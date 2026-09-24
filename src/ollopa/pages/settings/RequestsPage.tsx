@@ -12,7 +12,6 @@ import { useMemo, useState } from "react"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { IndexPage, SummaryStrip, type IndexColumn } from "../../layouts"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -159,18 +158,6 @@ export function RequestsPage({ session }: { session: Session }) {
   ]
 
   /** A named filter that says what it is set to, so the applied line and the count can name it. */
-  const pick = (label: string, value: string, set: (v: string) => void, off: string, options: { value: string; label: string }[]) => ({
-    name: label,
-    value: value === "all" || value === off ? undefined : value,
-    onClear: () => set(options[0].value),
-    node: (
-      <Select value={value} onValueChange={set}>
-        <SelectTrigger className="w-48" aria-label={label}><SelectValue /></SelectTrigger>
-        <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-      </Select>
-    ),
-  })
-
   return (
     <DoorGroup>
       {/* The Index type: the queue's toolbar and count in the card's header, the table above 640
@@ -197,30 +184,22 @@ export function RequestsPage({ session }: { session: Session }) {
         // One row: search, the three filters this seat sets most, the door, the count. Every
         // control says what it is set to, so the count can always be accounted for.
         filters={{
-          search: { value: q, onChange: setQ, placeholder: "Search requests by outcome, requester or reason" },
-          controls: [
-            pick("State", chip, (v) => setChip(v as typeof chip), "all", [
-              { value: "all", label: "State: everything" },
-              ...CHIP_ORDER.filter((st) => all.some((r) => r.state === st)).map((st) => ({ value: st, label: STATE_LABEL[st] })),
-            ]),
-            pick("Requester", requester, setRequester, "anyone", [{ value: "all", label: "Requester: anyone" },
-              ...[...new Set(all.map((r) => r.requester.user))].map((u) => ({ value: u, label: u }))]),
-            pick("Decision owner", owner, setOwner, "anyone", [{ value: "all", label: "Decision owner: anyone" },
-              ...[...new Set(all.map((r) => r.decisionOwner))].map((u) => ({ value: u, label: u }))]),
-            pick("What it touches", touches, setTouches, "anything", [{ value: "all", label: "Touches: anything" },
-              ...[...new Set(all.flatMap((r) => r.touches.map((t) => t.kind)))].map((k) => ({ value: k, label: k }))]),
-          ],
-          behind: [
-            pick("Kind", kind, setKind, "both", [{ value: "all", label: "Kind: both" },
-              { value: "change", label: "Workspace change" }, { value: "upgrade", label: "Locked feature" }]),
-            {
-              ...pick("Archived", archived, setArchived, "Open requests", [{ value: "Open requests", label: "Open requests" },
-                { value: "Everything, including declined", label: "Everything, including declined" }]),
-              group: "filters" as const,
-            },
+          search: { value: q, onChange: setQ },
+          filters: [
+            { kind: "one", name: "State", value: chip, onChange: (v) => setChip(v as typeof chip),
+              options: CHIP_ORDER.filter((st) => all.some((r) => r.state === st)).map((st) => ({ value: st, label: STATE_LABEL[st] })) },
+            { kind: "one", name: "Requester", value: requester, onChange: setRequester,
+              options: [...new Set(all.map((r) => r.requester.user))].map((u) => ({ value: u, label: u })) },
+            { kind: "one", name: "Decision owner", value: owner, onChange: setOwner,
+              options: [...new Set(all.map((r) => r.decisionOwner))].map((u) => ({ value: u, label: u })) },
+            { kind: "one", name: "Touches", value: touches, onChange: setTouches,
+              options: [...new Set(all.flatMap((r) => r.touches.map((t) => t.kind)))].map((k) => ({ value: k, label: k })) },
+            { kind: "one", name: "Kind", value: kind, onChange: setKind,
+              options: [{ value: "change", label: "a workspace change" }, { value: "upgrade", label: "a locked feature" }] },
+            { kind: "one", name: "Archived", value: archived, onChange: setArchived, off: "Open requests",
+              options: [{ value: "Everything, including declined", label: "shown, including declined" }] },
           ],
           count: { shown: shown.length, total: all.length, noun: "requests" },
-          onClearAll: () => { setQ(""); setChip("all"); setRequester("all"); setOwner("all"); setTouches("all"); setKind("all"); setArchived("Open requests") },
           doorId: "requests.filters",
         }}
         beside={(r) => ({ kind: "request", id: r.id })}

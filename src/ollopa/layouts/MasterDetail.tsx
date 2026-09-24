@@ -11,7 +11,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { openBeside, type BesideTarget } from "../beside"
 import { Split } from "./SplitHandle"
 import { Measured } from "./frame"
-import { PageHeader, Toolbar, type PageHeaderProps, type ToolbarControl } from "./parts"
+import { PageHeader, Toolbar, type PageHeaderProps } from "./parts"
+import type { FilterBarProps } from "./filters"
 
 /**
  * True below `sm`. Read rather than rendered twice: a template that draws both branches puts every
@@ -171,11 +172,8 @@ export interface BoardPageProps<T = unknown> extends PageHeaderProps {
    * one door, the count at the trailing edge. It wins over `controls`.
    */
   toolbar?: ReactNode
-  /** Search, filters, views — through the same Toolbar an index uses, so a board gets the phone
-   *  rule too: one control in front and one door for the rest. */
-  controls?: ToolbarControl[]
-  /** Printed at the end of the toolbar row: "11 open of 214". */
-  shown?: ReactNode
+  /** The filtering pattern as data, exactly as `IndexPage` takes it. `toolbar` wins over it. */
+  filters?: FilterBarProps
   above?: ReactNode
   /**
    * The column's width, if a board ever needs to say. It should not: the default shares the width
@@ -191,7 +189,7 @@ export interface BoardPageProps<T = unknown> extends PageHeaderProps {
  * memo 30 documents, so it is written down here.
  */
 export function BoardPage<T = unknown>({
-  stages, toolbar, controls, shown: shownCount, above, beside, itemKey,
+  stages, toolbar, filters, above, beside, itemKey,
   columnWidth = "min-w-40 max-w-[22rem] flex-1", ...header
 }: BoardPageProps<T>) {
   const phone = usePhone()
@@ -236,7 +234,7 @@ export function BoardPage<T = unknown>({
           wider than a 400 screen and pushes the page's primary act off it. */}
       <div className="grid gap-2 px-4 pt-4 [grid-template-columns:minmax(0,1fr)] sm:px-6">
         <PageHeader {...header} />
-        {toolbar ?? (controls?.length ? <Toolbar controls={controls} count={shownCount} /> : null)}
+        {toolbar ?? (filters ? <Toolbar {...filters} /> : null)}
         {above}
       </div>
 

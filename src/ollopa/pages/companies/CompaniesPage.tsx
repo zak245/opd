@@ -435,9 +435,14 @@ export function CompaniesPage({ session }: { session: Session }) {
         onFiltersChange={(filters) => setState({ filters })}
         primary={findIsPrimary ? { label: "Find companies", onClick: () => setFindOpen(true) } : undefined}
         pageMenu={{ label: pageMenuLabel, items: pageMenuItems }}
-        views={viewsAtLevelOne
-          ? <ViewsPopover name={state.view} views={seed.savedViews.filter((x) => x.object === "company").map((x) => x.name)} onPick={(name) => setState({ view: name })} />
-          : undefined}
+        views={viewsAtLevelOne ? {
+          views: [
+            { id: "All companies", name: "All companies" },
+            ...seed.savedViews.filter((x) => x.object === "company").map((x) => ({ id: x.name, name: x.name })),
+          ],
+          current: state.view,
+          onOpen: (id) => setState({ view: id }),
+        } : undefined}
         rowActions={visible}
         menuActions={menuActions}
         menuLabel={(v) => `Actions for ${v.company.name}`}
@@ -612,26 +617,6 @@ export function CompaniesPage({ session }: { session: Session }) {
 }
 
 /* -------------------------------------------------------------------------------- small pieces */
-
-function ViewsPopover({ name, views, onPick }: { name: string; views: string[]; onPick: (name: string) => void }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">Views: {name}</Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 p-2">
-        <ul className="space-y-0.5">
-          {["All companies", ...views].map((v) => (
-            <li key={v} className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" className="min-w-0 flex-1 justify-start truncate" onClick={() => onPick(v)}>{v}</Button>
-              <Button variant="link" size="sm" className="text-muted-foreground" onClick={() => toast(`“${v}” is your default view`)}>Set as default</Button>
-            </li>
-          ))}
-        </ul>
-      </PopoverContent>
-    </Popover>
-  )
-}
 
 function EditPanel({ row, onClose, onSaved }: { row: CompanyView; onClose: () => void; onSaved: (text: string) => void }) {
   const [name, setName] = useState(row.company.name)

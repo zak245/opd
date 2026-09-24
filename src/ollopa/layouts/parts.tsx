@@ -16,7 +16,7 @@ import {
 import { Actions, type Action } from "../ui/Actions"
 import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
-import { FilterBar, type FilterGroup, type ResultCountProps } from "./filters"
+import { FilterBar, type FilterBarProps } from "./filters"
 
 /** True below `sm`. Read, never rendered twice: two branches put every control in the DOM twice. */
 const PHONE = "(max-width: 639px)"
@@ -109,80 +109,17 @@ export function StatusRow({ children, className }: { children: ReactNode; classN
 
 // ---------------------------------------------------------------------------------- Toolbar
 
-export interface ToolbarControl {
-  /** What the control is for, in one or two words: "Stage", "Owner". Names it on the applied line. */
-  name: string
-  node: ReactNode
-  /**
-   * What this filter is set to right now, in the person's words: "me", "Cold, Approaching".
-   * Absent means the filter is off. Give it and the count becomes explainable: the filter reads in
-   * its own control on the row, or on the applied line under it, and never only as a number.
-   */
-  value?: string
-  /** Drops this one filter. The applied line and the empty state offer it. */
-  onClear?: () => void
-  /** Which part of the door this belongs to when it is not on the row. Filters by default. */
-  group?: FilterGroup
-  /** Kept while the pages move across: it puts the control on the row rather than in the door. */
-  always?: boolean
-  /** Kept while the pages move across: it marks the page's search box. */
-  pin?: boolean
-}
-
-/** Legacy pages name their search and their columns control; the door still has to group them. */
-function groupOf(c: ToolbarControl): FilterGroup {
-  if (c.group) return c.group
-  const n = c.name.toLowerCase()
-  if (n.includes("column") || n.includes("density")) return "columns"
-  if (n.includes("view")) return "views"
-  return "filters"
-}
-
 /**
- * The filter row in the card's header — search, the seat's filters, the door, the count.
+ * The filter row in the card's header — search, the seat's filters, the one door, the count.
  *
  * It is the one filtering pattern (LAYOUTS.md §2), and `FilterBar` in `filters.tsx` is where it is
- * built. This part is the name the pages already import, and the adapter that takes the older
- * `controls` list: the control marked `pin` (or called "Search") takes the first place, the ones
- * marked `always` keep the row, and everything else goes into the one door.
- *
- * A page that gives each control a `value` and an `onClear` gets the applied line and the honest
- * empty state for free. A page that gives neither still gets the row, the door and the count.
+ * built. This is the name the pages import; it adds nothing and decides nothing. **A page declares
+ * data only**: a filter's name, its kind, its options, its value and what changes it. There is no
+ * way to hand the row a control, because a page that can draw the row can make its index look like
+ * a different product, and four of them did.
  */
-export function Toolbar({
-  controls, count, result, onClearAll, doorId, className,
-}: {
-  controls: ToolbarControl[]
-  /** The count at the trailing edge, as the page already writes it: "9 of 800". */
-  count?: ReactNode
-  /** The same count in three parts, so it ticks as the filters change. Wins over `count`. */
-  result?: ResultCountProps
-  /** Drops every filter at once. The one "Clear all" in the pattern. */
-  onClearAll?: () => void
-  /** The door's id, so it remembers whether it was left open. */
-  doorId?: string
-  className?: string
-}) {
-  const search = controls.find((c) => c.pin) ?? controls.find((c) => c.name.toLowerCase() === "search")
-  const rest = controls.filter((c) => c !== search)
-  // The row keeps the ones the page marked, then the rest in the page's own order; `FilterBar`
-  // decides how many of them fit this width and puts the remainder in the door with the others.
-  const front = [...rest.filter((c) => c.always), ...rest.filter((c) => !c.always && groupOf(c) === "filters")]
-  const behind = rest
-    .filter((c) => !front.includes(c))
-    .map((c) => ({ ...c, group: groupOf(c) }))
-
-  return (
-    <FilterBar
-      className={className}
-      searchNode={search?.node}
-      controls={front}
-      behind={behind}
-      count={result ?? count}
-      onClearAll={onClearAll}
-      doorId={doorId}
-    />
-  )
+export function Toolbar(props: FilterBarProps) {
+  return <FilterBar {...props} />
 }
 
 // ---------------------------------------------------------------------------------- SummaryStrip
@@ -248,7 +185,10 @@ export function Section({
   return (
     <Card className={cn("gap-3 py-4", className)} {...rest}>
       {(heading || actions) && (
-        <CardHeader className="min-w-0 flex-wrap items-start gap-2 [grid-template-columns:minmax(0,1fr)] md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]">
+        <CardHeader className={cn(
+          "min-w-0 flex-wrap items-start gap-2 [grid-template-columns:minmax(0,1fr)]",
+          heading && "md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]",
+        )}>
           {heading && (
             // A heading is as long as the thing is called. It wraps inside its own column rather
             // than spilling into the action column, where its count ended up under a button.
@@ -262,7 +202,13 @@ export function Section({
           {actions && (
             // Below `md` the section's controls drop under the heading and take the full width;
             // above it they sit at the trailing edge of the same line.
-            <CardAction className="col-start-1 row-start-2 flex w-full min-w-0 flex-wrap items-center gap-2 justify-self-start md:col-start-2 md:row-start-1 md:w-auto md:justify-self-end">
+            <CardAction className={cn(
+              "col-start-1 row-start-2 flex w-full min-w-0 flex-wrap items-center gap-2 justify-self-start",
+              // With a heading beside them the controls sit at the trailing edge of its line; with
+              // no heading they are the whole header and start at the card's own leading edge.
+              heading && "md:col-start-2 md:row-start-1 md:w-auto md:justify-self-end",
+              !heading && "row-start-1",
+            )}>
               {actions}
             </CardAction>
           )}

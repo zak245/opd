@@ -9,7 +9,7 @@
 // business and never hard-coded, which is what lets the SDR, the AE, the marketer and the admin open
 // the same page without a mode switch. The one thing nobody may lose sight of is what a click costs
 // and how many people it touches: the price is on the control, and every bulk button repeats its count.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { ChevronDown, ChevronsUpDown, ListPlus, MoreHorizontal, Phone, Send, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,7 @@ import {
 import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
 import { Actions } from "../../ui/Actions"
-import { LegacyIndexPage as IndexPage, type ToolbarControl } from "../../layouts"
+import { LegacyIndexPage as IndexPage, FilterEmpty, ResultCount, type Filter, type FilterBarProps } from "../../layouts"
 import { openBeside } from "../../beside"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -76,6 +76,23 @@ function usePersisted<T>(user: string, what: string, initial: T, remember = true
 }
 
 interface Sort { key: string; dir: "asc" | "desc" }
+
+/**
+ * A control on a **lesson** row, drawn by the lesson rather than by the pattern. The product's row
+ * is data: see `peopleFilters` below. This type exists so the lessons can still show the version
+ * we are criticising, and it is deliberately local to this file — nothing else may import it.
+ */
+interface LessonControl { name: string; node: ReactNode; group?: string; always?: boolean; pin?: boolean; value?: string; onClear?: () => void }
+
+/** The lesson's own row: the controls as the criticised version drew them, and the count. */
+function LessonToolbar({ controls, result }: { controls: LessonControl[]; result: { shown: number; total: number; noun: string } }) {
+  return (
+    <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+      {controls.map((c) => <span key={c.name} className="min-w-0">{c.node}</span>)}
+      <ResultCount {...result} className="ml-auto" />
+    </div>
+  )
+}
 
 /* ------------------------------------------------------------------------------------ the page */
 
@@ -785,7 +802,13 @@ export function PeoplePage({ session }: { session: Session }) {
    * trailing edge. The template decides how many sit in front and labels its own door; a filter
    * that is on is marked `always`, because a cause the person cannot see is the thing rule 5 bans.
    */
-  const controls: ToolbarControl[] = [
+  /**
+   * **The lesson stages only.** A lesson exists to show the version we are criticising, so its row
+   * is drawn by hand here — the grey `Title` chips, the "Show Filters" sidebar, the audience
+   * headings. The product's row is `peopleFilters` below and is drawn entirely by the pattern:
+   * there is no way for this page to hand `FilterBar` a control.
+   */
+  const controls: LessonControl[] = [
     {
       name: "Saved views",
       // The views live in the one door, under their own heading: the row is the search, the
@@ -992,6 +1015,63 @@ export function PeoplePage({ session }: { session: Session }) {
     },
   ]
 
+  /**
+   * **The product's row, as data.** Every filter People has, in the seat's order: the ones the
+   * usage model puts at level one first, then the rest by how often this seat touches them. The
+   * pattern draws each control, keeps three on the row at 1280 and two at 1024, puts the rest in
+   * the one door, lists every one that is on under the row and derives "Clear all".
+   */
+  const peopleFilters: FilterBarProps = useMemo(() => {
+    const ranked = [...defs].sort((x, y) => (d.level(x.id) - d.level(y.id)) || (d.weekly(y.id) - d.weekly(x.id)))
+    const asFilter = (f: FilterDef): Filter => {
+      const values = f.values(ctx, allRows)
+      // A filter with a short list says how many rows each value would leave, which is what stops
+      // a person choosing a dead end. A long list gets a box to search instead: counting two
+      // hundred titles against eight hundred rows on every keystroke is not a help, it is a stall.
+      const options = values.map((v) => ({
+        value: v, label: v, ...(values.length <= 24 ? { count: counts(f, v) } : {}),
+      }))
+      if (f.single) {
+        return {
+          kind: "one", name: f.label, options, off: "",
+          value: active[f.id]?.[0] ?? "",
+          onChange: (v: string) => setFilter(f.id, v ? [v] : []),
+          search: values.length > 12 || f.typeAhead,
+        }
+      }
+      return {
+        kind: "many", name: f.label, options,
+        value: active[f.id] ?? [],
+        onChange: (v: string[]) => setFilter(f.id, v),
+        search: values.length > 12 || f.typeAhead,
+      }
+    }
+    return {
+      doorId: "people",
+      search: { value: typed, onChange: (v: string) => setTyped(v), inputRef: searchRef },
+      filters: ranked.map(asFilter),
+      views: {
+        views: views.map((v) => ({ id: v.id, name: v.name })),
+        current: viewId,
+        onOpen: (id: string) => { const v = views.find((x) => x.id === id); if (v) openView(v) },
+        edited,
+        onRevert: view ? () => setActive(view.filters) : undefined,
+        onSave: () => { toast(`View saved · ${view?.name ?? "the filters you are looking at"}`); setViewId(view?.id ?? null) },
+      },
+      display: {
+        columns: allColumns.map((c) => ({ id: c.id, label: c.header, on: shownColumnIds.includes(c.id) })),
+        onColumns: setColumns,
+        density: {
+          value: density,
+          options: [{ value: "Comfortable", label: "Comfortable" }, { value: "Compact", label: "Compact" }],
+          onChange: (v: string) => setDensity(v as typeof density),
+        },
+      },
+      count: { shown: sorted.length, total, noun: "people" },
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defs, ctx, allRows, active, typed, views, viewId, edited, view, allColumns, shownColumnIds, density, sorted.length, total, counts])
+
   /** The count this toolbar filters, at the trailing edge of the row. It ticks; it never moves. */
   const result = { shown: sorted.length, total, noun: "people" }
 
@@ -1188,10 +1268,10 @@ export function PeoplePage({ session }: { session: Session }) {
           { kind: "link", label: "Import CSV", onClick: () => leaveFor("/ollopa/import", "people.add") },
           ...(b.crm ? [{ kind: "secondary" as const, label: `Sync from ${b.crm} now`, onClick: () => toast(`Pulling changes from ${b.crm}.`) }] : []),
         ]}
-        controls={controls}
-        result={result}
-        onClearAll={activeCount > 0 || q ? clearAll : undefined}
-        doorId="people"
+        // The product's row is the pattern's, drawn from data. A lesson stage keeps the row the
+        // version it is criticising drew, because that is the whole point of the stage.
+        filters={onStage ? undefined : peopleFilters}
+        toolbar={onStage ? <LessonToolbar controls={controls} result={result} /> : undefined}
         above={
           <>
             {/* Before rule 2 the filters are a sidebar of groups, three deep. */}
@@ -1225,7 +1305,9 @@ export function PeoplePage({ session }: { session: Session }) {
           </>
         }
         tableRef={fitRef}
-        table={<>{tableBody}{sorted.length === 0 && <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />}</>}
+        table={<>{tableBody}{sorted.length === 0 && (onStage
+          ? <NoResults defs={defs} active={active} lastChip={lastChip} counts={counts} onDrop={(id) => setFilter(id, [])} onClear={clearAll} />
+          : <FilterEmpty noun="people" filters={peopleFilters.filters} search={q} onClearSearch={() => { setTyped(""); setQ("") }} onClearAll={clearAll} />)}</>}
         rows={rowList}
         pager={
           <div className="flex w-full flex-wrap items-center justify-center gap-4">

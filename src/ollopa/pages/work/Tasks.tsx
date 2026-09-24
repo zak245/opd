@@ -24,7 +24,7 @@ import { closeBeside, openBeside } from "../../beside"
 import { Actions, type Action } from "../../ui/Actions"
 import { Container } from "../../ui/Section"
 import { Chip } from "../../ui/Identity"
-import { PageHeader, QueuePage } from "../../layouts"
+import { PageHeader, QueuePage, Toolbar, FilterEmpty, filtersOn, type Filter, type FilterBarProps } from "../../layouts"
 import { clearEdit, recordEdit, useEdits } from "../../edits"
 import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { useDeclareAlerts } from "../../shell/banner"
@@ -323,30 +323,51 @@ export function Tasks({ session }: { session: Session }) {
 
   /* ------------------------------------------------------------------- what sits at level one */
 
-  const filterDefs = [
-    { key: "type", label: "Type", item: "tasks.filter-type", options: KINDS as unknown as string[] },
-    { key: "due", label: "Due", item: "tasks.filter-due", options: [...DUES] as string[] },
-    { key: "source", label: "Source", item: "tasks.filter-source", options: ["Manual", "Agent", ...new Set(base.map((t) => t.sequence).filter((s): s is string => !!s))] },
-    { key: "status", label: "Status", item: "tasks.filter-status", options: STATUSES as unknown as string[] },
-    { key: "sort", label: "Sort", item: "tasks.sort", options: ["Due", "Type", "Contact"] },
-  ]
-  const shown = filterDefs.filter((f) => d.level(f.item) === 1)
-  const behind = filterDefs.filter((f) => d.level(f.item) !== 1)
-  const activeBehind = behind.filter((f) => filters[f.key] && filters[f.key] !== "all").length
+  /**
+   * The filtering pattern (LAYOUTS.md §2), as data. The page says which filters its seat sets most
+   * — the usage model ranks them — and the pattern draws every control, keeps the top of that list
+   * on the row, puts the rest behind the one door and writes the count and the applied line.
+   */
   const showOwnerColumn = teamView && d.level("tasks.owner-column") === 1 && owner === "Everyone"
   const showPhone = d.level("tasks.dnc-badge") === 1
   const showLocalTime = d.level("tasks.local-time") === 1
 
-  function FilterSelect({ f }: { f: (typeof filterDefs)[number] }) {
-    return (
-      <Select value={filters[f.key] ?? (f.key === "due" ? "All open" : "all")} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
-        <SelectTrigger className="h-8 w-40 text-xs" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-        <SelectContent>
-          {f.key !== "due" && <SelectItem value="all">{f.label}: all</SelectItem>}
-          {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    )
+  const taskFilters: Filter[] = [
+    ...([
+      { key: "due", name: "Due", item: "tasks.filter-due", off: "All open", options: [...DUES] as string[] },
+      { key: "type", name: "Type", item: "tasks.filter-type", off: "all", options: KINDS as unknown as string[] },
+      { key: "status", name: "Status", item: "tasks.filter-status", off: "all", options: STATUSES as unknown as string[] },
+      { key: "source", name: "Source", item: "tasks.filter-source", off: "all", options: ["Manual", "Agent", ...new Set(base.map((t) => t.sequence).filter((x): x is string => !!x))] },
+    ] as const)
+      .slice()
+      .sort((x, y) => (d.level(x.item) - d.level(y.item)) || (d.weekly(y.item) - d.weekly(x.item)))
+      .map((f): Filter => ({
+        kind: "one",
+        name: f.name,
+        off: f.off,
+        value: filters[f.key] ?? f.off,
+        onChange: (v: string) => setFilters((a) => ({ ...a, [f.key]: v })),
+        options: f.options.filter((o) => o !== f.off).map((o) => ({ value: o, label: o })),
+      })),
+    ...(teamView ? [{
+      kind: "one" as const, name: "Owner", value: owner, off: "Everyone", onChange: setOwner,
+      options: seatsOf(session.business).filter((x) => x.role !== "marketer")
+        .map((x) => ({ value: x.user, label: x.user === session.user ? `${x.user} (me)` : x.user })),
+    }] : []),
+  ]
+
+  const tasksBar: FilterBarProps = {
+    doorId: "tasks.filters",
+    search: { value: q, onChange: setQ, inputRef: searchRef },
+    filters: taskFilters,
+    display: {
+      order: {
+        value: filters.sort ?? "Due",
+        options: ["Due", "Type", "Contact"].map((o) => ({ value: o, label: o })),
+        onChange: (v: string) => setFilters((a) => ({ ...a, sort: v })),
+      },
+    },
+    count: { shown: rows.length, total: openRows.length, noun: "tasks" },
   }
 
   /* ------------------------------------------------------------------------------------ a row */
@@ -551,6 +572,12 @@ export function Tasks({ session }: { session: Session }) {
       { kind: mode === "queue" ? "secondary" : "primary", label: "New task", keys: "n", onClick: () => setNewTask(true) },
       { kind: "secondary", label: switchLabel, keys: "w", onClick: () => setMode(mode === "queue" ? "list" : "queue") },
     ]) as Action[],
+    // "Expand all" is a control for the page's doors, not a filter, so it rides on the title line
+    // — the one place LAYOUTS.md §2 keeps for it — and never on the filter row.
+    trailing: mode === "list" ? <ExpandAll /> : undefined,
+    more: ([
+      { kind: "secondary", label: "Export CSV", onClick: () => say(`${rows.length} tasks exported as CSV.`) },
+    ]) as Action[],
   }
 
   /* The queue's master: the order itself, so what is being worked is read against what is behind
@@ -635,71 +662,19 @@ export function Tasks({ session }: { session: Session }) {
           )}
         />
       ) : (
-        <>
+        <DoorGroup>
         <div className="shrink-0 px-4 pt-4 sm:px-6">
           <PageHeader {...header} />
         </div>
-        <DoorGroup>
-          {/* The list is one container: its toolbar and its count in the header, its rows divided
-              inside it, and what is selected in its footer (DESIGN.md §5, containment). */}
+          {/* The list is one container: the filter row is its whole header — the count belongs to
+              the pattern and is written once, at the row's trailing edge, never twice. */}
           <Container
             component="table"
             as="div"
             className="mx-4 mb-4 flex min-h-0 flex-1 flex-col sm:mx-6"
             padded={false}
-            heading={filters.due ?? "All open"}
-            count={rows.length}
             bodyClassName="min-h-0 flex-1 overflow-y-auto"
-            actions={(
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input ref={searchRef} aria-label="Search contact, company, title or sequence" placeholder="Search tasks" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
-              {shown.map((f) => <FilterSelect key={f.key} f={f} />)}
-              {teamView && d.level("tasks.filter-owner") === 1 && (
-                <Select value={owner} onValueChange={setOwner}>
-                  <SelectTrigger className="h-8 w-44 text-xs" aria-label="Owner"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Everyone">Everyone</SelectItem>
-                    {seatsOf(session.business).filter((s) => s.role !== "marketer").map((s) => (
-                      <SelectItem key={s.user} value={s.user}>{s.user === session.user ? `${s.user} (me)` : s.user}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <ExpandAll />
-              <span className="ml-auto t-small tabular-nums text-muted-foreground">{rows.length} shown</span>
-            </div>
-
-            {/* One door, labelled by what is inside it (LAYOUTS.md §2): the filters this seat does
-                not use weekly, and what the table itself carries. Two doors stacked under a toolbar
-                are two doors. */}
-            <Door
-              id="tasks.filters"
-              label={`Filters and options: ${[...behind.map((f) => f.label.toLowerCase()), ...(teamView && d.level("tasks.filter-owner") !== 1 ? ["owner"] : []), "columns", "export"].join(", ")}`}
-              count={activeBehind || undefined}
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                {behind.map((f) => <FilterSelect key={f.key} f={f} />)}
-                {teamView && d.level("tasks.filter-owner") !== 1 && (
-                  <Select value={owner} onValueChange={setOwner}>
-                    <SelectTrigger className="h-8 w-44 text-xs" aria-label="Owner"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Everyone">Everyone</SelectItem>
-                      {seatsOf(session.business).filter((x) => x.role !== "marketer").map((x) => (
-                        <SelectItem key={x.user} value={x.user}>{x.user === session.user ? `${x.user} (me)` : x.user}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                <label className="flex items-center gap-2 t-body">
-                  <Checkbox checked={showOwnerColumn} disabled={!teamView} onCheckedChange={() => setOwner((o) => (o === "Everyone" ? session.user : "Everyone"))} />
-                  Owner column
-                </label>
-                <Actions surface="card" items={[{ kind: "secondary", label: "Export CSV", onClick: () => say(`${rows.length} tasks exported as CSV.`) }]} />
-              </div>
-            </Door>
-            </div>
-            )}
+            actions={<Toolbar {...tasksBar} />}
             footer={selection.length > 0 ? (
             <>
               <span className="t-body tabular-nums">{selection.length} selected</span>
@@ -728,8 +703,8 @@ export function Tasks({ session }: { session: Session }) {
           <div role="list" aria-label="Tasks" className="divide-y">
             {rows.length === 0 ? (
               <div className="p-6">
-                {q || Object.values(filters).some((v) => v && v !== "all" && v !== "All open")
-                  ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({ due: "All open" }) } }]} />} />
+                {q || filtersOn(taskFilters).length > 0
+                  ? <FilterEmpty noun="tasks" filters={taskFilters} search={q} onClearSearch={() => setQ("")} onClearAll={() => { setQ(""); setFilters({ due: "All open" }) }} />
                   : openRows.length === 0
                     ? <EmptyState title="Done for today." body={`${counts.tomorrow} due tomorrow.`} action={<Actions surface="card" items={[{ kind: "secondary", label: "See this week", onClick: () => setFilters({ due: "This week" }) }]} />} />
                     : <EmptyState title="Nothing due." body="Tasks arrive from sequences you own and from deals and accounts assigned to you." action={<Actions surface="card" items={[{ kind: "secondary", label: "New task", onClick: () => setNewTask(true) }]} />} />}
@@ -738,7 +713,6 @@ export function Tasks({ session }: { session: Session }) {
           </div>
           </Container>
         </DoorGroup>
-        </>
       )}
 
       {/* -------------------------------------------------------------------------- the panels */}

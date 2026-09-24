@@ -14,11 +14,10 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Door } from "../../ui/Door"
 import { IndexPage, SummaryStrip, type SummaryFigure } from "../../layouts"
-import { FilterBar, FilterEmpty, type DoorItem, type FilterControl } from "../../layouts/filters"
+import { FilterBar, FilterEmpty, clearFilter, filtersOn, type Filter, type ViewsSpec } from "../../layouts/filters"
 import type { BesideTarget } from "../../beside"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
@@ -86,8 +85,8 @@ export interface DataTableProps<T> {
   figures?: SummaryFigure[]
   /** Sections above the table: a hand-off waiting, a notice, a confirmation. Never filters. */
   above?: ReactNode
-  /** A control this page has that is not a column filter — the renewal windows on Accounts. */
-  extraControls?: FilterControl[]
+  /** A filter this page has that is not a column filter — the renewal windows on Accounts. */
+  extraFilters?: Filter[]
   /** One line under the card: the sentence naming who can do what this seat cannot (rule 4). */
   below?: ReactNode
   /** Level-one filters, as visible selects beside the search box. */
@@ -105,7 +104,7 @@ export interface DataTableProps<T> {
   primary?: { label: string; onClick: () => void }
   /** Page actions under level one for this seat, in one menu named by its contents. */
   pageMenu?: { label: string; items: { label: string; onClick: () => void }[] }
-  views?: ReactNode
+  views?: ViewsSpec
   rowActions: RowAction<T>[]
   menuActions: MenuAction<T>[]
   /** The "…" button's accessible name, which is the list of what it holds. */
@@ -236,75 +235,54 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
   /**
    * One filtering pattern, from `layouts/filters`: the search, the seat's named filters, one door,
-   * one count and one applied line. Each filter carries its own value and its own "clear", so it
-   * is dropped from its own chip rather than from a stray "×" beside it. The page still decides
-   * which filters its seat reads weekly; the part decides how many fit on the row.
+   * one count and one applied line. The page hands over **data** — a filter's name, its options,
+   * its value and what changes it — and the pattern draws every control, so Companies and Accounts
+   * cannot drift from People. The page still decides which filters its seat reads weekly; the
+   * pattern decides how many fit the row.
    */
-  const filterControls: FilterControl[] = [...p.chips, ...p.doorFilters].map((f) => {
-    const on = p.filters[f.id] && p.filters[f.id] !== "all" ? p.filters[f.id] : undefined
-    return {
+  const filterList: Filter[] = [
+    ...(p.extraFilters ?? []),
+    ...[...p.chips, ...p.doorFilters].map((f): Filter => ({
+      kind: "one",
       name: f.label,
-      value: on,
-      onClear: () => setFilter(f.id, "all"),
-      node: (
-        <Select value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
-          <SelectTrigger className="h-8 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{f.label}: all</SelectItem>
-            {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ),
-    }
-  })
+      value: p.filters[f.id] ?? "all",
+      onChange: (v: string) => setFilter(f.id, v),
+      options: f.options.filter(Boolean).map((o) => ({ value: o, label: o })),
+    })),
+  ]
 
   const sortable = p.allColumns.filter((c) => c.sortValue)
 
-  const behind: DoorItem[] = [
-    ...(p.views ? [{ name: "Saved views", group: "views" as const, node: p.views }] : []),
-    // The columns control is not a filter, so it is the door's own "Columns and density" group.
-    { name: "Columns", group: "columns", node: <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} /> },
-    // Sorting has no place of its own in the index contract, so it sits with the columns: both
-    // are the table's shape rather than which rows it holds.
-    ...(sortable.length > 0 ? [{
-      name: "Sort", group: "columns" as const,
-      node: (
-        <span className="flex items-center gap-1">
-          <Select value={p.sort.id} onValueChange={(v) => p.onSortChange({ id: v, dir: p.sort.dir })}>
-            <SelectTrigger className="h-8 w-auto min-w-40" aria-label="Sort by"><SelectValue /></SelectTrigger>
-            <SelectContent>{sortable.map((c) => <SelectItem key={c.id} value={c.id}>{c.header}</SelectItem>)}</SelectContent>
-          </Select>
-          <Button size="sm" variant="outline"
-                  aria-label={p.sort.dir === "asc" ? "Sorted first to last. Reverse it." : "Sorted last to first. Reverse it."}
-                  onClick={() => p.onSortChange({ id: p.sort.id, dir: p.sort.dir === "asc" ? "desc" : "asc" })}>
-            {p.sort.dir === "asc" ? "First to last" : "Last to first"}
-          </Button>
-        </span>
-      ),
-    }] : []),
-  ]
-
-  const clearAll = () => { setQ(""); p.onFiltersChange({}) }
-  const appliedControls = [...(p.extraControls ?? []), ...filterControls].filter((c) => c.value)
+  const clearAll = () => { setQ(""); p.onFiltersChange({}); for (const f of p.extraFilters ?? []) clearFilter(f) }
 
   const toolbar = (
     <FilterBar
       doorId={p.family}
-      searchNode={(
-        <Input
-          ref={search}
-          type="search"
-          aria-label={p.searchHint ?? "Search"}
-          placeholder={p.searchHint ?? "Search"}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="h-8 w-56"
-        />
-      )}
-      controls={[...(p.extraControls ?? []), ...filterControls]}
-      behind={behind}
+      search={{ value: q, onChange: setQ, inputRef: search }}
+      filters={filterList}
+      views={p.views}
+      display={{
+        columns: p.allColumns.map((c) => ({
+          id: c.id, label: c.header, on: p.columns.some((x) => x.id === c.id), locked: c.always,
+        })),
+        onColumns: p.onColumnsChange,
+        // Sorting has no place of its own in the index contract, so it sits with the columns: both
+        // are the table's shape rather than which rows it holds.
+        ...(sortable.length > 0 ? {
+          order: {
+            value: `${p.sort.id}.${p.sort.dir}`,
+            options: sortable.flatMap((c) => [
+              { value: `${c.id}.asc`, label: `${c.header}, first to last` },
+              { value: `${c.id}.desc`, label: `${c.header}, last to first` },
+            ]),
+            onChange: (v: string) => {
+              const at = v.lastIndexOf(".")
+              p.onSortChange({ id: v.slice(0, at), dir: v.slice(at + 1) as "asc" | "desc" })
+            },
+          },
+        } : {}),
+      }}
       count={{ shown: rows.length, total: p.total ?? p.rows.length, noun: p.noun ?? "rows" }}
-      onClearAll={clearAll}
     />
   )
 
@@ -416,8 +394,8 @@ export function DataTable<T>(p: DataTableProps<T>) {
         </Button>
       ) : undefined}
       empty={
-        q || appliedControls.length > 0
-          ? <FilterEmpty noun={p.noun ?? "rows"} applied={appliedControls} onClearAll={clearAll} />
+        q || filtersOn(filterList).length > 0
+          ? <FilterEmpty noun={p.noun ?? "rows"} filters={filterList} search={q} onClearSearch={() => setQ("")} onClearAll={clearAll} />
           : <EmptyState title={p.empty.title} body={p.empty.body} action={p.empty.action} />
       }
     />

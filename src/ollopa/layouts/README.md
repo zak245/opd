@@ -46,70 +46,121 @@ The **workspace's** own health row is the shell's; this is for a page with state
 
 Search, filters, views, columns — **in the card's header**, and the same shape on every index
 (LAYOUTS.md §2, "The filtering pattern"). `FilterBar` in `filters.tsx` is where it is built;
-`Toolbar` is the name the pages already import and the adapter for the older `controls` list.
+`Toolbar` is the name the pages import and is the same component under another word.
+
+**A page declares data. The pattern draws every control.** There is no `node`, no `children` and no
+`render` — a page that can draw the filter row can make its index look like a different product,
+and four of them did. If a page needs something the five kinds cannot say, add a sixth kind here.
 
 ```
-[ Search ] [ Owner: me ▾ ] [ Stage: cold ▾ ]   [ › ⚙ Filters and views  26 · 3 on ]   9 of 800 people
-Filtered by [ Score: 40 and above ✕ ]  Clear all 3 filters
+[ Search people ] [ Owner: me ▾ ] [ Stage: cold ▾ ] [ Title: any ▾ ]  [ › Filters and views  3 of 26 on ]   9 of 800 people
+Filtered by [ Search: cedar ✕ ] [ Owner: me ✕ ] [ Stage: cold ✕ ] [ Score: 40 and above ✕ ]  Clear all 4 filters
 └─ the door opens here, below the row, pushing the list down
 ```
 
 | Prop | Meaning |
 |---|---|
-| `search` | `{ value, onChange, placeholder }`. Always first, always the same box. |
-| `searchNode` | A search box the page already owns (a ref, a `/` hint). Takes the same first place. |
-| `controls` | The filters this seat sets most, in its order. **Three** keep the row at 1280 and above, two at 1024, none on a phone; the rest fall into the door. |
-| `behind` | Everything else, each with a `group`: `"filters"`, `"views"` or `"columns"`. |
-| `count` | `{ shown, total, noun }` and it ticks; or a `ReactNode` and it does not. |
-| `onClearAll` | Drops every filter. The one "Clear all" in the pattern. |
+| `search` | `{ value, onChange, inputRef? }`. The box, its label and its placeholder are the pattern's: `Search ` plus the count's noun. A page never writes a placeholder. |
+| `filters` | Every filter this page has, in the order this seat sets them. The bar keeps **three** on the row at 1280 and **two** at 1024, none on a phone, and never leaves exactly one behind. |
+| `views` | `{ views, current, onOpen, onSave?, edited?, onRevert? }` — the door's second group. |
+| `display` | `{ columns, onColumns, order?, density? }` — the door's third group. Not filters; never on the row. |
+| `count` | `{ shown, total, noun }`. Always given: it is the count, the empty state's noun and the search placeholder at once. |
 | `doorId` | The door's id, so it remembers whether it was left open (RULES.md rule 5). |
 
-A control is `{ name, node, value?, onClear? }`. **`value` is what makes the count explainable**:
-it is what the filter is set to, in the person's words, and absent means the filter is off. Give it
-and the filter names itself on the applied line and in the empty state; leave it out and the page
-has a count nobody can account for, which is the thing the rules forbid.
+There is **no `onClearAll`**: the pattern derives it by clearing every filter it was given and the
+search. A page cannot write a "Clear all" that forgets a filter someone added later.
+
+#### The five kinds
+
+Each one is `{ kind, name, … }`. `name` is one or two words and is what the control reads before
+the colon; the pattern writes the rest.
+
+| Kind | Fields | Reads |
+|---|---|---|
+| `"one"` | `options`, `value`, `off?` (default `"all"`), `onChange(value)` | `Stage: cold` · `Stage: any` |
+| `"many"` | `options`, `value: string[]`, `onChange(values)` | `Stage: Cold +2` · `Stage: any` |
+| `"toggle"` | `value: boolean`, `onLabel?`, `offLabel?`, `onChange(on)` | `Archived: shown` · `Archived: hidden` |
+| `"range"` | `options` in order, `from`, `to`, `onChange(from, to)` | `Amount: €10k to €50k` · `Amount: €10k and above` |
+| `"text"` | `value`, `onChange(value)` | `Company: Cedar` · `Company: any` |
+
+`options` are `{ value, label, count? }`. Give `count` and each value says how many rows it would
+leave, which is what stops a person choosing a dead end; leave it out on a long list, where
+counting two hundred values against eight hundred rows on every keystroke is a stall, not a help.
+A list over twelve values gets a box to search it, or set `search: true` to force one.
+
+**`off` is the value that means "not filtering"** — and it is the seat's own default, not
+necessarily a blank. The Deals board opens on the busiest pipeline, so that pipeline is the
+`Pipeline` filter's `off`: a control that says it is filtering when it sits at its own default
+teaches the person nothing. The opposite is just as important: Deals opens on "mine", and `off` is
+`all`, so `Whose deals: mine` correctly reads as a filter that is on.
 
 #### How a page uses this
 
 ```tsx
-<IndexPage
-  …
-  search={{ value: q, onChange: setQ, placeholder: "Search people by name, company or email" }}
-  controls={[
-    { name: "Owner", value: owner === "all" ? undefined : owner, onClear: () => setOwner("all"),
-      node: <Select …>{/* the trigger reads "Owner: me" */}</Select> },
-    { name: "Stage", value: stage.join(", ") || undefined, onClear: () => setStage([]),
-      node: <Select …/> },
-  ]}
-  behind={[
-    { name: "Score", group: "filters", value: score, onClear: …, node: <Select …/> },
-    { name: "Saved views", group: "views", node: <ViewsList …/> },
-    { name: "Columns and density", group: "columns", node: <ColumnsList …/> },
-  ]}
-  count={{ shown: rows.length, total: all.length, noun: "people" }}
-  onClearAll={clearAll} />
+export function ListsPage() {
+  const [q, setQ] = useState("")
+  const [kind, setKind] = usePersisted("lists.kind", "all")
+  const [owner, setOwner] = usePersisted("lists.owner", "all")
+  const [archived, setArchived] = usePersisted("lists.archived", false)
+  const [cols, setCols] = usePersisted("lists.cols", { source: false, created: false })
+
+  const rows = useMemo(() => all.filter(/* the page's own matching */), [all, q, kind, owner, archived])
+
+  const filters: FilterBarProps = {
+    search: { value: q, onChange: setQ },            // placeholder becomes "Search lists"
+    filters: [
+      { kind: "one", name: "Kind", value: kind, onChange: setKind,
+        options: [{ value: "people", label: "People" }, { value: "companies", label: "Companies" }] },
+      { kind: "one", name: "Owner", value: owner, onChange: setOwner,
+        options: b.roles.map((r) => ({ value: r.user, label: r.user })) },
+      { kind: "toggle", name: "Archived", value: archived, onChange: setArchived,
+        onLabel: "shown", offLabel: "hidden" },
+    ],
+    display: {
+      columns: [
+        { id: "source", label: "Source", on: cols.source },
+        { id: "created", label: "Created", on: cols.created },
+      ],
+      onColumns: (ids) => setCols({ source: ids.includes("source"), created: ids.includes("created") }),
+    },
+    count: { shown: rows.length, total: all.length, noun: "lists" },
+    doorId: "lists",
+  }
+
+  return <IndexPage<List> family="lists" title="Lists" filters={filters} rows={rows} … />
+}
 ```
 
-Four rules a page keeps, and the bar keeps the rest:
+That is the whole of it. The page never writes: the control, the word `any`, the chevron, the
+applied line, a chip, an "×", a "Clear all", the door, the door's label, the door's badge, the
+count's sentence, the search placeholder, the empty state, or a single class name.
 
-1. **Name every filter** and give it a `value` and an `onClear`. No page draws its own chip, its own
-   "×", its own "Clear all" or its own second door.
-2. **Order `controls` by what this seat sets most.** The bar decides how many fit; the page never does.
-3. **The columns control and the saved views are `behind`**, in their groups. They are not filters
-   and they never take a place on the row.
-4. **Pass the count in three parts** so it ticks and so it says what it counts.
+Three rules a page keeps, and the bar keeps the rest:
 
-### `ResultCount`, `AppliedLine`, `FilterEmpty`
+1. **Order `filters` by what this seat sets most.** The bar decides how many fit; the page never does.
+2. **The columns, the order and the density go in `display`; the saved views go in `views`.** They
+   are not filters, they never take a place on the row, and they never count towards the badge.
+3. **Pass the count in three parts.** It is the count, the noun in the empty state and the word in
+   the search placeholder, all from one place.
 
-The three pieces `FilterBar` draws, exported because a page that is not an index may need one.
+### `ResultCount`, `AppliedLine`, `FilterControl`, `FilterEmpty`
 
-- `<ResultCount shown total noun />` — "9 of 800 people", ticking over `MOTION.settleMs`, tabular so
-  it never changes width. The settled sentence is what a screen reader is given, once.
-- `<AppliedLine chips total onClearAll />` — the line under the row. It grows in on the first filter
-  and collapses on the last. A chip's "×" is **inside** the chip: one control, one accessible name.
-- `<FilterEmpty noun applied onClearAll />` — what a filtered index says when nothing is left. It
-  names the filter that emptied it and offers to clear that one. Pass `applied` in the order the
-  filters were switched on, so the last of them is the one that did it.
+The pieces `FilterBar` draws, exported because a page that is not an index may need one.
+
+- `<ResultCount shown total noun />` — "9 of 640 companies", **in that one wording whether or not
+  anything is filtering**, ticking over `MOTION.settleMs`, tabular so it never changes width. The
+  settled sentence is what a screen reader is given, once, `aria-live="polite" aria-atomic`.
+- `<FilterControl f={filter} />` — one filter, drawn the one way. The same component appears on the
+  row and inside the door, so a filter never looks like two things.
+- `<AppliedLine on search onClearSearch onClearAll />` — the line under the row. It grows in on the
+  first filter and collapses on the last, and it lists **every** filter that is on plus the search.
+  A chip's "×" is **inside** the chip: one control, one accessible name.
+- `<FilterEmpty noun filters search onClearSearch onClearAll />` — what a filtered index says when
+  nothing is left. It names the last filter switched on and offers to clear that one.
+
+`readFilter(f)` gives `{ name, value, on }` — the one reading rule — and `clearFilter(f)` puts one
+filter back to `any`. `filtersOn(filters)` is the ones that are on, and `filterSignature(props)` is
+what `useSettle` watches.
 
 ### The motion tokens: `MOTION`, `motionVars`, `useSettle`
 
@@ -126,12 +177,13 @@ Spread `motionVars` on any root to read them from CSS. Everything stops under
 `prefers-reduced-motion: reduce`: the transitions carry `motion-reduce:transition-none`, and
 `useReducedMotion()` is there for the movement JavaScript drives.
 
-`useSettle(signature)` is the rows' half. The list container spreads it, and when the signature
+`useSettle(signature)` is the rows' half. `IndexPage` already spreads it over its table, keyed on
+`filterSignature(filters)`; a page that draws its own list does the same. When the signature
 changes the new set arrives faded and two pixels high and settles into place. Out is instant; a dip
 in both directions is a flicker, not a settle.
 
 ```tsx
-const settle = useSettle(`${q}|${JSON.stringify(active)}`)
+const settle = useSettle(filterSignature(filters))
 <div {...settle}>{rows}</div>
 ```
 
@@ -345,13 +397,13 @@ Neither takes a padding, and `Section` no longer accepts one.
 ### `IndexPage` — the one index
 
 **How a page uses this.** It passes data, columns and acts. It cannot pass a class, a width or an
-order; the toolbar is handed in whole from the filters part.
+order; the filter row is declared as data and drawn by the pattern (see `FilterBar` above).
 
 ```tsx
 <IndexPage
   family="lists" title="Lists" count={lists.length}
   actions={[{ kind: "primary", label: "New list", onClick: create }]}
-  toolbar={<Toolbar … />}
+  filters={filters}
   columns={[
     { key: "records", header: "Records", priority: 1, numeric: true, cell: (l) => n(l.count) },
     { key: "owner", header: "Owner", priority: 3, cell: (l) => l.owner },
@@ -368,7 +420,7 @@ order; the toolbar is handed in whole from the filters part.
 and pass `sort`/`onSort`, and the header becomes a button showing the direction. Sorting never goes
 in the filter door. `acts` is the row's one visible act, drawn at rest before the `menu`; `subRow`
 returns content while the page has that row open and the template draws it as a full-width row
-under it. `BoardPage` takes the same `toolbar` node, so a board's row is an index's row.
+under it. `BoardPage` takes the same `filters` declaration, so a board's row is an index's row.
 
 **The theme decides the look.** No page and no part writes `rounded-*`, `shadow-*` or a colour:
 corners are square, a card is paper lifted off the page ground by the library's own shadow, and an
@@ -386,14 +438,16 @@ remaining pages move across.
 <IndexPage
   family="companies" title="Companies" count={3100}
   actions={[{ kind: "primary", label: "Find companies", onClick: find }]}
-  controls={controls} shown="260 of 3,100"
+  filters={filters}
   table={<Table>…</Table>}
   rows={rows.map(phoneRow)}
   pager={<Button variant="outline" size="sm" onClick={more}>Show 25 more</Button>}
   bulk={selected.length ? <BulkBar … /> : undefined} />
 ```
 
-`table` is the desktop body and `rows` the same things as a divided list for 400. Pass both.
+`table` is the desktop body and `rows` the same things as a divided list for 400. Pass both. It
+also takes a `toolbar` node, and **only the lesson stages may use it**: a lesson exists to show the
+version we are criticising and has to be allowed to draw it. No product page passes one.
 
 ### `MasterDetail` and `QueuePage`
 

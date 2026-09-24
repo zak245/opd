@@ -8,7 +8,6 @@
 // The record behind a row is the company record. This page builds no second one.
 import { useMemo, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,7 +18,7 @@ import { href } from "@/app/router"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Separator } from "@/components/ui/separator"
-import { Rows, Section, type SummaryFigure, type ToolbarControl, MetaLine } from "../../layouts"
+import { Rows, Section, type SummaryFigure, type Filter, MetaLine } from "../../layouts"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
@@ -147,27 +146,12 @@ export function AccountsPage({ session }: { session: Session }) {
    * may hold in front (LAYOUTS.md §2), so the windows are one joined segmented control with the
    * word in front of them.
    */
-  const windowControl: ToolbarControl[] = [{
+  const windowFilter: Filter[] = [{
+    kind: "many",
     name: "Renewals due",
-    node: (
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="t-label text-muted-foreground">Renewals</span>
-        <ToggleGroup
-          type="multiple"
-          variant="outline"
-          size="sm"
-          aria-label="Renewals due"
-          value={state.windows.map(String)}
-          onValueChange={(next) => setState({ windows: next.map(Number) })}
-        >
-          {[30, 60, 90].map((days) => (
-            <ToggleGroupItem key={days} value={String(days)} className="tabular-nums">
-              {days}d · {windowCount(days).n}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-    ),
+    value: state.windows.map(String),
+    onChange: (next) => setState({ windows: next.map(Number) }),
+    options: [30, 60, 90].map((days) => ({ value: String(days), label: `within ${days} days`, count: windowCount(days).n })),
   }]
 
   /** What sits above the table: a hand-off waiting for this seat, and what just happened. */
@@ -436,7 +420,7 @@ export function AccountsPage({ session }: { session: Session }) {
         searchText={(v) => `${v.account!.name} ${v.account!.domain} ${v.account!.champion} ${v.account!.owner}`}
         figures={figures}
         above={above}
-        extraControls={windowControl}
+        extraFilters={windowFilter}
         primary={session.role === "ae" && hasAe ? { label: "Send hand-off", onClick: () => toast("Pick a customer success manager; the account joins their queue.") } : undefined}
         chips={chips}
         doorFilters={doorFilters}

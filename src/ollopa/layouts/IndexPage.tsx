@@ -12,7 +12,7 @@
 // Anything a page needs that this shape has no room for goes in `slot`, the one named place, used
 // the same way by every page that needs it: the Deals board/table switch, Campaigns' three object
 // types, the Tasks list's "Expand all".
-import { Fragment, useMemo, type ReactNode } from "react"
+import { Fragment, useCallback, useMemo, type ReactNode } from "react"
 import { ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -25,11 +25,11 @@ import {
 import { openBeside, type BesideTarget } from "../beside"
 import { PageScroll } from "./frame"
 import { MetaLine } from "./MetaLine"
-import { PageFooter, PageHeader, Toolbar, type PageHeaderProps, type ToolbarControl } from "./parts"
+import { PageFooter, PageHeader, Toolbar, type PageHeaderProps } from "./parts"
 import { useFitColumns, type ColumnPriority } from "./columns"
 import {
-  FilterBar, FilterEmpty, useSettle,
-  type FilterBarProps, type FilterControl, type ResultCountProps,
+  FilterBar, FilterEmpty, clearFilter, filterSignature, useSettle,
+  type FilterBarProps, type ResultCountProps,
 } from "./filters"
 
 export interface IndexColumn<T> {
@@ -42,12 +42,6 @@ export interface IndexColumn<T> {
   priority?: ColumnPriority
   /** Right-aligned numbers, a fixed width: the template decides how, the page says which. */
   numeric?: boolean
-}
-
-export interface IndexControl {
-  /** Names the control in the door's label: "Stage", "Owner". */
-  name: string
-  node: ReactNode
 }
 
 export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
@@ -143,18 +137,28 @@ export function IndexPage<T>({
     return sort.dir === "desc" ? out.reverse() : out
   }, [given, columns, sort, nameSort])
 
-  // Every filter that is on, in the page's own order, so the empty state can name the last one.
-  const on: FilterControl[] = useMemo(
-    () => [...(filters?.controls ?? []), ...(filters?.behind ?? [])].filter((c) => Boolean(c.value)),
-    [filters],
-  )
   // A filter change does not swap the rows under the person: they settle, on the one duration and
   // the one curve the pattern owns (`MOTION`), and stand still under `prefers-reduced-motion`.
-  const settle = useSettle(`${filters?.search?.value ?? ""}|${on.map((c) => `${c.name}:${c.value}`).join("|")}|${rows.length}`)
+  const settle = useSettle(filters ? `${filterSignature(filters)}|${rows.length}` : rows.length)
+
+  // "Clear all" is the pattern's, derived from the filters themselves: no page writes one, and no
+  // page can write one that forgets a filter it added later.
+  const clearAll = useCallback(() => {
+    filters?.search?.onChange("")
+    for (const f of filters?.filters ?? []) clearFilter(f)
+  }, [filters])
 
   const noun = nounOf(filters)
   const nothing = empty ?? (filters
-    ? <FilterEmpty noun={noun} applied={on} onClearAll={filters.onClearAll} />
+    ? (
+      <FilterEmpty
+        noun={noun}
+        filters={filters.filters}
+        search={filters.search?.value}
+        onClearSearch={() => filters.search?.onChange("")}
+        onClearAll={clearAll}
+      />
+    )
     : "Nothing matches. Clear the search or a filter.")
 
   const span = fit.shown.length + 1 + (bulk ? 1 : 0) + (acts || menu ? 1 : 0)
@@ -305,14 +309,14 @@ export function IndexPage<T>({
 
 /** The older shape, kept while the pages that still compose their own table move across. */
 export interface LegacyIndexPageProps extends PageHeaderProps {
-  controls?: ToolbarControl[]
-  shown?: ReactNode
-  /** The count in three parts, so it ticks as the filters change. Wins over `shown`. */
-  result?: ResultCountProps
-  /** The one "Clear all" in the pattern. */
-  onClearAll?: () => void
-  /** The door's id, so it remembers whether it was left open. */
-  doorId?: string
+  /** The filtering pattern, exactly as `IndexPage` takes it. */
+  filters?: FilterBarProps
+  /**
+   * An already-built row. **Only the lesson stages use this**, because a lesson exists to show the
+   * version we are criticising and has to be allowed to draw it. No product page passes it: a page
+   * that can draw its own filter row can make its index look like a different product.
+   */
+  toolbar?: ReactNode
   table: ReactNode
   tableRef?: React.Ref<HTMLDivElement>
   rows?: ReactNode
@@ -323,17 +327,17 @@ export interface LegacyIndexPageProps extends PageHeaderProps {
 }
 
 export function LegacyIndexPage({
-  controls, shown, result, onClearAll, doorId, table, tableRef, rows, pager, bulk, above, children, ...header
+  filters, toolbar, table, tableRef, rows, pager, bulk, above, children, ...header
 }: LegacyIndexPageProps) {
   return (
     <PageScroll footer={bulk ? <PageFooter>{bulk}</PageFooter> : undefined}>
       <PageHeader {...header} />
       {above}
       <Card className="gap-0 overflow-hidden py-0">
-        {controls?.length ? (
+        {filters || toolbar ? (
           <>
             <CardHeader className="gap-2 py-3 [grid-template-columns:minmax(0,1fr)]">
-              <Toolbar controls={controls} count={shown} result={result} onClearAll={onClearAll} doorId={doorId} />
+              {filters ? <Toolbar {...filters} /> : toolbar}
             </CardHeader>
             <Separator />
           </>

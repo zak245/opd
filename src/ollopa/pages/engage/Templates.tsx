@@ -6,8 +6,6 @@
 // direction (IA-MAP 6.4h). "Used by" is a column, not a hover, because it is what a person needs
 // before they edit copy other people receive.
 import { useMemo, useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
 import { follow } from "../../chain"
 import { EmptyState } from "../../ui/EmptyState"
@@ -15,7 +13,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
-import { IndexPage, type IndexColumn } from "../../layouts"
+import { IndexPage, type FilterBarProps, type IndexColumn } from "../../layouts"
 import { Chip } from "../../ui/Identity"
 import { RowMenuButton, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
@@ -88,6 +86,7 @@ export function TemplatesPage({ session }: { session: Session }) {
   const [folder, setFolder] = usePersisted(key("folder"), "all")
   const [owner, setOwner] = usePersisted(key("owner"), "all")
   const [sort, setSort] = usePersisted<{ key: string; dir: "asc" | "desc" }>(key("sort"), { key: "lastUsed", dir: "desc" })
+  const [cols, setCols] = usePersisted(key("cols"), { owner: true, lastUsed: true, usedBy: true, updated: true })
 
   const folders = [...new Set(rowsAll.map((r) => r.folder))]
 
@@ -108,12 +107,12 @@ export function TemplatesPage({ session }: { session: Session }) {
     follow(`/ollopa/templates/${r.id}`, { route: "/ollopa/templates", title: h1Of("templates"), anchor: r.id })
 
   // The name, its kind and its folder are the template's first cell; these sit beside them.
-  const columns: IndexColumn<CopyRow>[] = [
+  const columns: IndexColumn<CopyRow>[] = ([
     { key: "owner", header: "Owner", priority: 2, cell: (r) => r.owner, sort: (a, c) => a.owner.localeCompare(c.owner) },
     { key: "lastUsed", header: "Last used", numeric: true, priority: 1, sort: (a, c) => a.lastUsed.localeCompare(c.lastUsed), cell: (r) => (r.lastUsed ? ago(r.lastUsed) : "Never") },
     { key: "usedBy", header: "Used by", priority: 1, cell: (r) => usedByLine(r) },
     { key: "updated", header: "Updated", numeric: true, priority: 3, sort: (a, c) => a.updated.localeCompare(c.updated), cell: (r) => (r.updated ? day(r.updated) : "—") },
-  ]
+  ] as IndexColumn<CopyRow>[]).filter((c) => cols[c.key as keyof typeof cols])
 
   useKeys(useMemo(() => [
     { keys: "/", label: "Search templates", run: focusSearch },
@@ -121,42 +120,25 @@ export function TemplatesPage({ session }: { session: Session }) {
     { keys: "k", label: "Previous template", run: () => moveRow(-1) },
   ], []))
 
-  /** The filtering pattern: the search, the folder and the owner, the count at the trailing edge. */
-  const filters = {
-    search: { value: q, onChange: setQ, placeholder: "Search templates by name or body text" },
-    controls: [
+  /** The filtering pattern (LAYOUTS.md §2). Data only: the pattern draws every control. */
+  const filters: FilterBarProps = {
+    search: { value: q, onChange: setQ },
+    filters: [
+      { kind: "one", name: "Folder", value: folder, onChange: setFolder, options: folders.map((f) => ({ value: f, label: f })) },
       {
-        name: "Folder",
-        value: folder === "all" ? undefined : folder,
-        onClear: () => setFolder("all"),
-        node: (
-          <Select value={folder} onValueChange={setFolder}>
-            <SelectTrigger className="h-8 w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Folder: all</SelectItem>
-              {folders.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ),
-      },
-      {
-        name: "Owner",
-        value: owner === "all" ? undefined : owner === "Mine" ? "mine" : owner,
-        onClear: () => setOwner("all"),
-        node: (
-          <Select value={owner} onValueChange={setOwner}>
-            <SelectTrigger className="h-8 w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Mine">Owner: mine</SelectItem>
-              <SelectItem value="all">Owner: everyone</SelectItem>
-              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ),
+        kind: "one", name: "Owner", value: owner, onChange: setOwner,
+        options: [{ value: "Mine", label: "mine" }, ...b.roles.map((r) => ({ value: r.user, label: r.user }))],
       },
     ],
+    display: {
+      columns: ([["owner", "Owner"], ["lastUsed", "Last used"], ["usedBy", "Used by"], ["updated", "Updated"]] as const)
+        .map(([id, label]) => ({ id, label, on: cols[id] })),
+      onColumns: (ids) => setCols({
+        owner: ids.includes("owner"), lastUsed: ids.includes("lastUsed"),
+        usedBy: ids.includes("usedBy"), updated: ids.includes("updated"),
+      }),
+    },
     count: { shown: rows.length, total: rowsAll.length, noun: "templates" },
-    onClearAll: () => { setQ(""); setFolder("all"); setOwner("all") },
     doorId: "templates",
   }
 
