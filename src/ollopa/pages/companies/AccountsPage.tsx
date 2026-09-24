@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
+import { href } from "@/app/router"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Separator } from "@/components/ui/separator"
@@ -253,13 +254,15 @@ export function AccountsPage({ session }: { session: Session }) {
         /* The row's own id on the name, so a return from the record lands on the name and the
            keyboard carries on from there rather than from the row's checkbox. */
         <div className="min-w-0" data-item={v.company.id} data-item-label={v.account!.name}>
-          <button
-            type="button"
+          {/* A real link, intercepted by the template: a plain click opens the account beside the
+              list, a modified one goes to the record (BUILD-CHAINS.md, mechanic 1). */}
+          <a
+            href={href(`/ollopa/companies/${v.company.id}`)}
             className="min-w-0 truncate font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            onClick={(e) => { e.stopPropagation(); openAccount(v) }}
+            onClick={(e) => { e.preventDefault(); openAccount(v) }}
           >
             {v.account!.name}
-          </button>
+          </a>
           <div className="truncate font-mono t-small text-muted-foreground">{v.account!.domain}</div>
         </div>
       ),
@@ -427,6 +430,7 @@ export function AccountsPage({ session }: { session: Session }) {
         total={all.length}
         rows={rows}
         rowKey={(v) => v.company.id}
+        beside={(v) => ({ kind: "company", id: v.company.id })}
         searchHint="Search accounts"
         noun="accounts"
         searchText={(v) => `${v.account!.name} ${v.account!.domain} ${v.account!.champion} ${v.account!.owner}`}

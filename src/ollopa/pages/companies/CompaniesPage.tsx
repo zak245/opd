@@ -121,13 +121,16 @@ export function CompaniesPage({ session }: { session: Session }) {
            keyboard carries on from there rather than from the row's checkbox. */
         <div className="min-w-0" data-item={v.company.id} data-item-label={v.company.name}>
           <div className="flex min-w-0 items-center gap-1.5">
-            <button
-              type="button"
+            {/* A real link: a plain click is intercepted by the template and opens the company
+                beside the list, and ⌘-click, the middle button and copy-link still reach the
+                record (BUILD-CHAINS.md, mechanic 1). */}
+            <a
+              href={href(`/ollopa/companies/${v.company.id}`)}
               className="min-w-0 truncate font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              onClick={(e) => { e.stopPropagation(); openCompany(v) }}
+              onClick={(e) => { e.preventDefault(); openCompany(v) }}
             >
               {v.company.name}
-            </button>
+            </a>
             {/* Safety state stays on the row whatever the columns say. */}
             {v.company.stage === "Do not prospect" && stageChip(v.company.stage)}
           </div>
@@ -411,6 +414,7 @@ export function CompaniesPage({ session }: { session: Session }) {
         total={b.counts.companies}
         rows={rows}
         rowKey={(v) => v.company.id}
+        beside={(v) => ({ kind: "company", id: v.company.id })}
         searchHint="Search a company, a domain or a person"
         noun="companies"
         searchText={(v) => `${v.company.name} ${v.company.domain} ${v.company.industry} ${v.contacts.map((c) => `${c.name} ${c.email}`).join(" ")}`}

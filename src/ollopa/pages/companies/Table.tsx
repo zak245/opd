@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Door } from "../../ui/Door"
 import { IndexPage, SummaryStrip, type SummaryFigure } from "../../layouts"
 import { FilterBar, FilterEmpty, type DoorItem, type FilterControl } from "../../layouts/filters"
+import type { BesideTarget } from "../../beside"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 import { type ColumnPriority } from "../../layouts/columns"
@@ -122,6 +123,11 @@ export interface DataTableProps<T> {
   pageSize?: number
   /** What this page is a list of, so the count says what it counts: "companies", "accounts". */
   noun?: string
+  /**
+   * What a plain click on the row's name opens beside the list. The template intercepts the click
+   * and adds the list and this row's place in it, so `[` and `]` walk the rows as shown.
+   */
+  beside?: (row: T) => BesideTarget | null
 }
 
 /* ------------------------------------------------------------------------------------- the table */
@@ -341,26 +347,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
     return (
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex min-w-0 items-start gap-2">
-          {/* Beside, not instead (BUILD-CHAINS.md, mechanic 1): a plain click on the row's name
-              opens the row beside the list rather than leaving the list for the record. A modified
-              click, the middle button and the keyboard's own `o` are left alone, and "Open the
-              page" is in the row's "…" — so the record is still one move away and still copyable.
-              This is the page doing it; when `IndexPage` grows its own `beside` prop it moves
-              there and every index gets it the same way. */}
-          <span
-            className="min-w-0"
-            onClickCapture={(e) => {
-              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
-              const hit = (e.target as HTMLElement).closest("a,button")
-              if (!hit || hit.getAttribute("role") === "checkbox") return
-              e.preventDefault()
-              e.stopPropagation()
-              cameFrom.current = (e.currentTarget as HTMLElement).closest("tr")
-              setGlancing(r)
-            }}
-          >
-            {p.columns[0]?.cell(r)}
-          </span>
+          {/* Beside, not instead: the template intercepts a plain click on the name and opens the
+              row beside the list (BUILD-CHAINS.md, mechanic 1). The cell only draws the link. */}
+          <span className="min-w-0">{p.columns[0]?.cell(r)}</span>
           {/* LAYOUTS.md §4: the primary act and the "…" are visible at rest. The rest of the acts
               are in the "…", where they already are — a row that carries four of them inline is a
               second line, and the index contract has no place of its own for row acts. */}
@@ -400,6 +389,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
           {p.above}
         </>
       }
+      beside={p.beside}
       columns={p.columns.slice(1).map((c) => ({ key: c.id, header: c.header, cell: c.cell, priority: c.priority }))}
       rows={shown}
       rowKey={p.rowKey}

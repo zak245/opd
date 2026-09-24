@@ -69,6 +69,12 @@ export interface DealCardProps {
   onEditingNextStep: (open: boolean) => void
   onSelect: (on: boolean) => void
   onGlance: () => void
+  /**
+   * A plain left click on the card's name: it opens the deal beside the board, carrying the
+   * column it sits in so `[` and `]` walk that column. The board passes the list; the card only
+   * decides that a plain click is a glance and a modified one is the link (BUILD-CHAINS.md 1).
+   */
+  onNameClick: (opener: HTMLElement) => void
   onOpen: () => void
   onMove: (stage: DealStage) => void
   onPatch: (patch: Partial<Deal>, said: string) => void
@@ -146,6 +152,8 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
 export function DealCard(p: DealCardProps) {
   const { deal, flags } = p
   const menuButton = useRef<HTMLButtonElement>(null)
+  /** Where the pointer went down on the name, so a drag that ends over it is not a click. */
+  const drag = useRef<{ x: number; y: number } | null>(null)
   const closed = deal.stage === WON_STAGE
   const initials = deal.owner.split(" ").map((w) => w[0]).join("").slice(0, 2)
 
@@ -212,7 +220,17 @@ export function DealCard(p: DealCardProps) {
             data-item={deal.id}
             data-item-label={deal.name}
             href={href(`/ollopa/deals/${deal.id}`)}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); p.onOpen() }}
+            // Where the pointer went down, so the click that ends a drag is not read as a click.
+            onPointerDown={(e) => { drag.current = { x: e.clientX, y: e.clientY } }}
+            onClick={(e) => {
+              e.stopPropagation()
+              // ⌘, Ctrl, Shift, Alt and the middle button are the link's: copy it, open a tab.
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+              const from = drag.current
+              if (from && Math.hypot(e.clientX - from.x, e.clientY - from.y) > 4) { e.preventDefault(); return }
+              e.preventDefault()
+              p.onNameClick(e.currentTarget)
+            }}
             className="t-body font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             {deal.name}

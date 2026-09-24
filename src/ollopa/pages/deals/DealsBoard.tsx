@@ -522,7 +522,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   /* --------------------------------------------------------------------------------- the column */
 
-  const renderCard = (deal: Deal) => (
+  const renderCard = (deal: Deal, index: number, list: Deal[]) => (
     <DealCard
       key={deal.id}
       deal={deal}
@@ -539,6 +539,8 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       onEditingNextStep={(open) => setEditingNext(open ? deal.id : null)}
       onSelect={(on) => setSelected((s) => (on ? [...s, deal.id] : s.filter((x) => x !== deal.id)))}
       onGlance={() => setGlance(deal.id)}
+      // The column the card sits in, in the order it is on screen: the pane walks that column.
+      onNameClick={(opener) => openBeside({ kind: "deal", id: deal.id, list: { ids: list.map((x) => x.id), index }, opener })}
       onOpen={() => leaveFor(`/ollopa/deals/${deal.id}`, deal.id)}
       onMove={(s) => move(deal.id, s)}
       onPatch={(change, said) => patch(deal.id, change, said)}
@@ -1066,9 +1068,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               }))}
               rows={sorted.slice(0, limit)}
               rowKey={(r) => r.id}
+              // The template intercepts a plain click on the name and opens the deal beside, with
+              // the rows in the order shown so `[` and `]` walk them. The link underneath stays
+              // real, so copy-link and a new tab still reach the record (LAYOUTS.md §2).
+              beside={(r) => ({ kind: "deal", id: r.id })}
               name={(r) => (
-                <button type="button" className="t-body text-left font-medium hover:underline"
-                        onClick={(e) => { e.stopPropagation(); setGlance(r.id) }}>{r.name}</button>
+                <a href={href(`/ollopa/deals/${r.id}`)} className="t-body font-medium hover:underline">{r.name}</a>
               )}
               menu={rowMenu}
               rowProps={(r) => ({
