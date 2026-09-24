@@ -10,8 +10,8 @@
     row mark  (none)
     mounted   /ollopa/inbox*@0
     h-scroll  doc=1440
-    [card] 3 d · Sep 10 overdue Cyrus Rossi I · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
-    [card] 3 d · Sep 10 overdue Kai Andersen  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Cyrus Rossi Interested Yes, worth  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Kai Andersen Interested I would wa · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
     [page body] (outside the four surfaces) · filled=1 (Send) · destructive=0 · links=0 · sentences=0
   [shot] shots/chains/review16/chains/07-work/01-inbox-1440.png
     replies   reply-r-7/c-629:Cyrus Rossi | reply-r-9/c-711:Kai Andersen | reply-r-13/c-20:Tara Okonkwo | reply-r-11/c-611:Kai Rossi
@@ -23,18 +23,18 @@
     h1        Inbox
     trail     (empty)
     pane      "Cyrus Rossi" / "Founder · Bramble Industries" w=448 doors=0 trans=0.2s
-    buttons   Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    buttons   All the fields | Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
     walker    1 of 4
     body      
-    focus     DIV "Cyrus Rossi Founder · Bramble Industries Open the page Title"  [inside the pane]
+    focus     DIV "Cyrus Rossi Founder · Bramble Industries All the fields Open"  [inside the pane]
     lit       (nothing lit)
-    row mark  3 d · Sep 10 overdue Cyrus Rossi Interested Founder · Bramble Industries Read as
+    row mark  Cyrus Rossi Interested Yes, worth twenty minutes. Sep 10 10 Sep · waiting 3 days
     mounted   /ollopa/inbox*@0
     h-scroll  doc=1440
     [pane] Cyrus Rossi · filled=0 · destructive=0 · links=1 · sentences=0
       A-CHECK disabled: "Add to a sequence" — beside it: Choose a sequence above
-    [card] 3 d · Sep 10 overdue Cyrus Rossi I · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
-    [card] 3 d · Sep 10 overdue Kai Andersen  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Cyrus Rossi Interested Yes, worth  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Kai Andersen Interested I would wa · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
     [page body] (outside the four surfaces) · filled=1 (Send) · destructive=0 · links=0 · sentences=0
   [shot] shots/chains/review16/chains/07-work/03-inbox-contact-1440.png
     nested    "(no deal offered inside the pane)"
@@ -43,62 +43,62 @@
     h1        Inbox
     trail     (empty)
     pane      "Cyrus Rossi" / "Founder · Bramble Industries" w=448 doors=0 trans=0.2s
-    buttons   Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    buttons   All the fields | Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
     walker    1 of 4
     body      
-    focus     DIV "Cyrus Rossi Founder · Bramble Industries Open the page Title"  [inside the pane]
+    focus     DIV "Cyrus Rossi Founder · Bramble Industries All the fields Open"  [inside the pane]
     lit       (nothing lit)
-    row mark  3 d · Sep 10 overdue Cyrus Rossi Interested Founder · Bramble Industries Read as
+    row mark  Cyrus Rossi Interested Yes, worth twenty minutes. Sep 10 10 Sep · waiting 3 days
     mounted   /ollopa/inbox*@0
     h-scroll  doc=1440
     [pane] Cyrus Rossi · filled=0 · destructive=0 · links=1 · sentences=0
       A-CHECK disabled: "Add to a sequence" — beside it: Choose a sequence above
-    [card] 3 d · Sep 10 overdue Cyrus Rossi I · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
-    [card] 3 d · Sep 10 overdue Kai Andersen  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Cyrus Rossi Interested Yes, worth  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Kai Andersen Interested I would wa · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
     [page body] (outside the four surfaces) · filled=1 (Send) · destructive=0 · links=0 · sentences=0
-    header    Cyrus Rossi Founder · Bramble Industries Open the page
+    header    Cyrus Rossi Founder · Bramble Industries All the fields Open the page
   [shot] shots/chains/review16/chains/07-work/04-inbox-nested-1440.png
-    deeper?   "(nothing deeper offered — correct)" → header "Cyrus Rossi Founder · Bramble Industries Open the page"
+    deeper?   "(nothing deeper offered — correct)" → header "Cyrus Rossi Founder · Bramble Industries All the fields Open the page"
   [shot] shots/chains/review16/chains/07-work/05-inbox-deeper-1440.png
   4. the one step back inside the pane
     hash      #/ollopa/inbox
     h1        Inbox
     trail     (empty)
-    pane      "Cyrus Rossi" / "Founder · Bramble Industries" w=448 doors=0 trans=0.2s
-    buttons   Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    pane      "Cyrus Rossi" / "Founder · Bramble Industries" w=672 doors=0 trans=0.2s
+    buttons   Just the glance | Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
     walker    1 of 4
     body      
-    focus     DIV "Cyrus Rossi Founder · Bramble Industries Open the page Title"  [inside the pane]
+    focus     DIV "Cyrus Rossi Founder · Bramble Industries Just the glance Ope"  [inside the pane]
     lit       (nothing lit)
-    row mark  3 d · Sep 10 overdue Cyrus Rossi Interested Founder · Bramble Industries Read as
+    row mark  Cyrus Rossi Interested Yes, worth twenty minutes. Sep 10 10 Sep · waiting 3 days
     mounted   /ollopa/inbox*@0
     h-scroll  doc=1440
     [pane] Cyrus Rossi · filled=0 · destructive=0 · links=1 · sentences=0
       A-CHECK disabled: "Add to a sequence" — beside it: Choose a sequence above
-    [card] 3 d · Sep 10 overdue Cyrus Rossi I · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
-    [card] 3 d · Sep 10 overdue Kai Andersen  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Cyrus Rossi Interested Yes, worth  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Kai Andersen Interested I would wa · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
     [page body] (outside the four surfaces) · filled=1 (Send) · destructive=0 · links=0 · sentences=0
   [shot] shots/chains/review16/chains/07-work/06-inbox-back-1440.png
   5. ] — the next reply
     hash      #/ollopa/inbox
     h1        Inbox
     trail     (empty)
-    pane      "Kai Andersen" / "Sales Enablement Lead · Oakline Group" w=448 doors=0 trans=0.2s
-    buttons   Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    pane      "Kai Andersen" / "Sales Enablement Lead · Oakline Group" w=672 doors=0 trans=0.2s
+    buttons   Just the glance | Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
     walker    2 of 4
     body      
-    focus     DIV "Kai Andersen Sales Enablement Lead · Oakline Group Open the "  [inside the pane]
+    focus     DIV "Kai Andersen Sales Enablement Lead · Oakline Group Just the "  [inside the pane]
     lit       (nothing lit)
-    row mark  3 d · Sep 10 overdue Kai Andersen Interested Sales Enablement Lead · Oakline Gro
+    row mark  Kai Andersen Interested I would want to see it running on our own data before we
     mounted   /ollopa/inbox*@0
     h-scroll  doc=1440
     [pane] Kai Andersen · filled=0 · destructive=0 · links=1 · sentences=0
       A-CHECK disabled: "Move to a sequence" — beside it: Choose a sequence above
-    [card] 3 d · Sep 10 overdue Cyrus Rossi I · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
-    [card] 3 d · Sep 10 overdue Kai Andersen  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Cyrus Rossi Interested Yes, worth  · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Kai Andersen Interested I would wa · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
     [page body] (outside the four surfaces) · filled=1 (Send) · destructive=0 · links=0 · sentences=0
   [shot] shots/chains/review16/chains/07-work/07-inbox-next-1440.png
-    after Esc focus=DIV "3 d · Sep 10 overdue Cyrus Rossi Interested Founde" visible=true
+    after Esc focus=DIV "Cyrus Rossi Interested Yes, worth twenty minutes. " visible=true
   6. Tasks
     hash      #/ollopa/tasks
     h1        Tasks
@@ -119,10 +119,10 @@
     h1        Tasks
     trail     (empty)
     pane      "Ben Novak" / "SDR Manager · Nettle Labs" w=448 doors=0 trans=0.2s
-    buttons   Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    buttons   All the fields | Choose a sequence | Add to a sequence | Add to list · Replied, no meeting yet | Create a call task
     walker    1 of 14
     body      
-    focus     DIV "Ben Novak SDR Manager · Nettle Labs Open the page Title SDR "  [inside the pane]
+    focus     DIV "Ben Novak SDR Manager · Nettle Labs All the fields Open the "  [inside the pane]
     lit       (nothing lit)
     row mark  Ben Novak SDR Manager · Nettle Labs
     mounted   /ollopa/tasks*@0
@@ -139,10 +139,10 @@
     h1        Tasks
     trail     (empty)
     pane      "Kai Kowalski" / "Chief Revenue Officer · Zephyr Partners" w=448 doors=0 trans=0.2s
-    buttons   Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
+    buttons   All the fields | Choose a sequence | Move to a sequence | Add to list · Replied, no meeting yet | Create a call task
     walker    1 of 13
     body      
-    focus     DIV "Kai Kowalski Chief Revenue Officer · Zephyr Partners Open th"  [inside the pane]
+    focus     DIV "Kai Kowalski Chief Revenue Officer · Zephyr Partners All the"  [inside the pane]
     lit       (nothing lit)
     row mark  Kai Kowalski Chief Revenue Officer · Zephyr Partners The deal
     mounted   /ollopa/tasks*@0
@@ -169,7 +169,7 @@
     [card] LinkedIn Greta Yilmaz · Brindle Wo · filled=0 · destructive=0 · links=0 · sentences=1
       B-SENTENCE "Greta Yilmaz" → "Send a connection request 3 days overdue"
   [shot] shots/chains/review16/chains/07-work/11-home-1440.png
-    items     15: t-11:LinkedIn Ben Novak · Nettl | t-13:LinkedIn Greta Yilmaz · Br | t-22:LinkedIn Freya Kowalski ·  | t-25:Email Kai Kowalski · Zephy | t-10:LinkedIn Elif Haddad · Jet | t-5:Call Luca Rossi · Northwin | r-6:Sami Novak · Gatehouse Lab | r-8:Ines Moreau · Nettle Labs 
+    items     16: t-11:LinkedIn Ben Novak · Nettl | t-13:LinkedIn Greta Yilmaz · Br | t-22:LinkedIn Freya Kowalski ·  | t-25:Email Kai Kowalski · Zephy | t-10:LinkedIn Elif Haddad · Jet | t-5:Call Luca Rossi · Northwin | r-6:Sami Novak · Gatehouse Lab | r-8:Ines Moreau · Nettle Labs 
     home reply r-6 "Reply r"
   10. a Home reply, opened
     hash      #/ollopa/inbox/r-6
@@ -181,8 +181,8 @@
     row mark  (none)
     mounted   /ollopa hidden inert@0 , /ollopa/inbox/r-6*@0
     h-scroll  doc=1440
-    [card] today · Sep 13 Sami Novak Question · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
-    [card] today · Sep 13 Soren Haddad Questi · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Sami Novak Question What happens t · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
+    [card] Soren Haddad Question What happens · filled=1 (Reply r) · destructive=0 · links=0 · sentences=0
     [page body] (outside the four surfaces) · filled=1 (Send) · destructive=0 · links=0 · sentences=0
   [shot] shots/chains/review16/chains/07-work/12-home-open-1440.png
   11. back on Home by the crumb (true)

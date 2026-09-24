@@ -10,8 +10,8 @@
     "file": "home-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 11,
       "sideways": 0,
@@ -30,8 +30,8 @@
     "file": "home-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 11,
       "sideways": 0,
@@ -50,10 +50,10 @@
     "file": "home-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -70,10 +70,10 @@
     "file": "home-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -90,11 +90,11 @@
     "file": "home-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 178,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 9,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -110,11 +110,11 @@
     "file": "home-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 178,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 9,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -130,10 +130,10 @@
     "file": "people-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -150,10 +150,10 @@
     "file": "people-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -170,10 +170,10 @@
     "file": "people-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 20,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -190,10 +190,10 @@
     "file": "people-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 20,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -210,10 +210,10 @@
     "file": "people-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -230,10 +230,10 @@
     "file": "people-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -250,7 +250,7 @@
     "file": "person-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 3,
@@ -270,7 +270,7 @@
     "file": "person-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 3,
@@ -290,10 +290,10 @@
     "file": "person-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 13,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -310,10 +310,10 @@
     "file": "person-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 13,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -330,7 +330,7 @@
     "file": "person-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 4,
@@ -350,7 +350,7 @@
     "file": "person-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 4,
@@ -370,10 +370,10 @@
     "file": "companies-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -390,10 +390,10 @@
     "file": "companies-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -410,10 +410,10 @@
     "file": "companies-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -430,10 +430,10 @@
     "file": "companies-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -450,10 +450,10 @@
     "file": "companies-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 30,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -470,10 +470,10 @@
     "file": "companies-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 30,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -490,7 +490,7 @@
     "file": "company-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 18,
       "nestedCards": 0,
       "clipped": 5,
@@ -510,7 +510,7 @@
     "file": "company-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 18,
       "nestedCards": 0,
       "clipped": 5,
@@ -530,10 +530,10 @@
     "file": "company-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 18,
       "nestedCards": 0,
-      "clipped": 7,
+      "clipped": 15,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -550,10 +550,10 @@
     "file": "company-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 18,
       "nestedCards": 0,
-      "clipped": 7,
+      "clipped": 15,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -570,10 +570,10 @@
     "file": "company-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 18,
       "nestedCards": 0,
-      "clipped": 6,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -590,10 +590,10 @@
     "file": "company-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 18,
       "nestedCards": 0,
-      "clipped": 6,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -610,10 +610,10 @@
     "file": "lists-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -630,10 +630,10 @@
     "file": "lists-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -650,10 +650,10 @@
     "file": "lists-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -670,10 +670,10 @@
     "file": "lists-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -690,11 +690,11 @@
     "file": "lists-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 15,
-      "sideways": 0,
+      "clipped": 17,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -710,11 +710,11 @@
     "file": "lists-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 15,
-      "sideways": 0,
+      "clipped": 17,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -730,10 +730,10 @@
     "file": "sequences-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -750,10 +750,10 @@
     "file": "sequences-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -770,10 +770,10 @@
     "file": "sequences-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -790,10 +790,10 @@
     "file": "sequences-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -810,10 +810,10 @@
     "file": "sequences-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 15,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -830,10 +830,10 @@
     "file": "sequences-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 15,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -850,7 +850,7 @@
     "file": "sequence-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 4,
       "nestedCards": 0,
       "clipped": 10,
@@ -870,7 +870,7 @@
     "file": "sequence-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 4,
       "nestedCards": 0,
       "clipped": 10,
@@ -890,11 +890,11 @@
     "file": "sequence-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 4,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 0,
+      "clipped": 20,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -910,11 +910,11 @@
     "file": "sequence-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 4,
       "nestedCards": 0,
-      "clipped": 12,
-      "sideways": 0,
+      "clipped": 20,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -930,7 +930,7 @@
     "file": "sequence-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 4,
       "nestedCards": 0,
       "clipped": 44,
@@ -950,7 +950,7 @@
     "file": "sequence-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 4,
       "nestedCards": 0,
       "clipped": 44,
@@ -970,10 +970,10 @@
     "file": "templates-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -990,10 +990,10 @@
     "file": "templates-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1010,10 +1010,10 @@
     "file": "templates-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1030,10 +1030,10 @@
     "file": "templates-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1050,10 +1050,10 @@
     "file": "templates-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 185,
+      "chrome": 93,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 22,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1070,10 +1070,10 @@
     "file": "templates-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 185,
+      "chrome": 93,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 22,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1090,10 +1090,10 @@
     "file": "inbox-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 6,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
@@ -1110,10 +1110,10 @@
     "file": "inbox-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 6,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
@@ -1130,10 +1130,10 @@
     "file": "inbox-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
@@ -1150,10 +1150,10 @@
     "file": "inbox-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "h2 \"Cyrus Rossi\""
@@ -1170,10 +1170,10 @@
     "file": "inbox-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 6,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1190,10 +1190,10 @@
     "file": "inbox-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 6,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1210,7 +1210,7 @@
     "file": "tasks-queue-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
@@ -1230,7 +1230,7 @@
     "file": "tasks-queue-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 2,
       "nestedCards": 0,
       "clipped": 2,
@@ -1250,10 +1250,10 @@
     "file": "tasks-queue-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1270,10 +1270,10 @@
     "file": "tasks-queue-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1290,7 +1290,7 @@
     "file": "tasks-queue-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 140,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -1310,7 +1310,7 @@
     "file": "tasks-queue-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 140,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -1330,7 +1330,7 @@
     "file": "tasks-list-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 10,
@@ -1350,7 +1350,7 @@
     "file": "tasks-list-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 10,
@@ -1370,10 +1370,10 @@
     "file": "tasks-list-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 20,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1390,10 +1390,10 @@
     "file": "tasks-list-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 20,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1410,7 +1410,7 @@
     "file": "tasks-list-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 140,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -1430,7 +1430,7 @@
     "file": "tasks-list-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 140,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -1450,11 +1450,11 @@
     "file": "deals-board-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 6,
-      "sideways": 0,
+      "clipped": 3,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1470,11 +1470,11 @@
     "file": "deals-board-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 6,
-      "sideways": 0,
+      "clipped": 3,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1490,11 +1490,11 @@
     "file": "deals-board-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 13,
-      "sideways": 1,
+      "clipped": 15,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1510,11 +1510,11 @@
     "file": "deals-board-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 13,
-      "sideways": 1,
+      "clipped": 15,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1530,11 +1530,11 @@
     "file": "deals-board-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1550,11 +1550,11 @@
     "file": "deals-board-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 2,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -1570,10 +1570,10 @@
     "file": "deals-table-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1590,10 +1590,10 @@
     "file": "deals-table-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1610,10 +1610,10 @@
     "file": "deals-table-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1630,10 +1630,10 @@
     "file": "deals-table-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1650,10 +1650,10 @@
     "file": "deals-table-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1670,10 +1670,10 @@
     "file": "deals-table-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1690,7 +1690,7 @@
     "file": "deal-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 6,
@@ -1710,7 +1710,7 @@
     "file": "deal-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 6,
@@ -1730,10 +1730,10 @@
     "file": "deal-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 8,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1750,10 +1750,10 @@
     "file": "deal-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 8,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1770,7 +1770,7 @@
     "file": "deal-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 8,
@@ -1790,7 +1790,7 @@
     "file": "deal-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 8,
@@ -1813,7 +1813,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1833,7 +1833,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1853,7 +1853,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 25,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1873,7 +1873,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 25,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1893,7 +1893,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1913,7 +1913,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1973,7 +1973,7 @@
       "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1993,7 +1993,7 @@
       "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2053,7 +2053,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 19,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2073,7 +2073,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 19,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2093,7 +2093,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 26,
+      "clipped": 32,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2113,7 +2113,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 26,
+      "clipped": 32,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2133,8 +2133,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 0,
+      "clipped": 25,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2153,8 +2153,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 0,
+      "clipped": 25,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2213,7 +2213,7 @@
       "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2233,7 +2233,7 @@
       "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2333,7 +2333,7 @@
       "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2353,7 +2353,7 @@
       "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2413,7 +2413,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 5,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2433,7 +2433,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 5,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2453,7 +2453,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2473,7 +2473,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2493,7 +2493,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2513,7 +2513,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2530,7 +2530,7 @@
     "file": "workflow-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 10,
       "nestedCards": 0,
       "clipped": 3,
@@ -2550,7 +2550,7 @@
     "file": "workflow-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 10,
       "nestedCards": 0,
       "clipped": 3,
@@ -2570,10 +2570,10 @@
     "file": "workflow-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 10,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2590,10 +2590,10 @@
     "file": "workflow-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 10,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2610,7 +2610,7 @@
     "file": "workflow-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 10,
       "nestedCards": 0,
       "clipped": 4,
@@ -2630,7 +2630,7 @@
     "file": "workflow-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 10,
       "nestedCards": 0,
       "clipped": 4,
@@ -2650,7 +2650,7 @@
     "file": "requests-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 5,
@@ -2670,7 +2670,7 @@
     "file": "requests-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 5,
@@ -2690,10 +2690,10 @@
     "file": "requests-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 27,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2710,10 +2710,10 @@
     "file": "requests-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 27,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2730,10 +2730,10 @@
     "file": "requests-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2750,10 +2750,10 @@
     "file": "requests-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 14,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2770,7 +2770,7 @@
     "file": "reports-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 2,
@@ -2790,7 +2790,7 @@
     "file": "reports-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 2,
@@ -2810,10 +2810,10 @@
     "file": "reports-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2830,10 +2830,10 @@
     "file": "reports-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2850,7 +2850,7 @@
     "file": "reports-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 2,
@@ -2870,7 +2870,7 @@
     "file": "reports-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 2,
@@ -2890,7 +2890,7 @@
     "file": "agents-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 205,
+      "chrome": 114,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2910,7 +2910,7 @@
     "file": "agents-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 205,
+      "chrome": 114,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2930,12 +2930,12 @@
     "file": "agents-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 205,
+      "chrome": 114,
       "cards": 6,
       "nestedCards": 0,
-      "clipped": 45,
+      "clipped": 58,
       "sideways": 0,
-      "pageScrollsSideways": true,
+      "pageScrollsSideways": false,
       "focused": "body"
     }
   },
@@ -2950,12 +2950,12 @@
     "file": "agents-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 205,
+      "chrome": 114,
       "cards": 6,
       "nestedCards": 0,
-      "clipped": 45,
+      "clipped": 58,
       "sideways": 0,
-      "pageScrollsSideways": true,
+      "pageScrollsSideways": false,
       "focused": "body"
     }
   },
@@ -2970,7 +2970,7 @@
     "file": "agents-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 160,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -2990,7 +2990,7 @@
     "file": "agents-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 160,
       "cards": 6,
       "nestedCards": 0,
       "clipped": 44,
@@ -3010,7 +3010,7 @@
     "file": "settings-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3030,7 +3030,7 @@
     "file": "settings-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3050,10 +3050,10 @@
     "file": "settings-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3070,10 +3070,10 @@
     "file": "settings-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3090,7 +3090,7 @@
     "file": "settings-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3110,7 +3110,7 @@
     "file": "settings-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3130,7 +3130,7 @@
     "file": "settings-you-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3150,7 +3150,7 @@
     "file": "settings-you-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3170,10 +3170,10 @@
     "file": "settings-you-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3190,10 +3190,10 @@
     "file": "settings-you-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3210,7 +3210,7 @@
     "file": "settings-you-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 11,
@@ -3230,7 +3230,7 @@
     "file": "settings-you-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 11,
@@ -3250,7 +3250,7 @@
     "file": "settings-workspace-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3270,7 +3270,7 @@
     "file": "settings-workspace-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3290,10 +3290,10 @@
     "file": "settings-workspace-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3310,10 +3310,10 @@
     "file": "settings-workspace-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3330,7 +3330,7 @@
     "file": "settings-workspace-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3350,7 +3350,7 @@
     "file": "settings-workspace-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3370,7 +3370,7 @@
     "file": "settings-how-your-team-works-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3390,7 +3390,7 @@
     "file": "settings-how-your-team-works-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3410,10 +3410,10 @@
     "file": "settings-how-your-team-works-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3430,10 +3430,10 @@
     "file": "settings-how-your-team-works-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3450,7 +3450,7 @@
     "file": "settings-how-your-team-works-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3470,7 +3470,7 @@
     "file": "settings-how-your-team-works-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3490,7 +3490,7 @@
     "file": "settings-team-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3510,7 +3510,7 @@
     "file": "settings-team-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3530,10 +3530,10 @@
     "file": "settings-team-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3550,10 +3550,10 @@
     "file": "settings-team-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3570,7 +3570,7 @@
     "file": "settings-team-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3590,7 +3590,7 @@
     "file": "settings-team-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3610,7 +3610,7 @@
     "file": "settings-email-sending-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3630,7 +3630,7 @@
     "file": "settings-email-sending-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3650,10 +3650,10 @@
     "file": "settings-email-sending-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3670,10 +3670,10 @@
     "file": "settings-email-sending-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3690,7 +3690,7 @@
     "file": "settings-email-sending-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3710,7 +3710,7 @@
     "file": "settings-email-sending-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3730,7 +3730,7 @@
     "file": "settings-prospecting-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3750,7 +3750,7 @@
     "file": "settings-prospecting-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3770,10 +3770,10 @@
     "file": "settings-prospecting-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3790,10 +3790,10 @@
     "file": "settings-prospecting-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3810,7 +3810,7 @@
     "file": "settings-prospecting-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3830,7 +3830,7 @@
     "file": "settings-prospecting-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3850,7 +3850,7 @@
     "file": "settings-pipeline-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3870,7 +3870,7 @@
     "file": "settings-pipeline-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3890,10 +3890,10 @@
     "file": "settings-pipeline-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3910,10 +3910,10 @@
     "file": "settings-pipeline-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -3930,7 +3930,7 @@
     "file": "settings-pipeline-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3950,7 +3950,7 @@
     "file": "settings-pipeline-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -3970,7 +3970,7 @@
     "file": "settings-sequences-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -3990,7 +3990,7 @@
     "file": "settings-sequences-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4010,10 +4010,10 @@
     "file": "settings-sequences-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4030,10 +4030,10 @@
     "file": "settings-sequences-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4050,7 +4050,7 @@
     "file": "settings-sequences-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4070,7 +4070,7 @@
     "file": "settings-sequences-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4090,7 +4090,7 @@
     "file": "settings-scoring-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4110,7 +4110,7 @@
     "file": "settings-scoring-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4130,10 +4130,10 @@
     "file": "settings-scoring-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4150,10 +4150,10 @@
     "file": "settings-scoring-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4170,7 +4170,7 @@
     "file": "settings-scoring-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4190,7 +4190,7 @@
     "file": "settings-scoring-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4210,7 +4210,7 @@
     "file": "settings-agents-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4230,7 +4230,7 @@
     "file": "settings-agents-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4250,10 +4250,10 @@
     "file": "settings-agents-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4270,10 +4270,10 @@
     "file": "settings-agents-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4290,7 +4290,7 @@
     "file": "settings-agents-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4310,7 +4310,7 @@
     "file": "settings-agents-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4330,7 +4330,7 @@
     "file": "settings-integrations-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4350,7 +4350,7 @@
     "file": "settings-integrations-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4370,10 +4370,10 @@
     "file": "settings-integrations-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4390,10 +4390,10 @@
     "file": "settings-integrations-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4410,7 +4410,7 @@
     "file": "settings-integrations-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4430,7 +4430,7 @@
     "file": "settings-integrations-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4450,7 +4450,7 @@
     "file": "settings-developer-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4470,7 +4470,7 @@
     "file": "settings-developer-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4490,10 +4490,10 @@
     "file": "settings-developer-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4510,10 +4510,10 @@
     "file": "settings-developer-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4530,7 +4530,7 @@
     "file": "settings-developer-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4550,7 +4550,7 @@
     "file": "settings-developer-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4570,7 +4570,7 @@
     "file": "settings-plan-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4590,7 +4590,7 @@
     "file": "settings-plan-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -4610,10 +4610,10 @@
     "file": "settings-plan-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4630,10 +4630,10 @@
     "file": "settings-plan-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4650,7 +4650,7 @@
     "file": "settings-plan-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4670,7 +4670,7 @@
     "file": "settings-plan-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -4690,7 +4690,7 @@
     "file": "connect-1-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -4710,7 +4710,7 @@
     "file": "connect-1-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -4730,10 +4730,10 @@
     "file": "connect-1-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4750,10 +4750,10 @@
     "file": "connect-1-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4770,7 +4770,7 @@
     "file": "connect-1-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -4790,7 +4790,7 @@
     "file": "connect-1-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -4810,7 +4810,7 @@
     "file": "connect-5-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -4830,7 +4830,7 @@
     "file": "connect-5-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -4850,10 +4850,10 @@
     "file": "connect-5-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4870,10 +4870,10 @@
     "file": "connect-5-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4890,7 +4890,7 @@
     "file": "connect-5-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -4910,7 +4910,7 @@
     "file": "connect-5-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -4930,7 +4930,7 @@
     "file": "import-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -4950,7 +4950,7 @@
     "file": "import-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 2,
@@ -4970,10 +4970,10 @@
     "file": "import-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -4990,10 +4990,10 @@
     "file": "import-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5010,7 +5010,7 @@
     "file": "import-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -5030,7 +5030,7 @@
     "file": "import-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
       "clipped": 3,
@@ -5050,7 +5050,7 @@
     "file": "integration-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 2,
@@ -5070,7 +5070,7 @@
     "file": "integration-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 2,
@@ -5090,10 +5090,10 @@
     "file": "integration-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5110,10 +5110,10 @@
     "file": "integration-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5130,7 +5130,7 @@
     "file": "integration-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
@@ -5150,7 +5150,7 @@
     "file": "integration-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 3,
       "nestedCards": 0,
       "clipped": 3,
@@ -5170,7 +5170,7 @@
     "file": "job-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
       "clipped": 2,
@@ -5190,7 +5190,7 @@
     "file": "job-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
       "clipped": 2,
@@ -5210,10 +5210,10 @@
     "file": "job-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5230,10 +5230,10 @@
     "file": "job-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5250,7 +5250,7 @@
     "file": "job-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
       "clipped": 3,
@@ -5270,7 +5270,7 @@
     "file": "job-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 5,
       "nestedCards": 0,
       "clipped": 3,
@@ -5290,7 +5290,7 @@
     "file": "developer-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 0,
       "nestedCards": 0,
       "clipped": 4,
@@ -5310,7 +5310,7 @@
     "file": "developer-1440-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 0,
       "nestedCards": 0,
       "clipped": 4,
@@ -5330,10 +5330,10 @@
     "file": "developer-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 0,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5350,10 +5350,10 @@
     "file": "developer-1024-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 0,
       "nestedCards": 0,
-      "clipped": 4,
+      "clipped": 18,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5370,7 +5370,7 @@
     "file": "developer-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 0,
       "nestedCards": 0,
       "clipped": 4,
@@ -5390,7 +5390,7 @@
     "file": "developer-400-dark.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 0,
       "nestedCards": 0,
       "clipped": 4,
@@ -5650,10 +5650,10 @@
     "file": "act-row-hover-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5670,10 +5670,10 @@
     "file": "act-row-hover-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5690,10 +5690,10 @@
     "file": "act-row-focus-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "input[Search people by name, title, company or email] \"\""
@@ -5710,10 +5710,10 @@
     "file": "act-row-focus-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "input[Search people by name, title, company or email] \"\""
@@ -5730,13 +5730,13 @@
     "file": "act-pane-open-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 0,
+      "clipped": 4,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
     }
   },
   {
@@ -5750,13 +5750,13 @@
     "file": "act-pane-open-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
     }
   },
   {
@@ -5770,13 +5770,13 @@
     "file": "act-pane-next-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 0,
+      "clipped": 4,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
     }
   },
   {
@@ -5790,13 +5790,13 @@
     "file": "act-pane-next-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
     }
   },
   {
@@ -5810,13 +5810,13 @@
     "file": "act-pane-step-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 0,
+      "clipped": 4,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
     }
   },
   {
@@ -5830,13 +5830,95 @@
     "file": "act-pane-step-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleWayfare SystemsCold · 3 conta\""
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
+    }
+  },
+  {
+    "scene": "act-pane-expanded",
+    "page": "People",
+    "caption": "The pane, widened over the page",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-pane-expanded-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
+    }
+  },
+  {
+    "scene": "act-pane-expanded",
+    "page": "People",
+    "caption": "The pane, widened over the page",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-pane-expanded-400-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "div \"From People · row Mateo NovakWayfare Sys\""
+    }
+  },
+  {
+    "scene": "act-quick-look-expanded",
+    "page": "People",
+    "caption": "The quick look, widened over the table",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 1440,
+    "theme": "light",
+    "file": "act-quick-look-expanded-1440-light.png",
+    "notes": [],
+    "measured": {
+      "chrome": 56,
+      "cards": 2,
+      "nestedCards": 0,
+      "clipped": 4,
+      "sideways": 1,
+      "pageScrollsSideways": false,
+      "focused": "div \"From People · row Mateo NovakMateo Novak\""
+    }
+  },
+  {
+    "scene": "act-quick-look-expanded",
+    "page": "People",
+    "caption": "The quick look, widened over the table",
+    "route": "/ollopa/people",
+    "seat": "meridian:sdr",
+    "width": 400,
+    "theme": "light",
+    "file": "act-quick-look-expanded-400-light.png",
+    "notes": [
+      "no pane"
+    ],
+    "measured": {
+      "chrome": 56,
+      "cards": 1,
+      "nestedCards": 0,
+      "clipped": 3,
+      "sideways": 0,
+      "pageScrollsSideways": false,
+      "focused": "input[Search people by name, title, company or email] \"\""
     }
   },
   {
@@ -5850,13 +5932,13 @@
     "file": "act-row-menu-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div#radix-_r_p_ \"Quick lookEnterOpen the full recordoSequ\""
+      "focused": "div#radix-_r_u_ \"Quick lookEnterOpen the full recordoSequ\""
     }
   },
   {
@@ -5870,13 +5952,13 @@
     "file": "act-row-menu-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "div#radix-_r_1e_ \"Quick lookEnterOpen the full recordoSequ\""
+      "focused": "div#radix-_r_1o_ \"Quick lookEnterOpen the full recordoSequ\""
     }
   },
   {
@@ -5890,7 +5972,7 @@
     "file": "act-dialog-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 7,
@@ -5910,7 +5992,7 @@
     "file": "act-dialog-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 9,
@@ -5930,7 +6012,7 @@
     "file": "act-door-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 152,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 3,
@@ -5950,7 +6032,7 @@
     "file": "act-door-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 174,
+      "chrome": 56,
       "cards": 14,
       "nestedCards": 0,
       "clipped": 12,
@@ -5970,8 +6052,8 @@
     "file": "act-expand-all-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 11,
       "sideways": 0,
@@ -5990,11 +6072,11 @@
     "file": "act-expand-all-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 178,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 9,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "button \"Collapse all\""
     }
@@ -6010,8 +6092,8 @@
     "file": "act-palette-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 12,
       "sideways": 0,
@@ -6030,11 +6112,11 @@
     "file": "act-palette-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 178,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 10,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "input[Search or jump to] \"\""
     }
@@ -6050,13 +6132,13 @@
     "file": "act-bell-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
-      "clipped": 13,
+      "clipped": 20,
       "sideways": 0,
       "pageScrollsSideways": false,
-      "focused": "button \"Unread only\""
+      "focused": "button \"All\""
     }
   },
   {
@@ -6070,13 +6152,13 @@
     "file": "act-bell-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 178,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
-      "clipped": 11,
-      "sideways": 2,
+      "clipped": 20,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "button \"Unread only\""
+      "focused": "button \"All\""
     }
   },
   {
@@ -6090,13 +6172,13 @@
     "file": "act-quick-look-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 3,
-      "sideways": 0,
+      "clipped": 4,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div \"From PeopleMateo NovakOpen the pageTitle\""
+      "focused": "div \"From People · row Mateo NovakMateo Novak\""
     }
   },
   {
@@ -6110,10 +6192,10 @@
     "file": "act-quick-look-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "input[Search people by name, title, company or email] \"\""
@@ -6130,10 +6212,10 @@
     "file": "act-divider-left-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -6150,10 +6232,10 @@
     "file": "act-divider-left-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 20,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -6170,10 +6252,10 @@
     "file": "act-divider-right-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 6,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -6190,10 +6272,10 @@
     "file": "act-divider-right-1024-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 16,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -6210,13 +6292,13 @@
     "file": "act-card-drag-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 11,
       "nestedCards": 0,
-      "clipped": 6,
-      "sideways": 0,
+      "clipped": 3,
+      "sideways": 2,
       "pageScrollsSideways": false,
-      "focused": "a \"Gatehouse Systems · Platform\""
+      "focused": "li[Gatehouse Systems · Platform, €5k, Qualified. Enter for the quick look, O for the record, M for the menu.] \"Gatehouse Systems · PlatformGatehouse Sy\""
     }
   },
   {
@@ -6230,13 +6312,13 @@
     "file": "act-card-drag-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 2,
-      "sideways": 1,
+      "clipped": 3,
+      "sideways": 2,
       "pageScrollsSideways": false,
-      "focused": "a \"Gatehouse Systems · Platform\""
+      "focused": "li[Gatehouse Systems · Platform, €5k, Qualified. Enter for the quick look, O for the record, M for the menu.] \"Gatehouse Systems · PlatformGatehouse Sy\""
     }
   },
   {
@@ -6250,7 +6332,7 @@
     "file": "act-trail-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
       "clipped": 3,
@@ -6270,7 +6352,7 @@
     "file": "act-trail-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 8,
       "nestedCards": 0,
       "clipped": 5,
@@ -6290,10 +6372,10 @@
     "file": "act-return-cue-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 125,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 9,
+      "clipped": 10,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "tr \"Mateo NovakVP SalesChanged jobWayfare Sy\""
@@ -6310,10 +6392,10 @@
     "file": "act-return-cue-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 2,
+      "clipped": 3,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "a \"Mateo Novak\""
@@ -6330,13 +6412,13 @@
     "file": "act-phone-sheet-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 178,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
       "clipped": 10,
-      "sideways": 2,
+      "sideways": 1,
       "pageScrollsSideways": false,
-      "focused": "div#radix-_r_1g_ \"SidebarDisplays the mobile sidebar.ollop\""
+      "focused": "div#radix-_r_1h_ \"SidebarDisplays the mobile sidebar.ollop\""
     }
   },
   {
@@ -6350,7 +6432,7 @@
     "file": "act-phone-bar-400-light.png",
     "notes": [],
     "measured": {
-      "chrome": 148,
+      "chrome": 56,
       "cards": 7,
       "nestedCards": 0,
       "clipped": 8,
@@ -6370,10 +6452,10 @@
     "file": "act-sidebar-collapsed-1440-light.png",
     "notes": [],
     "measured": {
-      "chrome": 155,
-      "cards": 4,
+      "chrome": 56,
+      "cards": 5,
       "nestedCards": 0,
-      "clipped": 11,
+      "clipped": 21,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "button[Toggle Sidebar] \"\""
