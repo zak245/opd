@@ -1,10 +1,11 @@
-// The health strip and the set-up door: the state of the workspace, above everything, without a click.
+// The state of the workspace, on the page that owns it.
 //
-// Only what needs attention gets a line of its own; what is fine is one sentence, because the bounce
-// guard state and the credit burn are decisions and are never behind a door. A bounce trip links to
-// where it is fixed, which is a different place in each of three cases: the paused sequence when one
-// sequence tripped, Sequences filtered to auto-paused when several did, and Settings when the trip is
-// mailbox-level and belongs to no single sequence.
+// REVIEW-ALERTS.md §5: there is no status row and no band of all-clears. "Credits on track" and
+// "Sending healthy" are never said — an all-clear is the absence of the band — and every number that
+// is worth reading keeps its numbers and sits in Home's own body, as a section with its rows, next
+// to the thing it is about. A bounce trip links to where it is fixed, which is a different place in
+// each of three cases: the paused sequence when one sequence tripped, Sequences filtered to
+// auto-paused when several did, and Settings when the trip is mailbox-level.
 import { useState } from "react"
 import { href } from "@/app/router"
 import { follow } from "../../chain"
@@ -15,14 +16,19 @@ import { Door, type Disclosure, type HealthLine } from "../../ui"
 import type { HomeData, SetupRow } from "./data"
 import { count } from "./format"
 import { Rows } from "../../layouts"
+import { Row, RowList, Section } from "./rows"
 
 const RANK = { error: 0, warning: 1, info: 2 }
 
+/**
+ * What about the workspace is worth a row on Home. Only what is not fine: nothing here reassures.
+ * Each row keeps its numbers, because the row is the only place they are now said.
+ */
 export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
   const h = data.health
-  // The strip carries an item for the seats that actually watch it: the seat's weekly use of the item,
-  // not just whether the seat has it at all. Credit burn is the exception — it is the price of the
-  // workspace, so anyone who holds it sees it (spec 01 §3.8, the strip row).
+  // The section carries an item for the seats that actually watch it: the seat's weekly use of the
+  // item, not just whether the seat has it at all. Credit burn is the exception — it is the price of
+  // the workspace, so anyone who holds it sees it (spec 01 §3.8).
   const holds = (id: string) => d.weekly(id) >= 8
   const lines: HealthLine[] = []
 
@@ -31,7 +37,7 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
       kind: h.bounceGuard === "paused" ? "error" : "warning",
       text: h.bounceGuard === "paused"
         ? `Bounce guard paused sending · ${h.bounceRate}% of ${count(h.bounceVolume)} sent — it pauses at ${h.guard.pausePercent}%`
-        : `Bounce ${h.bounceRate}% · the guard warns at ${h.guard.warnPercent}% and pauses at ${h.guard.pausePercent}%`,
+        : `Bounce ${h.bounceRate}% of ${count(h.bounceVolume)} sent · the guard warns at ${h.guard.warnPercent}% and pauses at ${h.guard.pausePercent}%`,
       href: href(h.bounceHref),
     })
   }
@@ -60,13 +66,12 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
     })
   }
 
-  if (d.weekly("home.health.credits") > 0) {
-    const tight = h.daysOfCredit <= 21
+  // Only when the cap is close. "Credits on track" is an all-clear and is never said; the balance
+  // and the burn are already on the credits pill and in Settings › Plan.
+  if (d.weekly("home.health.credits") > 0 && h.daysOfCredit <= 21) {
     lines.push({
-      kind: tight ? "warning" : "info",
-      text: tight
-        ? `Credits: at ${count(h.credits.burnPerWeek)} a week the cap is reached on ${h.runsOutOn}`
-        : `Credits on track · ${count(h.credits.balance)} left, ${count(h.credits.burnPerWeek)} a week, cap reached ${h.runsOutOn}`,
+      kind: "warning",
+      text: `Credits: at ${count(h.credits.burnPerWeek)} a week the cap is reached on ${h.runsOutOn} · ${count(h.credits.balance)} left`,
       href: href("/ollopa/settings/plan?row=plan.credits"),
     })
   }
@@ -79,21 +84,35 @@ export function healthLines(data: HomeData, d: Disclosure): HealthLine[] {
     })
   }
 
-  if (holds("home.health.bounce") && h.bounceGuard === "ok") {
-    const clean = holds("home.health.sync") && h.syncErrors === 0
-    lines.push({
-      kind: "info",
-      text: `Sending healthy · bounce ${h.bounceRate}%${clean ? " · sync clean" : ""}`,
-      href: href("/ollopa/settings/email-sending?row=mail.bounce-guard"),
-    })
-  }
-
   return lines.sort((a, b) => RANK[a.kind] - RANK[b.kind])
 }
 
-/** True when a line needs a human: the strip carries a border as well as the words (never colour alone). */
+/** True when a line needs a human. */
 export function needsAttention(lines: HealthLine[]): boolean {
   return lines.some((l) => l.kind !== "info")
+}
+
+/**
+ * The workspace's own state, as a tile of Home. It is absent when there is nothing wrong: an
+ * all-clear is the absence of the section, not a row saying everything is fine.
+ */
+export function Health({ lines, order }: { lines: HealthLine[]; order: number }) {
+  if (lines.length === 0) return null
+  const open = (l: HealthLine) => follow(l.href.replace(/^#/, ""), originHere("home-health"))
+  return (
+    <Section id="home-health" title="The workspace" count={lines.length} order={order}
+             link={{ label: "Settings", to: "/ollopa/settings" }}>
+      <RowList label="The workspace">
+        {lines.map((l) => (
+          <Row key={l.text} itemId={l.text} itemLabel={l.text} onEnter={() => open(l)} keys={{ o: () => open(l) }}>
+            {/* The word carries the state, never the ink alone (DESIGN.md §5). */}
+            <span className="min-w-0 flex-1">{l.text}</span>
+            <button type="button" className="shrink-0 underline underline-offset-4" onClick={() => open(l)}>Open</button>
+          </Row>
+        ))}
+      </RowList>
+    </Section>
+  )
 }
 
 /**

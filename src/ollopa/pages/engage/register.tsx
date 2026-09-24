@@ -274,8 +274,8 @@ const ListBeside: BesideComponent = ({ session, id }) => {
         field("detail.filters", list.mode === "segment" ? (
           <Field label="Filters">
             <span className="flex flex-wrap gap-1">
-              {list.filters.map((f, i) => <span key={i} className="rounded-full border px-2 py-0.5 text-xs">{f.field} {f.op} {f.value}</span>)}
-              {list.suppressions.map((s) => <span key={s} className="rounded-full border border-dashed px-2 py-0.5 text-xs text-muted-foreground">excludes {s}</span>)}
+              {list.filters.map((f, i) => <span key={i} className="border px-2 py-0.5 text-xs">{f.field} {f.op} {f.value}</span>)}
+              {list.suppressions.map((s) => <span key={s} className="border border-dashed px-2 py-0.5 text-xs text-muted-foreground">excludes {s}</span>)}
             </span>
           </Field>
         ) : null),

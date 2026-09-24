@@ -4,14 +4,14 @@
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
-import { AlertTriangle, ChevronLeft, CircleAlert, Grid3x3, Info, Megaphone, Minus, Plus, Search, TriangleAlert, X } from "lucide-react"
+import { ChevronLeft, Grid3x3, Minus, Plus, Search, TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Kbd } from "@/components/ui/kbd"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertTitle } from "@/components/ui/alert"
 import { href, navigate, useRoute } from "@/app/router"
 import { businessById } from "../data/businesses"
 import { seedFor } from "../data/seed"
@@ -30,12 +30,13 @@ import {
   SidebarRail, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar"
 import { BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Actions, type Action } from "../ui/Actions"
 import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
 import { Beside } from "../ui/Beside"
 import { back, clearTrail, crumbName, lightUp, showReturn, takeArrival, takeArrivalHandled, takeReturnCue, useTrail, type Origin } from "../chain"
 import { notificationsFor, TODAY, type Kind } from "./notifications"
-import { useBanner, usePageAlerts, type AlertItem } from "./banner"
+import { usePageAlerts, type AlertItem } from "./banner"
 import { usePhone } from "../layouts/parts"
 import { exposureDue, plusTwoWeeks } from "./signals"
 
@@ -44,8 +45,16 @@ const COLLAPSE_KEY = "ollopa.sidebar"
 /** The interrupting kinds that read as danger rather than as a warning, which sets the Alert's variant. */
 const DANGER_KINDS = new Set<Kind>(["bounce-guard", "sync-error", "credits-low"])
 
-/** The glyph on a health badge, so the row never leans on its ink alone. */
-const HEALTH_ICON = { error: CircleAlert, warning: AlertTriangle, info: Info }
+/**
+ * The page a band's door leads to, named by the sidebar's own word for it. A door is labelled by
+ * where the rest are decided, never by a count (RULES.md rule 4 and rule 7).
+ */
+function placeOf(target: string | undefined): string | null {
+  if (!target) return null
+  const path = target.replace(/^#/, "").replace(/^\/ollopa\/?/, "").split(/[/?#]/)[0]
+  if (!path) return "Home"
+  return NAV.find((n) => n.page === path)?.label ?? null
+}
 
 function SidebarRow({ entry, page, onAnswer }: { entry: SidebarEntry; page: Page; onAnswer: (a: "keep" | "remove") => void }) {
   const i = entry.item
@@ -59,7 +68,7 @@ function SidebarRow({ entry, page, onAnswer }: { entry: SidebarEntry; page: Page
         </a>
       </SidebarMenuButton>
       {entry.asking && (
-        <div className="t-small mx-2 mb-1 mt-1 rounded-md border bg-background p-2 group-data-[collapsible=icon]:hidden">
+        <div className="t-small mx-2 mb-1 mt-1 border bg-background p-2 group-data-[collapsible=icon]:hidden">
           <p>Keep {i.label} in the sidebar?</p>
           <div className="mt-1.5 flex gap-1">
             <Button size="sm" className="t-small h-6 px-2" onClick={() => onAnswer("keep")}>Keep</Button>
@@ -136,7 +145,7 @@ function BottomBar({ pages, page }: { pages: Page[]; page: Page }) {
             key={p}
             asChild
             variant={here ? "secondary" : "ghost"}
-            className="h-auto flex-1 flex-col gap-0.5 rounded-none py-2 text-xs"
+            className="h-auto flex-1 flex-col gap-0.5 py-2 text-xs"
           >
             <a href={href(`/ollopa/${p === "home" ? "" : p}`)} onClick={clearTrail} aria-current={here ? "page" : undefined}>
               <FamilyIcon of={p} tone={here ? "current" : "ink"} />
@@ -145,7 +154,7 @@ function BottomBar({ pages, page }: { pages: Page[]; page: Page }) {
           </Button>
         )
       })}
-      <Button variant="ghost" className="h-auto flex-1 flex-col gap-0.5 rounded-none py-2 text-xs" onClick={() => setOpenMobile(true)}>
+      <Button variant="ghost" className="h-auto flex-1 flex-col gap-0.5 py-2 text-xs" onClick={() => setOpenMobile(true)}>
         <Grid3x3 aria-hidden="true" />
         All pages
       </Button>
@@ -172,16 +181,10 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   const [bell, setBell] = useState(false)
   const [creditsOpen, setCredits] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
-  const [dismissed, setDismissed] = useState<string[]>([])
   const [expiring, setExpiring] = useState(false)
   const [, setTick] = useState(0)
   const refresh = () => setTick((t) => t + 1)
-  const banner = useBanner()
   const pageAlerts = usePageAlerts()
-  const [newsRead, setNewsRead] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
-  // A phone has room for one thing that needs deciding; everything else is behind the door.
-  const narrowShell = usePhone()
   const trail = useTrail()
   const route = useRoute()
   const heading = useRef<HTMLHeadingElement>(null)
@@ -306,26 +309,45 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
     return () => document.removeEventListener("keydown", onKey)
   }, [session])
 
-  const alerts = notes.filter((n) => n.interrupting && !dismissed.includes(n.id))
-  const news = newsRead ? undefined : banner.news
-
   /**
-   * Everything that needs a decision, in one list and in one shape, workspace first. The most
-   * urgent is the first: it reads in full with its acts, and the rest are one line each.
+   * Everything that needs a decision, workspace first. A workspace notification earns the band only
+   * by being marked interrupting in the seed — something is stopped until it is answered — and the
+   * page adds at most one of its own. There is no dismiss: nothing hides an unresolved problem, and
+   * the band goes when the thing is resolved (REVIEW-ALERTS.md §5).
    */
   const said: AlertItem[] = [
     ...(expiring ? [{ id: "__session", text: "Your session ends in 5 minutes.", acts: [{ label: "Stay signed in", onClick: () => setExpiring(false) }] }] : []),
-    ...alerts.map((n) => ({
+    ...notes.filter((n) => n.interrupting).map((n) => ({
       id: n.id,
       text: n.title,
       danger: DANGER_KINDS.has(n.kind),
       href: href(n.target),
-      acts: [{ label: "Dismiss", onClick: () => setDismissed((d) => [...d, n.id]) }],
     })),
     ...pageAlerts,
   ]
-  // One in full on a phone, four lines at a desktop; the rest are behind the door.
-  const room = narrowShell ? 1 : 4
+  // One band, one item. The rest are named by the place they are decided, never by a count.
+  const band = said[0]
+  const rest = said.slice(1)
+  // Where the rest are decided. An item the open page declared is decided on the open page, whatever
+  // its link points at; a workspace item is decided where its link goes.
+  const restPlace = rest.length === 0 ? null
+    : pageAlerts.includes(rest[0]) ? (NAV.find((n) => n.page === page)?.label ?? title)
+      : placeOf(rest[0].href)
+  /**
+   * At most two acts (DESIGN.md §1). The item's own choices come first; a destination is a link. When
+   * something else is waiting, the second act is the door to where it is decided — labelled by that
+   * place, so nothing decision-critical sits behind a count at any width (RULES.md rule 7).
+   */
+  const bandActs: Action[] = band ? [
+    ...(band.acts ?? []).slice(0, rest.length > 0 ? 1 : 2)
+      .map((a) => ({ kind: "secondary" as const, label: a.label, onClick: a.onClick })),
+    ...(!band.acts?.length && band.href
+      ? [{ kind: "link" as const, label: placeOf(band.href) ?? "Open", href: band.href }]
+      : []),
+    ...(rest.length > 0 && restPlace
+      ? [{ kind: "link" as const, label: `${rest.length} more waiting · ${restPlace}`, href: rest[0].href ?? href(`/ollopa/${page === "home" ? "" : page}`) }]
+      : []),
+  ].slice(0, 2) : []
   // The bottom bar is the sidebar at phone width, so it carries only pages the sidebar carries:
   // the seat's four, in the fixed order, topped up from the sidebar when the profile left one out.
   const inSidebarPages = entries.map((e) => e.item.page)
@@ -343,7 +365,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
       onOpenChange={(o) => { setCollapsed(!o); setTight(false) }}
       style={{ "--sidebar-width": "14rem" } as CSSProperties}
     >
-      <a href="#ollopa-main" className="sr-only rounded-md bg-foreground px-3 py-2 text-background focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
+      <a href="#ollopa-main" className="sr-only bg-foreground px-3 py-2 text-background focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         Skip to content
       </a>
 
@@ -355,7 +377,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
             <SidebarMenuItem>
               <SidebarMenuButton asChild size="lg">
                 <a href={href("/ollopa")} onClick={clearTrail}>
-                  <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
+                  <span className="inline-block size-5 shrink-0 bg-foreground" aria-hidden="true" />
                   {/* The mark alone carries the rail; the word would only be cut in half there. */}
                   <span className="font-semibold tracking-tight group-data-[collapsible=icon]:hidden">ollopA</span>
                 </a>
@@ -453,86 +475,22 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
           <AccountMenu session={session} onShortcuts={() => setShortcuts(true)} onChange={refresh} />
         </header>
 
-        {/* Everything that speaks from the top of a page is a shadcn Alert, one per item, stacked
-            with the library's gap. */}
-        {/* One Alert, and only what needs a decision is in it — the workspace's items first, then
-            whatever the page has declared through `declareAlerts` (LAYOUTS.md §2). Four things that
-            need deciding is four lines of chrome, so past the first the rest collapse: the most
-            urgent reads in full, a few read as one line each, and the remainder sit behind
-            "N more · Show", a door inside the Alert. */}
-        {said.length > 0 && (
-          <div className="px-3 pb-1 pt-1.5">
-            <Alert variant={said.some((a) => a.danger) ? "destructive" : "default"} className="py-1.5">
+        {/* One band, one item, one decision (LAYOUTS.md §2). The title is the thing itself, in its own
+            words — there is no fixed heading — and it wraps rather than being cut mid-word. The
+            variant is this item's own, so a warning is never painted in a sibling's red. It scrolls
+            with the page and goes when the thing is resolved. */}
+        {band && (
+          <div className="px-3 py-1">
+            <Alert variant={band.danger ? "destructive" : "default"} className="items-center py-2">
               <TriangleAlert />
-              <AlertTitle>Needs you now</AlertTitle>
-              <AlertDescription>
-                {(moreOpen ? said : said.slice(0, room)).map((a, i) => (
-                  // The most urgent reads in full; the rest are one line each, so four things that
-                  // need deciding cost four lines and not eight.
-                  <p key={a.id} className={cn("flex items-baseline gap-x-2", i === 0 ? "flex-wrap" : "min-w-0")}>
-                    <span className={cn("min-w-0", i > 0 && "truncate")}>{a.text}</span>
-                    {a.href && <a className="shrink-0 underline underline-offset-4" href={a.href}>Open</a>}
-                    {a.acts?.map((act) => (
-                      <button key={act.label} type="button" className="shrink-0 underline underline-offset-4" onClick={act.onClick}>
-                        {act.label}
-                      </button>
-                    ))}
-                  </p>
-                ))}
-                {said.length > room && (
-                  <p>
-                    <button
-                      type="button"
-                      className="underline underline-offset-4"
-                      aria-expanded={moreOpen}
-                      onClick={() => setMoreOpen((o) => !o)}
-                    >
-                      {moreOpen ? "Show fewer" : `${said.length - room} more · Show`}
-                    </button>
-                  </p>
-                )}
-              </AlertDescription>
+              {/* The words and the acts share one line where there is room, and stack where there is
+                  not. `line-clamp-none` undoes the component's one-line clamp: a band is never cut
+                  mid-word, it wraps (REVIEW-ALERTS.md §5). */}
+              <AlertTitle className="line-clamp-none flex flex-wrap items-center gap-x-3 gap-y-1.5 text-pretty">
+                <span className="min-w-0">{band.text}</span>
+                {bandActs.length > 0 && <Actions surface="card" items={bandActs} />}
+              </AlertTitle>
             </Alert>
-          </div>
-        )}
-
-        {/* The workspace's own state, under the Alert and directly above the page: a plain row of
-            small outline Badges with their icons, and the workspace-change line beside them. No box,
-            no border, no band — "Credits on track" is not an alert and must not be read in an
-            alert's register. It is one line at every width: too narrow and it scrolls rather than
-            taking a second and a third row away from the page. */}
-        {(banner.items.length > 0 || news) && (
-          <div className="flex items-center gap-3 overflow-x-auto px-4 pb-1.5">
-            {banner.items.map((h) => {
-              const Icon = HEALTH_ICON[h.kind]
-              const cut = h.text.indexOf(" · ")
-              const short = cut > 0 && h.text.length > 44 ? h.text.slice(0, cut) : h.text
-              return (
-                <Badge key={h.text} asChild variant="outline" className="shrink-0 font-normal text-muted-foreground">
-                  <a href={h.href} title={h.text}>
-                    <Icon
-                      aria-hidden="true"
-                      style={h.kind === "warning" ? { color: "var(--warning-ink)" } : h.kind === "error" ? { color: "var(--danger-ink)" } : undefined}
-                    />
-                    {short}
-                  </a>
-                </Badge>
-              )
-            })}
-            {news && (
-              <span className="t-small flex min-w-0 flex-1 items-center gap-1.5 text-muted-foreground">
-                <Megaphone className="size-3.5 shrink-0" aria-hidden="true" />
-                <span className="min-w-0 truncate">{news.text}</span>
-                {news.href && (
-                  <Button asChild variant="link" size="sm" className="h-auto shrink-0 px-0 py-0">
-                    <a href={news.href}>Open</a>
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon-xs" className="shrink-0" aria-label="Dismiss this notice" onClick={() => setNewsRead(true)}>
-                  <X aria-hidden="true" />
-                </Button>
-              </span>
-            )}
           </div>
         )}
 

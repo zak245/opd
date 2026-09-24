@@ -149,6 +149,18 @@ async function run(page, step, notes) {
       if (done !== true) notes.push(String(done))
       return wait(300)
     }
+    case "expandPane": {
+      const done = await page.evaluate(() => {
+        const pane = document.querySelector("aside[data-beside]")
+        if (!pane) return "no pane"
+        const control = pane.querySelector("header button[aria-expanded]")
+        if (!control) return "no widen control in the pane header"
+        control.click()
+        return true
+      })
+      if (done !== true) notes.push(String(done))
+      return wait(400)
+    }
     case "openDialog": {
       const ok = await clickByText(page, step.label)
       if (!ok) notes.push(`no act called "${step.label}"`)

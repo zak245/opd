@@ -24,6 +24,7 @@ import { Chip, FamilyIcon } from "../../ui/Identity"
 import { follow, routeKey, useTrail } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { CardRow, RecordPage, type RecordCard, type RecordDoor, type RecordField, type RecordSection } from "../../templates/RecordPage"
+import { Fields, MetaLine } from "../../layouts"
 import { EmptyState } from "../../ui/EmptyState"
 import { Panel } from "../../ui/Panel"
 import { useDoorState } from "../../ui/Door"
@@ -211,14 +212,20 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     id: "usage", title: "Usage over 90 days",
     children: (
       <div>
-        <div className="flex h-24 items-end gap-1" role="img" aria-label={`Usage index ${account!.usage30}, ${account!.usageDelta30 >= 0 ? "up" : "down"} ${Math.abs(account!.usageDelta30)}% over 30 days`}>
+        {/* The chart is the section's body, not a field: a field's label column would push the
+            bars into two thirds of the card and the shape is the whole point. */}
+        <div className="flex h-24 items-end gap-1" role="img" aria-label={`Weekly active seats. Usage index ${account!.usage30}, ${account!.usageDelta30 >= 0 ? "up" : "down"} ${Math.abs(account!.usageDelta30)}% over 30 days`}>
           {usageSeries.map((n, i) => (
             <span key={i} className="min-w-0 flex-1 bg-foreground/70" style={{ height: `${Math.max(4, n)}%` }} />
           ))}
         </div>
-        <p className="pt-2 t-body">
-          Index <span className="tabular-nums font-medium">{account!.usage30}</span> · {account!.usageDelta30 >= 0 ? "up" : "down"} {Math.abs(account!.usageDelta30)}% over 30 days
-        </p>
+        <Fields fields={[
+          {
+            id: "usage.index", label: "Index",
+            value: <span className="tabular-nums">{account!.usage30}</span>,
+            note: `${account!.usageDelta30 >= 0 ? "Up" : "Down"} ${Math.abs(account!.usageDelta30)}% over 30 days`,
+          },
+        ]} />
       </div>
     ),
   })
@@ -227,12 +234,13 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     id: "seats", title: "Seats and last sign-in", count: account!.seats.length,
     children: (
       <div>
-        <p className="pb-2 t-body">
-          <span className="tabular-nums font-medium">{account!.seatsActive}</span> of {account!.seatsBought} seats active
-          <span className="text-muted-foreground"> · {Math.round((account!.seatsActive / account!.seatsBought) * 100)}% utilisation</span>
-        </p>
+        <Fields fields={[{
+          id: "seats.active", label: "Seats active",
+          value: <span className="tabular-nums">{account!.seatsActive} of {account!.seatsBought}</span>,
+          note: `${Math.round((account!.seatsActive / account!.seatsBought) * 100)}% utilisation`,
+        }]} />
         {account!.seats.slice(0, 6).map((s) => (
-          <CardRow key={s.name} title={s.name} meta={`last sign-in ${ago(s.lastSignIn)}`} />
+          <CardRow key={s.name} title={s.name} meta={<MetaLine values={[{ key: "in", label: "Last sign-in", value: ago(s.lastSignIn) }]} />} />
         ))}
       </div>
     ),
@@ -242,28 +250,29 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     // 1. The drivers, directly under the health field. Never a door.
     if (used("rec.health-drivers")) sections.push({
       id: "health-drivers", title: "What makes up the score",
+      // The acts sit at the card's trailing edge, not at the end of the body.
+      action: (
+        <Actions
+          surface="card"
+          items={[
+            { kind: "secondary", label: "This flag was wrong", onClick: () => setFlagOpen(true) },
+            { kind: "link", label: "Settings › Signals, scoring and personas", href: href("/ollopa/settings/scoring"), onClick: () => follow("/ollopa/settings/scoring", origin("health-drivers")) },
+          ]}
+        />
+      ),
       children: (
-        <div>
-          <p className="t-body pb-2">{healthLine(account.health, account.band, account.healthDelta30)}</p>
-          <ul className="t-body space-y-1">
-            {account.drivers.map((x, i) => (
-              <li key={x.label}>
-                {i > 0 && <Separator className="my-1" />}
-                <span className="flex justify-between gap-3 py-1">
-                  <span className="min-w-0">{x.label}</span>
-                  <span className="shrink-0 tabular-nums">{x.points > 0 ? "+" : ""}{x.points}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Actions
-            className="pt-2"
-            items={[
-              { kind: "secondary", label: "This flag was wrong", onClick: () => setFlagOpen(true) },
-              { kind: "link", label: "Settings › Signals, scoring and personas", href: href("/ollopa/settings/scoring"), onClick: () => follow("/ollopa/settings/scoring", origin("health-drivers")) },
-            ]}
-          />
-        </div>
+        <Fields fields={[
+          {
+            id: "health.score", label: "Score",
+            value: <span className="tabular-nums">{account.health} · {account.band}</span>,
+            note: `${account.healthDelta30 >= 0 ? "Up" : "Down"} ${Math.abs(account.healthDelta30)} in 30 days`,
+          },
+          ...account.drivers.map((x) => ({
+            id: `health.${x.label}`,
+            label: x.label,
+            value: <span className="tabular-nums">{x.points > 0 ? "+" : ""}{x.points}</span>,
+          })),
+        ]} />
       ),
     })
 
@@ -294,26 +303,26 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
     if (used("rec.first-value")) sections.push({
       id: "first-value", title: "First value, and the goals agreed at the start",
       children: (
-        <div className="space-y-2 t-body">
-          <p>
-            <span className="font-medium">{account.firstValue.definition}</span>
-            <span className="text-muted-foreground"> · {account.firstValue.target}</span>
-          </p>
-          <p className="t-small text-muted-foreground">
-            {account.firstValue.confirmedOn
-              ? `Confirmed ${day(account.firstValue.confirmedOn)} by ${account.firstValue.confirmedBy}`
-              : "Not confirmed yet. Ninety days without it raises an Onboarding stalled risk."}
-          </p>
-          <ul className="space-y-1">
-            {account.goals.map((g, i) => (
-              <li key={g.text} className="pt-1">
-                {i > 0 && <Separator className="mb-1" />}
-                {g.text}
-                <span className="block t-small text-muted-foreground">Agreed {day(g.agreedOn)} · {g.source}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Fields fields={[
+          { id: "fv.definition", label: "First value", value: account.firstValue.definition, note: account.firstValue.target },
+          {
+            id: "fv.confirmed", label: "Confirmed",
+            value: account.firstValue.confirmedOn ? day(account.firstValue.confirmedOn) : "Not yet",
+            // "by null" was on screen where nobody had confirmed it: the name is a note or nothing.
+            note: account.firstValue.confirmedOn && account.firstValue.confirmedBy
+              ? `By ${account.firstValue.confirmedBy}`
+              : undefined,
+          },
+          ...account.goals.map((g) => ({
+            id: `fv.goal.${g.text}`,
+            label: "Goal",
+            value: g.text,
+            note: <MetaLine values={[
+              { key: "agreed", label: "Agreed", value: day(g.agreedOn) },
+              { key: "source", label: "Source", value: g.source },
+            ]} />,
+          })),
+        ]} />
       ),
     })
 
@@ -327,7 +336,11 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               <CardRow
                 key={r.id}
                 title={<Chip status={r.type === "Churn notice" ? "blocked" : "warning"}>{r.type}</Chip>}
-                meta={`${r.owner} · opened ${day(r.opened)}`}
+                meta={<MetaLine values={[
+                  { key: "owner", label: "Owner", value: r.owner },
+                  { key: "opened", label: "Opened", value: day(r.opened) },
+                  { key: "note", label: "Note", value: r.note },
+                ]} />}
                 actions={canEdit ? [{
                   label: "Resolve",
                   onClick: () => {
@@ -335,9 +348,7 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
                     toast(`${r.type} resolved. The health score gains ${r.type === "Churn notice" ? 37 : 12}.`)
                   },
                 }] : undefined}
-              >
-                <p className="pt-1 t-small text-muted-foreground">{r.note}</p>
-              </CardRow>
+              />
             ))}
           </div>
         ),
@@ -353,14 +364,19 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
               <CardRow
                 key={s.id}
                 title={s.kind}
-                meta={`${s.source} · fired ${day(s.fired)} · routed to ${s.routedTo} · due ${day(s.dueBy)}${s.outcome ? ` · ${s.outcome}` : " · no outcome yet"}`}
+                meta={<MetaLine values={[
+                  { key: "source", label: "Source", value: s.source },
+                  { key: "fired", label: "Fired", value: day(s.fired) },
+                  { key: "routed", label: "Routed to", value: s.routedTo },
+                  { key: "due", label: "Due", value: day(s.dueBy) },
+                  { key: "outcome", label: "Outcome", value: s.outcome || "none yet" },
+                  { key: "detail", label: "Detail", value: s.detail },
+                ]} />}
                 actions={[
                   { label: "Route it", onClick: () => { toast(`Expansion deal and a task created from “${s.kind}”, with the brief attached`); follow("/ollopa/deals", origin("expansion")) } },
                   { label: "Dismiss", onClick: () => { applyChange(merged.id, { dismissedSignals: [...(change.dismissedSignals ?? []), s.id] }); toast(`“${s.kind}” dismissed`) } },
                 ]}
-              >
-                <p className="pt-1 t-small text-muted-foreground">{s.detail}</p>
-              </CardRow>
+              />
             ))}
           </div>
         ),
@@ -392,26 +408,29 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           }]} />
         ),
         children: (
-          <div className="space-y-2 t-body">
-            <p className="t-small flex flex-wrap items-center gap-1.5 text-muted-foreground">
-              From {h.from} · sent {day(h.sent)} ·
-              <Chip status={h.accepted ? "approved" : "waiting"}>{h.accepted ? `accepted ${day(h.accepted)}` : "not accepted yet"}</Chip>
-            </p>
-            {parts.map(([label, value], i) => (
-              <div key={label} className="pt-2">
-                {i > 0 && <Separator className="mb-2" />}
-                <div className="t-label">{label}
-                  {wrote(label) && <span className="pl-1 font-normal text-muted-foreground">· {wrote(label)}</span>}
-                </div>
-                <div>{value}</div>
-              </div>
-            ))}
-            <Separator />
-            <div className="pt-2">
-              <div className="t-label">Checklist</div>
-              <ul>{h.checklist.map((c) => <li key={c.item}>{c.done ? "Done" : "Not done"} · {c.item}</li>)}</ul>
-            </div>
-          </div>
+          <Fields fields={[
+            { id: "handoff.from", label: "From", value: h.from, note: `Sent ${day(h.sent)}` },
+            {
+              id: "handoff.state", label: "State",
+              value: <Chip status={h.accepted ? "approved" : "waiting"}>{h.accepted ? `accepted ${day(h.accepted)}` : "not accepted yet"}</Chip>,
+            },
+            ...parts.map(([label, value]) => ({
+              id: `handoff.${label}`,
+              label,
+              value,
+              note: wrote(label) ? `Written by ${wrote(label)}` : undefined,
+            })),
+            {
+              id: "handoff.checklist", label: "Checklist",
+              value: (
+                <ul>
+                  {h.checklist.map((c) => (
+                    <li key={c.item}>{c.item} <span className="text-muted-foreground">· {c.done ? "done" : "not done"}</span></li>
+                  ))}
+                </ul>
+              ),
+            },
+          ]} />
         ),
       })
     }
@@ -475,7 +494,12 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
                   </button>
                 </span>
               }
-              meta={`${money(deal.amount, deal.currency)} · ${deal.stage} · closes ${day(deal.closeDate)} · ${deal.owner}`} />
+              meta={<MetaLine values={[
+                { key: "amount", label: "Amount", value: money(deal.amount, deal.currency) },
+                { key: "stage", label: "Stage", value: deal.stage },
+                { key: "closes", label: "Closes", value: day(deal.closeDate) },
+                { key: "owner", label: "Owner", value: deal.owner },
+              ]} />} />
           </div>
         ))}</div>,
   })
@@ -596,7 +620,12 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
             <li key={run.id} className={i === 0 ? "" : "pt-2"}>
               {i > 0 && <Separator className="mb-2" />}
               {/* Provenance in words, not an icon: which agent, when, how many sources, how much. */}
-              <div className="t-small text-muted-foreground">{run.agent} · {day(run.at)} · {run.sources} sources · {run.credits} credits</div>
+              <MetaLine values={[
+                { key: "agent", label: "Agent", value: run.agent },
+                { key: "at", label: "Run", value: day(run.at) },
+                { key: "sources", label: "Sources", value: run.sources },
+                { key: "credits", label: "Credits", value: run.credits },
+              ]} />
               {i === 0 && briefHref && (
                 <Actions
                   className="pt-1"
@@ -622,7 +651,12 @@ export function CompanyRecord({ session, id }: { session: Session; id?: string }
           {(account?.signals ?? []).map((s) => (
             <li key={s.id} className="py-1">
               <div>{s.kind}</div>
-              <div className="t-small text-muted-foreground">{s.detail} · {s.source} · {day(s.fired)} · routed to {s.routedTo}</div>
+              <MetaLine values={[
+                { key: "detail", label: "Detail", value: s.detail },
+                { key: "source", label: "Source", value: s.source },
+                { key: "fired", label: "Fired", value: day(s.fired) },
+                { key: "routed", label: "Routed to", value: s.routedTo },
+              ]} />
             </li>
           ))}
         </ul>

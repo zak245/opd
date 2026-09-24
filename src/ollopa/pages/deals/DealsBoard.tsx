@@ -29,7 +29,7 @@ import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Group } from "../../ui/Section"
-import { BoardPage, IndexPage, PageHeader, SummaryStrip, type BoardStage, type PageHeaderProps, type ToolbarControl } from "../../layouts"
+import { BoardPage, LegacyIndexPage as IndexPage, PageHeader, SummaryStrip, type BoardStage, type PageHeaderProps, type ToolbarControl } from "../../layouts"
 import { Divider } from "../../ui/Divider"
 import { inkOf } from "../../ui/Identity"
 import { useEdits } from "../../edits"
@@ -1077,7 +1077,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
       {/* Board only: the table says its own emptiness in its own words. */}
       {view === "board" && !workspaceEmpty && rows.length === 0 && anyFilter && (
-        <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-3 border border-dashed px-3 py-2 text-sm">
           <span>Nothing matches. Clear the search or the filters.</span>
           <Button size="sm" variant="outline" className="h-7" onClick={clearAll}>Clear search and filters</Button>
         </div>
@@ -1139,11 +1139,15 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               shown={`${rows.filter(isOpen).length.toLocaleString()} open of ${b.counts.openDeals.toLocaleString()}`}
               above={above}
               stages={stages}
-              // The stages share the width and scroll only when they cannot fit. The template's own
-              // floor is 18rem, which five stages cannot make fit in the 1,136 px a board gets at
-              // 1440, so the board scrolled sideways on the widest screen. 10rem is the largest step
-              // on the scale that still lets four stages fit at 1024 (LAYOUTS.md §5 and §6).
-             
+              // A kanban column has a readable floor, and below it a card is a wall of wrapped
+              // words: at 166 px of content a two-word deal name takes three lines. So the stage
+              // gets a floor and the board scrolls when the stages do not fit — which is what every
+              // board people actually use does, and what LAYOUTS.md §6 means by calling the board
+              // fluid. "Nothing scrolls sideways at 1440" is the index rule, where a scroll means
+              // the column set is wrong; a board is the exception. 20rem holds about 17rem of
+              // content inside the card's own padding, which is where the name stops wrapping to
+              // three lines. Above that the stages share the width; below it the board scrolls.
+              columnWidth="min-w-80 max-w-[22rem] flex-1"
             />
           </div>
         )}

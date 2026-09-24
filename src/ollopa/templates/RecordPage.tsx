@@ -287,14 +287,14 @@ function FieldCell({ field }: { field: RecordField }) {
 function SideCard({ card }: { card: RecordCard }) {
   return (
     <Card data-record-card className={cn("gap-3 py-4", card.tone === "attention" && "[border-color:var(--warning)]")}>
-      <CardHeader className="gap-0 px-4">
+      <CardHeader className="gap-0">
         <CardTitle className="t-section inline-flex items-baseline gap-2">
           {card.title}
           {card.count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{card.count}</span>}
         </CardTitle>
         {card.action && <CardAction>{card.action}</CardAction>}
       </CardHeader>
-      <CardContent className="px-4">
+      <CardContent>
         {card.subtitle && <p className="t-small -mt-1 pb-2 text-muted-foreground">{card.subtitle}</p>}
         {card.children}
       </CardContent>
@@ -378,7 +378,7 @@ function Section({ section }: { section: RecordSection }) {
           </CardAction>
         )}
       </CardHeader>
-      <CardContent className="px-4">
+      <CardContent>
       {section.authored && (
         <p className="t-small pb-2 text-muted-foreground">
           {section.authored === "generated" ? "Written by an agent" : "Written by a person"}
@@ -403,7 +403,7 @@ function DrawerDoor({ door }: { door: RecordDoor }) {
           aria-expanded={open}
           aria-controls={`drawer-${door.id}`}
           onClick={() => setOpen(true)}
-          className="t-label flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="t-label flex w-full items-center gap-2 px-2 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ChevronRight data-door-chevron aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0">{door.label}</span>
@@ -568,14 +568,14 @@ export function RecordPage(p: RecordPageProps) {
           </div>
 
           {p.ribbon && (
-            <div role="status" aria-live="polite" className={cn("mt-3 flex flex-wrap items-center gap-3 rounded-md px-3 py-2 t-body", RIBBON[p.ribbon.tone])}>
+            <div role="status" aria-live="polite" className={cn("mt-3 flex flex-wrap items-center gap-3 px-3 py-2 t-body", RIBBON[p.ribbon.tone])}>
               <span>{p.ribbon.text}</span>
               {p.ribbon.action && <span className="ml-auto">{p.ribbon.action}</span>}
             </div>
           )}
 
           {p.brief && (
-            <dl className="mt-3 grid gap-x-6 gap-y-1 rounded-md border px-3 py-2 t-small sm:grid-cols-2">
+            <dl className="mt-3 grid gap-x-6 gap-y-1 border px-3 py-2 t-small sm:grid-cols-2">
               <div className="sm:col-span-2"><dt className="inline text-muted-foreground">About </dt><dd className="inline font-medium">{p.brief.about}</dd></div>
               <div><dt className="inline text-muted-foreground">Assembled by </dt><dd className="inline">{p.brief.author}</dd></div>
               <div><dt className="inline text-muted-foreground">On </dt><dd className="inline">{p.brief.assembledOn}</dd></div>
@@ -588,7 +588,7 @@ export function RecordPage(p: RecordPageProps) {
           {/* The record's own fields are its first container: they are a group, and a group on the
               canvas is contained (DESIGN.md §5). */}
           <Card className="mt-3 mb-4 py-4">
-            <CardContent className="px-4">
+            <CardContent>
               {/* Four columns from 1024 up: at three, a field that must keep its date beside it
                   (`span: 2`) wraps out of the first row and leaves the right third of the strip
                   empty. Two at 400, four wherever there is room. */}
@@ -649,7 +649,7 @@ export function RecordPage(p: RecordPageProps) {
                 header line, where the contact record already has it. */}
             {doors.length > 0 && (
               <Card className="gap-0 py-2">
-                <CardContent className="px-2">
+                <CardContent>
                   {doors.map((d) => (
                     d.container === "drawer"
                       ? <DrawerDoor key={d.id} door={d} />
@@ -680,7 +680,7 @@ function Actions({ actions, confirming, setConfirming, compact }: {
 
   const ask = (a: RecordAction, variant: "default" | "outline") =>
     confirming === a.label ? (
-      <span key={a.label} className="flex flex-wrap items-center gap-2 rounded-md border px-2 py-1">
+      <span key={a.label} className="flex flex-wrap items-center gap-2 border px-2 py-1">
         <span className="t-small max-w-[28rem] text-muted-foreground">{a.confirm}</span>
         <Button size="sm" onClick={() => { a.onClick(); setConfirming(null) }}>{a.label}</Button>
         <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Cancel</Button>
@@ -727,7 +727,7 @@ function Actions({ actions, confirming, setConfirming, compact }: {
         </DropdownMenu>
       )}
       {asking && (
-        <span className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 px-2 py-1">
+        <span className="flex flex-wrap items-center gap-2 border border-destructive/40 px-2 py-1">
           <span className="t-small [color:var(--danger-ink)]">{actions.destructive!.consequence}</span>
           <Button size="sm" variant="destructive" onClick={() => { actions.destructive!.onConfirm(); setConfirming(null) }}>{actions.destructive!.label}</Button>
           <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>

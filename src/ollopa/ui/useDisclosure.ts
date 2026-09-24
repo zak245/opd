@@ -5,7 +5,7 @@
 // critical items are level one whatever the number (rule 7); an AE seat with direct reports reads the
 // `ae_plus` number where one exists. Nothing from here is ever rendered — no percentages, no sources,
 // no "level" anywhere in the product (PLAN.md, "Where numbers show").
-import { useMemo } from "react"
+import { createContext, useContext, useMemo } from "react"
 import { itemsFor, levelOf, weeklyUse, type Page, type UsageItem } from "../usage"
 import { useSession } from "../session"
 
@@ -22,7 +22,22 @@ export interface Disclosure {
   levelOne: UsageItem[]
 }
 
+/**
+ * One level deeper, inside the beside pane only.
+ *
+ * The pane has two widths and they are two levels of the same record: `beside` is the glance, the
+ * record's own first level; `expanded` is the same pane widened over the page with the next level
+ * of the record in it, so a person can read the whole thing without leaving (BUILD-CHAINS.md, the
+ * pane). Rather than every registered pane body learning a second rule, the frame turns this on
+ * around the body it draws and every `useDisclosure` inside it answers "level one" for everything.
+ *
+ * It is off everywhere else, so a record page, an index and a door are untouched by it.
+ */
+const Deeper = createContext(false)
+export const DeeperProvider = Deeper.Provider
+
 export function useDisclosure(page: Page): Disclosure {
+  const deeper = useContext(Deeper)
   const session = useSession()
   const business = session?.business ?? "meridian"
   const role = session?.role ?? "ae"
@@ -33,6 +48,8 @@ export function useDisclosure(page: Page): Disclosure {
     const byId = new Map(items.map((i) => [i.id, i]))
     const level = (id: string): 1 | 2 => {
       const item = byId.get(id)
+      // Widened, the pane is reading the next level, so everything the record declares is on it.
+      if (deeper && item) return 1
       if (!item) {
         if (import.meta.env.DEV) console.warn(`[usage] "${id}" is not an item on page "${page}"`)
         return 2
@@ -48,7 +65,7 @@ export function useDisclosure(page: Page): Disclosure {
       weekly,
       items,
       atLevelOne: (id: string) => level(id) === 1,
-      levelOne: items.filter((i) => levelOf(i, business, role, hasReports) === 1).sort((a, b) => weekly(b.id) - weekly(a.id)),
+      levelOne: items.filter((i) => level(i.id) === 1).sort((a, b) => weekly(b.id) - weekly(a.id)),
     }
-  }, [page, business, role, hasReports])
+  }, [page, business, role, hasReports, deeper])
 }

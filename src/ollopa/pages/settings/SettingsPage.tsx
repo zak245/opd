@@ -21,7 +21,7 @@ import { RETURN_HIGHLIGHT_MS } from "../../chain"
 import { Door, DoorGroup, ExpandAll, useDoorState } from "../../ui/Door"
 import { Actions } from "../../ui/Actions"
 import { FamilyIcon } from "../../ui/Identity"
-import { Section, SettingsPage as SettingsLayout } from "../../layouts"
+import { Fields, Section, SettingsPage as SettingsLayout, type Field } from "../../layouts"
 import { ruleOn, useLesson } from "@/learn/context"
 import { PARODY_IDS, ParodyShell } from "./parody"
 import { gate } from "../../ui/gate"
@@ -108,36 +108,26 @@ const LATER = new Set([
 
 /* ----------------------------------------------------------------------------------- the strip */
 
-/**
- * One decision-critical fact. Where it has a state, the state is a chip carrying its own word, so
- * the sentence beside it stays neutral ink and the colour never has to be read on its own
- * (DESIGN.md §5). `state` is the word the status set maps: "active", "warning", "auto-paused".
- */
-function StripLine({ item, label, children, state, word }: {
-  item: string; label: string; children: ReactNode
-  state?: "active" | "warning" | "auto-paused" | "none"
-  word?: string
-}) {
-  return (
-    // One label/value pair of the strip. The pair is wrapped so it can carry the usage-model id the
-    // rest of the product points this fact at: the search jump, the `?row=` arrival and the trail
-    // all look for `[data-item]`, and a figure with no anchor would lose all three.
-    <div data-item={item} data-item-label={label} className="grid min-w-0 gap-1 @md:grid-cols-4 @md:gap-4">
-      <dt className="t-label text-muted-foreground">{label}</dt>
-      <dd className="t-body min-w-0 sm:col-span-3">
-        {state && <Badge variant={STATE_BADGE[state]} className="mr-1.5 align-middle">{word}</Badge>}
-        {children}
-      </dd>
-    </div>
-  )
-}
-
 /** A state word is a shadcn Badge; the variant is the library's, and the page invents no colour. */
 const STATE_BADGE: Record<"active" | "warning" | "auto-paused" | "none", "secondary" | "outline" | "destructive"> = {
   active: "secondary",
   warning: "outline",
   "auto-paused": "destructive",
   none: "outline",
+}
+
+/** A value that opens with its state word, so the colour never has to be read on its own (DESIGN §5). */
+function Stated({ state, word, children }: {
+  state: "active" | "warning" | "auto-paused" | "none"
+  word: string
+  children: ReactNode
+}) {
+  return (
+    <>
+      <Badge variant={STATE_BADGE[state]} className="mr-1.5 align-middle">{word}</Badge>
+      {children}
+    </>
+  )
 }
 
 function Strip({ session, role, user, onCredits, homeless }: { session: Session; role: Role; user: string; onCredits: () => void; homeless?: boolean }) {
@@ -157,115 +147,177 @@ function Strip({ session, role, user, onCredits, homeless }: { session: Session;
   const spiked = c.spikeAlert.todayMultiple >= c.spikeAlert.multiple
   const paused = seed.mailboxes.filter((m) => m.paused).length
 
+  // One fact to a field, at most three joined with "·" in a value, and no prose in the body
+  // (LAYOUTS.md §2). Every field keeps the usage-model id the search jump, the `?row=` arrival and
+  // the trail read, so splitting a wall of clauses into fields costs none of them.
+  const fields: Field[] = isAdmin
+    ? [
+      { id: "plan", label: "Plan", value: `${b.plan.name} · ${b.plan.seats} seats`, "data-item": "plan.price", "data-item-label": "Plan and price" },
+      { id: "price", label: "Price", value: `${money(ws.plan.monthlyTotal)} a month`, note: ws.plan.billing === "annual" ? "Billed annually" : "Billed monthly" },
+      { id: "renews", label: "Renews", value: longDay(ws.plan.renews) },
+      {
+        id: "credits", label: "Credits",
+        value: (
+          <Stated state={runsOutFirst ? "warning" : "active"} word={runsOutFirst ? "Runs out early" : "Healthy"}>
+            {credits(c.balance)} of {credits(c.monthlyCap)} left this month
+          </Stated>
+        ),
+        note: runsOutFirst
+          ? `${credits(c.burnPerWeek)} a week · runs out about ${longDay(c.runsOutOn)}, before the cycle ends ${longDay(c.cycleEnds)}`
+          : `${credits(c.burnPerWeek)} a week · lasts to about ${longDay(c.runsOutOn)}`,
+        action: <Actions surface="card" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />,
+        "data-item": "plan.credits", "data-item-label": "Credits",
+      },
+      {
+        id: "guard", label: "Bounce guard",
+        value: (
+          <Stated
+            state={guard.state === "paused" ? "auto-paused" : guard.state === "warning" ? "warning" : "active"}
+            word={guard.state === "paused" ? "Paused" : guard.state === "warning" ? "Warning" : "On"}
+          >
+            {guard.observedPercent}% of {guard.volume7d.toLocaleString()} in 7 days
+          </Stated>
+        ),
+        note: `Warns at ${guard.warnPercent}% · pauses at ${guard.pausePercent}% · ${paused === 0 ? "nothing paused" : `${plural(paused, "mailbox", "mailboxes")} paused`}`,
+        "data-item": "mail.bounce-guard", "data-item-label": "Bounce guard",
+      },
+      {
+        id: "agents", label: "Agents", value: `${plural(seed.agents.filter((a) => a.on).length, "agent")} on`,
+        action: waiting > 0
+          ? (
+            <Actions surface="card" items={[{
+              label: `${waiting} waiting for approval`, kind: "link", href: href("/ollopa/agents"),
+              onClick: () => leaveSettings("/ollopa/agents", "ai.approvals"),
+            }]} />
+          )
+          : undefined,
+        "data-item": "ai.approvals", "data-item-label": "Agents",
+      },
+      { id: "owner-approves", label: "The owner approves", value: "Send · add to a sequence · change a stage", note: "And any spend over a cap" },
+      {
+        id: "second", label: "A second approval",
+        value: `Over ${seed.secondApproval.recipients.toLocaleString()} recipients · over ${seed.secondApproval.credits} credits`,
+        "data-item": "ai.second-approval", "data-item-label": "Second approval",
+      },
+      {
+        id: "caps", label: "Agent credit caps", value: `${seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month`,
+        "data-item": "ai.credit-caps", "data-item-label": "Agent credit caps",
+      },
+      {
+        id: "spike", label: "Credit spike",
+        value: (
+          <Stated state={spiked ? "auto-paused" : "none"} word={spiked ? "Alerted" : "Quiet"}>
+            {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}×
+          </Stated>
+        ),
+        "data-item": "plan.spike-alert", "data-item-label": "Credit spike",
+      },
+      {
+        id: "dnc", label: "Do-not-call",
+        value: (
+          <Stated state={dncOverdue ? "auto-paused" : "active"} word={dncOverdue ? "Overdue" : "Current"}>
+            Synchronised {longDay(st.prospecting.dnc.synchronisedOn)} · next due {longDay(st.prospecting.dnc.nextDueOn)}
+          </Stated>
+        ),
+        "data-item": "pros.dnc", "data-item-label": "Do-not-call",
+      },
+      // Decision-critical facts the category's settings have no page for at all, on screen here
+      // until rule 1 gives each an area of its own.
+      ...(homeless ? [
+        {
+          id: "delete", label: "Delete workspace",
+          value: `${seed.contacts.length.toLocaleString()} contacts · ${plural(seed.sequences.length, "sequence")} · every person's data`,
+          note: "14 days to change your mind",
+          "data-item": "plan.delete", "data-item-label": "Delete workspace",
+        },
+        {
+          id: "limits", label: "API limits", value: "200 a minute · 6,000 an hour · 50,000 a day",
+          note: "Per workspace, not per key",
+          "data-item": "dev.limits", "data-item-label": "API limits",
+        },
+        { id: "cost-table", label: "Cost per endpoint", value: "Published · typical and maximum", "data-item": "dev.cost-table", "data-item-label": "Cost per endpoint" },
+        { id: "key-spend", label: "Spend per key", value: "Against the same balance", "data-item": "dev.key-spend", "data-item-label": "Spend per key" },
+        { id: "alert-80", label: "The key's owner is told", value: "At 80% of the balance", "data-item": "dev.alert-80", "data-item-label": "Alert the key's owner at 80%" },
+        {
+          id: "hooks", label: "Webhooks", value: "At least once · signed · attempt-numbered",
+          note: "Retried for 24 hours · never silently disabled",
+          "data-item": "dev.hook-contract", "data-item-label": "Webhooks",
+        },
+        { id: "missed", label: "Missed events", value: "Readable from the reconciliation endpoint" },
+      ] as Field[] : []),
+      ...(upgrades.length > 0 ? [{
+        id: "upgrades", label: "Upgrade requests",
+        value: `${plural(upgrades.length, "request")} · ${upgrades[0].requester.user} wants ${upgrades[0].upgrade!.feature}`,
+        note: `${upgrades[0].upgrade!.plan} · ${money(upgrades[0].upgrade!.monthlyTotal)} a month for ${b.plan.seats} seats`,
+        action: (
+          <Actions surface="card" items={[{
+            label: "Review", kind: "link", href: href("/ollopa/requests"),
+            onClick: () => leaveSettings("/ollopa/requests", "plan.upgrade-requests"),
+          }]} />
+        ),
+        "data-item": "plan.upgrade-requests", "data-item-label": "Upgrade requests",
+      }] as Field[] : []),
+    ]
+    : [
+      {
+        id: "credits", label: "Your credits",
+        value: mine ? `${credits(mine.used)} used this month` : `${credits(c.balance)} left in the workspace`,
+        note: mine && mine.limit ? `Your limit is ${credits(mine.limit)}` : undefined,
+        action: <Actions surface="card" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />,
+        "data-item": "plan.credits", "data-item-label": "Your credits",
+      },
+      {
+        id: "guard", label: "Bounce guard",
+        value: (
+          <Stated
+            state={guard.state === "paused" ? "auto-paused" : guard.state === "warning" ? "warning" : "active"}
+            word={guard.state === "paused" ? "Paused" : guard.state === "warning" ? "Warning" : "On"}
+          >
+            Warns at {guard.warnPercent}% · pauses at {guard.pausePercent}%
+          </Stated>
+        ),
+        note: myMailboxes.length === 0
+          ? "You have no mailbox here"
+          : myMailboxes.some((m) => m.paused) ? "One of yours is paused" : `${plural(myMailboxes.length, "mailbox", "mailboxes")} of yours, none paused`,
+        "data-item": "mail.bounce-guard", "data-item-label": "Bounce guard",
+      },
+      {
+        id: "agents", label: "Agents wait for you", value: "Send · enrol · spend over a cap",
+        "data-item": "ai.approvals", "data-item-label": "Agents",
+      },
+      {
+        id: "second", label: "A second approval",
+        value: `Over ${seed.secondApproval.recipients.toLocaleString()} recipients · over ${seed.secondApproval.credits} credits`,
+      },
+    ]
+
   return (
-    // The facts that may never sit behind anything: one shadcn Card holding a definition list, so
-    // every label/value pair is a <dt>/<dd> and the card's own padding is the only padding.
-    // The page's one band of decision-critical facts. It is not the layouts' `SummaryStrip`: that
-    // part takes figures with no room for the `data-item` anchor the search jump, the `?row=`
-    // arrival and the trail all read, and it collapses to one sideways-scrolling line at 400, which
-    // would put five of these six facts out of sight — the one thing rule 7 forbids. One band, no
-    // boxes inside it, which is what LAYOUTS.md §2 asks a summary strip to be.
-    <Card
-      role="region"
-      aria-label="What this workspace costs and what can spend or stop it"
+    // The page's one band of decision-critical facts: a heading, one "…" at the trailing edge, and
+    // a body of fields. It is not the layouts' `SummaryStrip`: that part takes figures with no room
+    // for the `data-item` anchor the search jump, the `?row=` arrival and the trail all read, and it
+    // collapses to one sideways-scrolling line at 400, which would put most of these facts out of
+    // sight — the one thing rule 7 forbids.
+    <Section
+      heading="Plan, spend and limits"
+      count={fields.length}
       data-container="strip"
       data-container-label="the strip"
+      actions={isAdmin ? (
+        <Actions surface="card" layout="menu" menuLabel="the plan" items={[
+          { label: "Change plan", kind: "secondary",
+            onClick: () => toast("Change plan: seats, plan cards and the total, with Due today on screen.") },
+          { label: "Cancel plan", kind: "destructive",
+            onClick: () => toast(`${b.name} ends on ${longDay(ws.plan.renews)}.`),
+            irreversible: {
+              title: `Cancel ${b.name}?`,
+              consequence: `${b.name} ends on ${longDay(ws.plan.renews)} and sending stops that day. Your ${seed.contacts.length.toLocaleString()} contacts, ${plural(seed.sequences.length, "sequence")} and every report stay readable for 30 days, then they are deleted.`,
+              confirmLabel: "Cancel plan",
+            } },
+        ]} />
+      ) : undefined}
     >
-      <CardContent className="@container">
-      <dl className="grid gap-3">
-      {isAdmin ? (
-        <>
-          <StripLine item="plan.price" label="Plan and price">
-            {b.plan.name} · {b.plan.seats} seats · {money(ws.plan.monthlyTotal)} a month, billed {ws.plan.billing === "annual" ? "annually" : "monthly"} · renews {longDay(ws.plan.renews)}
-            <Actions surface="card" className="ml-2 inline-flex align-middle" items={[
-              { label: "Change plan", kind: "secondary",
-                onClick: () => toast("Change plan: seats, plan cards and the total, with Due today on screen.") },
-              { label: "Cancel plan", kind: "destructive",
-                onClick: () => toast(`${b.name} ends on ${longDay(ws.plan.renews)}.`),
-                irreversible: {
-                  title: `Cancel ${b.name}?`,
-                  consequence: `${b.name} ends on ${longDay(ws.plan.renews)} and sending stops that day. Your ${seed.contacts.length.toLocaleString()} contacts, ${plural(seed.sequences.length, "sequence")} and every report stay readable for 30 days, then they are deleted.`,
-                  confirmLabel: "Cancel plan",
-                } },
-            ]} />
-          </StripLine>
-          <StripLine item="plan.credits" label="Credits" state={runsOutFirst ? "warning" : "active"} word={runsOutFirst ? "Runs out early" : "Healthy"}>
-            {credits(c.balance)} of {credits(c.monthlyCap)} left this month · {credits(c.burnPerWeek)} a week ·{" "}
-            {runsOutFirst ? `runs out about ${longDay(c.runsOutOn)}, before the cycle ends on ${longDay(c.cycleEnds)}` : `lasts to about ${longDay(c.runsOutOn)}`}
-            <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />
-          </StripLine>
-          <StripLine item="mail.bounce-guard" label="Bounce guard" state={guard.state === "paused" ? "auto-paused" : guard.state === "warning" ? "warning" : "active"} word={guard.state === "paused" ? "Paused" : guard.state === "warning" ? "Warning" : "On"}>
-            {guard.observedPercent}% of {guard.volume7d.toLocaleString()} in 7 days ·
-            {" "}warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% · {paused === 0 ? "nothing paused" : `${plural(paused, "mailbox", "mailboxes")} paused`}
-          </StripLine>
-          <StripLine item="ai.approvals" label="Agents">
-            {plural(seed.agents.filter((a) => a.on).length, "agent")} on · send, add-to-sequence, stage changes and spend over a cap need the owner's approval ·
-            {" "}<span data-item="ai.second-approval" data-item-label="Second approval">a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits</span> ·
-            {" "}<span data-item="ai.credit-caps" data-item-label="Agent credit caps">caps {seed.agents.map((a) => credits(a.capPerMonth)).join(" / ")} a month</span>
-            {waiting > 0 && <> · <FamilyIcon of="agents" className="inline-block align-text-bottom" />{" "}
-              <Actions surface="card" className="inline-flex align-middle" items={[{
-                label: `${waiting} waiting for approval`, kind: "link", href: href("/ollopa/agents"),
-                onClick: () => leaveSettings("/ollopa/agents", "ai.approvals"),
-              }]} /></>}
-          </StripLine>
-          <StripLine item="plan.spike-alert" label="Credit spike" state={spiked ? "auto-paused" : "none"} word={spiked ? "Alerted" : "Quiet"}>
-            Alert at {c.spikeAlert.multiple}× the usual daily burn · today {c.spikeAlert.todayMultiple}×
-          </StripLine>
-          <StripLine item="pros.dnc" label="Do-not-call" state={dncOverdue ? "auto-paused" : "active"} word={dncOverdue ? "Overdue" : "Current"}>
-            Synchronised {longDay(st.prospecting.dnc.synchronisedOn)} · next due {longDay(st.prospecting.dnc.nextDueOn)}
-            {dncOverdue && " · calls made now are outside safe harbour"}
-          </StripLine>
-          {homeless && (
-            <>
-              {/* Decision-critical facts the category's settings have no page for at all: the memo
-                  records no delete control ("no self-serve control"), no published API limits and no
-                  written delivery contract. Rule 7 puts them on screen before rule 1 gives them an
-                  area to live in, so at the next step they move from here into their own areas. */}
-              <StripLine item="plan.delete" label="Delete workspace">
-                Deletes {seed.contacts.length.toLocaleString()} contacts, {plural(seed.sequences.length, "sequence")} and every person's data.
-                {" "}Fourteen days to change your mind, then it is gone. Export first.
-              </StripLine>
-              <StripLine item="dev.limits" label="API limits">
-                200 a minute · 6,000 an hour · 50,000 a day, per workspace, not per key
-                {" "}· <span data-item="dev.cost-table" data-item-label="Cost per endpoint">published cost per endpoint, typical and maximum</span>
-                {" "}· <span data-item="dev.key-spend" data-item-label="Spend per key">spend per key against the same balance</span>
-                {" "}· <span data-item="dev.alert-80" data-item-label="Alert the key's owner at 80%">the key's owner is told at 80%</span>
-              </StripLine>
-              <StripLine item="dev.hook-contract" label="Webhooks">
-                At least once, signed, attempt-numbered, retried for 24 hours, never silently disabled, and anything missed is readable from the reconciliation endpoint
-              </StripLine>
-            </>
-          )}
-          {upgrades.length > 0 && (
-            <StripLine item="plan.upgrade-requests" label="Upgrade requests">
-              {plural(upgrades.length, "upgrade request")} · {upgrades[0].requester.user} wants {upgrades[0].upgrade!.feature} ({upgrades[0].upgrade!.plan}, {money(upgrades[0].upgrade!.monthlyTotal)} a month for {b.plan.seats} seats)
-              {" "}<FamilyIcon of="requests" className="inline-block align-text-bottom" />{" "}
-              <Actions surface="card" className="inline-flex align-middle" items={[{
-                label: "Review", kind: "link", href: href("/ollopa/requests"),
-                onClick: () => leaveSettings("/ollopa/requests", "plan.upgrade-requests"),
-              }]} />
-            </StripLine>
-          )}
-        </>
-      ) : (
-        <>
-          <StripLine item="plan.credits" label="Your credits">
-            {mine ? `${credits(mine.used)} used this month${mine.limit ? ` · your limit is ${credits(mine.limit)}` : ""}` : `${credits(c.balance)} left in the workspace`}
-            <Actions surface="card" className="ml-2 inline-flex align-middle" items={[{ label: "Where it went", kind: "secondary", onClick: onCredits }]} />
-          </StripLine>
-          <StripLine item="mail.bounce-guard" label="Bounce guard" state={guard.state === "paused" ? "auto-paused" : guard.state === "warning" ? "warning" : "active"} word={guard.state === "paused" ? "Paused" : guard.state === "warning" ? "Warning" : "On"}>
-            Warns at {guard.warnPercent}%, pauses at {guard.pausePercent}% ·
-            {" "}{myMailboxes.length === 0 ? "you have no mailbox here" : myMailboxes.some((m) => m.paused) ? "one of yours is paused" : `${plural(myMailboxes.length, "mailbox", "mailboxes")} of yours, none paused`}
-          </StripLine>
-          <StripLine item="ai.approvals" label="Agents">
-            Agents never overwrite a field you set or confirmed; they propose instead. Sending, enrolling and spending over a cap wait for your approval ·
-            {" "}a second approval over {seed.secondApproval.recipients.toLocaleString()} recipients or {seed.secondApproval.credits} credits
-          </StripLine>
-        </>
-      )}
-      </dl>
-      </CardContent>
-    </Card>
+      <Fields fields={fields} />
+    </Section>
   )
 }
 

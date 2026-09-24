@@ -15,7 +15,7 @@ import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
-import { IndexPage } from "../../layouts"
+import { LegacyIndexPage as IndexPage } from "../../layouts"
 import { Chip } from "../../ui/Identity"
 import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 

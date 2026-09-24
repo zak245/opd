@@ -2473,15 +2473,21 @@ export function seedFor(business: Business): Seed {
     ...agentEvents.filter((e) => e.needsApproval).slice(0, 14).map((e, i) => ({
       id: `n-a${i + 1}`, kind: "approval" as const, when: `${e.when} ${e.at}`, title: e.summary,
       detail: e.ifApproved ? `${e.ifApproved.action === "send" ? "Sends 1 email" : e.ifApproved.action === "enrol" ? `Enrols ${e.ifApproved.recipients} people` : "Changes the stage"} · ${e.ifApproved.credits} credits` : e.detail,
-      target: "#/ollopa/agents", unread: true, groupKey: e.agent, interrupting: e.needsSecondApproval,
+      // It waits on Agents, where Approve and Decline are. A band that cannot decide it is a pointer,
+      // and a pointer is not an alert (REVIEW-ALERTS.md §5).
+      target: "#/ollopa/agents", unread: true, groupKey: e.agent, interrupting: false,
     })),
     ...(outbound ? [{
-      id: "n-bg1", kind: "bounce-guard" as const, when: `${shift(-2)} 09:12`, title: `Bounce rate 4.3% on ${sequences[0]?.name ?? "a sequence"}`,
-      detail: `Warns at ${BOUNCE_GUARD.warnPercent}%, pauses at ${BOUNCE_GUARD.pausePercent}%.`, target: "#/ollopa/sequences", unread: true, groupKey: sequences[0]?.name ?? "sequence", interrupting: true,
+      // The workspace's own rate, not a second number about the same thing: the strip used to say
+      // 4.3% here while the health row said 1.9% on the same screen. Nothing is stopped below the
+      // pause threshold, so it does not interrupt — it is in the bell and on Campaigns and Settings.
+      id: "n-bg1", kind: "bounce-guard" as const, when: `${shift(-2)} 09:12`, title: `Bounce rate ${sz.bounce.rate}% on ${sequences[0]?.name ?? "a sequence"}`,
+      detail: `Warns at ${BOUNCE_GUARD.warnPercent}%, pauses at ${BOUNCE_GUARD.pausePercent}%.`, target: "#/ollopa/sequences", unread: true, groupKey: sequences[0]?.name ?? "sequence", interrupting: sz.bounce.rate >= BOUNCE_GUARD.pausePercent,
     }] : []),
     ...(mailboxes.some((m) => m.paused) ? [{
       id: "n-bg2", kind: "bounce-guard" as const, when: `${shift(-1)} 11:40`, title: "A mailbox was paused at 6.2%",
-      detail: `The pause threshold is ${BOUNCE_GUARD.pausePercent}%. Sending from it has stopped.`, target: "#/ollopa/settings", unread: true, groupKey: "mailbox", interrupting: true,
+      // Sending from it has stopped until someone answers: this is what the band is for.
+      detail: `The pause threshold is ${BOUNCE_GUARD.pausePercent}%. Sending from it has stopped.`, target: "#/ollopa/settings/email-sending", unread: true, groupKey: "mailbox", interrupting: true,
     }] : []),
     ...syncErrors.map((e, i) => ({
       id: `n-s${i + 1}`, kind: "sync-error" as const, when: e.at, title: `${e.integration}: ${e.count} records did not sync`,
@@ -2489,7 +2495,8 @@ export function seedFor(business: Business): Seed {
     })),
     ...(b.credits.balance / (b.credits.burnPerWeek || 1) < 2 ? [{
       id: "n-c1", kind: "credits-low" as const, when: `${shift(-1)} 07:00`, title: "Credits run out in about 12 days",
-      detail: `${b.credits.balance.toLocaleString()} left, ${b.credits.burnPerWeek.toLocaleString()} a week.`, target: "#/ollopa/settings", unread: true, groupKey: "credits", interrupting: true,
+      // Nothing is stopped and the answer is a plan change in Settings, not a choice on the line.
+      detail: `${b.credits.balance.toLocaleString()} left, ${b.credits.burnPerWeek.toLocaleString()} a week.`, target: "#/ollopa/settings/plan", unread: true, groupKey: "credits", interrupting: false,
     }] : []),
   ]
 

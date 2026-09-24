@@ -7,13 +7,16 @@
 //
 // What the frame guarantees, so no page has to:
 //   · the page shrinks to make room and stays mounted, scrollable and clickable behind it;
-//   · 28 rem on a desktop, the whole width on a phone, about 200 ms, nothing under reduced motion;
+//   · three states, one continuous movement between them: the glance beside the page at 28 rem, the
+//     same pane widened over it at 42 rem with the next level of the record in it, and then the page
+//     itself through "Open the page", which is the only one of the three that pushes the trail;
+//   · the whole width on a phone at either width, where the control changes the level in place;
 //   · Escape closes, focus moves in on open and back to the thing that opened it on close;
 //   · [ and ] walk the list the pane was opened from, without closing;
 //   · nothing inside it opens a door, and it never opens a second pane — a related object opened
 //     from in here swaps the content and leaves one "‹ back", and past that the way on is the page.
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -21,28 +24,40 @@ import { Card } from "@/components/ui/card"
 import { quickLookFamily, quickLookOpen } from "../templates/QuickLook"
 import { Separator } from "@/components/ui/separator"
 import { href as hashHref, useRoute } from "@/app/router"
-import { besideBack, besideStep, closeBeside, useBeside, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
+import { besideBack, besideOpenedFrom, besideStep, closeBeside, toggleBesideMode, useBeside, useBesideDir, useBesideMode, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
 import { clearHighlight, crumbName, findAnchor, follow, showReturn } from "../chain"
 import { clearEdit, useEdit } from "../edits"
 import { besides } from "../Product"
 import { coreBesides } from "../beside"
 import type { Session } from "../session"
 import type { Page } from "../usage/model"
-import { useDisclosure } from "./useDisclosure"
+import { DeeperProvider, useDisclosure } from "./useDisclosure"
 import { FlatProvider } from "./Door"
 import { FamilyIcon } from "./Identity"
 import { familyOf } from "../identity"
 import { Actions } from "./Actions"
+import { MOTION, ms, reducedMotion } from "../motion"
+import "../motion.css"
 
-const MS = 200
+/**
+ * The two widths, and why these two.
+ *
+ * 28 rem is the glance (LAYOUTS.md §5: at 1440 three panes, sidebar, page and pane). 42 rem is the
+ * same pane widened over the page: at 1440 it leaves about 540 px of the list still on screen and
+ * still working, which is what makes it a wider pane rather than a new screen; at 1024 it covers,
+ * which §5 already says the pane does at that width; at 400 both come out as the whole width, so
+ * the control changes what is in the pane and not how wide it is.
+ *
+ * The page never reflows between the two. The pane's own box keeps the glance's 28 rem of flow and
+ * the extra 14 rem is taken as a negative margin, so the list behind holds its line lengths, its
+ * scroll and its wrapping while the pane widens over it.
+ */
+const GLANCE = "28rem"
+const WIDE = "42rem"
 
 /** Below `sm` the pane takes the whole width, so the page behind it is not on screen at all. */
 function phoneWidth() {
   return typeof window !== "undefined" && window.matchMedia?.("(max-width: 639px)").matches === true
-}
-
-function reducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
 }
 
 /** The name and context for a target, from the renderer the owning folder registered. */
@@ -175,6 +190,10 @@ export function useBesideDone(done: BesideDone | null) {
 export function Beside({ session, pageTitle }: { session: Session; pageTitle: string }) {
   const target = useBeside()
   const parent = useBesideParent()
+  // Which of the two widths the pane is at, and which way its content last moved. Both live in the
+  // pane store rather than here, so `[`, `]` and the header control all answer to one truth.
+  const mode = useBesideMode()
+  const dir = useBesideDir()
   const route = useRoute()
   // What is drawn. It outlives `target` by one closing animation, so the pane slides out with its
   // content still in it rather than emptying first.
@@ -199,20 +218,20 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   }
 
   useEffect(() => {
-    const ms = reducedMotion() ? 0 : MS
+    const over = ms(MOTION.surface)
     if (target) {
       // Opening a pane is a new answer to "which one are you on", so whatever a return lit three
       // seconds ago goes out: the marked row behind the pane is the only mark left.
       clearHighlight()
       opener.current = target.opener ?? opener.current
       last.current = target
-      pinRow(row.current ?? opener.current, ms + 60)
+      pinRow(row.current ?? opener.current, over + 60)
       const id = requestAnimationFrame(() => setOpen(true))
       return () => cancelAnimationFrame(id)
     }
     setOpen(false)
-    pinRow(row.current ?? opener.current, ms + 60)
-    const t = window.setTimeout(() => setShown(null), ms)
+    pinRow(row.current ?? opener.current, over + 60)
+    const t = window.setTimeout(() => setShown(null), over)
     return () => window.clearTimeout(t)
   }, [target])
 
@@ -268,14 +287,35 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
   useEffect(() => {
     if (!target) return
     const root = document.querySelector<HTMLElement>('[data-page-active="true"]') ?? document.body
-    const hit = Array.from(root.querySelectorAll<HTMLElement>(`[data-item="${CSS.escape(target.id)}"]`))
+    // Which row on the page is being read. Three answers, in this order:
+    //   · the pane's own object is a row on the page — a person opened from a list of people;
+    //   · a quick look, whose id is the look and not the record, so its place in the list is what
+    //     names the row: the nth thing the page put a `data-item` on;
+    //   · anything else — a contact's company, a deal's account, a setting a page links to — is the
+    //     row it was opened from, worked out when the pane opened.
+    const byId = Array.from(root.querySelectorAll<HTMLElement>(`[data-item="${CSS.escape(target.id)}"]`))
       .find((el) => el.offsetParent !== null)
+    const byPlace = target.kind === "quick-look" && target.list
+      ? Array.from(root.querySelectorAll<HTMLElement>("[data-item]"))
+        .filter((el) => el.offsetParent !== null)[target.list.index]
+      : undefined
+    const hit = byId ?? byPlace ?? besideOpenedFrom() ?? undefined
     const marked = (hit?.closest('tr, li, [role="listitem"], [data-task-row]') as HTMLElement | null) ?? hit
     row.current = marked ?? null
     rowList.current = marked?.parentElement ?? null
     setFromRow(hit?.getAttribute("data-item-label") ?? hit?.textContent?.trim().split("\n")[0].slice(0, 40) ?? null)
-    marked?.classList.add("ollopa-beside-open")
-    return () => marked?.classList.remove("ollopa-beside-open")
+    // The mark says "this is the one being read": a muted fill and a 3 px leading bar in the accent,
+    // which is the colour that means "you are here" (DESIGN.md §5). It arrives with the pane.
+    marked?.classList.add("ollopa-beside-open", "ollopa-reading")
+    return () => {
+      if (!marked) return
+      // And it leaves with the pane rather than a frame before it: the out movement runs for as long
+      // as the pane takes to slide away, then the classes go.
+      marked.classList.remove("ollopa-beside-open", "ollopa-reading")
+      marked.classList.add("ollopa-reading-out")
+      const el = marked
+      window.setTimeout(() => el.classList.remove("ollopa-reading-out"), ms(MOTION.surface))
+    }
   }, [target])
 
   // The keyboard runs the lap from anywhere on the page, not only from inside the pane.
@@ -332,6 +372,22 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
 
   const declarePage = (page: Page) => { declaredPage.current = page }
 
+  const expanded = mode === "expanded"
+  // One movement, not a swap: the box's width and its own compensating margin run together over the
+  // same 200 ms with the same easing, and so does the card inside it. Under reduced motion the same
+  // change happens in no time at all.
+  const over = ms(MOTION.surface)
+  const moving: CSSProperties = {
+    transitionProperty: "width, margin-left",
+    transitionDuration: `${over}ms`,
+    transitionTimingFunction: MOTION.ease,
+  }
+  // Which way the content that just arrived came from, so `]` reads as forward and `[` as back.
+  // Keyed by what is being shown, so the movement runs when the object changes and not when the
+  // same object re-renders after an act.
+  const swap = dir === 1 ? "ollopa-from-right" : dir === -1 ? "ollopa-from-left" : ""
+  const swapKey = `${shown.kind}:${shown.id}:${list?.index ?? ""}`
+
   const openPage = () => {
     // A quick look has no route of its own: "Open the page" is the opener's own move, which is what
     // keeps the trail (LAYOUTS.md §3, the quick look is the pane).
@@ -345,15 +401,30 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     <aside
       data-beside={shown.kind}
       aria-label={`${head.name}, beside ${pageTitle}`}
-      style={{ width: open ? "min(100%, 28rem)" : 0 }}
+      data-beside-mode={mode}
+      style={{
+        ...moving,
+        width: open ? `min(100%, ${expanded ? WIDE : GLANCE})` : 0,
+        // The page keeps the glance's width whatever the pane is doing, so widening the pane moves
+        // nothing on the page behind: no reflow, no re-wrap, no scroll jump, no re-render.
+        marginLeft: open && expanded ? `calc(min(100%, ${GLANCE}) - min(100%, ${WIDE}))` : 0,
+      }}
       className={cn(
         "z-40 shrink-0 overflow-hidden bg-transparent",
-        "transition-[width] duration-200 ease-out motion-reduce:transition-none",
         "max-sm:absolute max-sm:inset-y-0 max-sm:right-0",
       )}
     >
       {/* A shadcn Card carries the look; the aside only carries the width and the animation. */}
-      <Card ref={panel} tabIndex={-1} className="m-2 flex h-[calc(100%-1rem)] w-[calc(min(100vw,28rem)-1rem)] flex-col gap-0 overflow-hidden py-0 shadow-lg outline-none max-sm:m-0 max-sm:h-full max-sm:w-full max-sm:rounded-none max-sm:border-0">
+      <Card
+        ref={panel}
+        tabIndex={-1}
+        style={moving}
+        className={cn(
+          "m-2 flex h-[calc(100%-1rem)] flex-col gap-0 overflow-hidden py-0 shadow-lg outline-none",
+          expanded ? "w-[calc(min(100vw,42rem)-1rem)]" : "w-[calc(min(100vw,28rem)-1rem)]",
+          "max-sm:m-0 max-sm:h-full max-sm:w-full max-sm:border-0",
+        )}
+      >
         {/* A thin bar in the object's family hue, so the pane says what it is holding before it is
             read (DESIGN.md §5). */}
         <div aria-hidden="true" className="h-[3px] shrink-0" style={{ backgroundColor: familyOf(family).fill }} />
@@ -370,7 +441,7 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
           </p>
           <div className="flex items-start gap-2">
             <FamilyIcon of={family} size="header" className="mt-0.5" label={familyOf(family).name} />
-            <div className="min-w-0 flex-1">
+            <div key={swapKey} className={cn("ollopa-pane-head min-w-0 flex-1", swap)}>
               <h2 className="t-section truncate">{head.name}</h2>
               {head.context && <p className="t-small truncate text-muted-foreground">{head.context}</p>}
             </div>
@@ -385,15 +456,31 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
               <TooltipContent>Close · Esc</TooltipContent>
             </Tooltip>
           </div>
-          {/* A destination, not a state change, so it is a real link (DESIGN.md §1). Its click is
+          {/* The two ways on from a glance, side by side, so the difference between them is plain:
+              read the rest of the record here, or go to the page and take the trail with you.
+
+              The first is a door and is labelled by what is behind it, not by what it does to the
+              width (RULES.md rule 4), so it reads the same at 400 where nothing widens. The second
+              is a destination, not a state change, so it is a real link (DESIGN.md §1); its click is
               still the product's, which is what keeps the trail. */}
-          {(head.route || shown.kind === "quick-look") && (
-            <Actions
-              className="mt-2"
-              surface="pane"
-              items={[{ kind: "link", label: "Open the page", href: hashHref(head.route), onClick: openPage }]}
-            />
-          )}
+          <div className="mt-2 flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="xs"
+              className="ollopa-act -ml-2 shrink-0"
+              aria-expanded={expanded}
+              onClick={toggleBesideMode}
+            >
+              {expanded ? <ChevronsRight aria-hidden="true" /> : <ChevronsLeft aria-hidden="true" />}
+              {expanded ? "Just the glance" : "All the fields"}
+            </Button>
+            {(head.route || shown.kind === "quick-look") && (
+              <Actions
+                surface="pane"
+                items={[{ kind: "link", label: "Open the page", href: hashHref(head.route), onClick: openPage }]}
+              />
+            )}
+          </div>
         </header>
         <Separator />
 
@@ -401,11 +488,16 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
         <FlatProvider value={true}>
           <DoneSlot.Provider value={setBodyDone}>
           <DeclaredPage.Provider value={declarePage}>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm">
+          {/* Widened, every `useDisclosure` inside the body answers "level one" for everything the
+              record declares, so the pane shows the next level of the same record without a single
+              registered body having to learn a second rule. */}
+          <DeeperProvider value={expanded}>
+          <div key={swapKey} className={cn("ollopa-pane-body min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm", swap)}>
             {Body ? <Body session={session} id={shown.id} target={shown} /> : (
               <p className="text-muted-foreground">Nothing is registered to show a {shown.kind} here yet.</p>
             )}
           </div>
+          </DeeperProvider>
           </DeclaredPage.Provider>
           </DoneSlot.Provider>
         </FlatProvider>

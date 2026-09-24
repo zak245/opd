@@ -42,23 +42,98 @@ One line of page state: badges, a notice. One line at every width — it scrolls
 rather than wrapping, because a second row costs the page more than a scroll costs the reader.
 The **workspace's** own health row is the shell's; this is for a page with state of its own.
 
-### `Toolbar`
+### `Toolbar` and `FilterBar` — the filtering pattern
 
-Search, filters, views, columns — **in the card's header**. At most five controls sit in front; the
-sixth and beyond go behind one `Collapsible` door, and **the door labels itself** from what is
-inside it ("Filter by owner, created, source · 3"). A page never decides what to hide.
+Search, filters, views, columns — **in the card's header**, and the same shape on every index
+(LAYOUTS.md §2, "The filtering pattern"). `FilterBar` in `filters.tsx` is where it is built;
+`Toolbar` is the name the pages already import and the adapter for the older `controls` list.
 
-```tsx
-<Toolbar
-  count="9 of 800"
-  controls={[
-    { name: "Search", always: true, node: <Input … /> },
-    { name: "Stage", node: <Select … /> },
-    { name: "Owner", node: <Select … /> },
-  ]} />
+```
+[ Search ] [ Owner: me ▾ ] [ Stage: cold ▾ ]   [ › ⚙ Filters and views  26 · 3 on ]   9 of 800 people
+Filtered by [ Score: 40 and above ✕ ]  Clear all 3 filters
+└─ the door opens here, below the row, pushing the list down
 ```
 
-`always: true` keeps a control in front whatever the count. The search always is.
+| Prop | Meaning |
+|---|---|
+| `search` | `{ value, onChange, placeholder }`. Always first, always the same box. |
+| `searchNode` | A search box the page already owns (a ref, a `/` hint). Takes the same first place. |
+| `controls` | The filters this seat sets most, in its order. **Three** keep the row at 1280 and above, two at 1024, none on a phone; the rest fall into the door. |
+| `behind` | Everything else, each with a `group`: `"filters"`, `"views"` or `"columns"`. |
+| `count` | `{ shown, total, noun }` and it ticks; or a `ReactNode` and it does not. |
+| `onClearAll` | Drops every filter. The one "Clear all" in the pattern. |
+| `doorId` | The door's id, so it remembers whether it was left open (RULES.md rule 5). |
+
+A control is `{ name, node, value?, onClear? }`. **`value` is what makes the count explainable**:
+it is what the filter is set to, in the person's words, and absent means the filter is off. Give it
+and the filter names itself on the applied line and in the empty state; leave it out and the page
+has a count nobody can account for, which is the thing the rules forbid.
+
+#### How a page uses this
+
+```tsx
+<IndexPage
+  …
+  search={{ value: q, onChange: setQ, placeholder: "Search people by name, company or email" }}
+  controls={[
+    { name: "Owner", value: owner === "all" ? undefined : owner, onClear: () => setOwner("all"),
+      node: <Select …>{/* the trigger reads "Owner: me" */}</Select> },
+    { name: "Stage", value: stage.join(", ") || undefined, onClear: () => setStage([]),
+      node: <Select …/> },
+  ]}
+  behind={[
+    { name: "Score", group: "filters", value: score, onClear: …, node: <Select …/> },
+    { name: "Saved views", group: "views", node: <ViewsList …/> },
+    { name: "Columns and density", group: "columns", node: <ColumnsList …/> },
+  ]}
+  count={{ shown: rows.length, total: all.length, noun: "people" }}
+  onClearAll={clearAll} />
+```
+
+Four rules a page keeps, and the bar keeps the rest:
+
+1. **Name every filter** and give it a `value` and an `onClear`. No page draws its own chip, its own
+   "×", its own "Clear all" or its own second door.
+2. **Order `controls` by what this seat sets most.** The bar decides how many fit; the page never does.
+3. **The columns control and the saved views are `behind`**, in their groups. They are not filters
+   and they never take a place on the row.
+4. **Pass the count in three parts** so it ticks and so it says what it counts.
+
+### `ResultCount`, `AppliedLine`, `FilterEmpty`
+
+The three pieces `FilterBar` draws, exported because a page that is not an index may need one.
+
+- `<ResultCount shown total noun />` — "9 of 800 people", ticking over `MOTION.settleMs`, tabular so
+  it never changes width. The settled sentence is what a screen reader is given, once.
+- `<AppliedLine chips total onClearAll />` — the line under the row. It grows in on the first filter
+  and collapses on the last. A chip's "×" is **inside** the chip: one control, one accessible name.
+- `<FilterEmpty noun applied onClearAll />` — what a filtered index says when nothing is left. It
+  names the filter that emptied it and offers to clear that one. Pass `applied` in the order the
+  filters were switched on, so the last of them is the one that did it.
+
+### The motion tokens: `MOTION`, `motionVars`, `useSettle`
+
+Motion had no tokens, so a door opened in 180 ms on one page and 300 ms on another. There are now
+two durations and one curve, in `filters.tsx`, and **everything that moves uses them**:
+
+| Token | CSS custom property | Value | Used for |
+|---|---|---|---|
+| `MOTION.doorMs` | `--ollopa-door-ms` | 180 ms | a door, a panel or a pane opening or closing |
+| `MOTION.settleMs` | `--ollopa-settle-ms` | 160 ms | rows settling, the count ticking, a line growing in |
+| `MOTION.ease` | `--ollopa-ease` | `cubic-bezier(0.32, 0.72, 0, 1)` | all of it |
+
+Spread `motionVars` on any root to read them from CSS. Everything stops under
+`prefers-reduced-motion: reduce`: the transitions carry `motion-reduce:transition-none`, and
+`useReducedMotion()` is there for the movement JavaScript drives.
+
+`useSettle(signature)` is the rows' half. The list container spreads it, and when the signature
+changes the new set arrives faded and two pixels high and settles into place. Out is instant; a dip
+in both directions is a flicker, not a settle.
+
+```tsx
+const settle = useSettle(`${q}|${JSON.stringify(active)}`)
+<div {...settle}>{rows}</div>
+```
 
 ### `SummaryStrip`
 
@@ -247,7 +322,59 @@ no width.** Structured pages are about 1300 px; the board is fluid; a wizard ste
 | `SettingsPage` | Grouped panels, each saved on its own | Area index beside at `lg`, above it below |
 | `FormSheet` | One committed set of fields | A sheet — **the only thing a sheet is still for** |
 
-### `IndexPage`
+### `Fields` — a card body of facts
+
+**How a page uses this.** Hand it labelled values. A value may join at most three short facts with
+"·"; a fourth fact is a fourth field. The grid, the dividers and the padding are the part's.
+
+```tsx
+<Section heading="Plan and price">
+  <Fields fields={[
+    { label: "Plan", value: "Scale · 42 seats" },
+    { label: "Price", value: "$5,418 a month", note: "billed annually" },
+    { label: "Renews", value: "15 January 2027", action: <Button size="sm" variant="outline">Change plan</Button> },
+  ]} />
+</Section>
+```
+
+`Rows` is the same idea for a body of rows: it divides its children with the library's rule.
+Neither takes a padding, and `Section` no longer accepts one.
+
+**The theme decides the look.** No page and no part writes `rounded-*`, `shadow-*` or a colour.
+
+### `IndexPage` — the one index
+
+**How a page uses this.** It passes data, columns and acts. It cannot pass a class, a width or an
+order; the toolbar is handed in whole from the filters part.
+
+```tsx
+<IndexPage
+  family="lists" title="Lists" count={lists.length}
+  actions={[{ kind: "primary", label: "New list", onClick: create }]}
+  toolbar={<Toolbar … />}
+  columns={[
+    { key: "records", header: "Records", priority: 1, numeric: true, cell: (l) => n(l.count) },
+    { key: "owner", header: "Owner", priority: 3, cell: (l) => l.owner },
+  ]}
+  rows={rows} rowKey={(l) => l.id}
+  name={(l) => <><a href={href(`/ollopa/lists/${l.id}`)}>{l.name}</a><Chip status={l.kind} /></>}
+  menu={(l) => <Actions layout="menu" menuLabel={l.name} items={acts(l)} />}
+  bulk={{ selected, onChange: setSelected, bar: <BulkBar … /> }}
+  pager={<Button variant="outline" size="sm" onClick={more}>Show 25 more</Button>}
+  slot={<ViewSwitch />} />
+```
+
+**The theme decides the look.** No page and no part writes `rounded-*`, `shadow-*` or a colour:
+corners are square, a card is paper lifted off the page ground by the library's own shadow, and an
+overlay sits above the card. There are no levels beyond those two.
+
+`slot` is the one named place for what the shape has no room for — a board/table switch, object
+tabs, an "Expand all" — and it sits in the same place on every page that uses it.
+
+`LegacyIndexPage` is the older shape (a page composes its own `table`), kept only while the
+remaining pages move across.
+
+### `IndexPage` (the older shape)
 
 ```tsx
 <IndexPage

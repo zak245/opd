@@ -1,69 +1,25 @@
-// What a page has to say above its own content, so the shell can say it in one place.
+// What a page needs decided, so the shell can say it in one place.
 //
-// Round 11's rule: above the content there is the header and one Alert, and nothing else. A page
-// that has workspace health to report or a workspace change to announce does not draw a band of its
-// own — it publishes here, and the shell folds the items into the Alert it already draws.
+// One band, one item, one decision (LAYOUTS.md §2). A line earns the band only if something is
+// stopped, spending or at risk until it is answered, and the answer is a choice the person makes
+// rather than a page they visit. A pointer to a page is not an alert; a filter is not an alert; a
+// limit that clears itself is not an alert. So a page hands over at most one item, and that item
+// carries the act that decides it — an item with no act is not published at all.
 //
 // A module-level store rather than a context, for the same reason `edits.ts` is one: the publisher
 // is deep inside a page and the reader is above it in the tree.
 import { useEffect, useSyncExternalStore } from "react"
 
-export interface BannerItem {
-  kind: "error" | "warning" | "info"
-  text: string
-  href: string
-}
-
-export interface BannerNews {
-  text: string
-  href?: string
-}
-
-interface Banner {
-  items: BannerItem[]
-  news?: BannerNews
-}
-
-const EMPTY: Banner = { items: [] }
-let snapshot: Banner = EMPTY
-const subscribers = new Set<() => void>()
-
-function emit() {
-  for (const f of subscribers) f()
-}
-
-/** Said by the page, from an effect. Replaces whatever the last page said. */
-export function setBanner(items: BannerItem[], news?: BannerNews) {
-  snapshot = items.length === 0 && !news ? EMPTY : { items, news }
-  emit()
-}
-
-export function clearBanner() {
-  if (snapshot === EMPTY) return
-  snapshot = EMPTY
-  emit()
-}
-
-export function useBanner(): Banner {
-  return useSyncExternalStore(
-    (f) => { subscribers.add(f); return () => { subscribers.delete(f) } },
-    () => snapshot,
-    () => snapshot,
-  )
-}
-
-/* ------------------------------------------------------------------ what a page needs decided */
-
 export interface AlertItem {
-  /** Stable within the page, so React can key it and the shell can dedupe. */
+  /** Stable within the page, so React can key it. */
   id: string
-  /** One line: what needs deciding. */
+  /** The thing itself, in its own words. It becomes the band's title. */
   text: string
-  /** The acts that decide it, drawn as inline links inside the one Alert. */
+  /** The acts that decide it, at most two, drawn through `Actions`. */
   acts?: { label: string; onClick: () => void }[]
-  /** A link to where it is decided, when there is no act to run here. */
+  /** Where it is decided, when the act is a destination rather than a choice. */
   href?: string
-  /** Danger rather than a warning: it makes the one Alert destructive. */
+  /** Danger rather than a warning. It is this item's own, never a sibling's. */
   danger?: boolean
 }
 
@@ -71,15 +27,16 @@ let pageAlerts: AlertItem[] = []
 const alertSubscribers = new Set<() => void>()
 
 /**
- * A page says what it needs decided; the shell folds it into the one Alert it already draws, after
- * the workspace's own items (LAYOUTS.md §2, one Alert per page). Call it from an effect and return
- * its cleanup, or use `useDeclareAlerts`.
+ * A page says the one thing it needs decided. Everything past the first item that carries an act is
+ * dropped: the band holds one item, and a page that wants to say more says it in its own first
+ * section, next to what it is about (RULES.md rule 5).
  */
 export function declareAlerts(items: AlertItem[]) {
-  pageAlerts = items
+  const kept = items.filter((i) => i.acts?.length).slice(0, 1)
+  pageAlerts = kept
   for (const f of alertSubscribers) f()
   return () => {
-    if (pageAlerts === items) {
+    if (pageAlerts === kept) {
       pageAlerts = []
       for (const f of alertSubscribers) f()
     }
@@ -98,10 +55,10 @@ export function usePageAlerts(): AlertItem[] {
  * The hook form: the page declares what it needs decided and the shell clears it on unmount.
  *
  * ```tsx
- * useDeclareAlerts(exceptions.map((e) => ({
- *   id: e.id, text: e.text, danger: true,
- *   acts: [{ label: "Resume", onClick: () => resume(e) }],
- * })))
+ * useDeclareAlerts(paused ? [{
+ *   id: paused.id, text: paused.text, danger: true,
+ *   acts: [{ label: "Resume", onClick: () => resume(paused) }],
+ * }] : [])
  * ```
  */
 export function useDeclareAlerts(items: AlertItem[]) {

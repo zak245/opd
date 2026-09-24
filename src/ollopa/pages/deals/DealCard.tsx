@@ -128,7 +128,7 @@ function NextStepEditor({ deal, onSave, onCancel }: { deal: Deal; onSave: (text:
     // The one container-low band a card may hold: the editor is a region of the card, not a card
     // inside a card (DESIGN.md §5, containment).
     <Group
-      className="grid gap-1.5 rounded-[var(--radius)] p-2"
+      className="grid gap-1.5 p-2"
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
       onKeyDown={(e: React.KeyboardEvent) => { e.stopPropagation(); if (e.key === "Escape") onCancel(); if (e.key === "Enter" && ok) onSave(text.trim(), due) }}
     >
@@ -173,21 +173,22 @@ export function DealCard(p: DealCardProps) {
         if (e.key.toLowerCase() === "m") { e.preventDefault(); menuButton.current?.click() }
         if (e.key.toLowerCase() === "e") { e.preventDefault(); if (p.canEdit) p.onEditingNextStep(true) }
       }}
-      className="group/card cursor-pointer rounded-[var(--radius)] focus-visible:outline-none"
+      className="group/card cursor-pointer focus-visible:outline-none"
     >
       {/* A card per deal is the one case the shape allows: a deal on a board is read, decided on
           and dragged on its own. The box is shadcn's `Card` as shipped — its radius, its border and
           its padding — and every card in every column has the same two sections in the same order:
           the header carries who it is, the content carries the numbers, the next step, the warnings
-          and the footer facts. The drag lift is the only shadow on the page. */}
+          and the footer facts. A carried card is marked by the ring, not by a shadow written here: the
+          theme owns the shadow scale. */}
       <Card
         className={cn(
-          "t-body gap-0 py-0 group-focus-visible/card:ring-2 group-focus-visible/card:ring-ring",
-          p.carrying && "shadow-sm ring-2 ring-ring",
+          "t-body group-focus-visible/card:ring-2 group-focus-visible/card:ring-ring",
+          p.carrying && "ring-2 ring-ring",
           p.selected && "border-foreground",
         )}
       >
-      <CardHeader className={cn("gap-0 [grid-template-columns:minmax(0,1fr)]", flags.compact ? "px-2 pt-2" : "px-2.5 pt-2.5")}>
+      <CardHeader className="[grid-template-columns:minmax(0,1fr)]">
       <div className="flex items-start gap-2">
         {/* The grip is first in the header, so the pointer finds it where every board puts it and
             the keyboard reaches it before the card's own content. Its "Move to" menu is the route
@@ -281,7 +282,7 @@ export function DealCard(p: DealCardProps) {
       </div>
       </CardHeader>
 
-      <CardContent className={cn(flags.compact ? "space-y-1 px-2 pt-1 pb-2" : "space-y-1.5 px-2.5 pt-1.5 pb-2.5")}>
+      <CardContent className={cn(flags.compact ? "space-y-1" : "space-y-1.5")}>
       {/* What it is worth and when it closes: never edited apart, never hidden. */}
       <div className="t-small flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span className="font-medium tabular-nums text-foreground">

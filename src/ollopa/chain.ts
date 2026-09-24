@@ -234,15 +234,23 @@ let lit: number[] = []
 export function clearHighlight() {
   lit.forEach((t) => window.clearTimeout(t))
   lit = []
-  document.querySelectorAll(".ollopa-returned").forEach((el) => el.classList.remove("ollopa-returned"))
+  document.querySelectorAll(".ollopa-returned").forEach((el) => {
+    el.classList.remove("ollopa-returned", "ollopa-returned-in")
+  })
 }
 
-/** Light one element for the three seconds, and put out anything else that was lit. */
+/**
+ * Light one element for the three seconds, and put out anything else that was lit.
+ *
+ * The second class is the movement (`src/ollopa/motion.css`): the light comes up over the first
+ * 200 ms rather than appearing at full strength on the first frame, so it arrives as part of the
+ * move back rather than blinking on after it.
+ */
 export function lightUp(el: HTMLElement) {
   clearHighlight()
   void el.offsetWidth
-  el.classList.add("ollopa-returned")
-  lit.push(window.setTimeout(() => el.classList.remove("ollopa-returned"), RETURN_HIGHLIGHT_MS))
+  el.classList.add("ollopa-returned", "ollopa-returned-in")
+  lit.push(window.setTimeout(() => el.classList.remove("ollopa-returned", "ollopa-returned-in"), RETURN_HIGHLIGHT_MS))
 }
 
 /**

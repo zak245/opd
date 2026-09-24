@@ -15,7 +15,7 @@ import { useLesson } from "@/learn/context"
 import { Actions } from "../../ui/Actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { PageHeader, PageScroll, Section } from "../../layouts"
+import { Fields, PageHeader, PageScroll, Section, type Field } from "../../layouts"
 import { ApproveBar } from "../../ui/ApproveBar"
 import { DoorGroup, useDoorState } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
@@ -265,10 +265,14 @@ export function AgentsPage({ session }: { session: Session }) {
   const bulkAtLevelOne = d.atLevelOne("wait.bulk")
   const chosen = queue.filter((e) => selected.has(e.id))
   const seenDate = seen.slice(0, 10)
-  const sentence =
-    `Since ${WEEKDAYS[new Date(seenDate + "T00:00:00Z").getUTCDay()]} ${seen.slice(11)}: ` +
-    `${agentsOn} ${agentsOn === 1 ? "agent" : "agents"} ran ${since(seed.agentEvents, seen)} events. ` +
-    `${queue.length} waiting for you. ${exceptions.length} ${exceptions.length === 1 ? "exception" : "exceptions"}.`
+  // The digest, in parts: the briefing card holds facts, not a sentence about them (LAYOUTS.md §2).
+  const digest = {
+    since: `${WEEKDAYS[new Date(seenDate + "T00:00:00Z").getUTCDay()]} ${seen.slice(11)}`,
+    agents: agentsOn,
+    events: since(seed.agentEvents, seen),
+    waiting: queue.length,
+    exceptions: exceptions.length,
+  }
 
   return (
     <PageScroll>
@@ -290,7 +294,7 @@ export function AgentsPage({ session }: { session: Session }) {
 
       {rules.r7 && <Briefing
         rules={rules}
-        seed={seed} session={session} d={d} spend={spend} sentence={sentence} workspace={workspace}
+        seed={seed} session={session} d={d} spend={spend} digest={digest} workspace={workspace}
         agents={agents} pausedHere={pausedHere} onPause={pause}
         trackOf={(a) => trackRecord(a.name, session, seed, local)}
         runsToday={(a) => new Set(seed.agentEvents.filter((e) => e.agent === a.name && e.when === TODAY).map((e) => e.batchKey)).size}
@@ -321,25 +325,33 @@ export function AgentsPage({ session }: { session: Session }) {
       >
         <div className="px-4 pb-3">
         {batch && (
-          <p data-item="wait.batch-line" data-item-label="What arrived in this batch, and what it costs together"
-            className="t-small text-muted-foreground">
-            {batch.count} arrived while the agents ran, {batch.at}. Together:{" "}
-            {[batch.sends && `${batch.sends} ${batch.sends === 1 ? "email" : "emails"} from your mailbox`,
-              batch.enrols && `${batch.enrols.toLocaleString()} people added to sequences`,
-              batch.stages && `${batch.stages} ${batch.stages === 1 ? "deal" : "deals"} moved a stage`]
-              .filter(Boolean).join(", ")}
-            , {batch.credits.toLocaleString()} credits.{" "}
-            {batch.skippedTotal > 0 && (
-              <>
+          // What arrived, as facts on the shared grid rather than one running sentence about them.
+          <Fields fields={[
+            {
+              id: "arrived", label: "Arrived", value: `${batch.count} while the agents ran`, note: batch.at,
+              "data-item": "wait.batch-line", "data-item-label": "What arrived in this batch, and what it costs together",
+            },
+            {
+              id: "together", label: "Together",
+              value: [
+                batch.sends && `${batch.sends} ${batch.sends === 1 ? "email" : "emails"}`,
+                batch.enrols && `${batch.enrols.toLocaleString()} added to sequences`,
+                batch.stages && `${batch.stages} ${batch.stages === 1 ? "deal" : "deals"} moved a stage`,
+              ].filter(Boolean).join(" · "),
+            },
+            { id: "credits", label: "Credits", value: <span className="tabular-nums">{batch.credits.toLocaleString()}</span> },
+            ...(batch.skippedTotal > 0 ? [{
+              id: "skipped", label: "Skipped",
+              value: (
                 <a data-item="wait.skipped" data-item-label="What the run passed over"
                   className="underline underline-offset-4" href={href("/ollopa/agents?kind=skipped")}
                   onClick={() => setFilters({ ...NO_FILTERS, kind: "skipped" })}>
-                  {batch.skippedTotal} {batch.skippedTotal === 1 ? "record" : "records"} skipped
+                  {batch.skippedTotal} {batch.skippedTotal === 1 ? "record" : "records"}
                 </a>
-                : {batch.skipped.map((s) => `${s.count} ${s.reason}`).join(", ")}.
-              </>
-            )}
-          </p>
+              ),
+              note: batch.skipped.map((s) => `${s.count} ${s.reason}`).join(" · "),
+            }] : []),
+          ] as Field[]} />
         )}
 
         {queue.length === 0 ? (

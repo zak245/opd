@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Door } from "../../ui/Door"
-import { IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
+import { LegacyIndexPage as IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
 import { useFitColumns, type ColumnPriority } from "../../layouts/columns"

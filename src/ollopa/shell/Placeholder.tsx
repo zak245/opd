@@ -154,7 +154,7 @@ export function Placeholder({ session, page, title }: { session: Session; page: 
       {counts.length > 0 && (
         <dl className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {counts.map((c) => (
-            <div key={c.label} className="rounded-lg border p-4">
+            <div key={c.label} className="border p-4">
               <dt className="text-xs uppercase tracking-wider text-muted-foreground">{c.label}</dt>
               <dd className="mt-1 break-words text-2xl font-semibold tabular-nums">{c.value}</dd>
             </div>

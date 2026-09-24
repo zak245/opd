@@ -3,10 +3,8 @@
 // Each part is a thin composition of shadcn as shipped. None of them declares a colour, a radius,
 // a shadow or a spacing scale of its own: the library carries the look, `identity.ts` carries the
 // six families and five statuses, and `Actions` carries the action grammar.
-import { useId, useMemo, useState, useSyncExternalStore, type ReactNode } from "react"
-import { SlidersHorizontal } from "lucide-react"
+import { useSyncExternalStore, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle,
@@ -15,11 +13,10 @@ import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronRight } from "lucide-react"
 import { Actions, type Action } from "../ui/Actions"
 import { FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"
+import { FilterBar, type FilterGroup, type ResultCountProps } from "./filters"
 
 /** True below `sm`. Read, never rendered twice: two branches put every control in the DOM twice. */
 const PHONE = "(max-width: 639px)"
@@ -113,89 +110,78 @@ export function StatusRow({ children, className }: { children: ReactNode; classN
 // ---------------------------------------------------------------------------------- Toolbar
 
 export interface ToolbarControl {
-  /** Used for the door's label and as the key. Say what the control is for: "Stage", "Owner". */
+  /** What the control is for, in one or two words: "Stage", "Owner". Names it on the applied line. */
   name: string
   node: ReactNode
-  /** Keep it out in front whatever the count: an applied filter is, so its cause is visible. */
-  always?: boolean
   /**
-   * Keep it out in front even on a phone, where everything else goes in the door. Exactly one
-   * control should carry this — the search — because a phone toolbar is one control and one door.
+   * What this filter is set to right now, in the person's words: "me", "Cold, Approaching".
+   * Absent means the filter is off. Give it and the count becomes explainable: the filter reads in
+   * its own control on the row, or on the applied line under it, and never only as a number.
    */
+  value?: string
+  /** Drops this one filter. The applied line and the empty state offer it. */
+  onClear?: () => void
+  /** Which part of the door this belongs to when it is not on the row. Filters by default. */
+  group?: FilterGroup
+  /** Kept while the pages move across: it puts the control on the row rather than in the door. */
+  always?: boolean
+  /** Kept while the pages move across: it marks the page's search box. */
   pin?: boolean
 }
 
+/** Legacy pages name their search and their columns control; the door still has to group them. */
+function groupOf(c: ToolbarControl): FilterGroup {
+  if (c.group) return c.group
+  const n = c.name.toLowerCase()
+  if (n.includes("column") || n.includes("density")) return "columns"
+  if (n.includes("view")) return "views"
+  return "filters"
+}
+
 /**
- * Search, filters, views, columns — in the card's header, never in the page header.
+ * The filter row in the card's header — search, the seat's filters, the door, the count.
  *
- * At most five controls sit in front (LAYOUTS.md §2, memo 30 part H rule 15). The sixth and beyond
- * go behind one door, and the door is labelled by what is inside it, automatically — so a page
- * never has to decide what to hide or what to call it.
+ * It is the one filtering pattern (LAYOUTS.md §2), and `FilterBar` in `filters.tsx` is where it is
+ * built. This part is the name the pages already import, and the adapter that takes the older
+ * `controls` list: the control marked `pin` (or called "Search") takes the first place, the ones
+ * marked `always` keep the row, and everything else goes into the one door.
+ *
+ * A page that gives each control a `value` and an `onClear` gets the applied line and the honest
+ * empty state for free. A page that gives neither still gets the row, the door and the count.
  */
-export function Toolbar({ controls, count, max = 5, className }: {
+export function Toolbar({
+  controls, count, result, onClearAll, doorId, className,
+}: {
   controls: ToolbarControl[]
-  /** The count this toolbar filters, printed at the end of the row. */
+  /** The count at the trailing edge, as the page already writes it: "9 of 800". */
   count?: ReactNode
-  max?: number
+  /** The same count in three parts, so it ticks as the filters change. Wins over `count`. */
+  result?: ResultCountProps
+  /** Drops every filter at once. The one "Clear all" in the pattern. */
+  onClearAll?: () => void
+  /** The door's id, so it remembers whether it was left open. */
+  doorId?: string
   className?: string
 }) {
-  const [open, setOpen] = useState(false)
-  const id = useId()
-  const phone = usePhone()
-  const shown = useMemo(() => {
-    // At 400 a toolbar of six rows is the page. One thing in front — the search — and one door
-    // for everything else, including the filters that are on: the door's own count says how many
-    // ("Filters and views · 4 on"), so the cause is still visible without costing four rows.
-    if (phone) {
-      const pinned = controls.filter((c) => c.pin)
-      return { front: pinned, behind: controls.filter((c) => !c.pin) }
-    }
-    const always = controls.filter((c) => c.always)
-    const rest = controls.filter((c) => !c.always)
-    const room = Math.max(0, max - always.length)
-    return { front: [...always, ...rest.slice(0, room)], behind: rest.slice(room) }
-  }, [controls, max, phone])
-
-  const label = shown.behind.length === 0 ? "" : phone
-    ? "Filters and views"
-    : `Filter by ${shown.behind.map((c) => c.name.toLowerCase()).join(", ")}`
-
-
-  // On a phone the count and the columns control go inside the door too: a toolbar that costs six
-  // rows before the first row of the list is the page (LAYOUTS.md §5).
-  const countOut = phone ? undefined : count
+  const search = controls.find((c) => c.pin) ?? controls.find((c) => c.name.toLowerCase() === "search")
+  const rest = controls.filter((c) => c !== search)
+  // The row keeps the ones the page marked, then the rest in the page's own order; `FilterBar`
+  // decides how many of them fit this width and puts the remainder in the door with the others.
+  const front = [...rest.filter((c) => c.always), ...rest.filter((c) => !c.always && groupOf(c) === "filters")]
+  const behind = rest
+    .filter((c) => !front.includes(c))
+    .map((c) => ({ ...c, group: groupOf(c) }))
 
   return (
-    <div className={cn("flex w-full min-w-0 flex-col gap-2", className)}>
-      <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
-        {shown.front.map((c) => <div key={c.name} className={cn("shrink-0", phone && "w-full")}>{c.node}</div>)}
-        {countOut !== undefined && (
-          <span className="t-label ml-auto shrink-0 tabular-nums text-muted-foreground">{countOut}</span>
-        )}
-      </div>
-      {shown.behind.length > 0 && (
-        <Collapsible open={open} onOpenChange={setOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="-ml-2" aria-controls={id}>
-              <ChevronRight className={cn("transition-transform", open && "rotate-90")} aria-hidden="true" />
-              <SlidersHorizontal aria-hidden="true" />
-              {label}
-              <Badge variant="outline" className="ml-1">
-                {phone ? `${shown.behind.filter((c) => c.always).length || shown.behind.length} on` : shown.behind.length}
-              </Badge>
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent id={id} className="pt-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-              {shown.behind.map((c) => <div key={c.name} className="min-w-0">{c.node}</div>)}
-              {phone && count !== undefined && (
-                <span className="t-label tabular-nums text-muted-foreground">{count}</span>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-    </div>
+    <FilterBar
+      className={className}
+      searchNode={search?.node}
+      controls={front}
+      behind={behind}
+      count={result ?? count}
+      onClearAll={onClearAll}
+      doorId={doorId}
+    />
   )
 }
 
@@ -256,7 +242,7 @@ export function Section({
   return (
     <Card className={cn("gap-3 py-4", className)} {...rest}>
       {(heading || actions) && (
-        <CardHeader className="min-w-0 flex-wrap items-start gap-2 px-4 [grid-template-columns:minmax(0,1fr)] md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]">
+        <CardHeader className="min-w-0 flex-wrap items-start gap-2 [grid-template-columns:minmax(0,1fr)] md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]">
           {heading && (
             // A heading is as long as the thing is called. It wraps inside its own column rather
             // than spilling into the action column, where its count ended up under a button.
@@ -276,8 +262,8 @@ export function Section({
           )}
         </CardHeader>
       )}
-      <CardContent className={cn(padded ? "px-4" : "px-0", bodyClassName)}>{children}</CardContent>
-      {footer && <><Separator /><CardFooter className="px-4 pt-3">{footer}</CardFooter></>}
+      <CardContent className={cn(!padded && "px-0", bodyClassName)}>{children}</CardContent>
+      {footer && <><Separator /><CardFooter className="pt-3">{footer}</CardFooter></>}
     </Card>
   )
 }

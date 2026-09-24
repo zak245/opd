@@ -25,7 +25,7 @@ import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
 import { Separator } from "@/components/ui/separator"
-import { IndexPage } from "../../layouts"
+import { LegacyIndexPage as IndexPage } from "../../layouts"
 import { Chip } from "../../ui/Identity"
 import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
@@ -253,7 +253,7 @@ export function ListsPage({ session }: { session: Session }) {
       actions={[{ kind: "primary", label: "New list", onClick: () => setChooser((v) => !v) }]}
       above={<>
         {chooser && (
-          <div className="mx-4 mt-3 rounded-lg border p-3 sm:mx-6">
+          <div className="mx-4 mt-3 border p-3 sm:mx-6">
             <h3 className="t-body font-medium">New list</h3>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               {KINDS_OF_LIST.map((k) => (

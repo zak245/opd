@@ -24,6 +24,26 @@ export function waiting(iso: string): string {
   return `${n} d · ${stamp}`
 }
 
+/**
+ * The Inbox row's trailing stamp, the way a mail list writes it: "Sep 10", and "Today" for one that
+ * landed this morning. The row is one line, so the stamp is the short form and the whole of it —
+ * how long it has waited, and whether that is overdue — is in `waitedLabel` on the same element's
+ * title and accessible name.
+ */
+export function stamp(iso: string): string {
+  const n = daysBetween(iso)
+  if (n <= 0) return "Today"
+  const d = new Date(iso.slice(0, 10) + "T00:00:00Z")
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`
+}
+
+/** What the stamp says in full: the date, how long it has waited, and the word "overdue". */
+export function waitedLabel(iso: string, late = false): string {
+  const n = daysBetween(iso)
+  const waited = n <= 0 ? "arrived today" : n === 1 ? "waiting 1 day" : `waiting ${n} days`
+  return `${day(iso)} · ${waited}${late ? " · overdue" : ""}`
+}
+
 /** An Interested reply older than one business day is overdue, and it says so in text, not colour. */
 export function overdueWait(iso: string, outcome: string): boolean {
   return (outcome === "Interested" || outcome === "Question") && daysBetween(iso) > 1

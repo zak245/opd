@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { IndexPage } from "../layouts/IndexPage"
+import { LegacyIndexPage as IndexPage } from "../layouts/IndexPage"
 import { useFitColumns } from "../layouts/columns"
 import { Chip, FamilyIcon } from "../ui/Identity"
 import { familyOf } from "../identity"

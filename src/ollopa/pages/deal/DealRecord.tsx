@@ -598,7 +598,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             Forecast category{" "}
             {canEdit ? (
               <Select value={forecast} onValueChange={(v) => { setForecast(v as ForecastCategory); log("field", `Forecast category · ${forecast} → ${v}`) }}>
-                <SelectTrigger className="ml-1 inline-flex h-6 w-auto gap-1 border-none px-1 py-0 text-xs shadow-none" aria-label="Forecast category">
+                <SelectTrigger className="ml-1 inline-flex h-6 w-auto gap-1 border-none px-1 py-0 text-xs" aria-label="Forecast category">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -782,48 +782,58 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
 
   // Qualification: the AE's weekly work. A human validates; the model proposes; the quote sits beside it.
   const qualCard = (
-    <ThingPlace id="qual.card" label="Qualification" place="card.qual" placeLabel="the Qualification card" className="space-y-1">
-      {QUAL_ELEMENTS.map((element, i) => {
-        const v = qual?.[element]
-        const quote = evidence.find((e) => e.element === element)
-        return (
-          <div key={element}>
-          {i > 0 && <Divider />}
-          <div className="py-2">
-            <div className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-xs font-medium">{element}</span>
-              <span className="min-w-0 flex-1 text-sm">{v?.value || <span className="text-muted-foreground">Not answered yet</span>}</span>
-              {v?.value && <StateChip state={v.state} />}
+    <ThingPlace id="qual.card" label="Qualification" place="card.qual" placeLabel="the Qualification card">
+      {/* Label above value, divided by the library's rule. `Fields` puts the label in a column of
+          its own, which needs the main column's width; this card lives in the narrow side rail. */}
+      <dl className="w-full min-w-0 [&>*+*]:border-t [&>*+*]:border-border">
+        {QUAL_ELEMENTS.map((element) => {
+          const v = qual?.[element]
+          const quote = evidence.find((e) => e.element === element)
+          return (
+            <div key={element} className="min-w-0 py-2">
+              <dt className="t-label text-muted-foreground">{element}</dt>
+              <dd className="t-body min-w-0 break-words">
+                <span className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="min-w-0">{v?.value || <span className="text-muted-foreground">Not answered yet</span>}</span>
+                  {v?.value && <StateChip state={v.state} />}
+                </span>
+                {v?.value && (
+                  /* Two facts, so one value line. `MetaLine` is a table row's part: its clamp makes
+                     it as wide as its longest run, and the side rail has no width to spare. */
+                  <div className="t-small break-words text-muted-foreground">
+                    <span className="opacity-70">
+                      {v.state === "validated" ? "Validated by " : v.state === "edited" ? "Edited by " : "Source "}
+                    </span>
+                    {v.state === "validated" || v.state === "edited" ? v.updatedBy : v.source}
+                    <span aria-hidden="true" className="px-1.5 opacity-50">·</span>
+                    {day(v.at)}
+                  </div>
+                )}
+                {/* The words the buyer used: a model's answer is checkable only with the quote. */}
+                {quote && (
+                  <blockquote className="t-small mt-1 flex gap-2 text-muted-foreground">
+                    <Divider orientation="vertical" className="h-auto self-stretch" />
+                    {quoted(quote.quote)}
+                  </blockquote>
+                )}
+                {v?.value && v.state !== "validated" && canEdit && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setQual((prev) => prev && ({ ...prev, [element]: { ...prev[element], state: "validated", updatedBy: session.user, at: TODAY } }))
+                      toast(`${element} validated. Nothing generated overwrites it now.`)
+                    }}>Validate</Button>
+                    <Button size="sm" variant="ghost" onClick={() => {
+                      const next = window.prompt(`${element}`, v.value)
+                      if (next === null) return
+                      setQual((prev) => prev && ({ ...prev, [element]: { ...prev[element], value: next, state: "edited", updatedBy: session.user, at: TODAY } }))
+                    }}>Edit</Button>
+                  </div>
+                )}
+              </dd>
             </div>
-            {v?.value && (
-              <p className="text-xs text-muted-foreground">
-                {v.state === "validated" ? `Validated by ${v.updatedBy}` : v.state === "edited" ? `Edited by ${v.updatedBy}` : v.source} · {day(v.at)}
-              </p>
-            )}
-            {/* The words the buyer used, beside the value: a model's answer is checkable only with the quote. */}
-            {quote && (
-              <blockquote className="mt-1 flex gap-2 text-xs text-muted-foreground">
-                <Divider orientation="vertical" className="h-auto self-stretch" />
-                {quoted(quote.quote)}
-              </blockquote>
-            )}
-            {v?.value && v.state !== "validated" && canEdit && (
-              <div className="flex gap-1 pt-1">
-                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => {
-                  setQual((prev) => prev && ({ ...prev, [element]: { ...prev[element], state: "validated", updatedBy: session.user, at: TODAY } }))
-                  toast(`${element} validated. Nothing generated overwrites it now.`)
-                }}>Validate</Button>
-                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => {
-                  const next = window.prompt(`${element}`, v.value)
-                  if (next === null) return
-                  setQual((prev) => prev && ({ ...prev, [element]: { ...prev[element], value: next, state: "edited", updatedBy: session.user, at: TODAY } }))
-                }}>Edit</Button>
-              </div>
-            )}
-          </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </dl>
     </ThingPlace>
   )
 
@@ -856,7 +866,7 @@ export function DealRecord({ session, dealId }: { session: Session; dealId?: str
             : <p className="text-xs text-muted-foreground">{gaps} qualification element{gaps === 1 ? "" : "s"} still unanswered.</p>}
           <Button size="sm" variant="outline" onClick={() => toast("The prep brief opens as its own record.")}>Open the prep brief</Button>
           {meeting.actionItems.length > 0 && (
-            <div className="rounded-md border p-2">
+            <div className="border p-2">
               <div className="text-xs font-medium">Action items</div>
               <ul className="list-disc pl-4 text-xs text-muted-foreground">{meeting.actionItems.map((i) => <li key={i}>{i}</li>)}</ul>
               <Button size="sm" className="mt-2 h-7 text-xs" onClick={() => toast(`${meeting.actionItems.length} tasks created.`)}>

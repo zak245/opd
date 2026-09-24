@@ -21,6 +21,9 @@ export const openPane = (row) => ({ do: "openPane", row })
 export const next = () => ({ do: "next" })
 /** A step inside the pane: open its first door, so the pane shows a level deeper. */
 export const inPaneStep = () => ({ do: "inPaneStep" })
+/** The pane's middle state: the header control that widens it over the page and shows the next
+ *  level of the record. The same control narrows it back. */
+export const expandPane = () => ({ do: "expandPane" })
 export const openMenu = (row) => ({ do: "openMenu", row })
 export const openDialog = (label) => ({ do: "openDialog", label })
 export const openDoor = (label) => ({ do: "openDoor", label })
@@ -128,6 +131,14 @@ const ACTS = [
   ]),
   act("act-pane-step", "People", "A level deeper inside the pane", "/ollopa/people", "meridian:sdr", [
     openPane(1), wait(600), inPaneStep(), wait(500),
+  ]),
+  // The pane's middle state: widened over the page, the list still behind it, the next level of the
+  // record in it. At 400 it is the same width as the glance and the control changes the level only.
+  act("act-pane-expanded", "People", "The pane, widened over the page", "/ollopa/people", "meridian:sdr", [
+    openPane(1), wait(600), expandPane(), wait(600),
+  ]),
+  act("act-quick-look-expanded", "People", "The quick look, widened over the table", "/ollopa/people", "meridian:sdr", [
+    quickLook(1), wait(600), expandPane(), wait(600),
   ]),
   act("act-row-menu", "People", "A row's menu, open", "/ollopa/people", "meridian:sdr", [
     openMenu(1), wait(400),

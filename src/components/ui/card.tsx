@@ -6,7 +6,10 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm",
+        // Paper, not an outline. In light the shadow alone lifts the card off the page ground, so
+        // the border is held transparent rather than removed, which keeps the box the same size. In
+        // dark a shadow is invisible, so the border comes back and does the separating there.
+        "flex flex-col gap-6 rounded-xl border border-transparent bg-card py-6 text-card-foreground shadow-sm dark:border-border",
         className
       )}
       {...props}

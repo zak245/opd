@@ -9,7 +9,7 @@ first non-negotiable.
 
 ```ts
 import { Door, Panel, Actions, Confirm, QuickLook, ConsequenceLine, ApproveBar, Locked, gate,
-         HealthStrip, Announcement, SectionHeader, EmptyState, useDisclosure } from "@/ollopa/ui"
+         Announcement, SectionHeader, EmptyState, useDisclosure } from "@/ollopa/ui"
 import { follow, back, clearTrail, useTrail } from "@/ollopa/chain"
 import { openBeside, closeBeside, useBeside } from "@/ollopa/beside"
 ```
@@ -341,18 +341,18 @@ csv.locked
   : <Button variant="outline" onClick={exportCsv}>Export CSV</Button>
 ```
 
-## `HealthStrip`
+## `HealthStrip` — retired
 
-`{ lines: { kind: "error" | "warning" | "info", text, href }[] }`
+There is no status row (`REVIEW-ALERTS.md` §5). A number about the workspace lives on the page that
+owns it — a summary strip, a settings row, the credits pill, a section in Home's own body — never as
+chrome above every page. **"Everything is fine" is never said: an all-clear is the absence of the
+band.** The component still exists and renders nothing, only so the pages that have not moved their
+numbers yet keep compiling. Do not call it from anything new.
 
-One line across the top of a page with only what needs attention. Renders nothing when the list is empty.
-
-```tsx
-<HealthStrip lines={[
-  { kind: "error", text: "3 sync errors on Salesforce", href: "#/ollopa/settings" },
-  { kind: "warning", text: "Bounce rate 4.2% — warns at 4%", href: "#/ollopa/settings" },
-]} />
-```
+What does earn the one band under the shell header is `declareAlerts` in `shell/banner.ts`: one
+item, whose title is the thing itself, with at most two acts drawn through `Actions`. It earns the
+band only if something is stopped, spending or at risk until it is answered, and the answer is a
+choice made on the line rather than a page to visit.
 
 ## `Announcement`
 

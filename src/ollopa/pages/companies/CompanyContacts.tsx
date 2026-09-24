@@ -22,6 +22,7 @@ import { EmptyState } from "../../ui/EmptyState"
 import { toast } from "../../templates/TablePage"
 import type { Contact } from "../../data/seed"
 import { ago } from "./format"
+import { MetaLine } from "../../layouts"
 
 /** How many rows a page of the list holds. Paging happens here, inside the section. */
 const PAGE = 10
@@ -323,9 +324,13 @@ export function CompanyContacts({ companyId, contacts, companyName, sequenceName
                     ]}
                   />
                 </div>
-                <div className="t-small text-muted-foreground">
-                  {c.title} · {c.stage} · {seq ? `in ${seq}` : "not in a sequence"} · {ago(c.lastActivity)}
-                </div>
+                {/* Four facts in one run read as prose; each carries its label instead. */}
+                <MetaLine values={[
+                  { key: "title", label: "Title", value: c.title },
+                  { key: "stage", label: "Stage", value: c.stage },
+                  { key: "seq", label: "Sequence", value: seq || "none" },
+                  { key: "seen", label: "Last activity", value: ago(c.lastActivity) },
+                ]} />
                 {note && (
                   <div role="status" className="flex flex-wrap items-center gap-2 t-small">
                     <span>Done · {note}</span>

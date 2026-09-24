@@ -404,7 +404,7 @@ export function ParodyColumns({ all, shownIds, onChange, density, onDensity, sho
                     className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     onClick={() => onChange(on ? shownIds.filter((x) => x !== c.id) : [...shownIds, c.id])}
                   >
-                    <span aria-hidden="true" className={cn("size-3.5 shrink-0 rounded-sm border", on && "border-foreground bg-foreground")} />
+                    <span aria-hidden="true" className={cn("size-3.5 shrink-0 border", on && "border-foreground bg-foreground")} />
                     <span className="min-w-0 truncate">{c.header}</span>
                   </button>
                 </li>
@@ -466,7 +466,7 @@ export function CreditsDialog({ open, onOpenChange, count, cost, balance, onConf
           ))}
         </ol>
         {step === steps.length && (
-          <p className="rounded-md border p-2.5 text-sm">
+          <p className="border p-2.5 text-sm">
             Estimated credit usage: <span className="tabular-nums font-medium">{cost.toLocaleString()}</span> credits.
             Balance after: <span className="tabular-nums">{(balance - cost).toLocaleString()}</span>.
           </p>

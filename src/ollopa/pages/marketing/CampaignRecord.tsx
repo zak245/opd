@@ -26,7 +26,7 @@ import { ConsequenceLine, consequenceText } from "../../ui/ConsequenceLine"
 import { Actions } from "../../ui/Actions"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { Separator } from "@/components/ui/separator"
-import { RowsTable } from "../../layouts"
+import { Fields, RowsTable } from "../../layouts"
 import { FAMILY, PERSON_FAMILY, ink, inUsageOrder } from "./look"
 import { Panel } from "../../ui/Panel"
 import { EmptyState } from "../../ui/EmptyState"
@@ -61,18 +61,26 @@ function Funnel({ c }: { c: Campaign }) {
           </li>
         ))}
       </ol>
-      {/* Bounced and unsubscribed are the cost of the send and sit on the same line as the rest. */}
-      <p className="t-body pt-3">
-        <span
-          className={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? "font-medium" : ""}
-          style={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? ink("warning") : undefined}
-        >
-          {num(c.bounced)} bounced · {pct(c.bounced, c.sent)}
-        </span>
-        <span className="text-muted-foreground"> (warns at {BOUNCE_GUARD.warnPercent}%, pauses at {BOUNCE_GUARD.pausePercent}%)</span>
-        {" · "}
-        <span>{num(c.unsubscribed)} unsubscribed · {pct(c.unsubscribed, c.delivered)}</span>
-      </p>
+      {/* Bounced and unsubscribed are the cost of the send: one fact to a field, not a clause in a
+          running line (LAYOUTS.md §2). */}
+      <Fields className="pt-3" fields={[
+        {
+          id: "bounced", label: "Bounced",
+          value: (
+            <span
+              className={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? "font-medium tabular-nums" : "tabular-nums"}
+              style={c.sent && (c.bounced / c.sent) * 100 >= BOUNCE_GUARD.warnPercent ? ink("warning") : undefined}
+            >
+              {num(c.bounced)} · {pct(c.bounced, c.sent)}
+            </span>
+          ),
+          note: `Warns at ${BOUNCE_GUARD.warnPercent}% · pauses at ${BOUNCE_GUARD.pausePercent}%`,
+        },
+        {
+          id: "unsubscribed", label: "Unsubscribed",
+          value: <span className="tabular-nums">{num(c.unsubscribed)} · {pct(c.unsubscribed, c.delivered)}</span>,
+        },
+      ]} />
     </div>
   )
 }
@@ -518,21 +526,25 @@ export function CampaignRecord({ session, id }: { session: Session; id?: string 
   )
 
   const buildAudienceFrom = c.sent > 0 && (
-    <p className="pt-3 text-sm">
-      Build an audience from:{" "}
-      {[
-        { label: "opened", n: c.opened },
-        { label: "clicked", n: c.clicked },
-        { label: "did not open", n: Math.max(0, c.delivered - c.opened) },
-      ].map((x, i) => (
-        <span key={x.label}>
-          {i > 0 && " · "}
-          <button className="underline" onClick={() => toast(`New audience from ${c.name}: ${x.label} · ${num(x.n)} people. Nothing is sent.`)}>
-            {x.label} <span className="tabular-nums">{num(x.n)}</span>
-          </button>
-        </span>
-      ))}
-    </p>
+    <Fields fields={[{
+      id: "build", label: "Build an audience from",
+      value: (
+        <>
+          {[
+            { label: "opened", n: c.opened },
+            { label: "clicked", n: c.clicked },
+            { label: "did not open", n: Math.max(0, c.delivered - c.opened) },
+          ].map((x, i) => (
+            <span key={x.label}>
+              {i > 0 && " · "}
+              <button className="underline" onClick={() => toast(`New audience from ${c.name}: ${x.label} · ${num(x.n)} people. Nothing is sent.`)}>
+                {x.label} <span className="tabular-nums">{num(x.n)}</span>
+              </button>
+            </span>
+          ))}
+        </>
+      ),
+    }]} />
   )
 
   /* -------------------------------------------------------------------------------- the render */

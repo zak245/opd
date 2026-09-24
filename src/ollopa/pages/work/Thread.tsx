@@ -27,8 +27,8 @@ import { Door, DoorGroup, ExpandAll } from "../../ui/Door"
 import { seedFor } from "../../data/seed"
 import type { Session } from "../../session"
 import type { Disclosure } from "../../ui/useDisclosure"
-import { day, waiting } from "./format"
-import { contactIndex, dealFor, mailboxOf, savedReplies, type InboxReply } from "./data"
+import { day, overdueWait, waiting } from "./format"
+import { contactIndex, dealFor, mailboxOf, MEANINGS, savedReplies, type InboxReply } from "./data"
 import { sendReply, undoSend } from "./acts"
 
 export interface ThreadProps {
@@ -37,6 +37,15 @@ export interface ThreadProps {
   reply: InboxReply
   /** Who put the outcome on the reply: the seed's classifier, or "you" after a correction. */
   meantBy: string
+  /**
+   * Whose answer the meaning is, and the control that corrects it. This is the line the list row
+   * used to carry on every reply. It belongs here: the row is one line and this is read while the
+   * person has the reply itself in front of them, which is where a correction is actually decided.
+   * The thread is the open half of the page, not a door, so the line is still level one.
+   */
+  showMeant: boolean
+  /** Correct what the reply was read as. The Inbox owns the change and the undo line it says. */
+  onChangeMeaning: (meaning: string) => void
   say: (message: string, undo?: () => void) => void
   onBook: () => void
   /** Phone width: the thread is a page and this returns to the same row. */
@@ -56,7 +65,7 @@ function words(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
 
-export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBack, focusComposer, onOpenContact, onOpenDeal }: ThreadProps) {
+export function Thread({ session, disclosure, reply, meantBy, showMeant, onChangeMeaning, say, onBook, onBack, focusComposer, onOpenContact, onOpenDeal }: ThreadProps) {
   const seed = seedFor(session.business)
   const contact = contactIndex(session.business)(reply.contactId)
   const deal = dealFor(session.business, reply.dealId)
@@ -327,8 +336,25 @@ export function Thread({ session, disclosure, reply, meantBy, say, onBook, onBac
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-2">
               <span className="t-body font-medium">{reply.contact}</span>
               <span className="t-small tabular-nums text-muted-foreground">{waiting(reply.received)}</span>
+              {/* How long it has waited is a value; overdue is a state, so it keeps its chip and
+                  its word here, where there is room for it (DESIGN.md §5). */}
+              {overdueWait(reply.received, reply.outcome) && <Chip status="overdue">overdue</Chip>}
+              {/* "Read as Interested · by the reply agent · change", off the row and onto the one
+                  reply it is about. The correction control travels with it. */}
               <span className="t-small flex items-center gap-1.5 text-muted-foreground">
-                Read as <Chip icon={false}>{reply.outcome}</Chip> by {meantBy}
+                Read as <Chip icon={false}>{reply.outcome}</Chip>
+                {showMeant && <>by {meantBy} ·{" "}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="underline underline-offset-4">change</button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {MEANINGS.map((m) => (
+                        <DropdownMenuItem key={m} onSelect={() => onChangeMeaning(m)}>{m}</DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>}
               </span>
             </div>
             <p className="t-body whitespace-pre-line">{reply.body}</p>

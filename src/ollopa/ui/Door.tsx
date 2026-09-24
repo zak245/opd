@@ -216,7 +216,7 @@ export function Door({ id, label, count, children, defaultOpen = false }: DoorPr
           aria-expanded={open}
           aria-controls={contentId}
           onClick={() => setOpen(!open)}
-          className="t-label flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-accent focus-visible:outline-none"
+          className="t-label flex w-full items-center gap-2 px-2 py-2 text-left hover:bg-accent focus-visible:outline-none"
         >
           <ChevronRight data-door-chevron aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
           <span className="min-w-0">{label}</span>

@@ -8,8 +8,14 @@ export type { PageHeaderProps, ToolbarControl, SummaryFigure, SectionProps } fro
 // Which columns a table draws at this width (LAYOUTS.md §5, §6)
 export { useColumnFit, useFitColumns, useBand } from "./columns"
 export { MetaLine } from "./MetaLine"
+export { Fields } from "./Fields"
+export type { Field } from "./Fields"
 export type { MetaValue } from "./MetaLine"
 export type { ColumnPriority, Band } from "./columns"
+
+// The one filtering pattern: the row, the door, the applied line, the count, the motion (LAYOUTS.md §2)
+export { FilterBar, AppliedLine, ResultCount, FilterEmpty, useSettle, useReducedMotion, MOTION, motionVars, DOOR_LABEL } from "./filters"
+export type { FilterBarProps, FilterControl, FilterGroup, FilterSearch, DoorItem, ResultCountProps, AppliedLineProps, FilterEmptyProps } from "./filters"
 
 // The filter on a section inside a record: tabs above `md`, one Select below it
 export { SectionFilter } from "./SectionFilter"
@@ -27,7 +33,8 @@ export { Split, SplitHandle, type SplitProps } from "./SplitHandle"
 export { DragGrip, type DragGripProps } from "./DragGrip"
 
 // The templates (LAYOUTS.md §1)
-export { IndexPage, type IndexPageProps } from "./IndexPage"
+export { IndexPage, LegacyIndexPage } from "./IndexPage"
+export type { IndexPageProps, IndexColumn, LegacyIndexPageProps } from "./IndexPage"
 export { MasterDetail, QueuePage, BoardPage, HomeGrid } from "./MasterDetail"
 export type { MasterDetailProps, QueuePageProps, BoardPageProps, BoardStage } from "./MasterDetail"
 export { HomePage, WizardPage, SettingsPage, FormSheet } from "./pages"

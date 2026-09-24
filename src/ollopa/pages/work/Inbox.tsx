@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils"
 import { useRoute } from "@/app/router"
 import { openBeside, openBesideNested } from "../../beside"
 import { Actions, type Action, type ActionKind } from "../../ui/Actions"
-import { Chip } from "../../ui/Identity"
+import { Chip, FamilyIcon, inkOf } from "../../ui/Identity"
 import { MasterDetail } from "../../layouts"
 import { follow } from "../../chain"
 import { useEdits } from "../../edits"
@@ -30,8 +30,8 @@ import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { seedFor, type Reply } from "../../data/seed"
 import type { Session } from "../../session"
-import { day, daysBetween, overdueWait, waiting } from "./format"
-import { adminSeat, aeSeats, calendarOf, contactIndex, repliesFor, sdrSeats, visibleReplies, type InboxReply } from "./data"
+import { day, daysBetween, overdueWait, stamp, waitedLabel } from "./format"
+import { adminSeat, aeSeats, calendarOf, contactIndex, MEANINGS, repliesFor, sdrSeats, visibleReplies, type InboxReply } from "./data"
 import { originHere, undoSend, useRenderCount } from "./acts"
 import { Thread } from "./Thread"
 import { MeetingPanel } from "./MeetingPanel"
@@ -48,8 +48,6 @@ const GROUPS: { key: GroupKey; item: string }[] = [
   { key: "Unsubscribe", item: "inbox.group.unsubscribe" },
   { key: "Handled", item: "inbox.group.handled" },
 ]
-
-const MEANINGS: Outcome[] = ["Interested", "Question", "Not now", "Out of office", "Unsubscribe"]
 
 /** Who put this outcome on the reply: the agent that read it, or the person who corrected it. */
 const classifier = (r: InboxReply) => r.classifiedBy ?? "nobody yet"
@@ -278,8 +276,15 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
         case "n": if (open) { e.preventDefault(); doAction("not-interested", open) } break
         case "h": if (open && available("hand")) { e.preventDefault(); doAction("hand", open) } break
         case "u": if (open && open.outcome === "Unsubscribe") { e.preventDefault(); doAction("confirm-unsub", open) } break
+        case "o": if (open) { e.preventDefault(); setOpenId(open.id); setOnPhoneThread(true) } break
         case "x": if (open) { e.preventDefault(); setSelecting(true); setSelection((s) => (s.includes(open.id) ? s.filter((x) => x !== open.id) : [...s, open.id])) } break
-        case "Escape": if (selection.length || selecting) { setSelection([]); setSelecting(false) } break
+        case "Escape":
+          // A pane is open: Escape belongs to it, and the pane closes itself.
+          if (document.querySelector("aside[aria-label*='beside']")) break
+          if (selection.length || selecting) { setSelection([]); setSelecting(false); break }
+          // At 400 the thread is a page, and Escape is the way back to the list.
+          setOnPhoneThread(false)
+          break
         default: break
       }
     }
@@ -318,11 +323,30 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           ? <EmptyState title="Nothing waiting" body="Every interested reply is handled." />
           : <EmptyState title={`Nothing in ${group}.`} body="Replies land here as they arrive." />
 
+  /**
+   * One reply, one line — the way a mail list reads.
+   *
+   * Across the row: select it, what kind of thing it is, who wrote, what they meant, the first line
+   * of what they said, and when it landed. Nothing else, because a row five lines tall showed four
+   * replies in a 430 px pane where this shows fifteen, and a person working replies is scanning.
+   *
+   * What the row used to carry and no longer does is not gone: "Read as … by the reply agent ·
+   * change", the job title, the company, the mailbox and the sequence are all in the thread beside
+   * it, which is the open half of this page rather than a door — one click, or Enter (RULES.md
+   * rule 4: nothing here is hidden behind a door that was not already one).
+   */
   function Row({ r }: { r: InboxReply }) {
-    const c = contactOf(r.contactId)
     const actions = visibleActions(group)
     const late = overdueWait(r.received, r.outcome)
     const selected = selection.includes(r.id)
+    const when = waitedLabel(r.received, late)
+    // Where the seat reads its replies by sequence or by whose mailbox they landed in, that follows
+    // the first words on the same line and truncates with them — behind them, because what the
+    // person wrote is read more often than which sequence reached them (95 against 60).
+    const meta = [
+      showSequenceColumn ? `${r.sequence} · step ${r.step.n} of ${r.step.of}` : "",
+      showOwnerColumn ? r.boxOwner : "",
+    ].filter(Boolean).join(" · ")
     return (
       <div
         id={`reply-${r.id}`}
@@ -336,84 +360,106 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
         className={cn(
           // Rows in one container are divided, never carded, and the row you are on is the one
           // container-low region the container holds (DESIGN.md §5, containment).
-          "group block w-full cursor-pointer px-3 py-2.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-          r.id === openId ? "bg-muted" : "hover:bg-muted/50",
+          "group relative flex w-full cursor-pointer flex-wrap items-center gap-x-2 px-3 py-1.5 text-left",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:flex-nowrap",
+          r.id === openId ? "bg-muted" : "hover:bg-muted focus-within:bg-muted",
         )}
       >
-        <div className="flex items-start gap-2">
-          <span role="gridcell" className="flex shrink-0 items-start gap-2">
-          {selecting && (
-            <span onClick={(e) => e.stopPropagation()} className="pt-1">
-              <Checkbox aria-label={`Select the reply from ${r.contact}`} checked={selected} onCheckedChange={(v) => setSelection((s) => (v === true ? [...s, r.id] : s.filter((x) => x !== r.id)))} />
-            </span>
-          )}
-          {/* Waiting is the first column, because reply speed is the whole game. On the phone it
-              moves to the right of the name, which is the only thing that changes about the row. */}
-          {/* How long it has waited is a value; overdue is a state, so it is a chip with its
-              word rather than the number turning red (DESIGN.md §5). */}
-          <span className="t-small hidden w-24 shrink-0 pt-0.5 tabular-nums text-muted-foreground sm:block">
-            {waiting(r.received)}
-            {late && <Chip status="overdue" className="mt-0.5 flex w-fit">overdue</Chip>}
+        {/* Select it, and what kind of thing it is: a reply is a Work object and wears that
+            family's icon, never a glyph drawn for this page (DESIGN.md §5). */}
+        <span role="gridcell" className="flex shrink-0 items-center gap-2">
+          <span onClick={(e) => e.stopPropagation()} className="flex items-center">
+            <Checkbox
+              aria-label={`Select the reply from ${r.contact}`}
+              checked={selected}
+              onCheckedChange={(v) => setSelection((sel) => (v === true ? [...sel, r.id] : sel.filter((x) => x !== r.id)))}
+            />
           </span>
-          </span>
-          <div role="rowheader" className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-x-2 gap-y-0.5">
-              <span className="t-body truncate font-medium">{r.contact}</span>
-              {/* What the reply means is a category, not a state: a neutral chip with the word,
-                  never a status colour. Overdue, Sending and Sent below are the states. */}
-              <Chip icon={false} className="shrink-0">{r.outcome}</Chip>
-              <span className="t-small ml-auto shrink-0 tabular-nums text-muted-foreground sm:hidden">
-                {waiting(r.received)}{late && ", overdue"}
-              </span>
-            </div>
-            <div className="t-small truncate text-muted-foreground">{c?.title ?? "—"} · {r.company}</div>
-            {showMeantLine && (
-              <div className="t-small pt-0.5 text-muted-foreground">
-                Read as: {r.outcome} · by {changes[r.id]?.meantBy ?? classifier(r)} ·{" "}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="underline underline-offset-4" onClick={(e) => e.stopPropagation()}>change</button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {MEANINGS.map((m) => <DropdownMenuItem key={m} onSelect={() => doAction("change-meaning", r, m)}>{m}</DropdownMenuItem>)}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-            <div className="t-body truncate pt-0.5 text-muted-foreground">{r.snippet}</div>
-            {/* The same record the composer is reading: for ten seconds the reply can be pulled
-                back from the row it was written on, and after that the row says it has gone. */}
-            {acted[r.id]?.sending === true && (
-              <div role="status" aria-live="polite" className="flex flex-wrap items-center gap-2 pt-1">
-                <Chip status="Sending">Sending</Chip>
-                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); undoSend(r.id) }}>Undo</Button>
-              </div>
-            )}
-            {acted[r.id]?.sent === true && <div className="pt-1"><Chip status="Sent">Sent</Chip></div>}
-            {(showSequenceColumn || showOwnerColumn) && (
-              <div className="t-small pt-0.5 text-muted-foreground">
-                {showSequenceColumn && <>{r.sequence} · step {r.step.n} of {r.step.of}</>}
-                {showSequenceColumn && showOwnerColumn && " · "}
-                {showOwnerColumn && <>{r.boxOwner}</>}
-              </div>
-            )}
-          </div>
-        </div>
+          <FamilyIcon of="reply" label={`Reply from ${r.contact}`} />
+        </span>
 
-        <div role="gridcell" className="flex flex-wrap items-center gap-1 pt-1.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
-          {/* The row's own acts, drawn by what each one is: replying is the act a reply exists for,
-              so it is the filled control; everything else the person came for is an outline; the
-              menu behind them keeps spam and a misread report at the end, in the destructive
-              colour (DESIGN.md §1). */}
-          <Actions
-            surface="card"
-            items={actions.map((k) => ({
-              kind: KIND[k] ?? "secondary",
-              label: labelFor(k, r),
-              onClick: () => doAction(k, r),
-              keys: KEYS[k],
-            }))}
-          />
+        {/* Who wrote, what they meant, and their first line. Bold until somebody has handled it.
+            At 400 the first line drops under the name rather than fighting it for forty pixels;
+            wider, `sm:contents` dissolves that wrapper and the whole row is one line. */}
+        <span role="rowheader" className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-x-2">
+          <span className="flex min-w-0 items-center gap-x-2 sm:contents">
+          {/* The name takes the width it needs and gives it up last: the first line of the reply
+              is the one thing on the row that reads at any length, so it takes what is left and
+              stops there (`flex-1`, which grows into the gap and never pushes the name out). */}
+          <span className={cn("t-body min-w-0 truncate", r.handled ? "font-normal" : "font-semibold")}>
+            {r.contact}
+          </span>
+          {/* What the reply means is the whole reason this page exists, so it stays on the row. It
+              is a category and not a state, so it is a neutral chip with the word (DESIGN.md §5).
+              Overdue, Sending and Sent are the states. */}
+          <Chip icon={false} className="shrink-0">{r.outcome}</Chip>
+          </span>
+          <span className="t-body line-clamp-1 min-w-0 text-muted-foreground sm:flex-1">
+            {r.snippet}{meta && <> · {meta}</>}
+          </span>
+        </span>
+
+        {/* When it landed, and the row's own acts in its place while the pointer or the keyboard is
+            on the row. Overdue is the date in the danger ink; the word itself is on the title and
+            in the accessible name, because a one-line row has no room for a column of chips. */}
+        <span role="gridcell" className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0">
+          {/* The same record the composer is reading: for ten seconds the reply can be pulled back
+              from the row it was written on, and after that the row says it has gone. While it is
+              going, Undo is the only act the row has — Reply and Book do not apply to a reply in
+              flight, so they are removed rather than left to cover the one control that does
+              (RULES.md rule 4), and they come back the moment the window closes. */}
+          {acted[r.id]?.sending === true ? (
+            <span role="status" aria-live="polite" className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <Chip status="Sending">Sending</Chip>
+              <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); undoSend(r.id) }}>Undo</Button>
+            </span>
+          ) : (
+          <>
+          {acted[r.id]?.sent === true && <Chip status="Sent" className="shrink-0">Sent</Chip>}
+          <span
+            title={when}
+            className={cn(
+              "t-small shrink-0 tabular-nums",
+              late ? undefined : "text-muted-foreground",
+              "sm:transition-opacity sm:group-hover:opacity-0 sm:group-focus-within:opacity-0 sm:group-has-[[data-state=open]]:opacity-0",
+            )}
+            style={late ? { color: inkOf("overdue") } : undefined}
+          >
+            <span aria-hidden="true">{stamp(r.received)}</span>
+            <span className="sr-only">{when}</span>
+          </span>
+          <span
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "flex items-center gap-1",
+              // A phone has no hover, so the row's menu is simply there beside the date (RULES.md
+              // rule 4: never hover-only). Wider, the acts take the date's place while the pointer
+              // or the keyboard is on the row, and the menu comes with them.
+              "static opacity-100",
+              // Anchored to the row, not to the date cell, so the acts have the row's width to lay
+              // out in and take the date's place rather than stacking in forty pixels.
+              "sm:absolute sm:top-1/2 sm:right-3 sm:-translate-y-1/2 sm:flex-nowrap sm:bg-muted sm:pl-2",
+              "sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 sm:group-has-[[data-state=open]]:opacity-100",
+            )}
+          >
+            {/* The row's own acts, drawn by what each one is: replying is the act a reply exists
+                for, so it is the filled control; everything else the person came for is an outline;
+                the menu behind them keeps spam and a misread report at the end, in the destructive
+                colour (DESIGN.md §1). */}
+            {/* The two quick acts need about 290 px and the list pane is 348 px at 1024, where they
+                would cover the name as well as the first line. So below 1280 the row's menu is the
+                whole strip: it carries both acts and everything else, and nothing is lost. */}
+            <span className="hidden xl:flex xl:items-center">
+              <Actions
+                surface="card"
+                items={actions.map((k) => ({
+                  kind: KIND[k] ?? "secondary",
+                  label: labelFor(k, r),
+                  onClick: () => doAction(k, r),
+                  keys: KEYS[k],
+                }))}
+              />
+            </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon-sm" variant="ghost" data-row-menu aria-label={`${r.contact}: the contact and the deal, reply, route, read as, record`}><MoreHorizontal className="size-4" /></Button>
@@ -476,7 +522,10 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
               <DropdownMenuItem variant="destructive" onSelect={() => doAction("spam", r)}>Mark as spam or a bot reply</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+          </span>
+          </>
+          )}
+        </span>
       </div>
     )
   }
@@ -517,8 +566,6 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           <Container
             component="list"
             as="div"
-            role="grid"
-            aria-label={`${group} replies`}
             padded={false}
             className="flex h-full min-h-0 min-w-0 flex-col"
             actions={(
@@ -540,8 +587,11 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* The pane is 430 px at 1440 and 348 px at 1024, so the search keeps a small
+                      floor and takes whatever the meaning control and the count leave. Below that
+                      floor it wraps under them rather than squeezing both (LAYOUTS.md §5). */}
                   {searchAtLevelOne && (
-                    <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-full min-w-0 sm:w-auto sm:grow sm:basis-40" />
+                    <Input aria-label="Search name, company or reply text" placeholder="Search replies" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-full min-w-0 sm:w-auto sm:grow sm:basis-20" />
                   )}
                   {shownFilters.map((f) => (
                     <Select key={f.key} value={filters[f.key] ?? "all"} onValueChange={(v) => setFilters((a) => ({ ...a, [f.key]: v }))}>
@@ -586,7 +636,7 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
                 )}
               </div>
             )}
-            bodyClassName="min-h-0 flex-1 divide-y overflow-y-auto"
+            bodyClassName="min-h-0 flex-1 overflow-y-auto"
             footer={selection.length > 0 ? (
               <>
                 <span className="tabular-nums">{selection.length} selected</span>
@@ -621,7 +671,14 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
           >
             {filtered.length === 0
               ? <div className="p-6">{q || activeFilters.length ? <EmptyState title="Nothing matches." body="Clear the search or a filter." action={<Actions surface="card" items={[{ kind: "secondary", label: "Clear", onClick: () => { setQ(""); setFilters({}) } }]} />} /> : emptyBody}</div>
-              : filtered.map((r) => <Row key={r.id} r={r} />)}
+              : (
+                // The grid the rows are rows of. `Section` drops a `role` it is handed, so the list
+                // declares itself here rather than on the card — otherwise every `role="row"` on the
+                // page is an orphan and a screen reader reads a heap of cells.
+                <div role="grid" aria-label={`${group} replies`} className="divide-y">
+                  {filtered.map((r) => <Row key={r.id} r={r} />)}
+                </div>
+              )}
           </Container>
   )
 
@@ -633,6 +690,8 @@ export function Inbox({ session, thread, book }: { session: Session; thread?: st
       disclosure={d}
       reply={open}
       meantBy={changes[open.id]?.meantBy === "you" ? "you" : classifier(open)}
+      showMeant={showMeantLine}
+      onChangeMeaning={(m) => doAction("change-meaning", open, m)}
       say={say}
       onBook={() => setBooking(open)}
       focusComposer={focusComposer}

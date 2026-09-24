@@ -77,7 +77,7 @@ const DealBeside: BesideComponent = ({ session, id }) => {
 
       {/* What the last action did, where it was caused. */}
       {edit?.note && (
-        <p role="status" aria-live="polite" className="t-small rounded-md bg-muted px-2.5 py-1.5">{edit.note}</p>
+        <p role="status" aria-live="polite" className="t-small bg-muted px-2.5 py-1.5">{edit.note}</p>
       )}
 
       {/* A seat that may not change this deal gets the sentence naming who can, not a disabled

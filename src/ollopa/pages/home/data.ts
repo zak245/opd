@@ -13,7 +13,7 @@ import type { Session } from "../../session"
 import type { ConsequenceProps } from "../../ui"
 import { addDays, count, daysBetween, longDay, money, plural } from "./format"
 
-export type SectionKey = "today" | "replies" | "pipeline" | "approvals" | "campaigns" | "accounts" | "week"
+export type SectionKey = "today" | "replies" | "pipeline" | "approvals" | "campaigns" | "accounts" | "health" | "week"
 
 /** A batch of agent items that arrived together: one run, one task boundary, one heading. */
 export interface Batch {

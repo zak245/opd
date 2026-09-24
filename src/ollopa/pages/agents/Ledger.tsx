@@ -259,7 +259,7 @@ export function Ledger(p: LedgerProps) {
 
       {/* The columns, at the widths that fit. Below `sm` every row is two lines and the header goes. */}
       <Separator className="mt-3" />
-      <div className="hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 px-2 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
+      <div className="hidden grid-cols-[6.5rem_9rem_minmax(0,1fr)_10rem_9rem_5rem_4.5rem] gap-3 px-4 py-1 t-small font-medium uppercase tracking-wider text-muted-foreground sm:grid"
         style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
         <span>When</span>
         {rules.r4 && <span data-item="act.actor" data-item-label="Actor">Actor</span>}
@@ -361,7 +361,7 @@ function Row({ rules, e, seed, session, local, undone, onUndo, showContact, show
       data-item={`act.row.${e.id}`} data-item-label={e.summary}
       className={cn("py-1.5 outline-none", focused && "ring-2 ring-ring")}>
       <div
-        className="t-body grid grid-cols-1 gap-x-3 px-2 sm:grid"
+        className="t-body grid grid-cols-1 gap-x-3 px-4 sm:grid"
         style={{ gridTemplateColumns: undefined }}
       >
         <div className="hidden sm:grid sm:gap-3" style={{ gridTemplateColumns: columnTemplate(showContact, showOutcome, showSurface, rules.r4, rules.r2) }}>
@@ -397,7 +397,7 @@ function Row({ rules, e, seed, session, local, undone, onUndo, showContact, show
         </div>
       </div>
 
-      <div className="flex items-start gap-1 px-2">
+      <div className="flex items-start gap-1 px-4">
         <div className="min-w-0 flex-1">
           <Door id={`agents.steps.${e.id}`}
             label={rules.r4 ? `Step log · ${e.steps.length} ${e.steps.length === 1 ? "step" : "steps"} · ${e.steps.reduce((n, s) => n + s.credits, 0)} credits` : "Details"}>

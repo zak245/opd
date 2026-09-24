@@ -112,7 +112,7 @@ export function EnrichPanel({ open, onOpenChange, rows, session, seed, onSpend }
           <legend className="pb-2 text-xs font-medium text-muted-foreground">What to reveal</legend>
           <div className="space-y-1.5">
             {REVEAL_OPTIONS.map((o) => (
-              <label key={o.id} className="flex cursor-pointer items-start gap-2 rounded-md p-2.5 hover:bg-muted has-[:checked]:bg-muted">
+              <label key={o.id} className="flex cursor-pointer items-start gap-2 p-2.5 hover:bg-muted has-[:checked]:bg-muted">
                 <input
                   type="radio"
                   name="reveal"

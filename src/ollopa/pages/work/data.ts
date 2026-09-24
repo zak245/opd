@@ -48,13 +48,83 @@ export interface InboxReply extends Reply {
   boxOwner: string
 }
 
+/** The five meanings a reply can be read as, in the order the group control lists them. */
+export const MEANINGS: Reply["outcome"][] = ["Interested", "Question", "Not now", "Out of office", "Unsubscribe"]
+
+/**
+ * The demo's replies, in different words.
+ *
+ * The seed writes one body per outcome, so every Interested reply opened with the same six words
+ * and a list of them read as broken software rather than as five people. These are the same five
+ * meanings said several ways. The reply's own id picks one, so a reply says the same thing on every
+ * visit and on every surface that asks this file for it — the list, the thread and the pane.
+ */
+const BODIES: Record<Reply["outcome"], string[]> = {
+  Interested: [
+    "Happy to take a look. We are rebuilding how we route inbound this quarter, so the timing is not bad. Do you have time Thursday afternoon? I would want our ops lead on it too.",
+    "Yes, worth twenty minutes. We lost most of last quarter to a pipeline nobody trusted, and I would rather not repeat it. Tuesday morning, or is later in the week easier?",
+    "Good timing — this went on our roadmap two weeks ago. Send me a couple of slots and I will bring our RevOps lead with me.",
+    "I would want to see it running on our own data before we go further. What do you need from us to set that up?",
+    "Keen, though I am not the one who signs. Let me pull in our VP of Sales and we can do this properly.",
+    "You are the third person to email me about this in a month and the first to name the actual problem. Thursday or Friday both work.",
+  ],
+  Question: [
+    "Does this work with HubSpot, and can we keep our own field names? We tried something similar last year and the sync overwrote our data, which cost us a week.",
+    "What happens to our data if we leave? We are still untangling ourselves from the last vendor and I will not do that twice.",
+    "How long does a rollout usually take, end to end? We have eleven reps and none of them have a spare afternoon.",
+    "Is any of this sent to a model we do not control? Security will ask on day one, so I would rather know now.",
+    "What does this cost at twenty seats? Your pricing page stops at a starting price and I need a real number.",
+  ],
+  "Not now": [
+    "Not a priority this quarter — we are mid-migration and nobody has the bandwidth. Check back in January and I will take the call properly.",
+    "We are in a hiring freeze until the new year, so there is no budget to point this at. Try me in February.",
+    "Bad month: I am in forecast calls until the 20th and then I am off. Ping me after that and I will find time.",
+    "We signed something close to this in March and we are locked in for twelve months. Worth a conversation nearer the renewal.",
+  ],
+  "Out of office": [
+    "I am out until the 21st with limited email access. For anything urgent please contact our operations team.",
+    "On leave until the 24th and not reading email. Ravi is covering anything that cannot wait until I am back.",
+    "At a conference all week with patchy signal. I will come back to you when I land.",
+  ],
+  Unsubscribe: [
+    "Please remove me from this list. I am not the right person for this and I would rather not be contacted again.",
+    "Take me off your list. We have a policy against unsolicited email and I do not want a follow-up either.",
+    "Wrong person — I left this team eighteen months ago. Please stop emailing me.",
+  ],
+}
+
+/** The first sentence, which is what a one-line row shows. */
+const firstLine = (body: string) => body.split(".")[0] + "."
+
+/** The digits in "r-12", so the same reply always draws the same words. */
+const idNumber = (id: string) => {
+  const n = Number(id.replace(/\D+/g, ""))
+  return Number.isFinite(n) ? n : 0
+}
+
+/** One reply, said in its own words rather than in its outcome's. */
+function inItsOwnWords(reply: Reply): Reply {
+  const pool = BODIES[reply.outcome]
+  if (!pool?.length) return reply
+  const body = pool[idNumber(reply.id) % pool.length]
+  if (body === reply.body) return reply
+  return {
+    ...reply,
+    body,
+    snippet: firstLine(body),
+    // The thread and the contact's activity read the messages, so the words agree there too.
+    messages: reply.messages.map((m) => (m.from === "them" ? { ...m, body } : m)),
+  }
+}
+
 /** Every reply, with the person who owns the mailbox it landed in joined on. */
 export function repliesFor(session: Session): InboxReply[] {
   const seed = seedFor(session.business)
   const ownerOfBox = new Map(seed.mailboxes.map((m) => [m.address, m.owner]))
-  return seed.replies.map((reply) => ({
-    ...reply, box: reply.mailbox, boxOwner: ownerOfBox.get(reply.mailbox) ?? reply.mailbox,
-  }))
+  return seed.replies.map((seeded) => {
+    const reply = inItsOwnWords(seeded)
+    return { ...reply, box: reply.mailbox, boxOwner: ownerOfBox.get(reply.mailbox) ?? reply.mailbox }
+  })
 }
 
 /**

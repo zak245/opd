@@ -327,8 +327,8 @@ export function ListRecord({ session, id }: { session: Session; id?: string }) {
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-1.5">
-              {list.filters.map((f, i) => <span key={i} className="rounded-full border px-2 py-0.5 text-xs">{fieldLabel(f.field)} {f.op} {f.value}</span>)}
-              {list.suppressions.map((s) => <span key={s} className="rounded-full border border-dashed px-2 py-0.5 text-xs text-muted-foreground">excludes {s}</span>)}
+              {list.filters.map((f, i) => <span key={i} className="border px-2 py-0.5 text-xs">{fieldLabel(f.field)} {f.op} {f.value}</span>)}
+              {list.suppressions.map((s) => <span key={s} className="border border-dashed px-2 py-0.5 text-xs text-muted-foreground">excludes {s}</span>)}
               {isOwner && <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditingFilters(true)}>Edit filters</Button>}
             </div>
           )}

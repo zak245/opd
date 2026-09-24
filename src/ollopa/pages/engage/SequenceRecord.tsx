@@ -559,7 +559,7 @@ function StepCard({ session, seq, step, steps, index, enrollments, canEdit, onSa
     <div className={cn(step.on === 0 && "opacity-70")}>
       <div className="flex flex-wrap items-start gap-2 px-3 pt-3">
         {/* The step number is the library's outline badge, not a span drawn to look like one. */}
-        <Badge variant="outline" className="size-6 shrink-0 justify-center rounded-full p-0 tabular-nums">{step.order}</Badge>
+        <Badge variant="outline" className="size-6 shrink-0 justify-center p-0 tabular-nums">{step.order}</Badge>
         <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

@@ -8,7 +8,9 @@ export { ConsequenceLine, consequenceText, type ConsequenceProps } from "./Conse
 export { ApproveBar, approveAllLabel, type ApproveBarProps, type ApproveItem } from "./ApproveBar"
 export { Locked, type LockedProps } from "./Locked"
 export { gate, money, FEATURES, PLAN_ORDER, type Feature, type Plan, type GateResult } from "./gate"
-export { HealthStrip, type HealthLine, type HealthKind } from "./HealthStrip"
+// `HealthStrip` is retired (REVIEW-ALERTS.md §5). Its types stay while the pages that still
+// call it move their numbers to the page that owns them.
+export { type HealthLine, type HealthKind } from "./HealthStrip"
 export { Announcement, type AnnouncementProps } from "./Announcement"
 export { Divider } from "./Divider"
 export { SectionHeader, type SectionHeaderProps } from "./SectionHeader"

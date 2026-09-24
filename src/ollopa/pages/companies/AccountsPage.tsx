@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { follow } from "../../chain"
 import { toast } from "../../templates/TablePage"
 import { Separator } from "@/components/ui/separator"
-import { Rows, Section, type SummaryFigure, type ToolbarControl } from "../../layouts"
+import { Rows, Section, type SummaryFigure, type ToolbarControl, MetaLine } from "../../layouts"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Panel } from "../../ui/Panel"
@@ -180,9 +180,14 @@ export function AccountsPage({ session }: { session: Session }) {
               return (
                 <div key={v.company.id} className="flex flex-wrap items-start justify-between gap-2 py-2 first:pt-0">
                   <div className="min-w-0">
-                    <div className="t-label">{v.account!.name}</div>
-                    <div className="t-small text-muted-foreground">From {h.from} · sent {day(h.sent)}</div>
-                    <p className="t-small pt-1">Why they bought: {h.whyTheyBought}</p>
+                    <div className="t-body">{v.account!.name}</div>
+                    {/* Each fact carries its label; the prose line "Why they bought: …" was a
+                        paragraph in a card body, and a paragraph is not a value. */}
+                    <MetaLine values={[
+                      { key: "from", label: "From", value: h.from },
+                      { key: "sent", label: "Sent", value: day(h.sent) },
+                      { key: "why", label: "Why they bought", value: h.whyTheyBought },
+                    ]} />
                   </div>
                   <Actions surface="card" items={[{ kind: "secondary", label: "Accept the hand-off", onClick: () => setPending({ kind: "accept", row: v }) }]} />
                 </div>
@@ -459,10 +464,14 @@ export function AccountsPage({ session }: { session: Session }) {
               {v.account!.signals.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-medium">{s.kind}</span>
-                  <span className="t-small text-muted-foreground">
-                    {s.detail} · {s.source} · fired {day(s.fired)} · routed to {s.routedTo} · due {day(s.dueBy)}
-                    {s.outcome ? ` · ${s.outcome}` : " · no outcome yet"}
-                  </span>
+                  <MetaLine values={[
+                    { key: "detail", label: "Detail", value: s.detail },
+                    { key: "source", label: "Source", value: s.source },
+                    { key: "fired", label: "Fired", value: day(s.fired) },
+                    { key: "routed", label: "Routed to", value: s.routedTo },
+                    { key: "due", label: "Due", value: day(s.dueBy) },
+                    { key: "outcome", label: "Outcome", value: s.outcome || "none yet" },
+                  ]} />
                   <span className="ml-auto">
                     <Actions
                       surface="card"

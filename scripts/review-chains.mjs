@@ -64,6 +64,9 @@ export async function signIn(page, business, role, route, urlBase = base) {
   await page.evaluate((s) => localStorage.setItem("ollopa.session", JSON.stringify(s)), { business, role })
   await page.goto(urlBase + "/#" + route, { waitUntil: "networkidle0" })
   await page.reload({ waitUntil: "networkidle0" })
+  // The dev-only render counters are hidden from a person by CSS, so a reviewer has to ask for them.
+  // Without this the "renders" line in every log below comes back blank and proves nothing.
+  await page.evaluate(() => { document.documentElement.dataset.renders = "show" })
   await wait(600)
 }
 
@@ -109,7 +112,7 @@ export const observe = (page) => page.evaluate(() => {
     lit: lit ? txt(lit, 80) : null,
     besideOpenRow: marked ? txt(marked, 80) : null,
     mounted,
-    renders: Array.from(document.querySelectorAll("[data-renders]")).map((el) => `${el.getAttribute("data-renders")}=${txt(el, 20)}`),
+    renders: Array.from(document.querySelectorAll("[data-renders]:not(html)")).map((el) => `${el.getAttribute("data-renders")}=${txt(el, 20)}`),
     pageWidth: active ? Math.round(active.getBoundingClientRect().width) : null,
     docScrollW: document.documentElement.scrollWidth,
   }
@@ -580,8 +583,8 @@ export async function chain3(w, h) {
   await reportWithAudit(page, o1, "1. Northwind Analytics, the biggest account in the seed")
   const contacts = await page.evaluate(() => {
     const t = (e) => (e?.innerText || "").replace(/\s+/g, " ").trim()
-    const h = Array.from(document.querySelectorAll('[data-page-active="true"] h3')).find((x) => /Contacts at this company/.test(t(x)))
-    const sec = h?.closest("section") ?? h?.parentElement?.parentElement
+    const h = Array.from(document.querySelectorAll('[data-page-active="true"] h2, [data-page-active="true"] h3, [data-page-active="true"] [data-slot="card-title"]')).find((x) => /Contacts at this company/.test(t(x)))
+    const sec = h?.closest("section, [data-slot=card]") ?? h?.parentElement?.parentElement
     return {
       heading: t(h),
       search: Array.from(sec?.querySelectorAll("input") ?? []).map((i) => i.getAttribute("aria-label") || i.placeholder),
@@ -591,14 +594,14 @@ export async function chain3(w, h) {
     }
   })
   note(`    contacts  ${JSON.stringify(contacts)}`)
-  await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] h3')).find((x) => /Contacts at this company/.test(x.innerText))?.scrollIntoView({ block: "start" }))
+  await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] h2, [data-page-active="true"] h3, [data-page-active="true"] [data-slot="card-title"]')).find((x) => /Contacts at this company/.test(x.innerText))?.scrollIntoView({ block: "start" }))
   await wait(400)
   await shot("company")
 
   // search inside the company
   const typed = await page.evaluate(() => {
-    const h = Array.from(document.querySelectorAll('[data-page-active="true"] h3')).find((x) => /Contacts at this company/.test(x.innerText))
-    const sec = h?.closest("section") ?? h?.parentElement?.parentElement
+    const h = Array.from(document.querySelectorAll('[data-page-active="true"] h2, [data-page-active="true"] h3, [data-page-active="true"] [data-slot="card-title"]')).find((x) => /Contacts at this company/.test(x.innerText))
+    const sec = h?.closest("section, [data-slot=card]") ?? h?.parentElement?.parentElement
     const i = sec?.querySelector("input")
     if (!i) return null
     i.focus()
@@ -1116,11 +1119,11 @@ export async function chain9(w, h) {
     await shot("e-half-typed")
     await page.evaluate(() => document.querySelector('[data-page-active="true"] #seq-people')?.scrollIntoView({ block: "start" }))
     await wait(400)
-    const before = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
+    const before = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]:not(html)')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
     note(`  f. render counters before the pane: ${before.join(" · ") || "(none found)"}`)
     await page.evaluate(() => { const e = Array.from(document.querySelectorAll('[data-page-active="true"] [data-item^="c-"]')).find((x) => x.offsetParent !== null); (e.matches("button,a") ? e : e.querySelector("button,a"))?.click() })
     await wait(700)
-    const afterR = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
+    const afterR = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]:not(html)')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
     note(`  f. render counters with the pane open: ${afterR.join(" · ") || "(none found)"}  → ${before.join() === afterR.join() ? "NO re-render" : "THE PAGE RE-RENDERED"}`)
     await shot("f-counters")
     // g: Esc closes and focus returns to the opener
@@ -1140,7 +1143,7 @@ export async function chain9(w, h) {
     const draft1 = await page.evaluate(() => document.querySelector('[data-page-active="true"] #subj-seq-1-st1')?.value ?? "(the field is gone)")
     note(`  e. after follow and back, the field reads: "${draft1}"  → ${draft1 === draft0 ? "the draft survived" : "THE DRAFT WAS LOST"}`)
     note(`  e. the step door on return: ${await page.evaluate(() => { const i = document.querySelector('[data-page-active="true"] #subj-seq-1-st1'); const d = i && !i.closest("[hidden]") ? i : null; return d ? "still open" : "CLOSED AGAIN" })}`)
-    const afterBack = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
+    const afterBack = await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] [data-renders]:not(html)')).map((e) => `${e.getAttribute("data-renders")}=${e.textContent.trim()}`))
     note(`  f. render counters after the return: ${afterBack.join(" · ")}`)
     await shot("e-back")
     dumpConsole(page); await b.close()
