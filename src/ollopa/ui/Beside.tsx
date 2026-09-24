@@ -24,7 +24,7 @@ import { Card } from "@/components/ui/card"
 import { quickLookFamily, quickLookOpen } from "../templates/QuickLook"
 import { Separator } from "@/components/ui/separator"
 import { href as hashHref, useRoute } from "@/app/router"
-import { besideBack, besideOpenedFrom, besideStep, closeBeside, toggleBesideMode, useBeside, useBesideDir, useBesideMode, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
+import { besideBack, besideOpenedFrom, besideStep, closeBeside, isRowItem, toggleBesideMode, useBeside, useBesideDir, useBesideMode, useBesideParent, type BesideHead, type BesideTarget } from "../beside"
 import { clearHighlight, crumbName, findAnchor, follow, showReturn } from "../chain"
 import { clearEdit, useEdit } from "../edits"
 import { besides } from "../Product"
@@ -281,6 +281,15 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
     }
   }, [target])
 
+  // Stepping the list swaps the pane's content, and the content that goes takes whatever was
+  // focused inside it. The keyboard has to carry on from the pane and not from the top of the
+  // document, so focus lands back on the pane itself — the same place opening it puts focus.
+  useLayoutEffect(() => {
+    if (!target || dir === 0) return
+    const el = panel.current
+    if (el && !el.contains(document.activeElement)) el.focus()
+  }, [target, dir])
+
   // Mark the row the pane is reading, on the page itself, so the effect shows where it was caused.
   // Written straight to the DOM on purpose: asking the page for it would re-render the page, which
   // is the one thing opening a pane must not do.
@@ -297,13 +306,20 @@ export function Beside({ session, pageTitle }: { session: Session; pageTitle: st
       .find((el) => el.offsetParent !== null)
     const byPlace = target.kind === "quick-look" && target.list
       ? Array.from(root.querySelectorAll<HTMLElement>("[data-item]"))
-        .filter((el) => el.offsetParent !== null)[target.list.index]
+        .filter((el) => el.offsetParent !== null && isRowItem(el))[target.list.index]
       : undefined
     const hit = byId ?? byPlace ?? besideOpenedFrom() ?? undefined
     const marked = (hit?.closest('tr, li, [role="listitem"], [data-task-row]') as HTMLElement | null) ?? hit
     row.current = marked ?? null
     rowList.current = marked?.parentElement ?? null
-    setFromRow(hit?.getAttribute("data-item-label") ?? hit?.textContent?.trim().split("\n")[0].slice(0, 40) ?? null)
+    // What the row is called, for the phone header's "From People · row Mateo Novak". The row's own
+    // label first, then the name it leads with — never the whole row read out, which starts with
+    // whatever screen-reader text its controls carry and says "row the row menu".
+    const name = marked?.getAttribute("data-item-label")
+      ?? marked?.querySelector<HTMLElement>("[data-item-label]")?.getAttribute("data-item-label")
+      ?? marked?.querySelector<HTMLElement>("a, h2, h3, h4")?.textContent?.trim()
+      ?? marked?.textContent?.trim().split("\n")[0]
+    setFromRow(name ? name.replace(/\s+/g, " ").slice(0, 40) : null)
     // The mark says "this is the one being read": a muted fill and a 3 px leading bar in the accent,
     // which is the colour that means "you are here" (DESIGN.md §5). It arrives with the pane.
     marked?.classList.add("ollopa-beside-open", "ollopa-reading")

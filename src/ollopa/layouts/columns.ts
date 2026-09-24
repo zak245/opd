@@ -99,6 +99,11 @@ export function useFitColumns<T>(columns: T[], opts?: {
   priorityOf?: (column: T) => ColumnPriority | undefined
   /** Columns that must stay whatever happens. The first column is always kept. */
   keep?: (column: T) => boolean
+  /**
+   * The first column is the row's own name and never folds — true unless the name is drawn
+   * outside this set, as `IndexPage` draws it, in which case every column here may fold.
+   */
+  keepFirst?: boolean
 }) {
   const ref = useRef<HTMLDivElement | null>(null)
   const [dropped, setDropped] = useState(0)
@@ -111,7 +116,7 @@ export function useFitColumns<T>(columns: T[], opts?: {
   const order = useMemo(() => {
     const foldable = columns
       .map((c, i) => ({ c, i }))
-      .filter(({ c, i }) => i > 0 && !(opts?.keep?.(c) ?? false))
+      .filter(({ c, i }) => (opts?.keepFirst === false || i > 0) && !(opts?.keep?.(c) ?? false))
     return foldable
       .sort((a, b) => ((opts?.priorityOf?.(b.c) ?? 2) - (opts?.priorityOf?.(a.c) ?? 2)) || (b.i - a.i))
       .map(({ c }) => c)

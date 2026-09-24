@@ -387,20 +387,36 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
 /** The row's own menu, named for the record: "Actions for Q4 enterprise targets", never "More". */
 function RowMenu<T>({ row, p }: { row: T; p: DataTableProps<T> }) {
-  const items = p.menu?.(row) ?? []
-  const actions = p.rowActions ?? []
+  return (
+    <RowMenuButton
+      label={p.menuLabel(row)}
+      actions={(p.rowActions ?? []).map((a) => ({ label: a.label(row), onClick: () => a.onClick(row) }))}
+      items={p.menu?.(row) ?? []}
+    />
+  )
+}
+
+/**
+ * The same menu, for a page on the `IndexPage` contract: it hands the template one node per row
+ * and the order stays the library's — acts, then the menu, then the destructive one last.
+ */
+export function RowMenuButton({ label: menuLabel, actions = [], items = [] }: {
+  label: string
+  actions?: { label: string; onClick: () => void }[]
+  items?: RowMenuItem[]
+}) {
   if (items.length === 0 && actions.length === 0) return null
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon" variant="ghost" className="size-7 shrink-0" aria-label={`Actions for ${p.menuLabel(row)}`}>
+        <Button size="icon" variant="ghost" className="size-7 shrink-0" aria-label={`Actions for ${menuLabel}`}>
           <MoreHorizontal className="size-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       {/* Related objects and ordinary acts first, the destructive one last after a rule — the
           order DESIGN.md §1 fixes for a menu, so the page cannot put a delete in the middle. */}
       <DropdownMenuContent align="end" className="max-w-[18rem]">
-        {actions.map((a, i) => <DropdownMenuItem key={`a${i}`} onSelect={() => a.onClick(row)}>{a.label(row)}</DropdownMenuItem>)}
+        {actions.map((a, i) => <DropdownMenuItem key={`a${i}`} onSelect={a.onClick}>{a.label}</DropdownMenuItem>)}
         {actions.length > 0 && items.length > 0 && <DropdownMenuSeparator />}
         {items.filter((m) => !m.destructive).map((m, i) => (
           <DropdownMenuItem key={`m${i}`} onSelect={m.onClick} className="whitespace-normal">{m.label}</DropdownMenuItem>

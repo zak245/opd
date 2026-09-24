@@ -11,7 +11,6 @@
 // a click, and in the bulk bar, where it names what goes.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { MoreHorizontal, SlidersHorizontal } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +28,8 @@ import { openBeside } from "../../beside"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
 import { Group } from "../../ui/Section"
-import { BoardPage, LegacyIndexPage as IndexPage, PageHeader, SummaryStrip, type BoardStage, type PageHeaderProps, type ToolbarControl } from "../../layouts"
+import { BoardPage, IndexPage, PageHeader, SummaryStrip, type BoardStage, type PageHeaderProps, type ToolbarControl } from "../../layouts"
+import { FilterBar, FilterEmpty, type DoorItem, type FilterControl } from "../../layouts/filters"
 import { Divider } from "../../ui/Divider"
 import { inkOf } from "../../ui/Identity"
 import { useEdits } from "../../edits"
@@ -45,8 +45,7 @@ import { STAGE_FORECAST, STAGE_PROBABILITY, TODAY, seedFor, type Deal, type Deal
 import { ago, day, daysBetween, money } from "../deal/format"
 import { DealCard, chipText, type CardFlags } from "./DealCard"
 import { coverageFor } from "../reports/coverage"
-import { useFitColumns, type ColumnPriority } from "../../layouts/columns"
-import { MetaLine } from "../../layouts/MetaLine"
+import { type ColumnPriority } from "../../layouts/columns"
 import {
   ALL_STAGES, FORECAST_CATEGORIES_UI, LOST_REASONS, OPEN_STAGES, PERIODS, SCOPE_LABEL, WARNING_KINDS,
   WON_STAGE, dealGlanceFields, forecastFigures, goalFor, inPeriod, isOpen, lostConsequenceText, warningStatus,
@@ -652,13 +651,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   /* --------------------------------------------------------------------------------- the header */
 
   const anyFilter = filtersOn(filters) > 0 || q.trim().length > 0
-  const clearAll = () => { setFilters(NO_FILTERS); setQ("") }
 
   /* ---------------------------------------------------------------------------------- the table */
 
-  const chosenColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
-  // Which of those the table draws at this width, and which fold under the deal's name.
-  const { ref: fitRef, shown: visibleColumns, folded: foldedColumns } = useFitColumns(chosenColumns, { priorityOf: (c) => c.priority })
+  // What the person chose. Which of them the table draws at this width, and which fold under the
+  // deal's name, is the template's now — a page that folds them too folds them twice.
+  const visibleColumns = TABLE_COLUMNS.filter((c) => columns.includes(c.key))
 
   /* ---------------------------------------------------------------------------- the table view */
 
@@ -699,75 +697,6 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
             )
           })()
         : c.cell(r, { currency })
-
-  const tableBody = (
-    <Table>
-      <TableHeader className="sticky top-0 bg-muted">
-        <TableRow>
-          {visibleColumns.map((c, i) => (
-            <TableHead key={c.key} className={cn("t-label", (c.key === "stage" || c.key === "warnings") && "min-w-36")}>{c.header}</TableHead>
-          ))}
-          <TableHead className="w-px whitespace-nowrap"><span className="sr-only">Actions</span></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sorted.slice(0, limit).map((r) => (
-          <TableRow
-            key={r.id}
-            data-item={r.id}
-            data-item-label={r.name}
-            className={cn("group cursor-pointer hover:bg-muted focus-visible:bg-muted", glance === r.id && "bg-muted")}
-            tabIndex={0}
-            onClick={(e) => { e.currentTarget.focus(); setGlance(r.id) }}
-            onKeyDown={(e) => {
-              if (e.target !== e.currentTarget) return
-              if (e.key === "Enter") { e.preventDefault(); setGlance(r.id) }
-              if (e.key.toLowerCase() === "o") { e.preventDefault(); leaveFor(`/ollopa/deals/${r.id}`, r.id) }
-            }}
-          >
-            {visibleColumns.map((c, i) => (
-              <TableCell key={c.key} className={cn("t-body py-2 tabular-nums", (c.key === "stage" || c.key === "warnings") && "min-w-36 whitespace-nowrap")}>
-                {cellFor(c, r)}
-                {/* A column that does not fit at this width is read here, under the deal's name. */}
-                {i === 0 && foldedColumns.length > 0 && (
-                  <MetaLine values={foldedColumns.map((f) => ({ key: f.key, label: f.header, value: cellFor(f, r) }))} />
-                )}
-              </TableCell>
-            ))}
-            <TableCell className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-end">{rowMenu(r)}</div>
-            </TableCell>
-          </TableRow>
-        ))}
-        {sorted.length === 0 && (
-          <TableRow>
-            <TableCell colSpan={visibleColumns.length + 1} className="t-body py-10 text-center text-muted-foreground">
-              Nothing matches. Clear the search or the filters.
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
-  )
-
-  /* The same deals as a divided list for 400: the name reads first and every other column is
-     labelled, because a table with its last columns cut off is the one thing LAYOUTS.md §5 forbids. */
-  const tableRows = sorted.slice(0, limit).map((r) => (
-    <div key={r.id} data-item={r.id} data-item-label={r.name} className="flex items-start gap-2 px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <button type="button" className="t-body text-left font-medium hover:underline" onClick={() => setGlance(r.id)}>{r.name}</button>
-        <dl className="mt-1 grid grid-cols-[minmax(5rem,auto)_minmax(0,1fr)] gap-x-3 gap-y-0.5">
-          {visibleColumns.filter((c) => c.key !== "deal").map((c) => (
-            <div key={c.key} className="col-span-2 grid grid-cols-subgrid items-baseline">
-              <dt className="t-small text-muted-foreground">{c.header}</dt>
-              <dd className="t-small min-w-0">{cellFor(c, r)}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-      {rowMenu(r)}
-    </div>
-  ))
 
   /* --------------------------------------------------------------------------------- the render */
 
@@ -825,39 +754,68 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
    * the view switch is a group in the list below, the door prints the group count, and the page
    * puts no filters above the card.
    */
-  const doorGroups: { name: string; node: ReactNode }[] = [
+  /**
+   * The filters this seat reads most, in its order. Each carries its own value and its own clear,
+   * so it is dropped from its own chip (`layouts/filters`). `FilterBar` decides how many fit on
+   * the row; this page only decides which ones the seat reads weekly.
+   */
+  const filterControls: FilterControl[] = [
+    ...(used("deals.filter.scope") ? [{
+      name: "Whose deals",
+      value: scope === "mine" ? undefined : SCOPE_LABEL[scope],
+      onClear: () => setScope("mine"),
+      node: (
+        <Segmented label="Whose deals" value={scope} onChange={setScope}
+          options={(["mine", "team", "all"] as Scope[]).map((k) => ({ key: k, text: SCOPE_LABEL[k] }))} />
+      ),
+    }] : []),
+    {
+      name: "Closing period",
+      value: period === "quarter" ? undefined : period_.words,
+      onClear: () => setPeriod("quarter"),
+      node: (
+        <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+          <SelectTrigger className="h-8 w-auto min-w-40" aria-label="Closing period"><SelectValue /></SelectTrigger>
+          <SelectContent>{PERIODS.map((x) => <SelectItem key={x.key} value={x.key}>{x.label}</SelectItem>)}</SelectContent>
+        </Select>
+      ),
+    },
+    ...(one("deals.filter.owner") ? [{
+      name: "Owner",
+      value: filters.owner || undefined,
+      onClear: () => setFilters({ ...filters, owner: "" }),
+      node: (
+        <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
+          <SelectTrigger className="h-8 w-auto min-w-36" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Owner: all</SelectItem>
+            {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ),
+    }] : []),
+    ...(one("deals.filter.forecast") ? [{
+      name: "Forecast category",
+      value: filters.forecast || undefined,
+      onClear: () => setFilters({ ...filters, forecast: "" }),
+      node: (
+        <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
+          <SelectTrigger className="h-8 w-auto min-w-36" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Forecast: all</SelectItem>
+            {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ),
+    }] : []),
+  ]
+
+  /** Everything the one door holds, in its three groups: filters, saved views, columns. */
+  const doorGroups: DoorItem[] = [
     ...(pipelines.length > 1 ? [{ name: "Pipeline", node: (
       <Select value={pipelineName} onValueChange={setPipelineName}>
         <SelectTrigger className="h-8 w-full" aria-label="Pipeline"><SelectValue /></SelectTrigger>
         <SelectContent>{pipelines.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
-      </Select>
-    ) }] : []),
-    ...(used("deals.filter.scope") ? [{ name: "Whose deals", node: (
-      <Segmented label="Whose deals" value={scope} onChange={setScope}
-        options={(["mine", "team", "all"] as Scope[]).map((k) => ({ key: k, text: SCOPE_LABEL[k] }))} />
-    ) }] : []),
-    { name: "Closing period", node: (
-      <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-        <SelectTrigger className="h-8 w-full" aria-label="Closing period"><SelectValue /></SelectTrigger>
-        <SelectContent>{PERIODS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
-      </Select>
-    ) },
-    ...(one("deals.filter.owner") ? [{ name: "Owner", node: (
-      <Select value={filters.owner || "all"} onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? "" : v })}>
-        <SelectTrigger className="h-8 w-full" aria-label="Owner"><SelectValue placeholder="Owner: all" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Owner: all</SelectItem>
-          {(names ?? owners).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    ) }] : []),
-    ...(one("deals.filter.forecast") ? [{ name: "Forecast category", node: (
-      <Select value={filters.forecast || "all"} onValueChange={(v) => setFilters({ ...filters, forecast: v === "all" ? "" : v })}>
-        <SelectTrigger className="h-8 w-full" aria-label="Forecast category"><SelectValue placeholder="Forecast: all" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Forecast: all</SelectItem>
-          {FORECAST_CATEGORIES_UI.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-        </SelectContent>
       </Select>
     ) }] : []),
     ...(one("deals.filter.no-next-step") || one("deals.filter.comments") ? [{ name: "What needs you", node: (
@@ -971,13 +929,13 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         )}
       </div>
     ) },
-    { name: "Card and row order", node: (
+    { name: "Card and row order", group: "columns" as const, node: (
       <Select value={order} onValueChange={(v) => setOrder(v as Order)}>
         <SelectTrigger className="h-8 w-full" aria-label="Order"><SelectValue /></SelectTrigger>
         <SelectContent>{ORDERS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
       </Select>
     ) },
-    { name: "Card density", node: (
+    { name: "Card density", group: "columns" as const, node: (
       <ToggleGroup type="single" variant="outline" size="sm" aria-label="Card density"
         value={density} onValueChange={(v) => { if (v) setDensity(v as typeof density) }}>
         {(["comfortable", "compact"] as const).map((v) => (
@@ -985,7 +943,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         ))}
       </ToggleGroup>
     ) },
-    { name: `Table columns, ${columns.length} of ${TABLE_COLUMNS.length}`, node: (
+    { name: `Table columns, ${columns.length} of ${TABLE_COLUMNS.length}`, group: "columns" as const, node: (
       <ul className="max-h-40 space-y-1 overflow-y-auto">
         {TABLE_COLUMNS.map((c) => (
           <li key={c.key} className="flex items-center gap-2">
@@ -996,7 +954,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         ))}
       </ul>
     ) },
-    ...(used("deals.view.saved") ? [{ name: "Saved views", node: (
+    ...(used("deals.view.saved") ? [{ name: "Saved views", group: "views" as const, node: (
       <ul className="space-y-1">
         {seed.savedViews.filter((v) => v.object === "deal").map((v) => (
           <li key={v.id}>
@@ -1009,38 +967,28 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
         {seed.savedViews.filter((v) => v.object === "deal").length === 0 && <li className="text-xs text-muted-foreground">Nothing saved yet.</li>}
       </ul>
     ) }] : []),
-    { name: "Every door on the board", node: <ExpandAll className="-ml-2" /> },
+    { name: "Every door on the board", group: "columns" as const, node: <ExpandAll className="-ml-2" /> },
   ]
 
-  const filtersOnNow = filtersOn(filters)
+  const clearAll = () => { setFilters(NO_FILTERS); setQ("") }
 
-  /** The door itself: a short label, the count of what is behind it, and the filters that are on. */
-  const filtersAndViews = (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8">
-          <SlidersHorizontal aria-hidden="true" />
-          Filters and views
-          <Badge variant="outline" className="tabular-nums">{doorGroups.length}</Badge>
-          {filtersOnNow > 0 && (
-            <span className="tabular-nums text-muted-foreground">· {filtersOnNow} on</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-[70vh] w-[min(88vw,32rem)] space-y-3 overflow-y-auto text-sm">
-        {doorGroups.map((g) => (
-          <div key={g.name}>
-            <div className="pb-1 text-xs font-medium">{g.name}</div>
-            {g.node}
-          </div>
-        ))}
-        {filtersOnNow > 0 && (
-          <Button size="sm" variant="ghost" className="-ml-2 h-7 px-2 text-xs" onClick={() => setFilters(NO_FILTERS)}>
-            Clear {filtersOnNow} filter{filtersOnNow === 1 ? "" : "s"}
-          </Button>
-        )}
-      </PopoverContent>
-    </Popover>
+  /**
+   * The one filtering pattern (`layouts/filters`): the search, the seat's filters, one door with
+   * the rest and the columns in it, one count and one applied line. The board hands it to
+   * `BoardPage` as its single pinned control, so both views filter the same way.
+   */
+  const filterBar = (
+    <FilterBar
+      doorId="deals"
+      searchNode={(
+        <Input ref={search} type="search" aria-label="Search deals" placeholder="Search deals"
+               value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />
+      )}
+      controls={filterControls}
+      behind={doorGroups}
+      count={{ shown: sorted.length, total: b.counts.openDeals, noun: "deals" }}
+      onClearAll={clearAll}
+    />
   )
 
   const viewToggle = used("deals.view.toggle") ? (
@@ -1049,19 +997,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   ) : null
 
   /**
-   * What the toolbar carries, board and table alike. All three stay in front at every width, so the
-   * toolbar never opens a second door of its own: the search, the view switch a phone must be able
-   * to reach (LAYOUTS.md §5), and the one door that holds the rest.
+   * On the table the view switch is the template's `slot`, the one named place for what the index
+   * shape has no room for. `BoardPage` has no slot yet, so on the board it rides in the toolbar.
    */
-  const allControls: ToolbarControl[] = [
-    { name: "Search", always: true, pin: true, node: (
-      <Input ref={search} aria-label="Search deals" placeholder="Search deals" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-44 max-w-full" />
-    ) },
-    // Pinned, all three: the toolbar's own door would otherwise open on a second door at 400, and
-    // the view switch has to be reachable at every width (LAYOUTS.md §5). The "…" menu carries the
-    // switch in words as well, so a phone has two routes to the table.
+  const boardControls: ToolbarControl[] = [
     ...(viewToggle ? [{ name: "Board or table", always: true, pin: true, node: <>{viewToggle}</> }] : []),
-    { name: "Filters and views", always: true, pin: true, node: filtersAndViews },
+    { name: "Filters and views", always: true, pin: true, node: filterBar },
   ]
 
   const tableAbove = <div className="pt-2">{stripBlock}</div>
@@ -1113,14 +1054,36 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           // its body, the pager in its footer, and the same deals as a divided list at 400. The
           // page sets no width — the template does (LAYOUTS.md §1 and §6).
           <div className="min-h-0 flex-1">
-            <IndexPage
+            <IndexPage<Deal>
               {...headerProps}
-              controls={allControls}
-              shown={`${sorted.length.toLocaleString()} shown of ${b.counts.openDeals.toLocaleString()}`}
+              toolbar={filterBar}
+              // The one named place the index shape keeps for what it has no room for: here, the
+              // switch between the board and this table (LAYOUTS.md §2).
+              slot={viewToggle}
               above={tableAbove}
-              tableRef={fitRef}
-              table={tableBody}
-              rows={tableRows}
+              columns={visibleColumns.filter((c) => c.key !== "deal").map((c) => ({
+                key: c.key, header: c.header, cell: (r: Deal) => cellFor(c, r), priority: c.priority,
+              }))}
+              rows={sorted.slice(0, limit)}
+              rowKey={(r) => r.id}
+              name={(r) => (
+                <button type="button" className="t-body text-left font-medium hover:underline"
+                        onClick={(e) => { e.stopPropagation(); setGlance(r.id) }}>{r.name}</button>
+              )}
+              menu={rowMenu}
+              rowProps={(r) => ({
+                "data-item": r.id,
+                "data-item-label": r.name,
+                tabIndex: 0,
+                className: cn("group cursor-pointer", glance === r.id && "bg-muted"),
+                onClick: (e: React.MouseEvent<HTMLTableRowElement>) => { e.currentTarget.focus(); setGlance(r.id) },
+                onKeyDown: (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+                  if (e.target !== e.currentTarget) return
+                  if (e.key === "Enter") { e.preventDefault(); setGlance(r.id) }
+                  if (e.key.toLowerCase() === "o") { e.preventDefault(); leaveFor(`/ollopa/deals/${r.id}`, r.id) }
+                },
+              })}
+              empty={<FilterEmpty noun="deals" applied={filterControls.filter((c) => c.value)} onClearAll={clearAll} />}
               pager={sorted.length > limit ? (
                 <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + 25)}>
                   Show {Math.min(25, sorted.length - limit)} more
@@ -1135,8 +1098,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           <div className="min-h-0 flex-1">
             <BoardPage
               {...headerProps}
-              controls={allControls}
-              shown={`${rows.filter(isOpen).length.toLocaleString()} open of ${b.counts.openDeals.toLocaleString()}`}
+              controls={boardControls}
               above={above}
               stages={stages}
               // A kanban column has a readable floor, and below it a card is a wall of wrapped

@@ -8,11 +8,10 @@
 // many people feel the change, and Cost is the monthly total on an upgrade row before it is opened.
 // Where nothing in the workspace is locked, the upgrade kind cannot occur and the Cost column is
 // removed rather than shown empty.
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState } from "react"
 import { Actions } from "../../ui/Actions"
 import { Chip } from "../../ui/Identity"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { LegacyIndexPage as IndexPage, SummaryStrip } from "../../layouts"
+import { IndexPage, SummaryStrip, type IndexColumn } from "../../layouts"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { href, navigate } from "@/app/router"
 import { DoorGroup } from "../../ui/Door"
@@ -21,15 +20,9 @@ import { businessById } from "../../data/businesses"
 import { seedFor, type Request } from "../../data/seed"
 import type { Session } from "../../session"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-/** One column of the queue. The template draws the card, the toolbar and the pager around it. */
-interface Column { key: string; header: string; className?: string; cell: (r: Request) => ReactNode }
 import { businessDaysBetween, day, money, plural } from "./format"
 import { toast } from "./state"
-import { useFitColumns } from "../../layouts/columns"
-import { MetaLine } from "../../layouts/MetaLine"
 
 export const STATE_LABEL: Record<Request["state"], string> = {
   captured: "Needs a decision",
@@ -109,13 +102,9 @@ export function RequestsPage({ session }: { session: Session }) {
   // three that decide are first, so the ones that overflow at a narrow width are the descriptive
   // ones and never the state.
   // Fold whatever does not fit the box the table is in (LAYOUTS.md §5, §6).
-  const columns: Column[] = [
+  const columns: IndexColumn<Request>[] = [
     {
-      key: "outcome", header: "Request",
-      cell: (r) => <a className="block max-w-[20rem] truncate underline-offset-4 hover:underline" title={r.outcome} href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>,
-    },
-    {
-      key: "waiting", header: "Waiting",
+      key: "waiting", header: "Waiting", priority: 1,
       cell: (r) => {
         const w = waitingOf(r, target)
         return w.past > 0
@@ -123,18 +112,17 @@ export function RequestsPage({ session }: { session: Session }) {
           : <span className="whitespace-nowrap tabular-nums">{w.text}</span>
       },
     },
-    { key: "state", header: "State", cell: (r) => <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip> },
-    { key: "owner", header: "Decides", cell: (r) => <span className="whitespace-nowrap">{r.decisionOwner}</span> },
-    { key: "affects", header: "Affects", cell: (r) => <span className="tabular-nums">{r.affected.count}</span>, className: "text-right" },
+    { key: "state", header: "State", priority: 1, cell: (r) => <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip> },
+    { key: "owner", header: "Decides", priority: 2, cell: (r) => <span className="whitespace-nowrap">{r.decisionOwner}</span> },
+    { key: "affects", header: "Affects", priority: 2, numeric: true, cell: (r) => r.affected.count },
     ...(hasUpgrades ? [{
-      key: "cost", header: "Cost",
-      cell: (r: Request) => (r.upgrade ? <span className="whitespace-nowrap tabular-nums">{money(r.upgrade.monthlyTotal)} a month</span> : <span className="text-muted-foreground">—</span>),
-      className: "text-right",
+      key: "cost", header: "Cost", priority: 2 as const, numeric: true,
+      cell: (r: Request) => (r.upgrade ? <span className="whitespace-nowrap">{money(r.upgrade.monthlyTotal)} a month</span> : <span className="text-muted-foreground">—</span>),
     }] : []),
-    { key: "kind", header: "Kind", cell: (r) => (r.kind === "upgrade" ? "Locked feature" : "Workspace change"), className: "whitespace-nowrap" },
-    { key: "asked", header: "Asked by", cell: (r) => <span className="whitespace-nowrap">{r.requester.user}</span> },
+    { key: "kind", header: "Kind", priority: 3, cell: (r) => (r.kind === "upgrade" ? "Locked feature" : "Workspace change") },
+    { key: "asked", header: "Asked by", priority: 3, cell: (r) => <span className="whitespace-nowrap">{r.requester.user}</span> },
     {
-      key: "touches", header: "What it touches", className: "max-w-[12rem]",
+      key: "touches", header: "What it touches", priority: 3,
       cell: (r) => (
         <span className="block truncate">
           {r.touches[0]?.name}{r.touches.length > 1 && <span className="text-muted-foreground"> +{r.touches.length - 1}</span>}
@@ -142,8 +130,6 @@ export function RequestsPage({ session }: { session: Session }) {
       ),
     },
   ]
-  // Fold whatever does not fit the box the table is in (LAYOUTS.md §5, §6).
-  const fit = useFitColumns(columns)
 
   if (all.length === 0) {
     return (
@@ -172,8 +158,11 @@ export function RequestsPage({ session }: { session: Session }) {
     { label: "Archive", kind: "destructive" as const, onClick: () => toast(`${r.outcome} archived. The record, the reason and the history stay readable, and declined requests are kept for a year.`) },
   ]
 
-  const pick = (label: string, value: string, set: (v: string) => void, options: { value: string; label: string }[]) => ({
+  /** A named filter that says what it is set to, so the applied line and the count can name it. */
+  const pick = (label: string, value: string, set: (v: string) => void, off: string, options: { value: string; label: string }[]) => ({
     name: label,
+    value: value === "all" || value === off ? undefined : value,
+    onClear: () => set(options[0].value),
     node: (
       <Select value={value} onValueChange={set}>
         <SelectTrigger className="w-48" aria-label={label}><SelectValue /></SelectTrigger>
@@ -199,102 +188,55 @@ export function RequestsPage({ session }: { session: Session }) {
           { label: "Export the queue", kind: "secondary" as const, onClick: () => toast(`Exported ${shown.length} requests as CSV.`) },
         ]}
         above={
-          <>
-            <SummaryStrip figures={[
-              { label: "Waiting", value: open.length, note: "nothing here closes on its own" },
-              { label: `Past ${target} business days`, value: past.length === 0 ? "None" : <Chip status="overdue">{past.length}</Chip> },
-              ...(oldest ? [{ label: "Oldest", value: `${businessDaysBetween(oldest.raisedOn)} days`, note: oldest.requester.user }] : []),
-            ]} />
-            <ToggleGroup
-              type="single" variant="outline" size="sm" aria-label="Filter by state"
-              value={chip} onValueChange={(v) => setChip((v || "all") as typeof chip)} className="flex-wrap"
-            >
-              <ToggleGroupItem value="all">Everything ({all.length})</ToggleGroupItem>
-              {CHIP_ORDER.map((st) => {
-                const n = all.filter((r) => r.state === st).length
-                if (n === 0) return null
-                return <ToggleGroupItem key={st} value={st}>{STATE_LABEL[st]} ({n})</ToggleGroupItem>
-              })}
-            </ToggleGroup>
-          </>
+          <SummaryStrip figures={[
+            { label: "Waiting", value: open.length },
+            { label: `Past ${target} business days`, value: past.length === 0 ? "None" : <Chip status="overdue">{past.length}</Chip> },
+            ...(oldest ? [{ label: "Oldest", value: `${businessDaysBetween(oldest.raisedOn)} days`, note: oldest.requester.user }] : []),
+          ]} />
         }
-        controls={[
-          { name: "Search", always: true, node: (
-            <Input aria-label="Search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
-          ) },
-          pick("Requester", requester, setRequester, [{ value: "all", label: "Requester: anyone" },
-            ...[...new Set(all.map((r) => r.requester.user))].map((u) => ({ value: u, label: u }))]),
-          pick("Decision owner", owner, setOwner, [{ value: "all", label: "Decision owner: anyone" },
-            ...[...new Set(all.map((r) => r.decisionOwner))].map((u) => ({ value: u, label: u }))]),
-          pick("What it touches", touches, setTouches, [{ value: "all", label: "Touches: anything" },
-            ...[...new Set(all.flatMap((r) => r.touches.map((t) => t.kind)))].map((k) => ({ value: k, label: k }))]),
-          pick("Kind", kind, setKind, [{ value: "all", label: "Kind: both" },
-            { value: "change", label: "Workspace change" }, { value: "upgrade", label: "Locked feature" }]),
-          pick("Archived", archived, setArchived, [{ value: "Open requests", label: "Open requests" },
-            { value: "Everything, including declined", label: "Everything, including declined" }]),
-        ]}
-        shown={`${shown.length} shown of ${all.length}`}
-        tableRef={fit.ref}
-        table={
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {fit.shown.map((c) => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
-                <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {page.map((r) => (
-                <TableRow key={r.id} data-item={r.id} data-item-label={r.outcome}>
-                  {fit.shown.map((c, i) => (
-                    <TableCell key={c.key} className={c.className}>
-                      {c.cell(r)}
-                      {/* What did not fit reads here, under the row's own name. */}
-                      {i === 0 && fit.folded.length > 0 && (
-                        <MetaLine values={fit.folded.map((f) => ({ key: f.key, label: f.header, value: f.cell(r) }))} />
-                      )}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right"><Actions surface="row" layout="menu" items={rowMenu(r)} /></TableCell>
-                </TableRow>
-              ))}
-              {page.length === 0 && (
-                <TableRow><TableCell colSpan={fit.shown.length + 1} className="t-body py-10 text-center text-muted-foreground">Nothing matches. Clear the search or a filter.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        }
-        rows={page.map((r) => {
-          const w = waitingOf(r, target)
-          return (
-            <div key={r.id} data-item={r.id} data-item-label={r.outcome} className="px-4 py-3">
-              <a className="t-label underline-offset-4 hover:underline" href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
-              <p className="t-small mt-1 text-muted-foreground">
-                {r.requester.user} · {r.kind === "upgrade" ? "a locked feature" : "a workspace change"}
-              </p>
-              <p className="t-body mt-1">{w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : w.text}</p>
-              <p className="t-body">
-                {plural(r.affected.count, "person", "people")} feel it
-                {r.upgrade && <> · {money(r.upgrade.monthlyTotal)} a month</>}
-              </p>
-              <p className="t-small mt-1 flex items-center gap-1.5 text-muted-foreground">
-                <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip>
-                {r.decisionOwner} decides
-              </p>
-            </div>
-          )
-        })}
+        // One row: search, the three filters this seat sets most, the door, the count. Every
+        // control says what it is set to, so the count can always be accounted for.
+        filters={{
+          search: { value: q, onChange: setQ, placeholder: "Search requests by outcome, requester or reason" },
+          controls: [
+            pick("State", chip, (v) => setChip(v as typeof chip), "all", [
+              { value: "all", label: "State: everything" },
+              ...CHIP_ORDER.filter((st) => all.some((r) => r.state === st)).map((st) => ({ value: st, label: STATE_LABEL[st] })),
+            ]),
+            pick("Requester", requester, setRequester, "anyone", [{ value: "all", label: "Requester: anyone" },
+              ...[...new Set(all.map((r) => r.requester.user))].map((u) => ({ value: u, label: u }))]),
+            pick("Decision owner", owner, setOwner, "anyone", [{ value: "all", label: "Decision owner: anyone" },
+              ...[...new Set(all.map((r) => r.decisionOwner))].map((u) => ({ value: u, label: u }))]),
+            pick("What it touches", touches, setTouches, "anything", [{ value: "all", label: "Touches: anything" },
+              ...[...new Set(all.flatMap((r) => r.touches.map((t) => t.kind)))].map((k) => ({ value: k, label: k }))]),
+          ],
+          behind: [
+            pick("Kind", kind, setKind, "both", [{ value: "all", label: "Kind: both" },
+              { value: "change", label: "Workspace change" }, { value: "upgrade", label: "Locked feature" }]),
+            {
+              ...pick("Archived", archived, setArchived, "Open requests", [{ value: "Open requests", label: "Open requests" },
+                { value: "Everything, including declined", label: "Everything, including declined" }]),
+              group: "filters" as const,
+            },
+          ],
+          count: { shown: shown.length, total: all.length, noun: "requests" },
+          onClearAll: () => { setQ(""); setChip("all"); setRequester("all"); setOwner("all"); setTouches("all"); setKind("all"); setArchived("Open requests") },
+          doorId: "requests.filters",
+        }}
+        columns={columns}
+        rows={page}
+        rowKey={(r) => r.id}
+        rowProps={(r) => ({ "data-item": r.id, "data-item-label": r.outcome })}
+        name={(r) => (
+          <a className="underline-offset-4 hover:underline" title={r.outcome} href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
+        )}
+        menu={(r) => <Actions surface="row" layout="menu" menuLabel={r.outcome} items={rowMenu(r)} />}
         pager={shown.length > limit ? (
           <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + 15)}>
             Show {Math.min(15, shown.length - limit)} more
           </Button>
         ) : undefined}
-      >
-        <p className="t-small px-1 text-muted-foreground">
-          {b.name} · a request is raised where the problem was met, never here.{" "}
-          {hasUpgrades ? "An upgrade row carries its monthly total before it is opened." : `Nothing is locked on ${b.plan.name}, so the upgrade kind cannot occur here and its column is removed.`}
-        </p>
-      </IndexPage>
+      />
     </DoorGroup>
   )
 }

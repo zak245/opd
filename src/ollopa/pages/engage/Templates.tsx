@@ -15,9 +15,9 @@ import { businessById } from "../../data/businesses"
 import { seedFor } from "../../data/seed"
 import type { Business } from "../../usage/model"
 import type { Session } from "../../session"
-import { LegacyIndexPage as IndexPage } from "../../layouts"
+import { IndexPage, type IndexColumn } from "../../layouts"
 import { Chip } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
+import { RowMenuButton, RowOpen, ago, day, focusSearch, h1Of, moveRow, n, toast, useKeys, usePersisted } from "./shared"
 
 /** One row of the page: a template or the snippet a template nests. Both are copy with users. */
 export interface CopyRow {
@@ -107,23 +107,12 @@ export function TemplatesPage({ session }: { session: Session }) {
   const open = (r: CopyRow) =>
     follow(`/ollopa/templates/${r.id}`, { route: "/ollopa/templates", title: h1Of("templates"), anchor: r.id })
 
-  const columns: Col<CopyRow>[] = [
-    {
-      key: "name", header: "Template", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
-      cell: (r) => (
-        <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <RowOpen to={`/ollopa/templates/${r.id}`} onOpen={() => open(r)} className="truncate">{r.name}</RowOpen>
-            <Chip family="templates" icon={false} className="shrink-0">{r.kind}</Chip>
-          </div>
-          <div className="t-small truncate text-muted-foreground">{r.folder}</div>
-        </div>
-      ),
-    },
-    { key: "owner", header: "Owner", cell: (r) => r.owner, sort: (a, c) => a.owner.localeCompare(c.owner) },
-    { key: "lastUsed", header: "Last used", className: "tabular-nums", phone: true, sort: (a, c) => a.lastUsed.localeCompare(c.lastUsed), cell: (r) => (r.lastUsed ? ago(r.lastUsed) : "Never") },
-    { key: "usedBy", header: "Used by", phone: true, cell: (r) => usedByLine(r) },
-    { key: "updated", header: "Updated", className: "tabular-nums", sort: (a, c) => a.updated.localeCompare(c.updated), cell: (r) => (r.updated ? day(r.updated) : "—") },
+  // The name, its kind and its folder are the template's first cell; these sit beside them.
+  const columns: IndexColumn<CopyRow>[] = [
+    { key: "owner", header: "Owner", priority: 2, cell: (r) => r.owner, sort: (a, c) => a.owner.localeCompare(c.owner) },
+    { key: "lastUsed", header: "Last used", numeric: true, priority: 1, sort: (a, c) => a.lastUsed.localeCompare(c.lastUsed), cell: (r) => (r.lastUsed ? ago(r.lastUsed) : "Never") },
+    { key: "usedBy", header: "Used by", priority: 1, cell: (r) => usedByLine(r) },
+    { key: "updated", header: "Updated", numeric: true, priority: 3, sort: (a, c) => a.updated.localeCompare(c.updated), cell: (r) => (r.updated ? day(r.updated) : "—") },
   ]
 
   useKeys(useMemo(() => [
@@ -132,73 +121,86 @@ export function TemplatesPage({ session }: { session: Session }) {
     { keys: "k", label: "Previous template", run: () => moveRow(-1) },
   ], []))
 
-  const table = (only: "table" | "rows") => (
-    <DataTable<CopyRow>
-      only={only}
-      rows={rows}
-      rowKey={(r) => r.id}
-      columns={columns}
-      sortKey={sort.key}
-      sortDir={sort.dir}
-      onSort={(k, dir) => setSort({ key: k, dir })}
-      rowActions={[{ label: () => "Open", onClick: open }]}
-      menu={(r) => [
-        { label: "Duplicate", onClick: () => toast(`Duplicated ${r.name}`) },
-        { label: "Rename", onClick: () => open(r) },
-        { label: "Move to folder", onClick: () => toast(`${r.name}: choose a folder`) },
-        {
-          label: r.usedBySteps.length
-            ? `Archive · used by ${n(r.usedBySteps.length)} steps`
-            : "Archive",
-          destructive: true,
-          onClick: () => toast(`${r.name} archived · ${n(r.usedBySteps.length)} steps keep the text they have today`),
-        },
-      ]}
-      menuLabel={(r) => r.name}
-      onOpen={open}
-      empty={<EmptyState title="No templates yet" body="Write one here, or save a step's copy as a template from the step that uses it." />}
-    />
-  )
-
-  return (
-    <IndexPage
-      family="templates"
-      title="Templates and snippets"
-      count={rowsAll.length}
-      actions={[{ kind: "primary", label: "New template", onClick: () => toast("New template · name it, then write the subject and body") }]}
-      shown={`${n(rows.length)} shown of ${n(rowsAll.length)}`}
-      controls={[
-        {
-          name: "Search", always: true,
-          node: <Input
-            data-page-search aria-label="Search templates by name or body text" placeholder="Search name and body"
-            value={q} onChange={(e) => setQ(e.target.value)} className="w-64"
-          />,
-        },
-        {
-          name: "Folder",
-          node: <Select value={folder} onValueChange={setFolder}>
-            <SelectTrigger className="w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
+  /** The filtering pattern: the search, the folder and the owner, the count at the trailing edge. */
+  const filters = {
+    search: { value: q, onChange: setQ, placeholder: "Search templates by name or body text" },
+    controls: [
+      {
+        name: "Folder",
+        value: folder === "all" ? undefined : folder,
+        onClear: () => setFolder("all"),
+        node: (
+          <Select value={folder} onValueChange={setFolder}>
+            <SelectTrigger className="h-8 w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Folder: all</SelectItem>
               {folders.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
-          </Select>,
-        },
-        {
-          name: "Owner",
-          node: <Select value={owner} onValueChange={setOwner}>
-            <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+          </Select>
+        ),
+      },
+      {
+        name: "Owner",
+        value: owner === "all" ? undefined : owner === "Mine" ? "mine" : owner,
+        onClear: () => setOwner("all"),
+        node: (
+          <Select value={owner} onValueChange={setOwner}>
+            <SelectTrigger className="h-8 w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Mine">Owner: mine</SelectItem>
               <SelectItem value="all">Owner: everyone</SelectItem>
               {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
             </SelectContent>
-          </Select>,
-        },
-      ]}
-      table={table("table")}
-      rows={table("rows")}
+          </Select>
+        ),
+      },
+    ],
+    count: { shown: rows.length, total: rowsAll.length, noun: "templates" },
+    onClearAll: () => { setQ(""); setFolder("all"); setOwner("all") },
+    doorId: "templates",
+  }
+
+  return (
+    <IndexPage<CopyRow>
+      family="templates"
+      title="Templates and snippets"
+      count={rowsAll.length}
+      actions={[{ kind: "primary", label: "New template", onClick: () => toast("New template · name it, then write the subject and body") }]}
+      filters={filters}
+      columns={columns}
+      rows={rows}
+      rowKey={(r) => r.id}
+      nameHeader="Template"
+      nameSort={(a, c) => a.name.localeCompare(c.name)}
+      sort={sort}
+      onSort={(k, dir) => setSort({ key: k, dir })}
+      name={(r) => (
+        <>
+          <RowOpen to={`/ollopa/templates/${r.id}`} onOpen={() => open(r)}>{r.name}</RowOpen>
+          <Chip family="templates" icon={false}>{r.kind}</Chip>
+          <span className="t-small text-muted-foreground">{r.folder}</span>
+        </>
+      )}
+      menu={(r) => (
+        <RowMenuButton
+          label={r.name}
+          actions={[{ label: "Open", onClick: () => open(r) }]}
+          items={[
+            { label: "Duplicate", onClick: () => toast(`Duplicated ${r.name}`) },
+            { label: "Rename", onClick: () => open(r) },
+            { label: "Move to folder", onClick: () => toast(`${r.name}: choose a folder`) },
+            {
+              label: r.usedBySteps.length ? `Archive · used by ${n(r.usedBySteps.length)} steps` : "Archive",
+              destructive: true,
+              onClick: () => toast(`${r.name} archived · ${n(r.usedBySteps.length)} steps keep the text they have today`),
+            },
+          ]}
+        />
+      )}
+      rowProps={(r) => ({ "data-item": r.id, "data-item-label": r.name, "data-row-key": r.id })}
+      empty={rowsAll.length === 0 ? (
+        <EmptyState title="No templates yet" body="Write one here, or save a step's copy as a template from the step that uses it." />
+      ) : undefined}
     />
   )
 }

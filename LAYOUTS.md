@@ -40,7 +40,15 @@ pass a class, a width or an order.
   never a second door and never a filter bar on the page.
 - **The card body is the table**: a checkbox column when and only when the page has bulk acts; the
   name as a link with its chips inline; then the columns by priority, folding into the one-line
-  meta line under the name; then the "…" at the trailing edge. Every row the same height.
+  meta line under the name; then the row's one visible act and the "…" at the trailing edge. Every
+  row the same height.
+- **A column that can be sorted says so on its own header.** The header is the button, the
+  direction is shown on it, and the template does the sorting: no page draws a caret and no sort
+  control goes in the filter door — clicking a header is the thing every person already knows.
+- **One visible act per row**, the one this seat uses most, drawn at rest beside the "…". Never an
+  act that appears only on hover, and never an act laid inline beside the name by hand.
+- **Detail that belongs to one row** — a per-row door such as "Signals and news" — opens as a
+  full-width sub-row under that row, never inside the name cell.
 - **The card footer** is the pager, replaced by the bulk bar while rows are selected.
 - One named **slot** carries what this shape has no room for — a view switch, a set of object tabs,
   an "Expand all" — in the same place on every page that needs one.

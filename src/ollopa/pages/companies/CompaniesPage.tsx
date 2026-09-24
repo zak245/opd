@@ -412,6 +412,7 @@ export function CompaniesPage({ session }: { session: Session }) {
         rows={rows}
         rowKey={(v) => v.company.id}
         searchHint="Search a company, a domain or a person"
+        noun="companies"
         searchText={(v) => `${v.company.name} ${v.company.domain} ${v.company.industry} ${v.contacts.map((c) => `${c.name} ${c.email}`).join(" ")}`}
         above={notice || pending ? strip : undefined}
         below={(!canChangeOwner || (Boolean(b.crm) && !canPushCrm)) && admin ? (

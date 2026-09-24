@@ -12,7 +12,8 @@
 // Anything a page needs that this shape has no room for goes in `slot`, the one named place, used
 // the same way by every page that needs it: the Deals board/table switch, Campaigns' three object
 // types, the Tasks list's "Expand all".
-import type { ReactNode } from "react"
+import { Fragment, useMemo, type ReactNode } from "react"
+import { ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -23,13 +24,19 @@ import {
 } from "@/components/ui/table"
 import { PageScroll } from "./frame"
 import { MetaLine } from "./MetaLine"
-import { PageFooter, PageHeader, type PageHeaderProps } from "./parts"
+import { PageFooter, PageHeader, Toolbar, type PageHeaderProps, type ToolbarControl } from "./parts"
 import { useFitColumns, type ColumnPriority } from "./columns"
+import {
+  FilterBar, FilterEmpty, useSettle,
+  type FilterBarProps, type FilterControl, type ResultCountProps,
+} from "./filters"
 
 export interface IndexColumn<T> {
   key: string
   header: string
   cell: (row: T) => ReactNode
+  /** Give a comparator and the header sorts. The template draws the control and the arrow. */
+  sort?: (a: T, b: T) => number
   /** 1 is drawn at every width, 3 folds first. Unset means 2. */
   priority?: ColumnPriority
   /** Right-aligned numbers, a fixed width: the template decides how, the page says which. */
@@ -44,10 +51,12 @@ export interface IndexControl {
 
 export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
   /**
-   * The card header. The search, the named controls, the one "Filters and views" door and the
-   * count live in here, and they are the filters agent's, not a page's: build them with the
-   * `Toolbar` part and hand the result over. This template only decides where it sits.
+   * The filtering pattern (LAYOUTS.md §2), drawn in the card's header by `FilterBar`: the search,
+   * the seat's named filters, the one "Filters and views" door, the count at the trailing edge,
+   * the applied line and the one "Clear all". A page hands over the parts, never the row.
    */
+  filters?: FilterBarProps
+  /** An already-built row, for a page that has not come onto `filters` yet. */
   toolbar?: ReactNode
 
   columns: IndexColumn<T>[]
@@ -55,10 +64,28 @@ export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
   rowKey: (row: T) => string
   /** The row's name, as a link. Its chips sit inline beside it. */
   name: (row: T) => ReactNode
+  /** What the name column is called. The page's own title, unless it reads oddly in a header. */
+  nameHeader?: string
+  /**
+   * The row's one visible act, at the trailing edge before the "…" (LAYOUTS.md §4). One act, the
+   * one this seat uses most; everything else is in the menu. Drawn at rest, never on hover only.
+   */
+  acts?: (row: T) => ReactNode
   /** The row's "…" menu, at the trailing edge. */
   menu?: (row: T) => ReactNode
+  /**
+   * Detail that belongs to one row and is too big for a cell — a per-row door such as Accounts'
+   * "Signals and news". Return the content while the page has the row open and `null` when it is
+   * closed: it is drawn as a full-width sub-row under its own row, never inside the name cell.
+   */
+  subRow?: (row: T) => ReactNode
   /** Attributes a row must carry to be found again: `data-item`, a click, a keyboard handler. */
   rowProps?: (row: T) => Record<string, unknown>
+  /** The name column sorts too, under the key "name". */
+  nameSort?: (a: T, b: T) => number
+  /** Which column the rows are in the order of, and which way. The template does the sorting. */
+  sort?: { key: string; dir: "asc" | "desc" }
+  onSort?: (key: string, dir: "asc" | "desc") => void
 
   /** Bulk acts. A checkbox column appears when and only when this is given. */
   bulk?: {
@@ -69,7 +96,10 @@ export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
   }
   /** The pager, in the card's footer. */
   pager?: ReactNode
-  /** What the table says when nothing matches. */
+  /**
+   * What the table says when nothing matches. Left out on a page that passes `filters`, the
+   * pattern's own `FilterEmpty` names the filter that emptied the list and offers to clear it.
+   */
   empty?: ReactNode
 
   /**
@@ -83,12 +113,37 @@ export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
 }
 
 export function IndexPage<T>({
-  toolbar,
-  columns, rows, rowKey, name, menu, rowProps,
+  filters, toolbar,
+  columns, rows: given, rowKey, name, nameHeader, acts, menu, subRow, rowProps, nameSort, sort, onSort,
   bulk, pager, empty, slot, above, ...header
 }: IndexPageProps<T>) {
-  const fit = useFitColumns(columns, { priorityOf: (c) => c.priority })
+  // The row's name is drawn outside this set, so every column in it may fold into the meta line.
+  const fit = useFitColumns(columns, { priorityOf: (c) => c.priority, keepFirst: false })
 
+  // The order is the template's: a page says which column and which way, and hands over a
+  // comparator per column, so no two indexes sort by different means.
+  const rows = useMemo(() => {
+    const of = sort?.key === "name" ? nameSort : columns.find((c) => c.key === sort?.key)?.sort
+    if (!sort || !of) return given
+    const out = [...given].sort(of)
+    return sort.dir === "desc" ? out.reverse() : out
+  }, [given, columns, sort, nameSort])
+
+  // Every filter that is on, in the page's own order, so the empty state can name the last one.
+  const on: FilterControl[] = useMemo(
+    () => [...(filters?.controls ?? []), ...(filters?.behind ?? [])].filter((c) => Boolean(c.value)),
+    [filters],
+  )
+  // A filter change does not swap the rows under the person: they settle, on the one duration and
+  // the one curve the pattern owns (`MOTION`), and stand still under `prefers-reduced-motion`.
+  const settle = useSettle(`${filters?.search?.value ?? ""}|${on.map((c) => `${c.name}:${c.value}`).join("|")}|${rows.length}`)
+
+  const noun = nounOf(filters)
+  const nothing = empty ?? (filters
+    ? <FilterEmpty noun={noun} applied={on} onClearAll={filters.onClearAll} />
+    : "Nothing matches. Clear the search or a filter.")
+
+  const span = fit.shown.length + 1 + (bulk ? 1 : 0) + (acts || menu ? 1 : 0)
   const allOn = rows.length > 0 && rows.every((r) => bulk?.selected.includes(rowKey(r)))
   const someOn = (bulk?.selected.length ?? 0) > 0
 
@@ -105,19 +160,39 @@ export function IndexPage<T>({
             />
           </TableCell>
         )}
-        <TableCell className="t-body py-2">
+        {/* `w-full max-w-0` gives the name cell whatever the other columns leave and nothing more,
+            so a long meta line truncates inside it instead of pushing the table sideways; the
+            minimum is what keeps the name readable — under it, a column folds instead. */}
+        <TableCell className="t-body w-full max-w-0 min-w-[12rem] py-2">
           <span className="flex min-w-0 flex-wrap items-center gap-2">{name(r)}</span>
           <MetaLine values={fit.folded.map((c) => ({ key: c.key, label: c.header, value: c.cell(r) }))} />
         </TableCell>
         {fit.shown.map((c) => (
           <TableCell key={c.key} className={cn("t-body py-2", c.numeric && "tabular-nums")}>{c.cell(r)}</TableCell>
         ))}
-        {menu && (
+        {(acts || menu) && (
           <TableCell style={{ width: 1 }} className="py-1 pr-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-end">{menu(r)}</div>
+            <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+              {acts?.(r)}
+              {menu?.(r)}
+            </div>
           </TableCell>
         )}
       </TableRow>
+    )
+  }
+
+  /** The row, and under it the detail the page has opened for that row. */
+  const rowWithDetail = (r: T) => {
+    const under = subRow?.(r)
+    if (!under) return row(r)
+    return (
+      <Fragment key={`${rowKey(r)}-group`}>
+        {row(r)}
+        <TableRow data-sub-row={rowKey(r)} className="hover:bg-transparent">
+          <TableCell colSpan={span} className="bg-muted/30 py-3">{under}</TableCell>
+        </TableRow>
+      </Fragment>
     )
   }
 
@@ -127,14 +202,17 @@ export function IndexPage<T>({
       {slot && <div className="flex flex-wrap items-center gap-2">{slot}</div>}
       {above}
       <Card className="gap-0 overflow-hidden py-0">
-        {toolbar && (
+        {(filters || toolbar) && (
           <>
-            <CardHeader className="gap-2 py-3 [grid-template-columns:minmax(0,1fr)]">{toolbar}</CardHeader>
+            <CardHeader className="gap-2 py-3 [grid-template-columns:minmax(0,1fr)]">
+              {filters ? <FilterBar {...filters} /> : toolbar}
+            </CardHeader>
             <Separator />
           </>
         )}
         <CardContent className="px-0">
           <div ref={fit.ref} className="w-full min-w-0">
+            <div className={cn("w-full min-w-0", settle.className)} style={settle.style} data-settling={settle["data-settling"]}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -147,23 +225,32 @@ export function IndexPage<T>({
                       />
                     </TableHead>
                   )}
-                  <TableHead className="t-label">{header.title}</TableHead>
-                  {fit.shown.map((c) => <TableHead key={c.key} className="t-label">{c.header}</TableHead>)}
-                  {menu && <TableHead style={{ width: 1 }}><span className="sr-only">Actions</span></TableHead>}
+                  <TableHead className="t-label" aria-sort={ariaSort(sort, "name")}>
+                    {nameSort && onSort
+                      ? sortable(nameHeader ?? header.title, "name", sort, onSort)
+                      : nameHeader ?? header.title}
+                  </TableHead>
+                  {fit.shown.map((c) => (
+                    <TableHead key={c.key} className="t-label" aria-sort={ariaSort(sort, c.key)}>
+                      {c.sort && onSort ? sortable(c.header, c.key, sort, onSort) : c.header}
+                    </TableHead>
+                  ))}
+                  {(acts || menu) && <TableHead style={{ width: 1 }}><span className="sr-only">Actions</span></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map(row)}
+                {rows.map(rowWithDetail)}
                 {rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={fit.shown.length + 1 + (bulk ? 1 : 0) + (menu ? 1 : 0)}
+                    <TableCell colSpan={span}
                                className="t-body py-10 text-center text-muted-foreground">
-                      {empty ?? "Nothing matches. Clear the search or a filter."}
+                      {nothing}
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         </CardContent>
         {(pager || (someOn && bulk)) && (
@@ -181,8 +268,14 @@ export function IndexPage<T>({
 
 /** The older shape, kept while the pages that still compose their own table move across. */
 export interface LegacyIndexPageProps extends PageHeaderProps {
-  controls?: { name: string; node: ReactNode; always?: boolean; pin?: boolean }[]
+  controls?: ToolbarControl[]
   shown?: ReactNode
+  /** The count in three parts, so it ticks as the filters change. Wins over `shown`. */
+  result?: ResultCountProps
+  /** The one "Clear all" in the pattern. */
+  onClearAll?: () => void
+  /** The door's id, so it remembers whether it was left open. */
+  doorId?: string
   table: ReactNode
   tableRef?: React.Ref<HTMLDivElement>
   rows?: ReactNode
@@ -193,7 +286,7 @@ export interface LegacyIndexPageProps extends PageHeaderProps {
 }
 
 export function LegacyIndexPage({
-  controls, shown, table, tableRef, rows, pager, bulk, above, children, ...header
+  controls, shown, result, onClearAll, doorId, table, tableRef, rows, pager, bulk, above, children, ...header
 }: LegacyIndexPageProps) {
   return (
     <PageScroll footer={bulk ? <PageFooter>{bulk}</PageFooter> : undefined}>
@@ -203,7 +296,7 @@ export function LegacyIndexPage({
         {controls?.length ? (
           <>
             <CardHeader className="gap-2 py-3 [grid-template-columns:minmax(0,1fr)]">
-              <Toolbar controls={controls} count={shown} />
+              <Toolbar controls={controls} count={shown} result={result} onClearAll={onClearAll} doorId={doorId} />
             </CardHeader>
             <Separator />
           </>
@@ -219,4 +312,31 @@ export function LegacyIndexPage({
   )
 }
 
-import { Toolbar } from "./parts"
+type SortState = { key: string; dir: "asc" | "desc" } | undefined
+
+const ariaSort = (sort: SortState, key: string) =>
+  sort?.key !== key ? "none" : sort.dir === "asc" ? "ascending" : "descending"
+
+/** A header that sorts: the word, an arrow, and the library's own focus ring. Nothing bespoke. */
+function sortable(label: string, key: string, sort: SortState, onSort: (k: string, d: "asc" | "desc") => void) {
+  const on = sort?.key === key
+  return (
+    <button
+      type="button"
+      className="flex items-center gap-1 whitespace-nowrap text-left hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      onClick={() => onSort(key, on && sort!.dir === "asc" ? "desc" : "asc")}
+    >
+      <span>{label}</span>
+      <ChevronsUpDown
+        aria-hidden="true"
+        className={cn("size-3 shrink-0", on ? "text-foreground" : "text-muted-foreground/50", on && sort!.dir === "desc" && "rotate-180")}
+      />
+    </button>
+  )
+}
+
+/** What the page is a list of, for the empty state and the count: "people", "lists". */
+function nounOf(filters?: FilterBarProps): string {
+  const c = filters?.count
+  return typeof c === "object" && c !== null && "noun" in c ? String((c as ResultCountProps).noun) : "rows"
+}

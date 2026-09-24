@@ -59,13 +59,32 @@ function announce() { listeners.forEach((l) => l()) }
  */
 let openedFrom: HTMLElement | null = null
 
+/**
+ * `data-item` names two different things: an object on a row ("c-13", "co-1") and a usage-model item
+ * on a control ("people.search"). Only the first is a row, and the dot is what tells them apart.
+ */
+export function isRowItem(el: Element | null | undefined): boolean {
+  const id = el?.getAttribute?.("data-item") ?? ""
+  return id !== "" && !id.includes(".")
+}
+
+/** The nearest thing above `el` that is a row, ignoring the controls that share the attribute. */
+function rowFrom(el: HTMLElement | null | undefined): HTMLElement | null {
+  let node: HTMLElement | null = el?.isConnected ? el : null
+  while (node) {
+    if (isRowItem(node)) return node
+    node = node.parentElement
+  }
+  return null
+}
+
 function rowBehind(opener: HTMLElement | null | undefined): HTMLElement | null {
-  const own = opener?.isConnected ? opener.closest<HTMLElement>("[data-item]") : null
+  const own = rowFrom(opener)
   if (own) return own
   // Opened from a row's "…": the menu's own trigger is in the row, and it is the one control on the
   // page whose menu is open right now.
   const trigger = document.querySelector<HTMLElement>('[aria-haspopup="menu"][data-state="open"]')
-  return trigger?.closest<HTMLElement>("[data-item]") ?? null
+  return rowFrom(trigger)
 }
 
 /** The row the pane is being read from, for the mark the page carries while it is open. */

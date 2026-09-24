@@ -248,7 +248,7 @@ await wait(800)
 console.log("route:", await page.evaluate(() => location.hash))
 console.log("chips:", await page.evaluate(() => Array.from(document.querySelectorAll('[data-page-active="true"] button'))
   .map((b) => b.innerText.replace(/\s+/g, " ").trim()).filter((t) => /^Company/.test(t)).join(" | ") || "(none)"))
-console.log("count:", await page.evaluate(() => document.querySelector('[data-item="people.count"]')?.textContent ?? "(none)"))
+console.log("count:", await page.evaluate(() => document.querySelector('[data-item="people.count"]')?.textContent ?? document.querySelector('[data-slot="card-header"] [aria-live="polite"]')?.textContent ?? "(none)"))
 console.log("trail:", await trail())
 await shot("12-allinpeople")
 

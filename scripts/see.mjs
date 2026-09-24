@@ -141,8 +141,11 @@ async function run(page, step, notes) {
         if (!pane) return "no pane"
         const door = pane.querySelector('[data-door] button[aria-expanded="false"]')
         if (door) { door.click(); return true }
+        // Not the header's own controls: close, previous, next, and the one that widens the pane.
+        // Those are the frame; a step deeper is something the body offers.
         const act = Array.from(pane.querySelectorAll("button")).find((b) =>
-          b.offsetParent !== null && !/close|previous|next/i.test(b.getAttribute("aria-label") || "") && (b.textContent || "").trim())
+          b.offsetParent !== null && !b.hasAttribute("aria-expanded")
+          && !/close|previous|next/i.test(b.getAttribute("aria-label") || "") && (b.textContent || "").trim())
         if (act) { act.click(); return true }
         return "nothing to step into inside the pane"
       })

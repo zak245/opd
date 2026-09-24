@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
 import { follow } from "../../chain"
-import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { HealthStrip } from "../../ui/HealthStrip"
 import { useDisclosure } from "../../ui/useDisclosure"
@@ -19,9 +18,9 @@ import { BOUNCE_GUARD, seedFor, TODAY, type Sequence, type SequenceStep } from "
 import type { Session } from "../../session"
 import { engage, useEngage } from "./store"
 import { Actions } from "../../ui/Actions"
-import { LegacyIndexPage as IndexPage } from "../../layouts"
+import { IndexPage, type IndexColumn } from "../../layouts"
 import { Chip } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
+import { RowMenuButton, RowOpen, day, focusSearch, h1Of, moveRow, n, rate, toast, useKeys, usePersisted } from "./shared"
 
 /**
  * The words the status cell uses, and the bare state word behind each of them. Bounce guard is a
@@ -110,54 +109,46 @@ export function SequencesPage({ session }: { session: Session }) {
      Duplicate is a button there and a menu item everywhere else. */
   const duplicateIsVisible = d.weekly("seq.list.duplicate") >= 15
 
-  const columns: Col<Sequence>[] = [
+  // The name and the owner are the template's first cell; these are the facts beside them.
+  const columns: IndexColumn<Sequence>[] = [
     {
-      key: "name", header: "Sequence", primary: true, sort: (a, c) => a.name.localeCompare(c.name),
-      cell: (s) => (
-        <div className="min-w-0">
-          <RowOpen to={`/ollopa/sequences/${s.id}`} onOpen={() => open(s)}>{s.name}</RowOpen>
-          <div className="t-small text-muted-foreground">{s.owner}</div>
-        </div>
-      ),
-    },
-    {
-      key: "status", header: "Status", phone: true, className: "min-w-40",
+      key: "status", header: "Status", priority: 1,
       cell: (s) => {
         const st = statusOf(s)
         return (
-          <div className="min-w-0">
+          <span className="min-w-0">
             <Chip status={st.word}>{st.label}</Chip>
             {s.guardState === "warning" && (
-              <div className="t-small" style={{ color: "var(--warning-ink)" }}>Bounce {s.bounceRate7d}% · pauses at {BOUNCE_GUARD.pausePercent}%</div>
+              <span className="t-small" style={{ color: "var(--warning-ink)" }}> Bounce {s.bounceRate7d}% · pauses at {BOUNCE_GUARD.pausePercent}%</span>
             )}
-          </div>
+          </span>
         )
       },
     },
     {
-      key: "people", header: "People", className: "tabular-nums", phone: true, sort: (a, c) => a.active - c.active,
-      cell: (s) => <div>{n(s.active)} <span className="t-small text-muted-foreground">of {n(totalPeople(s))}</span></div>,
+      key: "people", header: "People", numeric: true, priority: 1, sort: (a, c) => a.active - c.active,
+      cell: (s) => <span>{n(s.active)} <span className="t-small text-muted-foreground">of {n(totalPeople(s))}</span></span>,
     },
     {
-      key: "replied", header: "Replied", className: "tabular-nums", phone: true, sort: (a, c) => a.replied - c.replied,
-      cell: (s) => <div>{n(s.replied)} <span className="t-small text-muted-foreground">· {rate(s.replied, s.sent)}</span></div>,
+      key: "replied", header: "Replied", numeric: true, priority: 2, sort: (a, c) => a.replied - c.replied,
+      cell: (s) => <span>{n(s.replied)} <span className="t-small text-muted-foreground">· {rate(s.replied, s.sent)}</span></span>,
     },
     {
-      key: "bounced", header: "Bounced", className: "tabular-nums", sort: (a, c) => a.bounceRate7d - c.bounceRate7d,
+      key: "bounced", header: "Bounced", numeric: true, priority: 2, sort: (a, c) => a.bounceRate7d - c.bounceRate7d,
       cell: (s) => (
-        <div style={s.bounceRate7d >= BOUNCE_GUARD.warnPercent ? { color: "var(--danger-ink)" } : undefined}>
+        <span style={s.bounceRate7d >= BOUNCE_GUARD.warnPercent ? { color: "var(--danger-ink)" } : undefined}>
           {n(s.bounced)} <span className="t-small">· {s.bounceRate7d}% over 7 days</span>
-        </div>
+        </span>
       ),
     },
-    { key: "steps", header: "Steps", className: "tabular-nums", sort: (a, c) => a.steps - c.steps, cell: (s) => s.steps },
-    { key: "activity", header: "Last activity", className: "tabular-nums", sort: (a, c) => a.updatedAt.localeCompare(c.updatedAt), cell: (s) => day(s.updatedAt) },
-    ...(cols.opened ? [{ key: "opened", header: "Opened", className: "tabular-nums", cell: (s: Sequence) => `${n(s.opened)} · ${rate(s.opened, s.delivered)}` } as Col<Sequence>] : []),
-    ...(cols.interested ? [{ key: "interested", header: "Interested", className: "tabular-nums", cell: (s: Sequence) => n(s.interested) } as Col<Sequence>] : []),
-    ...(cols.meetings ? [{ key: "meetings", header: "Meetings", className: "tabular-nums", cell: (s: Sequence) => n(s.meetings) } as Col<Sequence>] : []),
-    ...(cols.created ? [{ key: "created", header: "Created", className: "tabular-nums", cell: (s: Sequence) => day(s.createdAt) } as Col<Sequence>] : []),
-    ...(cols.mailbox ? [{ key: "mailbox", header: "Mailbox", cell: (s: Sequence) => (s.mailboxRotation.length ? `Rotates across ${s.mailboxRotation.length}` : s.mailbox) } as Col<Sequence>] : []),
-    ...(cols.schedule ? [{ key: "schedule", header: "Schedule", cell: (s: Sequence) => s.schedule } as Col<Sequence>] : []),
+    { key: "steps", header: "Steps", numeric: true, priority: 3, sort: (a, c) => a.steps - c.steps, cell: (s) => s.steps },
+    { key: "activity", header: "Last activity", numeric: true, priority: 2, sort: (a, c) => a.updatedAt.localeCompare(c.updatedAt), cell: (s) => day(s.updatedAt) },
+    ...(cols.opened ? [{ key: "opened", header: "Opened", numeric: true, priority: 3, cell: (s: Sequence) => `${n(s.opened)} · ${rate(s.opened, s.delivered)}` } as IndexColumn<Sequence>] : []),
+    ...(cols.interested ? [{ key: "interested", header: "Interested", numeric: true, priority: 3, cell: (s: Sequence) => n(s.interested) } as IndexColumn<Sequence>] : []),
+    ...(cols.meetings ? [{ key: "meetings", header: "Meetings", numeric: true, priority: 3, cell: (s: Sequence) => n(s.meetings) } as IndexColumn<Sequence>] : []),
+    ...(cols.created ? [{ key: "created", header: "Created", numeric: true, priority: 3, cell: (s: Sequence) => day(s.createdAt) } as IndexColumn<Sequence>] : []),
+    ...(cols.mailbox ? [{ key: "mailbox", header: "Mailbox", priority: 3, cell: (s: Sequence) => (s.mailboxRotation.length ? `Rotates across ${s.mailboxRotation.length}` : s.mailbox) } as IndexColumn<Sequence>] : []),
+    ...(cols.schedule ? [{ key: "schedule", header: "Schedule", priority: 3, cell: (s: Sequence) => s.schedule } as IndexColumn<Sequence>] : []),
   ]
 
   const menu = (s: Sequence) => [
@@ -186,63 +177,98 @@ export function SequencesPage({ session }: { session: Session }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [rows]))
 
-  const table = (only: "table" | "rows") => (
-    <DataTable<Sequence>
-      only={only}
-      bulkInFooter
-        rows={rows}
-        rowKey={(s) => s.id}
-        columns={columns}
-        sortKey={sort.key}
-        sortDir={sort.dir}
-        onSort={(k, dir) => setSort({ key: k, dir })}
-        rowActions={[
-          { label: (s) => (s.guardState === "auto-paused" ? "Review and resume" : s.status === "Active" ? "Pause" : "Resume"), onClick: pauseResume },
-          ...(duplicateIsVisible ? [{ label: () => "Duplicate", onClick: duplicate }] : []),
-          { label: () => "Open", onClick: open },
-        ]}
-        menu={menu}
-        menuLabel={(s) => s.name}
-        onOpen={open}
-        selection={{
-          selected, onChange: setSelected,
-          bar: (ids) => (
-            <>
-              <Actions
-                surface="card"
-                items={[
-                  { kind: "secondary", label: "Pause", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Paused", pausedBy: session.user })); setSelected([]); toast(`Paused ${n(ids.length)} sequences. Everyone keeps their place.`) } },
-                  { kind: "secondary", label: "Resume", onClick: () => { ids.forEach((id) => engage.patchSequence(session.business, id, { status: "Active", pausedBy: null })); setSelected([]); toast(`Resumed ${n(ids.length)} sequences.`) } },
-                  {
-                    kind: "destructive",
-                    label: `Archive ${n(ids.length)}`,
-                    onClick: () => {
-                      const people = ids.reduce((sum, id) => sum + (sequences.find((s) => s.id === id)?.active ?? 0), 0)
-                      ids.forEach((id) => engage.patchSequence(session.business, id, { archivedAt: TODAY, status: "Paused" }))
-                      setSelected([])
-                      toast(`Archived ${n(ids.length)} sequences · ${n(people)} people marked finished`)
-                    },
-                    irreversible: {
-                      title: `Archive ${n(ids.length)} sequences?`,
-                      consequence: "Their people are marked finished and their scheduled emails are deleted. Replies and activity stay on the records.",
-                      confirmLabel: `Archive ${n(ids.length)}`,
-                    },
-                  },
-                ]}
-              />
-            </>
-          ),
-        }}
-        empty={
-          sequences.length === 0
-            ? <EmptyState title="No sequences yet" body="Start one here, or ask the outreach agent to propose one." action={<Button size="sm" onClick={create}>New sequence</Button>} />
-            : undefined
-        }
-          />
+  const rowActions = (s: Sequence) => [
+    { label: s.guardState === "auto-paused" ? "Review and resume" : s.status === "Active" ? "Pause" : "Resume", onClick: () => pauseResume(s) },
+    ...(duplicateIsVisible ? [{ label: "Duplicate", onClick: () => duplicate(s) }] : []),
+    { label: "Open", onClick: () => open(s) },
+  ]
+
+  /** The one bar that replaces the pager while rows are selected. */
+  const bulkBar = (
+    <Actions
+      surface="card"
+      items={[
+        { kind: "secondary", label: "Pause", onClick: () => { selected.forEach((id) => engage.patchSequence(session.business, id, { status: "Paused", pausedBy: session.user })); setSelected([]); toast(`Paused ${n(selected.length)} sequences. Everyone keeps their place.`) } },
+        { kind: "secondary", label: "Resume", onClick: () => { selected.forEach((id) => engage.patchSequence(session.business, id, { status: "Active", pausedBy: null })); setSelected([]); toast(`Resumed ${n(selected.length)} sequences.`) } },
+        {
+          kind: "destructive",
+          label: `Archive ${n(selected.length)}`,
+          onClick: () => {
+            const people = selected.reduce((sum, id) => sum + (sequences.find((s) => s.id === id)?.active ?? 0), 0)
+            selected.forEach((id) => engage.patchSequence(session.business, id, { archivedAt: TODAY, status: "Paused" }))
+            setSelected([])
+            toast(`Archived ${n(selected.length)} sequences · ${n(people)} people marked finished`)
+          },
+          irreversible: {
+            title: `Archive ${n(selected.length)} sequences?`,
+            consequence: "Their people are marked finished and their scheduled emails are deleted. Replies and activity stay on the records.",
+            confirmLabel: `Archive ${n(selected.length)}`,
+          },
+        },
+      ]}
+    />
   )
 
+  /** The filtering pattern: the search, the two filters this seat sets, the columns in the door. */
+  const filters = {
+    search: { value: q, onChange: setQ, placeholder: "Search sequences by name or owner" },
+    controls: [
+      {
+        name: "Status",
+        value: status === "all" ? undefined : status,
+        onClear: () => setStatus("all"),
+        node: (
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="h-8 w-44" aria-label="Status"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Status: all</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Paused">Paused</SelectItem>
+              <SelectItem value="Auto-paused">Auto-paused</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+              <SelectItem value="Archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      ...(showOwnerFilter ? [{
+        name: "Owner",
+        value: owner === "all" ? undefined : owner === "Mine" ? "mine" : owner,
+        onClear: () => setOwner("all"),
+        node: (
+          <Select value={owner} onValueChange={setOwner}>
+            <SelectTrigger className="h-8 w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Mine">Owner: mine</SelectItem>
+              <SelectItem value="all">Owner: everyone</SelectItem>
+              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ),
+      }] : []),
+    ],
+    behind: [
+      {
+        name: "Columns", group: "columns" as const,
+        node: (
+          <div className="flex flex-wrap gap-4 text-sm">
+            {([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const).map(([k, label]) => (
+              <label key={k} className="flex items-center gap-2">
+                <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
+                {label}
+              </label>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    count: { shown: rows.length, total: b.counts.sequences, noun: "sequences" },
+    onClearAll: () => { setQ(""); setStatus("all"); setOwner("all") },
+    doorId: "sequences",
+  }
+
   return (
-    <IndexPage
+    <IndexPage<Sequence>
       family="sequences"
       title="Sequences"
       count={b.counts.sequences}
@@ -257,60 +283,32 @@ export function SequencesPage({ session }: { session: Session }) {
           href: `#/ollopa/sequences/${s.id}`,
         }))} />
       ) : undefined}
-      shown={`${n(rows.length)} shown of ${n(b.counts.sequences)}`}
-      controls={[
-        {
-          name: "Search", always: true,
-          node: <Input
-            data-page-search aria-label="Search sequences by name or owner" placeholder="Search sequences"
-            value={q} onChange={(e) => setQ(e.target.value)} className="w-56"
-          />,
-        },
-        {
-          name: "Status",
-          node: <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-44" aria-label="Status"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Status: all</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Paused">Paused</SelectItem>
-              <SelectItem value="Auto-paused">Auto-paused</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
-              <SelectItem value="Archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>,
-        },
-        ...(showOwnerFilter ? [{
-          name: "Owner",
-          node: <Select value={owner} onValueChange={setOwner}>
-            <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Mine">Owner: mine</SelectItem>
-              <SelectItem value="all">Owner: everyone</SelectItem>
-              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-            </SelectContent>
-          </Select>,
-        }] : []),
-        {
-          name: "Columns",
-          node: (
-            <DoorGroup>
-              <Door id="sequences.columns" label="Columns: opened, interested, meetings, created, mailbox, schedule">
-                <div className="flex flex-wrap gap-4 py-1 text-sm">
-                  {([["opened", "Opened"], ["interested", "Interested"], ["meetings", "Meetings"], ["created", "Created"], ["mailbox", "Mailbox"], ["schedule", "Schedule"]] as const).map(([k, label]) => (
-                    <label key={k} className="flex items-center gap-2">
-                      <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </Door>
-            </DoorGroup>
-          ),
-        },
-      ]}
-      table={table("table")}
-      rows={table("rows")}
+      filters={filters}
+      columns={columns}
+      rows={rows}
+      rowKey={(s) => s.id}
+      nameHeader="Sequence"
+      nameSort={(a, c) => a.name.localeCompare(c.name)}
+      sort={sort}
+      onSort={(k, dir) => setSort({ key: k, dir })}
+      name={(s) => (
+        <>
+          <RowOpen to={`/ollopa/sequences/${s.id}`} onOpen={() => open(s)}>{s.name}</RowOpen>
+          <span className="t-small text-muted-foreground">{s.owner}</span>
+        </>
+      )}
+      // The one act this seat uses most, at rest on the row; the rest are in the "…".
+      acts={(s) => (
+        <Button size="sm" variant="ghost" className="h-7" onClick={() => pauseResume(s)}>
+          {s.guardState === "auto-paused" ? "Review and resume" : s.status === "Active" ? "Pause" : "Resume"}
+        </Button>
+      )}
+      menu={(s) => <RowMenuButton label={s.name} actions={rowActions(s)} items={menu(s)} />}
+      rowProps={(s) => ({ "data-item": s.id, "data-item-label": s.name, "data-row-key": s.id })}
+      bulk={{ selected, onChange: setSelected, bar: bulkBar }}
+      empty={sequences.length === 0 ? (
+        <EmptyState title="No sequences yet" body="Start one here, or ask the outreach agent to propose one." action={<Button size="sm" onClick={create}>New sequence</Button>} />
+      ) : undefined}
     />
   )
 }

@@ -428,6 +428,7 @@ export function AccountsPage({ session }: { session: Session }) {
         rows={rows}
         rowKey={(v) => v.company.id}
         searchHint="Search accounts"
+        noun="accounts"
         searchText={(v) => `${v.account!.name} ${v.account!.domain} ${v.account!.champion} ${v.account!.owner}`}
         figures={figures}
         above={above}

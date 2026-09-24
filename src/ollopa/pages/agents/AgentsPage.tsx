@@ -92,6 +92,9 @@ export function AgentsPage({ session }: { session: Session }) {
     ] : undefined,
   })) : [])
   const spend = spendOf(seed, session.business)
+  // A run that stopped at its daily cap is a credit fact, so it reads in the briefing with the
+  // credits, not in the one band, which is only for what needs a decision (LAYOUTS.md §2).
+  const capped = seed.agentEvents.find((e) => e.kind === "capped") ?? null
   const batch = batchOf(queue, seed, session)
   const watch = watchOf(seed)
 
@@ -294,7 +297,7 @@ export function AgentsPage({ session }: { session: Session }) {
 
       {rules.r7 && <Briefing
         rules={rules}
-        seed={seed} session={session} d={d} spend={spend} digest={digest} workspace={workspace}
+        seed={seed} session={session} d={d} spend={spend} digest={digest} capped={capped ? { text: capped.summary, at: capped.at } : null} workspace={workspace}
         agents={agents} pausedHere={pausedHere} onPause={pause}
         trackOf={(a) => trackRecord(a.name, session, seed, local)}
         runsToday={(a) => new Set(seed.agentEvents.filter((e) => e.agent === a.name && e.when === TODAY).map((e) => e.batchKey)).size}

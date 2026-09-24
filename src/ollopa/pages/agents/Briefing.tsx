@@ -30,6 +30,8 @@ export interface BriefingProps {
   spend: Spend
   /** The digest, in parts: a card body holds facts, not a sentence about them (LAYOUTS.md §2). */
   digest: { since: string; agents: number; events: number; waiting: number; exceptions: number }
+  /** A run that stopped at its daily credit cap, if one did. A credit fact, not a decision. */
+  capped: { text: string; at: string } | null
   workspace: string | null
   agents: Agent[]
   pausedHere: Record<string, boolean>
@@ -173,6 +175,13 @@ export function Briefing(p: BriefingProps) {
             ? [{
               id: "today", label: "Spent today",
               value: <span data-item="brief.credits-today" data-item-label="Credits spent today" className="tabular-nums">{spend.today.toLocaleString()}</span>,
+            }]
+            : []),
+          ...(p.capped
+            ? [{
+              id: "capped", label: "Stopped at its cap",
+              value: <span data-item="exc.cap-reached" data-item-label="An agent stopped at its credit cap">{p.capped.text}</span>,
+              note: "Work that spends credits waits for the cap to reset at 00:00",
             }]
             : []),
           {

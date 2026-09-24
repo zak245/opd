@@ -10,11 +10,9 @@
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { navigate } from "@/app/router"
-import { Door, DoorGroup } from "../../ui/Door"
 import { EmptyState } from "../../ui/EmptyState"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { businessById } from "../../data/businesses"
@@ -24,10 +22,9 @@ import { engage, useEngage } from "./store"
 import { membersOf } from "./facts"
 import { AddToSequencePanel } from "./AddToSequence"
 import { follow } from "../../chain"
-import { Separator } from "@/components/ui/separator"
-import { LegacyIndexPage as IndexPage } from "../../layouts"
+import { IndexPage, type IndexColumn } from "../../layouts"
 import { Chip } from "../../ui/Identity"
-import { type Col, DataTable, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
+import { RowMenuButton, RowOpen, day, focusSearch, h1Of, moveRow, n, toast, usePersisted, useKeys } from "./shared"
 
 /** What "New list" opens: three choices, each with one sentence saying what it does. */
 const KINDS_OF_LIST = [
@@ -64,8 +61,6 @@ export function ListsPage({ session }: { session: Session }) {
   const [enrolling, setEnrolling] = useState<List | null>(null)
   const [confirming, setConfirming] = useState<List | null>(null)
   const [undo, setUndo] = useState<{ id: string; name: string } | null>(null)
-
-  const activeInDoor = [mode !== "all", source !== "all", archived].filter(Boolean).length
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -113,51 +108,39 @@ export function ListsPage({ session }: { session: Session }) {
     .slice(0, 3)
     .map((a) => ({ label: a.label, onClick: (l: List) => run(a.id, l) }))
 
-  const columns: Col<List>[] = [
+  // The row's own name and its chips are the template's first cell; these are the facts beside it.
+  // Priority 1 is drawn at every width, 3 folds into the meta line first.
+  const columns: IndexColumn<List>[] = [
     {
-      key: "name", header: "List", primary: true, className: "min-w-[19rem]", sort: (a, b2) => a.name.localeCompare(b2.name),
-      cell: (l) => (
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <RowOpen to={`/ollopa/lists/${l.id}`} onOpen={() => open(l)}>{l.name}</RowOpen>
-            <Chip family={l.kind === "people" ? "people" : "companies"}>{l.kind === "people" ? "People" : "Companies"}</Chip>
-            <Chip family="neutral" icon={false}>{l.mode === "segment" ? "Segment" : "Static"}</Chip>
-            {l.archived && <Chip status="Archived" />}
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "records", header: "Records", className: "tabular-nums", phone: true,
+      key: "records", header: "Records", numeric: true, priority: 2,
       sort: (a, b2) => a.memberIds.length - b2.memberIds.length,
-      phoneCell: (l) => <span>{n(l.memberIds.length)}{l.newThisWeek > 0 ? ` (+${n(l.newThisWeek)} this week)` : ""}</span>,
       cell: (l) => (
-        <div>
-          <div>{n(l.memberIds.length)}</div>
-          {l.newThisWeek > 0 && <div className="t-small text-muted-foreground">+{n(l.newThisWeek)} this week</div>}
-        </div>
+        <span>
+          {n(l.memberIds.length)}
+          {l.newThisWeek > 0 && <span className="text-muted-foreground"> +{n(l.newThisWeek)} this week</span>}
+        </span>
       ),
     },
     {
-      key: "feeds", header: "Feeds", phone: true,
+      key: "feeds", header: "Feeds", priority: 3,
       cell: (l) => l.feeds.length === 0
         ? <span className="text-muted-foreground">—</span>
         : (
-          <div className="space-y-0.5">
+          <span>
             {l.feeds.map((f) => (
-              <div key={f.name} className="text-xs">
+              <span key={f.name}>
                 {f.name}
                 {f.auto && <span style={{ color: "var(--warning-ink)" }}> · new matches added automatically</span>}
-              </div>
+              </span>
             ))}
-          </div>
+          </span>
         ),
     },
-    { key: "owner", header: "Owner", cell: (l) => l.owner, sort: (a, b2) => a.owner.localeCompare(b2.owner) },
-    { key: "updated", header: "Updated", className: "tabular-nums", sort: (a, b2) => a.updated.localeCompare(b2.updated), cell: (l) => day(l.updated) },
-    ...(cols.visibility ? [{ key: "visibility", header: "Who can see it", cell: (l: List) => (l.visibility === "everyone" ? "Everyone" : "Only me") } as Col<List>] : []),
-    ...(cols.source ? [{ key: "source", header: "Source", cell: (l: List) => ({ search: "Search", csv: "CSV", agent: "Agent", manual: "By hand" }[l.source]) } as Col<List>] : []),
-    ...(cols.created ? [{ key: "created", header: "Created", className: "tabular-nums", sort: (a: List, b2: List) => a.createdAt.localeCompare(b2.createdAt), cell: (l: List) => day(l.createdAt) } as Col<List>] : []),
+    { key: "owner", header: "Owner", priority: 2, cell: (l) => l.owner, sort: (a, b2) => a.owner.localeCompare(b2.owner) },
+    { key: "updated", header: "Updated", numeric: true, priority: 2, sort: (a, b2) => a.updated.localeCompare(b2.updated), cell: (l) => day(l.updated) },
+    ...(cols.visibility ? [{ key: "visibility", header: "Who can see it", priority: 3, cell: (l: List) => (l.visibility === "everyone" ? "Everyone" : "Only me") } as IndexColumn<List>] : []),
+    ...(cols.source ? [{ key: "source", header: "Source", priority: 3, cell: (l: List) => ({ search: "Search", csv: "CSV", agent: "Agent", manual: "By hand" }[l.source]) } as IndexColumn<List>] : []),
+    ...(cols.created ? [{ key: "created", header: "Created", numeric: true, priority: 3, sort: (a: List, b2: List) => a.createdAt.localeCompare(b2.createdAt), cell: (l: List) => day(l.createdAt) } as IndexColumn<List>] : []),
   ]
 
   const menu = (l: List) => [
@@ -206,54 +189,134 @@ export function ListsPage({ session }: { session: Session }) {
     window.setTimeout(() => setUndo((u) => (u?.id === l.id ? null : u)), 10_000)
   }
 
-  const table = (only: "table" | "rows") => (
-    <DataTable<List>
-      only={only}
-      bulkInFooter
-        rows={rows}
-        rowKey={(l) => l.id}
-        columns={columns}
-        sortKey={sort.key}
-        sortDir={sort.dir}
-        onSort={(k, dir) => setSort({ key: k, dir })}
-        rowActions={visibleActions}
-        menu={menu}
-        menuLabel={(l) => l.name}
-        onOpen={open}
-        selection={{
-          selected,
-          onChange: setSelected,
-          bar: (ids) => (
-            <>
-              <Button size="sm" variant="outline" onClick={() => { const first = lists.find((l) => l.id === ids[0]); if (first) setEnrolling(first) }}>
-                Add to sequence
-              </Button>
-              {hasCampaigns && <Button size="sm" variant="outline" onClick={() => toast(`${n(ids.length)} lists · pick a campaign`)}>Add to campaign</Button>}
-              <Button size="sm" variant="outline" onClick={() => toast(`Exported ${n(ids.length)} lists`)}>Export CSV</Button>
-              <Button size="sm" variant="outline" onClick={() => { ids.forEach((id) => engage.patchList(session.business, id, { archived: true })); setSelected([]); toast(`Archived ${n(ids.length)} lists`) }}>Archive</Button>
-              <Button size="sm" variant="ghost" style={{ color: "var(--danger-ink)" }} onClick={() => { ids.forEach((id) => engage.deleteList(session.business, id)); setSelected([]); toast(`Deleted ${n(ids.length)} lists · the people stay in People`) }}>
-                Delete {n(ids.length)} lists · the people stay in People
-              </Button>
-            </>
-          ),
-        }}
-        empty={
-          lists.length === 0
-            ? <EmptyState title="No lists yet" body="Make one from People, Companies, or here." action={<Button size="sm" onClick={() => setChooser(true)}>New list</Button>} />
-            : undefined
-        }
-          />
+  /** The one bar that replaces the pager while rows are selected. */
+  const bulkBar = (
+    <>
+      <Button size="sm" variant="outline" onClick={() => { const first = lists.find((l) => l.id === selected[0]); if (first) setEnrolling(first) }}>
+        Add to sequence
+      </Button>
+      {hasCampaigns && <Button size="sm" variant="outline" onClick={() => toast(`${n(selected.length)} lists · pick a campaign`)}>Add to campaign</Button>}
+      <Button size="sm" variant="outline" onClick={() => toast(`Exported ${n(selected.length)} lists`)}>Export CSV</Button>
+      <Button size="sm" variant="outline" onClick={() => { selected.forEach((id) => engage.patchList(session.business, id, { archived: true })); setSelected([]); toast(`Archived ${n(selected.length)} lists`) }}>Archive</Button>
+      <Button size="sm" variant="ghost" style={{ color: "var(--danger-ink)" }} onClick={() => { selected.forEach((id) => engage.deleteList(session.business, id)); setSelected([]); toast(`Deleted ${n(selected.length)} lists · the people stay in People`) }}>
+        Delete {n(selected.length)} lists · the people stay in People
+      </Button>
+    </>
   )
 
+  /**
+   * The filtering pattern (LAYOUTS.md §2): the search, the two filters this seat sets most, and
+   * everything else — mode, source, the archive, the columns — behind the one door. Each one says
+   * what it is set to, so the count is always explainable and the empty state can name the cause.
+   */
+  const SOURCE_LABEL: Record<string, string> = { search: "Search", csv: "CSV", agent: "Agent", manual: "By hand" }
+  const filters = {
+    search: { value: q, onChange: setQ, placeholder: "Search lists by name or owner" },
+    controls: [
+      {
+        name: "Kind",
+        value: kind === "all" ? undefined : kind === "people" ? "People" : "Companies",
+        onClear: () => setKind("all"),
+        node: (
+          <Select value={kind} onValueChange={setKind}>
+            <SelectTrigger className="h-8 w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Kind: all</SelectItem>
+              <SelectItem value="people">People</SelectItem>
+              <SelectItem value="companies">Companies</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        name: "Owner",
+        value: owner === "all" ? undefined : owner === "Mine" ? "mine" : owner === "Team" ? "the team" : owner,
+        onClear: () => setOwner("all"),
+        node: (
+          <Select value={owner} onValueChange={setOwner}>
+            <SelectTrigger className="h-8 w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Mine">Owner: mine</SelectItem>
+              <SelectItem value="Team">Owner: the team</SelectItem>
+              <SelectItem value="all">Owner: all</SelectItem>
+              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ),
+      },
+    ],
+    behind: [
+      {
+        name: "Mode", group: "filters" as const,
+        value: mode === "all" ? undefined : mode === "static" ? "Static" : "Segment",
+        onClear: () => setMode("all"),
+        node: (
+          <Select value={mode} onValueChange={setMode}>
+            <SelectTrigger className="h-8 w-44" aria-label="Mode"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Mode: all</SelectItem>
+              <SelectItem value="static">Static</SelectItem>
+              <SelectItem value="segment">Segment</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        name: "Source", group: "filters" as const,
+        value: source === "all" ? undefined : SOURCE_LABEL[source],
+        onClear: () => setSource("all"),
+        node: (
+          <Select value={source} onValueChange={setSource}>
+            <SelectTrigger className="h-8 w-44" aria-label="Source"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Source: all</SelectItem>
+              <SelectItem value="search">Search</SelectItem>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="agent">Agent</SelectItem>
+              <SelectItem value="manual">By hand</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        name: "Archived", group: "filters" as const,
+        value: archived ? "shown" : undefined,
+        onClear: () => setArchived(false),
+        node: (
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={archived} onCheckedChange={(v) => setArchived(v === true)} />
+            Show archived lists
+          </label>
+        ),
+      },
+      {
+        name: "Columns", group: "columns" as const,
+        node: (
+          <div className="flex flex-wrap gap-4 text-sm">
+            {([["visibility", "Who can see it"], ["source", "Source"], ["created", "Created"]] as const).map(([k, label]) => (
+              <label key={k} className="flex items-center gap-2">
+                <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
+                {label}
+              </label>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    count: { shown: rows.length, total: lists.length, noun: "lists" },
+    onClearAll: () => { setQ(""); setKind("all"); setOwner("all"); setMode("all"); setSource("all"); setArchived(false) },
+    doorId: "lists",
+  }
+
   return (
-    <IndexPage
-      family="lists"
-      title="Lists"
-      count={lists.length}
-      actions={[{ kind: "primary", label: "New list", onClick: () => setChooser((v) => !v) }]}
-      above={<>
-        {chooser && (
-          <div className="mx-4 mt-3 border p-3 sm:mx-6">
+    <>
+      <IndexPage<List>
+        family="lists"
+        title="Lists"
+        count={lists.length}
+        actions={[{ kind: "primary", label: "New list", onClick: () => setChooser((v) => !v) }]}
+        above={chooser ? (
+          <div className="border p-3">
             <h3 className="t-body font-medium">New list</h3>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               {KINDS_OF_LIST.map((k) => (
@@ -272,138 +335,74 @@ export function ListsPage({ session }: { session: Session }) {
               ))}
             </div>
           </div>
+        ) : undefined}
+        filters={filters}
+        columns={columns}
+        rows={rows}
+        rowKey={(l) => l.id}
+        nameHeader="List"
+        nameSort={(a, b2) => a.name.localeCompare(b2.name)}
+        sort={sort}
+        onSort={(k, dir) => setSort({ key: k, dir })}
+        name={(l) => (
+          <>
+            <RowOpen to={`/ollopa/lists/${l.id}`} onOpen={() => open(l)}>{l.name}</RowOpen>
+            <Chip family={l.kind === "people" ? "people" : "companies"}>{l.kind === "people" ? "People" : "Companies"}</Chip>
+            <Chip family="neutral" icon={false}>{l.mode === "segment" ? "Segment" : "Static"}</Chip>
+            {l.archived && <Chip status="Archived" />}
+          </>
         )}
-
-      </>}
-      shown={`${n(rows.length)} shown of ${n(lists.length)}`}
-      controls={[
-        {
-          name: "Search", always: true,
-          node: <Input
-            data-page-search
-            aria-label="Search lists by name or owner"
-            placeholder="Search lists"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-56"
-          />,
-        },
-        {
-          name: "Kind",
-          node: <Select value={kind} onValueChange={setKind}>
-            <SelectTrigger className="w-40" aria-label="Kind"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Kind: all</SelectItem>
-              <SelectItem value="people">People</SelectItem>
-              <SelectItem value="companies">Companies</SelectItem>
-            </SelectContent>
-          </Select>,
-        },
-        {
-          name: "Owner",
-          node: <Select value={owner} onValueChange={setOwner}>
-            <SelectTrigger className="w-48" aria-label="Owner"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Mine">Owner: mine</SelectItem>
-              <SelectItem value="Team">Owner: the team</SelectItem>
-              <SelectItem value="all">Owner: all</SelectItem>
-              {b.roles.map((r) => <SelectItem key={r.user} value={r.user}>{r.user}</SelectItem>)}
-            </SelectContent>
-          </Select>,
-        },
-        {
-          name: "Mode, source, archived",
-          node: (
-            <DoorGroup>
-              <Door id="lists.filters" label="Mode, source, archived" count={activeInDoor || undefined}>
-                <div className="grid gap-3 py-1 sm:grid-cols-3">
-                  <div>
-                    <Label htmlFor="f-mode" className="text-xs">Mode</Label>
-                    <Select value={mode} onValueChange={setMode}>
-                      <SelectTrigger id="f-mode" className="mt-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="static">Static</SelectItem>
-                        <SelectItem value="segment">Segment</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="f-source" className="text-xs">Source</Label>
-                    <Select value={source} onValueChange={setSource}>
-                      <SelectTrigger id="f-source" className="mt-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="search">Search</SelectItem>
-                        <SelectItem value="csv">CSV</SelectItem>
-                        <SelectItem value="agent">Agent</SelectItem>
-                        <SelectItem value="manual">By hand</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <label className="flex items-end gap-2 pb-2 text-sm">
-                    <Checkbox checked={archived} onCheckedChange={(v) => setArchived(v === true)} />
-                    Show archived lists
-                  </label>
-                </div>
-              </Door>
-            </DoorGroup>
-          ),
-        },
-        {
-          name: "Columns",
-          node: (
-            <DoorGroup>
-              <Door id="lists.columns" label="Columns: visibility, source, created">
-                <div className="flex flex-wrap gap-4 py-1 text-sm">
-                  {([["visibility", "Who can see it"], ["source", "Source"], ["created", "Created"]] as const).map(([k, label]) => (
-                    <label key={k} className="flex items-center gap-2">
-                      <Checkbox checked={cols[k]} onCheckedChange={(v) => setCols({ ...cols, [k]: v === true })} />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </Door>
-            </DoorGroup>
-          ),
-        },
-      ]}
-      table={table("table")}
-      rows={table("rows")}
-    >
-
-
-        {/* ------------------------------------------------------------- delete, with its words */}
-        {confirming && (<><Separator />
-          <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 bg-popover px-4 py-3 sm:px-6">
-            <p className="text-sm">
-              Delete <span className="font-medium">{confirming.name}</span>. The {n(confirming.memberIds.length)}{" "}
-              {confirming.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
-            </p>
-            <Button size="sm" variant="destructive" onClick={() => del(confirming)}>Delete list</Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>
-          </div></>
-        )}
-
-        {undo && (<><Separator />
-          <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 bg-popover px-4 py-2 sm:px-6">
-            <span className="text-sm">{undo.name} deleted. The people stay in People.</span>
-            <Button size="sm" variant="outline" onClick={() => { engage.undeleteList(session.business, undo.id); setUndo(null) }}>Undo</Button>
-          </div></>
-        )}
-
-        {enrolling && (
-          <AddToSequencePanel
-            open
-            onOpenChange={(o) => { if (!o) setEnrolling(null) }}
-            business={session.business}
-            user={session.user}
-            people={membersOf(enrolling, session.business)}
-            sequences={seed.sequences.filter((s) => s.status !== "Draft")}
-            from={enrolling.name}
+        // The one act this seat uses most, at rest on the row; the rest are in the "…".
+        acts={visibleActions[0] ? (l) => (
+          <Button size="sm" variant="ghost" className="h-7" onClick={() => visibleActions[0].onClick(l)}>
+            {visibleActions[0].label(l)}
+          </Button>
+        ) : undefined}
+        menu={(l) => (
+          <RowMenuButton
+            label={l.name}
+            actions={visibleActions.map((a) => ({ label: a.label(l), onClick: () => a.onClick(l) }))}
+            items={menu(l)}
           />
         )}
-    </IndexPage>
+        rowProps={(l) => ({ "data-item": l.id, "data-item-label": l.name, "data-row-key": l.id })}
+        bulk={{ selected, onChange: setSelected, bar: bulkBar }}
+        empty={lists.length === 0 ? (
+          <EmptyState title="No lists yet" body="Make one from People, Companies, or here." action={<Button size="sm" onClick={() => setChooser(true)}>New list</Button>} />
+        ) : undefined}
+      />
+
+      {/* ------------------------------------------------------------- delete, with its words */}
+      {confirming && (
+        <div role="alertdialog" aria-label={`Delete ${confirming.name}`} className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 bg-popover px-4 py-3 sm:px-6">
+          <p className="text-sm">
+            Delete <span className="font-medium">{confirming.name}</span>. The {n(confirming.memberIds.length)}{" "}
+            {confirming.kind === "people" ? "people stay in People" : "companies stay in Companies"}. Running sequences keep their contacts.
+          </p>
+          <Button size="sm" variant="destructive" onClick={() => del(confirming)}>Delete list</Button>
+          <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Keep it</Button>
+        </div>
+      )}
+
+      {undo && (
+        <div role="status" className="sticky bottom-0 z-30 flex flex-wrap items-center gap-3 bg-popover px-4 py-2 sm:px-6">
+          <span className="text-sm">{undo.name} deleted. The people stay in People.</span>
+          <Button size="sm" variant="outline" onClick={() => { engage.undeleteList(session.business, undo.id); setUndo(null) }}>Undo</Button>
+        </div>
+      )}
+
+      {enrolling && (
+        <AddToSequencePanel
+          open
+          onOpenChange={(o) => { if (!o) setEnrolling(null) }}
+          business={session.business}
+          user={session.user}
+          people={membersOf(enrolling, session.business)}
+          sequences={seed.sequences.filter((s) => s.status !== "Draft")}
+          from={enrolling.name}
+        />
+      )}
+    </>
   )
 }
 

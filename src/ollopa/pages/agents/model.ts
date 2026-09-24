@@ -316,9 +316,8 @@ export function exceptionsOf(seed: Seed, agents: Agent[], pausedHere: Record<str
     }
   }
 
-  for (const e of seed.agentEvents.filter((x) => x.kind === "capped")) {
-    out.push({ id: `cap-${e.id}`, text: `${e.summary}. Work that spends credits waits for the cap to reset at 00:00.`, href: "/ollopa/settings/agents", hrefLabel: "Credit caps" })
-  }
+  // A run that stopped at its credit cap is not a decision: it is a credit fact, and it reads in
+  // the briefing beside the credits it spent (LAYOUTS.md §2, one band, one decision).
 
   for (const m of seed.mailboxes.filter((x) => x.paused)) {
     out.push({
@@ -328,11 +327,14 @@ export function exceptionsOf(seed: Seed, agents: Agent[], pausedHere: Record<str
     })
   }
 
-  const companyPauses = seed.agentEvents.filter((x) => x.kind === "paused")
-  if (companyPauses.length > 0) {
+  // Companies, not events: two pauses on one company is one company paused, and counting the rows
+  // is what made this say five where Home said six.
+  const pausedCompanies = new Set(seed.agentEvents.filter((x) => x.kind === "paused").map((x) => x.companyId))
+  if (pausedCompanies.size > 0) {
     out.push({
       id: "company-pauses",
-      text: `Outreach paused to ${companyPauses.length} ${companyPauses.length === 1 ? "company" : "companies"}: bounce rate 5.1%, over the ${seed.bounceGuard.warnPercent}% warning and under the ${seed.bounceGuard.pausePercent}% pause threshold.`,
+      // One line, short enough for a phone: the pause threshold is one click away, behind the link.
+      text: `Outreach paused to ${pausedCompanies.size} ${pausedCompanies.size === 1 ? "company" : "companies"} · bounce 5.1%, over the ${seed.bounceGuard.warnPercent}% warning`,
       resume: true, href: "/ollopa/settings/email-sending", hrefLabel: "Open bounce guard",
     })
   }

@@ -65,7 +65,7 @@ export function ValueList({ filter, values, chosen, count, onChange }: PickerPro
                 aria-selected={on}
                 onClick={() => toggle(v)}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                  "flex w-full items-center gap-2 px-1.5 py-1 text-left text-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                   on && "bg-muted",
                 )}
               >
@@ -87,7 +87,12 @@ export function ValueList({ filter, values, chosen, count, onChange }: PickerPro
   )
 }
 
-/** The chip in the bar: it opens its picker in place, under itself, and reads what it holds. */
+/**
+ * The chip in the bar: it opens its picker in place, under itself, and reads what it holds.
+ *
+ * One control, one accessible name. The filter is dropped from inside the chip — the picker's
+ * "Clear <filter>" — never from a stray "×" floating beside it (LAYOUTS.md §2).
+ */
 export function FilterChip(p: PickerProps & { note?: ReactNode }) {
   const [open, setOpen] = useState(false)
   const on = p.chosen.length > 0
@@ -112,17 +117,6 @@ export function FilterChip(p: PickerProps & { note?: ReactNode }) {
           <ValueList {...p} />
         </PopoverContent>
       </Popover>
-      {on && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={`Clear ${p.filter.label}`}
-          onClick={() => p.onChange([])}
-        >
-          <X aria-hidden="true" />
-        </Button>
-      )}
       {p.note}
     </span>
   )

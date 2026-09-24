@@ -19,7 +19,6 @@ import { Actions } from "../../ui/Actions"
 import { useDisclosure } from "../../ui/useDisclosure"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { FAMILY, PERSON_FAMILY, RowGap, ink, inUsageOrder } from "./look"
-import { useDeclareAlerts } from "../../shell/banner"
 import { Separator } from "@/components/ui/separator"
 import { RowNote, undoable, useTick } from "../engage/shared"
 import { toast } from "../../templates/TablePage"
@@ -100,18 +99,6 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
   const runs = useMemo(() => runsOf(seed.workflowRuns, w?.id ?? ""), [seed.workflowRuns, w?.id])
   const exceptions = notRoutedRuns(runs)
-
-  /**
-   * The one decision this record has. The side rail holds related things and never the record's own
-   * decisions (LAYOUTS.md §2), so the line is declared to the shell and drawn in the one page Alert,
-   * above the sections, with its act on the line.
-   */
-  useDeclareAlerts(exceptions.length > 0 ? [{
-    id: `wf.not-routed.${w?.id ?? ""}`,
-    text: `${num(exceptions.length)} record${exceptions.length === 1 ? "" : "s"} reached nobody.`,
-    danger: true,
-    acts: [{ label: "Open the run history", onClick: showRuns }],
-  }] : [])
 
   if (!w) {
     return (
@@ -345,7 +332,11 @@ export function WorkflowRecord({ session, id }: { session: Session; id?: string 
 
   const doors: RecordDoor[] = [{
     id: RUNS_DOOR,
-    label: "Run history and enrolment",
+    // The count that needs reading is what reached nobody, on the door it is behind; a pointer in
+    // the one band was a count with nothing to decide (LAYOUTS.md §2).
+    label: exceptions.length > 0
+      ? `Run history and enrolment — ${num(exceptions.length)} record${exceptions.length === 1 ? "" : "s"} reached nobody`
+      : "Run history and enrolment",
     count: runs.length,
     content: (
       <div className="space-y-4">

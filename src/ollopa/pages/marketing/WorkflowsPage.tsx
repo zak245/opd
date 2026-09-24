@@ -17,7 +17,7 @@ import { href, useRoute } from "@/app/router"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
-import { LegacyIndexPage as IndexPage, type ToolbarControl } from "../../layouts"
+import { IndexPage, LegacyIndexPage, type IndexColumn } from "../../layouts"
 import { Chip, FamilyIcon } from "../../ui/Identity"
 import { familyOf } from "../../identity"
 import { FAMILY, ink } from "./look"
@@ -89,7 +89,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
 
   if (lock.locked) {
     return (
-      <IndexPage
+      <LegacyIndexPage
         family={FAMILY}
         title="Workflows"
         count={rows.workflows.length}
@@ -142,57 +142,69 @@ export function WorkflowsPage({ session }: { session: Session }) {
 
   /* -------------------------------------------------------------------------------- the columns */
 
-  const columns: GridColumn<Workflow>[] = [
-    // The name is the control, as it is on People: one thing to tab to, one thing to press.
-    { key: "name", header: "Workflow", sortBy: (w) => w.name, className: "min-w-[10rem] whitespace-normal", cell: (w) => (
-      <div className="min-w-0">
-        <a href={href(`/ollopa/workflows/${w.id}`)} className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}`, w.id) } }}>{w.name}</a>
-        {w.folder && <div className="text-xs text-muted-foreground">{w.folder}</div>}
-        <ActedNote business={session.business} kind="workflow" id={w.id} edit={workflowEdits[w.id]} />
-      </div>
+  const columns: IndexColumn<Workflow>[] = [
+    { key: "status", header: "Status", priority: 1, cell: (w) => (
+      <Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>
     ) },
-    { key: "trigger", header: "Trigger", sortBy: (w) => w.trigger, className: "min-w-[9rem] whitespace-normal", cell: (w) => <span className="text-sm">When {w.trigger}</span> },
-    { key: "status", header: "Status", sortBy: (w) => w.status, className: "min-w-[7rem] whitespace-normal", cell: (w) => (
-      <div className="min-w-0">
-        <Chip status={w.status === "on" ? "active" : "off"}>{w.status === "on" ? "On" : "Off"}</Chip>
-        <div className="t-small text-muted-foreground">{w.statusChangedBy}, {ago(w.statusChangedOn)}</div>
-      </div>
-    ) },
-    { key: "enrolled", header: "Enrolled, 7 days", sortBy: (w) => stats.get(w.id)?.enrolled ?? 0, className: "tabular-nums", cell: (w) => num(stats.get(w.id)?.enrolled ?? 0) },
-    { key: "breached", header: "Past the SLA window", sortBy: (w) => stats.get(w.id)?.breached ?? 0, className: "min-w-[8rem] whitespace-normal", cell: (w) => {
+    { key: "enrolled", header: "Enrolled 7d", priority: 2, numeric: true, cell: (w) => num(stats.get(w.id)?.enrolled ?? 0) },
+    { key: "breached", header: "Past the SLA", priority: 1, cell: (w) => {
       const n = stats.get(w.id)?.breached ?? 0
-      if (!w.sla) return <span className="text-muted-foreground">No clock on this one</span>
+      if (!w.sla) return <span className="text-muted-foreground">No clock</span>
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
         : <a className="font-medium tabular-nums underline" style={ink("danger")} href={href(`/ollopa/workflows/${w.id}?at=sla`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=sla`, w.id) } }}>{num(n)} past {w.sla.windows.hot}</a>
     } },
-    { key: "notRouted", header: "Could not route", sortBy: (w) => stats.get(w.id)?.notRouted ?? 0, cell: (w) => {
+    { key: "notRouted", header: "Not routed", priority: 1, cell: (w) => {
       const n = stats.get(w.id)?.notRouted ?? 0
       return n === 0
         ? <span className="tabular-nums text-muted-foreground">0</span>
         : <a className="font-medium tabular-nums underline" style={ink("danger")} href={href(`/ollopa/workflows/${w.id}?at=runs`)} onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=runs`, w.id) } }}>{num(n)}</a>
     } },
-    { key: "ceiling", header: "Credit ceiling and spend today", sortBy: (w) => w.ceiling.spentToday, className: "min-w-[9rem]", cell: (w) => (
+    { key: "ceiling", header: "Ceiling today", priority: 2, cell: (w) => (
       <a
         href={href(`/ollopa/workflows/${w.id}?at=ceiling`)}
         className={cn("tabular-nums underline", w.ceiling.spentToday >= w.ceiling.perDay && "font-medium")}
         style={w.ceiling.spentToday >= w.ceiling.perDay ? ink("warning") : undefined}
         onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}?at=ceiling`, w.id) } }}
       >
-        {num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)} a day
+        {num(w.ceiling.spentToday)} of {num(w.ceiling.perDay)}
       </a>
     ) },
-    { key: "owner", header: "Owner", sortBy: (w) => w.owner, cell: (w) => w.owner },
-    { key: "edited", header: "Last edited", sortBy: (w) => w.editedOn, cell: (w) => <span className="text-xs">{w.editedBy}<br />{day(w.editedOn)}</span> },
+    { key: "owner", header: "Owner", priority: 2, cell: (w) => w.owner },
   ]
 
-  const secondary = [
-    { key: "trigger", label: "Trigger", value: trigger, set: setTrigger, options: [...new Set(rows.workflows.map((w) => w.trigger))] },
-    { key: "owner", label: "Owner", value: owner, set: setOwner, options: [...new Set(rows.workflows.map((w) => w.owner))] },
-    { key: "folder", label: "Folder", value: folder, set: setFolder, options: [...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))] },
-    { key: "archived", label: "Archived", value: archived, set: setArchived, options: ["Archived only", "Not archived"] },
+  /* -------------------------------------------------------------------------------- the render */
+
+  /** A named filter that says what it is set to, so the count can always be accounted for. */
+  const pick = (name: string, value: string, set: (v: string) => void, options: { value: string; label: string }[]) => ({
+    name,
+    value: value === "all" ? undefined : value,
+    onClear: () => set("all"),
+    node: (
+      <Select value={value} onValueChange={set}>
+        <SelectTrigger className="w-44" aria-label={name}><SelectValue placeholder={name} /></SelectTrigger>
+        <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+      </Select>
+    ),
+  })
+
+  const rowMenu = (w: Workflow) => [
+    { label: w.status === "on" ? "Turn off" : "Turn on", kind: "secondary" as const, onClick: () => {
+      const runs = runsOf(seed.workflowRuns, w.id)
+      patchRow(session.business, "workflows", w.id, { status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
+      toast(w.status === "on"
+        ? `${w.name} stops enrolling. The ${num(breachedRows(w, runs).length + (w.sla?.running ?? 0))} people already running finish their steps.`
+        : `${w.name} is on. It enrols up to ${num(w.limits.perDay)} people a day; the rest wait.`)
+    } },
+    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
+    { label: "Test on one record", kind: "secondary" as const, onClick: () => open(`/ollopa/workflows/${w.id}?open=test`, w.id) },
+    { label: "Duplicate", kind: "secondary" as const, onClick: () => {
+      const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
+      addRow(session.business, "workflows", copy)
+      toast(`${copy.name} created, off. The copy does not carry the run history or the enrolments.`)
+    } },
+    { label: "Archive", kind: "destructive" as const, onClick: () => toast(`${w.name} archived. It stops enrolling for good; the run history is kept and the rule stays readable.`) },
   ]
-  const activeBehind = secondary.filter((f) => f.value !== "all").length
 
   const create = () => {
     const w: Workflow = {
@@ -211,100 +223,6 @@ export function WorkflowsPage({ session }: { session: Session }) {
     open(`/ollopa/workflows/${w.id}`, w.id)
   }
 
-  /* -------------------------------------------------------------------------------- the bodies */
-
-  // One grid, two bodies: the table for the desktop and the same rows as a divided list for 400.
-  // The page sets no width and draws no phone branch of its own (LAYOUTS.md §5).
-  const grid = useGrid<Workflow>({
-    id: "workflows",
-    rows: filtered,
-    rowKey: (w) => w.id,
-    columns,
-    // The order the page is read in: what has breached, then what could not be routed, then name.
-    defaultSort: { key: "breached", dir: "desc" },
-    actions: (w) => [{
-      label: w.status === "on" ? "Turn off" : "Turn on",
-      onClick: () => {
-        const runs = runsOf(seed.workflowRuns, w.id)
-        patchRow(session.business, "workflows", w.id, { status: w.status === "on" ? "off" : "on", statusChangedBy: session.user, statusChangedOn: TODAY })
-        toast(w.status === "on"
-          ? `${w.name} stops enrolling. The ${num(breachedRows(w, runs).length + (w.sla?.running ?? 0))} people already running finish their steps.`
-          : `${w.name} is on. It enrols up to ${num(w.limits.perDay)} people a day; the rest wait.`)
-      },
-    }],
-    menu: (w) => [
-      { label: "Open", onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
-      { label: "Test on one record", onClick: () => open(`/ollopa/workflows/${w.id}?open=test`, w.id) },
-      { label: "Duplicate", onClick: () => {
-        const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
-        addRow(session.business, "workflows", copy)
-        toast(`${copy.name} created, off. The copy does not carry the run history or the enrolments.`)
-      } },
-      { label: "Archive", destructive: true, separatorBefore: true, onClick: () => toast(`${w.name} archived. It stops enrolling for good; the run history is kept and the rule stays readable.`) },
-    ],
-    menuName: "Open, test on one record, duplicate, archive",
-    onOpen: (w) => open(`/ollopa/workflows/${w.id}`, w.id),
-    rowLabel: (w) => w.name,
-    cardTitle: (w) => <span className="font-medium">{w.name}</span>,
-    empty: (
-      <EmptyState
-        title="No workflows"
-        body="A workflow routes what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
-        action={<Actions surface="card" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />}
-      />
-    ),
-  })
-
-  /* ------------------------------------------------------------------------------- the toolbar */
-
-  // The template keeps five in front and puts the rest behind one door it labels itself.
-  const controls: ToolbarControl[] = [
-    {
-      name: "Search",
-      always: true,
-      node: <Input aria-label="Search workflows, triggers and rules" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />,
-    },
-    {
-      name: "Status",
-      node: (
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="t-small h-8 w-40" aria-label="Status"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">On ({on}) · Off ({off})</SelectItem>
-            <SelectItem value="On">On ({on})</SelectItem>
-            <SelectItem value="Off">Off ({off})</SelectItem>
-          </SelectContent>
-        </Select>
-      ),
-    },
-    {
-      name: "Folder",
-      node: (
-        <Select value={folder} onValueChange={setFolder}>
-          <SelectTrigger className="t-small h-8 w-40" aria-label="Folder"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Folder: all</SelectItem>
-            {[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ),
-    },
-    ...secondary.map((f) => ({
-      name: f.label,
-      node: (
-        <Select value={f.value} onValueChange={f.set}>
-          <SelectTrigger className="t-small h-8 w-44" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{f.label}: all</SelectItem>
-            {f.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ),
-    })),
-  ]
-
-  /* -------------------------------------------------------------------------------- the render */
-
   return (
     <IndexPage
       family={FAMILY}
@@ -312,16 +230,49 @@ export function WorkflowsPage({ session }: { session: Session }) {
       count={rows.workflows.length}
       description="Which rule is firing, on whom, and what it is about to cost."
       actions={[{ kind: "primary", label: "Create a workflow", onClick: create }]}
-      controls={rows.workflows.length === 0 ? undefined : controls}
-      shown={filtered.length === rows.workflows.length ? num(rows.workflows.length) : `${num(filtered.length)} shown of ${num(rows.workflows.length)}`}
-      table={grid.table}
-      rows={grid.rows}
-    >
-      {session.role !== "admin" && (
-        <p className="t-small text-muted-foreground">
-          Territories and permission profiles are the admin's: {admin} sets them in Settings › Team and access.
-        </p>
+      filters={rows.workflows.length === 0 ? undefined : {
+        search: { value: q, onChange: setQ, placeholder: "Search workflows, triggers and rules" },
+        controls: [
+          pick("Status", status, setStatus, [
+            { value: "all", label: `On (${on}) · Off (${off})` },
+            { value: "On", label: `On (${on})` },
+            { value: "Off", label: `Off (${off})` },
+          ]),
+          pick("Trigger", trigger, setTrigger, [{ value: "all", label: "Trigger: all" },
+            ...[...new Set(rows.workflows.map((w) => w.trigger))].map((o) => ({ value: o, label: o }))]),
+          pick("Owner", owner, setOwner, [{ value: "all", label: "Owner: all" },
+            ...[...new Set(rows.workflows.map((w) => w.owner))].map((o) => ({ value: o, label: o }))]),
+        ],
+        behind: [
+          { ...pick("Folder", folder, setFolder, [{ value: "all", label: "Folder: all" },
+            ...[...new Set(rows.workflows.map((w) => w.folder ?? "No folder"))].map((o) => ({ value: o, label: o }))]), group: "filters" as const },
+          { ...pick("Archived", archived, setArchived, [{ value: "all", label: "Archived: not archived" },
+            { value: "Archived only", label: "Archived only" }, { value: "Not archived", label: "Not archived" }]), group: "filters" as const },
+        ],
+        count: { shown: filtered.length, total: rows.workflows.length, noun: "workflows" },
+        onClearAll: () => { setQ(""); setStatus("all"); setTrigger("all"); setOwner("all"); setFolder("all"); setArchived("all") },
+        doorId: "workflows.filters",
+      }}
+      columns={columns}
+      rows={filtered}
+      rowKey={(w) => w.id}
+      rowProps={(w) => ({ "data-item": w.id, "data-item-label": w.name })}
+      name={(w) => (
+        <>
+          <a href={href(`/ollopa/workflows/${w.id}`)} className="min-w-0 truncate font-medium hover:underline"
+            onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}`, w.id) } }}>{w.name}</a>
+          <span className="t-small shrink-0 text-muted-foreground">When {w.trigger}{w.folder ? ` · ${w.folder}` : ""}</span>
+          <ActedNote business={session.business} kind="workflow" id={w.id} edit={workflowEdits[w.id]} />
+        </>
       )}
-    </IndexPage>
+      menu={(w) => <Actions surface="row" layout="menu" menuLabel={w.name} items={rowMenu(w)} />}
+      empty={
+        <EmptyState
+          title="No workflows"
+          body="A workflow routes what arrives — a form submission, a score crossing its threshold, a new contact — to a person, a list or a sequence."
+          action={<Actions surface="card" items={[{ kind: "primary", label: "Create a workflow", onClick: create }]} />}
+        />
+      }
+    />
   )
 }

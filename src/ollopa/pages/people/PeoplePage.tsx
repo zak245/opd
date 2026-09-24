@@ -775,7 +775,10 @@ export function PeoplePage({ session }: { session: Session }) {
    */
   const controls: ToolbarControl[] = [
     {
-      name: "Views",
+      name: "Saved views",
+      // The views live in the one door, under their own heading: the row is the search, the
+      // filters this seat sets and the count, and nothing else (LAYOUTS.md §2).
+      group: "views",
       node: (
         <span className="flex flex-wrap items-center gap-2" data-container="people.views.row" data-container-label="the views row">
           {rHead && d.level("people.views.saved") === 1 && chipViews.length > 0 && (
@@ -853,6 +856,14 @@ export function PeoplePage({ session }: { session: Session }) {
       name: f.label,
       // A filter that is on is never behind a door: a hidden cause is not allowed.
       always: (active[f.id]?.length ?? 0) > 0,
+      // What it is set to, in the person's words, and how to drop it. The chip reads its own
+      // value; the applied line under the row names the ones the row has no space for.
+      // A yes/no filter's one value is its own name, so "Not in a sequence: Not in a sequence"
+      // becomes "Not in a sequence: on" rather than saying it twice.
+      value: (active[f.id]?.length ?? 0) === 0 ? undefined
+        : active[f.id]!.length === 1 && active[f.id]![0] === f.label ? "on"
+        : `${active[f.id]!.slice(0, 2).join(", ")}${active[f.id]!.length > 2 ? ` +${active[f.id]!.length - 2}` : ""}`,
+      onClear: () => setFilter(f.id, []),
       node: (
         <span data-container="people.chips" data-container-label="the filter bar">
           <FilterChip
@@ -870,80 +881,81 @@ export function PeoplePage({ session }: { session: Session }) {
         </span>
       ),
     })),
-    {
-      name: "every filter",
-      node: (
-        <span className="flex items-center gap-1">
-          {/* Every filter, flat, for reference while the table stays readable: a popover on a
-              desktop (LAYOUTS.md §3, "needed for reference only"), a sheet on a phone. */}
-          <Popover open={rFlat ? panelOpen : showFilters} onOpenChange={(o) => (rFlat ? setPanelOpen(o) : setShowFilters(o))} modal={false}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                data-item="people.filters.all"
-                data-item-label={rDoors ? "All filters" : "Show Filters"}
-                onClick={(e) => {
-                  if (rFlat && window.matchMedia("(max-width: 767px)").matches) { e.preventDefault(); setPhoneFilters(true) }
-                }}
+    // Everything else the person can filter by: inside the one door, grouped, never a second
+    // door inside it. The "All filters" popover the page used to open over the rows is gone —
+    // a door inside a door is the thing LAYOUTS.md §2 bans.
+    ...(rDoors && rFlat
+      ? [{ name: "More filters", group: "filters" as const, node: <div className="min-w-0 flex-1">{filtersBody}</div> }]
+      : [
+      {
+        name: "every filter",
+        node: (
+          <span className="flex items-center gap-1">
+            {/* Every filter, flat, for reference while the table stays readable: a popover on a
+                desktop (LAYOUTS.md §3, "needed for reference only"), a sheet on a phone. */}
+            <Popover open={rFlat ? panelOpen : showFilters} onOpenChange={(o) => (rFlat ? setPanelOpen(o) : setShowFilters(o))} modal={false}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-item="people.filters.all"
+                  data-item-label={rDoors ? "All filters" : "Show Filters"}
+                  onClick={(e) => {
+                    if (rFlat && window.matchMedia("(max-width: 767px)").matches) { e.preventDefault(); setPhoneFilters(true) }
+                  }}
+                >
+                  <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (rFlat ? panelOpen : showFilters) && "rotate-180")} />
+                  {!rFlat ? (
+                    <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
+                  ) : !rDoors ? (
+                    <span>Filters</span>
+                  ) : (
+                    <>
+                      <span className="md:hidden">Filters{activeCount ? ` · ${activeCount} active` : ""}</span>
+                      <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
+                    </>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="hidden max-h-[70vh] w-96 overflow-y-auto md:block"
+                data-container="people.filters.panel"
+                data-container-label={rDoors ? `All filters (${defs.length})` : "Filters"}
+                onOpenAutoFocus={(e) => { if (pinned) e.preventDefault() }}
+                onInteractOutside={(e) => { if (pinned) e.preventDefault() }}
               >
-                <ChevronDown aria-hidden="true" className={cn("size-3 transition-transform", (rFlat ? panelOpen : showFilters) && "rotate-180")} />
-                {!rFlat ? (
-                  <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
-                ) : !rDoors ? (
-                  <span>Filters</span>
-                ) : (
-                  <>
-                    <span className="md:hidden">Filters{activeCount ? ` · ${activeCount} active` : ""}</span>
-                    <span className="hidden md:inline">All filters ({defs.length}){activeElsewhere.length ? ` · ${activeElsewhere.length} more active` : ""}</span>
-                  </>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              className="hidden max-h-[70vh] w-96 overflow-y-auto md:block"
-              data-container="people.filters.panel"
-              data-container-label={rDoors ? `All filters (${defs.length})` : "Filters"}
-              onOpenAutoFocus={(e) => { if (pinned) e.preventDefault() }}
-              onInteractOutside={(e) => { if (pinned) e.preventDefault() }}
-            >
-              <div className="flex items-center gap-1 pb-2">
-                <h3 className="flex-1 text-sm font-medium">{rDoors ? `All filters (${defs.length})` : "Filters"}</h3>
-                {rContext && (
-                  <Button
-                    size="icon"
-                    variant={pinned ? "secondary" : "ghost"}
-                    className="size-7"
-                    aria-pressed={pinned}
-                    aria-label={pinned ? "Unpin the filters panel" : "Pin the filters panel open"}
-                    data-item="people.filters.pin"
-                    data-item-label="Pin the filters panel"
-                    onClick={() => setPinned(!pinned)}
-                  >
-                    📌
-                  </Button>
-                )}
-              </div>
-              {filtersBody}
-            </PopoverContent>
-          </Popover>
-          {(activeCount > 0 || q) && (
-            <Button size="sm" variant="ghost" data-item="people.f.clear" data-item-label="Clear" onClick={clearAll}>Clear</Button>
-          )}
-        </span>
-      ),
-    },
-  ]
-
-  /** The trailing slot of the toolbar: the count this toolbar filters, and the columns control. */
-  const shown_ = (
-    <span className="flex items-center gap-3">
-      <Badge variant="outline" data-item="people.count" data-item-label="the result count" role="status" aria-live="polite" className="tabular-nums">
-        {settling ? "…" : `${sorted.length.toLocaleString()} of ${total.toLocaleString()}`}
-      </Badge>
-      {rDoors ? (
+                <div className="flex items-center gap-1 pb-2">
+                  <h3 className="flex-1 text-sm font-medium">{rDoors ? `All filters (${defs.length})` : "Filters"}</h3>
+                  {rContext && (
+                    <Button
+                      size="icon"
+                      variant={pinned ? "secondary" : "ghost"}
+                      className="size-7"
+                      aria-pressed={pinned}
+                      aria-label={pinned ? "Unpin the filters panel" : "Pin the filters panel open"}
+                      data-item="people.filters.pin"
+                      data-item-label="Pin the filters panel"
+                      onClick={() => setPinned(!pinned)}
+                    >
+                      📌
+                    </Button>
+                  )}
+                </div>
+                {filtersBody}
+              </PopoverContent>
+            </Popover>
+          </span>
+        ),
+      }
+      ]),
+    {
+      name: "Columns and density",
+      // The columns and the density are the third group in the same door, not a control of
+      // their own at the trailing edge pushing the count onto a second row.
+      group: "columns",
+      node: rDoors ? (
         <ColumnsDoor
           all={allColumns}
           shownIds={shownColumnIds}
@@ -964,9 +976,12 @@ export function PeoplePage({ session }: { session: Session }) {
           onDensity={setDensity}
           showDensity={rContent}
         />
-      )}
-    </span>
-  )
+      ),
+    },
+  ]
+
+  /** The count this toolbar filters, at the trailing edge of the row. It ticks; it never moves. */
+  const result = { shown: sorted.length, total, noun: "people" }
 
   const pad = density === "Compact" ? "py-1" : "py-2"
 
@@ -1153,7 +1168,9 @@ export function PeoplePage({ session }: { session: Session }) {
           ...(b.crm ? [{ kind: "secondary" as const, label: `Sync from ${b.crm} now`, onClick: () => toast(`Pulling changes from ${b.crm}.`) }] : []),
         ]}
         controls={controls}
-        shown={shown_}
+        result={result}
+        onClearAll={activeCount > 0 || q ? clearAll : undefined}
+        doorId="people"
         above={
           <>
             {/* Before rule 2 the filters are a sidebar of groups, three deep. */}

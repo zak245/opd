@@ -7,23 +7,21 @@
 // hover AND on focus AND in the row's named menu, and every door says what it holds with a count.
 //
 // The page decides what is level one; this file only lays it out.
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Door } from "../../ui/Door"
-import { LegacyIndexPage as IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
+import { IndexPage, SummaryStrip, type SummaryFigure } from "../../layouts"
+import { FilterBar, FilterEmpty, type DoorItem, type FilterControl } from "../../layouts/filters"
 import { EmptyState } from "../../ui/EmptyState"
 import { QuickLook, type QuickLookEditable, type QuickLookField } from "../../templates/QuickLook"
-import { useFitColumns, type ColumnPriority } from "../../layouts/columns"
-import { MetaLine } from "../../layouts/MetaLine"
+import { type ColumnPriority } from "../../layouts/columns"
 
 /* ------------------------------------------------------------------------------------- the parts */
 
@@ -88,7 +86,7 @@ export interface DataTableProps<T> {
   /** Sections above the table: a hand-off waiting, a notice, a confirmation. Never filters. */
   above?: ReactNode
   /** A control this page has that is not a column filter — the renewal windows on Accounts. */
-  extraControls?: ToolbarControl[]
+  extraControls?: FilterControl[]
   /** One line under the card: the sentence naming who can do what this seat cannot (rule 4). */
   below?: ReactNode
   /** Level-one filters, as visible selects beside the search box. */
@@ -122,6 +120,8 @@ export interface DataTableProps<T> {
   /** Below the first cell at phone width: the fields the phone layout folds into the row. */
   phoneSummary?: (row: T) => ReactNode
   pageSize?: number
+  /** What this page is a list of, so the count says what it counts: "companies", "accounts". */
+  noun?: string
 }
 
 /* ------------------------------------------------------------------------------------- the table */
@@ -138,8 +138,6 @@ export function DataTable<T>(p: DataTableProps<T>) {
   const cameFrom = useRef<HTMLElement | null>(null)
 
   const setFilter = (id: string, value: string) => p.onFiltersChange({ ...p.filters, [id]: value })
-  const activeFilters = [...p.chips, ...p.doorFilters].filter((f) => p.filters[f.id] && p.filters[f.id] !== "all")
-  const doorActive = p.doorFilters.filter((f) => p.filters[f.id] && p.filters[f.id] !== "all").length
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -206,74 +204,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
     return () => window.removeEventListener("keydown", onKey)
   }, [glancing, rows, p])
 
-  // Which columns fit the box the table is in, and which fold into the row's meta line.
-  const { ref: fitRef, shown: cols, folded } = useFitColumns(p.columns, { priorityOf: (c) => c.priority })
-
-  const header = (col: Col<T>) => {
-    const sorted = p.sort.id === col.id
-    return (
-      <TableHead
-        key={col.id}
-        aria-sort={sorted ? (p.sort.dir === "asc" ? "ascending" : "descending") : "none"}
-        className={cn("align-bottom", col.className, !col.phone && "hidden md:table-cell")}
-      >
-        {col.sortValue ? (
-          <button
-            type="button"
-            className="inline-flex items-start gap-1 text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            onClick={() => p.onSortChange({ id: col.id, dir: sorted && p.sort.dir === "asc" ? "desc" : "asc" })}
-          >
-            {col.header}
-            <span aria-hidden="true" className="text-muted-foreground">{sorted ? (p.sort.dir === "asc" ? "↑" : "↓") : ""}</span>
-            <span className="sr-only">{sorted ? `sorted ${p.sort.dir === "asc" ? "ascending" : "descending"}` : "sort by this column"}</span>
-          </button>
-        ) : col.header}
-      </TableHead>
-    )
-  }
-
-  // The toolbar's controls, each named so the template's own door can label itself with what it
-  // holds. The template keeps five in front and puts the rest behind that door; this page does not
-  // decide what to hide (LAYOUTS.md §2).
-  const controls: ToolbarControl[] = [
-    {
-      // Pinned as well as always: on a phone the toolbar is one control and one door, and the one
-      // control is the search (LAYOUTS.md §5).
-      name: "Search", always: true, pin: true,
-      node: (
-        <Input
-          ref={search}
-          aria-label={p.searchHint ?? "Search"}
-          placeholder={p.searchHint ?? "Search"}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="w-64 max-w-full"
-        />
-      ),
-    },
-    ...(p.extraControls ?? []).map((c) => ({ ...c, always: true })),
-    ...[...p.chips, ...p.doorFilters].map((f, i) => ({
-      name: f.label,
-      // Five in front and no more (LAYOUTS.md §2): the search, this page's own filter, the seat's
-      // first chips and the columns. Whatever is left labels the door.
-      always: i < Math.max(0, 4 - (p.extraControls?.length ?? 0)) && i < p.chips.length,
-      node: (
-        <Select value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
-          <SelectTrigger className="h-9 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{f.label}: all</SelectItem>
-            {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ),
-    })),
-    // The column chooser is not a filter, so it never goes behind the "Filter by …" door.
-    { name: "Columns", always: true, node: <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} /> },
-    ...(p.views ? [{ name: "Views", always: true, node: p.views }] : []),
-  ]
-
-  const bulkBar = selected.length > 0 || allMatching ? (
-    <div className="flex flex-wrap items-center gap-2">
+  /** What applies to the selection. It replaces the pager while a selection stands. */
+  const bulkBar = (
+    <>
       <span className="t-label tabular-nums">
         {allMatching ? `All ${rows.length.toLocaleString()} matching selected` : `${selected.length} selected`}
       </span>
@@ -290,232 +223,210 @@ export function DataTable<T>(p: DataTableProps<T>) {
         </Button>
       ))}
       <Button size="sm" variant="ghost" onClick={clearSelection}>Clear</Button>
-    </div>
-  ) : undefined
+    </>
+  )
 
-  /** The same rows as a divided list, for 400: a clipped table is what §5 forbids by name. */
-  const phoneRows = shown.map((r) => {
-    const id = p.rowKey(r)
-    return (
-      <div key={id} data-item={id} className="flex items-start gap-2 px-4 py-3">
-        <div className="min-w-0 flex-1">
-          {p.columns[0]?.cell(r)}
-          {p.phoneSummary && <div className="t-small pt-0.5 break-words text-muted-foreground">{p.phoneSummary(r)}</div>}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            {p.columns.slice(1).filter((c) => c.phone).map((c) => (
-              <span key={c.id} className="t-small text-muted-foreground">{c.cell(r)}</span>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-1 pt-1">
-            {p.rowActions.map((a) => (
-              <Button key={a.id} size="sm" variant="ghost" onClick={() => a.onClick(r)}>{a.label(r)}</Button>
-            ))}
-            <Button size="sm" variant="ghost" onClick={() => { setGlancing(r) }}>Quick look</Button>
-          </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost" className="size-8 shrink-0" aria-label={p.menuLabel(r)}>
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-w-xs">
-            {p.rowActions.map((a) => <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>)}
-            {p.menuActions.filter((a) => !a.destructive).map((a) => (
-              <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>
-            ))}
-            {p.menuActions.filter((a) => a.destructive).map((a) => (
-              <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)} className="whitespace-normal text-destructive">{a.label(r)}</DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    )
+  /* ------------------------------------------------------------------------------ the toolbar */
+
+  /**
+   * One filtering pattern, from `layouts/filters`: the search, the seat's named filters, one door,
+   * one count and one applied line. Each filter carries its own value and its own "clear", so it
+   * is dropped from its own chip rather than from a stray "×" beside it. The page still decides
+   * which filters its seat reads weekly; the part decides how many fit on the row.
+   */
+  const filterControls: FilterControl[] = [...p.chips, ...p.doorFilters].map((f) => {
+    const on = p.filters[f.id] && p.filters[f.id] !== "all" ? p.filters[f.id] : undefined
+    return {
+      name: f.label,
+      value: on,
+      onClear: () => setFilter(f.id, "all"),
+      node: (
+        <Select value={p.filters[f.id] ?? "all"} onValueChange={(v) => setFilter(f.id, v)}>
+          <SelectTrigger className="h-8 w-auto min-w-36" aria-label={f.label}><SelectValue placeholder={f.label} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{f.label}: all</SelectItem>
+            {f.options.filter(Boolean).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ),
+    }
   })
 
+  const sortable = p.allColumns.filter((c) => c.sortValue)
+
+  const behind: DoorItem[] = [
+    ...(p.views ? [{ name: "Saved views", group: "views" as const, node: p.views }] : []),
+    // The columns control is not a filter, so it is the door's own "Columns and density" group.
+    { name: "Columns", group: "columns", node: <ColumnsPopover columns={p.allColumns} chosen={p.columns.map((c) => c.id)} onChange={p.onColumnsChange} /> },
+    // Sorting has no place of its own in the index contract, so it sits with the columns: both
+    // are the table's shape rather than which rows it holds.
+    ...(sortable.length > 0 ? [{
+      name: "Sort", group: "columns" as const,
+      node: (
+        <span className="flex items-center gap-1">
+          <Select value={p.sort.id} onValueChange={(v) => p.onSortChange({ id: v, dir: p.sort.dir })}>
+            <SelectTrigger className="h-8 w-auto min-w-40" aria-label="Sort by"><SelectValue /></SelectTrigger>
+            <SelectContent>{sortable.map((c) => <SelectItem key={c.id} value={c.id}>{c.header}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button size="sm" variant="outline"
+                  aria-label={p.sort.dir === "asc" ? "Sorted first to last. Reverse it." : "Sorted last to first. Reverse it."}
+                  onClick={() => p.onSortChange({ id: p.sort.id, dir: p.sort.dir === "asc" ? "desc" : "asc" })}>
+            {p.sort.dir === "asc" ? "First to last" : "Last to first"}
+          </Button>
+        </span>
+      ),
+    }] : []),
+  ]
+
+  const clearAll = () => { setQ(""); p.onFiltersChange({}) }
+  const appliedControls = [...(p.extraControls ?? []), ...filterControls].filter((c) => c.value)
+
+  const toolbar = (
+    <FilterBar
+      doorId={p.family}
+      searchNode={(
+        <Input
+          ref={search}
+          type="search"
+          aria-label={p.searchHint ?? "Search"}
+          placeholder={p.searchHint ?? "Search"}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="h-8 w-56"
+        />
+      )}
+      controls={[...(p.extraControls ?? []), ...filterControls]}
+      behind={behind}
+      count={{ shown: rows.length, total: p.total ?? p.rows.length, noun: p.noun ?? "rows" }}
+      onClearAll={clearAll}
+    />
+  )
+
+  /* -------------------------------------------------------------------------------- the rows */
+
+  /** Everything the row's "…" holds, in the order the rules put it: look, act, then destructive. */
+  const rowMenu = (r: T) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon" variant="ghost" className="size-7" aria-label={p.menuLabel(r)}>
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="max-w-xs">
+        <DropdownMenuItem onSelect={(e) => { cameFrom.current = (e.currentTarget as HTMLElement).closest("tr") as HTMLElement ?? null; setGlancing(r) }}>Quick look</DropdownMenuItem>
+        {p.rowActions.map((a) => <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>)}
+        {p.menuActions.some((a) => !a.destructive) && <DropdownMenuSeparator />}
+        {p.menuActions.filter((a) => !a.destructive).map((a) => (
+          <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>
+        ))}
+        {p.menuActions.some((a) => a.destructive) && <DropdownMenuSeparator />}
+        {p.menuActions.filter((a) => a.destructive).map((a) => (
+          <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)} className="whitespace-normal text-destructive">
+            {a.label(r)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
+  /**
+   * The row's own name, its phone summary and its row acts. The template draws the cell; this
+   * decides what is in it. The acts are in the DOM at all times and change opacity, never
+   * presence, so a keyboard reaches them and a seat with four does not widen the table.
+   */
+  const rowName = (r: T) => {
+    const door = p.rowDoor?.label(r) ?? null
+    return (
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="min-w-0">{p.columns[0]?.cell(r)}</span>
+          {/* LAYOUTS.md §4: the primary act and the "…" are visible at rest. The rest of the acts
+              are in the "…", where they already are — a row that carries four of them inline is a
+              second line, and the index contract has no place of its own for row acts. */}
+          {p.rowActions.slice(0, 1).map((a) => (
+            <Button key={a.id} size="sm" variant="ghost" className="shrink-0" onClick={(e) => { e.stopPropagation(); a.onClick(r) }}>
+              {a.icon && <a.icon className="size-3.5" aria-hidden="true" />}
+              {a.label(r)}
+            </Button>
+          ))}
+        </span>
+        {/* The folded columns already say this above `md`; below it, they are what the row has. */}
+        {p.phoneSummary && <span className="t-small break-words text-muted-foreground md:hidden">{p.phoneSummary(r)}</span>}
+        {/* The row's own door. The index contract has no per-row door, so it opens under the
+            row's name rather than as a sub-row of its own. */}
+        {door && p.rowDoor && (
+          <span className="block" onClick={(e) => e.stopPropagation()}>
+            <Door id={p.rowDoor.id(r)} label={door} count={p.rowDoor.count(r)}>{p.rowDoor.content(r)}</Door>
+          </span>
+        )}
+      </span>
+    )
+  }
+
   return (
-    <IndexPage
+    <>
+    <IndexPage<T>
       family={p.family}
       title={p.title}
       count={p.total ?? p.rows.length}
       actions={p.primary ? [{ kind: "primary", label: p.primary.label, onClick: p.primary.onClick }] : []}
       more={(p.pageMenu?.items ?? []).map((i) => ({ kind: "secondary" as const, label: i.label, onClick: i.onClick }))}
-      controls={controls}
-      shown={`${rows.length.toLocaleString()} shown${p.total ? ` of ${p.total.toLocaleString()}` : ""}`}
+      toolbar={toolbar}
       above={
         <>
           {p.figures?.length ? <SummaryStrip figures={p.figures} /> : null}
           {p.above}
-          {activeFilters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="t-small text-muted-foreground">Matching all of: {activeFilters.map((f) => f.label).join(", ")}</span>
-              <Button size="sm" variant="ghost" onClick={() => p.onFiltersChange({})}>Clear</Button>
-            </div>
-          )}
         </>
       }
+      columns={p.columns.slice(1).map((c) => ({ key: c.id, header: c.header, cell: c.cell, priority: c.priority }))}
+      rows={shown}
+      rowKey={p.rowKey}
+      name={rowName}
+      menu={rowMenu}
+      rowProps={(r) => ({
+        "data-row": true,
+        "data-item": p.rowKey(r),
+        tabIndex: 0,
+        className: "group cursor-pointer align-top",
+        onClick: (e: React.MouseEvent<HTMLTableRowElement>) => { const el = e.currentTarget as HTMLElement; el.focus(); cameFrom.current = el; setGlancing(r) },
+        onKeyDown: (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+          if (e.target !== e.currentTarget) return
+          const handler = p.rowKeys?.[e.key]
+          if (handler) { e.preventDefault(); handler(r); return }
+          if (p.enterOpensRecord && e.key === "Enter") { e.preventDefault(); p.quickLook.onOpen(r); return }
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cameFrom.current = e.currentTarget as HTMLElement; setGlancing(r) }
+        },
+      })}
+      bulk={hasBulk ? { selected, onChange: setSelected, bar: bulkBar } : undefined}
       pager={rows.length > limit ? (
         <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (p.pageSize ?? 25))}>
           Show {Math.min(p.pageSize ?? 25, rows.length - limit)} more
         </Button>
       ) : undefined}
-      bulk={bulkBar}
-      rows={phoneRows}
-      tableRef={fitRef}
-      table={<>
-      <div role="status" aria-live="polite" className="sr-only">{rows.length} rows match</div>
-      <Table>
-          <TableHeader className="bg-card sticky top-0 z-10">
-            <TableRow>
-              {hasBulk && (
-                <TableHead className="w-8 pl-4 xl:pl-6">
-                  <Checkbox
-                    aria-label={`Select this page (${shown.length})`}
-                    checked={pageSelected}
-                    onCheckedChange={(v) => (v ? setSelected(shown.map(p.rowKey)) : clearSelection())}
-                  />
-                </TableHead>
-              )}
-              {cols.map(header)}
-              <TableHead className="bg-card sticky right-0 z-20 w-12"><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody ref={body}>
-            {shown.map((r) => {
-              const id = p.rowKey(r)
-              const door = p.rowDoor?.label(r) ?? null
-              return (
-                <Fragment key={id}>
-                  <TableRow
-                    data-row
-                    tabIndex={0}
-                    className="group cursor-pointer align-top"
-                    onClick={(e) => { const el = e.currentTarget as HTMLElement; el.focus(); cameFrom.current = el; setGlancing(r) }}
-                    onKeyDown={(e) => {
-                      if (e.target !== e.currentTarget) return
-                      const handler = p.rowKeys?.[e.key]
-                      if (handler) { e.preventDefault(); handler(r); return }
-                      if (p.enterOpensRecord && e.key === "Enter") { e.preventDefault(); p.quickLook.onOpen(r); return }
-                      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cameFrom.current = e.currentTarget as HTMLElement; setGlancing(r) }
-                    }}
-                  >
-                    {hasBulk && (
-                      <TableCell className="py-2 pl-4 xl:pl-6" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          aria-label={`Select row ${id}`}
-                          checked={allMatching || selected.includes(id)}
-                          onCheckedChange={(v) => setSelected((s) => (v ? [...s, id] : s.filter((x) => x !== id)))}
-                        />
-                      </TableCell>
-                    )}
-                    {cols.map((c, i) => (
-                      <TableCell
-                        key={c.id}
-                        className={cn("py-2", c.className, !c.phone && "hidden md:table-cell", i === 0 && "max-w-[8rem] md:max-w-none")}
-                      >
-                        {c.cell(r)}
-                        {i === 0 && p.phoneSummary && (
-                          <div className="pt-0.5 t-small break-words text-muted-foreground md:hidden">{p.phoneSummary(r)}</div>
-                        )}
-                        {/* A column that does not fit at this width is read here instead, under the
-                            row's own name — never cut off the right-hand edge. */}
-                        {i === 0 && folded.length > 0 && (
-                          <MetaLine values={folded.map((f) => ({ key: f.id, label: f.header, value: f.cell(r) }))} />
-                        )}
-                      </TableCell>
-                    ))}
-                    {/* The row's actions are in the DOM at all times and change opacity, never presence.
-                        They are laid over the row rather than in it, so a seat with four of them does
-                        not widen the table, and the "…" stays pinned to the right edge. */}
-                    <TableCell className="bg-card sticky right-0 z-10 w-12 py-1 pr-2 xl:pr-5" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative flex items-center justify-end gap-1">
-                        <div className="absolute top-1/2 right-full mr-1 hidden -translate-y-1/2 items-center gap-1 bg-card opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:flex">
-                        {p.rowActions.map((a) => (
-                          <Button
-                            key={a.id}
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 t-small"
-                            onClick={() => a.onClick(r)}
-                          >
-                            {a.icon && <a.icon className="size-3.5" aria-hidden="true" />}
-                            {a.label(r)}
-                          </Button>
-                        ))}
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" className="size-7" aria-label={p.menuLabel(r)}>
-                              <MoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="max-w-xs">
-                            <DropdownMenuItem onSelect={(e) => { cameFrom.current = (e.currentTarget as HTMLElement).closest("tr")?.previousElementSibling as HTMLElement ?? null; setGlancing(r) }}>Quick look</DropdownMenuItem>
-                            {p.rowActions.map((a) => <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>)}
-                            {p.menuActions.some((a) => !a.destructive) && <DropdownMenuSeparator />}
-                            {p.menuActions.filter((a) => !a.destructive).map((a) => (
-                              <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>
-                            ))}
-                            {p.menuActions.some((a) => a.destructive) && <DropdownMenuSeparator />}
-                            {p.menuActions.filter((a) => a.destructive).map((a) => (
-                              <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)} className="whitespace-normal text-destructive">
-                                {a.label(r)}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  {door && p.rowDoor && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={p.columns.length + (hasBulk ? 1 : 0) + 1} className="py-0 pl-5 lg:pl-6">
-                        <Door id={p.rowDoor.id(r)} label={door} count={p.rowDoor.count(r)}>
-                          {p.rowDoor.content(r)}
-                        </Door>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              )
-            })}
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={p.columns.length + (hasBulk ? 1 : 0) + 1} className="py-10">
-                  {q || activeFilters.length > 0 ? (
-                    <EmptyState
-                      title="Nothing matches"
-                      body="Clear the search or a filter."
-                      action={<Button size="sm" variant="outline" onClick={() => { setQ(""); p.onFiltersChange({}) }}>Clear</Button>}
-                    />
-                  ) : (
-                    <EmptyState title={p.empty.title} body={p.empty.body} action={p.empty.action} />
-                  )}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </>}
-    >
-      {p.below}
-      {glancing && (
-        <QuickLook
-          open
-          onOpenChange={(o) => {
-            if (o) return
-            setGlancing(null)
-            // The drawer's own close puts focus on the body; the row it was opened from gets it back.
-            const row = cameFrom.current
-            requestAnimationFrame(() => requestAnimationFrame(() => row?.focus()))
-          }}
-          title={p.quickLook.title(glancing)}
-          fields={p.quickLook.fields(glancing)}
-          editable={p.quickLook.editable?.(glancing)}
-          onOpen={() => { const row = glancing; setGlancing(null); p.quickLook.onOpen(row) }}
-        />
-      )}
-    </IndexPage>
+      empty={
+        q || appliedControls.length > 0
+          ? <FilterEmpty noun={p.noun ?? "rows"} applied={appliedControls} onClearAll={clearAll} />
+          : <EmptyState title={p.empty.title} body={p.empty.body} action={p.empty.action} />
+      }
+    />
+    {p.below}
+    {glancing && (
+      <QuickLook
+        open
+        onOpenChange={(o) => {
+          if (o) return
+          setGlancing(null)
+          // The drawer's own close puts focus on the body; the row it was opened from gets it back.
+          const row = cameFrom.current
+          requestAnimationFrame(() => requestAnimationFrame(() => row?.focus()))
+        }}
+        title={p.quickLook.title(glancing)}
+        fields={p.quickLook.fields(glancing)}
+        editable={p.quickLook.editable?.(glancing)}
+        onOpen={() => { const row = glancing; setGlancing(null); p.quickLook.onOpen(row) }}
+      />
+    )}
+    </>
   )
 }
 

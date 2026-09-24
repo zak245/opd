@@ -18,7 +18,7 @@ import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
-import { LegacyIndexPage as IndexPage, SummaryStrip, type SummaryFigure, type ToolbarControl } from "../../layouts"
+import { IndexPage, SummaryStrip, type IndexColumn, type SummaryFigure } from "../../layouts"
 import { FAMILY, ink } from "./look"
 import { useTick } from "../engage/shared"
 import { ActedNote, undoable } from "./acted"
@@ -181,92 +181,65 @@ export function CampaignsPage({ session }: { session: Session }) {
   const beside = (kind: string, id: string) => openBeside({ kind, id, opener: document.activeElement as HTMLElement | null })
 
   const rowMenu = (c: Campaign) => [
-    { label: "Read it beside this table", onClick: () => beside("campaign", c.id) },
-    { label: "Open", onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) },
-    { label: "Duplicate", onClick: () => duplicate(c) },
-    { label: "Compare with…", onClick: () => toast(`Pick a second campaign to compare with ${c.name}.`) },
-    { label: "Export results", onClick: () => toast(`${c.name}: results exported as CSV, with the filters you are looking at.`) },
-    { label: "Archive", separatorBefore: true, onClick: () => { setArchiveReason(""); setArchiving(c) } },
-    ...(c.status === "Draft" ? [{ label: "Delete draft", destructive: true, onClick: () => setDeleting(c) }] : []),
+    { label: "Read it beside this table", kind: "secondary" as const, onClick: () => beside("campaign", c.id) },
+    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) },
+    { label: "Duplicate", kind: "secondary" as const, onClick: () => duplicate(c) },
+    { label: "Compare with…", kind: "secondary" as const, onClick: () => toast(`Pick a second campaign to compare with ${c.name}.`) },
+    { label: "Export results", kind: "secondary" as const, onClick: () => toast(`${c.name}: results exported as CSV, with the filters you are looking at.`) },
+    { label: "Archive", kind: "destructive" as const, onClick: () => { setArchiveReason(""); setArchiving(c) } },
+    ...(c.status === "Draft" ? [{ label: "Delete draft", kind: "destructive" as const, onClick: () => setDeleting(c) }] : []),
   ]
 
   /* ------------------------------------------------------------------------------- the columns */
 
-  const campaignColumns: GridColumn<Campaign>[] = [
+  const campaignColumns: IndexColumn<Campaign>[] = [
     // The name is the control, as it is on People: one thing to tab to, one thing to press, and
     // the row is the anchor the crumb comes back to.
-    { key: "name", header: "Campaign", sortBy: (c) => c.name, className: "min-w-[13rem] whitespace-normal", cell: (c) => (
-      <div className="min-w-0">
-        <div>
-          {/* The name is the destination, so it is a real link: ⌘-click opens a new tab, and the
-              ordinary click follows, keeping this page and this row on the trail. */}
-          <a
-            href={href(`/ollopa/campaigns/${c.id}`)}
-            className="font-medium hover:underline"
-            onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/campaigns/${c.id}`, c.id) } }}
-          >
-            {c.name}
-          </a>
-          <span className="text-muted-foreground"> · {c.kind}</span>
-        </div>
-        <div className="truncate text-xs text-muted-foreground">{c.subject}</div>
-        <ActedNote business={session.business} kind="campaign" id={c.id} edit={campaignEdits[c.id]} />
-      </div>
-    ) },
-    { key: "status", header: "Status", sortBy: (c) => c.status, className: "min-w-36 whitespace-normal", cell: (c) => <StatusBadge c={c} />, optional: !at("camp.list.status") },
-    { key: "audience", header: "Audience", sortBy: (c) => c.audienceSize, optional: !at("camp.list.audience"), className: "min-w-[10rem] whitespace-normal", cell: (c) => {
+    { key: "status", priority: 1, header: "Status", cell: (c) => <StatusBadge c={c} /> },
+    { key: "subject", priority: 3, header: "Subject", cell: (c) => c.subject },
+    { key: "audience", priority: 1, header: "Audience", cell: (c) => {
       const a = rows.audiences.find((x) => x.id === c.audienceId)
       return a
         ? <div className="min-w-0"><div className="truncate">{a.name}</div><div className="text-xs tabular-nums text-muted-foreground">{num(netSize(a))} after suppressions</div></div>
         : <span className="text-muted-foreground">Audience removed; {num(c.audienceSize)} people at send time</span>
     } },
-    { key: "delivery", header: "Delivery", sortBy: (c) => c.sent, className: "min-w-[10rem] whitespace-normal", cell: (c) => <DeliveryCell c={c} /> },
-    { key: "opens", header: "Opened", sortBy: (c) => (c.delivered ? c.opened / c.delivered : 0), optional: !at("camp.list.opens-clicks"), cell: (c) => (
+    { key: "delivery", priority: 1, header: "Delivery", cell: (c) => <DeliveryCell c={c} /> },
+    { key: "opens", priority: 2, header: "Opened", cell: (c) => (
       <div className="tabular-nums"><div>{pct(c.opened, c.delivered)}</div><div className="text-xs text-muted-foreground">{num(c.opened)}</div></div>
     ) },
-    { key: "clicks", header: "Clicked", sortBy: (c) => (c.delivered ? c.clicked / c.delivered : 0), optional: !at("camp.list.opens-clicks"), cell: (c) => (
+    { key: "clicks", priority: 2, header: "Clicked", cell: (c) => (
       <div className="tabular-nums"><div>{pct(c.clicked, c.delivered)}</div><div className="text-xs text-muted-foreground">{num(c.clicked)}</div></div>
     ) },
-    { key: "replied", header: "Replied", sortBy: (c) => c.replied, optional: !at("camp.list.replies"), cell: (c) => <span className="tabular-nums">{num(c.replied)}</span> },
-    { key: "converted", header: "Converted", sortBy: (c) => c.converted, optional: !at("camp.list.conversions"), cell: (c) => (
+    { key: "replied", priority: 2, header: "Replied", cell: (c) => <span className="tabular-nums">{num(c.replied)}</span> },
+    { key: "converted", priority: 2, header: "Converted", cell: (c) => (
       <div className="tabular-nums"><div>{num(c.converted)}</div><div className="text-xs text-muted-foreground">{c.goal}</div></div>
     ) },
-    { key: "unsubscribed", header: "Unsubscribed", sortBy: (c) => c.unsubscribed, cell: (c) => (
+    { key: "unsubscribed", priority: 3, header: "Unsubscribed", cell: (c) => (
       <div className="tabular-nums"><div>{num(c.unsubscribed)}</div><div className="text-xs text-muted-foreground">{pct(c.unsubscribed, c.delivered)}</div></div>
     ) },
-    { key: "send", header: "Send", sortBy: (c) => c.sendAt ?? "", optional: !at("camp.list.send-time"), className: "min-w-[8rem] whitespace-normal", cell: (c) => (
+    { key: "send", priority: 2, header: "Send", cell: (c) => (
       c.kind === "Lifecycle" ? <span className="text-muted-foreground">Runs on a trigger</span>
         : c.status === "Scheduled" ? <span>Scheduled {day(c.sendAt)}</span>
           : <span className="text-muted-foreground">{c.sendAt ? `Sent ${day(c.sendAt)}` : "Not scheduled"}</span>
     ) },
-    { key: "trigger", header: "Trigger", optional: !at("camp.list.trigger"), className: "min-w-[9rem] whitespace-normal", cell: (c) => c.trigger ?? <span className="text-muted-foreground">—</span> },
-    { key: "lastSend", header: "Last send", optional: !at("camp.list.last-send"), sortBy: (c) => c.sendAt ?? "", cell: (c) => (c.sendAt ? ago(c.sendAt) : "—") },
-    { key: "owner", header: "Owner", optional: !at("camp.list.owner"), sortBy: (c) => c.owner, cell: (c) => c.owner },
-    { key: "from", header: "From", optional: !at("camp.list.from"), cell: (c) => <span className="text-xs">{c.fromName}<br />{c.fromMailbox}</span> },
-    { key: "variants", header: "A/B", optional: !at("camp.list.variants"), cell: (c) => (c.variants.length ? `${c.variants.length} variants` : "—") },
-    { key: "created", header: "Created", optional: !at("camp.list.created"), cell: (c) => day(c.activity[c.activity.length - 1]?.at ?? c.sendAt) },
+    { key: "trigger", priority: 3, header: "Trigger", cell: (c) => c.trigger ?? <span className="text-muted-foreground">—</span> },
+    { key: "lastSend", priority: 3, header: "Last send", cell: (c) => (c.sendAt ? ago(c.sendAt) : "—") },
+    { key: "owner", priority: 3, header: "Owner", cell: (c) => c.owner },
+    { key: "from", priority: 3, header: "From", cell: (c) => <span className="text-xs">{c.fromName}<br />{c.fromMailbox}</span> },
+    { key: "variants", priority: 3, header: "A/B", cell: (c) => (c.variants.length ? `${c.variants.length} variants` : "—") },
+    { key: "created", priority: 3, header: "Created", cell: (c) => day(c.activity[c.activity.length - 1]?.at ?? c.sendAt) },
   ]
 
-  // The column choices are the page's, not the table's, because the phone shows them inside the one
-  // door that replaces the filter row, and both must move together.
-  const [hiddenColumns, setHiddenColumns] = usePref<string[]>("campaigns.hidden", campaignColumns.filter((c) => c.optional).map((c) => c.key))
-
-  const audienceColumns: GridColumn<Audience>[] = [
-    { key: "name", header: "Audience", sortBy: (a) => a.name, className: "min-w-[11rem] whitespace-normal", cell: (a) => (
-      <div className="min-w-0">
-        <a href={href(`/ollopa/audiences/${a.id}`)} className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/audiences/${a.id}`, a.id) } }}>{a.name}</a>
-        <ActedNote business={session.business} kind="audience" id={a.id} edit={audienceEdits[a.id]} />
-      </div>
-    ) },
-    { key: "type", header: "Type", sortBy: (a) => a.type, cell: (a) => a.type },
-    { key: "mode", header: "Mode", sortBy: (a) => a.mode, cell: (a) => (
+  const audienceColumns: IndexColumn<Audience>[] = [
+    { key: "type", priority: 2, header: "Type", cell: (a) => a.type },
+    { key: "mode", priority: 2, header: "Mode", cell: (a) => (
       a.mode === "live"
         ? <span>Live · refreshes daily {a.refreshAt ? "06:00" : ""}</span>
         : <span>Frozen at {num(a.size)} on {day(a.frozenAt)}</span>
     ) },
-    { key: "size", header: "Size", sortBy: (a) => a.size, className: "tabular-nums", cell: (a) => num(a.size) },
-    { key: "net", header: "Net size", sortBy: (a) => netSize(a), className: "tabular-nums", cell: (a) => <span className="font-medium">{num(netSize(a))}</span> },
-    { key: "suppressed", header: "Suppressed", sortBy: (a) => suppressedTotal(a), cell: (a) => (
+    { key: "size", priority: 2, header: "Size", cell: (a) => num(a.size) },
+    { key: "net", priority: 1, header: "Net size", cell: (a) => <span className="font-medium">{num(netSize(a))}</span> },
+    { key: "suppressed", priority: 3, header: "Suppressed", cell: (a) => (
       <ul className="t-small">
         {suppressionCounts(a).map((s) => (
           <li key={s.key} className={s.on ? "" : "text-muted-foreground"}>
@@ -276,20 +249,14 @@ export function CampaignsPage({ session }: { session: Session }) {
         ))}
       </ul>
     ) },
-    { key: "rebuilt", header: "Last rebuilt", sortBy: (a) => a.lastRebuilt, cell: (a) => ago(a.lastRebuilt) },
-    { key: "usedBy", header: "Used by", cell: (a) => (a.usedBy.length ? a.usedBy.join(", ") : <span className="text-muted-foreground">No campaign yet</span>) },
+    { key: "rebuilt", priority: 3, header: "Last rebuilt", cell: (a) => ago(a.lastRebuilt) },
+    { key: "usedBy", priority: 3, header: "Used by", cell: (a) => (a.usedBy.length ? a.usedBy.join(", ") : <span className="text-muted-foreground">No campaign yet</span>) },
   ]
 
-  const formColumns: GridColumn<Form>[] = [
-    { key: "name", header: "Form", sortBy: (f) => f.name, className: "min-w-[11rem] whitespace-normal", cell: (f) => (
-      <div className="min-w-0">
-        <a href={href(`/ollopa/forms/${f.id}`)} className="font-medium hover:underline" onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/forms/${f.id}`, f.id) } }}>{f.name}</a>
-        <ActedNote business={session.business} kind="form" id={f.id} edit={formEdits[f.id]} />
-      </div>
-    ) },
-    { key: "status", header: "Status", sortBy: (f) => f.status, className: "min-w-28 whitespace-normal", cell: (f) => <Chip status={f.status}>{f.status}</Chip> },
-    { key: "submissions", header: "Submissions, 7 days", sortBy: (f) => f.submissions7d, className: "tabular-nums", cell: (f) => num(f.submissions7d) },
-    { key: "enrichment", header: "Enrichment spend", sortBy: (f) => f.enrichUsedToday, cell: (f) => (
+  const formColumns: IndexColumn<Form>[] = [
+    { key: "status", priority: 1, header: "Status", cell: (f) => <Chip status={f.status}>{f.status}</Chip> },
+    { key: "submissions", priority: 1, header: "Submissions, 7 days", cell: (f) => num(f.submissions7d) },
+    { key: "enrichment", priority: 2, header: "Enrichment spend", cell: (f) => (
       <div className="min-w-0 tabular-nums">
         <div
           className={f.enrichUsedToday >= f.enrichCapDaily ? "t-body font-medium" : "t-body"}
@@ -300,14 +267,14 @@ export function CampaignsPage({ session }: { session: Session }) {
         <div className="t-small text-muted-foreground">{num(f.matched)} of {num(f.submissions7d)} matched</div>
       </div>
     ) },
-    { key: "unrouted", header: "Could not route", sortBy: (f) => f.unrouted, className: "tabular-nums", cell: (f) => (
+    { key: "unrouted", priority: 1, header: "Could not route", cell: (f) => (
       f.unrouted > 0
         ? <span className="font-medium" style={ink("danger")}>{num(f.unrouted)} reached nobody</span>
         : <span className="text-muted-foreground">0</span>
     ) },
-    { key: "routes", header: "Routes to", cell: (f) => f.routesTo },
-    { key: "reports", header: "Reports to", cell: (f) => f.reportsTo },
-    { key: "last", header: "Last submission", sortBy: (f) => f.lastSubmission, cell: (f) => ago(f.lastSubmission) },
+    { key: "routes", priority: 2, header: "Routes to", cell: (f) => f.routesTo },
+    { key: "reports", priority: 3, header: "Reports to", cell: (f) => f.reportsTo },
+    { key: "last", priority: 3, header: "Last submission", cell: (f) => ago(f.lastSubmission) },
   ]
 
   /* --------------------------------------------------------------------------------- the states */
@@ -322,119 +289,24 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   /* ------------------------------------------------------------------------------- the bodies */
 
-  // One grid per view. The hook gives back both bodies the template asks for — the table for the
-  // desktop and the same rows as a divided list for 400 — so this page sets no width and draws no
-  // phone branch of its own (LAYOUTS.md §5).
-  const campaignGrid = useGrid<Campaign>({
-    id: "campaigns",
-    rows: campaigns,
-    rowKey: (c) => c.id,
-    columns: campaignColumns,
-    defaultSort: { key: "name", dir: "asc" },
-    actions: rowActions,
-    menu: rowMenu,
-    hidden: hiddenColumns,
-    onHidden: setHiddenColumns,
-    menuName: "Read it beside this table, open, duplicate, compare, export results, archive, delete draft",
-    onOpen: (c) => open(`/ollopa/campaigns/${c.id}`, c.id),
-    rowLabel: (c) => c.name,
-    cardTitle: (c) => <span className="font-medium">{c.name} · {c.kind}</span>,
-    empty: (
-      <EmptyState
-        title="No campaigns yet"
-        body={`A campaign sends one email to an audience built from your lists. Start with an audience, or create an email campaign.${
-          seed.sendPolicy.dailyCap === 0 ? ` This workspace has no marketing domain: ${admin} can add one in Settings › Email sending.` : ""
-        }`}
-        action={
-          <Actions surface="card" items={[
-            { kind: "primary", label: "Create an email campaign", onClick: () => setNewPanel(true) },
-            { kind: "secondary", label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") },
-          ]} />
-        }
-      />
-    ),
-  })
-
-  const audienceGrid = useGrid<Audience>({
-    id: "audiences",
-    rows: audiences,
-    rowKey: (a) => a.id,
-    columns: audienceColumns,
-    defaultSort: { key: "name", dir: "asc" },
-    actions: (a) => [{ label: "Rebuild now", onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } }],
-    menu: (a) => [
-      { label: "Read it beside this table", onClick: () => beside("audience", a.id) },
-      { label: "Open", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
-      { label: "Hand to sales", onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
-      { label: a.mode === "live" ? "Freeze" : "Make live", onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
-      { label: "Delete audience", destructive: true, separatorBefore: true, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
-    ],
-    menuName: "Read it beside this table, open, hand to sales, freeze, delete audience",
-    onOpen: (a) => open(`/ollopa/audiences/${a.id}`, a.id),
-    rowLabel: (a) => a.name,
-    cardTitle: (a) => <span className="font-medium">{a.name}</span>,
-  })
-
-  const formGrid = useGrid<Form>({
-    id: "forms",
-    rows: forms,
-    rowKey: (f) => f.id,
-    columns: formColumns,
-    defaultSort: { key: "submissions", dir: "desc" },
-    actions: (f) => [{ label: f.status === "Live" ? "Turn off" : "Turn on", onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } }],
-    menu: (f) => [
-      { label: "Read it beside this table", onClick: () => beside("form", f.id) },
-      { label: "Open", onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
-      { label: "Copy the form link", onClick: () => toast(`Link to ${f.name} copied.`) },
-      { label: "Export submissions", onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
-    ],
-    menuName: "Read it beside this table, open, copy the form link, export submissions",
-    onOpen: (f) => open(`/ollopa/forms/${f.id}`, f.id),
-    rowLabel: (f) => f.name,
-    cardTitle: (f) => <span className="font-medium">{f.name}</span>,
-  })
-
-  const grid = view === "campaigns" ? campaignGrid : view === "audiences" ? audienceGrid : formGrid
   const shownRows = view === "campaigns" ? campaigns.length : view === "audiences" ? audiences.length : forms.length
   const totalRows = view === "campaigns" ? rows.campaigns.length : view === "audiences" ? rows.audiences.length : rows.forms.length
 
-  /* ------------------------------------------------------------------------------ the toolbar */
+  const audienceMenu = (a: Audience) => [
+    { label: "Rebuild now", kind: "secondary" as const, onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } },
+    { label: "Read it beside this table", kind: "secondary" as const, onClick: () => beside("audience", a.id) },
+    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
+    { label: "Hand to sales", kind: "secondary" as const, onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
+    { label: a.mode === "live" ? "Freeze" : "Make live", kind: "secondary" as const, onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
+    { label: "Delete audience", kind: "destructive" as const, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
+  ]
 
-  // In the order the usage model ranks them; the template keeps five in front and puts the rest
-  // behind one door it labels itself. The model decides the order, the template decides the cut.
-  const controls: ToolbarControl[] = [
-    {
-      name: "View",
-      always: true,
-      node: (
-        // The view switch is state, not a door: three objects on one table (IA-MAP 3, P-campaigns),
-        // and it is first because it says what the rest of the toolbar is filtering.
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          aria-label="What this table shows"
-          value={view}
-          onValueChange={(v) => { if (v) setView(v as View) }}
-        >
-          {views.map((v) => (
-            <ToggleGroupItem key={v.key} value={v.key}>
-              {v.label} <span className="tabular-nums">{v.count}</span>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      ),
-    },
-    {
-      name: "Search",
-      always: true,
-      node: <Input aria-label="Search campaigns, subjects and audiences" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="h-8 w-56" />,
-    },
-    ...(view === "campaigns"
-      ? [
-        ...[...filterControls].sort((a, b) => d.weekly(b.id) - d.weekly(a.id)).map((f) => ({ name: f.label, node: <Filter f={f} /> })),
-        { name: "Columns", always: true, node: grid.columns },
-      ]
-      : []),
+  const formMenu = (f: Form) => [
+    { label: f.status === "Live" ? "Turn off" : "Turn on", kind: "secondary" as const, onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } },
+    { label: "Read it beside this table", kind: "secondary" as const, onClick: () => beside("form", f.id) },
+    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
+    { label: "Copy the form link", kind: "secondary" as const, onClick: () => toast(`Link to ${f.name} copied.`) },
+    { label: "Export submissions", kind: "secondary" as const, onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
   ]
 
   /* ------------------------------------------------------------------------------- the policy */
@@ -471,30 +343,123 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   /* -------------------------------------------------------------------------------- the render */
 
+  /** The view switch: three objects on one table, in the one named slot every index uses. */
+  const viewSwitch = (
+    <ToggleGroup
+      type="single" variant="outline" aria-label="What this table shows"
+      value={view} onValueChange={(v) => { if (v) setView(v as View) }}
+    >
+      {views.map((v) => (
+        <ToggleGroupItem key={v.key} value={v.key}>
+          {v.label} <span className="tabular-nums">{v.count}</span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  )
+
+  const shared = {
+    family: FAMILY,
+    title: "Campaigns",
+    count: totalRows,
+    description: "One send to an audience, or a lifecycle campaign that runs on a trigger.",
+    actions: [
+      { kind: "primary" as const, label: "New campaign", onClick: () => setNewPanel(true) },
+      ...(view === "audiences" ? [{ kind: "secondary" as const, label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") }] : []),
+      ...(view === "forms" ? [{ kind: "secondary" as const, label: "New form", onClick: () => toast("New form: name it, add the fields, and choose where submissions go.") }] : []),
+    ],
+    slot: viewSwitch,
+    above: <SummaryStrip figures={figures} />,
+  }
+
+  // One row: search, the filters this seat sets most, the door, the count. Everything the usage
+  // model ranks below the first three falls into the door with the columns.
+  const ranked = [...filterControls].sort((a, b) => d.weekly(b.id) - d.weekly(a.id))
+  const filters = nothing ? undefined : {
+    search: { value: q, onChange: setQ, placeholder: "Search campaigns, subjects and audiences" },
+    controls: view === "campaigns"
+      ? ranked.slice(0, 3).map((f) => ({ name: f.label, value: f.value === "all" ? undefined : f.value, onClear: () => f.set("all"), node: <Filter f={f} /> }))
+      : [],
+    behind: view === "campaigns"
+      ? ranked.slice(3).map((f) => ({ name: f.label, group: "filters" as const, value: f.value === "all" ? undefined : f.value, onClear: () => f.set("all"), node: <Filter f={f} /> }))
+      : [],
+    count: { shown: shownRows, total: totalRows, noun: view },
+    onClearAll: () => { setQ(""); for (const f of filterControls) f.set("all") },
+    doorId: `campaigns.filters.${view}`,
+  }
+
   return (
     <>
-      <IndexPage
-        family={FAMILY}
-        title="Campaigns"
-        count={totalRows}
-        description="One send to an audience, or a lifecycle campaign that runs on a trigger."
-        actions={[
-          { kind: "primary", label: "New campaign", onClick: () => setNewPanel(true) },
-          ...(view === "audiences" ? [{ kind: "secondary" as const, label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") }] : []),
-          ...(view === "forms" ? [{ kind: "secondary" as const, label: "New form", onClick: () => toast("New form: name it, add the fields, and choose where submissions go.") }] : []),
-        ]}
-        above={<SummaryStrip figures={figures} />}
-        controls={nothing ? undefined : controls}
-        shown={shownRows === totalRows ? num(totalRows) : `${num(shownRows)} shown of ${num(totalRows)}`}
-        table={grid.table}
-        rows={grid.rows}
-      >
-        {!isAdmin && (
-          <p className="t-small text-muted-foreground">
-            Owners and sending policy are the admin's: {admin} can change an owner or the bounce guard.
-          </p>
-        )}
-      </IndexPage>
+      {view === "campaigns" && (
+        <IndexPage
+          {...shared}
+          filters={filters}
+          columns={campaignColumns}
+          rows={campaigns}
+          rowKey={(c) => c.id}
+          rowProps={(c) => ({ "data-item": c.id, "data-item-label": c.name })}
+          name={(c) => (
+            <>
+              <a href={href(`/ollopa/campaigns/${c.id}`)} className="min-w-0 truncate font-medium hover:underline"
+                onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/campaigns/${c.id}`, c.id) } }}>{c.name}</a>
+              <span className="t-small shrink-0 text-muted-foreground">{c.kind}</span>
+              <ActedNote business={session.business} kind="campaign" id={c.id} edit={campaignEdits[c.id]} />
+            </>
+          )}
+          menu={(c) => <Actions surface="row" layout="menu" menuLabel={c.name} items={[...rowActions(c).map((a) => ({ ...a, kind: "secondary" as const })), ...rowMenu(c)]} />}
+          empty={
+            <EmptyState
+              title="No campaigns yet"
+              body={`A campaign sends one email to an audience built from your lists. Start with an audience, or create an email campaign.${
+                seed.sendPolicy.dailyCap === 0 ? ` This workspace has no marketing domain: ${admin} can add one in Settings › Email sending.` : ""
+              }`}
+              action={
+                <Actions surface="card" items={[
+                  { kind: "primary", label: "Create an email campaign", onClick: () => setNewPanel(true) },
+                  { kind: "secondary", label: "New audience", onClick: () => toast("New audience: name it, pick lists, add segment filters, choose live or frozen.") },
+                ]} />
+              }
+            />
+          }
+        />
+      )}
+
+      {view === "audiences" && (
+        <IndexPage
+          {...shared}
+          filters={filters}
+          columns={audienceColumns}
+          rows={audiences}
+          rowKey={(a) => a.id}
+          rowProps={(a) => ({ "data-item": a.id, "data-item-label": a.name })}
+          name={(a) => (
+            <span className="min-w-0">
+              <a href={href(`/ollopa/audiences/${a.id}`)} className="font-medium hover:underline"
+                onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/audiences/${a.id}`, a.id) } }}>{a.name}</a>
+              <ActedNote business={session.business} kind="audience" id={a.id} edit={audienceEdits[a.id]} />
+            </span>
+          )}
+          menu={(a) => <Actions surface="row" layout="menu" menuLabel={a.name} items={audienceMenu(a)} />}
+        />
+      )}
+
+      {view === "forms" && (
+        <IndexPage
+          {...shared}
+          filters={filters}
+          columns={formColumns}
+          rows={forms}
+          rowKey={(f) => f.id}
+          rowProps={(f) => ({ "data-item": f.id, "data-item-label": f.name })}
+          name={(f) => (
+            <span className="min-w-0">
+              <a href={href(`/ollopa/forms/${f.id}`)} className="font-medium hover:underline"
+                onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/forms/${f.id}`, f.id) } }}>{f.name}</a>
+              <ActedNote business={session.business} kind="form" id={f.id} edit={formEdits[f.id]} />
+            </span>
+          )}
+          menu={(f) => <Actions surface="row" layout="menu" menuLabel={f.name} items={formMenu(f)} />}
+        />
+      )}
 
       {/* ------------------------------------------------------------------ new campaign: which kind */}
       <Panel id="campaign-new" title="New campaign" open={newPanel} onOpenChange={setNewPanel}>

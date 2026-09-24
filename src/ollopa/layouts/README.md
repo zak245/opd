@@ -364,6 +364,12 @@ order; the toolbar is handed in whole from the filters part.
   slot={<ViewSwitch />} />
 ```
 
+`columns` carry the sorting: give a column a `sort` comparator (and the name column a `nameSort`)
+and pass `sort`/`onSort`, and the header becomes a button showing the direction. Sorting never goes
+in the filter door. `acts` is the row's one visible act, drawn at rest before the `menu`; `subRow`
+returns content while the page has that row open and the template draws it as a full-width row
+under it. `BoardPage` takes the same `toolbar` node, so a board's row is an index's row.
+
 **The theme decides the look.** No page and no part writes `rounded-*`, `shadow-*` or a colour:
 corners are square, a card is paper lifted off the page ground by the library's own shadow, and an
 overlay sits above the card. There are no levels beyond those two.

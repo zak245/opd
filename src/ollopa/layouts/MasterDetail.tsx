@@ -147,6 +147,12 @@ export interface BoardStage {
 
 export interface BoardPageProps extends PageHeaderProps {
   stages: BoardStage[]
+  /**
+   * The filtering pattern, built by the page with `FilterBar` and handed over whole — the same
+   * prop `IndexPage` takes, so a board's row is the index's row: search, the seat's filters, the
+   * one door, the count at the trailing edge. It wins over `controls`.
+   */
+  toolbar?: ReactNode
   /** Search, filters, views — through the same Toolbar an index uses, so a board gets the phone
    *  rule too: one control in front and one door for the rest. */
   controls?: ToolbarControl[]
@@ -166,7 +172,7 @@ export interface BoardPageProps extends PageHeaderProps {
  * At 400 it shows one stage at a time with a switcher — the behaviour no design system read for
  * memo 30 documents, so it is written down here.
  */
-export function BoardPage({ stages, controls, shown: shownCount, above, columnWidth = "min-w-40 max-w-[22rem] flex-1", ...header }: BoardPageProps) {
+export function BoardPage({ stages, toolbar, controls, shown: shownCount, above, columnWidth = "min-w-40 max-w-[22rem] flex-1", ...header }: BoardPageProps) {
   const phone = usePhone()
   const [only, setOnly] = useState(stages[0]?.id ?? "")
   useEffect(() => {
@@ -181,7 +187,7 @@ export function BoardPage({ stages, controls, shown: shownCount, above, columnWi
           wider than a 400 screen and pushes the page's primary act off it. */}
       <div className="grid gap-2 px-4 pt-4 [grid-template-columns:minmax(0,1fr)] sm:px-6">
         <PageHeader {...header} />
-        {controls?.length ? <Toolbar controls={controls} count={shownCount} /> : null}
+        {toolbar ?? (controls?.length ? <Toolbar controls={controls} count={shownCount} /> : null)}
         {above}
       </div>
 
