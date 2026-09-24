@@ -95,7 +95,7 @@
   --sidebar-accent-foreground: oklch(0.47 0.17 264);
   --sidebar-border: oklch(0.88 0.008 264);
   --sidebar-ring: oklch(0.55 0.16 264);
-  --radius: 0rem;
+  --radius: 0.25rem;
 }
 
 .dark {
@@ -282,8 +282,8 @@
   --color-paused: var(--paused);
   --color-paused-tint: var(--paused-tint);
   --color-paused-ink: var(--paused-ink);
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
 }
