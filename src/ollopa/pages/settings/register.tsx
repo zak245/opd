@@ -18,6 +18,10 @@ import { RequestRecord } from "./RequestRecord"
 import { settingsFor } from "./derived"
 import { Row, personalRows, rowsFor, type RowCtx, type SettingRow } from "./rows"
 import { SaveBar, SettingsState, toast } from "./state"
+import { Fields } from "../../layouts"
+import { Chip } from "../../ui/Identity"
+import { day, money, plural } from "./format"
+import { STATE_LABEL, STATE_STATUS, waitingOf } from "./RequestsPage"
 
 const areaNodes: Record<string, PageComponent> = Object.fromEntries(
   Object.keys(AREA_BY_NODE).map((node) => [node, ((props) => <SettingsPage session={props.session} node={node} />) as PageComponent]),
@@ -110,4 +114,36 @@ SettingBeside.head = ({ session, id }) => {
   return { name: row?.label ?? id, context: `${areaOf(id)} · Settings`, route: routeFor(id) }
 }
 
-export const besides: Record<string, BesideComponent> = { setting: SettingBeside }
+/* ------------------------------------------------------------------- one request, read beside */
+
+/**
+ * A request read beside the queue: what was asked, how long it has waited, where it stands and who
+ * decides. The acts that change somebody else's week stay on the record page, which is what
+ * "Open the page" is for (BUILD-CHAINS.md: beside, not instead).
+ */
+const RequestBeside: BesideComponent = ({ session, id }) => {
+  const seed = seedFor(session.business)
+  const target = seed.workspace.answerTarget.businessDays
+  const r = seed.requests.find((x) => x.id === id)
+  if (!r) return <p className="text-muted-foreground">That request is not here.</p>
+  const w = waitingOf(r, target)
+  return (
+    <Fields fields={[
+      { id: "waiting", label: "Waiting", value: w.past > 0 ? <Chip status="overdue">{w.text}</Chip> : w.text },
+      { id: "state", label: "State", value: <Chip status={STATE_STATUS[r.state]}>{STATE_LABEL[r.state]}</Chip> },
+      { id: "asked", label: "Asked by", value: r.requester.user, note: `Raised ${day(r.raisedOn)}` },
+      { id: "decides", label: "Decides", value: r.decisionOwner },
+      { id: "affects", label: "Affects", value: `${plural(r.affected.count, "person", "people")}` },
+      { id: "kind", label: "Kind", value: r.kind === "upgrade" ? "Locked feature" : "Workspace change" },
+      ...(r.upgrade ? [{ id: "cost", label: "Cost", value: `${money(r.upgrade.monthlyTotal)} a month`, note: r.upgrade.plan }] : []),
+      { id: "touches", label: "What it touches", value: r.touches.map((t) => t.name).join(" · ") || "—" },
+    ]} />
+  )
+}
+
+RequestBeside.head = ({ session, id }) => {
+  const r = seedFor(session.business).requests.find((x) => x.id === id)
+  return { name: r?.outcome ?? id, context: "Requests", route: `/ollopa/requests/${id}` }
+}
+
+export const besides: Record<string, BesideComponent> = { setting: SettingBeside, request: RequestBeside }

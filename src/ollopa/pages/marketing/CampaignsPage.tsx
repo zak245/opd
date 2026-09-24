@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { href, useRoute } from "@/app/router"
-import { openBeside } from "../../beside"
 import { follow, type Origin } from "../../chain"
 import { useEdits } from "../../edits"
 import { Actions } from "../../ui/Actions"
@@ -177,12 +176,9 @@ export function CampaignsPage({ session }: { session: Session }) {
     }
   }
 
-  /** A look at one row beside the table, without leaving the table: the pane, not a second page. */
-  const beside = (kind: string, id: string) => openBeside({ kind, id, opener: document.activeElement as HTMLElement | null })
 
   const rowMenu = (c: Campaign) => [
-    { label: "Read it beside this table", kind: "secondary" as const, onClick: () => beside("campaign", c.id) },
-    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) },
+    { label: "Open the page", kind: "secondary" as const, onClick: () => open(`/ollopa/campaigns/${c.id}`, c.id) },
     { label: "Duplicate", kind: "secondary" as const, onClick: () => duplicate(c) },
     { label: "Compare with…", kind: "secondary" as const, onClick: () => toast(`Pick a second campaign to compare with ${c.name}.`) },
     { label: "Export results", kind: "secondary" as const, onClick: () => toast(`${c.name}: results exported as CSV, with the filters you are looking at.`) },
@@ -294,8 +290,7 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   const audienceMenu = (a: Audience) => [
     { label: "Rebuild now", kind: "secondary" as const, onClick: () => { patchRow(session.business, "audiences", a.id, { lastRebuilt: TODAY }); toast(`${a.name} rebuilt · ${num(netSize(a))} after suppressions.`) } },
-    { label: "Read it beside this table", kind: "secondary" as const, onClick: () => beside("audience", a.id) },
-    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
+    { label: "Open the page", kind: "secondary" as const, onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
     { label: "Hand to sales", kind: "secondary" as const, onClick: () => open(`/ollopa/audiences/${a.id}`, a.id) },
     { label: a.mode === "live" ? "Freeze" : "Make live", kind: "secondary" as const, onClick: () => { patchRow(session.business, "audiences", a.id, a.mode === "live" ? { mode: "frozen", frozenAt: TODAY, refreshAt: null } : { mode: "live", frozenAt: null, refreshAt: TODAY }); toast(`${a.name} is now ${a.mode === "live" ? "frozen" : "live"}.`) } },
     { label: "Delete audience", kind: "destructive" as const, onClick: () => toast(a.usedBy.length ? `${a.name} cannot be deleted: ${a.usedBy[0]} uses it.` : `${a.name} deleted.`) },
@@ -303,8 +298,7 @@ export function CampaignsPage({ session }: { session: Session }) {
 
   const formMenu = (f: Form) => [
     { label: f.status === "Live" ? "Turn off" : "Turn on", kind: "secondary" as const, onClick: () => { patchRow(session.business, "forms", f.id, { status: f.status === "Live" ? "Off" : "Live" }); toast(`${f.name} is now ${f.status === "Live" ? "off — submissions stop" : "live — submissions are accepted and routed"}.`) } },
-    { label: "Read it beside this table", kind: "secondary" as const, onClick: () => beside("form", f.id) },
-    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
+    { label: "Open the page", kind: "secondary" as const, onClick: () => open(`/ollopa/forms/${f.id}`, f.id) },
     { label: "Copy the form link", kind: "secondary" as const, onClick: () => toast(`Link to ${f.name} copied.`) },
     { label: "Export submissions", kind: "secondary" as const, onClick: () => toast(`${f.name}: submissions exported as CSV.`) },
   ]
@@ -393,14 +387,14 @@ export function CampaignsPage({ session }: { session: Session }) {
         <IndexPage
           {...shared}
           filters={filters}
+          beside={(c) => ({ kind: "campaign", id: c.id })}
           columns={campaignColumns}
           rows={campaigns}
           rowKey={(c) => c.id}
           rowProps={(c) => ({ "data-item": c.id, "data-item-label": c.name })}
           name={(c) => (
             <>
-              <a href={href(`/ollopa/campaigns/${c.id}`)} className="min-w-0 truncate font-medium hover:underline"
-                onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/campaigns/${c.id}`, c.id) } }}>{c.name}</a>
+              <a href={href(`/ollopa/campaigns/${c.id}`)} className="min-w-0 truncate font-medium hover:underline">{c.name}</a>
               <span className="t-small shrink-0 text-muted-foreground">{c.kind}</span>
               <ActedNote business={session.business} kind="campaign" id={c.id} edit={campaignEdits[c.id]} />
             </>
@@ -427,6 +421,7 @@ export function CampaignsPage({ session }: { session: Session }) {
         <IndexPage
           {...shared}
           filters={filters}
+          beside={(a) => ({ kind: "audience", id: a.id })}
           columns={audienceColumns}
           rows={audiences}
           rowKey={(a) => a.id}
@@ -446,6 +441,7 @@ export function CampaignsPage({ session }: { session: Session }) {
         <IndexPage
           {...shared}
           filters={filters}
+          beside={(f) => ({ kind: "form", id: f.id })}
           columns={formColumns}
           rows={forms}
           rowKey={(f) => f.id}

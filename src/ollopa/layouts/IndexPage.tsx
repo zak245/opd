@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
+import { openBeside, type BesideTarget } from "../beside"
 import { PageScroll } from "./frame"
 import { MetaLine } from "./MetaLine"
 import { PageFooter, PageHeader, Toolbar, type PageHeaderProps, type ToolbarControl } from "./parts"
@@ -62,6 +63,19 @@ export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
   columns: IndexColumn<T>[]
   rows: T[]
   rowKey: (row: T) => string
+  /**
+   * **What a click on the row's name opens: the pane beside the page, not the page.**
+   *
+   * Give the object this row is — `(row) => ({ kind: "list", id: row.id })` — and the template
+   * does the rest: a plain left click on the name opens it beside, with the ids of every row in
+   * the order shown and this row's place among them, so `[` and `]` walk the list. The name keeps
+   * its real `href`, so copy-link, middle-click and ⌘-click still go to the page, and a modified
+   * click is left alone. Opening the whole page is the deliberate step: it stays on the row's "…".
+   *
+   * Return `null` for a row that has no pane. Without this prop the name behaves as the page drew
+   * it (BUILD-CHAINS.md: beside, not instead).
+   */
+  beside?: (row: T) => BesideTarget | null
   /** The row's name, as a link. Its chips sit inline beside it. */
   name: (row: T) => ReactNode
   /** What the name column is called. The page's own title, unless it reads oddly in a header. */
@@ -114,7 +128,7 @@ export interface IndexPageProps<T> extends Omit<PageHeaderProps, "className"> {
 
 export function IndexPage<T>({
   filters, toolbar,
-  columns, rows: given, rowKey, name, nameHeader, acts, menu, subRow, rowProps, nameSort, sort, onSort,
+  columns, rows: given, rowKey, name, nameHeader, beside, acts, menu, subRow, rowProps, nameSort, sort, onSort,
   bulk, pager, empty, slot, above, ...header
 }: IndexPageProps<T>) {
   // The row's name is drawn outside this set, so every column in it may fold into the meta line.
@@ -147,7 +161,28 @@ export function IndexPage<T>({
   const allOn = rows.length > 0 && rows.every((r) => bulk?.selected.includes(rowKey(r)))
   const someOn = (bulk?.selected.length ?? 0) > 0
 
-  const row = (r: T) => {
+  // The ids in the order shown, worked out once per render: the pane is handed the list it was
+  // opened from, which is what `[` and `]` walk.
+  const ids = useMemo(() => rows.map(rowKey), [rows, rowKey])
+
+  /**
+   * A plain click on the name opens the pane. It is caught here, on the way down, so the page's own
+   * link handler never runs: no page can make its name open the whole record by mistake.
+   */
+  const interceptName = (r: T, index: number) => (e: React.MouseEvent<HTMLElement>) => {
+    if (!beside) return
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    // A click on a chip beside the name is not a click on the name.
+    const link = (e.target as HTMLElement).closest("a")
+    if (!link) return
+    const target = beside(r)
+    if (!target) return
+    e.preventDefault()
+    e.stopPropagation()
+    openBeside({ ...target, list: { ids, index }, opener: link })
+  }
+
+  const row = (r: T, index: number) => {
     const id = rowKey(r)
     return (
       <TableRow key={id} {...(rowProps?.(r) ?? {})}>
@@ -164,7 +199,9 @@ export function IndexPage<T>({
             so a long meta line truncates inside it instead of pushing the table sideways; the
             minimum is what keeps the name readable — under it, a column folds instead. */}
         <TableCell className="t-body w-full max-w-0 min-w-[12rem] py-2">
-          <span className="flex min-w-0 flex-wrap items-center gap-2">{name(r)}</span>
+          <span className="flex min-w-0 flex-wrap items-center gap-2" onClickCapture={interceptName(r, index)}>
+            {name(r)}
+          </span>
           <MetaLine values={fit.folded.map((c) => ({ key: c.key, label: c.header, value: c.cell(r) }))} />
         </TableCell>
         {fit.shown.map((c) => (
@@ -183,12 +220,12 @@ export function IndexPage<T>({
   }
 
   /** The row, and under it the detail the page has opened for that row. */
-  const rowWithDetail = (r: T) => {
+  const rowWithDetail = (r: T, index: number) => {
     const under = subRow?.(r)
-    if (!under) return row(r)
+    if (!under) return row(r, index)
     return (
       <Fragment key={`${rowKey(r)}-group`}>
-        {row(r)}
+        {row(r, index)}
         <TableRow data-sub-row={rowKey(r)} className="hover:bg-transparent">
           <TableCell colSpan={span} className="bg-muted/30 py-3">{under}</TableCell>
         </TableRow>

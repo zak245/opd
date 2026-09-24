@@ -152,7 +152,7 @@ export function SequencesPage({ session }: { session: Session }) {
   ]
 
   const menu = (s: Sequence) => [
-    { label: "Open", onClick: () => open(s) },
+    { label: "Open the page", onClick: () => open(s) },
     { label: "Duplicate", onClick: () => duplicate(s) },
     {
       label: `Archive · ${n(s.active + s.paused)} people`,
@@ -180,7 +180,7 @@ export function SequencesPage({ session }: { session: Session }) {
   const rowActions = (s: Sequence) => [
     { label: s.guardState === "auto-paused" ? "Review and resume" : s.status === "Active" ? "Pause" : "Resume", onClick: () => pauseResume(s) },
     ...(duplicateIsVisible ? [{ label: "Duplicate", onClick: () => duplicate(s) }] : []),
-    { label: "Open", onClick: () => open(s) },
+    { label: "Open the page", onClick: () => open(s) },
   ]
 
   /** The one bar that replaces the pager while rows are selected. */
@@ -287,6 +287,8 @@ export function SequencesPage({ session }: { session: Session }) {
       columns={columns}
       rows={rows}
       rowKey={(s) => s.id}
+      // Clicking the name opens the sequence beside the page; the page itself is on the "…".
+      beside={(s) => ({ kind: "sequence", id: s.id })}
       nameHeader="Sequence"
       nameSort={(a, c) => a.name.localeCompare(c.name)}
       sort={sort}

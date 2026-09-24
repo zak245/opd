@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { href, navigate, useRoute } from "@/app/router"
 import { ruleOn, useLesson } from "@/learn/context"
-import { QuickLook } from "../../templates/QuickLook"
 import { Actions } from "../../ui/Actions"
 import { LegacyIndexPage as IndexPage, type ToolbarControl } from "../../layouts"
 import { openBeside } from "../../beside"
@@ -195,7 +194,6 @@ export function PeoplePage({ session }: { session: Session }) {
   const [selected, setSelected] = useState<string[]>([])
   const [allMatching, setAllMatching] = useState(false)
   const [perCompany, setPerCompany] = useState<number | null>(null)
-  const [glancing, setGlancing] = useState<PersonRow | null>(null)
   const [enrichFor, setEnrichFor] = useState<PersonRow[] | null>(null)
   const [lastChip, setLastChip] = useState<string | null>(null)
   const [undo, setUndo] = useState<{ text: string; run: () => void } | null>(null)
@@ -218,6 +216,20 @@ export function PeoplePage({ session }: { session: Session }) {
    * Leaving this table for a record: the row is the anchor, so the crumb back lands on it, lit and
    * focused, with the search, the filters, the scroll and the selection exactly as they were.
    */
+  /**
+   * **Beside, not instead** (BUILD-CHAINS.md): clicking a person's name opens them in the pane
+   * beside this page, with the rows in the order shown so `[` and `]` walk the list. It is the
+   * shared store, the same one every other page opens, not a drawer of this page's own — the row,
+   * the pane and the expand control have to be one mechanism or they drift.
+   */
+  const glance = (p: PersonRow, index: number, opener?: HTMLElement | null) =>
+    openBeside({
+      kind: "person",
+      id: p.id,
+      list: { ids: page.map((x) => x.id), index },
+      opener: opener ?? (document.activeElement as HTMLElement | null),
+    })
+
   const leaveFor = (to: string, anchor: string) =>
     follow(to, { route: route.raw, title: "People", anchor })
 
@@ -581,7 +593,7 @@ export function PeoplePage({ session }: { session: Session }) {
     }
     if (k === "ArrowDown" || k === "j") { e.preventDefault(); focusRow(i + 1); return }
     if (k === "ArrowUp" || k === "k") { e.preventDefault(); focusRow(i - 1); return }
-    if (k === "Enter" || k === " ") { e.preventDefault(); setGlancing(p); return }
+    if (k === "Enter" || k === " ") { e.preventDefault(); glance(p, i); return }
     if (k === "o") { e.preventDefault(); leaveFor(`/ollopa/people/${p.id}`, p.id); return }
     if (k === "x") { e.preventDefault(); toggleRow(p, i, e.shiftKey); return }
     if (k === "t") {
@@ -1027,7 +1039,7 @@ export function PeoplePage({ session }: { session: Session }) {
             aria-label={density === "Compact" ? `${p.name}, ${p.title}, ${p.company}` : undefined}
             onFocus={() => setFocused(i)}
             onKeyDown={(e) => onRowKey(e, p, i)}
-            onClick={(e) => { if ((e.target as HTMLElement).closest("a,button,input,[role=menuitem]")) return; rowRefs.current[i]?.focus(); setGlancing(p) }}
+            onClick={(e) => { if ((e.target as HTMLElement).closest("a,button,input,[role=menuitem]")) return; rowRefs.current[i]?.focus(); glance(p, i) }}
             /* The row you are on is the library's own hover and its own selected state; the
                page adds no background of its own. */
             data-state={selected.includes(p.id) || allMatching ? "selected" : undefined}
@@ -1042,7 +1054,16 @@ export function PeoplePage({ session }: { session: Session }) {
               />
             </TableCell>
             {cols.map((c) => (
-              <TableCell key={c.id} className={cn("px-2 align-middle", pad, c.className)}>
+              <TableCell
+                key={c.id}
+                className={cn(
+                  "px-2 align-middle", pad, c.className,
+                  // The name cell takes whatever the other columns leave and nothing more, so the
+                  // meta line under it truncates inside the card instead of pushing the table
+                  // sideways when the pane takes half the width.
+                  c.key === "name" && "w-full max-w-0 min-w-[11rem]",
+                )}
+              >
                 <div className={c.width}>
                 {c.key === "name" ? (
                   <span className="flex min-w-0 items-center gap-2">
@@ -1052,10 +1073,10 @@ export function PeoplePage({ session }: { session: Session }) {
                       onClick={(e) => {
                         e.stopPropagation()
                         // A real href, so copy-link and open-in-a-new-tab still work; a plain
-                        // click is a step in a chain, so it goes through the trail instead.
+                        // click opens the person beside the page, which is the default step.
                         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
                         e.preventDefault()
-                        leaveFor(`/ollopa/people/${p.id}`, p.id)
+                        glance(p, i, e.currentTarget)
                       }}
                     >
                       {c.cell(p)}
@@ -1100,7 +1121,7 @@ export function PeoplePage({ session }: { session: Session }) {
                     </Button>
                   ))}
                 </div>
-                <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
+                <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => glance(p, i)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
               </div>
             </TableCell>
           </TableRow>
@@ -1130,7 +1151,7 @@ export function PeoplePage({ session }: { session: Session }) {
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
             e.preventDefault()
-            leaveFor(`/ollopa/people/${p.id}`, p.id)
+            glance(p, i, e.currentTarget)
           }}
         >{p.name}</a>
         <div className="text-xs text-muted-foreground">{p.title} · {p.company}</div>
@@ -1145,7 +1166,7 @@ export function PeoplePage({ session }: { session: Session }) {
           )}
         </div>
             </div>
-            <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => setGlancing(p)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
+            <RowMenu p={p} acts={usable} named={rDoors} shortcuts={rExpert} onGlance={() => glance(p, i)} onOpen={() => leaveFor(`/ollopa/people/${p.id}`, p.id)} />
           </div>
         </li>
       ))}
@@ -1256,22 +1277,6 @@ export function PeoplePage({ session }: { session: Session }) {
         </Alert>
       )}
       </IndexPage>
-
-      {glancing && (
-        <QuickLook
-          open
-          /* Closing the drawer puts the keyboard back where it was: on the row it was opened from. */
-          onOpenChange={(o) => { if (!o) { setGlancing(null); window.setTimeout(() => (document.querySelector(`tr[data-row="${focused}"]`) as HTMLElement | null)?.focus(), 220) } }}
-          title={glancing.name}
-          /* The seat's own first level, from the usage model — the same call the record header and
-             the pane beside another page make, so the three cannot drift. */
-          fields={glanceFields(glancing, seed, d.level).map((f) => ({ label: f.label, value: f.label === "Stage" ? stageOf(glancing) : f.value }))}
-          editable={{ label: "Stage", value: stageOf(glancing), options: [...STAGES], onChange: (v) => moveStage(glancing, v as ContactStage) }}
-          /* "Open" leaves for the record and hands the trail this row, so the crumb back lands on
-             it, lit and focused, with the drawer closed and everything else as it was. */
-          onOpen={() => { const id = glancing.id; setGlancing(null); leaveFor(`/ollopa/people/${id}`, id) }}
-        />
-      )}
 
       {enrichFor && (
         <EnrichPanel

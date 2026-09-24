@@ -148,7 +148,7 @@ export function RequestsPage({ session }: { session: Session }) {
   const page = shown.slice(0, limit)
 
   const rowMenu = (r: Request) => [
-    { label: "Open", kind: "secondary" as const, onClick: () => navigate(`/ollopa/requests/${r.id}`) },
+    { label: "Open the page", kind: "secondary" as const, onClick: () => navigate(`/ollopa/requests/${r.id}`) },
     { label: r.state === "captured" ? "Approve to investigate" : "Hand over", kind: "secondary" as const,
       onClick: () => toast(r.state === "captured"
         ? `Approved to investigate. Nothing changes for anybody yet. ${r.requester.user} is told where they asked.`
@@ -223,12 +223,13 @@ export function RequestsPage({ session }: { session: Session }) {
           onClearAll: () => { setQ(""); setChip("all"); setRequester("all"); setOwner("all"); setTouches("all"); setKind("all"); setArchived("Open requests") },
           doorId: "requests.filters",
         }}
+        beside={(r) => ({ kind: "request", id: r.id })}
         columns={columns}
         rows={page}
         rowKey={(r) => r.id}
         rowProps={(r) => ({ "data-item": r.id, "data-item-label": r.outcome })}
         name={(r) => (
-          <a className="underline-offset-4 hover:underline" title={r.outcome} href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
+          <a className="min-w-0 truncate underline-offset-4 hover:underline" title={r.outcome} href={href(`/ollopa/requests/${r.id}`)}>{r.outcome}</a>
         )}
         menu={(r) => <Actions surface="row" layout="menu" menuLabel={r.outcome} items={rowMenu(r)} />}
         pager={shown.length > limit ? (

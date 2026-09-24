@@ -49,6 +49,18 @@ for (const route of ["sequences", "lists", "templates"]) {
     return r?.getAttribute("data-row-key") ?? el?.textContent.trim()
   })
   await wait(900)
+  // The name opens the object beside the page; the record is the deliberate step after it, taken
+  // from the pane's own "Open the page" (BUILD-CHAINS.md: beside, not instead).
+  const pane = await page.evaluate(() => {
+    const p = document.querySelector('aside[aria-label*=" beside "]')
+    return p ? (p.innerText || "").replace(/\s+/g, " ").trim().slice(0, 34) : "(no pane)"
+  })
+  await page.evaluate(() => {
+    const p = document.querySelector('aside[aria-label*=" beside "]')
+    const go = Array.from(p?.querySelectorAll("a,button") ?? []).find((x) => /open the page/i.test(x.textContent || ""))
+    go?.click()
+  })
+  await wait(900)
   const crumb = await page.evaluate(() => {
     const nav = document.querySelector('nav[aria-label="Your path"]')
     if (!nav) return "(no crumb)"
@@ -63,7 +75,7 @@ for (const route of ["sequences", "lists", "templates"]) {
   await page.keyboard.press("Enter")
   await wait(800)
   const lit = await page.evaluate(() => document.querySelector(".ollopa-returned")?.innerText.replace(/\n/g, " ").slice(0, 44) ?? "(nothing lit)")
-  console.log(`${route}: h1="${h1}" · ${names} · opened ${key} · crumb "${crumb}" · back lit "${lit}"`)
+  console.log(`${route}: h1="${h1}" · ${names} · opened ${key} · beside "${pane}" · crumb "${crumb}" · back lit "${lit}"`)
   await page.screenshot({ path: `${dir}/${route}-back-${w}.png` })
 }
 

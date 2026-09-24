@@ -196,7 +196,7 @@ export function WorkflowsPage({ session }: { session: Session }) {
         ? `${w.name} stops enrolling. The ${num(breachedRows(w, runs).length + (w.sla?.running ?? 0))} people already running finish their steps.`
         : `${w.name} is on. It enrols up to ${num(w.limits.perDay)} people a day; the rest wait.`)
     } },
-    { label: "Open", kind: "secondary" as const, onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
+    { label: "Open the page", kind: "secondary" as const, onClick: () => open(`/ollopa/workflows/${w.id}`, w.id) },
     { label: "Test on one record", kind: "secondary" as const, onClick: () => open(`/ollopa/workflows/${w.id}?open=test`, w.id) },
     { label: "Duplicate", kind: "secondary" as const, onClick: () => {
       const copy: Workflow = { ...w, id: `${w.id}-copy-${Date.now().toString(36)}`, name: `${w.name} (copy)`, status: "off", statusChangedBy: session.user, statusChangedOn: TODAY, ceiling: { ...w.ceiling, spentToday: 0 }, sla: w.sla ? { ...w.sla, running: 0, breachedToday: 0 } : null }
@@ -253,14 +253,14 @@ export function WorkflowsPage({ session }: { session: Session }) {
         onClearAll: () => { setQ(""); setStatus("all"); setTrigger("all"); setOwner("all"); setFolder("all"); setArchived("all") },
         doorId: "workflows.filters",
       }}
+      beside={(w) => ({ kind: "workflow", id: w.id })}
       columns={columns}
       rows={filtered}
       rowKey={(w) => w.id}
       rowProps={(w) => ({ "data-item": w.id, "data-item-label": w.name })}
       name={(w) => (
         <>
-          <a href={href(`/ollopa/workflows/${w.id}`)} className="min-w-0 truncate font-medium hover:underline"
-            onClick={(ev) => { ev.stopPropagation(); if (!ev.metaKey && !ev.ctrlKey) { ev.preventDefault(); open(`/ollopa/workflows/${w.id}`, w.id) } }}>{w.name}</a>
+          <a href={href(`/ollopa/workflows/${w.id}`)} className="min-w-0 truncate font-medium hover:underline">{w.name}</a>
           <span className="t-small shrink-0 text-muted-foreground">When {w.trigger}{w.folder ? ` · ${w.folder}` : ""}</span>
           <ActedNote business={session.business} kind="workflow" id={w.id} edit={workflowEdits[w.id]} />
         </>

@@ -133,6 +133,18 @@ await page.evaluate(() => {
   tr.querySelector("a")?.click()
 })
 await wait(800)
+// The name opens the person beside the page — that is the default step now. The record itself is
+// the deliberate one, and the pane's own "Open the page" is the way to it.
+console.log("pane:", await page.evaluate(() => {
+  const p = document.querySelector('aside[aria-label*=" beside "]')
+  return p ? (p.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40) : "(no pane)"
+}))
+await page.evaluate(() => {
+  const p = document.querySelector('aside[aria-label*=" beside "]')
+  const go = Array.from(p?.querySelectorAll("a,button") ?? []).find((x) => /open the page/i.test(x.textContent || ""))
+  go?.click()
+})
+await wait(900)
 const recordTitle = await page.evaluate(() => document.querySelector('[data-page-active="true"] h2')?.textContent ?? "(none)")
 console.log("record:", recordTitle, "· trail:", await trail())
 

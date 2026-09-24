@@ -170,6 +170,8 @@ export function TemplatesPage({ session }: { session: Session }) {
       columns={columns}
       rows={rows}
       rowKey={(r) => r.id}
+      // Clicking the name opens the template beside the page; the page itself is on the "…".
+      beside={(r) => ({ kind: "template", id: r.id })}
       nameHeader="Template"
       nameSort={(a, c) => a.name.localeCompare(c.name)}
       sort={sort}
@@ -184,7 +186,7 @@ export function TemplatesPage({ session }: { session: Session }) {
       menu={(r) => (
         <RowMenuButton
           label={r.name}
-          actions={[{ label: "Open", onClick: () => open(r) }]}
+          actions={[{ label: "Open the page", onClick: () => open(r) }]}
           items={[
             { label: "Duplicate", onClick: () => toast(`Duplicated ${r.name}`) },
             { label: "Rename", onClick: () => open(r) },

@@ -144,7 +144,7 @@ export function ListsPage({ session }: { session: Session }) {
   ]
 
   const menu = (l: List) => [
-    { label: "Open", onClick: () => open(l) },
+    { label: "Open the page", onClick: () => open(l) },
     ...(l.kind === "companies"
       ? [{ label: "Find people at these companies", onClick: () => run("lists.row.add-to-sequence", l) }]
       : [{ label: "Add to sequence", onClick: () => setEnrolling(l) }]),
@@ -340,6 +340,8 @@ export function ListsPage({ session }: { session: Session }) {
         columns={columns}
         rows={rows}
         rowKey={(l) => l.id}
+        // Clicking the name opens the list beside the page; the whole page is one step further on.
+        beside={(l) => ({ kind: "list", id: l.id })}
         nameHeader="List"
         nameSort={(a, b2) => a.name.localeCompare(b2.name)}
         sort={sort}

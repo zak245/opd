@@ -558,10 +558,13 @@ function NextStepCell({ value, onSave }: { value: { text: string; due: string };
     <button
       type="button"
       className="block w-full truncate text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      // The name, not an `sr-only` span inside the cell: a folded column is read through
+      // `MetaLine`, which draws every descendant inline, and an inline `sr-only` is a visible
+      // sliver of text rather than nothing.
+      aria-label={`Edit the next step: ${value.text}, ${day(value.due)}`}
       onClick={(e) => { e.stopPropagation(); setEditing(true) }}
     >
       {value.text} <span className="text-muted-foreground">· {day(value.due)}</span>
-      <span className="sr-only">Edit the next step</span>
     </button>
   )
 }

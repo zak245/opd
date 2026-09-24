@@ -313,7 +313,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-w-xs">
-        <DropdownMenuItem onSelect={(e) => { cameFrom.current = (e.currentTarget as HTMLElement).closest("tr") as HTMLElement ?? null; setGlancing(r) }}>Quick look</DropdownMenuItem>
+        <DropdownMenuItem onSelect={(e) => { cameFrom.current = (e.currentTarget as HTMLElement).closest("tr") as HTMLElement ?? null; setGlancing(r) }}>Look beside the list</DropdownMenuItem>
+        {/* The name opens the pane, so the page keeps an explicit route of its own. */}
+        <DropdownMenuItem onSelect={() => p.quickLook.onOpen(r)}>Open the page</DropdownMenuItem>
         {p.rowActions.map((a) => <DropdownMenuItem key={a.id} onSelect={() => a.onClick(r)}>{a.label(r)}</DropdownMenuItem>)}
         {p.menuActions.some((a) => !a.destructive) && <DropdownMenuSeparator />}
         {p.menuActions.filter((a) => !a.destructive).map((a) => (
@@ -338,8 +340,27 @@ export function DataTable<T>(p: DataTableProps<T>) {
     const door = p.rowDoor?.label(r) ?? null
     return (
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="min-w-0">{p.columns[0]?.cell(r)}</span>
+        <span className="flex min-w-0 items-start gap-2">
+          {/* Beside, not instead (BUILD-CHAINS.md, mechanic 1): a plain click on the row's name
+              opens the row beside the list rather than leaving the list for the record. A modified
+              click, the middle button and the keyboard's own `o` are left alone, and "Open the
+              page" is in the row's "…" — so the record is still one move away and still copyable.
+              This is the page doing it; when `IndexPage` grows its own `beside` prop it moves
+              there and every index gets it the same way. */}
+          <span
+            className="min-w-0"
+            onClickCapture={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+              const hit = (e.target as HTMLElement).closest("a,button")
+              if (!hit || hit.getAttribute("role") === "checkbox") return
+              e.preventDefault()
+              e.stopPropagation()
+              cameFrom.current = (e.currentTarget as HTMLElement).closest("tr")
+              setGlancing(r)
+            }}
+          >
+            {p.columns[0]?.cell(r)}
+          </span>
           {/* LAYOUTS.md §4: the primary act and the "…" are visible at rest. The rest of the acts
               are in the "…", where they already are — a row that carries four of them inline is a
               second line, and the index contract has no place of its own for row acts. */}
@@ -350,8 +371,9 @@ export function DataTable<T>(p: DataTableProps<T>) {
             </Button>
           ))}
         </span>
-        {/* The folded columns already say this above `md`; below it, they are what the row has. */}
-        {p.phoneSummary && <span className="t-small break-words text-muted-foreground md:hidden">{p.phoneSummary(r)}</span>}
+        {/* No phone summary: the folded columns say the same facts with their labels on, at every
+            width, through the template's own meta line. Two lines saying it twice is the wall of
+            text the owner objected to. */}
         {/* The row's own door. The index contract has no per-row door, so it opens under the
             row's name rather than as a sub-row of its own. */}
         {door && p.rowDoor && (
