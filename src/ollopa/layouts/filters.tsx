@@ -335,9 +335,14 @@ export function FilterBar({
   const panel = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
 
+  // Whether there is a door is a property of the page, not of the width: a person learns where
+  // the filters live and must find them there at 1440 and at 400. A page whose filters all fit the
+  // row — three at most, with nothing else behind them — shows them inline at every width and has
+  // no door at all; every other page has the door at every width, same place, same label (§2).
+  const doorless = behind.length === 0 && controls.length <= 3
   // Three named filters where there is room, two at 1024 where three plus the door plus the count
   // would wrap, none on a phone: there the row is the search and the door, and nothing else (§5).
-  const room = phone ? 0 : roomy ? 3 : 2
+  const room = doorless ? controls.length : phone ? 0 : roomy ? 3 : 2
   const front = controls.slice(0, room)
   const overflow = controls.slice(room)
 
@@ -416,8 +421,10 @@ export function FilterBar({
             {/* The same words at every width: an icon-only door is the unlabelled door rule 4
                 bans, and a door called one thing here and another there is two doors. */}
             <span>{DOOR_LABEL}</span>
+            {/* What the numbers are, in words: a bare "8 · 4" is the unlabelled thing rule 4
+                bans, and the person cannot tell which number is which. */}
             <Badge variant="outline" className="tabular-nums">
-              {onCount > 0 ? `${items.length} · ${onCount} on` : items.length}
+              {onCount > 0 ? `${items.length} inside · ${onCount} on` : `${items.length} inside`}
             </Badge>
           </Button>
         )}

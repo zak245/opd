@@ -86,7 +86,7 @@ export function WizardPage({ steps, current, onGo, children, footer, ...header }
         </nav>
         <Card className="min-w-0 gap-3 py-4">
           <CardHeader>
-            <CardTitle className="t-section">{step?.name}</CardTitle>
+            <CardTitle as="h3" className="t-section">{step?.name}</CardTitle>
           </CardHeader>
           <CardContent>{children}</CardContent>
         </Card>

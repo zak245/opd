@@ -225,6 +225,12 @@ export interface SectionProps {
   count?: number | string
   /** The section's own controls, in its card header. */
   actions?: ReactNode
+  /**
+   * The heading level of the card's title. The page's own title is an `h2`, so a section card
+   * under it is an `h3` — and a card nested inside a section is an `h4`. It changes the outline
+   * a screen reader jumps through, never the look.
+   */
+  level?: 2 | 3 | 4
   footer?: ReactNode
   /** Turn the card's body padding off where the body is a table or a divided list. */
   padded?: boolean
@@ -236,8 +242,8 @@ export interface SectionProps {
 
 /** One card per section, the heading and count on the card, the rows divided inside it. */
 export function Section({
-  heading, count, actions, footer, padded = true, className, bodyClassName, children,
-  as: _as, component: _component, level: _level, role: _role, border: _border, ...rest
+  heading, count, actions, footer, padded = true, className, bodyClassName, children, level = 3,
+  as: _as, component: _component, role: _role, border: _border, ...rest
 }: SectionProps) {
   return (
     <Card className={cn("gap-3 py-4", className)} {...rest}>
@@ -246,7 +252,7 @@ export function Section({
           {heading && (
             // A heading is as long as the thing is called. It wraps inside its own column rather
             // than spilling into the action column, where its count ended up under a button.
-            <CardTitle className="t-section flex min-w-0 flex-wrap items-baseline gap-2">
+            <CardTitle as={`h${level}`} className="t-section flex min-w-0 flex-wrap items-baseline gap-2">
               <span className="min-w-0">{heading}</span>
               {count !== undefined && (
                 <span className="t-label font-normal tabular-nums text-muted-foreground">{count}</span>

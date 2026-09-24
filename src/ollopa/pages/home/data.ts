@@ -10,6 +10,7 @@ import {
   type AgentEvent, type Company, type Deal, type Reply, type Sequence, type Task,
 } from "../../data/seed"
 import type { Session } from "../../session"
+import { repliesFor } from "../work/data"
 import type { ConsequenceProps } from "../../ui"
 import { addDays, count, daysBetween, longDay, money, plural } from "./format"
 
@@ -80,9 +81,13 @@ export function homeData(session: Session) {
 
   /* ----------------------------------------------------------------------------------- replies */
 
+  // Through the Inbox's own reader, never the raw seed: the seed writes one body per outcome, so
+  // reading it here printed the same sentence three times in a row. `repliesFor` gives each reply
+  // its own words, and it is the same words the Inbox, the thread and the pane show.
   const ownerOf = new Map(seed.contacts.map((c) => [c.id, c.owner]))
-  const mineReplies = seed.replies.filter((r) => !r.handled && ownerOf.get(r.contactId) === user)
-  const anyReplies = seed.replies.filter((r) => !r.handled)
+  const allReplies = repliesFor(session)
+  const mineReplies = allReplies.filter((r) => !r.handled && ownerOf.get(r.contactId) === user)
+  const anyReplies = allReplies.filter((r) => !r.handled)
   const replyPool = mineReplies.length > 0 ? mineReplies : session.role === "admin" ? anyReplies : mineReplies
   const newest = (a: Reply, z: Reply) => z.received.localeCompare(a.received)
   const hotReplies = replyPool.filter((r) => r.outcome === "Interested" || r.outcome === "Question").sort(newest)
@@ -138,7 +143,12 @@ export function homeData(session: Session) {
   /** Logged work: cheap and reversible, so it is written down rather than queued (rule 7's corollary). */
   const week = sortByDate(seed.agentEvents.filter((e) => daysBetween(e.when) <= 7)).reverse()
   const loggedThisWeek = week.filter((e) => !e.needsApproval || e.decision !== null)
-  const pausedByAgent = seed.agentEvents.filter((e) => e.kind === "paused" || e.kind === "capped")
+  // What an agent stopped, counted the way Agents counts it: companies, not events, and only a real
+  // pause. A run that stopped at its credit cap resumes by itself when the cap resets, so it is not
+  // a pause and it is not a decision. Counting events and capped runs is what said six here and
+  // five on Agents.
+  const pausedByAgent = seed.agentEvents.filter((e) => e.kind === "paused")
+  const pausedCompanies = new Set(pausedByAgent.map((e) => e.companyId))
 
   /** The overnight research run: logged work, one line, never an approval. */
   const research = seed.agentEvents
@@ -268,7 +278,7 @@ export function homeData(session: Session) {
       ...health, credits, daysOfCredit, bounceHref, crmName,
       guard: BOUNCE_GUARD,
       runsOutOn: longDay(credits.runsOutOn),
-      pausedOutreach: pausedByAgent.length,
+      pausedOutreach: pausedCompanies.size,
       pausedSequences,
     },
     announcement,

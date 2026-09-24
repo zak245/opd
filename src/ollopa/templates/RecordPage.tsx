@@ -288,7 +288,7 @@ function SideCard({ card }: { card: RecordCard }) {
   return (
     <Card data-record-card className={cn("gap-3 py-4", card.tone === "attention" && "[border-color:var(--warning)]")}>
       <CardHeader className="gap-0">
-        <CardTitle className="t-section inline-flex items-baseline gap-2">
+        <CardTitle as="h3" className="t-section inline-flex items-baseline gap-2">
           {card.title}
           {card.count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{card.count}</span>}
         </CardTitle>
@@ -350,7 +350,7 @@ function Section({ section }: { section: RecordSection }) {
         "min-w-0 gap-2 px-4 [grid-template-columns:minmax(0,1fr)]",
         acts && "md:[grid-template-columns:minmax(0,auto)_minmax(0,1fr)]",
       )}>
-        <CardTitle className="t-section flex min-w-0 flex-wrap items-baseline gap-2">
+        <CardTitle as="h3" className="t-section flex min-w-0 flex-wrap items-baseline gap-2">
           <span className="min-w-0">{section.title}</span>
           {section.count !== undefined && <span className="t-label font-normal tabular-nums text-muted-foreground">{section.count}</span>}
         </CardTitle>

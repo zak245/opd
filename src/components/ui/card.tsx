@@ -30,9 +30,12 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+// A card's title is a div by default, as shadcn ships it. A section card's title is also the
+// section's heading, and a page of divs has no outline to jump between, so `as` sets the tag —
+// the classes, the slot and the look are unchanged.
+function CardTitle({ className, as: Tag = "div", ...props }: React.ComponentProps<"div"> & { as?: React.ElementType }) {
   return (
-    <div
+    <Tag
       data-slot="card-title"
       className={cn("leading-none font-semibold", className)}
       {...props}
