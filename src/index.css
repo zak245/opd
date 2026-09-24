@@ -134,3 +134,15 @@
    every check that reads it keeps working. */
 [data-renders] { display: none; }
 html[data-renders="show"] [data-renders] { display: inline-block; }
+
+/* The chrome is raised above the page, not drawn on it. shadcn ships the shadow scale but puts no
+   elevation on the sidebar or the header, so it is set here, once, from the theme's own tokens: a
+   rail casts sideways and a bar casts down. In light the shadow does the separating and the border
+   is held back; in dark a shadow is invisible, so the border carries it there instead. */
+[data-slot="sidebar-container"] { box-shadow: var(--shadow-rail); }
+[data-slot="sidebar-container"] [data-sidebar="sidebar"] { border-right-color: transparent; }
+.dark [data-slot="sidebar-container"] { box-shadow: none; }
+.dark [data-slot="sidebar-container"] [data-sidebar="sidebar"] { border-right-color: var(--sidebar-border); }
+
+[data-slot="app-bar"] { box-shadow: var(--shadow-bar); border-bottom-color: transparent; }
+.dark [data-slot="app-bar"] { box-shadow: none; border-bottom-color: var(--border); }
