@@ -2,12 +2,13 @@
 //
 // Each sets its own measure and its own three-width behaviour (LAYOUTS.md §5). Nothing is removed
 // as the page narrows — only how much is visible at once.
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { openBeside, type BesideTarget } from "../beside"
 import { Split } from "./SplitHandle"
 import { Measured } from "./frame"
 import { PageHeader, Toolbar, type PageHeaderProps, type ToolbarControl } from "./parts"
@@ -137,16 +138,33 @@ export function QueuePage({
 
 // ---------------------------------------------------------------------------------- BoardPage
 
-export interface BoardStage {
+export interface BoardStage<T = unknown> {
   id: string
   name: string
   /** What the column's heading says after the name: a count, a total. */
   note?: ReactNode
   cards: ReactNode
+  /**
+   * The items in this column, in the order they are on screen. Given with `beside`, a plain click
+   * on a card's name opens it in the pane with **this column** as the list, so `[` and `]` stay in
+   * the column a person is scanning rather than wandering the whole board.
+   */
+  items?: T[]
 }
 
-export interface BoardPageProps extends PageHeaderProps {
-  stages: BoardStage[]
+export interface BoardPageProps<T = unknown> extends PageHeaderProps {
+  stages: BoardStage<T>[]
+  /**
+   * **What a click on a card's name opens: the pane beside the board, not the page** — the same
+   * contract `IndexPage` takes, with the column as the list (see each stage's `items`).
+   *
+   * The template owns the interaction, including the drag guard: a pointer that travelled more
+   * than 4 px between going down and coming up ended a drag, and a drag is not a click. A card
+   * keeps its real `href`, so ⌘-click, middle-click and copy-link still go to the page.
+   */
+  beside?: (item: T) => BesideTarget | null
+  /** How an item is named in the DOM — it must match the card's own `data-item`. */
+  itemKey?: (item: T) => string
   /**
    * The filtering pattern, built by the page with `FilterBar` and handed over whole — the same
    * prop `IndexPage` takes, so a board's row is the index's row: search, the seat's filters, the
@@ -172,8 +190,39 @@ export interface BoardPageProps extends PageHeaderProps {
  * At 400 it shows one stage at a time with a switcher — the behaviour no design system read for
  * memo 30 documents, so it is written down here.
  */
-export function BoardPage({ stages, toolbar, controls, shown: shownCount, above, columnWidth = "min-w-40 max-w-[22rem] flex-1", ...header }: BoardPageProps) {
+export function BoardPage<T = unknown>({
+  stages, toolbar, controls, shown: shownCount, above, beside, itemKey,
+  columnWidth = "min-w-40 max-w-[22rem] flex-1", ...header
+}: BoardPageProps<T>) {
   const phone = usePhone()
+  // Where the pointer went down, so the click that ends a drag is not read as a click. One guard,
+  // in the template, rather than a copy of it in every card.
+  const from = useRef<{ x: number; y: number } | null>(null)
+
+  /**
+   * A plain left click on a card's name opens that card's object beside the board. It is caught on
+   * the way down, on the column, so a board cannot make its cards open the whole record instead.
+   */
+  const column = (stage: BoardStage<T>) => ({
+    onPointerDownCapture: (e: React.PointerEvent) => { from.current = { x: e.clientX, y: e.clientY } },
+    onClickCapture: (e: React.MouseEvent) => {
+      if (!beside || !stage.items || !itemKey) return
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+      const link = (e.target as HTMLElement).closest("a")
+      if (!link) return
+      const start = from.current
+      // More than 4 px between down and up: that was a drag ending, not a click.
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) { e.preventDefault(); return }
+      const id = link.closest("[data-item]")?.getAttribute("data-item")
+      const index = stage.items.findIndex((it) => itemKey(it) === id)
+      if (index < 0) return
+      const target = beside(stage.items[index])
+      if (!target) return
+      e.preventDefault()
+      e.stopPropagation()
+      openBeside({ ...target, list: { ids: stage.items.map(itemKey), index }, opener: link as HTMLElement })
+    },
+  })
   const [only, setOnly] = useState(stages[0]?.id ?? "")
   useEffect(() => {
     if (stages.length && !stages.some((s) => s.id === only)) setOnly(stages[0].id)
@@ -208,7 +257,7 @@ export function BoardPage({ stages, toolbar, controls, shown: shownCount, above,
         {!phone && (
         <div className="flex gap-4 min-w-full items-start">
           {stages.map((s) => (
-            <section key={s.id} data-stage-column={s.id} className={cn("flex min-w-0 flex-col gap-3", columnWidth)}>
+            <section key={s.id} data-stage-column={s.id} {...column(s)} className={cn("flex min-w-0 flex-col gap-3", columnWidth)}>
               <h3 className="t-section inline-flex items-baseline gap-2">
                 {s.name}
                 {s.note && <span className="t-label font-normal tabular-nums text-muted-foreground">{s.note}</span>}
@@ -219,7 +268,7 @@ export function BoardPage({ stages, toolbar, controls, shown: shownCount, above,
         </div>
         )}
         {phone && shown && (
-          <section data-stage-column={shown.id} className="flex flex-col gap-3">
+          <section data-stage-column={shown.id} {...column(shown)} className="flex flex-col gap-3">
             <h3 className="t-section inline-flex items-baseline gap-2">
               {shown.name}
               {shown.note && <span className="t-label font-normal tabular-nums text-muted-foreground">{shown.note}</span>}

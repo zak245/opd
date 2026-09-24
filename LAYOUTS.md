@@ -49,6 +49,15 @@ pass a class, a width or an order.
   act that appears only on hover, and never an act laid inline beside the name by hand.
 - **Detail that belongs to one row** — a per-row door such as "Signals and news" — opens as a
   full-width sub-row under that row, never inside the name cell.
+- **A click on the name opens the object beside the page, not the page.** The template intercepts
+  it and hands the pane the rows in the order shown with this row's place among them, so `[` and
+  `]` walk the list. The name keeps its real `href`, so ⌘-click, middle-click and copy-link still
+  go to the page, and the page itself stays one deliberate step away, on the row's "…".
+- **The board says it the same way.** `BoardPage` takes the same `beside`, with two differences it
+  needs: the list is **the column the card sits in**, in that column's order, so stepping stays in
+  the stage being scanned; and the template owns the drag guard — a pointer that travelled more
+  than 4 px between going down and coming up ended a drag, and a drag is not a click. No card
+  carries a copy of either.
 - **The card footer** is the pager, replaced by the bulk bar while rows are selected.
 - One named **slot** carries what this shape has no room for — a view switch, a set of object tabs,
   an "Expand all" — in the same place on every page that needs one.

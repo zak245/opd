@@ -522,7 +522,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
 
   /* --------------------------------------------------------------------------------- the column */
 
-  const renderCard = (deal: Deal, index: number, list: Deal[]) => (
+  const renderCard = (deal: Deal) => (
     <DealCard
       key={deal.id}
       deal={deal}
@@ -539,8 +539,6 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
       onEditingNextStep={(open) => setEditingNext(open ? deal.id : null)}
       onSelect={(on) => setSelected((s) => (on ? [...s, deal.id] : s.filter((x) => x !== deal.id)))}
       onGlance={() => setGlance(deal.id)}
-      // The column the card sits in, in the order it is on screen: the pane walks that column.
-      onNameClick={(opener) => openBeside({ kind: "deal", id: deal.id, list: { ids: list.map((x) => x.id), index }, opener })}
       onOpen={() => leaveFor(`/ollopa/deals/${deal.id}`, deal.id)}
       onMove={(s) => move(deal.id, s)}
       onPatch={(change, said) => patch(deal.id, change, said)}
@@ -618,11 +616,12 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
   // so it carries the success ink, with the word and never the colour alone. It is a stage of the
   // board like any other now, so the phone's switcher reaches it the way it reached the old chip.
   const railSum = sumOf(wonRows)
-  const stages: BoardStage[] = [
+  const stages: BoardStage<Deal>[] = [
     ...OPEN_STAGES.map((s) => ({
       id: s,
       name: s,
       note: `${byStage(s).length} · ${moneyShort(sumOf(byStage(s)), currency)}`,
+      items: byStage(s),
       cards: columnBody(s),
     })),
     ...(used("deals.board.closed-won-rail")
@@ -630,6 +629,7 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
           id: WON_STAGE,
           name: WON_STAGE,
           note: `${wonRows.length} · ${moneyShort(railSum, currency)}`,
+          items: railOpen ? byStage(WON_STAGE) : [],
           cards: railOpen ? (
             <>
               <Button variant="link" size="sm" className="h-auto self-end px-2 py-1 text-muted-foreground"
@@ -1106,6 +1106,10 @@ export function DealsBoard({ session, glanceAt }: { session: Session; glanceAt?:
               controls={boardControls}
               above={above}
               stages={stages}
+              // Clicking a card's name opens the deal beside the board; the template carries the
+              // column as the list, so `[` and `]` stay in the stage being scanned.
+              itemKey={(d) => d.id}
+              beside={(d) => ({ kind: "deal", id: d.id })}
               // A kanban column has a readable floor, and below it a card is a wall of wrapped
               // words: at 166 px of content a two-word deal name takes three lines. So the stage
               // gets a floor and the board scrolls when the stages do not fit — which is what every
