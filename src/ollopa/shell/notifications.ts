@@ -26,6 +26,44 @@ export const KIND_LABEL: Record<Kind, string> = {
   "credits-low": "Credits low",
 }
 
+/**
+ * The family a kind belongs to, as a page id `identity.ts` already knows.
+ *
+ * A row says what kind it is with the family's icon and hue, never with a shouted word
+ * (DESIGN.md §5). `KIND_LABEL` is what that icon is called, for the person who cannot see it.
+ */
+export const KIND_FAMILY: Record<Kind, string> = {
+  reply: "inbox",
+  meeting: "inbox",
+  approval: "agents",
+  "bounce-guard": "sequences",
+  "sync-error": "settings",
+  "credits-low": "settings",
+}
+
+/**
+ * One short line per reply row.
+ *
+ * The seed gives every reply the same snippet, so three replies in a row read as a broken panel.
+ * A row's second line is one line, so it says the one thing this person asked and nothing else.
+ */
+const REPLY_LINES = [
+  "Asks whether it works with HubSpot.",
+  "Wants to keep their own field names.",
+  "Asks what the sync overwrote last year.",
+  "Wants a price for fifteen seats.",
+  "Asks who else should join the call.",
+  "Free on Thursday afternoon.",
+  "Wants to see it on their own data.",
+  "Asks how long the set-up takes.",
+]
+
+/** The reply line for a row, by its seed id, so the same row always reads the same way. */
+function replyLine(id: string): string {
+  const n = Number(id.replace(/\D/g, "")) || 1
+  return REPLY_LINES[(n - 1) % REPLY_LINES.length]
+}
+
 export interface Note {
   id: string
   kind: Kind
@@ -91,6 +129,7 @@ export function notificationsFor(session: Session): Note[] {
     .map<Note>((n) => {
       const on = n.when.slice(0, 10)
       const waitsOnAdmin = n.interrupting && n.kind === "approval" && session.role !== "admin"
+      const detail = n.kind === "reply" ? replyLine(n.id) : n.detail
       return {
         id: n.id,
         kind: n.kind,
@@ -98,7 +137,7 @@ export function notificationsFor(session: Session): Note[] {
         when: on > TODAY ? TODAY : on,
         on,
         title: n.title,
-        detail: waitsOnAdmin ? `${n.detail} Waiting on ${admin?.name ?? "your admin"}.` : n.detail,
+        detail: waitsOnAdmin ? `Waiting on ${admin?.name ?? "your admin"} · ${detail}` : detail,
         target: n.target.replace(/^#/, ""),
         unread: n.unread && !state.read.includes(n.id),
         interrupting: n.interrupting && !waitsOnAdmin,

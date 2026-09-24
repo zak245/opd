@@ -126,3 +126,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 }
+
+/* The render counters are a proof, not a feature. They exist so a reviewer can show that opening a
+   pane did not re-render the page behind it, and the walk scripts read them out of the DOM. They
+   mean nothing to a person using the product, so they stay out of the picture unless someone asks
+   for them with `document.documentElement.dataset.renders = "show"`. The node stays either way, so
+   every check that reads it keeps working. */
+[data-renders] { display: none; }
+html[data-renders="show"] [data-renders] { display: inline-block; }
