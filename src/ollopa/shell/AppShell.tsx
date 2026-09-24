@@ -316,8 +316,11 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
     ...inSidebarPages.filter((p) => !BOTTOM_BAR[session.role].includes(p)),
   ].slice(0, 4)
 
+  // Controlled, not just `defaultOpen`: shadcn's provider keeps its own state only while no
+  // `onOpenChange` is given, so passing the handler alone leaves the trigger dead and the sidebar
+  // never collapses. Our state is the one state, and it is what the trigger and the rail both move.
   return (
-    <SidebarProvider defaultOpen={!collapsed} onOpenChange={(o) => setCollapsed(!o)}>
+    <SidebarProvider open={!collapsed} onOpenChange={(o) => setCollapsed(!o)}>
       <a href="#ollopa-main" className="sr-only rounded-md bg-foreground px-3 py-2 text-background focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         Skip to content
       </a>
@@ -331,7 +334,8 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
               <SidebarMenuButton asChild size="lg">
                 <a href={href("/ollopa")} onClick={clearTrail}>
                   <span className="inline-block size-5 shrink-0 rounded-sm bg-foreground" aria-hidden="true" />
-                  <span className="font-semibold tracking-tight">ollopA</span>
+                  {/* The mark alone carries the rail; the word would only be cut in half there. */}
+                  <span className="font-semibold tracking-tight group-data-[collapsible=icon]:hidden">ollopA</span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
