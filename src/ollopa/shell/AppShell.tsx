@@ -3,7 +3,7 @@
 // The sidebar is declared, never inferred: the seat decides what may be opened, the workspace profile
 // may leave a page out, and the person may add one back. Order never changes by role, business or
 // history. The one thing the shell must never lose is the credits pill, so it is here at every width.
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { AlertTriangle, ChevronLeft, CircleAlert, Grid3x3, Info, Megaphone, Minus, Plus, Search, TriangleAlert, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -162,6 +162,12 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
     if (defaultCollapsed !== undefined) return defaultCollapsed
     try { return localStorage.getItem(COLLAPSE_KEY) === "collapsed" } catch { return false }
   })
+  // Not enough room for a full sidebar. Kept apart from the person's own choice above, so a narrow
+  // window never rewrites what they picked, and widening the window gives it back.
+  const [tight, setTight] = useState(() =>
+    defaultCollapsed === undefined && typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 1180px)").matches
+      : false)
   const [palette, setPalette] = useState(false)
   const [bell, setBell] = useState(false)
   const [creditsOpen, setCredits] = useState(false)
@@ -246,6 +252,18 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? "collapsed" : "open") } catch { /* ignore */ }
   }, [collapsed, defaultCollapsed])
 
+  // A full sidebar costs the page 224 px, which a 1,100 px window cannot spare. Above 1180 px the
+  // person's own choice stands; below it the rail is the starting state. The trigger still opens the
+  // sidebar at any width — it clears `tight` — because a control that does nothing is worse than a
+  // narrow page.
+  useEffect(() => {
+    if (defaultCollapsed !== undefined) return
+    const q = window.matchMedia("(max-width: 1180px)")
+    const cross = (e: MediaQueryListEvent) => setTight(e.matches)
+    q.addEventListener("change", cross)
+    return () => q.removeEventListener("change", cross)
+  }, [defaultCollapsed])
+
   // The channels answer to events too, so the palette can open the bell without knowing about it.
   useEffect(() => {
     const openPalette = () => setPalette(true)
@@ -320,7 +338,11 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
   // `onOpenChange` is given, so passing the handler alone leaves the trigger dead and the sidebar
   // never collapses. Our state is the one state, and it is what the trigger and the rail both move.
   return (
-    <SidebarProvider open={!collapsed} onOpenChange={(o) => setCollapsed(!o)}>
+    <SidebarProvider
+      open={!(collapsed || tight)}
+      onOpenChange={(o) => { setCollapsed(!o); setTight(false) }}
+      style={{ "--sidebar-width": "14rem" } as CSSProperties}
+    >
       <a href="#ollopa-main" className="sr-only rounded-md bg-foreground px-3 py-2 text-background focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         Skip to content
       </a>
