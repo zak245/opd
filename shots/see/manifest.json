@@ -1333,7 +1333,7 @@
       "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 11,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1353,7 +1353,7 @@
       "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 10,
+      "clipped": 11,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1373,7 +1373,7 @@
       "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 20,
+      "clipped": 21,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1393,7 +1393,7 @@
       "chrome": 114,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 20,
+      "clipped": 21,
       "sideways": 1,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1413,7 +1413,7 @@
       "chrome": 140,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -1433,7 +1433,7 @@
       "chrome": 140,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 3,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2053,7 +2053,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 5,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2073,7 +2073,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 5,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2093,7 +2093,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 32,
+      "clipped": 23,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2113,7 +2113,7 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 32,
+      "clipped": 23,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2133,8 +2133,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 25,
-      "sideways": 1,
+      "clipped": 34,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2153,8 +2153,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 25,
-      "sideways": 1,
+      "clipped": 34,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
     }
@@ -2413,7 +2413,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2433,7 +2433,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 4,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2453,7 +2453,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 13,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2473,7 +2473,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 13,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2493,7 +2493,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 11,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2513,7 +2513,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 12,
+      "clipped": 11,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2653,7 +2653,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2673,7 +2673,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 5,
+      "clipped": 12,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2693,7 +2693,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 27,
+      "clipped": 33,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2713,7 +2713,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 27,
+      "clipped": 33,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2733,7 +2733,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -2753,7 +2753,7 @@
       "chrome": 56,
       "cards": 1,
       "nestedCards": 0,
-      "clipped": 14,
+      "clipped": 17,
       "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "body"
@@ -5733,8 +5733,8 @@
       "chrome": 56,
       "cards": 2,
       "nestedCards": 0,
-      "clipped": 4,
-      "sideways": 1,
+      "clipped": 13,
+      "sideways": 0,
       "pageScrollsSideways": false,
       "focused": "div \"From People · row Mateo NovakWayfare Sys\""
     }
