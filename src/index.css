@@ -117,6 +117,7 @@
 
 
 @theme inline {
+  --color-chrome: var(--chrome);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

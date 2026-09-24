@@ -87,7 +87,8 @@
   --destructive: var(--danger);
 
   /* shadcn's sidebar variables, with our neutrals and our indigo. */
-  --sidebar: oklch(1 0 0);
+  --chrome: oklch(1 0 0);
+  --sidebar: var(--chrome);
   --sidebar-foreground: oklch(0.24 0.008 264);
   --sidebar-primary: oklch(0.52 0.17 264);
   --sidebar-primary-foreground: oklch(0.99 0.003 264);
@@ -169,7 +170,8 @@
   --paused-ink: oklch(0.79 0.055 250);
 
   --destructive: var(--danger);
-  --sidebar: oklch(0.145 0.006 264);
+  --chrome: oklch(0.145 0.006 264);
+  --sidebar: var(--chrome);
   --sidebar-foreground: oklch(0.96 0.005 264);
   --sidebar-primary: oklch(0.52 0.17 264);
   --sidebar-primary-foreground: oklch(0.99 0.003 264);

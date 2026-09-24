@@ -416,7 +416,7 @@ export function AppShell({ session, page, title, children, defaultCollapsed }: {
         {/* shadcn's header pattern inside SidebarInset: the trigger, a vertical Separator, then the
             page's own path and the workspace channels. Nothing here sets a colour or a size of its
             own — the Button, Badge, Kbd and Avatar carry it. */}
-        <header data-slot="app-bar" className={cn("bg-background relative z-20 flex shrink-0 items-center gap-2 border-b px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
+        <header data-slot="app-bar" className={cn("bg-chrome relative z-20 flex shrink-0 items-center gap-2 border-b px-4", canAdd || added ? "h-auto min-h-14 flex-wrap py-1.5 md:h-14 md:flex-nowrap md:py-0" : "h-14")}>
           {/* The page title carries its family icon and hue — one of the three ways you know
               where you are (DESIGN.md §5). */}
           <SidebarTrigger className="-ml-1" />
